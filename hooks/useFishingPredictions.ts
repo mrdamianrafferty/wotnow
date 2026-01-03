@@ -467,7 +467,8 @@ export function useFishingPredictions(options: UseFishingPredictionsOptions): Us
         const formattedPredictions = predictions.map(p => ({
           speciesCode: (p.species_id || p.species_code) as string,
         }));
-        await preloadTopSpeciesImages(formattedPredictions, 10);
+        // Cache ALL species images for this rectangle (typically 40-60 species, ~2-3MB)
+        await preloadTopSpeciesImages(formattedPredictions, formattedPredictions.length);
       } catch (e) {
         // Silently ignore pre-loading errors
         if (process.env.NODE_ENV === 'development') {
