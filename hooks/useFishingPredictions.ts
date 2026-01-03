@@ -469,14 +469,23 @@ export function useFishingPredictions(options: UseFishingPredictionsOptions): Us
         }));
         // Cache ALL species images for this rectangle (typically 40-60 species, ~2-3MB)
         await preloadTopSpeciesImages(formattedPredictions, formattedPredictions.length);
+
+        // Pre-cache species details (bios, names) for offline access
+        const { preCacheSpeciesDetails } = await import('@/lib/findr/preCacheSpeciesDetails');
+        const speciesForCache = predictions.map(p => ({
+          species_id: p.species_id as string | undefined,
+          species_code: (p.species_code || p.species_id) as string | undefined,
+          species_common_name: (p.species_common_name || p.name_en) as string | undefined,
+        }));
+        await preCacheSpeciesDetails(rectangleCode!, speciesForCache);
       } catch (e) {
         // Silently ignore pre-loading errors
         if (process.env.NODE_ENV === 'development') {
-          console.warn('[useFishingPredictions] Image preload failed:', e);
+          console.warn('[useFishingPredictions] Image/species preload failed:', e);
         }
       }
     })();
-  }, [query.data?.predictions]);
+  }, [query.data?.predictions, rectangleCode]);
 
   // Pre-cache 7-day forecast for offline access (runs once per rectangle)
   const preCacheRef = useRef<string | null>(null);
