@@ -24,10 +24,16 @@ export function OfflineInit() {
           }
 
           // Initialize push notifications for native apps
-          console.log('[OfflineInit] Initializing push notifications...');
-          const { initPushNotifications } = await import('@/lib/capacitor/pushNotifications');
-          await initPushNotifications();
-          console.log('[OfflineInit] Push notifications initialized');
+          // Wrapped in try-catch as plugin may not be available in hybrid mode
+          try {
+            console.log('[OfflineInit] Initializing push notifications...');
+            const { initPushNotifications } = await import('@/lib/capacitor/pushNotifications');
+            await initPushNotifications();
+            console.log('[OfflineInit] Push notifications initialized');
+          } catch (pushError) {
+            // Don't fail initialization if push notifications aren't available
+            console.warn('[OfflineInit] Push notifications unavailable:', pushError);
+          }
         }
 
         // Initialize IndexedDB

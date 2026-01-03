@@ -25,6 +25,13 @@ export async function initPushNotifications(): Promise<void> {
     return;
   }
 
+  // Check if PushNotifications plugin is actually available
+  // In hybrid mode (server URL), plugins may not be properly bridged
+  if (!Capacitor.isPluginAvailable('PushNotifications')) {
+    console.log('[Push] Skipping - PushNotifications plugin not available');
+    return;
+  }
+
   try {
     // IMPORTANT: Set up listeners BEFORE registering to catch the registration event
     setupPushListeners();
@@ -43,10 +50,12 @@ export async function initPushNotifications(): Promise<void> {
     }
 
     // Also request local notification permissions
-    const localPermResult = await LocalNotifications.requestPermissions();
-    if (localPermResult.display === 'granted') {
-      if (process.env.NODE_ENV === 'development') {
-        console.log('[Push] Local notifications permitted');
+    if (Capacitor.isPluginAvailable('LocalNotifications')) {
+      const localPermResult = await LocalNotifications.requestPermissions();
+      if (localPermResult.display === 'granted') {
+        if (process.env.NODE_ENV === 'development') {
+          console.log('[Push] Local notifications permitted');
+        }
       }
     }
   } catch (error) {
@@ -241,6 +250,11 @@ export async function scheduleReminder(plan: PlannedActivity): Promise<number | 
     return null;
   }
 
+  if (!Capacitor.isPluginAvailable('LocalNotifications')) {
+    console.log('[Push] Skipping reminder - LocalNotifications plugin not available');
+    return null;
+  }
+
   if (!plan.reminderEnabled) {
     return null;
   }
@@ -314,7 +328,7 @@ export async function scheduleReminder(plan: PlannedActivity): Promise<number | 
  * Cancel a scheduled reminder
  */
 export async function cancelReminder(planId: string): Promise<void> {
-  if (!Capacitor.isNativePlatform()) {
+  if (!Capacitor.isNativePlatform() || !Capacitor.isPluginAvailable('LocalNotifications')) {
     return;
   }
 
@@ -356,7 +370,7 @@ function getAppTitle(app: PlannedActivity['app']): string {
  * Get all pending local notifications
  */
 export async function getPendingReminders(): Promise<LocalNotificationSchema[]> {
-  if (!Capacitor.isNativePlatform()) {
+  if (!Capacitor.isNativePlatform() || !Capacitor.isPluginAvailable('LocalNotifications')) {
     return [];
   }
 
