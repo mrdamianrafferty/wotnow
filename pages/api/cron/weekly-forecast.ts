@@ -49,6 +49,40 @@ const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
 
 const resend = RESEND_API_KEY ? new Resend(RESEND_API_KEY) : null;
 
+/**
+ * Check if user has already received a weekly forecast email this week
+ * Enforces maximum one email per week policy
+ */
+async function hasReceivedWeeklyForecastThisWeek(userId: string): Promise<boolean> {
+  // Get start of current week (Monday)
+  const today = new Date();
+  const dayOfWeek = today.getDay();
+  const daysFromMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+  const weekStart = new Date(today);
+  weekStart.setDate(today.getDate() - daysFromMonday);
+  weekStart.setHours(0, 0, 0, 0);
+
+  try {
+    const { data, error } = await supabase
+      .from('notification_log')
+      .select('id')
+      .eq('user_id', userId)
+      .eq('channel', 'email')
+      .in('notification_type', ['weekly_forecast', 'weekly_forecast_v2'])
+      .gte('sent_at', weekStart.toISOString())
+      .limit(1);
+
+    if (error) {
+      console.error('[Weekly Forecast] Error checking weekly log:', error);
+      return false; // On error, allow sending
+    }
+
+    return data && data.length > 0;
+  } catch {
+    return false; // On error, allow sending
+  }
+}
+
 /** Type for species advice data from JSON */
 interface SpeciesAdviceEntry {
   name: string;
@@ -647,6 +681,13 @@ async function sendWeeklyForecastEmail(userId: string): Promise<boolean> {
   }
 
   try {
+    // 0. Check if user already received weekly forecast this week
+    const alreadySentThisWeek = await hasReceivedWeeklyForecastThisWeek(userId);
+    if (alreadySentThisWeek) {
+      console.log('[Weekly Forecast] User already received forecast this week, skipping:', userId);
+      return false;
+    }
+
     // 1. Get user's email and name
     const { data: userData, error: userError } = await supabase.auth.admin.getUserById(userId);
 
@@ -832,6 +873,23 @@ async function sendWeeklyForecastEmail(userId: string): Promise<boolean> {
     }
 
     console.log(`[Weekly Forecast] Email sent successfully to ${userEmail}:`, data?.id);
+
+    // 15. Log the send to notification_log for deduplication
+    await supabase.from('notification_log').insert({
+      user_id: userId,
+      species_id: null,
+      notification_type: 'weekly_forecast_v2',
+      channel: 'email',
+      confidence_at_send: null,
+      threshold_value: null,
+      notification_data: {
+        species_count: enhancedForecasts.length,
+        rectangle_code: firstRectangle,
+        resend_id: data?.id,
+      },
+      sent_at: new Date().toISOString(),
+    });
+
     return true;
 
   } catch (error) {

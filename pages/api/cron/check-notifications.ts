@@ -213,6 +213,8 @@ async function wasRecentlySent(userId: string, speciesId: string): Promise<boole
 /**
  * Check if user has already received a daily digest email today
  * Enforces maximum one email per day policy
+ *
+ * NOTE: Checks for both 'daily_digest' (legacy) and 'daily_digest_v2' (current)
  */
 async function hasReceivedDailyDigestToday(userId: string): Promise<boolean> {
   const todayStart = new Date();
@@ -224,7 +226,7 @@ async function hasReceivedDailyDigestToday(userId: string): Promise<boolean> {
       .select('id')
       .eq('user_id', userId)
       .eq('channel', 'email')
-      .eq('notification_type', 'daily_digest')
+      .in('notification_type', ['daily_digest', 'daily_digest_v2'])
       .gte('sent_at', todayStart.toISOString())
       .limit(1);
 
