@@ -1,7 +1,7 @@
 'use client';
 
 import { useQuery } from '@tanstack/react-query';
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { TideInfo } from '../components/findr/TideConditions';
 import type { FreshnessLevel } from '@/lib/offline/storage';
 import { Capacitor } from '@capacitor/core';
@@ -10,6 +10,27 @@ type JsonValue = string | number | boolean | null | JsonValue[] | { [key: string
 
 // Check if running on native platform
 const isNativePlatform = typeof window !== 'undefined' && Capacitor.isNativePlatform();
+
+// Check network status (returns true for server-side rendering)
+async function checkNetworkStatus(): Promise<boolean> {
+  if (typeof window === 'undefined') return true;
+
+  // First check browser's online status
+  if (!navigator.onLine) return false;
+
+  // On native platform, use Capacitor Network plugin for more accurate status
+  if (isNativePlatform) {
+    try {
+      const { Network } = await import('@capacitor/network');
+      const status = await Network.getStatus();
+      return status.connected;
+    } catch {
+      // Fall back to navigator.onLine
+    }
+  }
+
+  return navigator.onLine;
+}
 
 export interface FishingPrediction {
   [key: string]: JsonValue | undefined;
@@ -53,6 +74,7 @@ export interface UseFishingPredictionsState {
   tideInfo?: TideInfo | null;
   reload: () => void;
   // Offline-related fields
+  isOffline?: boolean;
   isFromCache?: boolean;
   cacheTimestamp?: number;
   freshness?: FreshnessLevel;
@@ -74,6 +96,11 @@ interface PredictionResponse {
       };
     };
   };
+  // Offline-related fields
+  isOffline?: boolean;
+  isFromCache?: boolean;
+  cacheTimestamp?: number;
+  freshness?: FreshnessLevel;
 }
 
 const DEFAULT_LANGUAGE = 'en';
@@ -84,8 +111,16 @@ async function fetchPredictions(params: {
   language: string;
   latitude?: number;
   longitude?: number;
-}): Promise<PredictionResponse & { isFromCache?: boolean; cacheTimestamp?: number; freshness?: FreshnessLevel }> {
+}): Promise<PredictionResponse> {
   const date = params.predictionDate || new Date().toISOString().split('T')[0];
+
+  // Check network status FIRST - skip network requests entirely when offline
+  const isOnline = await checkNetworkStatus();
+  const isOffline = !isOnline;
+
+  if (isOffline) {
+    console.log('[useFishingPredictions] Device is OFFLINE, loading from cache only');
+  }
 
   // On native platform, try SQLite cache first (faster than network)
   if (isNativePlatform) {
@@ -139,9 +174,10 @@ async function fetchPredictions(params: {
           };
         });
 
-        // If from cache, also trigger background refresh
-        if (fromCache) {
-          fetchAndCacheFromNetwork(params, date).catch(() => {
+        // If from cache AND online, trigger background refresh
+        // Skip background refresh when offline to avoid unnecessary network errors
+        if (fromCache && !isOffline) {
+          fetchAndCacheFromNetwork(params, date, false).catch(() => {
             // Silently ignore background refresh errors
           });
         }
@@ -151,6 +187,7 @@ async function fetchPredictions(params: {
           predictionDate: date,
           language: params.language,
           predictions: mappedPredictions,
+          isOffline,
           isFromCache: fromCache,
           cacheTimestamp: fromCache ? Date.now() : undefined,
           freshness: fromCache ? 'stale' : 'fresh',
@@ -161,8 +198,35 @@ async function fetchPredictions(params: {
     }
   }
 
-  // Fetch from network (standard path)
-  return fetchAndCacheFromNetwork(params, date);
+  // When offline and not on native platform, try IndexedDB cache before giving up
+  if (isOffline) {
+    console.log('[useFishingPredictions] Offline - trying IndexedDB cache...');
+    try {
+      const { getStorage } = await import('@/lib/offline/storage');
+      const storage = getStorage();
+      const cached = await storage.getPrediction(params.rectangleCode, date);
+
+      if (cached) {
+        console.log('[useFishingPredictions] Loaded from offline IndexedDB cache');
+        const cachedData = cached.data as PredictionResponse;
+        return {
+          ...cachedData,
+          isOffline: true,
+          isFromCache: true,
+          cacheTimestamp: cached.timestamp,
+          freshness: cached.freshness,
+        };
+      }
+    } catch (cacheError) {
+      console.warn('[useFishingPredictions] IndexedDB cache check failed:', cacheError);
+    }
+
+    // No cache available while offline
+    throw new Error('No cached predictions available. Please connect to the internet to load fishing predictions.');
+  }
+
+  // Fetch from network (standard path - only when online)
+  return fetchAndCacheFromNetwork(params, date, isOffline);
 }
 
 async function fetchAndCacheFromNetwork(params: {
@@ -171,7 +235,7 @@ async function fetchAndCacheFromNetwork(params: {
   language: string;
   latitude?: number;
   longitude?: number;
-}, date: string): Promise<PredictionResponse & { isFromCache?: boolean; cacheTimestamp?: number; freshness?: FreshnessLevel }> {
+}, date: string, _isOffline: boolean): Promise<PredictionResponse> {
   // Try network fetch first
   try {
     // Use absolute URL for fishfindr.eu and godaisy.io to avoid redirect issues
@@ -229,24 +293,35 @@ async function fetchAndCacheFromNetwork(params: {
         await findrDb.predictions.cache(params.rectangleCode, date, params.language, offlinePredictions);
 
         // Also cache to Preferences for offline shell access
+        // Include richer data for better offline experience
         try {
           const { Preferences } = await import('@capacitor/preferences');
           const cacheData = {
             rectangleCode: params.rectangleCode,
             date,
             cachedAt: new Date().toISOString(),
-            predictions: typed.predictions.slice(0, 15).map(p => ({
+            region: typed.metadata?.region || null,
+            predictions: typed.predictions.slice(0, 20).map(p => ({
+              species_code: p.species_code || p.species_id || '',
               species_common_name: p.species_common_name || p.name_en || 'Unknown',
               species_scientific_name: p.species_scientific_name || p.scientific_name || '',
+              slug: p.slug || '',
+              guild: p.guild || '',
               confidence: p.confidence_percent ?? p.confidence ?? 0,
               bite_score: p.bite_score,
+              temp_score: p.temp_score,
+              tide_score: p.tide_score,
+              light_score: p.light_score,
+              lunar_score: p.lunar_score,
+              best_times: p.best_times || [],
+              playful_bio: p.playful_bio || '',
             })),
           };
           await Preferences.set({
             key: 'findr_offline_predictions',
             value: JSON.stringify(cacheData),
           });
-          console.log('[useFishingPredictions] Cached to Preferences for offline shell');
+          console.log('[useFishingPredictions] Cached to Preferences for offline shell:', cacheData.predictions.length, 'predictions');
         } catch (prefError) {
           console.warn('[useFishingPredictions] Failed to cache to Preferences:', prefError);
         }
@@ -264,7 +339,12 @@ async function fetchAndCacheFromNetwork(params: {
       // Silently ignore cache errors
     }
 
-    return typed;
+    return {
+      ...typed,
+      isOffline: false,
+      isFromCache: false,
+      freshness: 'fresh' as FreshnessLevel,
+    };
   } catch (networkError) {
     // Network fetch failed - try offline cache
     console.log('[useFishingPredictions] Network fetch failed, trying offline cache...');
@@ -285,6 +365,7 @@ async function fetchAndCacheFromNetwork(params: {
         const cachedData = cached.data as PredictionResponse;
         return {
           ...cachedData,
+          isOffline: true, // Network failed, so we're effectively offline
           isFromCache: true,
           cacheTimestamp: cached.timestamp,
           freshness: cached.freshness,
@@ -308,6 +389,37 @@ export function useFishingPredictions(options: UseFishingPredictionsOptions): Us
     latitude,
     longitude
   } = options;
+
+  // Track real-time online/offline status
+  const [isOnline, setIsOnline] = useState(() => {
+    if (typeof window === 'undefined') return true;
+    return navigator.onLine;
+  });
+
+  useEffect(() => {
+    const handleOnline = () => setIsOnline(true);
+    const handleOffline = () => setIsOnline(false);
+
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+
+    // Also check Capacitor Network plugin on native
+    if (isNativePlatform) {
+      import('@capacitor/network').then(({ Network }) => {
+        Network.getStatus().then(status => setIsOnline(status.connected));
+        Network.addListener('networkStatusChange', status => {
+          setIsOnline(status.connected);
+        });
+      }).catch(() => {
+        // Ignore if Network plugin unavailable
+      });
+    }
+
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, []);
 
   // Build query key and params
   const shouldFetch = enabled && Boolean(rectangleCode);
@@ -399,6 +511,9 @@ export function useFishingPredictions(options: UseFishingPredictionsOptions): Us
     return () => clearTimeout(timer);
   }, [rectangleCode, query.data?.isFromCache, query.data?.predictions, query.isLoading, latitude, longitude, language]);
 
+  // Determine offline status: use real-time status OR data-level offline flag
+  const isOffline = !isOnline || query.data?.isOffline;
+
   return {
     predictions: query.data?.predictions ?? null,
     loading: query.isLoading || query.isFetching,
@@ -408,6 +523,7 @@ export function useFishingPredictions(options: UseFishingPredictionsOptions): Us
     tideInfo: query.data?.metadata?.conditions?.tide ?? null,
     reload: () => query.refetch(),
     // Offline-related fields
+    isOffline,
     isFromCache: query.data?.isFromCache,
     cacheTimestamp: query.data?.cacheTimestamp,
     freshness: query.data?.freshness,

@@ -144,6 +144,13 @@
       align-items: center;
       justify-content: center;
       flex-shrink: 0;
+      overflow: hidden;
+    }
+
+    .fish-icon img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
     }
 
     .fish-icon svg {
@@ -151,6 +158,22 @@
       height: 32px;
       color: var(--cyan);
     }
+
+    .guild-badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 10px;
+      font-size: 10px;
+      font-weight: 600;
+      text-transform: uppercase;
+      margin-top: 4px;
+    }
+
+    .guild-pelagic { background: rgba(59, 130, 246, 0.2); color: #60a5fa; }
+    .guild-reef_kelp { background: rgba(34, 197, 94, 0.2); color: #4ade80; }
+    .guild-benthic { background: rgba(168, 85, 247, 0.2); color: #c084fc; }
+    .guild-surf_estuary { background: rgba(234, 179, 8, 0.2); color: #facc15; }
+    .guild-cephalopod { background: rgba(236, 72, 153, 0.2); color: #f472b6; }
 
     .prediction-info {
       flex: 1;
@@ -474,6 +497,14 @@
       const Preferences = window.Capacitor.Plugins.Preferences;
 
       try {
+        // First, try to read saved location
+        const locationResult = await Preferences.get({ key: 'findr_offline_location' });
+        let savedLocation = null;
+        if (locationResult.value) {
+          savedLocation = JSON.parse(locationResult.value);
+          console.log('[Findr Offline] Found saved location:', savedLocation.name || savedLocation.rectangleCode);
+        }
+
         // Read cached predictions from Preferences
         const result = await Preferences.get({ key: 'findr_offline_predictions' });
 
@@ -484,18 +515,24 @@
         }
 
         const cacheData = JSON.parse(result.value);
-        console.log('[Findr Offline] Loaded cache from Preferences:', cacheData.rectangleCode);
+        console.log('[Findr Offline] Loaded cache from Preferences:', {
+          rectangleCode: cacheData.rectangleCode,
+          region: cacheData.region,
+          predictions: cacheData.predictions?.length || 0
+        });
 
         if (cacheData.predictions && cacheData.predictions.length > 0) {
-          renderPredictions(cacheData.predictions);
-
-          if (cacheData.rectangleCode) {
-            document.getElementById('location-display').textContent = cacheData.rectangleCode;
-          }
+          // Use saved location name if available, otherwise fall back to cached data
+          const displayName = savedLocation?.name || savedLocation?.region || cacheData.region || cacheData.rectangleCode;
+          renderPredictions(cacheData.predictions, displayName);
 
           if (cacheData.cachedAt) {
             showStalenessBanner(new Date(cacheData.cachedAt));
           }
+        } else if (savedLocation) {
+          // We have a saved location but no predictions - show message
+          document.getElementById('location-display').textContent = savedLocation.name || savedLocation.rectangleCode;
+          showEmptyState();
         } else {
           showEmptyState();
         }
@@ -505,17 +542,20 @@
       }
     }
 
-    function renderPredictions(predictions, speciesMap) {
+    function renderPredictions(predictions, region) {
       const container = document.getElementById('predictions-list');
       container.innerHTML = '';
 
-      // Get the location from the first prediction
-      if (predictions[0]?.rectangleCode) {
-        document.getElementById('location-display').textContent = predictions[0].rectangleCode;
+      // Display location/region
+      const locationDisplay = document.getElementById('location-display');
+      if (region) {
+        locationDisplay.textContent = region;
+      } else if (predictions[0]?.rectangleCode) {
+        locationDisplay.textContent = predictions[0].rectangleCode;
       }
 
-      // Render top 10 predictions
-      const topPredictions = predictions.slice(0, 10);
+      // Render top predictions (up to 15 for offline)
+      const topPredictions = predictions.slice(0, 15);
 
       topPredictions.forEach(pred => {
         // Handle different confidence field names from API
@@ -526,20 +566,37 @@
         // Handle different species name field names
         const speciesName = pred.species_common_name || pred.name_en || pred.species_name || pred.commonName || pred.species || 'Unknown Species';
         const scientificName = pred.species_scientific_name || pred.scientific_name || pred.scientificName || '';
+        const slug = pred.slug || '';
+        const guild = pred.guild || '';
+
+        // Build image URL (species images are stored by slug)
+        const imageUrl = slug ? `https://fishfindr.eu/PNGS/${slug}.webp` : '';
+
+        // Guild display name
+        const guildNames = {
+          'pelagic': 'Pelagic',
+          'reef_kelp': 'Reef/Kelp',
+          'benthic': 'Bottom',
+          'surf_estuary': 'Shore',
+          'cephalopod': 'Cephalopod'
+        };
+        const guildDisplay = guildNames[guild] || guild;
 
         const card = document.createElement('div');
         card.className = 'prediction-card';
         card.innerHTML = `
           <div class="fish-icon">
+            ${imageUrl ? `<img src="${imageUrl}" alt="${speciesName}" onerror="this.parentElement.innerHTML='<svg viewBox=\\'0 0 24 24\\' fill=\\'none\\' stroke=\\'currentColor\\' stroke-width=\\'2\\'><path d=\\'M6.5 12c.94-3.46 4.94-6 8.5-6 3.56 0 6.06 2.54 7 6-.94 3.47-3.44 6-7 6s-7.56-2.53-8.5-6Z\\'/><circle cx=\\'15\\' cy=\\'12\\' r=\\'2\\'/><path d=\\'M2 12s2-2 4-2\\'/></svg>'" />` : `
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <path d="M6.5 12c.94-3.46 4.94-6 8.5-6 3.56 0 6.06 2.54 7 6-.94 3.47-3.44 6-7 6s-7.56-2.53-8.5-6Z"/>
               <circle cx="15" cy="12" r="2"/>
               <path d="M2 12s2-2 4-2"/>
-            </svg>
+            </svg>`}
           </div>
           <div class="prediction-info">
             <div class="species-name">${speciesName}</div>
             <div class="species-scientific">${scientificName}</div>
+            ${guild ? `<span class="guild-badge guild-${guild}">${guildDisplay}</span>` : ''}
             <div class="confidence-bar">
               <div class="confidence-fill ${confidenceClass}" style="width: ${confidence}%"></div>
             </div>

@@ -35,6 +35,7 @@ import type { TideExtreme } from '../../lib/findr/conditionHelpers';
 import { FindrNavigation } from '../../components/findr/FindrNavigationMobile';
 import { TranslatedFishName, TranslatedFishBio, TranslatedText } from '../../components/translation/TranslatedFishCard';
 import { NetworkStatusIndicator } from '../../components/findr/NetworkStatusIndicator';
+import { OfflineStatusBar } from '../../components/findr/OfflineStatusBar';
 
 // Dynamically import non-critical components
 const FishingAreaInfo = dynamic(
@@ -794,6 +795,7 @@ const FindrPage: React.FC<FindrPageProps> = ({ initialRectangle: _initialRectang
     error,
     lastUpdated,
     reload,
+    isOffline,
     isFromCache,
     cacheTimestamp,
     freshness,
@@ -1208,6 +1210,17 @@ const FindrPage: React.FC<FindrPageProps> = ({ initialRectangle: _initialRectang
       {/* Navigation component outside main to avoid CSS containment affecting fixed positioning */}
       <FindrNavigation />
       <main className="min-h-screen bg-base-200 pb-16">
+        {/* Offline/cache status bar - shows when viewing cached predictions */}
+        {(isOffline || isFromCache) && !loading && predictions && predictions.length > 0 && (
+          <OfflineStatusBar
+            isOffline={isOffline || false}
+            isFromCache={isFromCache}
+            cacheTimestamp={cacheTimestamp}
+            freshness={freshness}
+            onRefresh={reload}
+            className="sticky top-0 z-40"
+          />
+        )}
 
         {/* Content container - minimal spacing on mobile */}
         <div className="sm:mx-auto pt-0 sm:pt-2 lg:max-w-6xl px-0">

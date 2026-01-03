@@ -58,6 +58,28 @@ esac
 
 echo "Using Capacitor config: $CONFIG_FILE"
 
+# Build static export for offline-capable apps
+if [ "$FLAVOR" = "findr" ]; then
+    echo ""
+    echo "Building static export for Findr offline mode..."
+    echo "(This bundles the React app locally for offline use)"
+
+    # Build static export using the offline config
+    # Note: This creates a static HTML/JS bundle that works offline
+    NEXT_PUBLIC_OFFLINE_MODE=true npx next build -c next.config.findr-offline.mjs 2>&1 || {
+        echo "Warning: Static export build failed. Falling back to server-based mode."
+        echo "The app will require network connection to function."
+    }
+
+    # If build succeeded, copy to Capacitor assets
+    if [ -d "out-findr" ]; then
+        echo "Copying static export to Capacitor assets..."
+        rm -rf .capacitor-assets-offline
+        cp -r out-findr .capacitor-assets-offline
+        echo "Static export ready: .capacitor-assets-offline/"
+    fi
+fi
+
 # Sync Capacitor with the correct config
 # Capacitor CLI always reads capacitor.config.ts, so we swap it temporarily
 echo "Syncing Capacitor..."

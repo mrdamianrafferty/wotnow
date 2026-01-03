@@ -229,9 +229,52 @@ const pwaConfig = withPWA({
   // Clean up outdated Workbox caches automatically
   cleanupOutdatedCaches: true,
   // Force cache refresh by changing cacheId
-  cacheId: '20251215-no-image-precache',
+  cacheId: '20260103-findr-offline-optimized',
   runtimeCaching: [
-    // Cache all HTML pages (SSR/SSG)
+    // FINDR-SPECIFIC CACHING: Prioritize for offline fishing use
+    // Cache Findr pages with CacheFirst for reliable offline access
+    {
+      urlPattern: /\/findr(?:\/|$)/,
+      handler: 'CacheFirst',
+      options: {
+        cacheName: 'findr-pages-cache',
+        expiration: {
+          maxEntries: 30,
+          maxAgeSeconds: 7 * 24 * 60 * 60, // 7 days
+        },
+        cacheableResponse: {
+          statuses: [0, 200],
+        },
+      },
+    },
+    // Cache Findr predictions API with longer TTL (matches server cache)
+    {
+      urlPattern: /\/api\/findr\/predictions/,
+      handler: 'CacheFirst',
+      options: {
+        cacheName: 'findr-predictions-cache',
+        expiration: {
+          maxEntries: 100, // ~14 days x 7 rectangles
+          maxAgeSeconds: 6 * 60 * 60, // 6 hours (matches server cache TTL)
+        },
+        cacheableResponse: {
+          statuses: [0, 200],
+        },
+      },
+    },
+    // Cache other Findr API endpoints
+    {
+      urlPattern: /\/api\/findr\//,
+      handler: 'StaleWhileRevalidate',
+      options: {
+        cacheName: 'findr-api-cache',
+        expiration: {
+          maxEntries: 50,
+          maxAgeSeconds: 3 * 60 * 60, // 3 hours
+        },
+      },
+    },
+    // Cache all HTML pages (SSR/SSG) - general fallback
     {
       urlPattern: /^https?:\/\/[^\/]+\/.*/,
       handler: 'StaleWhileRevalidate',
@@ -243,7 +286,7 @@ const pwaConfig = withPWA({
         },
       },
     },
-    // Cache API responses (local and remote)
+    // Cache API responses (local and remote) - general fallback
     {
       urlPattern: /\/api\//,
       handler: 'StaleWhileRevalidate',

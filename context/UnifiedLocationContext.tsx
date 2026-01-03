@@ -124,6 +124,8 @@ function persistState(state: StoredState | null) {
   if (!state || state.locations.length === 0) {
     window.localStorage.removeItem(STORAGE_KEY);
     window.localStorage.removeItem(LEGACY_STORAGE_KEY); // Clean up legacy too
+    // Also clear from Capacitor Preferences
+    persistToNativePreferences(null);
     return;
   }
   try {
@@ -134,9 +136,52 @@ function persistState(state: StoredState | null) {
     if (active) {
       const legacy = convertToLegacy(active);
       window.localStorage.setItem(LEGACY_STORAGE_KEY, JSON.stringify(legacy));
+
+      // Persist active location to Capacitor Preferences for offline shell access
+      persistToNativePreferences(active);
     }
   } catch (error) {
     console.warn('[UnifiedLocation] Failed to persist state', error);
+  }
+}
+
+/**
+ * Persist active location to Capacitor Preferences for offline shell access.
+ * This enables the offline shell to know the last-used location.
+ */
+async function persistToNativePreferences(location: SavedLocation | null) {
+  // Only run on native platforms
+  if (typeof window === 'undefined') return;
+
+  try {
+    const { Capacitor } = await import('@capacitor/core');
+    if (!Capacitor.isNativePlatform()) return;
+
+    const { Preferences } = await import('@capacitor/preferences');
+
+    if (!location) {
+      await Preferences.remove({ key: 'findr_offline_location' });
+      return;
+    }
+
+    const offlineLocation = {
+      rectangleCode: location.rectangleCode,
+      region: location.rectangleRegion,
+      name: location.name,
+      lat: location.lat,
+      lon: location.lon,
+      savedAt: new Date().toISOString(),
+    };
+
+    await Preferences.set({
+      key: 'findr_offline_location',
+      value: JSON.stringify(offlineLocation),
+    });
+
+    console.log('[UnifiedLocation] Persisted location to Preferences for offline:', offlineLocation.rectangleCode);
+  } catch (error) {
+    // Silently ignore - Preferences might not be available
+    console.warn('[UnifiedLocation] Failed to persist to Preferences:', error);
   }
 }
 
