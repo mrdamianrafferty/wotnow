@@ -15,7 +15,7 @@ import {
 import { auth, type AuthUser } from '../../lib/grow/auth';
 import { buildGrowLoginUrl, GROW_ONBOARDING_PATH, GROW_ROOT_PATH } from '../../lib/grow/routes';
 import { api } from '../../lib/grow/api';
-import { Home, Calendar, Sprout, CloudSun, Info } from 'lucide-react';
+import { Home, Calendar, Sprout, CloudSun, Info, LogIn } from 'lucide-react';
 
 // Code-split ALL page components with skeleton loaders for iOS performance
 const Homepage = dynamic(() => import('./Homepage').then(mod => ({ default: mod.Homepage })), {
@@ -51,6 +51,7 @@ export function GrowExperience() {
   const [currentPage, setCurrentPage] = useState<GrowPageKey>('home');
   const [currentUser, setCurrentUser] = useState<AuthUser | null>(null);
   const [hasCheckedPlants, setHasCheckedPlants] = useState(false);
+  const [isGuestMode, setIsGuestMode] = useState(false);
   const router = useRouter();
   const userId = currentUser?.id ?? null;
   const { isReady } = router;
@@ -87,10 +88,18 @@ export function GrowExperience() {
         if (!isMounted) {
           return;
         }
-        setCurrentUser(user);
+        if (user) {
+          setCurrentUser(user);
+          setIsGuestMode(false);
+        } else {
+          // No user - enable guest mode instead of redirecting
+          setCurrentUser(null);
+          setIsGuestMode(true);
+        }
       } catch (_error) {
         if (isMounted) {
           setCurrentUser(null);
+          setIsGuestMode(true);
         }
       }
     };
@@ -102,9 +111,11 @@ export function GrowExperience() {
           return;
         }
         setCurrentUser(session?.user ?? null);
+        setIsGuestMode(!session?.user);
       } catch (_error) {
         if (isMounted) {
           setCurrentUser(null);
+          setIsGuestMode(true);
         }
       }
     };
@@ -113,16 +124,18 @@ export function GrowExperience() {
       if (!isMounted) {
         return;
       }
+      // Don't redirect - just switch to guest mode
       setCurrentUser(null);
-      redirectToLogin();
+      setIsGuestMode(true);
     };
 
     const handleSessionExpired = () => {
       if (!isMounted) {
         return;
       }
+      // Don't redirect - just switch to guest mode
       setCurrentUser(null);
-      redirectToLogin();
+      setIsGuestMode(true);
     };
 
     loadUser();
@@ -137,7 +150,7 @@ export function GrowExperience() {
       window.removeEventListener('auth:refresh-failed', handleRefreshFailed);
       window.removeEventListener('auth:session-expired', handleSessionExpired);
     };
-  }, [redirectToLogin]);
+  }, []);
 
   useEffect(() => {
     setHasCheckedPlants(false);
@@ -151,6 +164,7 @@ export function GrowExperience() {
       let isMounted = true;
 
       // Verify the user has at least one persisted plant; otherwise redirect to onboarding.
+      // Skip this check for guest users - they can browse without plants.
       const verifyPlantInventory = async () => {
         if (typeof window === 'undefined') {
           return;
@@ -158,9 +172,10 @@ export function GrowExperience() {
 
         const token = auth.getCurrentAccessToken();
         if (!token) {
+          // No token - user is in guest mode, skip plant check
           if (isMounted) {
             setHasCheckedPlants(true);
-            redirectToLogin();
+            setIsGuestMode(true);
           }
           return;
         }
@@ -193,7 +208,8 @@ export function GrowExperience() {
 
           const message = error instanceof Error ? error.message : '';
           if (message === 'Not authenticated') {
-            redirectToLogin();
+            // Not authenticated - switch to guest mode instead of redirecting
+            setIsGuestMode(true);
             return;
           }
 
@@ -206,7 +222,7 @@ export function GrowExperience() {
       return () => {
         isMounted = false;
       };
-    }, [hasCheckedPlants, isReady, redirectToLogin, router, userId]);
+    }, [hasCheckedPlants, isReady, router, userId]);
 
   useEffect(() => {
     window.localStorage.setItem(STORAGE_KEY, currentPage);
@@ -253,6 +269,24 @@ export function GrowExperience() {
         />
       </div>
       <SessionRefreshNotice />
+      {/* Guest mode banner */}
+      {isGuestMode && (
+        <div className="bg-green-50 border-b border-green-200">
+          <div className="container mx-auto px-4 py-3 flex items-center justify-between gap-4">
+            <p className="text-sm text-green-800">
+              <span className="font-medium">Browsing as guest.</span>{' '}
+              <span className="hidden sm:inline">Sign in to save your garden and get personalized recommendations.</span>
+            </p>
+            <button
+              onClick={() => redirectToLogin()}
+              className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 transition-colors whitespace-nowrap"
+            >
+              <LogIn size={16} />
+              Sign In
+            </button>
+          </div>
+        </div>
+      )}
       {/* Add bottom padding for mobile bottom nav */}
       <main id="main-content" className="container mx-auto px-4 py-8 pb-24 md:pb-8">
         {currentView}
