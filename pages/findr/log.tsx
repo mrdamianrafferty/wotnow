@@ -5,11 +5,12 @@ import SEO from '../../components/SEO';
 import { ClipboardList, Zap, Camera, Trophy, MapPin, TrendingUp, AlertTriangle, Fish, Calendar, Clock } from 'lucide-react';
 import QuickLogButton from '../../components/findr/QuickLogButton';
 import { FindrNavigation } from '../../components/findr/FindrNavigationMobile';
-import { useQuickCatchLog } from '@/hooks/useCatchLogger';
+import { useOfflineCatchLogger } from '@/hooks/useOfflineCatchLogger';
 import { supabase } from '@/lib/supabase/client';
 import { useQueryClient } from '@tanstack/react-query';
 import { CatchSummaryStats } from '../../components/findr/CatchSummaryStats';
 import { useMyCatchPhotos } from '@/hooks/useMyCatchPhotos';
+import { PendingCatchesBadge } from '@/components/findr/PendingCatchesBadge';
 
 const QuickLogModal = dynamic(() => import('../../components/findr/QuickLogModal').then(mod => ({ default: mod.QuickLogModal })), { ssr: false, loading: () => null });
 
@@ -148,7 +149,7 @@ export default function FindrCatchLogPage() {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
   const [isLoadingCatches, setIsLoadingCatches] = useState(true);
 
-  const quickCatchLog = useQuickCatchLog({
+  const offlineCatchLogger = useOfflineCatchLogger({
     onError: (error) => {
       console.error('[CatchLog] API Error:', error);
       setToastMessage(error.message || 'Failed to log catch');
@@ -156,6 +157,17 @@ export default function FindrCatchLogPage() {
     },
   });
   const queryClient = useQueryClient();
+
+  // Destructure offline-specific state for easy access
+  const {
+    quickLog,
+    isOffline,
+    pendingCount,
+    isSyncing,
+    syncProgress,
+    lastSyncResult,
+    syncNow,
+  } = offlineCatchLogger;
 
   // Fetch user authentication status
   useEffect(() => {
@@ -221,12 +233,16 @@ export default function FindrCatchLogPage() {
 
   // Quick log success handler
   const handleQuickLogSuccess = useCallback(() => {
-    setToastMessage('🎉 Quick catch logged!');
+    if (isOffline) {
+      setToastMessage('📱 Catch saved offline - will sync when back online');
+    } else {
+      setToastMessage('🎉 Quick catch logged!');
+      void fetchCatches();
+      // Invalidate React Query cache to update the gallery page
+      void queryClient.invalidateQueries({ queryKey: ['my-catch-photos'] });
+    }
     setShowToast(true);
-    void fetchCatches();
-    // Invalidate React Query cache to update the gallery page
-    void queryClient.invalidateQueries({ queryKey: ['my-catch-photos'] });
-  }, [fetchCatches, queryClient]);
+  }, [fetchCatches, queryClient, isOffline]);
 
   // Toast auto-hide
   useEffect(() => {
@@ -290,10 +306,20 @@ export default function FindrCatchLogPage() {
                 </div>
               </div>
 
-              {/* Right: Quick Log Button */}
-              <span onClick={() => setShowQuickLogModal(true)} className="flex-shrink-0">
-                <QuickLogButton />
-              </span>
+              {/* Right: Pending Catches Badge + Quick Log Button */}
+              <div className="flex items-center gap-2 flex-shrink-0">
+                <PendingCatchesBadge
+                  pendingCount={pendingCount}
+                  isOffline={isOffline}
+                  isSyncing={isSyncing}
+                  syncProgress={syncProgress}
+                  lastSyncResult={lastSyncResult}
+                  onSyncNow={syncNow}
+                />
+                <span onClick={() => setShowQuickLogModal(true)}>
+                  <QuickLogButton />
+                </span>
+              </div>
             </div>
           </div>
         </div>
@@ -352,7 +378,7 @@ export default function FindrCatchLogPage() {
           <QuickLogModal
             isOpen={showQuickLogModal}
             onClose={() => setShowQuickLogModal(false)}
-            onQuickLog={quickCatchLog.quickLog}
+            onQuickLog={quickLog}
             onSuccess={handleQuickLogSuccess}
           />
         )}
