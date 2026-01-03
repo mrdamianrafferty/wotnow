@@ -279,9 +279,103 @@ export function clearPreCacheStatus(): void {
   localStorage.removeItem(PRECACHE_STORAGE_KEY);
 }
 
+/**
+ * Pre-cache predictions for all saved locations
+ * Call this when the app comes online to ensure all locations have cached data.
+ *
+ * @param locations - Array of saved locations with rectangleCode, lat, lon
+ * @param language - Language code (default: 'en')
+ * @param onProgress - Optional callback for progress updates
+ */
+export async function preCacheAllLocations(
+  locations: Array<{ rectangleCode: string | null | undefined; lat: number; lon: number }>,
+  language: string = 'en',
+  onProgress?: (current: number, total: number, rectangleCode: string) => void
+): Promise<{ cached: number; skipped: number; failed: number }> {
+  // Skip if not in browser
+  if (typeof window === 'undefined') {
+    return { cached: 0, skipped: 0, failed: 0 };
+  }
+
+  // Check network conditions
+  if (!shouldPreCache()) {
+    console.log('[preCacheAllLocations] Skipping - poor network or data-saver mode');
+    return { cached: 0, skipped: 0, failed: 0 };
+  }
+
+  // Filter to only locations with rectangle codes
+  const validLocations = locations.filter(loc => loc.rectangleCode);
+  if (validLocations.length === 0) {
+    return { cached: 0, skipped: 0, failed: 0 };
+  }
+
+  let cached = 0;
+  let skipped = 0;
+  let failed = 0;
+  const total = validLocations.length;
+
+  console.log('[preCacheAllLocations] Starting pre-cache for', validLocations.length, 'locations');
+
+  for (let i = 0; i < validLocations.length; i++) {
+    const loc = validLocations[i];
+    const rectangleCode = loc.rectangleCode!;
+
+    // Report progress
+    if (onProgress) {
+      onProgress(i + 1, total, rectangleCode);
+    }
+
+    // Check if already cached
+    const existingStatus = getPreCacheStatus(rectangleCode);
+    if (existingStatus && existingStatus.daysCached >= PRECACHE_DAYS) {
+      skipped++;
+      continue;
+    }
+
+    try {
+      await preCachePredictions(rectangleCode, loc.lat, loc.lon, language);
+      cached++;
+    } catch {
+      failed++;
+    }
+
+    // Delay between locations to avoid rate limiting
+    if (i < validLocations.length - 1) {
+      await new Promise(resolve => setTimeout(resolve, 2000));
+    }
+  }
+
+  console.log('[preCacheAllLocations] Completed:', { cached, skipped, failed });
+
+  return { cached, skipped, failed };
+}
+
+/**
+ * Get all pre-cached rectangles for today
+ */
+export function getPreCachedRectangles(): string[] {
+  if (typeof localStorage === 'undefined') return [];
+
+  try {
+    const raw = localStorage.getItem(PRECACHE_STORAGE_KEY);
+    if (!raw) return [];
+
+    const statuses = JSON.parse(raw) as Record<string, PreCacheStatus>;
+    const today = formatDate(new Date());
+
+    return Object.entries(statuses)
+      .filter(([_, s]) => s.lastCached === today && s.daysCached > 0)
+      .map(([code]) => code);
+  } catch {
+    return [];
+  }
+}
+
 const preCachePredictionsApi = {
   preCachePredictions,
+  preCacheAllLocations,
   getPreCacheProgress,
+  getPreCachedRectangles,
   clearPreCacheStatus,
 };
 

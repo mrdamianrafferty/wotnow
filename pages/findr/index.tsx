@@ -36,6 +36,7 @@ import { FindrNavigation } from '../../components/findr/FindrNavigationMobile';
 import { TranslatedFishName, TranslatedFishBio, TranslatedText } from '../../components/translation/TranslatedFishCard';
 import { NetworkStatusIndicator } from '../../components/findr/NetworkStatusIndicator';
 import { OfflineStatusBar } from '../../components/findr/OfflineStatusBar';
+import { OfflineFallbackContent } from '../../components/findr/OfflineFallbackContent';
 
 // Dynamically import non-critical components
 const FishingAreaInfo = dynamic(
@@ -1357,11 +1358,13 @@ const FindrPage: React.FC<FindrPageProps> = ({ initialRectangle: _initialRectang
 
             {isHydrated && activeRectangle && !loading && !error && totalPredictions === 0 && (
                 <div className="px-4 sm:px-0">
-                  <div className="alert alert-warning">
-                    <span>
-                      The fish are quiet here for {predictionDate}. Try different waters or shift the day.
-                    </span>
-                  </div>
+                  <OfflineFallbackContent
+                    isOffline={isOffline || false}
+                    predictionDate={predictionDate}
+                    region={activeOption?.region}
+                    hasCachedData={isFromCache}
+                    onRetry={reload}
+                  />
                 </div>
               )}
           </section>
