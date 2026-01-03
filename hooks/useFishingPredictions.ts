@@ -227,6 +227,29 @@ async function fetchAndCacheFromNetwork(params: {
           bestTimes: p.best_times as string[] | undefined,
         }));
         await findrDb.predictions.cache(params.rectangleCode, date, params.language, offlinePredictions);
+
+        // Also cache to Preferences for offline shell access
+        try {
+          const { Preferences } = await import('@capacitor/preferences');
+          const cacheData = {
+            rectangleCode: params.rectangleCode,
+            date,
+            cachedAt: new Date().toISOString(),
+            predictions: typed.predictions.slice(0, 15).map(p => ({
+              species_common_name: p.species_common_name || p.name_en || 'Unknown',
+              species_scientific_name: p.species_scientific_name || p.scientific_name || '',
+              confidence: p.confidence_percent ?? p.confidence ?? 0,
+              bite_score: p.bite_score,
+            })),
+          };
+          await Preferences.set({
+            key: 'findr_offline_predictions',
+            value: JSON.stringify(cacheData),
+          });
+          console.log('[useFishingPredictions] Cached to Preferences for offline shell');
+        } catch (prefError) {
+          console.warn('[useFishingPredictions] Failed to cache to Preferences:', prefError);
+        }
       } else {
         // Cache to IndexedDB on web
         const { getStorage } = await import('@/lib/offline/storage');

@@ -5,14 +5,12 @@ const config: CapacitorConfig = {
   appName: 'Findr',
   webDir: '.capacitor-assets',
 
+  // Server URL with offline fallback
   server: {
-    // PRODUCTION: Load content from Vercel
-    url: 'https://fishfindr.eu',
-    cleartext: false,  // Force HTTPS
-
-    // DEVELOPMENT: Uncomment to test locally
-    // url: 'http://192.168.1.X:3000',
-    // cleartext: true,
+    url: 'https://fishfindr.eu/findr',
+    // When server unreachable, load offline shell from webDir
+    errorPath: 'index.html',
+    cleartext: false,
   },
 
   plugins: {

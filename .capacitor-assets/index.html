@@ -421,30 +421,15 @@
   </div>
 
   <script>
-    // IndexedDB for cached data
-    const DB_NAME = 'findr-offline';
-    const DB_VERSION = 1;
-    let db = null;
-
     // Initialize
     async function init() {
-      console.log('[Findr Offline] Initializing...');
+      console.log('[Findr Offline] Initializing offline shell...');
 
-      // Check if we're online
-      if (navigator.onLine) {
-        console.log('[Findr Offline] Online - redirecting to main app');
-        // Small delay to show loading, then redirect
-        setTimeout(() => {
-          window.location.href = 'https://fishfindr.eu/findr';
-        }, 500);
-        return;
-      }
+      // Wait for Capacitor to be ready
+      await waitForCapacitor();
 
-      console.log('[Findr Offline] Offline mode - loading cached data');
-
-      // We're offline - show the offline app
+      // Try to load from Preferences (simple key-value storage)
       try {
-        await openDatabase();
         await loadCachedData();
         showApp();
       } catch (error) {
@@ -458,98 +443,66 @@
       window.addEventListener('offline', handleOffline);
     }
 
-    function openDatabase() {
-      return new Promise((resolve, reject) => {
-        // Try to open the existing Findr database
-        const request = indexedDB.open('findr-offline', 1);
-
-        request.onerror = () => {
-          console.warn('[Findr Offline] Could not open database');
-          reject(request.error);
+    function waitForCapacitor() {
+      return new Promise((resolve) => {
+        // Wait for Capacitor to inject its bridge
+        let attempts = 0;
+        const check = () => {
+          attempts++;
+          if (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Preferences) {
+            console.log('[Findr Offline] Capacitor ready after', attempts, 'attempts');
+            resolve();
+          } else if (attempts < 20) {
+            setTimeout(check, 100);
+          } else {
+            console.warn('[Findr Offline] Capacitor not available after', attempts, 'attempts');
+            resolve();
+          }
         };
-
-        request.onsuccess = () => {
-          db = request.result;
-          console.log('[Findr Offline] Database opened');
-          resolve(db);
-        };
-
-        request.onupgradeneeded = (event) => {
-          // If we're creating a new DB, that means no cached data exists
-          console.log('[Findr Offline] No existing cache found');
-        };
+        check();
       });
     }
 
     async function loadCachedData() {
-      if (!db) {
+      // Check if Capacitor Preferences is available
+      if (!window.Capacitor || !window.Capacitor.Plugins || !window.Capacitor.Plugins.Preferences) {
+        console.warn('[Findr Offline] Capacitor Preferences not available');
         showEmptyState();
         return;
       }
 
+      const Preferences = window.Capacitor.Plugins.Preferences;
+
       try {
-        // Try to get predictions from cache
-        const rawPredictions = await getFromStore('predictions');
-        const species = await getFromStore('species');
+        // Read cached predictions from Preferences
+        const result = await Preferences.get({ key: 'findr_offline_predictions' });
 
-        if (rawPredictions && rawPredictions.length > 0) {
-          // Sort by timestamp (most recent first) and get the latest prediction
-          rawPredictions.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+        if (!result.value) {
+          console.log('[Findr Offline] No cached predictions in Preferences');
+          showEmptyState();
+          return;
+        }
 
-          // Get the prediction data - could be nested in .data property
-          const latestRaw = rawPredictions[0];
-          const predictionData = latestRaw.data || latestRaw;
+        const cacheData = JSON.parse(result.value);
+        console.log('[Findr Offline] Loaded cache from Preferences:', cacheData.rectangleCode);
 
-          // Extract predictions array from response structure
-          let predictions = [];
-          if (predictionData.predictions) {
-            predictions = predictionData.predictions;
-          } else if (predictionData.data?.predictions) {
-            predictions = predictionData.data.predictions;
-          } else if (Array.isArray(predictionData)) {
-            predictions = predictionData;
+        if (cacheData.predictions && cacheData.predictions.length > 0) {
+          renderPredictions(cacheData.predictions);
+
+          if (cacheData.rectangleCode) {
+            document.getElementById('location-display').textContent = cacheData.rectangleCode;
           }
 
-          if (predictions.length > 0) {
-            // Add rectangle code from the cache key
-            predictions = predictions.map(p => ({
-              ...p,
-              rectangleCode: latestRaw.rectangleCode || p.rectangleCode
-            }));
-
-            renderPredictions(predictions, species);
-
-            // Show staleness banner
-            const cacheTime = latestRaw.timestamp;
-            if (cacheTime) {
-              showStalenessBanner(new Date(cacheTime));
-            }
-          } else {
-            showEmptyState();
+          if (cacheData.cachedAt) {
+            showStalenessBanner(new Date(cacheData.cachedAt));
           }
         } else {
           showEmptyState();
         }
       } catch (error) {
-        console.error('[Findr Offline] Error loading cache:', error);
+        console.error('[Findr Offline] Error loading from Preferences:', error);
         showEmptyState();
       }
-    }
-
-    function getFromStore(storeName) {
-      return new Promise((resolve, reject) => {
-        if (!db || !db.objectStoreNames.contains(storeName)) {
-          resolve([]);
-          return;
-        }
-
-        const transaction = db.transaction(storeName, 'readonly');
-        const store = transaction.objectStore(storeName);
-        const request = store.getAll();
-
-        request.onsuccess = () => resolve(request.result || []);
-        request.onerror = () => reject(request.error);
-      });
     }
 
     function renderPredictions(predictions, speciesMap) {
@@ -634,9 +587,9 @@
       badge.classList.add('online-badge');
       text.textContent = 'Online';
 
-      // Redirect to main app after a moment
+      // Reload to let Capacitor try the server again
       setTimeout(() => {
-        window.location.href = 'https://fishfindr.eu/findr';
+        window.location.reload();
       }, 1500);
     }
 
@@ -649,11 +602,8 @@
     }
 
     function tryOnline() {
-      if (navigator.onLine) {
-        window.location.href = 'https://fishfindr.eu/findr';
-      } else {
-        alert('Still offline. Please check your internet connection.');
-      }
+      // Reload to let Capacitor try the server again
+      window.location.reload();
     }
 
     function showTab(tab) {
