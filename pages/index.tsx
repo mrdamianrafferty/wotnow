@@ -8,7 +8,6 @@ import { activityTypes } from '../data/activityTypes';
 import { WeatherForecastDay } from '../types/weatherTypes';
 import { useUserPreferences } from '../context/UserPreferencesContext';
 import { getActivityEmoji } from '../data/emojiMap';
-import { resolveSpeciesImage } from '../lib/findr/mapPrediction';
 import { getActivityBg } from '../data/bgMap';
 import { useHasMounted } from '../utils/useHasMounted';
 import { activityMessages } from '../data/activityMessages';
@@ -1011,11 +1010,7 @@ function buildForecastFromOneCall(weatherData: WeatherWithPollen): WeatherForeca
             const isOutdoorActivity = isOutdoor(activityId);
             const activityMessage = getActivityMessage(activityId, scoreInfo.label.toLowerCase() as "perfect" | "good" | "fair" | "poor", []);
 
-            // Use activity name as species name for fish image lookup
-            const fishCommonName: string | undefined = activity?.name;
-            const fishImageInfo = fishCommonName ? resolveSpeciesImage(undefined, fishCommonName) : undefined;
-
-            const handleFishClick = () => {
+            const handleActivityClick = () => {
               const popupPayload = buildPopupActivityPayload({
                 activityId,
                 score: score || 0,
@@ -1030,26 +1025,16 @@ function buildForecastFromOneCall(weatherData: WeatherWithPollen): WeatherForeca
                 className="card__hero-activity"
                 role="button"
                 tabIndex={0}
-                onClick={fishCommonName ? handleFishClick : undefined}
+                onClick={handleActivityClick}
                 onKeyDown={(e) => {
-                  if ((e.key === 'Enter' || e.key === ' ') && fishCommonName) {
+                  if (e.key === 'Enter' || e.key === ' ') {
                     e.preventDefault();
-                    handleFishClick();
+                    handleActivityClick();
                   }
                 }}
               >
                 <div className="card__hero-icon">
-                  {fishImageInfo && fishImageInfo.thumb ? (
-                    <Image
-                      src={fishImageInfo.thumb}
-                      alt={fishCommonName || ''}
-                      width={48}
-                      height={48}
-                      style={{ borderRadius: '50%', cursor: 'pointer' }}
-                    />
-                  ) : (
-                    <span style={{ fontSize: 40, cursor: 'pointer' }}>{getActivityEmoji(activityId) || '🐟'}</span>
-                  )}
+                  <span style={{ fontSize: 40, cursor: 'pointer' }}>{getActivityEmoji(activityId) || '🌤️'}</span>
                 </div>
                 <div className="card__hero-title">
                   <div className={`card__hero-name ${isOutdoorActivity ? 'outdoor' : ''}`}>{activity?.name || activityId.replace(/_/g, ' ')}</div>
