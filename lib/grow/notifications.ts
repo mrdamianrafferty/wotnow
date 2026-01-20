@@ -354,7 +354,8 @@ function isInQuietHours(prefs: {
  * Log a notification to the notification_log table
  */
 async function logNotification(
-  supabase: ReturnType<typeof createClient>,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  supabase: any,
   userId: string,
   subscriptionId: string | null,
   notificationType: NotificationType,
