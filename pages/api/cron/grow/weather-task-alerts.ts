@@ -25,8 +25,12 @@ import { sendPushNotification, NotificationType } from '@/lib/grow/notifications
  */
 function mapAlertToNotificationType(alertType: string, severity: string): NotificationType {
   if (alertType === 'frost') return 'frost_alert';
-  if (severity === 'critical' && ['storm', 'heat', 'wind'].includes(alertType)) {
+  if (severity === 'critical' && ['storm', 'heat', 'wind', 'wind_desiccation'].includes(alertType)) {
     return 'extreme_weather';
+  }
+  // Pest/disease alerts use weather_threat notification type
+  if (['late_blight', 'powdery_mildew', 'botrytis', 'aphids', 'slugs'].includes(alertType)) {
+    return 'weather_threat';
   }
   return 'weather_threat';
 }
@@ -180,8 +184,14 @@ async function sendAlertNotification(
       url = '/grow/weather?alert=frost';
     } else if (alert.type === 'heat') {
       icon = '/icons/heat-alert.png';
-    } else if (alert.type === 'wind') {
+    } else if (alert.type === 'wind' || alert.type === 'wind_desiccation') {
       icon = '/icons/wind-alert.png';
+    } else if (['late_blight', 'powdery_mildew', 'botrytis'].includes(alert.type)) {
+      icon = '/icons/disease-alert.png';
+      url = '/grow/weather?alert=disease';
+    } else if (['aphids', 'slugs'].includes(alert.type)) {
+      icon = '/icons/pest-alert.png';
+      url = '/grow/weather?alert=pest';
     }
 
     // Use the centralized notification system which handles:

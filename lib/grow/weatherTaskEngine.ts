@@ -48,7 +48,10 @@ export interface UserPlant {
 }
 
 export interface WeatherAlert {
-  type: 'frost' | 'heat' | 'drought' | 'rain' | 'wind' | 'storm';
+  type:
+    | 'frost' | 'heat' | 'drought' | 'rain' | 'wind' | 'storm'
+    | 'late_blight' | 'powdery_mildew' | 'botrytis' | 'aphids' | 'slugs'
+    | 'wind_desiccation';
   severity: 'info' | 'warning' | 'critical';
   title: string;
   message: string;
@@ -347,6 +350,349 @@ export function detectWindRisk(
 }
 
 // =============================================================================
+// PEST & DISEASE RISK DETECTION
+// =============================================================================
+
+/**
+ * Plants susceptible to specific diseases
+ */
+const DISEASE_SUSCEPTIBLE_PLANTS: Record<string, string[]> = {
+  late_blight: ['tomato', 'potato', 'pepper', 'aubergine', 'eggplant'],
+  powdery_mildew: ['courgette', 'zucchini', 'squash', 'cucumber', 'melon', 'pumpkin', 'rose', 'pea'],
+  botrytis: ['strawberry', 'grape', 'tomato', 'lettuce', 'bean'],
+  aphids: ['rose', 'bean', 'pepper', 'tomato', 'lettuce', 'cabbage', 'brassica', 'apple'],
+  slugs: ['lettuce', 'hosta', 'strawberry', 'cabbage', 'bean', 'seedling'],
+};
+
+/**
+ * Calculate cumulative rain over multiple days
+ */
+function calculateRain72h(forecast: WeatherForecast[]): number {
+  return forecast.slice(0, 3).reduce((sum, day) => sum + (day.precipitation || 0), 0);
+}
+
+/**
+ * Check for consecutive dry days
+ */
+function countDryDays(forecast: WeatherForecast[]): number {
+  let count = 0;
+  for (const day of forecast) {
+    if (day.precipitation < 1) count++;
+    else break;
+  }
+  return count;
+}
+
+/**
+ * Find plants matching disease susceptibility
+ */
+function findSusceptiblePlants(plants: UserPlant[], disease: string): UserPlant[] {
+  const susceptibleTypes = DISEASE_SUSCEPTIBLE_PLANTS[disease] || [];
+  return plants.filter(p => {
+    const slug = (p.plantSlug || p.plantName || '').toLowerCase();
+    return susceptibleTypes.some(type => slug.includes(type));
+  });
+}
+
+/**
+ * LATE BLIGHT RISK
+ * Conditions: rain_72h > 20mm AND humidity > 90% for 6+ hours AND temp 15-25°C
+ * Devastating for tomatoes and potatoes
+ */
+export function detectLateBlight(
+  forecast: WeatherForecast[],
+  plants: UserPlant[]
+): WeatherAlert[] {
+  const alerts: WeatherAlert[] = [];
+  const today = forecast[0];
+  if (!today) return alerts;
+
+  const rain72h = calculateRain72h(forecast);
+  const humidity = today.humidity;
+  const temp = (today.tempMin + today.tempMax) / 2;
+
+  // Late blight thrives in wet, humid, mild conditions
+  const blightRisk = rain72h > 15 && humidity > 80 && temp >= 12 && temp <= 25;
+  const highBlightRisk = rain72h > 25 && humidity > 90 && temp >= 15 && temp <= 22;
+
+  if (blightRisk || highBlightRisk) {
+    const susceptiblePlants = findSusceptiblePlants(plants, 'late_blight');
+    const severity: 'warning' | 'critical' = highBlightRisk ? 'critical' : 'warning';
+    const riskLevel = highBlightRisk ? 'HIGH' : 'ELEVATED';
+
+    alerts.push({
+      type: 'late_blight',
+      severity,
+      title: `${riskLevel} Late Blight Risk`,
+      message: `Weather conditions favor late blight: ${rain72h.toFixed(0)}mm rain in 72h, ` +
+        `${humidity}% humidity, ${temp.toFixed(0)}°C average temperature. ` +
+        (susceptiblePlants.length > 0
+          ? `${susceptiblePlants.length} of your plants (tomatoes, potatoes) are at risk.`
+          : 'Monitor tomatoes and potatoes closely.'),
+      forecastDate: today.date,
+      forecastValue: rain72h,
+      affectedPlantIds: susceptiblePlants.map(p => p.id),
+      suggestedAction: severity === 'critical'
+        ? 'Apply copper-based fungicide immediately. Improve air circulation. Remove lower leaves touching soil.'
+        : 'Inspect plants for brown lesions. Consider preventive copper spray. Avoid overhead watering.',
+    });
+  }
+
+  return alerts;
+}
+
+/**
+ * POWDERY MILDEW RISK
+ * Conditions: high night humidity > 90% AND dry days > 3 AND temp 20-30°C
+ * Common on squash, cucumbers, roses
+ */
+export function detectPowderyMildew(
+  forecast: WeatherForecast[],
+  plants: UserPlant[]
+): WeatherAlert[] {
+  const alerts: WeatherAlert[] = [];
+  const today = forecast[0];
+  if (!today) return alerts;
+
+  const dryDays = countDryDays(forecast);
+  const humidity = today.humidity;
+  const temp = (today.tempMin + today.tempMax) / 2;
+
+  // Powdery mildew: dry days but humid nights, warm temps
+  const mildewRisk = dryDays >= 3 && humidity > 70 && temp >= 18 && temp <= 30;
+  const highMildewRisk = dryDays >= 5 && humidity > 85 && temp >= 20 && temp <= 28;
+
+  if (mildewRisk || highMildewRisk) {
+    const susceptiblePlants = findSusceptiblePlants(plants, 'powdery_mildew');
+    const severity: 'warning' | 'critical' = highMildewRisk ? 'critical' : 'warning';
+    const riskLevel = highMildewRisk ? 'HIGH' : 'ELEVATED';
+
+    alerts.push({
+      type: 'powdery_mildew',
+      severity,
+      title: `${riskLevel} Powdery Mildew Risk`,
+      message: `${dryDays} consecutive dry days with ${humidity}% humidity and ${temp.toFixed(0)}°C ` +
+        `creates ideal conditions for powdery mildew. ` +
+        (susceptiblePlants.length > 0
+          ? `${susceptiblePlants.length} of your plants (squash, cucumbers, roses) are at risk.`
+          : 'Watch courgettes, cucumbers, and roses.'),
+      forecastDate: today.date,
+      forecastValue: humidity,
+      affectedPlantIds: susceptiblePlants.map(p => p.id),
+      suggestedAction: severity === 'critical'
+        ? 'Apply sulfur-based fungicide or milk spray (1:10 ratio). Remove affected leaves.'
+        : 'Improve air circulation. Water at soil level, not on leaves. Monitor for white patches.',
+    });
+  }
+
+  return alerts;
+}
+
+/**
+ * BOTRYTIS (Grey Mold) RISK
+ * Conditions: humidity > 85% AND temp 15-25°C AND wet foliage
+ */
+export function detectBotrytis(
+  forecast: WeatherForecast[],
+  plants: UserPlant[]
+): WeatherAlert[] {
+  const alerts: WeatherAlert[] = [];
+  const today = forecast[0];
+  if (!today) return alerts;
+
+  const humidity = today.humidity;
+  const temp = (today.tempMin + today.tempMax) / 2;
+  const recentRain = today.precipitation > 2;
+
+  // Botrytis: high humidity, moderate temps, wet conditions
+  const botrytisRisk = humidity > 80 && temp >= 12 && temp <= 25 && recentRain;
+  const highBotrytisRisk = humidity > 90 && temp >= 15 && temp <= 22;
+
+  if (botrytisRisk || highBotrytisRisk) {
+    const susceptiblePlants = findSusceptiblePlants(plants, 'botrytis');
+    const severity: 'warning' | 'critical' = highBotrytisRisk ? 'critical' : 'warning';
+
+    alerts.push({
+      type: 'botrytis',
+      severity,
+      title: `${severity === 'critical' ? 'HIGH' : 'ELEVATED'} Grey Mold (Botrytis) Risk`,
+      message: `Humid conditions (${humidity}%) with ${temp.toFixed(0)}°C temperatures favor botrytis. ` +
+        (susceptiblePlants.length > 0
+          ? `Watch your strawberries, tomatoes, and lettuce.`
+          : 'Monitor soft fruits and dense foliage plants.'),
+      forecastDate: today.date,
+      forecastValue: humidity,
+      affectedPlantIds: susceptiblePlants.map(p => p.id),
+      suggestedAction: 'Remove dead/decaying material. Increase spacing for airflow. Avoid wetting leaves when watering.',
+    });
+  }
+
+  return alerts;
+}
+
+/**
+ * APHID RISK
+ * Conditions: temp > 15°C AND wind < 10km/h AND growing season
+ * Calm, warm conditions favor aphid reproduction
+ */
+export function detectAphidRisk(
+  forecast: WeatherForecast[],
+  plants: UserPlant[]
+): WeatherAlert[] {
+  const alerts: WeatherAlert[] = [];
+  const today = forecast[0];
+  if (!today) return alerts;
+
+  const temp = (today.tempMin + today.tempMax) / 2;
+  const wind = today.windSpeed;
+  const month = new Date().getMonth() + 1;
+
+  // Growing season: April to September (4-9)
+  const inGrowingSeason = month >= 4 && month <= 9;
+
+  // Aphids love warm, calm conditions during growing season
+  const aphidRisk = inGrowingSeason && temp > 15 && temp < 30 && wind < 15;
+  const highAphidRisk = inGrowingSeason && temp >= 18 && temp <= 25 && wind < 8;
+
+  // Check for consecutive favorable days
+  const favorableDays = forecast.filter(d =>
+    d.windSpeed < 15 && ((d.tempMin + d.tempMax) / 2) > 15
+  ).length;
+
+  if ((aphidRisk && favorableDays >= 3) || highAphidRisk) {
+    const susceptiblePlants = findSusceptiblePlants(plants, 'aphids');
+    const severity: 'info' | 'warning' = highAphidRisk ? 'warning' : 'info';
+
+    alerts.push({
+      type: 'aphids',
+      severity,
+      title: 'Aphid Activity Likely',
+      message: `Warm (${temp.toFixed(0)}°C), calm (${wind.toFixed(0)} km/h wind) conditions with ` +
+        `${favorableDays} favorable days ahead promote aphid reproduction. ` +
+        (susceptiblePlants.length > 0
+          ? `Check your roses, beans, and brassicas.`
+          : 'Inspect new growth and undersides of leaves.'),
+      forecastDate: today.date,
+      forecastValue: temp,
+      affectedPlantIds: susceptiblePlants.map(p => p.id),
+      suggestedAction: 'Check new growth daily. Encourage ladybirds. Blast off with water or use insecticidal soap if found.',
+    });
+  }
+
+  return alerts;
+}
+
+/**
+ * SLUG RISK
+ * Conditions: rain in last 24h > 5mm AND temp > 5°C AND night time or overcast
+ */
+export function detectSlugRisk(
+  forecast: WeatherForecast[],
+  plants: UserPlant[]
+): WeatherAlert[] {
+  const alerts: WeatherAlert[] = [];
+  const today = forecast[0];
+  if (!today) return alerts;
+
+  const rain = today.precipitation;
+  const humidity = today.humidity;
+  const temp = today.tempMin;
+
+  // Slugs active after rain, in mild, humid conditions
+  const slugRisk = rain > 3 && temp > 5 && humidity > 70;
+  const highSlugRisk = rain > 10 && temp > 10 && humidity > 85;
+
+  if (slugRisk || highSlugRisk) {
+    const susceptiblePlants = findSusceptiblePlants(plants, 'slugs');
+    const severity: 'info' | 'warning' = highSlugRisk ? 'warning' : 'info';
+
+    alerts.push({
+      type: 'slugs',
+      severity,
+      title: 'Slug Activity Expected Tonight',
+      message: `Recent rain (${rain.toFixed(0)}mm) with mild temperatures (${temp.toFixed(0)}°C) and ` +
+        `${humidity}% humidity creates ideal slug conditions. ` +
+        (susceptiblePlants.length > 0
+          ? `Protect your lettuce, hostas, and seedlings.`
+          : 'Protect vulnerable seedlings and leafy crops.'),
+      forecastDate: today.date,
+      forecastValue: rain,
+      affectedPlantIds: susceptiblePlants.map(p => p.id),
+      suggestedAction: 'Go slug hunting after dark with a torch. Set beer traps. Apply slug pellets or wool barriers around vulnerable plants.',
+    });
+  }
+
+  return alerts;
+}
+
+/**
+ * WIND DESICCATION RISK
+ * Conditions: high wind > 25km/h AND low humidity < 40% AND sunny
+ * Rapid moisture loss can damage plants
+ */
+export function detectWindDesiccation(
+  forecast: WeatherForecast[],
+  plants: UserPlant[]
+): WeatherAlert[] {
+  const alerts: WeatherAlert[] = [];
+  const today = forecast[0];
+  if (!today) return alerts;
+
+  const wind = today.windSpeed;
+  const gust = today.windGust;
+  const humidity = today.humidity;
+  const temp = today.tempMax;
+
+  // Wind desiccation: strong wind, low humidity, warm/sunny
+  const desiccationRisk = wind > 20 && humidity < 50 && temp > 15;
+  const highDesiccationRisk = (wind > 30 || gust > 45) && humidity < 40 && temp > 20;
+
+  if (desiccationRisk || highDesiccationRisk) {
+    const severity: 'warning' | 'critical' = highDesiccationRisk ? 'critical' : 'warning';
+
+    // Newly planted and container plants most at risk
+    const atRiskPlants = plants.filter(p => {
+      const slug = (p.plantSlug || p.plantName || '').toLowerCase();
+      return slug.includes('seedling') || p.waterNeeds === 'high';
+    });
+
+    alerts.push({
+      type: 'wind_desiccation',
+      severity,
+      title: `${severity === 'critical' ? 'SEVERE' : 'Wind'} Desiccation Risk`,
+      message: `Strong wind (${wind.toFixed(0)} km/h, gusts ${gust.toFixed(0)} km/h) combined with ` +
+        `low humidity (${humidity}%) will cause rapid moisture loss from leaves and soil. ` +
+        `Newly planted and container plants are most vulnerable.`,
+      forecastDate: today.date,
+      forecastValue: wind,
+      affectedPlantIds: atRiskPlants.map(p => p.id),
+      suggestedAction: severity === 'critical'
+        ? 'Water deeply early morning. Move containers to shelter. Consider temporary windbreaks for vulnerable plants.'
+        : 'Increase watering. Mulch to retain soil moisture. Check containers twice daily.',
+    });
+  }
+
+  return alerts;
+}
+
+/**
+ * Combined pest & disease alert detection
+ */
+export function detectPestDiseaseRisks(
+  forecast: WeatherForecast[],
+  plants: UserPlant[]
+): WeatherAlert[] {
+  return [
+    ...detectLateBlight(forecast, plants),
+    ...detectPowderyMildew(forecast, plants),
+    ...detectBotrytis(forecast, plants),
+    ...detectAphidRisk(forecast, plants),
+    ...detectSlugRisk(forecast, plants),
+    ...detectWindDesiccation(forecast, plants),
+  ];
+}
+
+// =============================================================================
 // SMART WATERING
 // =============================================================================
 
@@ -553,10 +899,13 @@ export function analyzeWeatherForTasks(
   plants: UserPlant[],
   plannedActivities: string[] = []
 ): WeatherTaskResult {
-  // Generate all alerts
+  // Generate all weather alerts
   const frostAlerts = detectFrostRisk(forecast, plants);
   const heatAlerts = detectHeatStress(forecast, plants);
   const windAlerts = detectWindRisk(forecast);
+
+  // Generate pest & disease alerts based on weather conditions
+  const pestDiseaseAlerts = detectPestDiseaseRisks(forecast, plants);
 
   // Analyze wind impact on activities
   const windAdjustments = assessWindImpact(forecast, plannedActivities);
@@ -567,8 +916,15 @@ export function analyzeWeatherForTasks(
   // Calculate planting windows
   const plantingWindows = calculatePlantingWindows(soil, forecast, plants);
 
+  // Combine and sort all alerts by severity
+  const allAlerts = [...frostAlerts, ...heatAlerts, ...windAlerts, ...pestDiseaseAlerts];
+  allAlerts.sort((a, b) => {
+    const severityOrder = { critical: 0, warning: 1, info: 2 };
+    return severityOrder[a.severity] - severityOrder[b.severity];
+  });
+
   return {
-    alerts: [...frostAlerts, ...heatAlerts, ...windAlerts],
+    alerts: allAlerts,
     taskAdjustments: windAdjustments,
     wateringRecommendation,
     plantingWindows,
