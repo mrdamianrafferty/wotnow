@@ -42,6 +42,7 @@ import { buildGrowLoginUrl, GROW_ROOT_PATH } from '../../lib/grow/routes';
 import { GrowLocationDialog } from './GrowLocationDialog';
 import { GrowLanguageSelector } from './GrowLanguageSelector';
 import { NotificationPreferencesCard } from './NotificationPreferencesCard';
+import { IntegrationsCard } from './IntegrationsCard';
 
 // Onboarding data structure (mirrors OnboardingFlow.tsx)
 interface OnboardingData {
@@ -649,6 +650,9 @@ export function SettingsPage() {
 
       {/* Notification Preferences Section */}
       <NotificationPreferencesCard />
+
+      {/* Third-Party Integrations Section */}
+      <IntegrationsCard />
 
       {/* Garden Profile Section */}
       <Card>
