@@ -697,6 +697,22 @@ export function detectPestDiseaseRisks(
 // =============================================================================
 
 /**
+ * Find the next date when conditions are suitable for watering (not frozen)
+ */
+function calculateNextUnfrozenDate(forecast: WeatherForecast[]): string {
+  for (const day of forecast) {
+    // Look for first day with temps above freezing
+    if (day.tempMax > 2) { // Give 2°C buffer above freezing
+      return day.date;
+    }
+  }
+  // If no warm day in forecast, suggest checking in a week
+  const checkDate = new Date();
+  checkDate.setDate(checkDate.getDate() + 7);
+  return checkDate.toISOString().split('T')[0];
+}
+
+/**
  * Calculate smart watering recommendation based on weather
  */
 export function calculateWateringRecommendation(
@@ -722,6 +738,44 @@ export function calculateWateringRecommendation(
   let adjustmentFactor = 1.0;
   let shouldWater = true;
   let reason = '';
+
+  // 0. CRITICAL: Check for frozen conditions - NEVER water frozen soil
+  const soilIsFrozen = soil.temp6cm <= 0;
+  const airIsFreezing = today.tempMax <= 0;
+  const airIsNearFreezing = today.tempMin <= 0;
+
+  if (soilIsFrozen) {
+    return {
+      shouldWater: false,
+      reason: 'Soil is frozen - do not water',
+      nextWateringDate: calculateNextUnfrozenDate(forecast),
+      adjustmentFactor: 0,
+      details: [
+        `Soil temperature at 6cm: ${soil.temp6cm.toFixed(1)}°C (frozen)`,
+        'Watering frozen soil can damage plant roots',
+        'Wait for soil to thaw before watering',
+      ],
+    };
+  }
+
+  if (airIsFreezing) {
+    return {
+      shouldWater: false,
+      reason: 'Air temperature below freezing - do not water',
+      nextWateringDate: calculateNextUnfrozenDate(forecast),
+      adjustmentFactor: 0,
+      details: [
+        `Maximum temperature today: ${today.tempMax.toFixed(0)}°C`,
+        'Water will freeze on contact with plants',
+        'Wait for temperatures to rise above freezing',
+      ],
+    };
+  }
+
+  // Add warning if near-freezing (but still can water if soil is warm)
+  if (airIsNearFreezing && !soilIsFrozen) {
+    details.push(`⚠️ Frost possible tonight (${today.tempMin.toFixed(0)}°C) - water early in the day if needed`);
+  }
 
   // 1. Check soil moisture
   const soilMoisture = soil.moisture1to3cm;
