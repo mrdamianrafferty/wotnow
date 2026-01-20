@@ -77,23 +77,62 @@ export function useWeatherTasks(): UseWeatherTasksResult {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
+  const [locationKey, setLocationKey] = useState<string | null>(null);
 
   const supabase = createClient();
 
-  // Check for authenticated user
+  // Check for authenticated user and their location
   useEffect(() => {
-    const checkUser = async () => {
+    const checkUserAndLocation = async () => {
       const { data: { user } } = await supabase.auth.getUser();
       setUserId(user?.id || null);
+
+      // Get user's location to use as a cache key
+      if (user?.id) {
+        const { data: prefs } = await supabase
+          .from('grow_user_preferences')
+          .select('latitude, longitude')
+          .eq('user_id', user.id)
+          .single();
+
+        if (prefs?.latitude && prefs?.longitude) {
+          setLocationKey(`${prefs.latitude.toFixed(2)},${prefs.longitude.toFixed(2)}`);
+        }
+      }
     };
-    checkUser();
+    checkUserAndLocation();
 
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setUserId(session?.user?.id || null);
+      if (!session?.user?.id) {
+        setLocationKey(null);
+      }
     });
 
-    return () => subscription.unsubscribe();
+    // Listen for location preference changes
+    const prefsChannel = supabase
+      .channel('grow_prefs_changes')
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'grow_user_preferences',
+        },
+        (payload) => {
+          const newPrefs = payload.new as { latitude?: number; longitude?: number; user_id?: string };
+          if (newPrefs.latitude && newPrefs.longitude) {
+            setLocationKey(`${newPrefs.latitude.toFixed(2)},${newPrefs.longitude.toFixed(2)}`);
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      subscription.unsubscribe();
+      supabase.removeChannel(prefsChannel);
+    };
   }, [supabase]);
 
   const fetchWeatherTasks = useCallback(async () => {
@@ -159,7 +198,7 @@ export function useWeatherTasks(): UseWeatherTasksResult {
     if (userId) {
       fetchWeatherTasks();
     }
-  }, [userId, fetchWeatherTasks]);
+  }, [userId, locationKey, fetchWeatherTasks]);
 
   return {
     data,
