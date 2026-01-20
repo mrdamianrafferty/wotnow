@@ -356,11 +356,11 @@ export function detectWindRisk(
 export function calculateWateringRecommendation(
   forecast: WeatherForecast[],
   soil: SoilConditions,
-  plants: UserPlant[]
+  _plants: UserPlant[]
 ): WateringRecommendation {
   const today = forecast[0];
   const tomorrow = forecast[1];
-  const dayAfter = forecast[2];
+  const _dayAfter = forecast[2];
 
   if (!today) {
     return {
