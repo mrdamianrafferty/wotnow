@@ -8,6 +8,7 @@
  */
 
 import React from 'react';
+import Link from 'next/link';
 import { Lock, Sparkles, Thermometer, AlertTriangle, Wind, Droplets, Leaf, ChartBar, Users } from 'lucide-react';
 import { useGrowSubscription } from '@/hooks/useGrowSubscription';
 import {
@@ -154,9 +155,9 @@ function UpgradeGatePrompt({ feature, requireTier, compact }: UpgradeGatePromptP
         <Lock className="h-4 w-4 text-emerald-600 shrink-0" />
         <span className="text-sm text-emerald-800">
           <span className="font-medium">{featureName}</span> requires{' '}
-          <a href="/grow/premium" className="text-emerald-600 font-semibold hover:underline">
+          <Link href="/grow/premium" className="text-emerald-600 font-semibold hover:underline">
             {tierName}
-          </a>
+          </Link>
         </span>
       </div>
     );
@@ -186,13 +187,13 @@ function UpgradeGatePrompt({ feature, requireTier, compact }: UpgradeGatePromptP
       </p>
 
       {/* CTA Button */}
-      <a
+      <Link
         href="/grow/premium"
         className="inline-flex items-center gap-2 px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-medium rounded-lg transition-colors"
       >
         <Sparkles className="h-4 w-4" />
         Upgrade to {tierName}
-      </a>
+      </Link>
     </div>
   );
 }
@@ -227,9 +228,9 @@ function TeaserGate({ feature, requireTier, compact, children }: TeaserGateProps
           </p>
           <p className="text-xs text-emerald-700 mt-1">
             Unlock with{' '}
-            <a href="/grow/premium" className="text-emerald-600 font-semibold hover:underline">
+            <Link href="/grow/premium" className="text-emerald-600 font-semibold hover:underline">
               {tierName}
-            </a>
+            </Link>
           </p>
         </div>
       </div>
