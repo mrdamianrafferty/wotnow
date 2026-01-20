@@ -201,6 +201,8 @@ const pwaConfig = withPWA({
   disable: process.env.NODE_ENV === 'development',
   register: true,
   skipWaiting: true,
+  // Custom worker directory for push notification handlers
+  customWorkerDir: 'worker',
   // Fallback pages for offline scenarios
   fallbacks: {
     document: '/_offline',  // Offline fallback for navigation requests
