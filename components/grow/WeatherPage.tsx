@@ -2,6 +2,8 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';
 import { Badge } from '../ui/badge';
+import { useGrowSubscription } from '@/hooks/useGrowSubscription';
+import { BloomWeatherGate } from './premium/GrowPremiumGate';
 import {
   Cloud,
   Sun,
@@ -533,7 +535,16 @@ export function WeatherPage() {
       <HeroWeatherCard data={currentWeather} marine={null} WeatherIcon={WeatherIcon} unitSystem={unitSystem} t={t} />
 
       {/* Soil Status - important for gardening, placed prominently */}
-      {currentWeatherData.soil ? <SoilConditionsCard data={currentWeatherData.soil} hourly={currentWeatherData.hourly} unitSystem={unitSystem} t={t} /> : null}
+      {/* Premium feature: 4-depth soil temperature requires BLOOM tier */}
+      {currentWeatherData.soil ? (
+        <BloomWeatherGate
+          feature="soilTemperature"
+          showTeaser
+          teaserContent={<SoilConditionsCard data={currentWeatherData.soil} hourly={currentWeatherData.hourly} unitSystem={unitSystem} t={t} />}
+        >
+          <SoilConditionsCard data={currentWeatherData.soil} hourly={currentWeatherData.hourly} unitSystem={unitSystem} t={t} />
+        </BloomWeatherGate>
+      ) : null}
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
         <Card>

@@ -1,6 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { getAuthenticatedClient } from '../../../../lib/grow/server/auth';
 import { serializePlant, type PlantRow, type InsertPlantRow } from '../../../../lib/grow/server/plants';
+import { getTierLimits, type GrowSubscriptionTier } from '../../../../lib/grow/subscription';
 
 const ALLOWED_HEALTH_VALUES = new Set(['excellent', 'good', 'fair', 'poor']);
 
@@ -52,11 +53,62 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       console.warn('[grow] Failed to load onboarding status for user', userId, profileError);
     }
 
+    // Get subscription tier for limit info
+    const { data: tierProfile } = await supabase
+      .from('profiles')
+      .select('grow_subscription_tier')
+      .eq('id', userId)
+      .single();
+
+    const userTier = (tierProfile?.grow_subscription_tier as GrowSubscriptionTier) || 'seed';
+    const limits = getTierLimits(userTier);
+
     return res.status(200).json({
       plants,
       onboardingCompleted: Boolean(profile?.grow_onboarding_completed),
       onboardingCompletedAt: profile?.grow_onboarding_completed_at ?? null,
+      // Include limit info for UI
+      plantCount: plants.length,
+      plantLimit: limits.maxPlants,
+      tier: userTier,
     });
+  }
+
+  // =========================================================================
+  // PLANT COUNT LIMIT CHECK (for POST)
+  // =========================================================================
+
+  // Get user's subscription tier
+  const { data: tierProfile } = await supabase
+    .from('profiles')
+    .select('grow_subscription_tier')
+    .eq('id', userId)
+    .single();
+
+  const userTier = (tierProfile?.grow_subscription_tier as GrowSubscriptionTier) || 'seed';
+  const limits = getTierLimits(userTier);
+  const maxPlants = limits.maxPlants;
+
+  // Check current plant count if there's a limit
+  if (maxPlants !== -1) {
+    const { count, error: countError } = await supabase
+      .from('grow_user_plants')
+      .select('id', { count: 'exact', head: true })
+      .eq('user_id', userId);
+
+    if (countError) {
+      console.error('[grow] Failed to count plants for user', userId, countError);
+    } else if (count !== null && count >= maxPlants) {
+      console.log(`[grow] Plant limit reached for user ${userId}: ${count}/${maxPlants} plants`);
+      return res.status(403).json({
+        error: 'Plant limit reached',
+        message: `You've reached your limit of ${maxPlants} plants. Upgrade to track more plants.`,
+        currentCount: count,
+        limit: maxPlants,
+        tier: userTier,
+        upgradeUrl: '/grow/premium',
+      });
+    }
   }
 
   const { 

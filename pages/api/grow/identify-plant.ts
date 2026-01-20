@@ -2,8 +2,13 @@ import type { NextApiRequest, NextApiResponse } from 'next';
 import { plantIdService, type PlantIdentificationResult, type PlantCandidate, type ThreatCandidate, getPlantIdProvider, getProviderConfig } from '@/lib/grow/plantIdentificationService';
 import { getSupabaseServerClient } from '@/lib/supabase/serverClient';
 import { getWikipediaImageLicense, getWikipediaArticleImageLicense, isWikimediaUrl, getWikipediaSummary, getWikipediaSummaryByScientificName } from '@/lib/grow/wikipediaLicense';
+import { createClient } from '@supabase/supabase-js';
+import { getTierLimits, type GrowSubscriptionTier } from '@/lib/grow/subscription';
 import formidable from 'formidable';
 import fs from 'fs/promises';
+
+const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 
 // Disable bodyParser for file uploads
 export const config = {
@@ -76,6 +81,69 @@ export default async function handler(
     // Validate mode
     if (!requestData.mode || !['plant', 'pest'].includes(requestData.mode)) {
       return res.status(400).json({ error: 'Mode must be "plant" or "pest"' });
+    }
+
+    // =========================================================================
+    // USAGE TRACKING - Check subscription tier and limits
+    // =========================================================================
+    const authHeader = req.headers.authorization;
+    let userId: string | null = null;
+    let userTier: GrowSubscriptionTier = 'seed';
+
+    // Create service client for usage tracking
+    const serviceClient = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
+      auth: { autoRefreshToken: false, persistSession: false },
+    });
+
+    // Extract user from auth token if provided
+    if (authHeader?.startsWith('Bearer ')) {
+      const token = authHeader.substring(7);
+      const supabaseClient = getSupabaseServerClient();
+      const { data: { user } } = await supabaseClient.auth.getUser(token);
+
+      if (user) {
+        userId = user.id;
+
+        // Get user's subscription tier
+        const { data: profile } = await serviceClient
+          .from('profiles')
+          .select('grow_subscription_tier')
+          .eq('id', userId)
+          .single();
+
+        if (profile?.grow_subscription_tier) {
+          userTier = profile.grow_subscription_tier as GrowSubscriptionTier;
+        }
+      }
+    }
+
+    // Get tier limits
+    const limits = getTierLimits(userTier);
+    const usageType = requestData.mode === 'plant' ? 'plant_id' : 'pest_disease';
+    const limitKey = requestData.mode === 'plant' ? 'plantIdCalls' : 'pestDiseaseCalls';
+    const usageLimit = limits[limitKey];
+
+    // Check current usage if user is authenticated and has a limit
+    if (userId && usageLimit !== -1) {
+      const { data: currentUsage } = await serviceClient.rpc('grow_get_current_usage', {
+        p_user_id: userId,
+      });
+
+      const currentCount = requestData.mode === 'plant'
+        ? (currentUsage?.plant_id_calls || 0)
+        : (currentUsage?.pest_disease_calls || 0);
+
+      if (currentCount >= usageLimit) {
+        console.log(`[identify-plant] Usage limit reached for user ${userId}: ${currentCount}/${usageLimit} ${usageType} calls`);
+        return res.status(429).json({
+          error: 'Usage limit reached',
+          message: `You've used all ${usageLimit} ${requestData.mode === 'plant' ? 'plant identification' : 'pest diagnosis'} calls this month. Upgrade for more.`,
+          currentUsage: currentCount,
+          limit: usageLimit,
+          tier: userTier,
+          upgradeUrl: '/grow/premium',
+        } as { error: string });
+      }
     }
 
     // Read image file
@@ -285,7 +353,27 @@ export default async function handler(
       }
     }
 
-    // TODO: Track usage for budget management (like fish ID)
+    // =========================================================================
+    // INCREMENT USAGE - Track successful identification
+    // =========================================================================
+    if (userId && result.success) {
+      try {
+        const { data: usageResult, error: usageError } = await serviceClient.rpc('grow_increment_usage', {
+          p_user_id: userId,
+          p_usage_type: usageType,
+          p_increment: 1,
+        });
+
+        if (usageError) {
+          console.warn('[identify-plant] Failed to increment usage:', usageError);
+        } else {
+          console.log(`[identify-plant] Usage incremented for ${userId}: ${usageType} = ${usageResult?.current_count}`);
+        }
+      } catch (usageErr) {
+        console.warn('[identify-plant] Error tracking usage:', usageErr);
+        // Don't fail the request - usage tracking is not critical
+      }
+    }
 
     return res.status(200).json(result);
 
