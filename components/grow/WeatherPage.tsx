@@ -42,6 +42,10 @@ import {
 import { getClimateZoneInfo, type ClimateZoneCode } from '../../lib/grow/climate';
 import { useTranslationMap } from '../../lib/translation/useTranslationMap';
 import { SkeletonWeatherPage } from './GrowSkeletons';
+import { useWeatherTasks } from '../../hooks/useWeatherTasks';
+import { WeatherAlertsCard, AlertBanner } from './WeatherAlertsCard';
+import { SmartWateringCard } from './SmartWateringCard';
+import { PlantingWindowCard } from './PlantingWindowCard';
 
 interface ProgressProps {
   value: number;
@@ -310,6 +314,13 @@ export function WeatherPage() {
   const [climateZone, setClimateZone] = useState<ClimateZoneCode | null>(null);
   const [unitSystem, setUnitSystem] = useState<UnitSystem>('metric');
 
+  // Weather-based task recommendations (alerts, watering, planting windows)
+  const {
+    data: weatherTasksData,
+    isLoading: isLoadingTasks,
+    error: tasksError,
+  } = useWeatherTasks();
+
   const staticCopy = React.useMemo(
     () => [
       'Garden Location',
@@ -481,6 +492,11 @@ export function WeatherPage() {
     <div className="space-y-6">
       <ErrorBanner error={error} alerts={alerts} />
 
+      {/* Critical weather alerts from smart task engine */}
+      {weatherTasksData && weatherTasksData.alerts.length > 0 && (
+        <AlertBanner alerts={weatherTasksData.alerts} />
+      )}
+
       <Card>
         <CardContent className="p-4">
           <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
@@ -532,6 +548,74 @@ export function WeatherPage() {
       </Card>
 
       <HeroWeatherCard data={currentWeather} marine={null} WeatherIcon={WeatherIcon} unitSystem={unitSystem} t={t} />
+
+      {/* Weather-based alerts and smart recommendations - BLOOM feature */}
+      {weatherTasksData && (
+        <BloomWeatherGate
+          feature="weatherThreats"
+          showTeaser
+          teaserContent={
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+              <WeatherAlertsCard alerts={weatherTasksData.alerts.slice(0, 2)} compact />
+              <SmartWateringCard
+                recommendation={weatherTasksData.wateringRecommendation}
+                soilMoisture={weatherTasksData.soil?.moisture1to3cm}
+              />
+            </div>
+          }
+        >
+          <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+            <WeatherAlertsCard alerts={weatherTasksData.alerts} />
+            <SmartWateringCard
+              recommendation={weatherTasksData.wateringRecommendation}
+              soilMoisture={weatherTasksData.soil?.moisture1to3cm}
+            />
+          </div>
+        </BloomWeatherGate>
+      )}
+
+      {/* Planting windows based on soil temperature - BLOOM feature */}
+      {weatherTasksData && weatherTasksData.plantingWindows.length > 0 && (
+        <BloomWeatherGate
+          feature="soilTemperature"
+          showTeaser
+          teaserContent={
+            <PlantingWindowCard
+              plantingWindows={weatherTasksData.plantingWindows.slice(0, 3)}
+              currentSoilTemp={weatherTasksData.soil?.temperature6cm || 0}
+            />
+          }
+        >
+          <PlantingWindowCard
+            plantingWindows={weatherTasksData.plantingWindows}
+            currentSoilTemp={weatherTasksData.soil?.temperature6cm || 0}
+          />
+        </BloomWeatherGate>
+      )}
+
+      {/* Loading state for weather tasks */}
+      {isLoadingTasks && !weatherTasksData && (
+        <Card className="border-dashed">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-center gap-3 text-muted-foreground">
+              <RefreshCw className="h-5 w-5 animate-spin" />
+              <span>Loading smart weather recommendations...</span>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Error state for weather tasks */}
+      {tasksError && (
+        <Card className="border-amber-200 bg-amber-50/50">
+          <CardContent className="p-4 text-sm text-amber-800">
+            <div className="flex items-center gap-2">
+              <AlertTriangle className="h-4 w-4" />
+              <span>Weather task recommendations unavailable: {tasksError}</span>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Soil Status - important for gardening, placed prominently */}
       {/* Premium feature: 4-depth soil temperature requires BLOOM tier */}
