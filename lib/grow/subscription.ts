@@ -45,8 +45,8 @@ export interface GrowTierLimits {
   // Hardware integrations (weather stations, irrigation controllers)
   hardwareIntegrations: boolean;
 
-  // Companion planting
-  guildAccess: 'basic' | 'full';  // basic = 2 guilds, full = all 84
+  // Companion planting (FREE for all tiers)
+  // guildAccess removed - guilds are now free for everyone
 
   // Data retention
   taskHistoryMonths: number;  // -1 = unlimited
@@ -107,7 +107,6 @@ export const GROW_TIERS: Record<GrowSubscriptionTier, GrowTierInfo> = {
       windAwareness: false,
       smartWatering: false,
       hardwareIntegrations: false,
-      guildAccess: 'basic',
       taskHistoryMonths: 1,
       harvestHistoryYears: 0,
       exportData: false,
@@ -145,7 +144,6 @@ export const GROW_TIERS: Record<GrowSubscriptionTier, GrowTierInfo> = {
       windAwareness: false,
       smartWatering: false,
       hardwareIntegrations: true,
-      guildAccess: 'basic',
       taskHistoryMonths: 6,
       harvestHistoryYears: 0,
       exportData: true,
@@ -189,7 +187,6 @@ export const GROW_TIERS: Record<GrowSubscriptionTier, GrowTierInfo> = {
       windAwareness: true,     // THE MOAT
       smartWatering: true,     // THE MOAT
       hardwareIntegrations: true,
-      guildAccess: 'full',     // All 84 guilds
       taskHistoryMonths: 12,
       harvestHistoryYears: 1,
       exportData: true,
@@ -232,7 +229,6 @@ export const GROW_TIERS: Record<GrowSubscriptionTier, GrowTierInfo> = {
       windAwareness: true,
       smartWatering: true,
       hardwareIntegrations: true,
-      guildAccess: 'full',
       taskHistoryMonths: -1,  // Unlimited
       harvestHistoryYears: 5,
       exportData: true,
@@ -275,7 +271,6 @@ export const GROW_TIERS: Record<GrowSubscriptionTier, GrowTierInfo> = {
       windAwareness: true,
       smartWatering: true,
       hardwareIntegrations: true,
-      guildAccess: 'full',
       taskHistoryMonths: -1,
       harvestHistoryYears: -1,  // Unlimited
       exportData: true,
@@ -467,7 +462,6 @@ export const FEATURE_DISPLAY_NAMES: Partial<Record<keyof GrowTierLimits, string>
   windAwareness: 'Wind-Aware Gardening',
   smartWatering: 'Smart Watering',
   hardwareIntegrations: 'Hardware Integrations',
-  guildAccess: 'Companion Planting Guilds',
   exportData: 'Export Garden Data',
   cropRotation: 'Crop Rotation Planner',
   yieldPredictions: 'Yield Predictions',

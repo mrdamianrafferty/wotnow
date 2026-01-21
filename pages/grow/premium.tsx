@@ -216,7 +216,6 @@ export default function GrowPremiumPage() {
                 { icon: Bug, text: 'Weather threat engine', highlight: true },
                 { icon: Wind, text: 'Wind-aware gardening', highlight: true },
                 { icon: Droplets, text: 'Smart watering', highlight: true },
-                { icon: Leaf, text: 'All 84 guilds' },
                 { icon: Check, text: '14-day forecast' },
               ]}
             />
@@ -431,7 +430,6 @@ function FeatureComparison() {
     { name: 'Weather threats', seed: false, sprout: false, bloom: true, harvest: true },
     { name: 'Smart watering', seed: false, sprout: false, bloom: true, harvest: true },
     { name: 'Hardware integrations', seed: false, sprout: true, bloom: true, harvest: true },
-    { name: 'Companion guilds', seed: '2', sprout: '2', bloom: '84', harvest: '84' },
     { name: 'Yield predictions', seed: false, sprout: false, bloom: false, harvest: true },
     { name: 'AI Expert', seed: false, sprout: false, bloom: false, harvest: '2/mo' },
   ];

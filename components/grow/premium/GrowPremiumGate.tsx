@@ -9,7 +9,7 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { Lock, Sparkles, Thermometer, AlertTriangle, Wind, Droplets, Leaf, ChartBar, Users } from 'lucide-react';
+import { Lock, Sparkles, Thermometer, AlertTriangle, Wind, Droplets, ChartBar, Users } from 'lucide-react';
 import { useGrowSubscription } from '@/hooks/useGrowSubscription';
 import {
   GrowSubscriptionTier,
@@ -254,7 +254,6 @@ function getFeatureIcon(feature: FeatureKey): React.ComponentType<{ className?: 
     weatherThreats: AlertTriangle,
     windAwareness: Wind,
     smartWatering: Droplets,
-    guildAccess: Leaf,
     analyticsAccess: ChartBar,
     teamMembers: Users,
   };
@@ -268,7 +267,6 @@ function getFeatureBenefit(feature: FeatureKey): string {
     weatherThreats: 'Receive alerts when weather conditions favor pests and diseases affecting your plants.',
     windAwareness: 'Know when to skip spraying, adjust watering, or protect young seedlings from wind.',
     smartWatering: 'Save water and time with recommendations based on soil moisture, rain forecast, and evaporation.',
-    guildAccess: 'Access all 84 permaculture companion planting guilds to maximize your garden productivity.',
     analyticsAccess: 'Track your garden performance with charts, trends, and insights over time.',
     teamMembers: 'Share your garden with family members and collaborate on tasks together.',
     yieldPredictions: 'Get AI-powered harvest predictions based on your plants, weather, and care history.',
