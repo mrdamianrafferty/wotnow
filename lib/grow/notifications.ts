@@ -51,7 +51,8 @@ export type NotificationType =
   | 'task_reminder'
   | 'plant_health'
   | 'harvest_reminder'
-  | 'local_pest';
+  | 'local_pest'
+  | 'local_signal';
 
 export interface PushNotificationPayload {
   title: string;
@@ -311,6 +312,7 @@ function checkNotificationTypeEnabled(
     plant_health: 'plant_health_alerts',
     harvest_reminder: 'harvest_reminders',
     local_pest: 'local_pest_alerts',
+    local_signal: 'local_signal_alerts',
   };
 
   const prefKey = typeMap[type];
@@ -494,6 +496,57 @@ export function createHarvestReminderPayload(options: {
       type: 'harvest_reminder',
       plantName: options.plantName,
       url: '/grow/garden',
+    },
+  };
+}
+
+/**
+ * Create a local signal notification payload
+ * Used for weather-based regional alerts (pest pressure, disease risk, weather damage)
+ */
+export function createLocalSignalPayload(options: {
+  signalType: string;
+  severity: 'low' | 'moderate' | 'high' | 'critical';
+  title: string;
+  message: string;
+  advice?: string;
+  location?: string;
+}): PushNotificationPayload {
+  // Select emoji based on signal type category
+  const getEmoji = (type: string): string => {
+    if (type.includes('frost') || type.includes('heat') || type.includes('wind') || type.includes('drought')) {
+      return '🌡️';
+    }
+    if (type.includes('blight') || type.includes('mildew') || type.includes('botrytis') || type.includes('rust')) {
+      return '🦠';
+    }
+    if (type.includes('aphid') || type.includes('slug') || type.includes('caterpillar')) {
+      return '🐛';
+    }
+    return '⚠️';
+  };
+
+  const emoji = getEmoji(options.signalType);
+  const locationText = options.location ? ` in ${options.location}` : '';
+  const severityLabel = options.severity === 'critical' ? '🚨 CRITICAL: ' :
+                        options.severity === 'high' ? '⚠️ HIGH: ' : '';
+
+  return {
+    title: `${emoji} ${severityLabel}${options.title}`,
+    body: `${options.message}${locationText}${options.advice ? `. ${options.advice}` : ''}`,
+    icon: '/icons/grow-icon-192.png',
+    badge: '/icons/grow-badge-72.png',
+    tag: `local-signal-${options.signalType}`,
+    requireInteraction: options.severity === 'critical' || options.severity === 'high',
+    actions: [
+      { action: 'view', title: 'View Details' },
+      { action: 'dismiss', title: 'Dismiss' },
+    ],
+    data: {
+      type: 'local_signal',
+      signalType: options.signalType,
+      severity: options.severity,
+      url: '/grow',
     },
   };
 }
