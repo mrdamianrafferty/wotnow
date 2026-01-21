@@ -904,6 +904,21 @@ const FindrPage: React.FC<FindrPageProps> = ({ initialRectangle: _initialRectang
   const totalPredictions = cards.length;
   const deckResetDisabled = loading || cardQueue.length === cards.length;
 
+  // Extract environmental conditions from first card for FishingAreaInfo
+  const areaConditions = useMemo(() => {
+    const firstCard = cards[0];
+    if (!firstCard?.environmental_factors) return null;
+
+    const ef = firstCard.environmental_factors;
+    return {
+      temperature: ef.temperature?.actual ?? null,
+      salinity: ef.salinity?.actual ?? null,
+      speciesCount: cards.length,
+      dataSource: ef.data_source ?? null,
+      dataAgeHours: ef.data_age_hours ?? null,
+    };
+  }, [cards]);
+
   const handleDateChange = useCallback(
     (event: React.ChangeEvent<HTMLInputElement>) => {
       setPredictionDate(event.target.value);
@@ -1618,6 +1633,7 @@ const FindrPage: React.FC<FindrPageProps> = ({ initialRectangle: _initialRectang
           <FishingAreaInfo
             activeOption={activeOption}
             activeRectangle={activeRectangle}
+            conditions={areaConditions}
           />
           
           {/* Prediction Settings */}

@@ -3,11 +3,11 @@ import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';
 import { Badge } from '../ui/badge';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '../ui/dialog';
-import { 
-  Calendar, 
-  Sprout, 
-  Scissors, 
-  ShoppingBasket, 
+import {
+  Calendar,
+  Sprout,
+  Scissors,
+  ShoppingBasket,
   AlertTriangle,
   StickyNote,
   Plus,
@@ -18,12 +18,13 @@ import {
   ChevronRight,
   SkipForward
 } from 'lucide-react';
-import { api } from '../../lib/grow/api';
+import { api, type LocalSignal, type WeatherTask } from '../../lib/grow/api';
 import { useScreenTracking } from '../../lib/performance';
 import { auth } from '../../lib/grow/auth';
 import { WeeklyTaskView } from './WeeklyTaskView';
 import { SkeletonPlanPage } from './GrowSkeletons';
 import { TaskIcon } from './TaskIcon';
+import { useUnifiedLocation } from '../../context/UnifiedLocationContext';
 interface TimelineEvent {
   id: string;
   type: 'planting' | 'maintenance' | 'harvest' | 'alert' | 'reminder';
@@ -186,6 +187,7 @@ function convertWindowToEvent(window: PlantingCalendarWindow, year: number): Tim
 
 export function PlanPage() {
   const { markFirstData, markInteractive } = useScreenTracking('PlanPage');
+  const { location } = useUnifiedLocation();
   const [viewMode, setViewMode] = useState<'timeline' | 'calendar' | 'weekly'>('timeline');
   const [filterType, setFilterType] = useState<string>('all');
   const [selectedCrop, setSelectedCrop] = useState<string>('all');
@@ -230,139 +232,121 @@ export function PlanPage() {
     void loadUserAndDismissals();
   }, []);
 
-  // Mock data - in production, this would come from backend
-  const mockEvents = useMemo<TimelineEvent[]>(() => [
-    {
-      id: '1',
-      type: 'planting',
-      title: 'Start Tomato Seeds Indoors',
-      description: 'Optimal window for starting tomato seeds indoors. Use seed trays with good drainage.',
-      dateLabel: 'This Week',
-      startDate: new Date(2025, 2, 1),
-      endDate: new Date(2025, 2, 15),
-      plant: 'Tomatoes',
-      emoji: '🍅',
-      priority: 'high',
-      status: 'current',
-      tags: ['planting', 'optimal']
-    },
-    {
-      id: '2',
-      type: 'alert',
-      title: '⚠️ Frost Warning',
-      description: 'Temperatures expected to drop below 0°C. Protect tender plants.',
-      dateLabel: 'March 5',
-      startDate: new Date(2025, 2, 5),
-      priority: 'critical',
-      status: 'upcoming',
-      tags: ['critical']
-    },
-    {
-      id: '3',
-      type: 'maintenance',
-      title: 'Fertilize Fruit Trees',
-      description: 'Apply balanced fertilizer around drip line of fruit trees.',
-      dateLabel: 'March 10',
-      startDate: new Date(2025, 2, 10),
-      plant: 'Fruit Trees',
-      emoji: '🌳',
-      priority: 'normal',
-      status: 'upcoming'
-    },
-    {
-      id: '4',
-      type: 'planting',
-      title: 'Direct Sow Peas',
-      description: 'Soil temperature is right for peas. Sow directly outdoors.',
-      dateLabel: 'March 15-30',
-      startDate: new Date(2025, 2, 15),
-      endDate: new Date(2025, 2, 30),
-      plant: 'Peas',
-      emoji: '🫛',
-      priority: 'normal',
-      status: 'upcoming',
-      tags: ['direct-sow']
-    },
-    {
-      id: '5',
-      type: 'reminder',
-      title: 'Order Summer Seeds',
-      description: 'Last chance to order summer vegetable seeds for best selection.',
-      dateLabel: 'March 20',
-      startDate: new Date(2025, 2, 20),
-      priority: 'high',
-      status: 'upcoming'
-    },
-    {
-      id: '6',
-      type: 'harvest',
-      title: '🧺 Spring Greens Ready',
-      description: 'Lettuce, spinach, and arugula should be ready to harvest.',
-      dateLabel: 'April 1-15',
-      startDate: new Date(2025, 3, 1),
-      endDate: new Date(2025, 3, 15),
-      plant: 'Greens',
-      emoji: '🥬',
-      priority: 'normal',
-      status: 'upcoming',
-      tags: ['harvest']
-    },
-    {
-      id: '7',
-      type: 'maintenance',
-      title: 'Prune Roses',
-      description: 'Prime time for rose pruning before new growth begins.',
-      dateLabel: 'March 8',
-      startDate: new Date(2025, 2, 8),
-      plant: 'Roses',
-      emoji: '🌹',
-      priority: 'normal',
-      status: 'upcoming'
-    },
-    {
-      id: '8',
-      type: 'planting',
-      title: 'Transplant Seedlings Outdoors',
-      description: 'After last frost date, transplant hardened-off seedlings.',
-      dateLabel: 'April 10-25',
-      startDate: new Date(2025, 3, 10),
-      endDate: new Date(2025, 3, 25),
-      plant: 'Various',
-      priority: 'high',
-      status: 'upcoming'
-    },
-    {
-      id: '9',
-      type: 'harvest',
-      title: '🧺 Tomato Harvest Window',
-      description: 'Expected yield: 75 days from transplant. Pick when fully colored.',
-      dateLabel: 'July 15-31',
-      startDate: new Date(2025, 6, 15),
-      endDate: new Date(2025, 6, 31),
-      plant: 'Tomatoes',
-      emoji: '🍅',
-      priority: 'normal',
-      status: 'upcoming',
-      tags: ['harvest']
-    },
-    {
-      id: '10',
-      type: 'alert',
-      title: '⚠️ First Frost Expected',
-      description: 'Harvest tender crops. Protect perennials. Bring pots indoors.',
-      dateLabel: 'October 15',
-      startDate: new Date(2025, 9, 15),
-      priority: 'critical',
-      status: 'upcoming',
-      tags: ['critical']
+  /**
+   * Convert a local signal to a timeline event
+   */
+  const signalToEvent = useCallback((signal: LocalSignal): TimelineEvent => {
+    const validFrom = new Date(signal.validFrom);
+    const validUntil = signal.validUntil ? new Date(signal.validUntil) : undefined;
+
+    // Map signal types to event types
+    let type: TimelineEvent['type'] = 'alert';
+    let emoji = '⚠️';
+
+    if (signal.type.includes('frost')) {
+      type = 'alert';
+      emoji = '🥶';
+    } else if (signal.type.includes('heat')) {
+      type = 'alert';
+      emoji = '🔥';
+    } else if (signal.type.includes('wind')) {
+      type = 'alert';
+      emoji = '💨';
+    } else if (signal.type.includes('aphid') || signal.type.includes('slug') || signal.type.includes('pest')) {
+      type = 'alert';
+      emoji = '🐛';
+    } else if (signal.type.includes('blight') || signal.type.includes('mildew') || signal.type.includes('botrytis') || signal.type.includes('disease')) {
+      type = 'alert';
+      emoji = '🍂';
     }
-  ], []);
+
+    // Map severity to priority
+    const priorityMap: Record<string, TimelineEvent['priority']> = {
+      critical: 'critical',
+      high: 'high',
+      moderate: 'normal',
+      low: 'low',
+    };
+
+    return {
+      id: `signal-${signal.id}`,
+      type,
+      title: `${emoji} ${signal.name}`,
+      description: `${signal.description} ${signal.recommendation}`,
+      dateLabel: validFrom.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+      startDate: validFrom,
+      endDate: validUntil,
+      priority: priorityMap[signal.severity] || 'normal',
+      status: deriveStatus(validFrom, validUntil),
+      tags: ['weather-signal', signal.type],
+    };
+  }, []);
+
+  /**
+   * Convert a weather task to a timeline event
+   */
+  const weatherTaskToEvent = useCallback((task: WeatherTask): TimelineEvent => {
+    const validFrom = new Date(task.validFrom);
+    const validUntil = task.validUntil ? new Date(task.validUntil) : undefined;
+
+    // Map task types to event types and emojis
+    let type: TimelineEvent['type'] = 'maintenance';
+    let emoji = '🌱';
+
+    if (task.type.includes('frost') || task.type.includes('protect')) {
+      type = 'alert';
+      emoji = '🥶';
+    } else if (task.type.includes('heat') || task.type.includes('shade')) {
+      type = 'alert';
+      emoji = '☀️';
+    } else if (task.type.includes('water') || task.type.includes('irrigat')) {
+      type = 'maintenance';
+      emoji = '💧';
+    } else if (task.type.includes('harvest')) {
+      type = 'harvest';
+      emoji = '🧺';
+    } else if (task.type.includes('plant') || task.type.includes('sow')) {
+      type = 'planting';
+      emoji = '🌱';
+    } else if (task.type.includes('disease') || task.type.includes('blight') || task.type.includes('mildew')) {
+      type = 'alert';
+      emoji = '🍂';
+    } else if (task.type.includes('pest') || task.type.includes('aphid') || task.type.includes('slug')) {
+      type = 'alert';
+      emoji = '🐛';
+    } else if (task.type.includes('wind')) {
+      type = 'alert';
+      emoji = '💨';
+    }
+
+    // Map severity to priority
+    const priorityMap: Record<string, TimelineEvent['priority']> = {
+      critical: 'critical',
+      warning: 'high',
+      info: 'normal',
+    };
+
+    return {
+      id: `weather-task-${task.id}`,
+      type,
+      title: task.title.startsWith('⚠️') || task.title.includes('🥶') ? task.title : `${emoji} ${task.title}`,
+      description: `${task.description} ${task.recommendation}`,
+      dateLabel: validFrom.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+      startDate: validFrom,
+      endDate: validUntil,
+      plant: task.affectedPlants.length > 0 ? task.affectedPlants.join(', ') : undefined,
+      priority: priorityMap[task.severity] || 'normal',
+      status: deriveStatus(validFrom, validUntil),
+      tags: ['weather-task', task.type],
+    };
+  }, []);
 
   const loadTimelineEvents = useCallback(async () => {
     setIsLoading(true);
     const baseYear = new Date().getFullYear();
     const aggregated: TimelineEvent[] = [];
 
+    // Fetch garden timeline events
     try {
       const response = await api.getGardenTimeline();
       if (response?.events) {
@@ -389,10 +373,9 @@ export function PlanPage() {
     try {
       console.log('📋 PlanPage: Fetching user tasks...');
       const myTasksResponse = await api.getMyTasks();
-      console.log('📋 PlanPage: Raw response:', myTasksResponse);
       if (myTasksResponse?.tasks && Array.isArray(myTasksResponse.tasks)) {
         console.log('📋 PlanPage: Found', myTasksResponse.tasks.length, 'tasks in response');
-        const userTasks = myTasksResponse.tasks.map((task: { 
+        const userTasks = myTasksResponse.tasks.map((task: {
           id: string;
           task_id?: string;
           title?: string;
@@ -402,11 +385,11 @@ export function PlanPage() {
           plant_slug?: string;
           task_type?: string;
         }) => {
-          const scheduledDate = task.scheduled_for 
-            ? new Date(task.scheduled_for) 
+          const scheduledDate = task.scheduled_for
+            ? new Date(task.scheduled_for)
             : new Date();
-          
-          const mappedTask = {
+
+          return {
             id: `user-${task.id || task.task_id}`,
             type: (task.task_type || 'maintenance') as TimelineEvent['type'],
             title: task.title || 'Added Task',
@@ -418,18 +401,15 @@ export function PlanPage() {
             status: deriveStatus(scheduledDate),
             tags: ['user-added']
           } as TimelineEvent;
-          console.log('📋 PlanPage: Mapped task:', mappedTask);
-          return mappedTask;
         });
         aggregated.push(...userTasks);
         console.log(`✅ Added ${userTasks.length} user tasks`);
-      } else {
-        console.log('📋 PlanPage: No tasks array in response or empty');
       }
     } catch (error) {
       console.log('⚠️ User tasks unavailable, continuing without user tasks', error);
     }
 
+    // Fetch planting calendar
     try {
       const calendarResponse = (await api.getPlantingCalendar()) as PlantingCalendarResponse;
       const windows = Array.isArray(calendarResponse?.windows) ? calendarResponse.windows : [];
@@ -442,19 +422,73 @@ export function PlanPage() {
       console.log('⚠️ Planting calendar unavailable, skipping calendar events', error);
     }
 
-    if (aggregated.length === 0) {
-      setEvents(mockEvents);
+    // Fetch local signals (frost, pest pressure, disease risk) if we have location
+    if (location?.lat && location?.lon) {
+      try {
+        const signalsResponse = await api.getLocalSignals(location.lat, location.lon);
+        if (signalsResponse?.signals && signalsResponse.signals.length > 0) {
+          const signalEvents = signalsResponse.signals.map(signalToEvent);
+          aggregated.push(...signalEvents);
+          console.log(`🚨 Added ${signalEvents.length} local signal events`);
+        }
+      } catch (error) {
+        console.log('⚠️ Local signals unavailable:', error);
+      }
+
+      // Fetch weather-based tasks
+      try {
+        const weatherTasksResponse = await api.getWeatherTasks(location.lat, location.lon);
+        if (weatherTasksResponse?.alerts && weatherTasksResponse.alerts.length > 0) {
+          const alertEvents = weatherTasksResponse.alerts.map(weatherTaskToEvent);
+          aggregated.push(...alertEvents);
+          console.log(`⚡ Added ${alertEvents.length} weather alert events`);
+        }
+        if (weatherTasksResponse?.tasks && weatherTasksResponse.tasks.length > 0) {
+          const taskEvents = weatherTasksResponse.tasks.map(weatherTaskToEvent);
+          aggregated.push(...taskEvents);
+          console.log(`📋 Added ${taskEvents.length} weather task events`);
+        }
+      } catch (error) {
+        console.log('⚠️ Weather tasks unavailable:', error);
+      }
     } else {
-      setEvents([...aggregated, ...mockEvents]);
+      console.log('📍 No location set - skipping weather-based events');
     }
+
+    // Fetch weather alerts for the user
+    try {
+      const alertsResponse = await api.getWeatherAlerts();
+      if (alertsResponse?.alerts && alertsResponse.alerts.length > 0) {
+        const alertEvents = alertsResponse.alerts.map((alert) => ({
+          id: `weather-alert-${alert.id}`,
+          type: 'alert' as const,
+          title: `⚠️ ${alert.title}`,
+          description: alert.message,
+          dateLabel: new Date(alert.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+          startDate: new Date(alert.createdAt),
+          endDate: new Date(alert.expiresAt),
+          plant: alert.affectedPlantNames?.join(', '),
+          priority: (alert.severity === 'critical' ? 'critical' : alert.severity === 'high' ? 'high' : 'normal') as TimelineEvent['priority'],
+          status: deriveStatus(new Date(alert.createdAt), new Date(alert.expiresAt)),
+          tags: ['weather-alert', alert.alertType],
+        }));
+        aggregated.push(...alertEvents);
+        console.log(`🌤️ Added ${alertEvents.length} weather alerts`);
+      }
+    } catch (error) {
+      console.log('⚠️ Weather alerts unavailable:', error);
+    }
+
+    setEvents(aggregated);
     markFirstData();
     setIsLoading(false);
     markInteractive();
-  }, [mockEvents, markFirstData, markInteractive]);
+  }, [location, signalToEvent, weatherTaskToEvent, markFirstData, markInteractive]);
 
   useEffect(() => {
+    // Reload when location changes
     loadTimelineEvents();
-  }, [loadTimelineEvents]);
+  }, [loadTimelineEvents, location?.lat, location?.lon]);
 
   const getEventColor = (type: string) => {
     switch (type) {

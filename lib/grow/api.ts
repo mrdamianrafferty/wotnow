@@ -1448,6 +1448,71 @@ Delete a task completion
     const key = `weather:${location ?? 'default'}:${includeMarine}`;
     return coalesceRequest(key, () => this.getWeather(location, includeMarine));
   }
+
+  /**
+   * Get local signals (weather-based alerts: frost, pest pressure, disease risk)
+   */
+  async getLocalSignals(lat: number, lon: number): Promise<LocalSignalsResponse> {
+    try {
+      const url = `/api/grow/signals?lat=${lat}&lon=${lon}`;
+      const response = await this.fetchWithTimeout(url, {
+        headers: this.getHeaders(false),
+      }, 10000);
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch local signals');
+      }
+
+      return response.json();
+    } catch (error) {
+      console.error('Failed to fetch local signals:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Get weather-based task recommendations
+   */
+  async getWeatherTasks(lat: number, lon: number): Promise<WeatherTasksResponse> {
+    try {
+      const url = `/api/grow/weather-tasks?lat=${lat}&lon=${lon}`;
+      const response = await this.fetchWithTimeout(url, {
+        headers: this.getHeaders(true),
+      }, 15000);
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch weather tasks');
+      }
+
+      return response.json();
+    } catch (error) {
+      console.error('Failed to fetch weather tasks:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Get weather alerts for the user
+   */
+  async getWeatherAlerts(): Promise<WeatherAlertsResponse> {
+    try {
+      const response = await this.fetchWithTimeout('/api/grow/weather-alerts', {
+        headers: this.getHeaders(true),
+      }, 10000);
+
+      if (!response.ok) {
+        if (response.status === 401) {
+          return { alerts: [] };
+        }
+        throw new Error('Failed to fetch weather alerts');
+      }
+
+      return response.json();
+    } catch (error) {
+      console.error('Failed to fetch weather alerts:', error);
+      return { alerts: [] };
+    }
+  }
 }
 
 // Types for Garden Photos
@@ -1469,6 +1534,88 @@ export interface GardenPhoto {
 export interface GardenPhotosResponse {
   photos: GardenPhoto[];
   total: number;
+}
+
+// Types for Local Signals
+export interface LocalSignal {
+  id: string;
+  type: string;
+  name: string;
+  severity: 'low' | 'moderate' | 'high' | 'critical';
+  score: number;
+  description: string;
+  recommendation: string;
+  factors: Array<{
+    name: string;
+    value: number;
+    unit: string;
+    contribution: 'favorable' | 'neutral' | 'unfavorable';
+  }>;
+  validFrom: string;
+  validUntil: string;
+}
+
+export interface LocalSignalsResponse {
+  signals: LocalSignal[];
+  location: {
+    lat: number;
+    lon: number;
+    name: string;
+  };
+  generatedAt: string;
+  dataFreshness: string;
+}
+
+// Types for Weather Tasks
+export interface WeatherTask {
+  id: string;
+  type: string;
+  title: string;
+  description: string;
+  severity: 'info' | 'warning' | 'critical';
+  forecastValue?: number;
+  threshold?: number;
+  recommendation: string;
+  affectedPlants: string[];
+  validFrom: string;
+  validUntil?: string;
+}
+
+export interface WeatherTasksResponse {
+  tasks: WeatherTask[];
+  alerts: WeatherTask[];
+  plantingWindows: Array<{
+    plantSlug: string;
+    plantName: string;
+    canPlantNow: boolean;
+    reason: string;
+    soilTempRequired: number;
+    currentSoilTemp: number;
+  }>;
+  soil?: {
+    temperature6cm?: number;
+    temperature18cm?: number;
+    moisture?: number;
+  };
+}
+
+// Types for Weather Alerts
+export interface WeatherAlert {
+  id: string;
+  alertType: string;
+  severity: 'low' | 'moderate' | 'high' | 'critical';
+  title: string;
+  message: string;
+  affectedPlantIds?: string[];
+  affectedPlantNames?: string[];
+  forecastTemperature?: number;
+  expiresAt: string;
+  isRead: boolean;
+  createdAt: string;
+}
+
+export interface WeatherAlertsResponse {
+  alerts: WeatherAlert[];
 }
 
 export const api = new ApiClient();

@@ -1,20 +1,30 @@
 'use client';
 
 import React from 'react';
-import { MapPin, Waves, Fish as FishIcon, Calendar } from 'lucide-react';
+import { MapPin, Waves, Fish as FishIcon, Calendar, Thermometer } from 'lucide-react';
 import { TranslatedText } from '../translation/TranslatedFishCard';
 import type { RectangleOption } from '../../hooks/useFindrRectangleOptions';
+
+export interface EnvironmentalConditions {
+  temperature?: number | null;      // Sea temperature in °C
+  salinity?: number | null;         // Salinity in PSU
+  speciesCount?: number | null;     // Number of species predicted in area
+  dataSource?: string | null;       // Data source (e.g., "CMEMS")
+  dataAgeHours?: number | null;     // Age of data in hours
+}
 
 export interface FishingAreaInfoProps {
   activeOption: RectangleOption | null;
   activeRectangle: string | null;
   rectangleRegion?: string;
+  conditions?: EnvironmentalConditions | null;
 }
 
 export const FishingAreaInfo: React.FC<FishingAreaInfoProps> = ({
   activeOption,
   activeRectangle,
   rectangleRegion,
+  conditions,
 }) => {
   if (!activeOption && !activeRectangle) {
     return (
@@ -132,39 +142,59 @@ export const FishingAreaInfo: React.FC<FishingAreaInfoProps> = ({
           </div>
         </div>
 
-        {/* Future data placeholders - can be populated when available */}
-        {/* Uncomment when backend provides this data
-        <div className="divider my-4"></div>
-        
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="stat bg-base-200 rounded-lg p-4">
-            <div className="stat-figure text-cyan-500">
-              <Thermometer size={24} />
+        {/* Environmental conditions (shown when data is available) */}
+        {conditions && (conditions.temperature != null || conditions.salinity != null || conditions.speciesCount != null) && (
+          <>
+            <div className="divider my-4"></div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {conditions.temperature != null && (
+                <div className="stat bg-base-200 rounded-lg p-4">
+                  <div className="stat-figure text-cyan-500">
+                    <Thermometer size={24} />
+                  </div>
+                  <div className="stat-title text-xs"><TranslatedText text="Sea Temperature" /></div>
+                  <div className="stat-value text-2xl">{conditions.temperature.toFixed(1)}°C</div>
+                  <div className="stat-desc">
+                    {conditions.dataSource ? (
+                      <TranslatedText text={`Source: ${conditions.dataSource}`} />
+                    ) : (
+                      <TranslatedText text="Current conditions" />
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {conditions.salinity != null && (
+                <div className="stat bg-base-200 rounded-lg p-4">
+                  <div className="stat-figure text-blue-500">
+                    <Waves size={24} />
+                  </div>
+                  <div className="stat-title text-xs"><TranslatedText text="Salinity" /></div>
+                  <div className="stat-value text-2xl">{conditions.salinity.toFixed(1)} PSU</div>
+                  <div className="stat-desc">
+                    {conditions.dataAgeHours != null ? (
+                      <TranslatedText text={`Updated ${conditions.dataAgeHours < 1 ? 'just now' : `${Math.round(conditions.dataAgeHours)}h ago`}`} />
+                    ) : (
+                      <TranslatedText text="Current reading" />
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {conditions.speciesCount != null && conditions.speciesCount > 0 && (
+                <div className="stat bg-base-200 rounded-lg p-4">
+                  <div className="stat-figure text-purple-500">
+                    <FishIcon size={24} />
+                  </div>
+                  <div className="stat-title text-xs"><TranslatedText text="Species" /></div>
+                  <div className="stat-value text-2xl">{conditions.speciesCount}+</div>
+                  <div className="stat-desc"><TranslatedText text="Predicted in area" /></div>
+                </div>
+              )}
             </div>
-            <div className="stat-title text-xs">Avg. Temperature</div>
-            <div className="stat-value text-2xl">16°C</div>
-            <div className="stat-desc">Current conditions</div>
-          </div>
-          
-          <div className="stat bg-base-200 rounded-lg p-4">
-            <div className="stat-figure text-blue-500">
-              <Waves size={24} />
-            </div>
-            <div className="stat-title text-xs">Salinity</div>
-            <div className="stat-value text-2xl">34 ppt</div>
-            <div className="stat-desc">Typical range</div>
-          </div>
-          
-          <div className="stat bg-base-200 rounded-lg p-4">
-            <div className="stat-figure text-purple-500">
-              <FishIcon size={24} />
-            </div>
-            <div className="stat-title text-xs">Species</div>
-            <div className="stat-value text-2xl">45+</div>
-            <div className="stat-desc">Common in area</div>
-          </div>
-        </div>
-        */}
+          </>
+        )}
 
         <div className="divider my-4"></div>
 

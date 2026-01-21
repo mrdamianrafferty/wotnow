@@ -412,22 +412,8 @@ const AstronomyCard: React.FC<AstronomyCardProps> = ({ className = '', style = {
     return () => { cancelled = true; };
   }, [homeLocation?.lat, homeLocation?.lon]);
 
-  // Defensive: ensure highlights array has at least 2 days
-  const safeHighlights = Array.isArray(highlights) ? highlights.slice(0, 2) : [];
-  if (safeHighlights.length === 1) {
-    // Mock a second day by copying the first and incrementing the date
-    const first = safeHighlights[0];
-    const nextDate = new Date(first.date);
-    nextDate.setDate(nextDate.getDate() + 1);
-    safeHighlights.push({
-      ...first,
-      date: nextDate.toISOString().split('T')[0],
-      dayName: nextDate.toLocaleDateString('en-US', { weekday: 'long' }),
-      isToday: false,
-      wotnowMessage: '[Mocked] Second day highlight.'
-    });
-  }
-  const tonight = safeHighlights.length > 0 ? safeHighlights[0] : undefined;
+  // Get tonight's astronomy data from the first highlight
+  const tonight = Array.isArray(highlights) && highlights.length > 0 ? highlights[0] : undefined;
 
   useEffect(() => {
     if (tonight?.moon?.phaseName) {

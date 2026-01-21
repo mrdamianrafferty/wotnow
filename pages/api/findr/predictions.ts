@@ -1060,6 +1060,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
               target_rectangle: rectangleCode,
               target_date: predictionDate,
               target_month: targetMonth,
+              current_tide_stage: currentTideStage, // Pass tide stage for tide_score calculation
             },
           },
           // FALLBACK: Global grid-based predictions (for non-ICES areas)
