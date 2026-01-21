@@ -90,8 +90,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         });
       }
 
-      // Store the weather data
-      const stored = await storeWeatherStationData(supabase, integrationId, result.data);
+      // Store the weather data (including soil sensors if available)
+      const stored = await storeWeatherStationData(
+        supabase,
+        integrationId,
+        result.data,
+        result.soilData
+      );
 
       if (!stored) {
         return res.status(500).json({ error: 'Failed to store weather data' });

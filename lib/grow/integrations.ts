@@ -56,6 +56,15 @@ export interface WeatherStationData {
   lightning_distance_km?: number;
   feels_like_c?: number;
   dew_point_c?: number;
+  // Soil sensors (Ambient Weather)
+  soil_temp_1_c?: number;
+  soil_temp_2_c?: number;
+  soil_temp_3_c?: number;
+  soil_temp_4_c?: number;
+  soil_moisture_1_pct?: number;
+  soil_moisture_2_pct?: number;
+  soil_moisture_3_pct?: number;
+  soil_moisture_4_pct?: number;
 }
 
 // =============================================================================
@@ -188,14 +197,52 @@ export async function updateLastSync(
 export async function storeWeatherStationData(
   supabase: SupabaseClient,
   integrationId: string,
-  data: WeatherStationData
+  data: WeatherStationData,
+  soilData?: {
+    temp1?: number;
+    temp2?: number;
+    temp3?: number;
+    temp4?: number;
+    moisture1?: number;
+    moisture2?: number;
+    moisture3?: number;
+    moisture4?: number;
+  }
 ): Promise<boolean> {
+  // Build the insert object with weather data
+  const insertData: Record<string, unknown> = {
+    integration_id: integrationId,
+    temperature_c: data.temperature_c,
+    humidity_percent: data.humidity_percent,
+    pressure_mb: data.pressure_mb,
+    wind_speed_mps: data.wind_speed_mps,
+    wind_direction_deg: data.wind_direction_deg,
+    wind_gust_mps: data.wind_gust_mps,
+    rain_mm_hour: data.rain_mm_hour,
+    rain_mm_day: data.rain_mm_day,
+    uv_index: data.uv_index,
+    solar_radiation_wm2: data.solar_radiation_wm2,
+    lightning_count: data.lightning_count,
+    lightning_distance_km: data.lightning_distance_km,
+    feels_like_c: data.feels_like_c,
+    dew_point_c: data.dew_point_c,
+  };
+
+  // Add soil sensor data if provided
+  if (soilData) {
+    insertData.soil_temp_1_c = soilData.temp1;
+    insertData.soil_temp_2_c = soilData.temp2;
+    insertData.soil_temp_3_c = soilData.temp3;
+    insertData.soil_temp_4_c = soilData.temp4;
+    insertData.soil_moisture_1_pct = soilData.moisture1;
+    insertData.soil_moisture_2_pct = soilData.moisture2;
+    insertData.soil_moisture_3_pct = soilData.moisture3;
+    insertData.soil_moisture_4_pct = soilData.moisture4;
+  }
+
   const { error } = await supabase
     .from('grow_weather_station_data')
-    .insert({
-      integration_id: integrationId,
-      ...data,
-    });
+    .insert(insertData);
 
   if (error) {
     console.error('[Integrations] Error storing weather data:', error);
