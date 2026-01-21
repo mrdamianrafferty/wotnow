@@ -7,6 +7,7 @@
  */
 
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
+import { GrowSubscriptionTier, hasFeatureAccess } from './subscription';
 
 // =============================================================================
 // TYPES
@@ -284,4 +285,39 @@ export async function deactivateIntegration(
     .eq('integration_id', integrationId);
 
   return true;
+}
+
+/**
+ * Check if a user has access to hardware integrations (paid feature)
+ * Returns the user's subscription tier if they have access, null otherwise
+ */
+export async function checkIntegrationAccess(
+  supabase: SupabaseClient,
+  userId: string
+): Promise<{
+  hasAccess: boolean;
+  tier: GrowSubscriptionTier;
+  error?: string;
+}> {
+  try {
+    // Fetch user's subscription tier from profile
+    const { data: profile, error: fetchError } = await supabase
+      .from('profiles')
+      .select('grow_subscription_tier')
+      .eq('id', userId)
+      .single();
+
+    if (fetchError && fetchError.code !== 'PGRST116') {
+      console.error('[Integrations] Error fetching subscription:', fetchError);
+      return { hasAccess: false, tier: 'seed', error: 'Failed to verify subscription' };
+    }
+
+    const tier = (profile?.grow_subscription_tier as GrowSubscriptionTier) || 'seed';
+    const hasAccess = hasFeatureAccess(tier, 'hardwareIntegrations');
+
+    return { hasAccess, tier };
+  } catch (error) {
+    console.error('[Integrations] Subscription check error:', error);
+    return { hasAccess: false, tier: 'seed', error: 'Failed to verify subscription' };
+  }
 }

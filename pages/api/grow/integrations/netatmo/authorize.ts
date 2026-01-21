@@ -11,6 +11,7 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { createClient } from '@supabase/supabase-js';
 import { getNetatmoAuthUrl } from '@/lib/grow/netatmo';
+import { checkIntegrationAccess } from '@/lib/grow/integrations';
 
 const SUPABASE_URL = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
 const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -42,6 +43,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   if (authError || !user) {
     return res.status(401).json({ error: 'Invalid or expired token' });
+  }
+
+  // Check subscription access for hardware integrations
+  const { hasAccess } = await checkIntegrationAccess(supabase, user.id);
+  if (!hasAccess) {
+    return res.status(403).json({
+      error: 'Hardware integrations require a paid subscription',
+      upgradeRequired: true,
+    });
   }
 
   try {

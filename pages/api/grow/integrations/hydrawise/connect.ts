@@ -12,7 +12,7 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { createClient } from '@supabase/supabase-js';
 import { validateHydrawiseKey, getHydrawiseStatus } from '@/lib/grow/hydrawise';
-import { storeIntegrationToken } from '@/lib/grow/integrations';
+import { storeIntegrationToken, checkIntegrationAccess } from '@/lib/grow/integrations';
 
 const SUPABASE_URL = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
 const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -47,6 +47,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   const userId = user.id;
+
+  // Check subscription access for hardware integrations
+  const { hasAccess } = await checkIntegrationAccess(supabase, userId);
+  if (!hasAccess) {
+    return res.status(403).json({
+      error: 'Hardware integrations require a paid subscription',
+      upgradeRequired: true,
+    });
+  }
 
   if (req.method === 'POST') {
     const { apiKey } = req.body as ConnectRequest;

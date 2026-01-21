@@ -30,8 +30,12 @@ import {
   Sparkles,
   Target,
   Leaf,
+  Lock,
+  Crown,
 } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
+import { useGrowSubscription } from '@/hooks/useGrowSubscription';
+import Link from 'next/link';
 
 // =============================================================================
 // TYPES
@@ -214,6 +218,10 @@ export function IntegrationsCard({ className = '' }: IntegrationCardProps) {
   const [selectedCategory, setSelectedCategory] = useState<IntegrationCategory | null>(null);
 
   const supabase = createClient();
+  const { canUse, isLoading: subscriptionLoading } = useGrowSubscription();
+
+  // Check if user can access hardware integrations (paid feature)
+  const canAccessIntegrations = canUse('hardwareIntegrations');
 
   // Helper to determine data source status
   const hasWeatherStation = integrations.some(
@@ -443,13 +451,26 @@ export function IntegrationsCard({ className = '' }: IntegrationCardProps) {
         className="w-full flex items-center justify-between p-4 hover:bg-gray-50 transition-colors"
       >
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-full bg-purple-100 flex items-center justify-center">
-            <CloudSun className="h-5 w-5 text-purple-600" />
+          <div className={`w-10 h-10 rounded-full flex items-center justify-center ${canAccessIntegrations ? 'bg-purple-100' : 'bg-gray-100'}`}>
+            {canAccessIntegrations ? (
+              <CloudSun className="h-5 w-5 text-purple-600" />
+            ) : (
+              <Lock className="h-5 w-5 text-gray-400" />
+            )}
           </div>
           <div className="text-left">
-            <h3 className="font-semibold text-gray-900">Hardware Integrations</h3>
+            <div className="flex items-center gap-2">
+              <h3 className="font-semibold text-gray-900">Hardware Integrations</h3>
+              {!canAccessIntegrations && (
+                <span className="text-[10px] bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded-full font-medium">
+                  Premium
+                </span>
+              )}
+            </div>
             <p className="text-sm text-gray-500">
-              {integrations.length === 0 ? (
+              {!canAccessIntegrations ? (
+                'Connect weather stations & irrigation'
+              ) : integrations.length === 0 ? (
                 'Get more accurate data from your garden'
               ) : hasWeatherStation ? (
                 <span className="flex items-center gap-1">
@@ -479,9 +500,57 @@ export function IntegrationsCard({ className = '' }: IntegrationCardProps) {
             className="overflow-hidden"
           >
             <div className="p-4 pt-0 space-y-4">
-              {isLoading ? (
+              {isLoading || subscriptionLoading ? (
                 <div className="flex justify-center py-4">
                   <Loader2 className="h-6 w-6 animate-spin text-gray-400" />
+                </div>
+              ) : !canAccessIntegrations ? (
+                /* Upgrade prompt for free users */
+                <div className="space-y-4">
+                  <div className="bg-gradient-to-br from-amber-50 to-orange-50 border border-amber-200 rounded-xl p-5">
+                    <div className="flex items-start gap-4">
+                      <div className="w-12 h-12 rounded-full bg-amber-100 flex items-center justify-center flex-shrink-0">
+                        <Crown className="h-6 w-6 text-amber-600" />
+                      </div>
+                      <div className="flex-1">
+                        <h4 className="font-semibold text-gray-900 text-lg">
+                          Connect Your Weather Station
+                        </h4>
+                        <p className="text-sm text-gray-700 mt-1">
+                          Hardware integrations are available on paid plans. Connect your weather station or irrigation controller to get:
+                        </p>
+                        <ul className="mt-3 space-y-2">
+                          <li className="flex items-center gap-2 text-sm text-gray-700">
+                            <Check className="h-4 w-4 text-emerald-500 flex-shrink-0" />
+                            <span>Actual temperature & humidity from your garden</span>
+                          </li>
+                          <li className="flex items-center gap-2 text-sm text-gray-700">
+                            <Check className="h-4 w-4 text-emerald-500 flex-shrink-0" />
+                            <span>Soil moisture data at multiple depths</span>
+                          </li>
+                          <li className="flex items-center gap-2 text-sm text-gray-700">
+                            <Check className="h-4 w-4 text-emerald-500 flex-shrink-0" />
+                            <span>Smart watering that skips when soil is wet</span>
+                          </li>
+                          <li className="flex items-center gap-2 text-sm text-gray-700">
+                            <Check className="h-4 w-4 text-emerald-500 flex-shrink-0" />
+                            <span>Tasks based on real conditions, not forecasts</span>
+                          </li>
+                        </ul>
+                      </div>
+                    </div>
+                    <Link
+                      href="/grow/premium"
+                      className="mt-4 w-full inline-flex items-center justify-center gap-2 bg-gradient-to-r from-amber-500 to-orange-500 text-white font-medium py-2.5 px-4 rounded-lg hover:from-amber-600 hover:to-orange-600 transition-all shadow-sm"
+                    >
+                      <Lock className="h-4 w-4" />
+                      Upgrade to Unlock
+                    </Link>
+                  </div>
+
+                  <p className="text-xs text-center text-gray-500">
+                    Starting at €3.99/month • Cancel anytime
+                  </p>
                 </div>
               ) : addingType ? (
                 /* Adding a specific integration */

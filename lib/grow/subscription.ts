@@ -42,6 +42,9 @@ export interface GrowTierLimits {
   windAwareness: boolean;
   smartWatering: boolean;
 
+  // Hardware integrations (weather stations, irrigation controllers)
+  hardwareIntegrations: boolean;
+
   // Companion planting
   guildAccess: 'basic' | 'full';  // basic = 2 guilds, full = all 84
 
@@ -103,6 +106,7 @@ export const GROW_TIERS: Record<GrowSubscriptionTier, GrowTierInfo> = {
       weatherThreats: false,
       windAwareness: false,
       smartWatering: false,
+      hardwareIntegrations: false,
       guildAccess: 'basic',
       taskHistoryMonths: 1,
       harvestHistoryYears: 0,
@@ -140,6 +144,7 @@ export const GROW_TIERS: Record<GrowSubscriptionTier, GrowTierInfo> = {
       weatherThreats: false,
       windAwareness: false,
       smartWatering: false,
+      hardwareIntegrations: true,
       guildAccess: 'basic',
       taskHistoryMonths: 6,
       harvestHistoryYears: 0,
@@ -183,6 +188,7 @@ export const GROW_TIERS: Record<GrowSubscriptionTier, GrowTierInfo> = {
       weatherThreats: true,    // THE MOAT
       windAwareness: true,     // THE MOAT
       smartWatering: true,     // THE MOAT
+      hardwareIntegrations: true,
       guildAccess: 'full',     // All 84 guilds
       taskHistoryMonths: 12,
       harvestHistoryYears: 1,
@@ -225,6 +231,7 @@ export const GROW_TIERS: Record<GrowSubscriptionTier, GrowTierInfo> = {
       weatherThreats: true,
       windAwareness: true,
       smartWatering: true,
+      hardwareIntegrations: true,
       guildAccess: 'full',
       taskHistoryMonths: -1,  // Unlimited
       harvestHistoryYears: 5,
@@ -267,6 +274,7 @@ export const GROW_TIERS: Record<GrowSubscriptionTier, GrowTierInfo> = {
       weatherThreats: true,
       windAwareness: true,
       smartWatering: true,
+      hardwareIntegrations: true,
       guildAccess: 'full',
       taskHistoryMonths: -1,
       harvestHistoryYears: -1,  // Unlimited
@@ -458,6 +466,7 @@ export const FEATURE_DISPLAY_NAMES: Partial<Record<keyof GrowTierLimits, string>
   weatherThreats: 'Weather Threat Engine',
   windAwareness: 'Wind-Aware Gardening',
   smartWatering: 'Smart Watering',
+  hardwareIntegrations: 'Hardware Integrations',
   guildAccess: 'Companion Planting Guilds',
   exportData: 'Export Garden Data',
   cropRotation: 'Crop Rotation Planner',
