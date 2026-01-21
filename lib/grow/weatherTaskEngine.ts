@@ -413,7 +413,7 @@ export function detectLateBlight(
 
   // Late blight thrives in wet, humid, mild conditions
   const blightRisk = rain72h > 15 && humidity > 80 && temp >= 12 && temp <= 25;
-  const highBlightRisk = rain72h > 25 && humidity > 90 && temp >= 15 && temp <= 22;
+  const highBlightRisk = rain72h >= 25 && humidity >= 90 && temp >= 15 && temp <= 22;
 
   if (blightRisk || highBlightRisk) {
     const susceptiblePlants = findSusceptiblePlants(plants, 'late_blight');
@@ -821,10 +821,16 @@ export function calculateWateringRecommendation(
     details.push(`Wind speed (${today.windSpeed.toFixed(0)} km/h) increases water loss by ${((windFactor - 1) * 100).toFixed(0)}%`);
   }
 
-  // 5. Check humidity
-  if (today.humidity < 40) {
+  // 5. Check humidity (stronger effect at extreme values)
+  if (today.humidity < 30) {
+    adjustmentFactor *= 1.25;
+    details.push(`Very low humidity (${today.humidity}%) significantly increases evaporation`);
+  } else if (today.humidity < 40) {
     adjustmentFactor *= 1.15;
     details.push(`Low humidity (${today.humidity}%) increases evaporation`);
+  } else if (today.humidity >= 95) {
+    adjustmentFactor *= 0.7;
+    details.push(`Very high humidity (${today.humidity}%) greatly reduces evaporation`);
   } else if (today.humidity > 80) {
     adjustmentFactor *= 0.9;
     details.push(`High humidity (${today.humidity}%) reduces evaporation`);
