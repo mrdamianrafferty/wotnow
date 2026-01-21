@@ -46,6 +46,7 @@ import { useWeatherTasks } from '../../hooks/useWeatherTasks';
 import { WeatherAlertsCard, AlertBanner } from './WeatherAlertsCard';
 import { SmartWateringCard } from './SmartWateringCard';
 import { PlantingWindowCard } from './PlantingWindowCard';
+import { GrewpGroupsCard } from './GrewpGroupsCard';
 
 interface ProgressProps {
   value: number;
@@ -694,6 +695,9 @@ export function WeatherPage() {
         {currentWeatherData.airQuality ? <AirQualityCard data={currentWeatherData.airQuality} t={t} /> : null}
         {currentWeatherData.pollen ? <PollenCard data={currentWeatherData.pollen} t={t} /> : null}
       </div>
+
+      {/* Local Gardening Groups via Grewp */}
+      <GrewpGroupsCard />
     </div>
   );
 }
