@@ -44,6 +44,7 @@ import { GrowLanguageSelector } from './GrowLanguageSelector';
 import { NotificationPreferencesCard } from './NotificationPreferencesCard';
 import { IntegrationsCard } from './IntegrationsCard';
 import { SubscriptionCard } from './SubscriptionCard';
+import { PricingOverview } from './PricingOverview';
 
 // Onboarding data structure (mirrors OnboardingFlow.tsx)
 interface OnboardingData {
@@ -570,6 +571,9 @@ export function SettingsPage() {
 
       {/* Subscription Section */}
       <SubscriptionCard />
+
+      {/* Pricing Overview */}
+      <PricingOverview />
 
       {/* Location Section */}
       <Card>

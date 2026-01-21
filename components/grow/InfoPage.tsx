@@ -23,11 +23,13 @@ import {
   MapPin,
   Thermometer,
   Database,
-  Camera
+  Camera,
+  Radio,
 } from 'lucide-react';
 import { SoilIdentificationGuide } from './SoilIdentificationGuide';
 import { ClimateZoneInfo } from './ClimateZoneInfo';
 import { SubscriptionCard } from './SubscriptionCard';
+import { PricingOverview } from './PricingOverview';
 import { type ClimateZoneCode } from '../../lib/grow/climate';
 
 export function InfoPage() {
@@ -67,6 +69,73 @@ export function InfoPage() {
 
       {/* Subscription Status */}
       <SubscriptionCard compact />
+
+      {/* Pricing Overview */}
+      <PricingOverview compact />
+
+      {/* Hardware Integrations */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Radio className="h-5 w-5 text-purple-600" />
+            Hardware Integrations
+          </CardTitle>
+          <p className="text-sm text-muted-foreground">
+            Connect your weather station or irrigation controller for more accurate data
+          </p>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid gap-3">
+            {/* Weather Stations */}
+            <div>
+              <h4 className="text-sm font-medium mb-2 flex items-center gap-2">
+                <CloudSun className="h-4 w-4 text-blue-500" />
+                Weather Stations
+              </h4>
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                {[
+                  { name: 'Netatmo', desc: 'Easy OAuth setup' },
+                  { name: 'Ecowitt', desc: 'Soil sensors' },
+                  { name: 'Ambient Weather', desc: 'Feature-rich' },
+                  { name: 'Tempest', desc: 'Premium wireless' },
+                  { name: 'Davis WeatherLink', desc: 'Pro-grade' },
+                ].map((station) => (
+                  <div key={station.name} className="p-2 border rounded-lg text-center">
+                    <p className="font-medium text-sm">{station.name}</p>
+                    <p className="text-xs text-muted-foreground">{station.desc}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Irrigation Controllers */}
+            <div>
+              <h4 className="text-sm font-medium mb-2 flex items-center gap-2">
+                <Droplets className="h-4 w-4 text-cyan-500" />
+                Irrigation Controllers
+              </h4>
+              <div className="grid grid-cols-2 gap-2">
+                {[
+                  { name: 'Rachio', desc: 'Smart watering' },
+                  { name: 'Hunter Hydrawise', desc: 'Pro irrigation' },
+                ].map((controller) => (
+                  <div key={controller.name} className="p-2 border rounded-lg text-center">
+                    <p className="font-medium text-sm">{controller.name}</p>
+                    <p className="text-xs text-muted-foreground">{controller.desc}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg">
+            <p className="text-sm text-amber-800">
+              <strong>Premium Feature:</strong> Hardware integrations require a paid subscription (Sprout or higher).
+              Connect your own devices to get hyperlocal weather data instead of regional forecasts.
+            </p>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* How Grow Daisy Works */}
       <Card>
