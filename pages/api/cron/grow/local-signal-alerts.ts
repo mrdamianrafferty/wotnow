@@ -15,7 +15,6 @@ import { createClient } from '@supabase/supabase-js';
 import {
   generateLocalSignals,
   getUrgentSignals,
-  type LocalSignal,
 } from '@/lib/grow/localSignals';
 import type { WeatherForecast } from '@/lib/grow/weatherTaskEngine';
 import { sendPushNotification, createLocalSignalPayload } from '@/lib/grow/notifications';
