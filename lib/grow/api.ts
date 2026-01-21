@@ -327,7 +327,7 @@ export class ApiClient {
 
     try {
       const response = await this.fetchWithTimeout(url, {
-        headers: this.getHeaders(false), // Don't require auth
+        headers: this.getHeaders(true), // Include auth to fetch user's plants for personalized tasks
       }, 10000); // Increased timeout for weather API calls
 
       if (!response.ok) {
