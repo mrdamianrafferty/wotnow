@@ -16,6 +16,7 @@ import { api } from '../../lib/grow/api';
 import { auth } from '../../lib/grow/auth';
 import { ClimateZoneInfo } from './ClimateZoneInfo';
 import { TaskIcon } from './TaskIcon';
+import { TaskFeedbackPrompt } from './TaskFeedbackPrompt';
 import { type ClimateZoneCode } from '../../lib/grow/climate';
 import { useScreenTracking } from '../../lib/performance';
 
@@ -154,6 +155,13 @@ export function WeeklyTaskView({ userId: propUserId }: WeeklyTaskViewProps) {
   const [showCompleted, setShowCompleted] = useState(true);
   const [userId, setUserId] = useState<string | null>(propUserId ?? null);
   const [isAuthChecking, setIsAuthChecking] = useState(true);
+  const [feedbackTask, setFeedbackTask] = useState<{
+    id: string;
+    taskCode: string;
+    plantSlug: string;
+    plantName: string | null;
+    taskName: string | null;
+  } | null>(null);
   const [userAddedTasks, setUserAddedTasks] = useState<Array<{
     id: string;
     task_id: string;
@@ -371,6 +379,15 @@ export function WeeklyTaskView({ userId: propUserId }: WeeklyTaskViewProps) {
           const completion = (response as { completion?: TaskCompletion | unknown }).completion;
           if (completion && typeof completion === 'object') {
             setCompletions((prev) => [...prev, completion as TaskCompletion]);
+
+            // Show feedback prompt for the completed task
+            setFeedbackTask({
+              id: (completion as TaskCompletion).id,
+              taskCode: task.taskCode,
+              plantSlug: task.plantSlug,
+              plantName: task.plantName,
+              taskName: task.taskName,
+            });
           }
         }
       } catch (err) {
@@ -838,6 +855,21 @@ export function WeeklyTaskView({ userId: propUserId }: WeeklyTaskViewProps) {
             : '.'}
           Weather and frost data refine these windows each season.
         </div>
+      )}
+
+      {/* Task Feedback Prompt */}
+      {feedbackTask && (
+        <TaskFeedbackPrompt
+          taskId={feedbackTask.id}
+          taskType={feedbackTask.taskCode}
+          taskName={feedbackTask.taskName || feedbackTask.taskCode.replace(/_/g, ' ')}
+          plantId={feedbackTask.plantSlug}
+          onClose={() => setFeedbackTask(null)}
+          onFeedbackSubmitted={() => {
+            // Optional: Could refresh completions or show a success message
+            console.log('[WeeklyTaskView] Feedback submitted for task:', feedbackTask.id);
+          }}
+        />
       )}
     </div>
   );
