@@ -678,8 +678,15 @@ export class ApiClient {
     });
 
     if (!response.ok) {
-      const error = await response.json().catch(() => ({ error: 'Network error' }));
-      throw new Error(error.error || 'Failed to add plant');
+      const errorData = await response.json().catch(() => ({ error: 'Network error' }));
+      // Create an error with additional properties for limit handling
+      const error = new Error(errorData.error || errorData.message || 'Failed to add plant') as Error & {
+        status: number;
+        response: typeof errorData;
+      };
+      error.status = response.status;
+      error.response = errorData;
+      throw error;
     }
 
     return response.json();

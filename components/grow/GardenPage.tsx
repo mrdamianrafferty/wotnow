@@ -71,6 +71,7 @@ import { PLANT_IMAGE_MAP } from '../../lib/grow/plantImages';
 import type { PlantIdentificationResult } from '../../lib/grow/plantIdentificationService';
 import { TranslatedText } from '../translation/TranslatedFishCard';
 import { useUnifiedLocation } from '../../context/UnifiedLocationContext';
+import { AILimitPrompt } from './premium/UpgradePrompt';
 
 type ThreatRiskBand = 'none' | 'low' | 'moderate' | 'high' | 'severe';
 
@@ -299,6 +300,8 @@ export function GardenPage() {
   const [activeTab, setActiveTab] = useState('plants');
   const [isIdentifying, setIsIdentifying] = useState(false);
   const [identifyMode, setIdentifyMode] = useState<'plant' | 'pest'>('plant');
+  const [showAILimitPrompt, setShowAILimitPrompt] = useState(false);
+  const [aiLimitType, setAiLimitType] = useState<'plant_id' | 'pest_diagnosis'>('plant_id');
   const [guildModalOpen, setGuildModalOpen] = useState(false);
   const [isLoadingPlants, setIsLoadingPlants] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
@@ -898,6 +901,14 @@ export function GardenPage() {
 
       if (!response.ok) {
         const errorData = await response.json();
+
+        // Check for AI usage limit (429)
+        if (response.status === 429) {
+          setAiLimitType(identifyMode === 'plant' ? 'plant_id' : 'pest_diagnosis');
+          setShowAILimitPrompt(true);
+          return; // Don't throw, just show the prompt
+        }
+
         throw new Error(errorData.error || 'Identification failed');
       }
 
@@ -1194,6 +1205,17 @@ export function GardenPage() {
   }
 
   return (
+    <>
+    {/* AI Usage Limit Prompt */}
+    {showAILimitPrompt && (
+      <AILimitPrompt
+        type={aiLimitType}
+        variant="modal"
+        dismissible
+        onDismiss={() => setShowAILimitPrompt(false)}
+      />
+    )}
+
     <div className="space-y-6">
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
@@ -3054,5 +3076,6 @@ export function GardenPage() {
         onPlantUpdated={handlePlantUpdated}
       />
     </div>
+    </>
   );
 }

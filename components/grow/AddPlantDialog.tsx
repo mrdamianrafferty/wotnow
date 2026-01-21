@@ -44,6 +44,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { api } from '../../lib/grow/api';
+import { PlantLimitPrompt } from './premium/UpgradePrompt';
 import type { PlantSpecies, PlantSpeciesCategoriesResponse, PlantSpeciesSearchResponse } from '../../lib/grow/species';
 import type { SerializedPlant } from '../../lib/grow/server/plants';
 
@@ -235,6 +236,8 @@ const [cultivarSearchQuery, setCultivarSearchQuery] = useState('');
   const [isFetching, setIsFetching] = useState(false);
   const [listVariant, setListVariant] = useState<PlantListVariant>('search');
   const [showCareInfo, setShowCareInfo] = useState(false);
+  const [showPlantLimitPrompt, setShowPlantLimitPrompt] = useState(false);
+  const [plantLimitInfo, setPlantLimitInfo] = useState<{ currentCount: number; limit: number } | null>(null);
   const requestIdRef = useRef(0);
 
   const resetState = () => {
@@ -610,6 +613,18 @@ const cultivarIdForStorage = useMemo(() => {
         });
         onOpenChange(false);
       } catch (error: unknown) {
+        // Check for plant limit error (403)
+        const apiError = error as { status?: number; response?: { currentCount?: number; limit?: number } };
+        if (apiError.status === 403 || (error instanceof Error && error.message.includes('Plant limit'))) {
+          setPlantLimitInfo({
+            currentCount: apiError.response?.currentCount || 0,
+            limit: apiError.response?.limit || 25,
+          });
+          setShowPlantLimitPrompt(true);
+          setIsSaving(false);
+          return;
+        }
+
         const message = error instanceof Error ? error.message : 'Unknown error';
         toast.error('Could not add plant', {
           description: message,
@@ -653,6 +668,18 @@ const cultivarIdForStorage = useMemo(() => {
       toast.success(`${nameToStore} added to your garden`);
       onOpenChange(false);
     } catch (error: unknown) {
+      // Check for plant limit error (403)
+      const apiError = error as { status?: number; response?: { currentCount?: number; limit?: number } };
+      if (apiError.status === 403 || (error instanceof Error && error.message.includes('Plant limit'))) {
+        setPlantLimitInfo({
+          currentCount: apiError.response?.currentCount || 0,
+          limit: apiError.response?.limit || 25,
+        });
+        setShowPlantLimitPrompt(true);
+        setIsSaving(false);
+        return;
+      }
+
       const message = error instanceof Error ? error.message : 'Unknown error';
       toast.error('Could not add plant', {
         description: message,
@@ -970,6 +997,21 @@ const cultivarIdForStorage = useMemo(() => {
   };
 
   return (
+    <>
+    {/* Plant Limit Upgrade Prompt */}
+    {showPlantLimitPrompt && (
+      <PlantLimitPrompt
+        variant="modal"
+        dismissible
+        onDismiss={() => {
+          setShowPlantLimitPrompt(false);
+          setPlantLimitInfo(null);
+        }}
+        currentUsage={plantLimitInfo?.currentCount}
+        limit={plantLimitInfo?.limit}
+      />
+    )}
+
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto flex flex-col">
         <DialogHeader>
@@ -1433,5 +1475,6 @@ const cultivarIdForStorage = useMemo(() => {
         )}
       </DialogContent>
     </Dialog>
+    </>
   );
 }
