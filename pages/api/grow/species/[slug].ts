@@ -81,6 +81,9 @@ const BASE_SELECT = [
   'perenual_default_image',
   'care_guides',
   'perenual_last_synced_at',
+  // Companion planting
+  'companions_with',
+  'companions_avoid',
   ...Object.keys(PLANT_SPECIES_LANGUAGE_FIELDS),
 ].join(',');
 

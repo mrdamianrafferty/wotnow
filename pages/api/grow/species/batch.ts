@@ -141,6 +141,9 @@ function serializeCustomSpecies(row: CustomSpeciesRow): PlantSpecies {
     wikiImageLicense: row.wiki_image_license,
     edibleParts: row.wiki_data?.edibleParts || null,
     propagationMethods: row.wiki_data?.propagationMethods || null,
+    // Companion planting - not available for custom species
+    companionsWith: [],
+    companionsAvoid: [],
   };
 }
 
@@ -219,6 +222,9 @@ const BASE_SELECT = [
   'perenual_default_image',
   'care_guides',
   'perenual_last_synced_at',
+  // Companion planting
+  'companions_with',
+  'companions_avoid',
   ...Object.keys(PLANT_SPECIES_LANGUAGE_FIELDS),
 ].join(',');
 

@@ -19,6 +19,7 @@ import { truncateLocationName } from "@/lib/utils/truncateLocationName";
 import { getPlantImage, PLANT_IMAGE_MAP } from "@/lib/grow/plantImages";
 import type { PlantSpecies } from "@/lib/grow/species";
 import { api } from "@/lib/grow/api";
+import { JobsTimeline } from "@/components/grow/JobsTimeline";
 
 type PlantingWindow = {
   plantSlug: string;
@@ -1030,6 +1031,33 @@ export default function GrowSpeciesPage() {
                     {species.searchTerms.slice(0, 8).join(", ")}
                   </div>
                 ) : null}
+
+                {/* Companion planting notes */}
+                {(species.companionsWith?.length > 0 || species.companionsAvoid?.length > 0) && (
+                  <div className="pt-2 border-t space-y-2">
+                    <div className="text-xs font-medium text-muted-foreground">
+                      Companion notes
+                    </div>
+                    {species.companionsWith?.length > 0 && (
+                      <div className="flex items-start gap-2 text-sm">
+                        <span className="text-green-600 shrink-0">✓</span>
+                        <span className="text-muted-foreground">
+                          <span className="font-medium text-foreground">Often paired with:</span>{" "}
+                          {species.companionsWith.join(", ")}
+                        </span>
+                      </div>
+                    )}
+                    {species.companionsAvoid?.length > 0 && (
+                      <div className="flex items-start gap-2 text-sm">
+                        <span className="text-amber-600 shrink-0">⚠</span>
+                        <span className="text-muted-foreground">
+                          <span className="font-medium text-foreground">Often avoided near:</span>{" "}
+                          {species.companionsAvoid.join(", ")}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
             ) : (
               <p className="text-sm text-muted-foreground">
@@ -1077,6 +1105,14 @@ export default function GrowSpeciesPage() {
               </div>
             ) : windows && windows.length > 0 ? (
               <div className="space-y-5">
+                {/* Visual Jobs Timeline */}
+                <div>
+                  <div className="text-xs font-medium text-muted-foreground mb-3">
+                    Jobs throughout the year
+                  </div>
+                  <JobsTimeline windows={windows} />
+                </div>
+
                 <div className="overflow-x-hidden">
                   <div className="text-xs font-medium text-muted-foreground mb-2">
                     Next actionable
