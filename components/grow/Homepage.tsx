@@ -34,6 +34,8 @@ import { TaskIcon } from './TaskIcon';
 import { SkeletonGrowHomepage } from './GrowSkeletons';
 import { PlanItSheet, type PlannedActivity } from '../PlanItSheet';
 import { PlannedActivitiesList } from '../PlannedActivitiesList';
+import { LocalSignalsCard } from './LocalSignalsCard';
+import { useLocalSignals } from '../../hooks/useLocalSignals';
 
 type Translator = (value: string) => string;
 
@@ -515,6 +517,17 @@ export function Homepage() {
   );
   const { t } = useTranslationMap(staticCopy);
 
+  // Local Signals hook - weather-based regional alerts
+  const {
+    signals: localSignals,
+    loading: signalsLoading,
+    dismissSignal,
+    muteSignalType,
+  } = useLocalSignals({
+    location: userLocation || undefined,
+    enabled: !!userLocation,
+  });
+
   const loadTasks = useCallback(async (location?: string) => {
     setIsLoading(true);
     try {
@@ -892,6 +905,17 @@ export function Homepage() {
 
       {(alertsLoading || gardenAlerts.length > 0) && (
         <GardenAlertBox alerts={gardenAlerts} isLoading={alertsLoading} />
+      )}
+
+      {/* Local Signals - weather-based regional alerts */}
+      {(signalsLoading || localSignals.length > 0) && (
+        <LocalSignalsCard
+          signals={localSignals}
+          loading={signalsLoading}
+          onDismissSignal={dismissSignal}
+          onMuteSignalType={muteSignalType}
+          compact
+        />
       )}
 
       {/* Planned Activities Section */}
