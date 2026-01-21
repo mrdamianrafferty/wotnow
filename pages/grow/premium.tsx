@@ -23,6 +23,9 @@ import {
   MessageSquare,
   Crown,
   Zap,
+  Radio,
+  Wifi,
+  Cloud,
 } from 'lucide-react';
 import { useGrowSubscription } from '@/hooks/useGrowSubscription';
 import { getStripe } from '@/lib/stripe/client';
@@ -190,6 +193,7 @@ export default function GrowPremiumPage() {
                 { icon: Bug, text: '10 diagnoses/month' },
                 { icon: Camera, text: 'Unlimited photos' },
                 { icon: Check, text: '7-day forecast' },
+                { icon: Radio, text: 'Hardware integrations', highlight: true },
                 { icon: Check, text: 'Export data' },
               ]}
             />
@@ -265,6 +269,9 @@ export default function GrowPremiumPage() {
 
           {/* Feature Comparison */}
           <FeatureComparison />
+
+          {/* Hardware Integrations */}
+          <HardwareIntegrations />
 
           {/* FAQ */}
           <FAQ />
@@ -423,6 +430,7 @@ function FeatureComparison() {
     { name: 'Frost alerts', seed: false, sprout: false, bloom: true, harvest: true },
     { name: 'Weather threats', seed: false, sprout: false, bloom: true, harvest: true },
     { name: 'Smart watering', seed: false, sprout: false, bloom: true, harvest: true },
+    { name: 'Hardware integrations', seed: false, sprout: true, bloom: true, harvest: true },
     { name: 'Companion guilds', seed: '2', sprout: '2', bloom: '84', harvest: '84' },
     { name: 'Yield predictions', seed: false, sprout: false, bloom: false, harvest: true },
     { name: 'AI Expert', seed: false, sprout: false, bloom: false, harvest: '2/mo' },
@@ -479,6 +487,133 @@ function FeatureValue({ value, highlight }: { value: boolean | string; highlight
     <span className={highlight ? 'text-emerald-700 font-medium' : 'text-gray-600'}>
       {value}
     </span>
+  );
+}
+
+function HardwareIntegrations() {
+  const weatherStations = [
+    {
+      name: 'WeatherFlow Tempest',
+      description: 'Premium all-in-one station',
+      badge: 'Popular',
+    },
+    {
+      name: 'Ambient Weather',
+      description: 'Soil sensors supported',
+      badge: 'Soil Sensors',
+    },
+    {
+      name: 'Ecowitt',
+      description: 'Affordable & feature-rich',
+      badge: 'Best Value',
+    },
+    {
+      name: 'Netatmo',
+      description: 'Sleek European design',
+      badge: 'Easy Setup',
+    },
+    {
+      name: 'Davis WeatherLink',
+      description: 'Professional-grade accuracy',
+      badge: 'Pro',
+    },
+  ];
+
+  const irrigationControllers = [
+    {
+      name: 'Rachio',
+      description: 'Smart watering schedules',
+      badge: 'Popular',
+    },
+    {
+      name: 'Hunter Hydrawise',
+      description: 'Professional irrigation',
+      badge: 'Pro',
+    },
+  ];
+
+  return (
+    <div className="bg-white rounded-2xl shadow-lg p-6 mb-8">
+      <div className="text-center mb-6">
+        <div className="inline-flex items-center gap-2 bg-emerald-100 text-emerald-700 rounded-full px-4 py-1.5 mb-3">
+          <Radio className="h-4 w-4" />
+          <span className="text-sm font-medium">Sprout+ Feature</span>
+        </div>
+        <h2 className="text-xl font-bold">Connect Your Hardware</h2>
+        <p className="text-gray-600 mt-2">
+          Sync your weather station or irrigation controller for hyper-local garden intelligence
+        </p>
+      </div>
+
+      {/* Weather Stations */}
+      <div className="mb-6">
+        <div className="flex items-center gap-2 mb-4">
+          <Cloud className="h-5 w-5 text-blue-500" />
+          <h3 className="font-semibold text-gray-800">Weather Stations</h3>
+        </div>
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
+          {weatherStations.map((station) => (
+            <div
+              key={station.name}
+              className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-100"
+            >
+              <div>
+                <p className="font-medium text-gray-900">{station.name}</p>
+                <p className="text-xs text-gray-500">{station.description}</p>
+              </div>
+              <span className="text-xs font-medium bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full whitespace-nowrap">
+                {station.badge}
+              </span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Irrigation Controllers */}
+      <div>
+        <div className="flex items-center gap-2 mb-4">
+          <Droplets className="h-5 w-5 text-cyan-500" />
+          <h3 className="font-semibold text-gray-800">Irrigation Controllers</h3>
+        </div>
+        <div className="grid sm:grid-cols-2 gap-3">
+          {irrigationControllers.map((controller) => (
+            <div
+              key={controller.name}
+              className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-100"
+            >
+              <div>
+                <p className="font-medium text-gray-900">{controller.name}</p>
+                <p className="text-xs text-gray-500">{controller.description}</p>
+              </div>
+              <span className="text-xs font-medium bg-cyan-100 text-cyan-700 px-2 py-0.5 rounded-full whitespace-nowrap">
+                {controller.badge}
+              </span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Benefits */}
+      <div className="mt-6 pt-6 border-t border-gray-100">
+        <div className="grid sm:grid-cols-3 gap-4 text-center">
+          <div>
+            <Wifi className="h-6 w-6 text-emerald-500 mx-auto mb-2" />
+            <p className="text-sm font-medium text-gray-900">Real-Time Sync</p>
+            <p className="text-xs text-gray-500">Data updates automatically</p>
+          </div>
+          <div>
+            <Thermometer className="h-6 w-6 text-emerald-500 mx-auto mb-2" />
+            <p className="text-sm font-medium text-gray-900">Soil Sensors</p>
+            <p className="text-xs text-gray-500">Temperature & moisture</p>
+          </div>
+          <div>
+            <Droplets className="h-6 w-6 text-emerald-500 mx-auto mb-2" />
+            <p className="text-sm font-medium text-gray-900">Smart Watering</p>
+            <p className="text-xs text-gray-500">Weather-aware schedules</p>
+          </div>
+        </div>
+      </div>
+    </div>
   );
 }
 
