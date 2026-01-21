@@ -1,9 +1,93 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
+import type { SupabaseClient } from '@supabase/supabase-js';
 import { getAuthenticatedClient } from '../../../../lib/grow/server/auth';
 import { serializePlant, type PlantRow, type InsertPlantRow } from '../../../../lib/grow/server/plants';
 import { getTierLimits, type GrowSubscriptionTier } from '../../../../lib/grow/subscription';
 
 const ALLOWED_HEALTH_VALUES = new Set(['excellent', 'good', 'fair', 'poor']);
+
+/**
+ * Try to find a species_slug for a plant by name
+ * Uses fuzzy matching similar to the planting calendar
+ */
+async function findSpeciesSlugByName(
+  supabase: SupabaseClient,
+  plantName: string,
+  plantType: string
+): Promise<string | null> {
+  const normalizedName = plantName.toLowerCase().trim();
+
+  // Fetch species to match against
+  const { data: species, error } = await supabase
+    .from('plant_species')
+    .select('slug, name');
+
+  if (error || !species) {
+    return null;
+  }
+
+  // Build maps for lookup
+  const nameToSlug = new Map<string, string>();
+  const slugSet = new Set<string>();
+  for (const sp of species) {
+    if (sp.name) {
+      nameToSlug.set(sp.name.toLowerCase().trim(), sp.slug);
+    }
+    slugSet.add(sp.slug);
+  }
+
+  // Direct match by name
+  let matchedSlug = nameToSlug.get(normalizedName);
+
+  // Check if plant name matches a slug directly (e.g., "Pepper" -> "pepper" slug)
+  if (!matchedSlug && slugSet.has(normalizedName)) {
+    matchedSlug = normalizedName;
+  }
+
+  // Try extracting base name (e.g., "Tomato (slicer)" -> "tomato")
+  if (!matchedSlug) {
+    const baseName = normalizedName.split(/[\s(\/]/)[0].trim();
+    if (baseName !== normalizedName) {
+      matchedSlug = nameToSlug.get(baseName);
+      if (!matchedSlug && slugSet.has(baseName)) {
+        matchedSlug = baseName;
+      }
+    }
+  }
+
+  // Try with fruit- prefix for fruit trees
+  if (!matchedSlug && (plantType === 'fruit-tree' || plantType === 'fruit')) {
+    const fruitSlug = `fruit-${normalizedName}`;
+    if (slugSet.has(fruitSlug)) {
+      matchedSlug = fruitSlug;
+    }
+    if (!matchedSlug) {
+      const baseName = normalizedName.split(/[\s(\/]/)[0].trim();
+      const fruitBaseSlug = `fruit-${baseName}`;
+      if (slugSet.has(fruitBaseSlug)) {
+        matchedSlug = fruitBaseSlug;
+      }
+    }
+  }
+
+  // Try with herb- prefix
+  if (!matchedSlug && (plantType === 'herb' || plantType === 'ornamental')) {
+    const herbSlug = `herb-${normalizedName}`;
+    if (slugSet.has(herbSlug)) {
+      matchedSlug = herbSlug;
+    }
+  }
+
+  // Try with tree- prefix
+  if (!matchedSlug && plantType === 'tree') {
+    const treeSlug = `tree-${normalizedName}`;
+    if (slugSet.has(treeSlug)) {
+      matchedSlug = treeSlug;
+    }
+  }
+
+  return matchedSlug || null;
+}
 
 function toIsoString(value?: unknown): string | null {
   if (!value) {
@@ -146,6 +230,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     ? health
     : 'good';
 
+  // Auto-lookup species_slug if not provided
+  let effectiveSpeciesSlug = speciesSlug ? String(speciesSlug).trim() : null;
+  if (!effectiveSpeciesSlug) {
+    effectiveSpeciesSlug = await findSpeciesSlugByName(supabase, String(name), String(type));
+  }
+
   const insertPayload: InsertPlantRow = {
     user_id: userId,
     name: String(name).trim(),
@@ -155,8 +245,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     planted_at: toIsoString(planted),
     last_watered_at: toIsoString(lastWatered),
     notes: notes ? String(notes) : null,
-    // Enhanced fields
-    species_slug: speciesSlug ? String(speciesSlug).trim() : null,
+    // Enhanced fields - auto-lookup if not provided
+    species_slug: effectiveSpeciesSlug,
     variety: variety ? String(variety).trim() : null,
     quantity: typeof quantity === 'number' && quantity > 0 ? quantity : null,
     source: source ? String(source).trim() : null,
