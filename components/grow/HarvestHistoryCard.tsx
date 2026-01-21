@@ -42,7 +42,7 @@ interface HarvestOutcome {
 
 interface HarvestHistoryCardProps {
   plantId: string;
-  plantName: string;
+  plantName?: string;
   compact?: boolean;
 }
 
@@ -52,7 +52,7 @@ interface HarvestHistoryCardProps {
 
 export function HarvestHistoryCard({
   plantId,
-  plantName,
+  plantName: _plantName,
   compact = false,
 }: HarvestHistoryCardProps) {
   const [harvests, setHarvests] = useState<HarvestOutcome[]>([]);

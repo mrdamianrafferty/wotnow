@@ -22,7 +22,6 @@ import {
   Leaf,
   Scale,
   Calendar,
-  Camera,
   ChevronRight,
   Check,
   Sparkles,

@@ -19,7 +19,6 @@ import {
   Loader2,
   Heart,
   Droplets,
-  Camera,
   ChevronDown,
   ChevronUp,
   AlertTriangle,
