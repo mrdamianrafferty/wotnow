@@ -16,7 +16,10 @@ export type IntegrationType =
   | 'tempest'
   | 'ambient_weather'
   | 'rachio'
-  | 'netatmo';
+  | 'netatmo'
+  | 'hydrawise'
+  | 'ecowitt'
+  | 'weatherlink';
 
 export interface Integration {
   id: string;
