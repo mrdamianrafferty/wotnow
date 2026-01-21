@@ -226,6 +226,8 @@ async function fetchZoneOffsets(supabase: SupabaseClient, zoneCode: string | nul
 
 type UserPlantRow = {
   species_slug: string | null;
+  name: string | null;
+  type: string | null;
 };
 
 type UserPreferencesRow = {
@@ -269,7 +271,7 @@ async function fetchUserPreferences(supabase: SupabaseClient, userId: string): P
 async function fetchUserPlantSlugs(supabase: SupabaseClient, userId: string): Promise<Set<string>> {
   const { data, error } = await supabase
     .from('grow_user_plants')
-    .select('species_slug')
+    .select('species_slug, name, type')
     .eq('user_id', userId);
 
   if (error) {
@@ -279,11 +281,70 @@ async function fetchUserPlantSlugs(supabase: SupabaseClient, userId: string): Pr
   }
 
   const slugs = new Set<string>();
+  const plantsNeedingLookup: { name: string; type: string | null }[] = [];
+
   for (const row of (data ?? []) as UserPlantRow[]) {
     if (row.species_slug) {
       slugs.add(row.species_slug);
+    } else if (row.name) {
+      // Collect plants that need name-based lookup
+      plantsNeedingLookup.push({ name: row.name, type: row.type });
     }
   }
+
+  // For plants without species_slug, try to match by name
+  if (plantsNeedingLookup.length > 0) {
+    // Fetch all species to match against (could be optimized with text search)
+    const { data: speciesData, error: speciesError } = await supabase
+      .from('plant_species')
+      .select('slug, name');
+
+    if (!speciesError && speciesData) {
+      // Build a map of lowercase name -> slug for quick lookup
+      const nameToSlug = new Map<string, string>();
+      for (const species of speciesData) {
+        if (species.name) {
+          nameToSlug.set(species.name.toLowerCase().trim(), species.slug);
+        }
+      }
+
+      // Match user plants by name
+      for (const plant of plantsNeedingLookup) {
+        const normalizedName = plant.name.toLowerCase().trim();
+
+        // Direct match
+        if (nameToSlug.has(normalizedName)) {
+          slugs.add(nameToSlug.get(normalizedName)!);
+          continue;
+        }
+
+        // Try common variations for fruit trees
+        if (plant.type === 'fruit-tree' || plant.type === 'fruit') {
+          const fruitSlug = nameToSlug.get(normalizedName) || nameToSlug.get(`fruit-${normalizedName}`);
+          if (fruitSlug) {
+            slugs.add(fruitSlug);
+            continue;
+          }
+          // Check if any slug ends with the plant name (e.g., "fruit-pear" for "Pear")
+          for (const [speciesName, slug] of nameToSlug.entries()) {
+            if (slug.endsWith(`-${normalizedName}`) || speciesName === normalizedName) {
+              slugs.add(slug);
+              break;
+            }
+          }
+        }
+
+        // Try herb- prefix for herbs/ornamentals that might be herbs
+        if (plant.type === 'herb' || plant.type === 'ornamental') {
+          const herbSlug = nameToSlug.get(`herb-${normalizedName}`);
+          if (herbSlug) {
+            slugs.add(herbSlug);
+          }
+        }
+      }
+    }
+  }
+
   return slugs;
 }
 
