@@ -373,6 +373,14 @@ tsx scripts/clear-all-cache-for-date.js
 2. Build: `next build` via `vercel-build.sh`
 3. Environment variables must be set in Vercel dashboard
 
+**Adding Vercel Environment Variables:**
+- **ALWAYS** use the helper script to prevent line break issues:
+  ```bash
+  ./scripts/vercel-env-add.sh VAR_NAME "value" production
+  ```
+- NEVER use `echo "multiline\nvalue" | vercel env add` directly
+- The script automatically strips line breaks from values (important for private keys)
+
 **Domains:**
 - Go Daisy: `godaisy.io` (generalist app)
 - Findr: `fishfindr.eu` (fishing specialist app, with `www.fishfindr.eu` redirect handling)
