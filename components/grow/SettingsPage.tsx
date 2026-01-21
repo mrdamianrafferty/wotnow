@@ -43,6 +43,7 @@ import { GrowLocationDialog } from './GrowLocationDialog';
 import { GrowLanguageSelector } from './GrowLanguageSelector';
 import { NotificationPreferencesCard } from './NotificationPreferencesCard';
 import { IntegrationsCard } from './IntegrationsCard';
+import { SubscriptionCard } from './SubscriptionCard';
 
 // Onboarding data structure (mirrors OnboardingFlow.tsx)
 interface OnboardingData {
@@ -566,6 +567,9 @@ export function SettingsPage() {
           </Card>
         </div>
       )}
+
+      {/* Subscription Section */}
+      <SubscriptionCard />
 
       {/* Location Section */}
       <Card>

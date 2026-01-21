@@ -27,6 +27,7 @@ import {
 } from 'lucide-react';
 import { SoilIdentificationGuide } from './SoilIdentificationGuide';
 import { ClimateZoneInfo } from './ClimateZoneInfo';
+import { SubscriptionCard } from './SubscriptionCard';
 import { type ClimateZoneCode } from '../../lib/grow/climate';
 
 export function InfoPage() {
@@ -63,6 +64,9 @@ export function InfoPage() {
           Learn how Grow Daisy helps you garden smarter
         </p>
       </div>
+
+      {/* Subscription Status */}
+      <SubscriptionCard compact />
 
       {/* How Grow Daisy Works */}
       <Card>
