@@ -948,7 +948,7 @@ export function calculateWateringRecommendation(
   const adequateThreshold = isWinterMonth ? 35 : 50;
   const moderateThreshold = isWinterMonth ? 25 : 30;
 
-  if (soilMoisture > adequateThreshold) {
+  if (soilMoisture >= adequateThreshold) {
     shouldWater = false;
     reason = 'Soil moisture is adequate';
     details.push(`Soil moisture at 1-3cm: ${soilMoisture.toFixed(0)}% (adequate${isWinterMonth ? ' for winter' : ''})`);
@@ -973,15 +973,10 @@ export function calculateWateringRecommendation(
     reason = `Significant rain expected (${rainNext24h.toFixed(0)}mm)`;
     details.push(`Rain forecast: ${rainNext24h.toFixed(0)}mm in next 24-48h (${rainProbability}% chance)`);
   } else if (rainLikelyToday) {
-    // Rain likely today - skip or significantly reduce watering
-    if (todayRainProb >= 50) {
-      shouldWater = false;
-      reason = `Rain likely today (${todayRainProb}% chance)`;
-      details.push(`Rain expected today (${todayRainProb}% chance) - skip watering`);
-    } else {
-      adjustmentFactor *= 0.3; // Significantly reduce
-      details.push(`Rain possible today (${todayRainProb}% chance) - reduce watering`);
-    }
+    // Rain likely today (≥30%) - skip watering to align with UI messaging
+    shouldWater = false;
+    reason = `Rain likely today (${todayRainProb}% chance)`;
+    details.push(`Rain expected today (${todayRainProb}% chance) - skip watering`);
   } else if (rainNext24h >= 5 && rainProbability >= 40) {
     adjustmentFactor *= 0.5;
     details.push(`Light rain expected: ${rainNext24h.toFixed(0)}mm - reduce watering`);
