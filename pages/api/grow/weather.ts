@@ -233,13 +233,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         temperature: Math.round((soilData.temperature.surface ?? soilData.temperature.shallow ?? 10) * 10) / 10,
         // Convert moisture from m³/m³ to percentage (0-100) for display
         // Typical soil moisture: 0.1-0.4 m³/m³ = 10-40%
-        moisture: Math.round((soilData.moisture.surface ?? soilData.moisture.shallow ?? 0.25) * 100),
+        moisture: Math.round((soilData.moisture.surface ?? soilData.moisture.shallow ?? 0.35) * 100),
         // Derive compaction/structure from moisture level
-        compaction: getSoilCompaction(soilData.moisture.surface ?? soilData.moisture.shallow ?? 0.25),
+        compaction: getSoilCompaction(soilData.moisture.surface ?? soilData.moisture.shallow ?? 0.35),
         // Recommendation based on soil conditions
         recommendation: getSoilRecommendation(
           soilData.temperature.surface ?? 10,
-          soilData.moisture.surface ?? 0.25
+          soilData.moisture.surface ?? 0.35
         ),
         // Also include detailed multi-depth data for advanced users
         detailed: soilData,

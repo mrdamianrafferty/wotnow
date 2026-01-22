@@ -149,15 +149,18 @@ async function fetchWeatherForecast(lat: number, lon: number): Promise<WeatherFo
  * Default soil conditions when API fails
  */
 function getDefaultSoilConditions(): SoilConditions {
+  // Fallback values when Open-Meteo soil API is unavailable
+  // Using 35% as a reasonable default for temperate climates
+  console.warn('[WeatherTasks] Using default soil conditions - API may be unavailable');
   return {
     temp0cm: 15,
     temp6cm: 14,
     temp18cm: 12,
     temp54cm: 10,
-    moisture0to1cm: 30,
-    moisture1to3cm: 30,
-    moisture3to9cm: 30,
-    moisture9to27cm: 30,
+    moisture0to1cm: 35,
+    moisture1to3cm: 35,
+    moisture3to9cm: 35,
+    moisture9to27cm: 35,
   };
 }
 
@@ -193,10 +196,10 @@ async function fetchSoilConditions(lat: number, lon: number): Promise<SoilCondit
       temp6cm: hourly.soil_temperature_6cm?.[idx] ?? 14,
       temp18cm: hourly.soil_temperature_18cm?.[idx] ?? 12,
       temp54cm: hourly.soil_temperature_54cm?.[idx] ?? 10,
-      moisture0to1cm: (hourly.soil_moisture_0_to_1cm?.[idx] ?? 0.3) * 100,
-      moisture1to3cm: (hourly.soil_moisture_1_to_3cm?.[idx] ?? 0.3) * 100,
-      moisture3to9cm: (hourly.soil_moisture_3_to_9cm?.[idx] ?? 0.3) * 100,
-      moisture9to27cm: (hourly.soil_moisture_9_to_27cm?.[idx] ?? 0.3) * 100,
+      moisture0to1cm: (hourly.soil_moisture_0_to_1cm?.[idx] ?? 0.35) * 100,
+      moisture1to3cm: (hourly.soil_moisture_1_to_3cm?.[idx] ?? 0.35) * 100,
+      moisture3to9cm: (hourly.soil_moisture_3_to_9cm?.[idx] ?? 0.35) * 100,
+      moisture9to27cm: (hourly.soil_moisture_9_to_27cm?.[idx] ?? 0.35) * 100,
     };
   } catch (err) {
     console.error('[WeatherTasks] fetchSoilConditions error:', err);
