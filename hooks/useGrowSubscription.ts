@@ -148,7 +148,7 @@ export function useGrowSubscription(userId?: string): UseGrowSubscriptionState {
       // Fetch fresh data
       const { data, error: fetchError } = await supabase
         .from('profiles')
-        .select('grow_subscription_tier, grow_subscription_type, grow_stripe_subscription_id, grow_subscription_start_date, grow_subscription_end_date')
+        .select('grow_subscription_tier, grow_subscription_type, grow_stripe_subscription_id, grow_subscription_start, grow_subscription_end')
         .eq('id', targetUserId)
         .single();
 
@@ -175,8 +175,8 @@ export function useGrowSubscription(userId?: string): UseGrowSubscriptionState {
         tier: (data?.grow_subscription_tier as GrowSubscriptionTier) || 'seed',
         subscriptionType: data?.grow_subscription_type as GrowSubscriptionType | null,
         stripeSubscriptionId: data?.grow_stripe_subscription_id || null,
-        subscriptionStartDate: data?.grow_subscription_start_date || null,
-        subscriptionEndDate: data?.grow_subscription_end_date || null,
+        subscriptionStartDate: data?.grow_subscription_start || null,
+        subscriptionEndDate: data?.grow_subscription_end || null,
       };
 
       setSubscription(subscriptionData);
@@ -287,8 +287,8 @@ export function useGrowSubscription(userId?: string): UseGrowSubscriptionState {
               tier: (payload.new.grow_subscription_tier as GrowSubscriptionTier) || 'seed',
               subscriptionType: payload.new.grow_subscription_type as GrowSubscriptionType | null,
               stripeSubscriptionId: payload.new.grow_stripe_subscription_id || null,
-              subscriptionStartDate: payload.new.grow_subscription_start_date || null,
-              subscriptionEndDate: payload.new.grow_subscription_end_date || null,
+              subscriptionStartDate: payload.new.grow_subscription_start || null,
+              subscriptionEndDate: payload.new.grow_subscription_end || null,
             };
 
             setSubscription(newData);
