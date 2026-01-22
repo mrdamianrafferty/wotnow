@@ -939,32 +939,67 @@ export function calculateWateringRecommendation(
     details.push(`⚠️ Frost possible tonight (${today.tempMin.toFixed(0)}°C) - water early in the day if needed`);
   }
 
-  // 1. Check soil moisture
+  // 1. Check soil moisture (with seasonal awareness)
   const soilMoisture = soil.moisture1to3cm;
-  if (soilMoisture > 50) {
+  const currentMonth = new Date().getMonth(); // 0-11
+  const isWinterMonth = currentMonth === 11 || currentMonth === 0 || currentMonth === 1;
+
+  // In winter, lower moisture thresholds are acceptable (soil stays wetter, less evaporation)
+  const adequateThreshold = isWinterMonth ? 35 : 50;
+  const moderateThreshold = isWinterMonth ? 25 : 30;
+
+  if (soilMoisture > adequateThreshold) {
     shouldWater = false;
     reason = 'Soil moisture is adequate';
-    details.push(`Soil moisture at 1-3cm: ${soilMoisture.toFixed(0)}% (adequate)`);
-  } else if (soilMoisture > 30) {
+    details.push(`Soil moisture at 1-3cm: ${soilMoisture.toFixed(0)}% (adequate${isWinterMonth ? ' for winter' : ''})`);
+  } else if (soilMoisture > moderateThreshold) {
     details.push(`Soil moisture at 1-3cm: ${soilMoisture.toFixed(0)}% (moderate)`);
   } else {
     details.push(`Soil moisture at 1-3cm: ${soilMoisture.toFixed(0)}% (dry - needs water)`);
     adjustmentFactor = 1.2; // Water more
   }
 
-  // 2. Check incoming rain
+  // 2. Check incoming rain (aligned with UI thresholds - 30%+ is considered likely)
   const rainNext24h = today.precipitation + (tomorrow?.precipitation || 0);
-  const rainProbability = Math.max(today.precipProbability, tomorrow?.precipProbability || 0);
+  const todayRainProb = today.precipProbability;
+  const tomorrowRainProb = tomorrow?.precipProbability || 0;
+  const rainProbability = Math.max(todayRainProb, tomorrowRainProb);
+
+  // Check if rain is likely TODAY (matches soil status UI threshold of 30%)
+  const rainLikelyToday = todayRainProb >= 30;
 
   if (rainNext24h >= 10 && rainProbability >= 60) {
     shouldWater = false;
     reason = `Significant rain expected (${rainNext24h.toFixed(0)}mm)`;
     details.push(`Rain forecast: ${rainNext24h.toFixed(0)}mm in next 24-48h (${rainProbability}% chance)`);
-  } else if (rainNext24h >= 5 && rainProbability >= 50) {
+  } else if (rainLikelyToday) {
+    // Rain likely today - skip or significantly reduce watering
+    if (todayRainProb >= 50) {
+      shouldWater = false;
+      reason = `Rain likely today (${todayRainProb}% chance)`;
+      details.push(`Rain expected today (${todayRainProb}% chance) - skip watering`);
+    } else {
+      adjustmentFactor *= 0.3; // Significantly reduce
+      details.push(`Rain possible today (${todayRainProb}% chance) - reduce watering`);
+    }
+  } else if (rainNext24h >= 5 && rainProbability >= 40) {
     adjustmentFactor *= 0.5;
     details.push(`Light rain expected: ${rainNext24h.toFixed(0)}mm - reduce watering`);
   } else {
     details.push('No significant rain expected');
+  }
+
+  // 2b. Seasonal awareness - winter months need less watering
+  const month = new Date().getMonth(); // 0-11
+  const isWinter = month === 11 || month === 0 || month === 1; // Dec, Jan, Feb
+  const isAutumn = month >= 9 && month <= 10; // Oct, Nov
+
+  if (isWinter) {
+    adjustmentFactor *= 0.5; // Halve watering in winter
+    details.push('Winter season - soil retains moisture longer');
+  } else if (isAutumn) {
+    adjustmentFactor *= 0.7; // Reduce in autumn
+    details.push('Autumn season - reduced evaporation');
   }
 
   // 3. Check temperature (evaporation)
