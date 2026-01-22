@@ -42,7 +42,7 @@ interface GrowSubscriptionCacheSchema extends DBSchema {
 }
 
 const DB_NAME = 'grow_subscription_cache';
-const DB_VERSION = 1;
+const DB_VERSION = 2; // Bumped to clear stale cache after column name fix
 const SUBSCRIPTION_STORE = 'subscriptions';
 const USAGE_STORE = 'usage';
 const SUBSCRIPTION_TTL_MS = 24 * 60 * 60 * 1000; // 24 hours
