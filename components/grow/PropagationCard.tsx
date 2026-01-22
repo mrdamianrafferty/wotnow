@@ -21,8 +21,51 @@ const difficultyLabels = {
   advanced: 'Advanced',
 };
 
+interface MethodItemProps {
+  method: string;
+  icon: string;
+  difficulty: 'easy' | 'moderate' | 'advanced';
+}
+
+function MethodItem({ method, icon, difficulty }: MethodItemProps) {
+  const bgColors = {
+    easy: 'bg-green-50',
+    moderate: 'bg-amber-50',
+    advanced: 'bg-gray-50',
+  };
+
+  const iconColors = {
+    easy: 'text-green-600',
+    moderate: 'text-amber-600',
+    advanced: 'text-gray-400',
+  };
+
+  return (
+    <div className={`flex items-center justify-between p-2 rounded-lg ${bgColors[difficulty]}`}>
+      <div className="flex items-center gap-1.5">
+        {difficulty === 'advanced' ? (
+          <Circle className={`h-3 w-3 ${iconColors[difficulty]}`} />
+        ) : (
+          <Check className={`h-3 w-3 ${iconColors[difficulty]}`} />
+        )}
+        <span className="text-sm">{icon}</span>
+        <span className={`font-medium text-xs ${difficulty === 'advanced' ? 'text-muted-foreground' : ''}`}>
+          {method}
+        </span>
+      </div>
+      <Badge
+        variant="outline"
+        className={`${difficultyColors[difficulty]} text-[10px] px-1.5 py-0`}
+      >
+        {difficultyLabels[difficulty]}
+      </Badge>
+    </div>
+  );
+}
+
 /**
  * Displays propagation methods for a plant species with difficulty ratings.
+ * Uses a 2-column grid layout for compact display.
  */
 export function PropagationCard({ species }: PropagationCardProps) {
   const propagationMethods = formatPropagation(species.propagation);
@@ -38,10 +81,6 @@ export function PropagationCard({ species }: PropagationCardProps) {
     return order[a.difficulty] - order[b.difficulty];
   });
 
-  const easyMethods = sortedMethods.filter(m => m.difficulty === 'easy');
-  const moderateMethods = sortedMethods.filter(m => m.difficulty === 'moderate');
-  const advancedMethods = sortedMethods.filter(m => m.difficulty === 'advanced');
-
   return (
     <Card>
       <CardHeader className="pb-2">
@@ -50,82 +89,15 @@ export function PropagationCard({ species }: PropagationCardProps) {
           How to Propagate
         </CardTitle>
       </CardHeader>
-      <CardContent className="space-y-3">
-        {/* Recommended methods (easy) */}
-        {easyMethods.length > 0 && (
-          <div className="space-y-2">
-            {easyMethods.map(({ method, icon, difficulty }) => (
-              <div
-                key={method}
-                className="flex items-center justify-between p-2 rounded-lg bg-green-50"
-              >
-                <div className="flex items-center gap-2">
-                  <Check className="h-4 w-4 text-green-600" />
-                  <span className="text-lg">{icon}</span>
-                  <span className="font-medium text-sm">{method}</span>
-                </div>
-                <Badge
-                  variant="outline"
-                  className={difficultyColors[difficulty]}
-                >
-                  {difficultyLabels[difficulty]}
-                </Badge>
-              </div>
-            ))}
-          </div>
-        )}
-
-        {/* Moderate methods */}
-        {moderateMethods.length > 0 && (
-          <div className="space-y-2">
-            {moderateMethods.map(({ method, icon, difficulty }) => (
-              <div
-                key={method}
-                className="flex items-center justify-between p-2 rounded-lg bg-amber-50"
-              >
-                <div className="flex items-center gap-2">
-                  <Check className="h-4 w-4 text-amber-600" />
-                  <span className="text-lg">{icon}</span>
-                  <span className="font-medium text-sm">{method}</span>
-                </div>
-                <Badge
-                  variant="outline"
-                  className={difficultyColors[difficulty]}
-                >
-                  {difficultyLabels[difficulty]}
-                </Badge>
-              </div>
-            ))}
-          </div>
-        )}
-
-        {/* Advanced methods */}
-        {advancedMethods.length > 0 && (
-          <div className="space-y-2">
-            {advancedMethods.map(({ method, icon, difficulty }) => (
-              <div
-                key={method}
-                className="flex items-center justify-between p-2 rounded-lg bg-gray-50"
-              >
-                <div className="flex items-center gap-2">
-                  <Circle className="h-4 w-4 text-gray-400" />
-                  <span className="text-lg">{icon}</span>
-                  <span className="font-medium text-sm text-muted-foreground">{method}</span>
-                </div>
-                <Badge
-                  variant="outline"
-                  className={difficultyColors[difficulty]}
-                >
-                  {difficultyLabels[difficulty]}
-                </Badge>
-              </div>
-            ))}
-          </div>
-        )}
-
+      <CardContent className="pt-0">
+        <div className="grid grid-cols-2 gap-1">
+          {sortedMethods.map(({ method, icon, difficulty }) => (
+            <MethodItem key={method} method={method} icon={icon} difficulty={difficulty} />
+          ))}
+        </div>
         {/* Seeds info */}
         {species.seeds > 0 && (
-          <p className="text-xs text-muted-foreground text-center pt-2 border-t">
+          <p className="text-xs text-muted-foreground text-center pt-2 mt-2 border-t">
             This plant produces viable seeds for propagation
           </p>
         )}

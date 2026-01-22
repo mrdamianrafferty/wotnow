@@ -9,30 +9,6 @@ interface VisualCharacteristicsCardProps {
   species: PlantSpecies;
 }
 
-interface CharacteristicRowProps {
-  icon: React.ReactNode;
-  label: string;
-  value: React.ReactNode;
-  subValue?: string | null;
-}
-
-function CharacteristicRow({ icon, label, value, subValue }: CharacteristicRowProps) {
-  return (
-    <div className="flex items-start gap-3 py-2">
-      <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-purple-50 flex items-center justify-center">
-        {icon}
-      </div>
-      <div className="flex-1 min-w-0">
-        <p className="text-xs text-muted-foreground uppercase tracking-wide">{label}</p>
-        <div className="font-medium text-sm">{value}</div>
-        {subValue && (
-          <p className="text-xs text-muted-foreground mt-0.5">{subValue}</p>
-        )}
-      </div>
-    </div>
-  );
-}
-
 function ColorBadges({ colors }: { colors: string[] }) {
   const colorMap: Record<string, string> = {
     red: 'bg-red-100 text-red-800',
@@ -53,7 +29,7 @@ function ColorBadges({ colors }: { colors: string[] }) {
       {colors.map((color) => {
         const colorClass = colorMap[color.toLowerCase()] || 'bg-gray-100 text-gray-800';
         return (
-          <Badge key={color} variant="outline" className={`${colorClass} text-xs`}>
+          <Badge key={color} variant="outline" className={`${colorClass} text-[10px] px-1.5 py-0`}>
             {color.charAt(0).toUpperCase() + color.slice(1)}
           </Badge>
         );
@@ -62,18 +38,128 @@ function ColorBadges({ colors }: { colors: string[] }) {
   );
 }
 
+interface CharacteristicItemProps {
+  icon: React.ReactNode;
+  label: string;
+  value: React.ReactNode;
+  subValue?: string | null;
+}
+
+function CharacteristicItem({ icon, label, value, subValue }: CharacteristicItemProps) {
+  return (
+    <div className="flex items-start gap-2 p-2">
+      <div className="flex-shrink-0 w-7 h-7 rounded-lg bg-purple-50 flex items-center justify-center">
+        {icon}
+      </div>
+      <div className="flex-1 min-w-0">
+        <p className="text-[10px] text-muted-foreground uppercase tracking-wide">{label}</p>
+        <div className="font-medium text-sm leading-tight">{value}</div>
+        {subValue && (
+          <p className="text-[10px] text-muted-foreground mt-0.5 leading-tight">{subValue}</p>
+        )}
+      </div>
+    </div>
+  );
+}
+
 /**
  * Displays visual characteristics of a plant species including
  * flowering, fruiting, leaf colors, and edibility.
+ * Uses a 2-column grid layout for compact display.
  */
 export function VisualCharacteristicsCard({ species }: VisualCharacteristicsCardProps) {
   const hasFlowers = species.flowers && (species.flowerColor || species.floweringSeason);
   const hasFruits = species.fruits && (species.fruitColor.length > 0 || species.harvestSeason);
   const hasLeaves = species.leafColor.length > 0;
-  const hasEdibles = species.edibleFruit || species.edibleLeaf || species.cuisine;
+  const hasCulinary = species.cuisine && species.cuisineList;
+  const hasCones = species.cones;
 
-  // Check if we have any data to display
-  if (!hasFlowers && !hasFruits && !hasLeaves && !hasEdibles) {
+  // Build array of characteristics to display
+  const characteristics: CharacteristicItemProps[] = [];
+
+  if (hasFlowers) {
+    characteristics.push({
+      icon: <Flower2 className="h-4 w-4 text-pink-500" />,
+      label: 'Flowers',
+      value: (
+        <div className="flex flex-wrap items-center gap-1">
+          <span className="text-pink-600 text-sm">Yes</span>
+          {species.flowerColor && (
+            <Badge variant="outline" className="bg-pink-50 text-pink-700 text-[10px] px-1.5 py-0">
+              {species.flowerColor}
+            </Badge>
+          )}
+        </div>
+      ),
+      subValue: species.floweringSeason ? `Blooms in ${formatSeason(species.floweringSeason)}` : null,
+    });
+  }
+
+  if (hasFruits) {
+    characteristics.push({
+      icon: <Apple className="h-4 w-4 text-red-500" />,
+      label: 'Fruits',
+      value: (
+        <div className="space-y-1">
+          <div className="flex items-center gap-1">
+            <span className="text-red-600 text-sm">Yes</span>
+            {species.edibleFruit && (
+              <Badge className="bg-green-100 text-green-700 text-[10px] px-1.5 py-0">
+                Edible
+              </Badge>
+            )}
+          </div>
+          {species.fruitColor.length > 0 && <ColorBadges colors={species.fruitColor} />}
+        </div>
+      ),
+      subValue: species.harvestSeason
+        ? `Harvest: ${formatSeason(species.harvestSeason)}`
+        : species.edibleFruitTasteProfile
+          ? `Taste: ${species.edibleFruitTasteProfile}`
+          : null,
+    });
+  }
+
+  if (hasLeaves) {
+    characteristics.push({
+      icon: <Leaf className="h-4 w-4 text-green-500" />,
+      label: 'Foliage',
+      value: (
+        <div className="space-y-1">
+          {species.edibleLeaf && (
+            <Badge className="bg-green-100 text-green-700 text-[10px] px-1.5 py-0">
+              Edible Leaves
+            </Badge>
+          )}
+          <ColorBadges colors={species.leafColor} />
+        </div>
+      ),
+      subValue: species.edibleLeafTasteProfile ? `Taste: ${species.edibleLeafTasteProfile}` : null,
+    });
+  }
+
+  if (hasCulinary) {
+    characteristics.push({
+      icon: <span className="text-base">🍳</span>,
+      label: 'Culinary',
+      value: (
+        <Badge className="bg-amber-100 text-amber-700 text-[10px] px-1.5 py-0">
+          Culinary Use
+        </Badge>
+      ),
+      subValue: species.cuisineList,
+    });
+  }
+
+  if (hasCones) {
+    characteristics.push({
+      icon: <span className="text-base">🌲</span>,
+      label: 'Cones',
+      value: <span className="text-green-700 text-sm">Produces cones</span>,
+    });
+  }
+
+  if (characteristics.length === 0) {
     return null;
   }
 
@@ -86,99 +172,10 @@ export function VisualCharacteristicsCard({ species }: VisualCharacteristicsCard
         </CardTitle>
       </CardHeader>
       <CardContent className="pt-0">
-        <div className="divide-y divide-gray-100">
-          {/* Flowers */}
-          {hasFlowers && (
-            <CharacteristicRow
-              icon={<Flower2 className="h-4 w-4 text-pink-500" />}
-              label="Flowers"
-              value={
-                <div className="flex flex-wrap items-center gap-2">
-                  <span className="text-pink-600">Yes</span>
-                  {species.flowerColor && (
-                    <Badge variant="outline" className="bg-pink-50 text-pink-700 text-xs">
-                      {species.flowerColor}
-                    </Badge>
-                  )}
-                </div>
-              }
-              subValue={species.floweringSeason ? `Blooms in ${formatSeason(species.floweringSeason)}` : null}
-            />
-          )}
-
-          {/* Fruits */}
-          {hasFruits && (
-            <CharacteristicRow
-              icon={<Apple className="h-4 w-4 text-red-500" />}
-              label="Fruits"
-              value={
-                <div className="space-y-1">
-                  <div className="flex items-center gap-2">
-                    <span className="text-red-600">Yes</span>
-                    {species.edibleFruit && (
-                      <Badge className="bg-green-100 text-green-700 text-xs">
-                        Edible
-                      </Badge>
-                    )}
-                  </div>
-                  {species.fruitColor.length > 0 && (
-                    <ColorBadges colors={species.fruitColor} />
-                  )}
-                </div>
-              }
-              subValue={
-                species.harvestSeason
-                  ? `Harvest in ${formatSeason(species.harvestSeason)}`
-                  : species.edibleFruitTasteProfile
-                    ? `Taste: ${species.edibleFruitTasteProfile}`
-                    : null
-              }
-            />
-          )}
-
-          {/* Leaves */}
-          {hasLeaves && (
-            <CharacteristicRow
-              icon={<Leaf className="h-4 w-4 text-green-500" />}
-              label="Foliage"
-              value={
-                <div className="space-y-1">
-                  <div className="flex items-center gap-2">
-                    {species.edibleLeaf && (
-                      <Badge className="bg-green-100 text-green-700 text-xs">
-                        Edible Leaves
-                      </Badge>
-                    )}
-                  </div>
-                  <ColorBadges colors={species.leafColor} />
-                </div>
-              }
-              subValue={species.edibleLeafTasteProfile ? `Taste: ${species.edibleLeafTasteProfile}` : null}
-            />
-          )}
-
-          {/* Culinary uses */}
-          {species.cuisine && species.cuisineList && (
-            <CharacteristicRow
-              icon={<span className="text-lg">🍳</span>}
-              label="Culinary"
-              value={
-                <Badge className="bg-amber-100 text-amber-700 text-xs">
-                  Culinary Use
-                </Badge>
-              }
-              subValue={species.cuisineList}
-            />
-          )}
-
-          {/* Cones (for conifers) */}
-          {species.cones && (
-            <CharacteristicRow
-              icon={<span className="text-lg">🌲</span>}
-              label="Cones"
-              value={<span className="text-green-700">Produces cones</span>}
-            />
-          )}
+        <div className="grid grid-cols-2 gap-1">
+          {characteristics.map((char, index) => (
+            <CharacteristicItem key={index} {...char} />
+          ))}
         </div>
       </CardContent>
     </Card>

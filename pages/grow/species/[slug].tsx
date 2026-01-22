@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Sprout, Shovel, Scissors, Wheat, MapPin } from "lucide-react";
+import { Sprout, Shovel, Scissors, Wheat, MapPin, ChevronDown } from "lucide-react";
 import { ThreatCard } from "@/components/grow/ThreatCard";
 import { GrowLayout } from "@/components/grow/GrowLayout";
 import { QuickFactsCard } from "@/components/grow/QuickFactsCard";
@@ -376,6 +376,7 @@ export default function GrowSpeciesPage() {
   );
 
   const [isHeroOpen, setIsHeroOpen] = useState(false);
+  const [isAllWindowsExpanded, setIsAllWindowsExpanded] = useState(false);
 
   // Fetch user location on mount (wait for hydration AND accessToken to be set)
   useEffect(() => {
@@ -1197,41 +1198,50 @@ export default function GrowSpeciesPage() {
                 </div>
 
                 <div>
-                  <div className="text-xs font-medium text-muted-foreground mb-2">
+                  <button
+                    type="button"
+                    onClick={() => setIsAllWindowsExpanded(!isAllWindowsExpanded)}
+                    className="flex items-center gap-1 text-xs font-medium text-muted-foreground mb-2 hover:text-foreground transition-colors"
+                  >
+                    <ChevronDown
+                      className={`h-4 w-4 transition-transform ${isAllWindowsExpanded ? "rotate-0" : "-rotate-90"}`}
+                    />
                     All windows
-                  </div>
-                  <div className="space-y-2">
-                    {Array.from(windowsByTaskCode.entries()).map(
-                      ([taskCode, rows]) => (
-                        <div
-                          key={taskCode}
-                          className="p-3 rounded-lg border bg-white"
-                        >
-                          <div className="flex items-center justify-between gap-2">
-                            <div className="flex items-center gap-2 font-medium">
-                              {rows[0] ? (
-                                <TimingIcon
-                                  kind={classifyTimingKind(rows[0])}
-                                />
-                              ) : null}
-                              <span>{rows[0]?.taskName ?? taskCode}</span>
+                  </button>
+                  {isAllWindowsExpanded && (
+                    <div className="space-y-2">
+                      {Array.from(windowsByTaskCode.entries()).map(
+                        ([taskCode, rows]) => (
+                          <div
+                            key={taskCode}
+                            className="p-3 rounded-lg border bg-white"
+                          >
+                            <div className="flex items-center justify-between gap-2">
+                              <div className="flex items-center gap-2 font-medium">
+                                {rows[0] ? (
+                                  <TimingIcon
+                                    kind={classifyTimingKind(rows[0])}
+                                  />
+                                ) : null}
+                                <span>{rows[0]?.taskName ?? taskCode}</span>
+                              </div>
+                              <Badge variant="outline">{taskCode}</Badge>
                             </div>
-                            <Badge variant="outline">{taskCode}</Badge>
+                            <div className="mt-2 flex flex-wrap gap-2">
+                              {rows.slice(0, 4).map((w) => (
+                                <Badge
+                                  key={`${taskCode}:${w.startWeek}:${w.endWeek}`}
+                                  variant="secondary"
+                                >
+                                  {windowStartLabel(w)}–{windowEndLabel(w)}
+                                </Badge>
+                              ))}
+                            </div>
                           </div>
-                          <div className="mt-2 flex flex-wrap gap-2">
-                            {rows.slice(0, 4).map((w) => (
-                              <Badge
-                                key={`${taskCode}:${w.startWeek}:${w.endWeek}`}
-                                variant="secondary"
-                              >
-                                {windowStartLabel(w)}–{windowEndLabel(w)}
-                              </Badge>
-                            ))}
-                          </div>
-                        </div>
-                      ),
-                    )}
-                  </div>
+                        ),
+                      )}
+                    </div>
+                  )}
                 </div>
               </div>
             ) : (
