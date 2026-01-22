@@ -10,6 +10,13 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Sprout, Shovel, Scissors, Wheat, MapPin } from "lucide-react";
 import { ThreatCard } from "@/components/grow/ThreatCard";
 import { GrowLayout } from "@/components/grow/GrowLayout";
+import { QuickFactsCard } from "@/components/grow/QuickFactsCard";
+import { SafetyCard, SafetyAlerts } from "@/components/grow/SafetyCard";
+import { VisualCharacteristicsCard } from "@/components/grow/VisualCharacteristicsCard";
+import { WildlifeCard } from "@/components/grow/WildlifeCard";
+import { PropagationCard } from "@/components/grow/PropagationCard";
+import { HardinessZoneBar } from "@/components/grow/HardinessZoneBar";
+import { LocalizedNamesCard } from "@/components/grow/LocalizedNamesCard";
 import { TranslatedText } from "@/components/translation/TranslatedFishCard";
 import { GrowLocationDialog } from "@/components/grow/GrowLocationDialog";
 import { type BasicLocation } from "@/components/CoastalLocationDialog";
@@ -334,6 +341,8 @@ export default function GrowSpeciesPage() {
 
   // Location state for personalized timing
   const [locationName, setLocationName] = useState<string | null>(null);
+  const [userLat, setUserLat] = useState<number | null>(null);
+  const [userLon, setUserLon] = useState<number | null>(null);
   const [hasLocation, setHasLocation] = useState<boolean | null>(null); // null = loading, starts as loading
   const [showLocationDialog, setShowLocationDialog] = useState(false);
   const [locationVersion, setLocationVersion] = useState(0); // Trigger refetch when location changes
@@ -395,7 +404,7 @@ export default function GrowSpeciesPage() {
           return r.json();
         })
         .then((data) => {
-          // API returns { location: { rectangleLabel, rectangleRegion, ... } }
+          // API returns { location: { rectangleLabel, rectangleRegion, lat, lon, ... } }
           const loc = data?.location;
           const name =
             loc?.rectangleLabel ||
@@ -403,6 +412,8 @@ export default function GrowSpeciesPage() {
             null;
           console.log("[Species] Location loaded:", name, "from data:", data);
           setLocationName(name);
+          setUserLat(loc?.lat ?? null);
+          setUserLon(loc?.lon ?? null);
           setHasLocation(Boolean(name));
         })
         .catch((err) => {
@@ -440,6 +451,8 @@ export default function GrowSpeciesPage() {
         });
 
         setLocationName(loc.name);
+        setUserLat(loc.lat);
+        setUserLon(loc.lon);
         setHasLocation(true);
         // Trigger refetch of planting windows with new location
         setWindows(null);
@@ -861,6 +874,8 @@ export default function GrowSpeciesPage() {
                 <Badge variant="outline">📏 {species.plantSize}</Badge>
               ) : null}
               {usda ? <Badge variant="outline">{usda}</Badge> : null}
+              {/* Safety alerts for thorny/invasive/toxic */}
+              {species && <SafetyAlerts species={species} />}
             </div>
 
             {/* Custom species info banner */}
@@ -962,6 +977,9 @@ export default function GrowSpeciesPage() {
             </div>
           </div>
         ) : null}
+
+        {/* Quick Facts Card - dimensions, growth, care summary */}
+        {species && <QuickFactsCard species={species} userLat={userLat} userLon={userLon} />}
 
         <Card>
           <CardHeader>
@@ -1066,6 +1084,12 @@ export default function GrowSpeciesPage() {
             )}
           </CardContent>
         </Card>
+
+        {/* Safety Card - toxicity warnings (only shows if moderate+ toxicity) */}
+        {species && <SafetyCard species={species} />}
+
+        {/* Visual Characteristics Card - flowers, fruits, colors */}
+        {species && <VisualCharacteristicsCard species={species} />}
 
         {/* The [Plant] year in [Location] Section */}
         <Card>
@@ -1347,6 +1371,18 @@ export default function GrowSpeciesPage() {
             </CardContent>
           </Card>
         ) : null}
+
+        {/* Propagation Card - how to propagate with difficulty ratings */}
+        {species && <PropagationCard species={species} />}
+
+        {/* Wildlife & Ecology Card - pollinators attracted, pests */}
+        {species && <WildlifeCard species={species} />}
+
+        {/* Hardiness Zone Bar - visual zone indicator with user compatibility */}
+        {species && <HardinessZoneBar species={species} userLat={userLat} userLon={userLon} />}
+
+        {/* Localized Names Card - multi-language names (collapsible) */}
+        {species && <LocalizedNamesCard species={species} />}
       </div>
 
       {/* Location dialog */}

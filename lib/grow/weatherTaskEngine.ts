@@ -45,6 +45,13 @@ export interface UserPlant {
   temperatureMax?: number;
   lastWateredAt?: string;
   wateringFrequencyDays?: number;
+  // Enhanced properties from PlantSpecies for personalization
+  droughtTolerant?: boolean;
+  growthRate?: 'High' | 'Medium' | 'Low' | string | null;
+  hardinessMin?: number | null;  // USDA hardiness zone min
+  hardinessMax?: number | null;  // USDA hardiness zone max
+  indoor?: boolean;
+  soil?: string[];  // Soil types for watering adjustments
 }
 
 export interface WeatherAlert {
@@ -74,6 +81,14 @@ export interface WeatherTaskResult {
   taskAdjustments: TaskAdjustment[];
   wateringRecommendation: WateringRecommendation;
   plantingWindows: PlantingWindow[];
+  // Enhanced features
+  fertilizerRecommendations: FertilizerRecommendation[];
+  indoorPlantWatering: WateringRecommendation[];
+  plantCounts: {
+    total: number;
+    outdoor: number;
+    indoor: number;
+  };
 }
 
 export interface WateringRecommendation {
@@ -94,12 +109,139 @@ export interface PlantingWindow {
   daysUntilReady?: number;
 }
 
+export interface FertilizerRecommendation {
+  plantId: string;
+  plantName: string;
+  frequency: 'monthly' | 'bi-weekly' | 'quarterly' | 'none';
+  reason: string;
+  nextFeedDate?: string;
+  isGrowingSeason: boolean;
+}
+
+// =============================================================================
+// USDA HARDINESS ZONE UTILITIES
+// =============================================================================
+
+/**
+ * Convert USDA hardiness zone to approximate minimum temperature (°C)
+ * Used for per-plant frost threshold calculations
+ */
+const ZONE_TO_MIN_TEMP: Record<number, number> = {
+  1: -51, 2: -46, 3: -40, 4: -34, 5: -29, 6: -23,
+  7: -18, 8: -12, 9: -7, 10: -1, 11: 4, 12: 10, 13: 16,
+};
+
+export function zoneToMinTemp(zone: number): number {
+  return ZONE_TO_MIN_TEMP[zone] ?? -10; // Default to zone 6-7 boundary
+}
+
+/**
+ * Get frost threshold temperature for a plant based on hardiness zone
+ * Returns the minimum temperature the plant can tolerate
+ */
+export function getPlantFrostThreshold(plant: UserPlant): number {
+  // Use hardiness zone if available (more accurate)
+  if (plant.hardinessMin !== null && plant.hardinessMin !== undefined) {
+    // Add 2°C safety margin above the zone's minimum
+    return zoneToMinTemp(plant.hardinessMin) + 2;
+  }
+
+  // Fall back to frost tolerance categories
+  switch (plant.frostTolerance) {
+    case 'hardy':
+      return -10; // Can handle hard frosts
+    case 'half_hardy':
+      return -2;  // Light frost only
+    case 'tender':
+      return 2;   // No frost tolerance
+    default:
+      return 0;   // Conservative default
+  }
+}
+
+// =============================================================================
+// PER-PLANT WATERING MULTIPLIERS
+// =============================================================================
+
+/**
+ * Calculate watering adjustment multiplier based on plant properties
+ * Factors in: water needs, drought tolerance, growth rate, soil preferences
+ */
+export function calculatePlantWateringMultiplier(plant: UserPlant): {
+  multiplier: number;
+  reasons: string[];
+} {
+  let multiplier = 1.0;
+  const reasons: string[] = [];
+
+  // 1. Water needs adjustment
+  switch (plant.waterNeeds) {
+    case 'low':
+      multiplier *= 0.7;
+      reasons.push('Low water needs (-30%)');
+      break;
+    case 'high':
+      multiplier *= 1.3;
+      reasons.push('High water needs (+30%)');
+      break;
+    // 'medium' stays at 1.0
+  }
+
+  // 2. Drought tolerance adjustment
+  if (plant.droughtTolerant) {
+    multiplier *= 0.8;
+    reasons.push('Drought tolerant (-20%)');
+  }
+
+  // 3. Growth rate adjustment (fast growers need more water)
+  const growthRate = plant.growthRate?.toLowerCase();
+  if (growthRate === 'high') {
+    multiplier *= 1.2;
+    reasons.push('Fast growth rate (+20%)');
+  } else if (growthRate === 'low') {
+    multiplier *= 0.85;
+    reasons.push('Slow growth rate (-15%)');
+  }
+
+  // 4. Soil type adjustment
+  if (plant.soil && plant.soil.length > 0) {
+    const soilTypes = plant.soil.map(s => s.toLowerCase());
+    if (soilTypes.some(s => s.includes('sandy') || s.includes('well-drain'))) {
+      multiplier *= 1.15;
+      reasons.push('Sandy/well-draining soil (+15%)');
+    } else if (soilTypes.some(s => s.includes('clay') || s.includes('heavy'))) {
+      multiplier *= 0.85;
+      reasons.push('Clay/heavy soil (-15%)');
+    }
+  }
+
+  return {
+    multiplier: Math.round(multiplier * 100) / 100,
+    reasons,
+  };
+}
+
+/**
+ * Check if plant is indoor and should skip outdoor weather tasks
+ */
+export function isIndoorPlant(plant: UserPlant): boolean {
+  return plant.indoor === true;
+}
+
+/**
+ * Filter plants to only outdoor plants for weather-based recommendations
+ */
+export function filterOutdoorPlants(plants: UserPlant[]): UserPlant[] {
+  return plants.filter(p => !isIndoorPlant(p));
+}
+
 // =============================================================================
 // FROST DETECTION
 // =============================================================================
 
 /**
  * Check forecast for frost risk and identify affected plants
+ * Uses per-plant hardiness zones for personalized thresholds
  */
 export function detectFrostRisk(
   forecast: WeatherForecast[],
@@ -110,51 +252,70 @@ export function detectFrostRisk(
   const now = new Date();
   const cutoff = new Date(now.getTime() + hoursAhead * 60 * 60 * 1000);
 
-  // Find frost events in forecast window
-  const frostDays = forecast.filter(day => {
+  // Filter to outdoor plants only - indoor plants don't need frost protection
+  const outdoorPlants = filterOutdoorPlants(plants);
+  if (outdoorPlants.length === 0) return alerts;
+
+  // Find cold days in forecast window (check any day with temp below typical tender threshold)
+  const coldDays = forecast.filter(day => {
     const dayDate = new Date(day.date);
-    return dayDate <= cutoff && day.tempMin <= 0;
+    return dayDate <= cutoff && day.tempMin <= 5; // Check any day below 5°C
   });
 
-  if (frostDays.length === 0) return alerts;
+  if (coldDays.length === 0) return alerts;
 
-  // Identify tender and half-hardy plants at risk
-  const tenderPlants = plants.filter(p => p.frostTolerance === 'tender');
-  const halfHardyPlants = plants.filter(p => p.frostTolerance === 'half_hardy');
+  for (const coldDay of coldDays) {
+    const forecastTemp = coldDay.tempMin;
+    const affectedPlants: Array<{ plant: UserPlant; threshold: number; margin: number }> = [];
+    let maxSeverity: 'info' | 'warning' | 'critical' = 'info';
 
-  for (const frostDay of frostDays) {
-    const frostTemp = frostDay.tempMin;
-    const affectedIds: string[] = [];
-    let severity: 'info' | 'warning' | 'critical' = 'info';
+    // Check each plant against its personalized frost threshold
+    for (const plant of outdoorPlants) {
+      const threshold = getPlantFrostThreshold(plant);
+      const margin = forecastTemp - threshold;
 
-    // Tender plants are at risk from any frost
-    if (tenderPlants.length > 0 && frostTemp <= 0) {
-      affectedIds.push(...tenderPlants.map(p => p.id));
-      severity = frostTemp <= -2 ? 'critical' : 'warning';
+      // If forecast temp is at or below plant's threshold, it's at risk
+      if (margin <= 2) { // 2°C safety margin
+        affectedPlants.push({ plant, threshold, margin });
+
+        // Determine severity based on how far below threshold
+        if (margin <= -5) {
+          maxSeverity = 'critical';
+        } else if (margin <= 0 && maxSeverity !== 'critical') {
+          maxSeverity = 'critical';
+        } else if (margin <= 2 && maxSeverity === 'info') {
+          maxSeverity = 'warning';
+        }
+      }
     }
 
-    // Half-hardy plants at risk from hard frost
-    if (halfHardyPlants.length > 0 && frostTemp <= -2) {
-      affectedIds.push(...halfHardyPlants.map(p => p.id));
-      severity = 'critical';
-    }
-
-    if (affectedIds.length > 0) {
-      const plantCount = affectedIds.length;
+    if (affectedPlants.length > 0) {
+      const plantCount = affectedPlants.length;
       const plantWord = plantCount === 1 ? 'plant' : 'plants';
+      const criticalPlants = affectedPlants.filter(p => p.margin <= 0);
+      const warningPlants = affectedPlants.filter(p => p.margin > 0 && p.margin <= 2);
+
+      // Build detailed message
+      let detailMessage = `Temperature expected to drop to ${forecastTemp}°C on ${coldDay.date}. `;
+      if (criticalPlants.length > 0) {
+        const names = criticalPlants.slice(0, 3).map(p => p.plant.plantName).join(', ');
+        detailMessage += `${criticalPlants.length} ${plantWord} at critical risk (${names}${criticalPlants.length > 3 ? '...' : ''}). `;
+      }
+      if (warningPlants.length > 0) {
+        detailMessage += `${warningPlants.length} more ${plantWord} approaching their cold tolerance limit.`;
+      }
 
       alerts.push({
         type: 'frost',
-        severity,
-        title: severity === 'critical'
-          ? `HARD FROST WARNING - ${plantCount} ${plantWord} at risk`
-          : `Frost Alert - ${plantCount} ${plantWord} may need protection`,
-        message: `Temperature expected to drop to ${frostTemp}°C on ${frostDay.date}. ` +
-          `${plantCount} of your tender or half-hardy ${plantWord} could be damaged.`,
-        forecastDate: frostDay.date,
-        forecastValue: frostTemp,
-        affectedPlantIds: affectedIds,
-        suggestedAction: severity === 'critical'
+        severity: maxSeverity,
+        title: maxSeverity === 'critical'
+          ? `FROST WARNING - ${plantCount} ${plantWord} at risk`
+          : `Cold Alert - ${plantCount} ${plantWord} may need protection`,
+        message: detailMessage,
+        forecastDate: coldDay.date,
+        forecastValue: forecastTemp,
+        affectedPlantIds: affectedPlants.map(p => p.plant.id),
+        suggestedAction: maxSeverity === 'critical'
           ? 'Move tender plants indoors or cover with fleece/cloches tonight.'
           : 'Consider covering tender plants or moving containers to a sheltered spot.',
       });
@@ -713,12 +874,13 @@ function calculateNextUnfrozenDate(forecast: WeatherForecast[]): string {
 }
 
 /**
- * Calculate smart watering recommendation based on weather
+ * Calculate smart watering recommendation based on weather and plant properties
+ * Now includes per-plant multipliers for personalized recommendations
  */
 export function calculateWateringRecommendation(
   forecast: WeatherForecast[],
   soil: SoilConditions,
-  _plants: UserPlant[]
+  plants: UserPlant[]
 ): WateringRecommendation {
   const today = forecast[0];
   const tomorrow = forecast[1];
@@ -836,7 +998,42 @@ export function calculateWateringRecommendation(
     details.push(`High humidity (${today.humidity}%) reduces evaporation`);
   }
 
-  // 6. Calculate next watering date
+  // 6. Per-plant watering adjustments
+  // Filter to outdoor plants only - indoor plants have separate watering needs
+  const outdoorPlants = filterOutdoorPlants(plants);
+
+  if (outdoorPlants.length > 0) {
+    // Calculate average plant multiplier for the garden
+    const plantMultipliers = outdoorPlants.map(p => calculatePlantWateringMultiplier(p));
+    const avgPlantMultiplier = plantMultipliers.reduce((sum, m) => sum + m.multiplier, 0) / plantMultipliers.length;
+
+    if (avgPlantMultiplier !== 1.0) {
+      adjustmentFactor *= avgPlantMultiplier;
+
+      // Summarize plant-based reasons
+      const uniqueReasons = new Set<string>();
+      for (const m of plantMultipliers) {
+        m.reasons.forEach(r => uniqueReasons.add(r));
+      }
+
+      if (uniqueReasons.size > 0) {
+        const reasonSummary = Array.from(uniqueReasons).slice(0, 3).join('; ');
+        details.push(`Plant needs: ${reasonSummary}`);
+      }
+    }
+
+    // Special handling: drought-tolerant plants can wait longer
+    const droughtTolerantCount = outdoorPlants.filter(p => p.droughtTolerant).length;
+    const droughtRatio = droughtTolerantCount / outdoorPlants.length;
+
+    if (droughtRatio > 0.5 && soilMoisture > 20 && shouldWater) {
+      // If most plants are drought-tolerant and soil isn't critically dry, suggest skipping
+      details.push(`${droughtTolerantCount}/${outdoorPlants.length} plants are drought-tolerant - can wait longer`);
+      adjustmentFactor *= 0.8;
+    }
+  }
+
+  // 7. Calculate next watering date
   let nextWateringDate = new Date().toISOString().split('T')[0];
   if (!shouldWater) {
     // Suggest checking after rain
@@ -947,11 +1144,186 @@ export function calculatePlantingWindows(
 }
 
 // =============================================================================
+// GROWTH-BASED FERTILIZER RECOMMENDATIONS
+// =============================================================================
+
+/**
+ * Generate fertilizer recommendations based on plant growth rate and season
+ * Fast-growing plants need more frequent feeding during growing season
+ */
+export function calculateFertilizerRecommendations(
+  plants: UserPlant[]
+): FertilizerRecommendation[] {
+  const recommendations: FertilizerRecommendation[] = [];
+  const now = new Date();
+  const month = now.getMonth() + 1; // 1-12
+
+  // Growing season: April to September (4-9) in Northern Hemisphere
+  const isGrowingSeason = month >= 4 && month <= 9;
+
+  // Filter to outdoor plants - indoor plants have different fertilizer needs
+  const outdoorPlants = filterOutdoorPlants(plants);
+
+  for (const plant of outdoorPlants) {
+    const growthRate = plant.growthRate?.toLowerCase();
+    let frequency: FertilizerRecommendation['frequency'] = 'quarterly';
+    let reason = '';
+
+    if (!isGrowingSeason) {
+      // Dormant season - minimal feeding for most plants
+      frequency = 'none';
+      reason = 'Dormant season - no fertilizer needed until spring';
+    } else if (growthRate === 'high') {
+      // Fast growers need frequent feeding during growing season
+      frequency = 'bi-weekly';
+      reason = 'Fast-growing plant benefits from bi-weekly feeding in growing season';
+    } else if (growthRate === 'medium') {
+      // Medium growers need monthly feeding
+      frequency = 'monthly';
+      reason = 'Regular monthly feeding during growing season';
+    } else if (growthRate === 'low') {
+      // Slow growers need less frequent feeding
+      frequency = 'quarterly';
+      reason = 'Slow-growing plant needs minimal feeding';
+    } else {
+      // Default for unknown growth rate
+      frequency = 'monthly';
+      reason = 'Standard monthly feeding during growing season';
+    }
+
+    // Calculate next feed date
+    let nextFeedDate: string | undefined;
+    if (frequency !== 'none') {
+      const daysUntilNext = {
+        'bi-weekly': 14,
+        'monthly': 30,
+        'quarterly': 90,
+        'none': 0,
+      }[frequency];
+
+      const nextDate = new Date();
+      nextDate.setDate(nextDate.getDate() + daysUntilNext);
+      nextFeedDate = nextDate.toISOString().split('T')[0];
+    }
+
+    recommendations.push({
+      plantId: plant.id,
+      plantName: plant.plantName,
+      frequency,
+      reason,
+      nextFeedDate,
+      isGrowingSeason,
+    });
+  }
+
+  return recommendations;
+}
+
+/**
+ * Get summary of fertilizer tasks for the garden
+ */
+export function getFertilizerSummary(recommendations: FertilizerRecommendation[]): {
+  needsFeedingNow: number;
+  needsFeedingSoon: number;
+  summary: string;
+} {
+  const now = new Date();
+  const oneWeekLater = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+
+  const needsFeedingNow = recommendations.filter(r => {
+    if (!r.nextFeedDate || r.frequency === 'none') return false;
+    const feedDate = new Date(r.nextFeedDate);
+    return feedDate <= now;
+  }).length;
+
+  const needsFeedingSoon = recommendations.filter(r => {
+    if (!r.nextFeedDate || r.frequency === 'none') return false;
+    const feedDate = new Date(r.nextFeedDate);
+    return feedDate > now && feedDate <= oneWeekLater;
+  }).length;
+
+  let summary = '';
+  if (needsFeedingNow > 0) {
+    summary = `${needsFeedingNow} plant${needsFeedingNow > 1 ? 's need' : ' needs'} fertilizing now`;
+  } else if (needsFeedingSoon > 0) {
+    summary = `${needsFeedingSoon} plant${needsFeedingSoon > 1 ? 's need' : ' needs'} fertilizing soon`;
+  } else if (recommendations.some(r => r.frequency === 'none')) {
+    summary = 'Dormant season - hold off on fertilizing';
+  } else {
+    summary = 'All plants are on track with feeding';
+  }
+
+  return { needsFeedingNow, needsFeedingSoon, summary };
+}
+
+// =============================================================================
+// INDOOR PLANT WATERING
+// =============================================================================
+
+/**
+ * Calculate watering recommendation for indoor plants
+ * Indoor plants aren't affected by outdoor weather
+ */
+export function calculateIndoorWateringRecommendation(
+  plant: UserPlant
+): WateringRecommendation {
+  const details: string[] = [];
+  let adjustmentFactor = 1.0;
+  let shouldWater = true;
+  let reason = '';
+
+  // Check last watered date if available
+  if (plant.lastWateredAt) {
+    const lastWatered = new Date(plant.lastWateredAt);
+    const now = new Date();
+    const daysSince = Math.floor((now.getTime() - lastWatered.getTime()) / (1000 * 60 * 60 * 24));
+    const frequency = plant.wateringFrequencyDays ?? 7;
+
+    if (daysSince < frequency * 0.7) {
+      shouldWater = false;
+      reason = `Watered ${daysSince} day${daysSince !== 1 ? 's' : ''} ago - wait a bit longer`;
+      details.push(`Last watered: ${daysSince} days ago (frequency: every ${frequency} days)`);
+    } else if (daysSince >= frequency) {
+      details.push(`Due for watering - ${daysSince} days since last watered`);
+      reason = 'Time for regular watering';
+    }
+  }
+
+  // Apply plant-specific multiplier
+  const plantMultiplier = calculatePlantWateringMultiplier(plant);
+  adjustmentFactor *= plantMultiplier.multiplier;
+  if (plantMultiplier.reasons.length > 0) {
+    details.push(`Plant needs: ${plantMultiplier.reasons.join('; ')}`);
+  }
+
+  // Calculate next watering date
+  const frequency = plant.wateringFrequencyDays ?? 7;
+  const daysUntilNext = shouldWater ? 0 : Math.ceil(frequency * 0.3);
+  const nextDate = new Date();
+  nextDate.setDate(nextDate.getDate() + daysUntilNext);
+
+  if (!reason) {
+    reason = shouldWater
+      ? 'Check soil moisture - water if dry'
+      : 'Plant has adequate moisture';
+  }
+
+  return {
+    shouldWater,
+    reason,
+    nextWateringDate: nextDate.toISOString().split('T')[0],
+    adjustmentFactor: Math.round(adjustmentFactor * 100) / 100,
+    details,
+  };
+}
+
+// =============================================================================
 // MAIN ENGINE
 // =============================================================================
 
 /**
  * Main weather task engine - analyzes weather and generates recommendations
+ * Enhanced with per-plant personalization, indoor plant handling, and fertilizer recommendations
  */
 export function analyzeWeatherForTasks(
   forecast: WeatherForecast[],
@@ -959,22 +1331,32 @@ export function analyzeWeatherForTasks(
   plants: UserPlant[],
   plannedActivities: string[] = []
 ): WeatherTaskResult {
-  // Generate all weather alerts
-  const frostAlerts = detectFrostRisk(forecast, plants);
-  const heatAlerts = detectHeatStress(forecast, plants);
+  // Separate indoor and outdoor plants
+  const outdoorPlants = filterOutdoorPlants(plants);
+  const indoorPlants = plants.filter(p => isIndoorPlant(p));
+
+  // Generate all weather alerts (only for outdoor plants)
+  const frostAlerts = detectFrostRisk(forecast, outdoorPlants);
+  const heatAlerts = detectHeatStress(forecast, outdoorPlants);
   const windAlerts = detectWindRisk(forecast);
 
-  // Generate pest & disease alerts based on weather conditions
-  const pestDiseaseAlerts = detectPestDiseaseRisks(forecast, plants);
+  // Generate pest & disease alerts based on weather conditions (outdoor plants)
+  const pestDiseaseAlerts = detectPestDiseaseRisks(forecast, outdoorPlants);
 
   // Analyze wind impact on activities
   const windAdjustments = assessWindImpact(forecast, plannedActivities);
 
-  // Calculate watering recommendation
-  const wateringRecommendation = calculateWateringRecommendation(forecast, soil, plants);
+  // Calculate watering recommendation (for outdoor plants)
+  const wateringRecommendation = calculateWateringRecommendation(forecast, soil, outdoorPlants);
 
-  // Calculate planting windows
-  const plantingWindows = calculatePlantingWindows(soil, forecast, plants);
+  // Calculate planting windows (outdoor context)
+  const plantingWindows = calculatePlantingWindows(soil, forecast, outdoorPlants);
+
+  // Calculate fertilizer recommendations (all plants)
+  const fertilizerRecommendations = calculateFertilizerRecommendations(plants);
+
+  // Calculate indoor plant watering (not affected by weather)
+  const indoorPlantWatering = indoorPlants.map(p => calculateIndoorWateringRecommendation(p));
 
   // Combine and sort all alerts by severity
   const allAlerts = [...frostAlerts, ...heatAlerts, ...windAlerts, ...pestDiseaseAlerts];
@@ -988,6 +1370,13 @@ export function analyzeWeatherForTasks(
     taskAdjustments: windAdjustments,
     wateringRecommendation,
     plantingWindows,
+    fertilizerRecommendations,
+    indoorPlantWatering,
+    plantCounts: {
+      total: plants.length,
+      outdoor: outdoorPlants.length,
+      indoor: indoorPlants.length,
+    },
   };
 }
 
