@@ -135,6 +135,11 @@ interface CopernicusUpdateRow {
   chlorophyll_mg_m3: number | null;
   dissolved_oxygen_mg_l: number | null;
   salinity_psu: number | null;
+  // Temperature
+  sea_temp_c: number | null;
+  // Nutrients
+  nitrate_umol_l: number | null;
+  phosphate_umol_l: number | null;
   // Food chain
   zooplankton_mmol_m3: number | null;
   phytoplankton_mmol_m3: number | null;
@@ -262,8 +267,15 @@ function snapshotToRow(
     kd490: snapshot.kd490Surface ?? null,
     // Biogeochemical (bio-band scoring)
     chlorophyll_mg_m3: snapshot.chlorophyllSurface ?? null,
-    dissolved_oxygen_mg_l: snapshot.dissolvedOxygenSurface ?? null,
+    dissolved_oxygen_mg_l: snapshot.dissolvedOxygenSurface != null
+      ? snapshot.dissolvedOxygenSurface * 0.032  // mmol/m³ → mg/L (O₂ MW = 32 g/mol)
+      : null,
     salinity_psu: snapshot.salinitySurface ?? null,
+    // Temperature
+    sea_temp_c: snapshot.temperatureSurface ?? null,
+    // Nutrients
+    nitrate_umol_l: snapshot.nitrateSurface ?? null,
+    phosphate_umol_l: snapshot.phosphateSurface ?? null,
     // Food chain
     zooplankton_mmol_m3: snapshot.zooplanktonSurface ?? null,
     phytoplankton_mmol_m3: snapshot.phytoplanktonSurface ?? null,
@@ -337,6 +349,9 @@ async function ingestRectangle(rectangle: Rectangle): Promise<boolean> {
         chlorophyll_mg_m3: row.chlorophyll_mg_m3,
         dissolved_oxygen_mg_l: row.dissolved_oxygen_mg_l,
         salinity_psu: row.salinity_psu,
+        sea_temp_c: row.sea_temp_c,
+        nitrate_umol_l: row.nitrate_umol_l,
+        phosphate_umol_l: row.phosphate_umol_l,
         zooplankton_mmol_m3: row.zooplankton_mmol_m3,
         phytoplankton_mmol_m3: row.phytoplankton_mmol_m3,
         primary_production_mg_c_m3_day: row.primary_production_mg_c_m3_day,
@@ -352,7 +367,7 @@ async function ingestRectangle(rectangle: Rectangle): Promise<boolean> {
       return false;
     }
     
-    console.log(`   ✅ Updated (current: ${row.current_speed_ms?.toFixed(2) ?? 'null'} m/s, chl: ${row.chlorophyll_mg_m3?.toFixed(2) ?? 'null'} mg/m³, O₂: ${row.dissolved_oxygen_mg_l?.toFixed(1) ?? 'null'} mg/L, sal: ${row.salinity_psu?.toFixed(1) ?? 'null'} PSU)`);
+    console.log(`   ✅ Updated (current: ${row.current_speed_ms?.toFixed(2) ?? 'null'} m/s, temp: ${row.sea_temp_c?.toFixed(1) ?? 'null'}°C, chl: ${row.chlorophyll_mg_m3?.toFixed(2) ?? 'null'} mg/m³, O₂: ${row.dissolved_oxygen_mg_l?.toFixed(1) ?? 'null'} mg/L, sal: ${row.salinity_psu?.toFixed(1) ?? 'null'} PSU)`);
   } else {
     // No existing record, insert new snapshot
     const { error } = await supabase
@@ -364,7 +379,7 @@ async function ingestRectangle(rectangle: Rectangle): Promise<boolean> {
       return false;
     }
 
-    console.log(`   ✅ Inserted (current: ${row.current_speed_ms?.toFixed(2) ?? 'null'} m/s, chl: ${row.chlorophyll_mg_m3?.toFixed(2) ?? 'null'} mg/m³, O₂: ${row.dissolved_oxygen_mg_l?.toFixed(1) ?? 'null'} mg/L, sal: ${row.salinity_psu?.toFixed(1) ?? 'null'} PSU)`);
+    console.log(`   ✅ Inserted (current: ${row.current_speed_ms?.toFixed(2) ?? 'null'} m/s, temp: ${row.sea_temp_c?.toFixed(1) ?? 'null'}°C, chl: ${row.chlorophyll_mg_m3?.toFixed(2) ?? 'null'} mg/m³, O₂: ${row.dissolved_oxygen_mg_l?.toFixed(1) ?? 'null'} mg/L, sal: ${row.salinity_psu?.toFixed(1) ?? 'null'} PSU)`);
   }
   
   return true;
