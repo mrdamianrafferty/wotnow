@@ -131,6 +131,10 @@ interface CopernicusUpdateRow {
   sea_surface_height_m: number | null;
   // Water clarity
   kd490: number | null;
+  // Biogeochemical (bio-band scoring)
+  chlorophyll_mg_m3: number | null;
+  dissolved_oxygen_mg_l: number | null;
+  salinity_psu: number | null;
   // Food chain
   zooplankton_mmol_m3: number | null;
   phytoplankton_mmol_m3: number | null;
@@ -256,6 +260,10 @@ function snapshotToRow(
     sea_surface_height_m: snapshot.seaSurfaceHeight ?? null,
     // Water clarity
     kd490: snapshot.kd490Surface ?? null,
+    // Biogeochemical (bio-band scoring)
+    chlorophyll_mg_m3: snapshot.chlorophyllSurface ?? null,
+    dissolved_oxygen_mg_l: snapshot.dissolvedOxygenSurface ?? null,
+    salinity_psu: snapshot.salinitySurface ?? null,
     // Food chain
     zooplankton_mmol_m3: snapshot.zooplanktonSurface ?? null,
     phytoplankton_mmol_m3: snapshot.phytoplanktonSurface ?? null,
@@ -325,6 +333,10 @@ async function ingestRectangle(rectangle: Rectangle): Promise<boolean> {
         mixed_layer_depth_m: row.mixed_layer_depth_m,
         sea_surface_height_m: row.sea_surface_height_m,
         kd490: row.kd490,
+        // Biogeochemical (bio-band scoring)
+        chlorophyll_mg_m3: row.chlorophyll_mg_m3,
+        dissolved_oxygen_mg_l: row.dissolved_oxygen_mg_l,
+        salinity_psu: row.salinity_psu,
         zooplankton_mmol_m3: row.zooplankton_mmol_m3,
         phytoplankton_mmol_m3: row.phytoplankton_mmol_m3,
         primary_production_mg_c_m3_day: row.primary_production_mg_c_m3_day,
@@ -340,19 +352,19 @@ async function ingestRectangle(rectangle: Rectangle): Promise<boolean> {
       return false;
     }
     
-    console.log(`   ✅ Updated (current: ${row.current_speed_ms?.toFixed(2) ?? 'null'} m/s, clarity: ${row.kd490?.toFixed(3) ?? 'null'})`);
+    console.log(`   ✅ Updated (current: ${row.current_speed_ms?.toFixed(2) ?? 'null'} m/s, chl: ${row.chlorophyll_mg_m3?.toFixed(2) ?? 'null'} mg/m³, O₂: ${row.dissolved_oxygen_mg_l?.toFixed(1) ?? 'null'} mg/L, sal: ${row.salinity_psu?.toFixed(1) ?? 'null'} PSU)`);
   } else {
     // No existing record, insert new snapshot
     const { error } = await supabase
       .from('findr_conditions_snapshots')
       .insert(row);
-    
+
     if (error) {
       console.log(`   ❌ Insert failed: ${error.message}`);
       return false;
     }
-    
-    console.log(`   ✅ Inserted (current: ${row.current_speed_ms?.toFixed(2) ?? 'null'} m/s, clarity: ${row.kd490?.toFixed(3) ?? 'null'})`);
+
+    console.log(`   ✅ Inserted (current: ${row.current_speed_ms?.toFixed(2) ?? 'null'} m/s, chl: ${row.chlorophyll_mg_m3?.toFixed(2) ?? 'null'} mg/m³, O₂: ${row.dissolved_oxygen_mg_l?.toFixed(1) ?? 'null'} mg/L, sal: ${row.salinity_psu?.toFixed(1) ?? 'null'} PSU)`);
   }
   
   return true;
