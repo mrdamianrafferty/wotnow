@@ -4,6 +4,10 @@
  * Settings card for managing push notification preferences in Grow Daisy.
  * Includes toggle for subscribing and individual notification type controls.
  *
+ * Supports both:
+ * - Web Push (PWA/browser)
+ * - Native Push via Capacitor (iOS/Android apps)
+ *
  * @module components/grow/NotificationPreferencesCard
  */
 
@@ -36,6 +40,7 @@ import {
   Leaf,
   Clock,
   AlertTriangle,
+  Smartphone,
 } from 'lucide-react';
 import { useGrowPushNotifications } from '@/hooks/useGrowPushNotifications';
 import { useGrowSubscription } from '@/hooks/useGrowSubscription';
@@ -82,14 +87,32 @@ const DEFAULT_PREFERENCES: NotificationPreferences = {
 // =============================================================================
 
 export function NotificationPreferencesCard() {
+  // Detect if running in Capacitor native app (must be in useEffect for SSR safety)
+  const [isNativeApp, setIsNativeApp] = useState(false);
+  const [platformChecked, setPlatformChecked] = useState(false);
+
+  useEffect(() => {
+    const checkPlatform = async () => {
+      try {
+        const { Capacitor } = await import('@capacitor/core');
+        setIsNativeApp(Capacitor.isNativePlatform());
+      } catch {
+        setIsNativeApp(false);
+      }
+      setPlatformChecked(true);
+    };
+    checkPlatform();
+  }, []);
+
+  // Web Push hook (only used for PWA/browser)
   const {
-    isSupported,
-    permission,
-    isSubscribed,
-    isLoading: pushLoading,
-    error: pushError,
-    subscribe,
-    unsubscribe,
+    isSupported: webPushSupported,
+    permission: webPushPermission,
+    isSubscribed: webPushSubscribed,
+    isLoading: webPushLoading,
+    error: webPushError,
+    subscribe: webPushSubscribe,
+    unsubscribe: webPushUnsubscribe,
   } = useGrowPushNotifications();
 
   const { isBloomOrHigher } = useGrowSubscription();
@@ -98,6 +121,93 @@ export function NotificationPreferencesCard() {
   const [preferences, setPreferences] = useState<NotificationPreferences>(DEFAULT_PREFERENCES);
   const [isLoadingPrefs, setIsLoadingPrefs] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+
+  // Native push state (Capacitor)
+  const [nativePushEnabled, setNativePushEnabled] = useState(false);
+  const [nativePushLoading, setNativePushLoading] = useState(false);
+  const [nativePushError, setNativePushError] = useState<string | null>(null);
+
+  // Unified state based on platform
+  const isSupported = isNativeApp ? true : webPushSupported;
+  const permission = isNativeApp ? (nativePushEnabled ? 'granted' : 'prompt') : webPushPermission;
+  const isSubscribed = isNativeApp ? nativePushEnabled : webPushSubscribed;
+  const pushLoading = isNativeApp ? nativePushLoading : webPushLoading;
+  const pushError = isNativeApp ? nativePushError : webPushError;
+
+  // Check native push status on mount
+  useEffect(() => {
+    if (!isNativeApp) return;
+
+    const checkNativePushStatus = async () => {
+      try {
+        const { PushNotifications } = await import('@capacitor/push-notifications');
+        const permStatus = await PushNotifications.checkPermissions();
+        setNativePushEnabled(permStatus.receive === 'granted');
+      } catch (error) {
+        console.error('[NotificationPrefs] Error checking native push status:', error);
+      }
+    };
+
+    checkNativePushStatus();
+  }, [isNativeApp]);
+
+  // Native push subscribe handler
+  const handleNativeSubscribe = useCallback(async (): Promise<boolean> => {
+    if (!isNativeApp) return false;
+
+    setNativePushLoading(true);
+    setNativePushError(null);
+
+    try {
+      const { initPushNotifications, syncPushTokenToServer } = await import('@/lib/capacitor/pushNotifications');
+
+      // Initialize push notifications (requests permission + registers)
+      await initPushNotifications();
+
+      // Get session for token sync
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.access_token) {
+        await syncPushTokenToServer(session.access_token);
+      }
+
+      setNativePushEnabled(true);
+      setNativePushLoading(false);
+      return true;
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Failed to enable notifications';
+      setNativePushError(message);
+      setNativePushLoading(false);
+      return false;
+    }
+  }, [isNativeApp, supabase]);
+
+  // Native push unsubscribe handler
+  const handleNativeUnsubscribe = useCallback(async (): Promise<boolean> => {
+    if (!isNativeApp) return false;
+
+    setNativePushLoading(true);
+
+    try {
+      const { removePushTokenFromServer } = await import('@/lib/capacitor/pushNotifications');
+
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.access_token) {
+        await removePushTokenFromServer(session.access_token);
+      }
+
+      setNativePushEnabled(false);
+      setNativePushLoading(false);
+      return true;
+    } catch (error) {
+      console.error('[NotificationPrefs] Error unsubscribing:', error);
+      setNativePushLoading(false);
+      return false;
+    }
+  }, [isNativeApp, supabase]);
+
+  // Unified subscribe/unsubscribe handlers
+  const subscribe = isNativeApp ? handleNativeSubscribe : webPushSubscribe;
+  const unsubscribe = isNativeApp ? handleNativeUnsubscribe : webPushUnsubscribe;
 
   // ---------------------------------------------------------------------------
   // LOAD PREFERENCES
@@ -191,6 +301,25 @@ export function NotificationPreferencesCard() {
   // RENDER
   // ---------------------------------------------------------------------------
 
+  // Loading while checking platform
+  if (!platformChecked) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-lg">
+            <Bell className="h-5 w-5" />
+            Notifications
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-center justify-center p-4">
+            <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
   // Not supported banner
   if (!isSupported) {
     return (
@@ -226,8 +355,17 @@ export function NotificationPreferencesCard() {
         <CardContent>
           <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
             <p className="text-sm text-red-800">
-              Notification permission was denied. To enable notifications,
-              please update your browser settings to allow notifications from this site.
+              {isNativeApp ? (
+                <>
+                  Notification permission was denied. To enable notifications,
+                  go to Settings → Grow Daisy → Notifications and enable them.
+                </>
+              ) : (
+                <>
+                  Notification permission was denied. To enable notifications,
+                  please update your browser settings to allow notifications from this site.
+                </>
+              )}
             </p>
           </div>
         </CardContent>
@@ -241,11 +379,16 @@ export function NotificationPreferencesCard() {
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2 text-lg">
-          <Bell className="h-5 w-5" />
+          {isNativeApp ? <Smartphone className="h-5 w-5" /> : <Bell className="h-5 w-5" />}
           Notifications
           {isSubscribed && (
             <Badge variant="default" className="ml-2 bg-emerald-500">
               Active
+            </Badge>
+          )}
+          {isNativeApp && (
+            <Badge variant="outline" className="ml-2 text-xs">
+              Native
             </Badge>
           )}
         </CardTitle>

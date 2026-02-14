@@ -9,6 +9,11 @@
  * - Extreme weather (heat waves, storms)
  * - Pest/disease favorable conditions (high humidity + warm temps)
  *
+ * Sends to:
+ * - Web Push (PWA users) via grow_push_subscriptions
+ * - APNs (iOS native app) via user_push_tokens
+ * - FCM (Android native app) via user_push_tokens
+ *
  * @module pages/api/cron/grow/weather-alerts
  */
 
@@ -19,6 +24,8 @@ import {
   createFrostAlertPayload,
   createPestRiskPayload,
 } from '@/lib/grow/notifications';
+import { sendGrowApnsPushNotification } from '@/lib/grow/apnsClient';
+import { sendFcmPushNotification } from '@/lib/notifications/fcmClient';
 
 const SUPABASE_URL = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
 const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -77,7 +84,14 @@ interface AlertResult {
   userId: string;
   alertType: string;
   sent: boolean;
+  channel?: 'web' | 'ios' | 'android';
   error?: string;
+}
+
+interface NativePushToken {
+  user_id: string;
+  token: string;
+  platform: 'ios' | 'android';
 }
 
 // =============================================================================
@@ -152,18 +166,38 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     const results: AlertResult[] = [];
 
+    // Get native push tokens for all users (iOS/Android apps)
+    const { data: nativeTokens } = await supabase
+      .from('user_push_tokens')
+      .select('user_id, token, platform')
+      .in('user_id', userIds);
+
+    const nativeTokenMap = new Map<string, NativePushToken[]>();
+    for (const token of nativeTokens || []) {
+      const existing = nativeTokenMap.get(token.user_id) || [];
+      existing.push(token as NativePushToken);
+      nativeTokenMap.set(token.user_id, existing);
+    }
+
+    console.log(`[WeatherAlerts] Found ${nativeTokens?.length || 0} native push tokens`);
+
     // Process each user
     for (const user of usersWithLocations) {
       try {
-        // Check if user has active push subscriptions
-        const { count } = await supabase
+        // Check if user has active Web Push subscriptions
+        const { count: webPushCount } = await supabase
           .from('grow_push_subscriptions')
           .select('id', { count: 'exact', head: true })
           .eq('user_id', user.user_id)
           .eq('is_active', true);
 
-        if (!count || count === 0) {
-          continue; // Skip users without active subscriptions
+        // Check if user has native push tokens
+        const userNativeTokens = nativeTokenMap.get(user.user_id) || [];
+        const hasWebPush = (webPushCount || 0) > 0;
+        const hasNativePush = userNativeTokens.length > 0;
+
+        if (!hasWebPush && !hasNativePush) {
+          continue; // Skip users without any push capability
         }
 
         // Fetch weather for user's location
@@ -172,20 +206,20 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
         // Check for frost
         if (user.frost_alerts) {
-          const frostResult = await checkAndSendFrostAlert(user, weather);
-          if (frostResult) results.push(frostResult);
+          const frostResult = await checkAndSendFrostAlert(user, weather, hasWebPush, userNativeTokens);
+          if (frostResult) results.push(...frostResult);
         }
 
         // Check for pest/disease conditions
         if (user.weather_threats) {
-          const threatResult = await checkAndSendThreatAlert(user, weather);
-          if (threatResult) results.push(threatResult);
+          const threatResult = await checkAndSendThreatAlert(user, weather, hasWebPush, userNativeTokens);
+          if (threatResult) results.push(...threatResult);
         }
 
         // Check for extreme weather
         if (user.extreme_weather) {
-          const extremeResult = await checkAndSendExtremeWeatherAlert(user, weather);
-          if (extremeResult) results.push(extremeResult);
+          const extremeResult = await checkAndSendExtremeWeatherAlert(user, weather, hasWebPush, userNativeTokens);
+          if (extremeResult) results.push(...extremeResult);
         }
       } catch (error) {
         console.error(`[WeatherAlerts] Error processing user ${user.user_id}:`, error);
@@ -336,8 +370,10 @@ function parseFallbackForecast(data: Record<string, unknown>): WeatherForecast {
 
 async function checkAndSendFrostAlert(
   user: UserWithPreferences,
-  weather: WeatherForecast
-): Promise<AlertResult | null> {
+  weather: WeatherForecast,
+  hasWebPush: boolean,
+  nativeTokens: NativePushToken[]
+): Promise<AlertResult[] | null> {
   const FROST_THRESHOLD = 2; // Celsius
 
   // Check next 48 hours for frost
@@ -366,33 +402,66 @@ async function checkAndSendFrostAlert(
   const hoursUntilFrost = Math.round((frostTime.getTime() - now.getTime()) / (1000 * 60 * 60));
   const expectedTime = hoursUntilFrost <= 12 ? 'tonight' : hoursUntilFrost <= 24 ? 'tomorrow night' : 'in 2 days';
 
-  // Send the alert
+  const results: AlertResult[] = [];
+
+  // Create payload
   const payload = createFrostAlertPayload({
     temperature: Math.round(frostHour.temp),
     location: user.location || 'your area',
     expectedTime,
   });
 
-  const result = await sendPushNotification({
-    userId: user.user_id,
-    notificationType: 'frost_alert',
-    payload,
-    respectPreferences: false, // Already checked
-    respectQuietHours: true,
-  });
+  // Send via Web Push if available
+  if (hasWebPush) {
+    const result = await sendPushNotification({
+      userId: user.user_id,
+      notificationType: 'frost_alert',
+      payload,
+      respectPreferences: false,
+      respectQuietHours: true,
+    });
 
-  return {
-    userId: user.user_id,
-    alertType: 'frost_alert',
-    sent: result.sent > 0,
-    error: result.errors.join(', ') || undefined,
-  };
+    results.push({
+      userId: user.user_id,
+      alertType: 'frost_alert',
+      sent: result.sent > 0,
+      channel: 'web',
+      error: result.errors.join(', ') || undefined,
+    });
+  }
+
+  // Send via native push (APNs/FCM)
+  for (const token of nativeTokens) {
+    const nativePayload = {
+      title: payload.title,
+      body: payload.body,
+      data: { type: 'frost_alert', url: '/grow/weather' },
+    };
+
+    let sent = false;
+    if (token.platform === 'ios') {
+      sent = await sendGrowApnsPushNotification(token.token, nativePayload);
+    } else if (token.platform === 'android') {
+      sent = await sendFcmPushNotification(token.token, nativePayload);
+    }
+
+    results.push({
+      userId: user.user_id,
+      alertType: 'frost_alert',
+      sent,
+      channel: token.platform,
+    });
+  }
+
+  return results.length > 0 ? results : null;
 }
 
 async function checkAndSendThreatAlert(
   user: UserWithPreferences,
-  weather: WeatherForecast
-): Promise<AlertResult | null> {
+  weather: WeatherForecast,
+  hasWebPush: boolean,
+  nativeTokens: NativePushToken[]
+): Promise<AlertResult[] | null> {
   // Conditions that favor pests/diseases:
   // - High humidity (>70%) + warm temps (15-25°C) = fungal diseases
   // - Extended wet periods = late blight, downy mildew
@@ -447,32 +516,65 @@ async function checkAndSendThreatAlert(
     return riskOrder[b.riskLevel] - riskOrder[a.riskLevel];
   })[0];
 
+  const results: AlertResult[] = [];
+
   const payload = createPestRiskPayload({
     threatName: highestThreat.name,
     riskLevel: highestThreat.riskLevel,
-    affectedPlants: ['tomatoes', 'peppers', 'cucumbers'], // Generic for now
+    affectedPlants: ['tomatoes', 'peppers', 'cucumbers'],
   });
 
-  const result = await sendPushNotification({
-    userId: user.user_id,
-    notificationType: 'weather_threat',
-    payload,
-    respectPreferences: false,
-    respectQuietHours: true,
-  });
+  // Send via Web Push if available
+  if (hasWebPush) {
+    const result = await sendPushNotification({
+      userId: user.user_id,
+      notificationType: 'weather_threat',
+      payload,
+      respectPreferences: false,
+      respectQuietHours: true,
+    });
 
-  return {
-    userId: user.user_id,
-    alertType: 'weather_threat',
-    sent: result.sent > 0,
-    error: result.errors.join(', ') || undefined,
-  };
+    results.push({
+      userId: user.user_id,
+      alertType: 'weather_threat',
+      sent: result.sent > 0,
+      channel: 'web',
+      error: result.errors.join(', ') || undefined,
+    });
+  }
+
+  // Send via native push (APNs/FCM)
+  for (const token of nativeTokens) {
+    const nativePayload = {
+      title: payload.title,
+      body: payload.body,
+      data: { type: 'weather_threat', url: '/grow/threats' },
+    };
+
+    let sent = false;
+    if (token.platform === 'ios') {
+      sent = await sendGrowApnsPushNotification(token.token, nativePayload);
+    } else if (token.platform === 'android') {
+      sent = await sendFcmPushNotification(token.token, nativePayload);
+    }
+
+    results.push({
+      userId: user.user_id,
+      alertType: 'weather_threat',
+      sent,
+      channel: token.platform,
+    });
+  }
+
+  return results.length > 0 ? results : null;
 }
 
 async function checkAndSendExtremeWeatherAlert(
   user: UserWithPreferences,
-  weather: WeatherForecast
-): Promise<AlertResult | null> {
+  weather: WeatherForecast,
+  hasWebPush: boolean,
+  nativeTokens: NativePushToken[]
+): Promise<AlertResult[] | null> {
   const extremeConditions: string[] = [];
 
   // Heat wave: temps above 30°C
@@ -508,9 +610,14 @@ async function checkAndSendExtremeWeatherAlert(
     return null;
   }
 
+  const results: AlertResult[] = [];
+
+  const title = `${extremeConditions[0]} Warning`;
+  const body = `${extremeConditions.join(' and ')} expected in ${user.location || 'your area'}. Protect your plants!`;
+
   const payload = {
-    title: `${extremeConditions[0]} Warning`,
-    body: `${extremeConditions.join(' and ')} expected in ${user.location || 'your area'}. Protect your plants!`,
+    title,
+    body,
     icon: '/icons/grow-icon-192.png',
     badge: '/icons/grow-badge-72.png',
     tag: 'extreme-weather',
@@ -522,20 +629,49 @@ async function checkAndSendExtremeWeatherAlert(
     },
   };
 
-  const result = await sendPushNotification({
-    userId: user.user_id,
-    notificationType: 'extreme_weather',
-    payload,
-    respectPreferences: false,
-    respectQuietHours: true,
-  });
+  // Send via Web Push if available
+  if (hasWebPush) {
+    const result = await sendPushNotification({
+      userId: user.user_id,
+      notificationType: 'extreme_weather',
+      payload,
+      respectPreferences: false,
+      respectQuietHours: true,
+    });
 
-  return {
-    userId: user.user_id,
-    alertType: 'extreme_weather',
-    sent: result.sent > 0,
-    error: result.errors.join(', ') || undefined,
-  };
+    results.push({
+      userId: user.user_id,
+      alertType: 'extreme_weather',
+      sent: result.sent > 0,
+      channel: 'web',
+      error: result.errors.join(', ') || undefined,
+    });
+  }
+
+  // Send via native push (APNs/FCM)
+  for (const token of nativeTokens) {
+    const nativePayload = {
+      title,
+      body,
+      data: { type: 'extreme_weather', url: '/grow/weather' },
+    };
+
+    let sent = false;
+    if (token.platform === 'ios') {
+      sent = await sendGrowApnsPushNotification(token.token, nativePayload);
+    } else if (token.platform === 'android') {
+      sent = await sendFcmPushNotification(token.token, nativePayload);
+    }
+
+    results.push({
+      userId: user.user_id,
+      alertType: 'extreme_weather',
+      sent,
+      channel: token.platform,
+    });
+  }
+
+  return results.length > 0 ? results : null;
 }
 
 // =============================================================================
