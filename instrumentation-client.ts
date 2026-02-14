@@ -58,4 +58,33 @@ Sentry.init({
           : 'godaisy',
     },
   },
+
+  // Filter out benign errors that don't affect user experience
+  beforeSend(event, hint) {
+    const error = hint.originalException;
+
+    // Ignore AbortError - happens when requests are cancelled (navigation, app backgrounding)
+    if (error instanceof DOMException && error.name === 'AbortError') {
+      return null;
+    }
+
+    // Also check error message for AbortError pattern
+    if (
+      error instanceof Error &&
+      (error.name === 'AbortError' || error.message?.includes('AbortError'))
+    ) {
+      return null;
+    }
+
+    // Ignore network errors from fetch being aborted
+    if (
+      event.exception?.values?.some(
+        (e) => e.type === 'AbortError' || e.value?.includes('AbortError')
+      )
+    ) {
+      return null;
+    }
+
+    return event;
+  },
 });
