@@ -17,7 +17,6 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../ui/card';
 import { Button } from '../ui/button';
 import { Label } from '../ui/label';
-import { Switch } from '../ui/switch';
 import { Badge } from '../ui/badge';
 import { Separator } from '../ui/separator';
 import {
@@ -41,6 +40,9 @@ import {
   Clock,
   AlertTriangle,
   Smartphone,
+  Check,
+  Circle,
+  Lock,
 } from 'lucide-react';
 import { useGrowPushNotifications } from '@/hooks/useGrowPushNotifications';
 import { useGrowSubscription } from '@/hooks/useGrowSubscription';
@@ -437,20 +439,20 @@ export function NotificationPreferencesCard() {
             <Separator />
 
             {/* Weather Alerts - BLOOM+ Feature */}
-            <div className="space-y-4">
-              <div className="flex items-center gap-2">
-                <CloudRain className="h-4 w-4 text-blue-600" />
-                <Label className="text-sm font-medium">Weather Alerts</Label>
+            <div className="space-y-3">
+              <div className="flex items-center gap-3 px-1">
+                <CloudRain className="h-5 w-5 text-blue-600" />
+                <span className="text-base font-semibold">Weather Alerts</span>
                 {!isBloomOrHigher && (
                   <Badge variant="secondary" className="text-xs">BLOOM+</Badge>
                 )}
               </div>
 
-              <div className="space-y-3 pl-6">
+              <div className="space-y-2">
                 <PreferenceToggle
                   label="Frost Alerts"
                   description="Get warned 48 hours before frost"
-                  icon={<Snowflake className="h-4 w-4 text-blue-400" />}
+                  icon={<Snowflake className="h-5 w-5 text-blue-400" />}
                   checked={preferences.frostAlerts}
                   onChange={(checked) => savePreference('frostAlerts', checked)}
                   disabled={!isBloomOrHigher || isSaving}
@@ -460,7 +462,7 @@ export function NotificationPreferencesCard() {
                 <PreferenceToggle
                   label="Pest & Disease Threats"
                   description="Alerts when conditions favor pests"
-                  icon={<Bug className="h-4 w-4 text-amber-600" />}
+                  icon={<Bug className="h-5 w-5 text-amber-600" />}
                   checked={preferences.weatherThreats}
                   onChange={(checked) => savePreference('weatherThreats', checked)}
                   disabled={!isBloomOrHigher || isSaving}
@@ -470,7 +472,7 @@ export function NotificationPreferencesCard() {
                 <PreferenceToggle
                   label="Extreme Weather"
                   description="Heat waves, storms, heavy rain"
-                  icon={<AlertTriangle className="h-4 w-4 text-red-500" />}
+                  icon={<AlertTriangle className="h-5 w-5 text-red-500" />}
                   checked={preferences.extremeWeather}
                   onChange={(checked) => savePreference('extremeWeather', checked)}
                   disabled={!isBloomOrHigher || isSaving}
@@ -482,17 +484,17 @@ export function NotificationPreferencesCard() {
             <Separator />
 
             {/* Task Reminders - All Tiers */}
-            <div className="space-y-4">
-              <div className="flex items-center gap-2">
-                <CheckSquare className="h-4 w-4 text-emerald-600" />
-                <Label className="text-sm font-medium">Task Reminders</Label>
+            <div className="space-y-3">
+              <div className="flex items-center gap-3 px-1">
+                <CheckSquare className="h-5 w-5 text-emerald-600" />
+                <span className="text-base font-semibold">Task Reminders</span>
               </div>
 
-              <div className="space-y-3 pl-6">
+              <div className="space-y-2">
                 <PreferenceToggle
                   label="Watering Reminders"
                   description="When plants need water"
-                  icon={<Droplets className="h-4 w-4 text-blue-500" />}
+                  icon={<Droplets className="h-5 w-5 text-blue-500" />}
                   checked={preferences.wateringReminders}
                   onChange={(checked) => savePreference('wateringReminders', checked)}
                   disabled={isSaving}
@@ -501,7 +503,7 @@ export function NotificationPreferencesCard() {
                 <PreferenceToggle
                   label="Task Reminders"
                   description="General garden tasks"
-                  icon={<CheckSquare className="h-4 w-4 text-emerald-500" />}
+                  icon={<CheckSquare className="h-5 w-5 text-emerald-500" />}
                   checked={preferences.taskReminders}
                   onChange={(checked) => savePreference('taskReminders', checked)}
                   disabled={isSaving}
@@ -510,7 +512,7 @@ export function NotificationPreferencesCard() {
                 <PreferenceToggle
                   label="Harvest Reminders"
                   description="When crops are ready to pick"
-                  icon={<Leaf className="h-4 w-4 text-green-600" />}
+                  icon={<Leaf className="h-5 w-5 text-green-600" />}
                   checked={preferences.harvestReminders}
                   onChange={(checked) => savePreference('harvestReminders', checked)}
                   disabled={isSaving}
@@ -521,26 +523,26 @@ export function NotificationPreferencesCard() {
             <Separator />
 
             {/* Quiet Hours */}
-            <div className="space-y-4">
-              <div className="flex items-center gap-2">
-                <Clock className="h-4 w-4 text-gray-600" />
-                <Label className="text-sm font-medium">Quiet Hours</Label>
+            <div className="space-y-3">
+              <div className="flex items-center gap-3 px-1">
+                <Clock className="h-5 w-5 text-gray-600" />
+                <span className="text-base font-semibold">Quiet Hours</span>
               </div>
 
-              <div className="flex items-center gap-4 pl-6">
-                <div className="flex items-center gap-2">
-                  <Label className="text-sm text-muted-foreground">From</Label>
+              <div className="p-4 bg-muted/20 rounded-xl space-y-4">
+                <div className="flex items-center justify-between gap-4">
+                  <span className="text-base text-muted-foreground">From</span>
                   <Select
                     value={preferences.quietStartHour.toString()}
                     onValueChange={(value) => savePreference('quietStartHour', parseInt(value))}
                     disabled={isSaving}
                   >
-                    <SelectTrigger className="w-24">
+                    <SelectTrigger className="w-28 h-12 text-base">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
                       {Array.from({ length: 24 }, (_, i) => (
-                        <SelectItem key={i} value={i.toString()}>
+                        <SelectItem key={i} value={i.toString()} className="text-base py-3">
                           {i.toString().padStart(2, '0')}:00
                         </SelectItem>
                       ))}
@@ -548,29 +550,30 @@ export function NotificationPreferencesCard() {
                   </Select>
                 </div>
 
-                <div className="flex items-center gap-2">
-                  <Label className="text-sm text-muted-foreground">to</Label>
+                <div className="flex items-center justify-between gap-4">
+                  <span className="text-base text-muted-foreground">To</span>
                   <Select
                     value={preferences.quietEndHour.toString()}
                     onValueChange={(value) => savePreference('quietEndHour', parseInt(value))}
                     disabled={isSaving}
                   >
-                    <SelectTrigger className="w-24">
+                    <SelectTrigger className="w-28 h-12 text-base">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
                       {Array.from({ length: 24 }, (_, i) => (
-                        <SelectItem key={i} value={i.toString()}>
+                        <SelectItem key={i} value={i.toString()} className="text-base py-3">
                           {i.toString().padStart(2, '0')}:00
                         </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
                 </div>
+
+                <p className="text-sm text-muted-foreground">
+                  No notifications during these hours
+                </p>
               </div>
-              <p className="text-xs text-muted-foreground pl-6">
-                No notifications will be sent during quiet hours
-              </p>
             </div>
           </>
         )}
@@ -602,27 +605,54 @@ function PreferenceToggle({
   disabled,
   locked,
 }: PreferenceToggleProps) {
+  const handleClick = () => {
+    if (!disabled && !locked) {
+      onChange(!checked);
+    }
+  };
+
   return (
-    <div className="flex items-center justify-between">
-      <div className="flex items-center gap-3">
-        {icon}
-        <div>
-          <Label className="text-sm font-normal">{label}</Label>
-          <p className="text-xs text-muted-foreground">{description}</p>
+    <button
+      type="button"
+      onClick={handleClick}
+      disabled={disabled || locked}
+      className={`
+        w-full flex items-center justify-between p-4 rounded-xl
+        transition-all duration-200 text-left
+        ${disabled || locked
+          ? 'opacity-50 cursor-not-allowed bg-muted/30'
+          : 'active:scale-[0.98] hover:bg-muted/50 cursor-pointer'
+        }
+        ${checked && !locked ? 'bg-emerald-50 dark:bg-emerald-950/30' : 'bg-muted/20'}
+      `}
+    >
+      <div className="flex items-center gap-4">
+        <div className="flex-shrink-0">
+          {icon}
+        </div>
+        <div className="min-w-0">
+          <span className="text-base font-medium block">{label}</span>
+          <span className="text-sm text-muted-foreground block mt-0.5">{description}</span>
         </div>
       </div>
-      <div className="flex items-center gap-2">
-        {locked && (
-          <Badge variant="outline" className="text-xs">
-            Upgrade
-          </Badge>
+      <div className="flex items-center gap-3 flex-shrink-0 ml-4">
+        {locked ? (
+          <div className="flex items-center gap-2">
+            <Lock className="h-4 w-4 text-muted-foreground" />
+            <Badge variant="secondary" className="text-xs">
+              Upgrade
+            </Badge>
+          </div>
+        ) : checked ? (
+          <div className="h-7 w-7 rounded-full bg-emerald-500 flex items-center justify-center">
+            <Check className="h-5 w-5 text-white stroke-[3]" />
+          </div>
+        ) : (
+          <div className="h-7 w-7 rounded-full border-2 border-muted-foreground/30 flex items-center justify-center">
+            <Circle className="h-3 w-3 text-transparent" />
+          </div>
         )}
-        <Switch
-          checked={checked}
-          onCheckedChange={onChange}
-          disabled={disabled}
-        />
       </div>
-    </div>
+    </button>
   );
 }
