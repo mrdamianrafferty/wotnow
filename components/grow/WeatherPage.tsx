@@ -312,6 +312,7 @@ export function WeatherPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
   const [userLocation, setUserLocation] = useState('');
+  const [userCoords, setUserCoords] = useState<{ lat: number; lon: number } | null>(null);
   const [climateZone, setClimateZone] = useState<ClimateZoneCode | null>(null);
   const [unitSystem, setUnitSystem] = useState<UnitSystem>('metric');
 
@@ -397,6 +398,10 @@ export function WeatherPage() {
             setUserLocation(interests.location);
             hasLocation = true;
           }
+          // Also load coordinates if available (more reliable than geocoding)
+          if (typeof interests.latitude === 'number' && typeof interests.longitude === 'number') {
+            setUserCoords({ lat: interests.latitude, lon: interests.longitude });
+          }
           if (interests.climate_zone) {
             setClimateZone(interests.climate_zone);
           }
@@ -430,7 +435,7 @@ export function WeatherPage() {
   }, []);
 
   const fetchWeatherData = useCallback(async () => {
-    if (!userLocation) {
+    if (!userLocation && !userCoords) {
       setIsLoading(false);
       return;
     }
@@ -438,7 +443,8 @@ export function WeatherPage() {
     try {
       setIsLoading(true);
       setError('');
-      const data = await api.getWeather(userLocation, false);
+      // Pass coordinates if available (more reliable than geocoding location names)
+      const data = await api.getWeather(userLocation, false, userCoords?.lat, userCoords?.lon);
       if (isWeatherApiResponse(data)) {
         setWeatherData(data);
       } else {
@@ -459,13 +465,13 @@ export function WeatherPage() {
     } finally {
       setIsLoading(false);
     }
-  }, [t, userLocation]);
+  }, [t, userLocation, userCoords]);
 
   useEffect(() => {
-    if (userLocation) {
+    if (userLocation || userCoords) {
       fetchWeatherData();
     }
-  }, [fetchWeatherData, userLocation]);
+  }, [fetchWeatherData, userLocation, userCoords]);
 
   const handleUnitToggle = async () => {
     const newUnit: UnitSystem = unitSystem === 'imperial' ? 'metric' : 'imperial';

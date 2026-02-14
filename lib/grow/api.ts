@@ -286,12 +286,18 @@ export class ApiClient {
     return response.json();
   }
 
-  async getWeather(location?: string, includeMarine: boolean = false) {
+  async getWeather(location?: string, includeMarine: boolean = false, lat?: number, lon?: number) {
     // Use local API endpoint - same data source as Go Daisy, always returns metric (Celsius)
     const url = new URL(GROW_WEATHER_API, window.location.origin);
-    if (location) {
+
+    // Prefer lat/lon if provided (more reliable than geocoding)
+    if (lat !== undefined && lon !== undefined) {
+      url.searchParams.set('lat', lat.toString());
+      url.searchParams.set('lon', lon.toString());
+    } else if (location) {
       url.searchParams.set('location', location);
     }
+
     if (includeMarine) {
       url.searchParams.set('marine', 'true');
     }
