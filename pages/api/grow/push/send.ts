@@ -3,6 +3,7 @@
  *
  * API endpoint for sending push notifications.
  * Can send to a single user or broadcast to all users of a notification type.
+ * Supports both Web Push (PWA) and native push (APNs for iOS, FCM for Android).
  *
  * POST: Send a notification
  *   - userId + payload: Send to specific user
@@ -23,6 +24,8 @@ import {
   NotificationType,
   PushNotificationPayload,
 } from '@/lib/grow/notifications';
+import { sendGrowApnsPushNotification } from '@/lib/grow/apnsClient';
+import { sendFcmPushNotification } from '@/lib/notifications/fcmClient';
 
 const SUPABASE_URL = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
 const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -117,6 +120,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
       const notificationType = body.notificationType || 'task_reminder';
 
+      // Send via Web Push
       const result = await sendPushNotification({
         userId: targetUserId,
         notificationType,
@@ -125,16 +129,28 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         respectQuietHours: true,
       });
 
+      // Also send via native push (APNs/FCM)
+      const nativeResult = await sendToNativeTokens(targetUserId, payload);
+
+      const totalSent = result.sent + nativeResult.sent;
+      const totalFailed = result.failed + nativeResult.failed;
+      const allErrors = [...result.errors, ...nativeResult.errors];
+
       return res.status(200).json({
-        success: result.sent > 0,
-        sent: result.sent,
-        failed: result.failed,
-        errors: result.errors,
+        success: totalSent > 0,
+        sent: totalSent,
+        failed: totalFailed,
+        errors: allErrors,
+        channels: {
+          webPush: { sent: result.sent, failed: result.failed },
+          native: { sent: nativeResult.sent, failed: nativeResult.failed },
+        },
       });
     }
 
     // Broadcast notification
     if (body.broadcast && body.notificationType) {
+      // Web Push broadcast
       const result = await sendBulkNotification({
         notificationType: body.notificationType,
         payload,
@@ -143,11 +159,24 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         radiusKm: body.radiusKm,
       });
 
+      // Also broadcast via native push (APNs/FCM)
+      const nativeResult = await broadcastToNativeTokens(
+        body.notificationType,
+        payload
+      );
+
+      const totalSent = result.sent + nativeResult.sent;
+      const totalFailed = result.failed + nativeResult.failed;
+
       return res.status(200).json({
-        success: result.sent > 0,
-        totalUsers: result.totalUsers,
-        sent: result.sent,
-        failed: result.failed,
+        success: totalSent > 0,
+        totalUsers: result.totalUsers + nativeResult.totalUsers,
+        sent: totalSent,
+        failed: totalFailed,
+        channels: {
+          webPush: { totalUsers: result.totalUsers, sent: result.sent, failed: result.failed },
+          native: { totalUsers: nativeResult.totalUsers, sent: nativeResult.sent, failed: nativeResult.failed },
+        },
       });
     }
 
@@ -197,4 +226,117 @@ function buildPayloadFromTemplate(template: {
     default:
       return undefined;
   }
+}
+
+// =============================================================================
+// NATIVE PUSH HELPERS (APNs / FCM)
+// =============================================================================
+
+/**
+ * Send notification to a single user's native push tokens (iOS/Android)
+ */
+async function sendToNativeTokens(
+  targetUserId: string,
+  payload: PushNotificationPayload
+): Promise<{ sent: number; failed: number; errors: string[] }> {
+  let sent = 0;
+  let failed = 0;
+  const errors: string[] = [];
+
+  try {
+    const { data: tokens } = await supabase
+      .from('user_push_tokens')
+      .select('token, platform')
+      .eq('user_id', targetUserId);
+
+    if (!tokens || tokens.length === 0) {
+      return { sent: 0, failed: 0, errors: [] };
+    }
+
+    const nativePayload = {
+      title: payload.title,
+      body: payload.body,
+      data: payload.data as Record<string, string> | undefined,
+    };
+
+    for (const tokenEntry of tokens) {
+      try {
+        let success = false;
+        if (tokenEntry.platform === 'ios') {
+          success = await sendGrowApnsPushNotification(tokenEntry.token, nativePayload);
+        } else if (tokenEntry.platform === 'android') {
+          success = await sendFcmPushNotification(tokenEntry.token, nativePayload);
+        }
+
+        if (success) {
+          sent++;
+        } else {
+          failed++;
+          errors.push(`Failed to send via ${tokenEntry.platform}`);
+        }
+      } catch (err) {
+        failed++;
+        errors.push(`${tokenEntry.platform} error: ${err instanceof Error ? err.message : 'Unknown'}`);
+      }
+    }
+  } catch (err) {
+    errors.push(`Failed to fetch native tokens: ${err instanceof Error ? err.message : 'Unknown'}`);
+  }
+
+  return { sent, failed, errors };
+}
+
+/**
+ * Broadcast notification to all native push tokens (iOS/Android)
+ * for users who have the specified notification type enabled.
+ */
+async function broadcastToNativeTokens(
+  notificationType: NotificationType,
+  payload: PushNotificationPayload
+): Promise<{ totalUsers: number; sent: number; failed: number }> {
+  let totalUsers = 0;
+  let sent = 0;
+  let failed = 0;
+
+  try {
+    // Get all native tokens joined with notification preferences
+    const { data: tokens } = await supabase
+      .from('user_push_tokens')
+      .select('user_id, token, platform');
+
+    if (!tokens || tokens.length === 0) {
+      return { totalUsers: 0, sent: 0, failed: 0 };
+    }
+
+    totalUsers = new Set(tokens.map(t => t.user_id)).size;
+
+    const nativePayload = {
+      title: payload.title,
+      body: payload.body,
+      data: payload.data as Record<string, string> | undefined,
+    };
+
+    for (const tokenEntry of tokens) {
+      try {
+        let success = false;
+        if (tokenEntry.platform === 'ios') {
+          success = await sendGrowApnsPushNotification(tokenEntry.token, nativePayload);
+        } else if (tokenEntry.platform === 'android') {
+          success = await sendFcmPushNotification(tokenEntry.token, nativePayload);
+        }
+
+        if (success) {
+          sent++;
+        } else {
+          failed++;
+        }
+      } catch {
+        failed++;
+      }
+    }
+  } catch (err) {
+    console.error('[GrowPushSend] Native broadcast error:', err);
+  }
+
+  return { totalUsers, sent, failed };
 }
