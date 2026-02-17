@@ -19,6 +19,8 @@ import {
   WeatherAlert,
 } from '@/lib/grow/weatherTaskEngine';
 import { sendPushNotification, NotificationType } from '@/lib/grow/notifications';
+import { sendGrowApnsPushNotification } from '@/lib/grow/apnsClient';
+import { sendFcmPushNotification } from '@/lib/notifications/fcmClient';
 
 /**
  * Map alert types to notification types
@@ -167,12 +169,19 @@ function defaultSoilConditions(): SoilConditions {
   };
 }
 
+interface NativePushToken {
+  user_id: string;
+  token: string;
+  platform: 'ios' | 'android';
+}
+
 /**
- * Send push notification for weather alert
+ * Send push notification for weather alert via web push AND native (APNs/FCM)
  */
 async function sendAlertNotification(
   userId: string,
-  alert: WeatherAlert
+  alert: WeatherAlert,
+  nativeTokens: NativePushToken[] = []
 ): Promise<boolean> {
   try {
     // Determine notification icon and URL
@@ -194,28 +203,54 @@ async function sendAlertNotification(
       url = '/grow/weather?alert=pest';
     }
 
-    // Use the centralized notification system which handles:
-    // - Fetching subscriptions
-    // - Checking preferences
-    // - Respecting quiet hours
-    const result = await sendPushNotification({
-      userId,
-      notificationType: mapAlertToNotificationType(alert.type, alert.severity),
-      payload: {
-        title: alert.title,
-        body: alert.suggestedAction,
-        icon,
-        data: {
-          url,
-          alertType: alert.type,
-          alertId: alert.forecastDate,
-        },
-      },
-      respectPreferences: true,
-      respectQuietHours: true,
-    });
+    let anySent = false;
 
-    return result.sent > 0;
+    // Send via web push (centralized notification system handles
+    // subscriptions, preferences, and quiet hours)
+    try {
+      const result = await sendPushNotification({
+        userId,
+        notificationType: mapAlertToNotificationType(alert.type, alert.severity),
+        payload: {
+          title: alert.title,
+          body: alert.suggestedAction,
+          icon,
+          data: {
+            url,
+            alertType: alert.type,
+            alertId: alert.forecastDate,
+          },
+        },
+        respectPreferences: true,
+        respectQuietHours: true,
+      });
+      if (result.sent > 0) anySent = true;
+    } catch (webError) {
+      console.error(`[WeatherCron] Web push error for ${userId}:`, webError);
+    }
+
+    // Send via native push (APNs/FCM) independently of web push
+    const nativePayload = {
+      title: alert.title,
+      body: alert.suggestedAction,
+      data: { type: alert.type, url },
+    };
+
+    for (const token of nativeTokens) {
+      try {
+        let sent = false;
+        if (token.platform === 'ios') {
+          sent = await sendGrowApnsPushNotification(token.token, nativePayload);
+        } else if (token.platform === 'android') {
+          sent = await sendFcmPushNotification(token.token, nativePayload);
+        }
+        if (sent) anySent = true;
+      } catch (nativeError) {
+        console.error(`[WeatherCron] Native push error (${token.platform}) for ${userId}:`, nativeError);
+      }
+    }
+
+    return anySent;
   } catch (error) {
     console.error('[WeatherCron] Notification error:', error);
     return false;
@@ -248,6 +283,22 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
 
     console.log(`[WeatherCron] Processing ${users.length} users with locations`);
+
+    // Bulk-fetch native push tokens (APNs/FCM) for all users
+    const userIds = users.map(u => u.user_id);
+    const { data: nativeTokens } = await supabase
+      .from('user_push_tokens')
+      .select('user_id, token, platform')
+      .in('user_id', userIds);
+
+    const nativeTokenMap = new Map<string, NativePushToken[]>();
+    for (const token of (nativeTokens || []) as NativePushToken[]) {
+      const existing = nativeTokenMap.get(token.user_id) || [];
+      existing.push(token);
+      nativeTokenMap.set(token.user_id, existing);
+    }
+
+    console.log(`[WeatherCron] Found ${nativeTokens?.length || 0} native push tokens`);
 
     // Process users in batches to avoid rate limits
     const BATCH_SIZE = 10;
@@ -287,15 +338,22 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             temperatureMax: p.temperature_max_c,
           }));
 
+          // Skip users with no plants — nothing to alert about
+          if (plants.length === 0) {
+            return;
+          }
+
           // Analyze weather
           const result = analyzeWeatherForTasks(forecast, soil, plants);
 
           usersProcessed++;
 
+          const userNativeTokens = nativeTokenMap.get(userId) || [];
+
           // Process critical and warning alerts
           for (const alert of result.alerts) {
             if (alert.severity === 'critical' || alert.severity === 'warning') {
-              // Check if we already sent this alert
+              // Check if we already sent this alert (dedup)
               const { data: existing } = await supabase
                 .from('grow_weather_alerts')
                 .select('id')
@@ -320,11 +378,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
                 alertsGenerated++;
 
-                // Send push notification for critical alerts
-                if (alert.severity === 'critical') {
-                  const sent = await sendAlertNotification(userId, alert);
-                  if (sent) notificationsSent++;
-                }
+                // Send push notification for critical and warning alerts
+                const sent = await sendAlertNotification(userId, alert, userNativeTokens);
+                if (sent) notificationsSent++;
               }
             }
           }
@@ -358,3 +414,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     });
   }
 }
+
+export const config = {
+  maxDuration: 60,
+};

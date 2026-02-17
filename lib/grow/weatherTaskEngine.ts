@@ -526,6 +526,44 @@ const DISEASE_SUSCEPTIBLE_PLANTS: Record<string, string[]> = {
 };
 
 /**
+ * Outdoor growing season by plant type (months 1-12, Northern Hemisphere / Ireland).
+ * A plant is only considered "in the ground" and susceptible to outdoor diseases
+ * during these months. Having a plant in your list doesn't mean it's growing now —
+ * e.g. tomatoes are added in winter but aren't outside until May.
+ *
+ * Perennials (roses, apple, hosta, strawberry, grape) are always outdoors.
+ * Ranges are inclusive: [startMonth, endMonth].
+ */
+const PLANT_GROWING_SEASONS: Record<string, [number, number]> = {
+  // Tender crops — planted out after last frost, harvested by autumn
+  tomato: [5, 10],
+  pepper: [5, 10],
+  aubergine: [5, 10],
+  eggplant: [5, 10],
+  cucumber: [5, 9],
+  courgette: [5, 10],
+  zucchini: [5, 10],
+  squash: [5, 10],
+  melon: [6, 9],
+  pumpkin: [5, 10],
+  // Hardy crops — earlier outdoor season
+  potato: [3, 10],
+  pea: [3, 7],
+  bean: [5, 10],
+  lettuce: [3, 10],
+  cabbage: [3, 11],
+  brassica: [3, 11],
+  // Perennials — always outdoors, susceptible year-round
+  rose: [1, 12],
+  apple: [1, 12],
+  hosta: [3, 11],
+  strawberry: [3, 10],
+  grape: [4, 11],
+  // Seedlings — only relevant during propagation season
+  seedling: [3, 6],
+};
+
+/**
  * Calculate cumulative rain over multiple days
  */
 function calculateRain72h(forecast: WeatherForecast[]): number {
@@ -545,13 +583,29 @@ function countDryDays(forecast: WeatherForecast[]): number {
 }
 
 /**
- * Find plants matching disease susceptibility
+ * Check if a plant type is currently in its outdoor growing season.
+ * Returns true if the plant would actually be in the ground / outdoors right now.
+ */
+function isInGrowingSeason(plantType: string, month: number): boolean {
+  const season = PLANT_GROWING_SEASONS[plantType];
+  if (!season) return true; // Unknown plants: assume year-round (conservative)
+  const [start, end] = season;
+  return month >= start && month <= end;
+}
+
+/**
+ * Find plants matching disease susceptibility AND currently in their growing season.
+ * A user may have "tomatoes" in their garden list year-round, but tomatoes aren't
+ * actually outdoors in February — so they shouldn't trigger disease alerts.
  */
 function findSusceptiblePlants(plants: UserPlant[], disease: string): UserPlant[] {
   const susceptibleTypes = DISEASE_SUSCEPTIBLE_PLANTS[disease] || [];
+  const month = new Date().getMonth() + 1; // 1-12
   return plants.filter(p => {
     const slug = (p.plantSlug || p.plantName || '').toLowerCase();
-    return susceptibleTypes.some(type => slug.includes(type));
+    return susceptibleTypes.some(type =>
+      slug.includes(type) && isInGrowingSeason(type, month)
+    );
   });
 }
 
@@ -568,6 +622,10 @@ export function detectLateBlight(
   const today = forecast[0];
   if (!today) return alerts;
 
+  // Season gate: late blight only relevant April-October
+  const month = new Date().getMonth() + 1;
+  if (month < 4 || month > 10) return alerts;
+
   const rain72h = calculateRain72h(forecast);
   const humidity = today.humidity;
   const temp = (today.tempMin + today.tempMax) / 2;
@@ -578,6 +636,10 @@ export function detectLateBlight(
 
   if (blightRisk || highBlightRisk) {
     const susceptiblePlants = findSusceptiblePlants(plants, 'late_blight');
+
+    // Skip alert if user has plants but none are susceptible/in-season
+    if (susceptiblePlants.length === 0 && plants.length > 0) return alerts;
+
     const severity: 'warning' | 'critical' = highBlightRisk ? 'critical' : 'warning';
     const riskLevel = highBlightRisk ? 'HIGH' : 'ELEVATED';
 
@@ -587,9 +649,7 @@ export function detectLateBlight(
       title: `${riskLevel} Late Blight Risk`,
       message: `Weather conditions favor late blight: ${rain72h.toFixed(0)}mm rain in 72h, ` +
         `${humidity}% humidity, ${temp.toFixed(0)}°C average temperature. ` +
-        (susceptiblePlants.length > 0
-          ? `${susceptiblePlants.length} of your plants (tomatoes, potatoes) are at risk.`
-          : 'Monitor tomatoes and potatoes closely.'),
+        `${susceptiblePlants.length} of your plants (tomatoes, potatoes) are at risk.`,
       forecastDate: today.date,
       forecastValue: rain72h,
       affectedPlantIds: susceptiblePlants.map(p => p.id),
@@ -615,6 +675,10 @@ export function detectPowderyMildew(
   const today = forecast[0];
   if (!today) return alerts;
 
+  // Season gate: powdery mildew only relevant May-October
+  const month = new Date().getMonth() + 1;
+  if (month < 5 || month > 10) return alerts;
+
   const dryDays = countDryDays(forecast);
   const humidity = today.humidity;
   const temp = (today.tempMin + today.tempMax) / 2;
@@ -625,6 +689,10 @@ export function detectPowderyMildew(
 
   if (mildewRisk || highMildewRisk) {
     const susceptiblePlants = findSusceptiblePlants(plants, 'powdery_mildew');
+
+    // Skip alert if user has plants but none are susceptible/in-season
+    if (susceptiblePlants.length === 0 && plants.length > 0) return alerts;
+
     const severity: 'warning' | 'critical' = highMildewRisk ? 'critical' : 'warning';
     const riskLevel = highMildewRisk ? 'HIGH' : 'ELEVATED';
 
@@ -634,9 +702,7 @@ export function detectPowderyMildew(
       title: `${riskLevel} Powdery Mildew Risk`,
       message: `${dryDays} consecutive dry days with ${humidity}% humidity and ${temp.toFixed(0)}°C ` +
         `creates ideal conditions for powdery mildew. ` +
-        (susceptiblePlants.length > 0
-          ? `${susceptiblePlants.length} of your plants (squash, cucumbers, roses) are at risk.`
-          : 'Watch courgettes, cucumbers, and roses.'),
+        `${susceptiblePlants.length} of your plants (squash, cucumbers, roses) are at risk.`,
       forecastDate: today.date,
       forecastValue: humidity,
       affectedPlantIds: susceptiblePlants.map(p => p.id),
@@ -671,6 +737,10 @@ export function detectBotrytis(
 
   if (botrytisRisk || highBotrytisRisk) {
     const susceptiblePlants = findSusceptiblePlants(plants, 'botrytis');
+
+    // Skip alert if user has plants but none are susceptible/in-season
+    if (susceptiblePlants.length === 0 && plants.length > 0) return alerts;
+
     const severity: 'warning' | 'critical' = highBotrytisRisk ? 'critical' : 'warning';
 
     alerts.push({
@@ -678,9 +748,7 @@ export function detectBotrytis(
       severity,
       title: `${severity === 'critical' ? 'HIGH' : 'ELEVATED'} Grey Mold (Botrytis) Risk`,
       message: `Humid conditions (${humidity}%) with ${temp.toFixed(0)}°C temperatures favor botrytis. ` +
-        (susceptiblePlants.length > 0
-          ? `Watch your strawberries, tomatoes, and lettuce.`
-          : 'Monitor soft fruits and dense foliage plants.'),
+        `Watch your strawberries, tomatoes, and lettuce.`,
       forecastDate: today.date,
       forecastValue: humidity,
       affectedPlantIds: susceptiblePlants.map(p => p.id),

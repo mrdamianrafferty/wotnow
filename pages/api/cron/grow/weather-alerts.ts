@@ -1,18 +1,16 @@
 /**
+ * @deprecated This cron has been replaced by /api/cron/grow/weather-task-alerts
+ * which is plant-aware, season-aware, and uses the weatherTaskEngine for proper
+ * disease/pest detection. This file is kept for manual testing only.
+ *
  * /api/cron/grow/weather-alerts
  *
  * Cron job endpoint for checking weather conditions and sending alerts.
- * Should be called every 6 hours by Vercel Cron or similar scheduler.
  *
- * Checks for:
- * - Frost conditions (temp dropping below 2°C in next 48 hours)
- * - Extreme weather (heat waves, storms)
- * - Pest/disease favorable conditions (high humidity + warm temps)
- *
- * Sends to:
- * - Web Push (PWA users) via grow_push_subscriptions
- * - APNs (iOS native app) via user_push_tokens
- * - FCM (Android native app) via user_push_tokens
+ * Issues with this implementation:
+ * - No plant awareness: hardcodes ['tomatoes', 'peppers', 'cucumbers'] for every user
+ * - No season gating: fires disease alerts in winter when no crops are in the ground
+ * - Crude thresholds: Irish winter weather (10-20°C, >80% humidity) triggers false positives
  *
  * @module pages/api/cron/grow/weather-alerts
  */

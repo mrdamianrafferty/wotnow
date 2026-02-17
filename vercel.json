@@ -61,7 +61,7 @@
       "schedule": "0 3 * * 1"
     },
     {
-      "path": "/api/cron/grow/weather-alerts",
+      "path": "/api/cron/grow/weather-task-alerts",
       "schedule": "0 */6 * * *"
     },
     {
