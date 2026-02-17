@@ -167,7 +167,7 @@ const FindrConditionsRoute: React.FC = () => {
         <FindrNavigation />
 
         {/* Content container - reduced padding/margins, removed unnecessary wrappers */}
-        <div className="px-1 pt-2 sm:px-2 md:px-4 lg:max-w-3xl mx-auto">
+        <div className="px-1 pt-2 sm:px-2 md:px-4 lg:max-w-6xl mx-auto">
           <ConditionsDashboard
             data={conditions.data}
             loading={conditions.loading}
