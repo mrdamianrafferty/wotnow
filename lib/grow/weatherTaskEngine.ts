@@ -637,8 +637,8 @@ export function detectLateBlight(
   if (blightRisk || highBlightRisk) {
     const susceptiblePlants = findSusceptiblePlants(plants, 'late_blight');
 
-    // Skip alert if user has plants but none are susceptible/in-season
-    if (susceptiblePlants.length === 0 && plants.length > 0) return alerts;
+    // Skip alert if no susceptible plants are currently in-season
+    if (susceptiblePlants.length === 0) return alerts;
 
     const severity: 'warning' | 'critical' = highBlightRisk ? 'critical' : 'warning';
     const riskLevel = highBlightRisk ? 'HIGH' : 'ELEVATED';
@@ -690,8 +690,8 @@ export function detectPowderyMildew(
   if (mildewRisk || highMildewRisk) {
     const susceptiblePlants = findSusceptiblePlants(plants, 'powdery_mildew');
 
-    // Skip alert if user has plants but none are susceptible/in-season
-    if (susceptiblePlants.length === 0 && plants.length > 0) return alerts;
+    // Skip alert if no susceptible plants are currently in-season
+    if (susceptiblePlants.length === 0) return alerts;
 
     const severity: 'warning' | 'critical' = highMildewRisk ? 'critical' : 'warning';
     const riskLevel = highMildewRisk ? 'HIGH' : 'ELEVATED';
@@ -738,8 +738,8 @@ export function detectBotrytis(
   if (botrytisRisk || highBotrytisRisk) {
     const susceptiblePlants = findSusceptiblePlants(plants, 'botrytis');
 
-    // Skip alert if user has plants but none are susceptible/in-season
-    if (susceptiblePlants.length === 0 && plants.length > 0) return alerts;
+    // Skip alert if no susceptible plants are currently in-season
+    if (susceptiblePlants.length === 0) return alerts;
 
     const severity: 'warning' | 'critical' = highBotrytisRisk ? 'critical' : 'warning';
 
