@@ -202,7 +202,7 @@
     "@typescript-eslint/parser": "^8.41.0",
     "autoprefixer": "^10.4.21",
     "babel-plugin-transform-remove-console": "^6.9.4",
-    "baseline-browser-mapping": "^2.9.6",
+    "baseline-browser-mapping": "^2.10.0",
     "cross-fetch": "^4.1.0",
     "cssnano": "^6.0.5",
     "cssnano-preset-default": "^6.0.5",
