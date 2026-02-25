@@ -6,6 +6,8 @@
  * - Climate zone and frost conditions
  * - Garden conditions (soil, sun, moisture)
  * - Seasonal timing
+ * - Weather forecasts (watering, planting windows)
+ * - Growth stage (harvest reminders)
  */
 
 import type { ClimateZoneCode, FrostRiskLevel } from './climate';
@@ -14,8 +16,16 @@ import {
   isInFrostRiskPeriod,
   getClimateZoneFrostDates,
 } from './climate';
+import type {
+  WeatherForecast,
+  SoilConditions,
+} from './weatherTaskEngine';
+import {
+  calculateWateringRecommendation,
+  calculatePlantingWindows,
+} from './weatherTaskEngine';
 
-export type TaskType = 'planting' | 'care' | 'protection' | 'harvest' | 'watering';
+export type TaskType = 'planting' | 'care' | 'protection' | 'harvest' | 'watering' | 'seasonal';
 export type TaskUrgency = 'now' | 'soon' | 'upcoming' | 'later';
 export type FrostTolerance = 'hardy' | 'half_hardy' | 'tender';
 
@@ -24,6 +34,9 @@ export interface PlantInfo {
   name: string | null;
   frostTolerance: FrostTolerance | null;
   frostProtectionNeeded: boolean;
+  plantedAt?: string | null;
+  daysToHarvest?: number | null;
+  waterNeeds?: 'low' | 'medium' | 'high' | null;
 }
 
 export interface GardenConditions {
@@ -41,6 +54,8 @@ export interface SmartTaskContext {
   userPlants: PlantInfo[];
   gardenConditions: GardenConditions | null;
   currentDate?: Date;
+  forecast?: WeatherForecast[];
+  soilConditions?: SoilConditions;
 }
 
 export interface SmartTask {
@@ -327,22 +342,403 @@ export function generateFrostProtectionTask(
   };
 }
 
+// =============================================================================
+// WATERING TASK GENERATOR
+// =============================================================================
+
+/**
+ * Approximate days to harvest for common crops.
+ * Used when grow_user_plants doesn't have species-level data.
+ */
+const DEFAULT_DAYS_TO_HARVEST: Record<string, number> = {
+  lettuce: 45, spinach: 40, radish: 28, rocket: 30,
+  chard: 55, kale: 60, spring_onion: 60,
+  beetroot: 60, carrot: 70, turnip: 55,
+  pea: 65, bean: 60, broad_bean: 90, runner_bean: 70, french_bean: 55,
+  courgette: 50, cucumber: 55, squash: 90, pumpkin: 100, butternut_squash: 100,
+  tomato: 75, pepper: 80, chilli: 85, aubergine: 80,
+  potato: 90, sweet_potato: 100, sweetcorn: 85,
+  broccoli: 70, cauliflower: 80, cabbage: 75, brussels_sprouts: 120,
+  onion: 100, garlic: 180, leek: 120, shallot: 90,
+  parsnip: 110, celery: 100, celeriac: 120,
+  strawberry: 60, raspberry: 70, blueberry: 80,
+};
+
+/**
+ * Generate watering task based on weather forecast and soil conditions.
+ * Uses calculateWateringRecommendation from weatherTaskEngine.
+ */
+export function generateWateringTask(
+  ctx: SmartTaskContext
+): SmartTask | null {
+  if (!ctx.forecast || !ctx.soilConditions || ctx.forecast.length === 0) {
+    return null;
+  }
+
+  // Build minimal UserPlant array for the weather engine
+  const userPlants = ctx.userPlants.map((p) => ({
+    id: p.slug,
+    plantName: p.name || p.slug,
+    plantSlug: p.slug,
+    frostTolerance: p.frostTolerance,
+    waterNeeds: p.waterNeeds ?? null,
+  }));
+
+  const rec = calculateWateringRecommendation(ctx.forecast, ctx.soilConditions, userPlants);
+
+  if (rec.shouldWater) {
+    const urgency: TaskUrgency = rec.adjustmentFactor >= 1.3 ? 'now' : 'soon';
+    return {
+      id: generateTaskId('watering', ['garden']),
+      type: 'watering',
+      title: rec.adjustmentFactor >= 1.3
+        ? 'Water your garden — conditions are dry'
+        : 'Water your garden today',
+      description: rec.reason + '. ' + rec.details.slice(0, 2).join('. '),
+      plants: ctx.userPlants.map((p) => p.slug),
+      urgency,
+      isRelevant: true,
+      relevanceReason: rec.reason,
+      conditions: {
+        weatherBased: true,
+        frostBased: false,
+        seasonBased: false,
+        soilBased: true,
+      },
+    };
+  }
+
+  // Generate a "skip watering" informational task
+  if (rec.adjustmentFactor === 0 || rec.reason.toLowerCase().includes('rain')) {
+    return {
+      id: generateTaskId('watering', ['garden']),
+      type: 'watering',
+      title: 'Skip watering today',
+      description: rec.reason + '. ' + rec.details.slice(0, 2).join('. '),
+      plants: [],
+      urgency: 'later',
+      isRelevant: true,
+      relevanceReason: rec.reason,
+      conditions: {
+        weatherBased: true,
+        frostBased: false,
+        seasonBased: false,
+        soilBased: true,
+      },
+    };
+  }
+
+  return null;
+}
+
+// =============================================================================
+// PLANTING WINDOW TASK GENERATOR
+// =============================================================================
+
+/**
+ * Generate planting window tasks based on soil temperature.
+ * Uses calculatePlantingWindows from weatherTaskEngine.
+ */
+export function generatePlantingWindowTasks(
+  ctx: SmartTaskContext
+): SmartTask[] {
+  if (!ctx.forecast || !ctx.soilConditions || ctx.forecast.length === 0) {
+    return [];
+  }
+
+  const userPlants = ctx.userPlants.map((p) => ({
+    id: p.slug,
+    plantName: p.name || p.slug,
+    plantSlug: p.slug,
+    frostTolerance: p.frostTolerance,
+    waterNeeds: p.waterNeeds ?? null,
+  }));
+
+  const windows = calculatePlantingWindows(ctx.soilConditions, ctx.forecast, userPlants);
+  const tasks: SmartTask[] = [];
+
+  for (const window of windows) {
+    if (window.canPlantNow) {
+      tasks.push({
+        id: generateTaskId('planting', [window.plantSlug]),
+        type: 'planting',
+        title: `Soil is warm enough to sow ${window.plantSlug} outdoors`,
+        description: window.reason,
+        plants: [window.plantSlug],
+        urgency: 'soon',
+        isRelevant: true,
+        relevanceReason: window.reason,
+        conditions: {
+          weatherBased: false,
+          frostBased: false,
+          seasonBased: true,
+          soilBased: true,
+        },
+      });
+    } else if (window.daysUntilReady !== undefined && window.daysUntilReady <= 14) {
+      tasks.push({
+        id: generateTaskId('planting', [window.plantSlug]),
+        type: 'planting',
+        title: `Wait ${window.daysUntilReady} more days before sowing ${window.plantSlug}`,
+        description: `Soil temp ${window.currentSoilTemp.toFixed(1)}°C, needs ${window.soilTempRequired}°C minimum.`,
+        plants: [window.plantSlug],
+        urgency: 'upcoming',
+        isRelevant: true,
+        relevanceReason: window.reason,
+        conditions: {
+          weatherBased: false,
+          frostBased: false,
+          seasonBased: true,
+          soilBased: true,
+        },
+      });
+    }
+  }
+
+  return tasks;
+}
+
+// =============================================================================
+// HARVEST REMINDER TASK GENERATOR
+// =============================================================================
+
+/**
+ * Generate harvest reminders based on planted_at dates and species days_to_harvest.
+ */
+export function generateHarvestReminders(
+  ctx: SmartTaskContext
+): SmartTask[] {
+  const tasks: SmartTask[] = [];
+  const now = ctx.currentDate ?? new Date();
+  const nowMs = now.getTime();
+
+  for (const plant of ctx.userPlants) {
+    if (!plant.plantedAt) continue;
+
+    const plantedDate = new Date(plant.plantedAt);
+    if (isNaN(plantedDate.getTime())) continue;
+
+    const daysToHarvest = plant.daysToHarvest
+      ?? DEFAULT_DAYS_TO_HARVEST[plant.slug]
+      ?? null;
+
+    if (daysToHarvest === null) continue;
+
+    const daysSincePlanted = Math.floor((nowMs - plantedDate.getTime()) / (1000 * 60 * 60 * 24));
+    const daysRemaining = daysToHarvest - daysSincePlanted;
+    const plantName = plant.name || plant.slug;
+
+    if (daysRemaining <= 0 && daysRemaining > -14) {
+      // Ready to harvest now
+      tasks.push({
+        id: generateTaskId('harvest', [plant.slug]),
+        type: 'harvest',
+        title: `Your ${plantName} may be ready to harvest`,
+        description: `Planted ${daysSincePlanted} days ago (typical harvest at ${daysToHarvest} days). Check for readiness.`,
+        plants: [plant.slug],
+        urgency: 'now',
+        isRelevant: true,
+        relevanceReason: `${daysSincePlanted} days since planting, expected harvest at ${daysToHarvest} days`,
+        conditions: {
+          weatherBased: false,
+          frostBased: false,
+          seasonBased: true,
+          soilBased: false,
+        },
+      });
+    } else if (daysRemaining > 0 && daysRemaining <= 7) {
+      // Approaching harvest window
+      tasks.push({
+        id: generateTaskId('harvest', [plant.slug]),
+        type: 'harvest',
+        title: `${plantName} approaching harvest — ${daysRemaining} days to go`,
+        description: `Planted ${daysSincePlanted} days ago. Entering peak harvest window soon.`,
+        plants: [plant.slug],
+        urgency: 'upcoming',
+        isRelevant: true,
+        relevanceReason: `${daysRemaining} days until expected harvest`,
+        conditions: {
+          weatherBased: false,
+          frostBased: false,
+          seasonBased: true,
+          soilBased: false,
+        },
+      });
+    }
+  }
+
+  return tasks;
+}
+
+// =============================================================================
+// SEASONAL MAINTENANCE TASK GENERATOR
+// =============================================================================
+
+/**
+ * Seasonal maintenance tasks derived from month + climate zone.
+ */
+const SEASONAL_TASKS: Array<{
+  months: number[];
+  title: string;
+  description: string;
+  zones?: ClimateZoneCode[];
+}> = [
+  // Spring
+  {
+    months: [3, 4],
+    title: 'Start hardening off indoor seedlings',
+    description: 'Gradually acclimatise seedlings grown indoors by placing them outside for increasing periods over 7-10 days before transplanting.',
+  },
+  {
+    months: [3],
+    title: 'Prepare beds for spring sowing',
+    description: 'Clear winter debris, fork over soil, and rake to a fine tilth. Apply compost or well-rotted manure.',
+  },
+  {
+    months: [4, 5],
+    title: 'Install plant supports',
+    description: 'Set up bean poles, pea sticks, tomato cages, and other plant supports before crops need them.',
+  },
+  {
+    months: [4, 5],
+    title: 'Start regular slug patrols',
+    description: 'Check around vulnerable seedlings at dusk. Set beer traps or apply organic slug deterrents.',
+  },
+  // Summer
+  {
+    months: [6, 7],
+    title: 'Pinch out tomato side shoots',
+    description: 'Remove side shoots (suckers) from cordon tomato varieties to focus energy on fruit production.',
+  },
+  {
+    months: [6, 7, 8],
+    title: 'Deadhead flowers regularly',
+    description: 'Remove spent blooms from annuals and perennials to encourage continued flowering.',
+  },
+  {
+    months: [7, 8],
+    title: 'Summer prune trained fruit trees',
+    description: 'Prune espalier, cordon, and fan-trained fruit trees to maintain shape and encourage fruit buds.',
+  },
+  // Autumn
+  {
+    months: [9, 10],
+    title: 'Collect and save seeds',
+    description: 'Harvest seeds from your best-performing plants for next year. Dry thoroughly and store in labelled envelopes.',
+  },
+  {
+    months: [9, 10],
+    title: 'Plant spring-flowering bulbs',
+    description: 'Plant tulips, daffodils, crocuses, and alliums now for spring colour.',
+  },
+  {
+    months: [10, 11],
+    title: 'Protect tender plants before first frost',
+    description: 'Move tender plants to shelter, wrap containers with fleece, and mulch around crowns of borderline-hardy plants.',
+    zones: ['atlantic_mild', 'cool_maritime', 'continental_cool', 'mountain_cool'],
+  },
+  {
+    months: [10, 11],
+    title: 'Clean and store garden tools',
+    description: 'Clean soil from tools, oil metal parts, sharpen blades. Store in a dry place to prevent rust.',
+  },
+  {
+    months: [11],
+    title: 'Spread organic mulch on empty beds',
+    description: 'Apply a thick layer of compost, leaf mould, or well-rotted manure to protect soil over winter.',
+  },
+  // Winter
+  {
+    months: [12, 1, 2],
+    title: 'Prune dormant fruit trees',
+    description: 'Prune apple, pear, and other deciduous fruit trees while dormant. Remove crossing, dead, and diseased branches.',
+  },
+  {
+    months: [1, 2],
+    title: 'Order seeds and plan the growing season',
+    description: 'Review last year, plan crop rotations, and order seeds early for the best selection.',
+  },
+  {
+    months: [2, 3],
+    title: 'Start early seeds indoors',
+    description: 'Sow peppers, aubergines, and early tomatoes on a windowsill or in a heated propagator.',
+  },
+  {
+    months: [2],
+    title: 'Chit seed potatoes',
+    description: 'Place seed potatoes in egg boxes in a cool, light spot to encourage short, sturdy sprouts before planting in March.',
+  },
+];
+
+export function generateSeasonalMaintenanceTasks(
+  ctx: SmartTaskContext
+): SmartTask[] {
+  const date = ctx.currentDate ?? new Date();
+  const month = date.getMonth() + 1; // 1-12
+  const tasks: SmartTask[] = [];
+
+  for (const item of SEASONAL_TASKS) {
+    if (!item.months.includes(month)) continue;
+
+    // Zone filtering
+    if (item.zones && ctx.climateZone && !item.zones.includes(ctx.climateZone)) {
+      continue;
+    }
+
+    tasks.push({
+      id: generateTaskId('seasonal' as TaskType, ['general']),
+      type: 'care',
+      title: item.title,
+      description: item.description,
+      plants: [],
+      urgency: 'upcoming',
+      isRelevant: true,
+      relevanceReason: `Seasonal task for month ${month}`,
+      conditions: {
+        weatherBased: false,
+        frostBased: false,
+        seasonBased: true,
+        soilBased: false,
+      },
+    });
+  }
+
+  return tasks;
+}
+
+// =============================================================================
+// MAIN GENERATOR
+// =============================================================================
+
 /**
  * Main function to generate all relevant smart tasks
  */
 export function generateSmartTasks(ctx: SmartTaskContext): SmartTask[] {
   const tasks: SmartTask[] = [];
 
-  // Check frost protection
+  // 1. Frost protection (existing)
   const frostResult = shouldShowFrostProtection(ctx);
   if (frostResult.show && frostResult.tenderPlants.length > 0) {
     tasks.push(generateFrostProtectionTask(frostResult.tenderPlants, ctx));
   }
 
-  // Future: Add more task generators here
-  // - Watering tasks based on weather forecast
-  // - Planting window tasks based on calendar
-  // - Harvest reminders based on planted_at dates
+  // 2. Watering task (weather-driven)
+  const wateringTask = generateWateringTask(ctx);
+  if (wateringTask) {
+    tasks.push(wateringTask);
+  }
+
+  // 3. Planting window tasks (soil temperature)
+  const plantingTasks = generatePlantingWindowTasks(ctx);
+  tasks.push(...plantingTasks);
+
+  // 4. Harvest reminders (growth stage)
+  const harvestTasks = generateHarvestReminders(ctx);
+  tasks.push(...harvestTasks);
+
+  // 5. Seasonal maintenance tasks (calendar-based)
+  const seasonalTasks = generateSeasonalMaintenanceTasks(ctx);
+  tasks.push(...seasonalTasks);
 
   return tasks;
 }

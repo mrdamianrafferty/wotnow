@@ -535,7 +535,7 @@ const DISEASE_SUSCEPTIBLE_PLANTS: Record<string, string[]> = {
  * Ranges are inclusive: [startMonth, endMonth].
  */
 const PLANT_GROWING_SEASONS: Record<string, [number, number]> = {
-  // Tender crops — planted out after last frost, harvested by autumn
+  // ── Tender crops — planted out after last frost, harvested by autumn ──
   tomato: [5, 10],
   pepper: [5, 10],
   aubergine: [5, 10],
@@ -546,20 +546,91 @@ const PLANT_GROWING_SEASONS: Record<string, [number, number]> = {
   squash: [5, 10],
   melon: [6, 9],
   pumpkin: [5, 10],
-  // Hardy crops — earlier outdoor season
+  basil: [5, 9],
+  sweetcorn: [5, 10],
+  chilli: [5, 10],
+  sweet_potato: [5, 10],
+
+  // ── Hardy vegetables — earlier outdoor season ──
   potato: [3, 10],
   pea: [3, 7],
   bean: [5, 10],
   lettuce: [3, 10],
   cabbage: [3, 11],
   brassica: [3, 11],
-  // Perennials — always outdoors, susceptible year-round
-  rose: [1, 12],
+  carrot: [3, 10],
+  parsnip: [3, 11],
+  beetroot: [3, 10],
+  turnip: [3, 10],
+  swede: [3, 11],
+  radish: [3, 10],
+  spinach: [3, 10],
+  chard: [4, 10],
+  swiss_chard: [4, 10],
+  kale: [2, 12],
+  brussels_sprouts: [3, 12],
+  broccoli: [3, 11],
+  cauliflower: [3, 10],
+  leek: [3, 12],
+  onion: [3, 10],
+  garlic: [10, 7], // overwintered — planted Oct, harvested Jul
+  spring_onion: [3, 10],
+  shallot: [3, 9],
+  celery: [4, 10],
+  celeriac: [4, 11],
+  broad_bean: [2, 7],
+  runner_bean: [5, 10],
+  french_bean: [5, 10],
+  asparagus: [2, 12],
+  rhubarb: [1, 12],
+
+  // ── Herbs ──
+  mint: [3, 11],
+  rosemary: [1, 12],
+  thyme: [1, 12],
+  sage: [1, 12],
+  oregano: [4, 10],
+  parsley: [3, 10],
+  coriander: [3, 10],
+  chives: [3, 10],
+  dill: [4, 9],
+  fennel: [4, 10],
+  bay: [1, 12],
+  lavender: [1, 12],
+  tarragon: [4, 10],
+
+  // ── Fruits — perennials, always outdoors, susceptible year-round ──
   apple: [1, 12],
-  hosta: [3, 11],
-  strawberry: [3, 10],
+  pear: [1, 12],
+  plum: [1, 12],
+  cherry: [1, 12],
+  damson: [1, 12],
+  fig: [1, 12],
   grape: [4, 11],
-  // Seedlings — only relevant during propagation season
+  strawberry: [3, 10],
+  raspberry: [1, 12],
+  blueberry: [1, 12],
+  blackberry: [1, 12],
+  gooseberry: [1, 12],
+  blackcurrant: [1, 12],
+  redcurrant: [1, 12],
+
+  // ── Cucurbits ──
+  butternut_squash: [5, 10],
+  watermelon: [6, 9],
+
+  // ── Ornamentals ──
+  rose: [1, 12],
+  hosta: [3, 11],
+  dahlia: [5, 10],
+  sweet_pea: [3, 9],
+  sunflower: [4, 10],
+  lily: [3, 11],
+  tulip: [1, 6],
+  daffodil: [1, 5],
+  cosmos: [5, 10],
+
+  // ── Seedlings — only relevant during propagation season ──
   seedling: [3, 6],
 };
 

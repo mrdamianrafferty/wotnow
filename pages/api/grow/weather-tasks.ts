@@ -18,6 +18,9 @@ import {
   UserPlant,
   WeatherTaskResult,
 } from '@/lib/grow/weatherTaskEngine';
+import { generateSmartTasks } from '@/lib/grow/smartTasks';
+import type { SmartTaskContext, PlantInfo } from '@/lib/grow/smartTasks';
+import type { ClimateZoneCode } from '@/lib/grow/climate';
 
 const SUPABASE_URL = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
 const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -349,6 +352,71 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       });
     }
 
+    // Generate smart tasks (frost, watering, planting, harvest, seasonal)
+    // Load climate zone for seasonal task generation
+    const { data: profileData } = await supabase
+      .from('profiles')
+      .select('preferences_json')
+      .eq('id', userId)
+      .maybeSingle();
+
+    const prefs = profileData?.preferences_json as Record<string, unknown> | null;
+    const climateZone = (prefs?.['climate_zone'] as ClimateZoneCode) ?? null;
+
+    const smartPlants: PlantInfo[] = plants.map((p) => ({
+      slug: p.plantSlug || p.plantName || 'unknown',
+      name: p.plantName,
+      frostTolerance: p.frostTolerance,
+      frostProtectionNeeded: p.frostTolerance === 'tender',
+      plantedAt: p.lastWateredAt, // Use lastWateredAt as proxy if planted_at unavailable
+      waterNeeds: p.waterNeeds,
+    }));
+
+    const smartCtx: SmartTaskContext = {
+      climateZone,
+      elevation: null,
+      userPlants: smartPlants,
+      gardenConditions: {
+        soilType: null,
+        sunExposure: null,
+        moisture: null,
+        hasGreenhouse: false,
+        hasRaisedBeds: false,
+        hasColdFrame: false,
+      },
+      forecast,
+      soilConditions: soil,
+    };
+
+    const smartTasks = generateSmartTasks(smartCtx);
+
+    // Auto-create actionable tasks in grow_user_tasks (non-blocking)
+    const actionableTasks = smartTasks.filter(
+      (t) => t.isRelevant && (t.urgency === 'now' || t.urgency === 'soon')
+    );
+
+    for (const task of actionableTasks) {
+      supabase
+        .from('grow_user_tasks')
+        .upsert(
+          {
+            user_id: userId,
+            task_id: task.id,
+            title: task.title,
+            description: task.description,
+            task_type: task.type,
+            plant_slug: task.plants[0] || null,
+            status: 'pending',
+          },
+          { onConflict: 'user_id,task_id', ignoreDuplicates: true }
+        )
+        .then(({ error: upsertError }) => {
+          if (upsertError) {
+            console.error('[WeatherTasks] Task upsert error:', upsertError);
+          }
+        });
+    }
+
     return res.status(200).json({
       success: true,
       location: {
@@ -369,6 +437,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       },
       plantCount: plants.length,
       result,
+      smartTasks,
       generatedAt: new Date().toISOString(),
     });
   } catch (error) {
