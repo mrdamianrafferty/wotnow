@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, useCallback } from 'react';
 import Head from 'next/head';
 import CoastalLocationDialog from '@/components/CoastalLocationDialog';
 import Script from 'next/script';
@@ -10,6 +10,7 @@ import { useUserPreferences } from '@/context/UserPreferencesContext';
 import { Globe, ChevronDown } from 'lucide-react';
 import { useLanguage } from '@/context/LanguageContext';
 import { getSupportedLanguages } from '@/lib/user/language';
+import { useGoDaisyPushNotifications } from '@/hooks/useGoDaisyPushNotifications';
 
 // Flag emojis for each language
 const LANGUAGE_FLAGS: Record<string, string> = {
@@ -176,6 +177,90 @@ export default function AccountPage() {
   const handleLanguageSelect = (langCode: string) => {
     setLanguage(langCode);
     setLangDropdownOpen(false);
+  };
+
+  // ---------------------------------------------------------------------------
+  // NOTIFICATION PREFERENCES
+  // ---------------------------------------------------------------------------
+
+  const {
+    isSupported: pushSupported,
+    permission: pushPermission,
+    isSubscribed: pushSubscribed,
+    isLoading: pushLoading,
+    error: pushError,
+    subscribe: pushSubscribe,
+    unsubscribe: pushUnsubscribe,
+  } = useGoDaisyPushNotifications();
+
+  interface NotifPrefs {
+    weatherAlerts: boolean;
+    extremeWeather: boolean;
+    activityRecommendations: boolean;
+    astronomyAlerts: boolean;
+    tideAlerts: boolean;
+    quietStartHour: number;
+    quietEndHour: number;
+  }
+
+  const [notifPrefs, setNotifPrefs] = useState<NotifPrefs>({
+    weatherAlerts: true,
+    extremeWeather: true,
+    activityRecommendations: true,
+    astronomyAlerts: true,
+    tideAlerts: true,
+    quietStartHour: 22,
+    quietEndHour: 7,
+  });
+  const [notifPrefsLoading, setNotifPrefsLoading] = useState(true);
+  const [notifSaving, setNotifSaving] = useState(false);
+
+  const loadNotifPrefs = useCallback(async () => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) { setNotifPrefsLoading(false); return; }
+
+      const response = await fetch('/api/godaisy/push/preferences', {
+        headers: { Authorization: `Bearer ${session.access_token}` },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        if (data.preferences) setNotifPrefs(data.preferences);
+      }
+    } catch (err) {
+      console.error('Failed to load notification preferences:', err);
+    } finally {
+      setNotifPrefsLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (pushSubscribed) loadNotifPrefs();
+    else setNotifPrefsLoading(false);
+  }, [pushSubscribed, loadNotifPrefs]);
+
+  const saveNotifPref = async (key: keyof NotifPrefs, value: boolean | number) => {
+    setNotifSaving(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) return;
+
+      const res = await fetch('/api/godaisy/push/preferences', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({ [key]: value }),
+      });
+
+      if (res.ok) setNotifPrefs(prev => ({ ...prev, [key]: value }));
+    } catch (err) {
+      console.error('Failed to save notification preference:', err);
+    } finally {
+      setNotifSaving(false);
+    }
   };
 
   return (
@@ -365,6 +450,134 @@ export default function AccountPage() {
             </div>
           </section>
 
+          {/* Notifications */}
+          {isSignedIn && (
+            <section className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 mb-4">
+              <h2 className="text-lg font-semibold text-gray-900 mb-1">Notifications</h2>
+              <p className="text-sm text-gray-600 mb-3">
+                Get alerts for weather, activity recommendations, and more.
+              </p>
+
+              {!pushSupported ? (
+                <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 text-amber-800 text-sm">
+                  Push notifications are not supported in this browser.
+                  Try Chrome, Firefox, or Edge.
+                </div>
+              ) : pushPermission === 'denied' ? (
+                <div className="bg-red-50 border border-red-200 rounded-lg p-3 text-red-800 text-sm">
+                  Notification permission was denied. Update your browser settings to allow notifications.
+                </div>
+              ) : (
+                <>
+                  {/* Enable/Disable toggle */}
+                  <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg mb-3">
+                    <div>
+                      <div className="font-medium text-gray-900">
+                        {pushSubscribed ? 'Notifications enabled' : 'Enable notifications'}
+                      </div>
+                      <div className="text-sm text-gray-500">
+                        {pushSubscribed
+                          ? 'Receiving alerts on this device'
+                          : 'Turn on to receive weather alerts and activity tips'}
+                      </div>
+                    </div>
+                    <button
+                      className={`px-4 py-2 rounded-lg font-medium ${
+                        pushSubscribed
+                          ? 'border border-gray-300 text-gray-700 hover:bg-gray-50'
+                          : 'bg-blue-600 text-white hover:bg-blue-700'
+                      } disabled:opacity-50`}
+                      disabled={pushLoading || notifPrefsLoading}
+                      onClick={async () => {
+                        if (pushSubscribed) {
+                          await pushUnsubscribe();
+                        } else {
+                          const ok = await pushSubscribe();
+                          if (!ok && pushError) alert(pushError);
+                        }
+                      }}
+                    >
+                      {pushLoading ? '...' : pushSubscribed ? 'Disable' : 'Enable'}
+                    </button>
+                  </div>
+
+                  {/* Preferences - only when subscribed */}
+                  {pushSubscribed && !notifPrefsLoading && (
+                    <div className="space-y-2">
+                      <NotifToggle
+                        label="Weather alerts"
+                        desc="Wind, rain, UV warnings"
+                        checked={notifPrefs.weatherAlerts}
+                        onChange={(v) => saveNotifPref('weatherAlerts', v)}
+                        disabled={notifSaving}
+                      />
+                      <NotifToggle
+                        label="Extreme weather"
+                        desc="Storms, heat waves, heavy frost"
+                        checked={notifPrefs.extremeWeather}
+                        onChange={(v) => saveNotifPref('extremeWeather', v)}
+                        disabled={notifSaving}
+                      />
+                      <NotifToggle
+                        label="Activity tips"
+                        desc="Great conditions for your activities"
+                        checked={notifPrefs.activityRecommendations}
+                        onChange={(v) => saveNotifPref('activityRecommendations', v)}
+                        disabled={notifSaving}
+                      />
+                      <NotifToggle
+                        label="Astronomy alerts"
+                        desc="ISS passes, meteor showers, eclipses"
+                        checked={notifPrefs.astronomyAlerts}
+                        onChange={(v) => saveNotifPref('astronomyAlerts', v)}
+                        disabled={notifSaving}
+                      />
+                      {isMarineUser && (
+                        <NotifToggle
+                          label="Tide alerts"
+                          desc="Significant tide events at your coast"
+                          checked={notifPrefs.tideAlerts}
+                          onChange={(v) => saveNotifPref('tideAlerts', v)}
+                          disabled={notifSaving}
+                        />
+                      )}
+
+                      {/* Quiet hours */}
+                      <div className="pt-2 border-t border-gray-100 mt-2">
+                        <div className="text-sm font-medium text-gray-700 mb-2">Quiet hours</div>
+                        <div className="flex items-center gap-2 text-sm text-gray-600">
+                          <span>From</span>
+                          <select
+                            className="px-2 py-1 border border-gray-300 rounded bg-white text-gray-900"
+                            value={notifPrefs.quietStartHour}
+                            onChange={(e) => saveNotifPref('quietStartHour', parseInt(e.target.value))}
+                            disabled={notifSaving}
+                          >
+                            {Array.from({ length: 24 }, (_, i) => (
+                              <option key={i} value={i}>{i.toString().padStart(2, '0')}:00</option>
+                            ))}
+                          </select>
+                          <span>to</span>
+                          <select
+                            className="px-2 py-1 border border-gray-300 rounded bg-white text-gray-900"
+                            value={notifPrefs.quietEndHour}
+                            onChange={(e) => saveNotifPref('quietEndHour', parseInt(e.target.value))}
+                            disabled={notifSaving}
+                          >
+                            {Array.from({ length: 24 }, (_, i) => (
+                              <option key={i} value={i}>{i.toString().padStart(2, '0')}:00</option>
+                            ))}
+                          </select>
+                        </div>
+                        <p className="text-xs text-gray-500 mt-1">No notifications during these hours</p>
+                      </div>
+                    </div>
+                  )}
+                </>
+              )}
+            </section>
+          )}
+
           {/* Sync status */}
           {!isSignedIn ? (
             <div className="bg-gray-100 border border-gray-200 rounded-lg p-4 mb-4 flex items-center justify-between">
@@ -447,6 +660,51 @@ export default function AccountPage() {
 
       <Footer />
     </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Notification toggle sub-component
+// ---------------------------------------------------------------------------
+
+function NotifToggle({
+  label,
+  desc,
+  checked,
+  onChange,
+  disabled,
+}: {
+  label: string;
+  desc: string;
+  checked: boolean;
+  onChange: (v: boolean) => void;
+  disabled?: boolean;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={() => !disabled && onChange(!checked)}
+      disabled={disabled}
+      className={`w-full flex items-center justify-between p-3 rounded-lg text-left transition-colors ${
+        disabled ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-50 cursor-pointer'
+      } ${checked ? 'bg-blue-50' : ''}`}
+    >
+      <div>
+        <div className="text-sm font-medium text-gray-900">{label}</div>
+        <div className="text-xs text-gray-500">{desc}</div>
+      </div>
+      <div
+        className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
+          checked ? 'bg-blue-600 border-blue-600' : 'border-gray-300'
+        }`}
+      >
+        {checked && (
+          <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+          </svg>
+        )}
+      </div>
+    </button>
   );
 }
 
