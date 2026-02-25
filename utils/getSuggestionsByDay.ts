@@ -91,9 +91,9 @@ function calculateActivityScoreWithSnow(
   console.log(`🎯 Scoring ${activity.id}...`);
   console.log(`🌦️ Raw weather input:`, JSON.stringify(weather, null, 2));
   
-  // Indoor activities: low daytime, boosted in evening
+  // Indoor activities: always doable regardless of weather, boosted in evening
   if (!activity.weatherSensitive) {
-    let score = 45;
+    let score = 65;
     const hour = new Date(opts.nowTs).getHours();
     const eveningResult = applyEveningBonus(activity as unknown as ActivityType, hour, contextTags, opts);
     score *= eveningResult.multiplier;
