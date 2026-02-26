@@ -80,6 +80,15 @@ export default function GrowPremiumPage() {
         const result = await fetchOfferings();
         if (!cancelled) {
           setOfferings(result);
+          // Debug: log what RevenueCat returned
+          if (result?.current) {
+            console.log('[Premium] Offering packages:', result.current.availablePackages.map(p => ({
+              identifier: p.identifier,
+              productId: p.product.identifier,
+            })));
+          } else {
+            console.log('[Premium] No current offering found. All offerings:', result);
+          }
         }
       } catch (err) {
         console.error('[Premium] Failed to load offerings:', err);
@@ -93,15 +102,18 @@ export default function GrowPremiumPage() {
 
   /**
    * Find the RevenueCat package matching a tier + billing cycle.
-   * Packages use identifiers like "$rc_monthly", "$rc_annual", "$rc_lifetime"
-   * and contain product IDs like "growdaisy_bloom_monthly".
+   * Packages contain product IDs like "growdaisy_bloom_monthly".
+   * Match by product identifier or by package identifier (custom lookup key).
    */
   const findPackage = useCallback((tier: GrowSubscriptionTier): PurchasesPackage | null => {
     if (!offerings?.current?.availablePackages) return null;
 
-    const productPrefix = `growdaisy_${tier}_${billingCycle}`;
+    const expectedProductId = `growdaisy_${tier}_${billingCycle}`;
+    const expectedPackageKey = `$rc_custom_${tier}_${billingCycle}`;
+
     return offerings.current.availablePackages.find(
-      (pkg) => pkg.product.identifier === productPrefix
+      (pkg) => pkg.product.identifier === expectedProductId
+        || pkg.identifier === expectedPackageKey
     ) ?? null;
   }, [offerings, billingCycle]);
 
