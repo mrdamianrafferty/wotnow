@@ -18,19 +18,8 @@ export default class MyDocument extends Document {
   {/* Preconnect to Supabase for faster auth and data fetching */}
   <link rel="preconnect" href="https://swmviqpxetwziqxhzldh.supabase.co" crossOrigin="anonymous" />
 
-  {/* Core */}
-  <link rel="icon" href="/favicon.ico" sizes="any" />
-  <link rel="shortcut icon" href="/favicon.ico?v=2" />
-
-  {/* PNG fallbacks */}
-  <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png?v=2" />
-  <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png?v=2" />
-
-  {/* Apple / iOS */}
-  <link rel="apple-touch-icon" href="/apple-touch-icon.png?v=2" />
-  <meta name="apple-mobile-web-app-capable" content="yes" />
-  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-  <meta name="apple-mobile-web-app-title" content="Go Daisy" />
+  {/* Favicons and apple-touch-icon are set dynamically per-app in _app.tsx */}
+  {/* (Go Daisy, Grow Daisy, Findr each have their own favicon set) */}
 
   {/* PWA Manifest - Handled dynamically in _app.tsx based on domain/route */}
 
