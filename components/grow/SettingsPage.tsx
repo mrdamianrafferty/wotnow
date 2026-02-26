@@ -38,6 +38,7 @@ import {
   AlertTriangle,
   FileText,
   Shield,
+  HelpCircle,
 } from 'lucide-react';
 import { auth, type AuthUser } from '../../lib/grow/auth';
 import { api } from '../../lib/grow/api';
@@ -918,11 +919,18 @@ export function SettingsPage() {
             <span className="text-sm font-medium">Privacy Policy</span>
           </Link>
           <Link
-            href="/terms"
+            href="/grow/terms"
             className="flex items-center gap-3 p-3 rounded-lg hover:bg-muted/50 transition-colors"
           >
             <FileText className="h-4 w-4 text-muted-foreground" />
             <span className="text-sm font-medium">Terms of Service</span>
+          </Link>
+          <Link
+            href="/grow/support"
+            className="flex items-center gap-3 p-3 rounded-lg hover:bg-muted/50 transition-colors"
+          >
+            <HelpCircle className="h-4 w-4 text-muted-foreground" />
+            <span className="text-sm font-medium">Support</span>
           </Link>
         </CardContent>
       </Card>
