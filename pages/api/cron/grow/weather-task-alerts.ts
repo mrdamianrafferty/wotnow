@@ -21,6 +21,7 @@ import {
 import { sendPushNotification, NotificationType } from '@/lib/grow/notifications';
 import { sendGrowApnsPushNotification } from '@/lib/grow/apnsClient';
 import { sendFcmPushNotification } from '@/lib/notifications/fcmClient';
+import { verifyCronAuth } from '@/lib/cron-auth';
 
 /**
  * Map alert types to notification types
@@ -40,8 +41,6 @@ function mapAlertToNotificationType(alertType: string, severity: string): Notifi
 const SUPABASE_URL = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
 const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const OPENWEATHER_API_KEY = process.env.OPENWEATHER_API_KEY || process.env.NEXT_PUBLIC_OPENWEATHER_KEY;
-const CRON_SECRET = process.env.CRON_SECRET;
-
 if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
   throw new Error('Missing Supabase configuration');
 }
@@ -258,9 +257,7 @@ async function sendAlertNotification(
 }
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  // Verify cron secret
-  const authHeader = req.headers.authorization;
-  if (CRON_SECRET && authHeader !== `Bearer ${CRON_SECRET}`) {
+  if (!verifyCronAuth(req)) {
     return res.status(401).json({ error: 'Unauthorized' });
   }
 
@@ -284,12 +281,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     console.log(`[WeatherCron] Processing ${users.length} users with locations`);
 
-    // Bulk-fetch native push tokens (APNs/FCM) for all users
+    // Bulk-fetch Grow Daisy native push tokens (APNs/FCM) for all users
+    // Filter to Grow Daisy bundle_id or legacy tokens (null bundle_id)
     const userIds = users.map(u => u.user_id);
     const { data: nativeTokens } = await supabase
       .from('user_push_tokens')
       .select('user_id, token, platform')
-      .in('user_id', userIds);
+      .in('user_id', userIds)
+      .or('bundle_id.eq.io.growdaisy.app,bundle_id.is.null');
 
     const nativeTokenMap = new Map<string, NativePushToken[]>();
     for (const token of (nativeTokens || []) as NativePushToken[]) {

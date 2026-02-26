@@ -16,11 +16,24 @@ export default async function handler(
   }
 
   try {
-    const { code, codeVerifier, clientId, redirectUri } = req.body;
+    const { code, codeVerifier, platform } = req.body;
 
-    if (!code || !codeVerifier || !clientId || !redirectUri) {
+    if (!code || !codeVerifier) {
       return res.status(400).json({ error: 'Missing required parameters' });
     }
+
+    // Resolve clientId from server-side env vars based on platform
+    const clientIdMap: Record<string, string | undefined> = {
+      web: process.env.NEXT_PUBLIC_GOOGLE_WEB_CLIENT_ID,
+      ios: process.env.NEXT_PUBLIC_GOOGLE_IOS_CLIENT_ID,
+      android: process.env.NEXT_PUBLIC_GOOGLE_GODAISY_ANDROID_CLIENT_ID,
+    };
+    const clientId = clientIdMap[platform || 'web'];
+    if (!clientId) {
+      return res.status(400).json({ error: 'Invalid platform or missing client ID configuration' });
+    }
+
+    const redirectUri = process.env.GOOGLE_OAUTH_REDIRECT_URI || `${process.env.NEXT_PUBLIC_BASE_URL}/auth/callback`;
 
     console.log('[Google Token Exchange] Exchanging code for tokens');
 
@@ -52,8 +65,7 @@ export default async function handler(
       const errorData = await tokenResponse.text();
       console.error('[Google Token Exchange] Token exchange failed:', errorData);
       return res.status(tokenResponse.status).json({
-        error: 'Token exchange failed',
-        details: errorData
+        error: 'Authentication failed. Please try again.'
       });
     }
 
@@ -71,8 +83,7 @@ export default async function handler(
   } catch (error) {
     console.error('[Google Token Exchange] Error:', error);
     return res.status(500).json({
-      error: 'Internal server error',
-      message: error instanceof Error ? error.message : 'Unknown error'
+      error: 'Authentication failed. Please try again.'
     });
   }
 }

@@ -28,7 +28,7 @@ BEGIN;
 
 -- ---- aphids ----
 INSERT INTO garden_threat_host (threat_id, host_kind, host_key, host_strength, notes)
-SELECT gt.id, v.host_kind, v.host_key, v.host_strength, v.notes
+SELECT gt.id, v.host_kind::garden_host_kind, v.host_key, v.host_strength, v.notes
 FROM garden_threat gt
 CROSS JOIN (VALUES
   ('crop_tag', 'tomato',           2, 'Preferred host; sap-feeder on young growth'),
@@ -66,7 +66,7 @@ ON CONFLICT DO NOTHING;
 
 -- ---- slugs-snails ----
 INSERT INTO garden_threat_host (threat_id, host_kind, host_key, host_strength, notes)
-SELECT gt.id, v.host_kind, v.host_key, v.host_strength, v.notes
+SELECT gt.id, v.host_kind::garden_host_kind, v.host_key, v.host_strength, v.notes
 FROM garden_threat gt
 CROSS JOIN (VALUES
   ('crop_tag', 'lettuce',       3, 'Primary target; soft leaves are irresistible'),
@@ -96,7 +96,7 @@ ON CONFLICT DO NOTHING;
 
 -- ---- spider-mites ----
 INSERT INTO garden_threat_host (threat_id, host_kind, host_key, host_strength, notes)
-SELECT gt.id, v.host_kind, v.host_key, v.host_strength, v.notes
+SELECT gt.id, v.host_kind::garden_host_kind, v.host_key, v.host_strength, v.notes
 FROM garden_threat gt
 CROSS JOIN (VALUES
   ('crop_tag', 'tomato',           2, 'Two-spotted spider mite thrives on tomatoes'),
@@ -119,7 +119,7 @@ ON CONFLICT DO NOTHING;
 
 -- ---- whitefly ----
 INSERT INTO garden_threat_host (threat_id, host_kind, host_key, host_strength, notes)
-SELECT gt.id, v.host_kind, v.host_key, v.host_strength, v.notes
+SELECT gt.id, v.host_kind::garden_host_kind, v.host_key, v.host_strength, v.notes
 FROM garden_threat gt
 CROSS JOIN (VALUES
   ('crop_tag', 'tomato',           3, 'Greenhouse whitefly primary host'),
@@ -142,7 +142,7 @@ ON CONFLICT DO NOTHING;
 
 -- ---- thrips ----
 INSERT INTO garden_threat_host (threat_id, host_kind, host_key, host_strength, notes)
-SELECT gt.id, v.host_kind, v.host_key, v.host_strength, v.notes
+SELECT gt.id, v.host_kind::garden_host_kind, v.host_key, v.host_strength, v.notes
 FROM garden_threat gt
 CROSS JOIN (VALUES
   ('crop_tag', 'onion_family',     2, 'Onion thrips (Thrips tabaci) major pest'),
@@ -165,7 +165,7 @@ ON CONFLICT DO NOTHING;
 
 -- ---- scale-insects ----
 INSERT INTO garden_threat_host (threat_id, host_kind, host_key, host_strength, notes)
-SELECT gt.id, v.host_kind, v.host_key, v.host_strength, v.notes
+SELECT gt.id, v.host_kind::garden_host_kind, v.host_key, v.host_strength, v.notes
 FROM garden_threat gt
 CROSS JOIN (VALUES
   ('crop_tag', 'houseplants',  3, 'Very common on indoor plants'),
@@ -187,7 +187,7 @@ ON CONFLICT DO NOTHING;
 
 -- ---- mealybugs ----
 INSERT INTO garden_threat_host (threat_id, host_kind, host_key, host_strength, notes)
-SELECT gt.id, v.host_kind, v.host_key, v.host_strength, v.notes
+SELECT gt.id, v.host_kind::garden_host_kind, v.host_key, v.host_strength, v.notes
 FROM garden_threat gt
 CROSS JOIN (VALUES
   ('crop_tag', 'houseplants',      3, 'Most common houseplant pest'),
@@ -204,7 +204,7 @@ ON CONFLICT DO NOTHING;
 
 -- ---- vine-weevil ----
 INSERT INTO garden_threat_host (threat_id, host_kind, host_key, host_strength, notes)
-SELECT gt.id, v.host_kind, v.host_key, v.host_strength, v.notes
+SELECT gt.id, v.host_kind::garden_host_kind, v.host_key, v.host_strength, v.notes
 FROM garden_threat gt
 CROSS JOIN (VALUES
   ('crop_tag', 'strawberry',   3, 'Larvae devour roots; adults notch leaves'),
@@ -223,7 +223,7 @@ ON CONFLICT DO NOTHING;
 
 -- ---- brassica-caterpillars ----
 INSERT INTO garden_threat_host (threat_id, host_kind, host_key, host_strength, notes)
-SELECT gt.id, v.host_kind, v.host_key, v.host_strength, v.notes
+SELECT gt.id, v.host_kind::garden_host_kind, v.host_key, v.host_strength, v.notes
 FROM garden_threat gt
 CROSS JOIN (VALUES
   ('crop_tag', 'brassicas',        3, 'Primary host family for cabbage whites'),
@@ -244,7 +244,7 @@ ON CONFLICT DO NOTHING;
 
 -- ---- cutworms ----
 INSERT INTO garden_threat_host (threat_id, host_kind, host_key, host_strength, notes)
-SELECT gt.id, v.host_kind, v.host_key, v.host_strength, v.notes
+SELECT gt.id, v.host_kind::garden_host_kind, v.host_key, v.host_strength, v.notes
 FROM garden_threat gt
 CROSS JOIN (VALUES
   ('crop_tag', 'lettuce',      2, 'Sever stems at soil level'),
@@ -265,7 +265,7 @@ ON CONFLICT DO NOTHING;
 
 -- ---- fungus-gnats ----
 INSERT INTO garden_threat_host (threat_id, host_kind, host_key, host_strength, notes)
-SELECT gt.id, v.host_kind, v.host_key, v.host_strength, v.notes
+SELECT gt.id, v.host_kind::garden_host_kind, v.host_key, v.host_strength, v.notes
 FROM garden_threat gt
 CROSS JOIN (VALUES
   ('crop_tag', 'houseplants',      3, 'Larvae feed on roots in damp compost'),
@@ -281,7 +281,7 @@ ON CONFLICT DO NOTHING;
 
 -- ---- leaf-miners ----
 INSERT INTO garden_threat_host (threat_id, host_kind, host_key, host_strength, notes)
-SELECT gt.id, v.host_kind, v.host_key, v.host_strength, v.notes
+SELECT gt.id, v.host_kind::garden_host_kind, v.host_key, v.host_strength, v.notes
 FROM garden_threat gt
 CROSS JOIN (VALUES
   ('crop_tag', 'lettuce',      2, 'Serpentine mines in leaves'),
@@ -302,7 +302,7 @@ ON CONFLICT DO NOTHING;
 
 -- ---- carrot-fly ----
 INSERT INTO garden_threat_host (threat_id, host_kind, host_key, host_strength, notes)
-SELECT gt.id, v.host_kind, v.host_key, v.host_strength, v.notes
+SELECT gt.id, v.host_kind::garden_host_kind, v.host_key, v.host_strength, v.notes
 FROM garden_threat gt
 CROSS JOIN (VALUES
   ('crop_tag', 'carrot',   3, 'Primary host; larvae tunnel through roots'),
@@ -318,7 +318,7 @@ ON CONFLICT DO NOTHING;
 
 -- ---- cabbage-root-fly ----
 INSERT INTO garden_threat_host (threat_id, host_kind, host_key, host_strength, notes)
-SELECT gt.id, v.host_kind, v.host_key, v.host_strength, v.notes
+SELECT gt.id, v.host_kind::garden_host_kind, v.host_key, v.host_strength, v.notes
 FROM garden_threat gt
 CROSS JOIN (VALUES
   ('crop_tag', 'brassicas',        3, 'All brassicas susceptible'),
@@ -338,7 +338,7 @@ ON CONFLICT DO NOTHING;
 
 -- ---- flea-beetle ----
 INSERT INTO garden_threat_host (threat_id, host_kind, host_key, host_strength, notes)
-SELECT gt.id, v.host_kind, v.host_key, v.host_strength, v.notes
+SELECT gt.id, v.host_kind::garden_host_kind, v.host_key, v.host_strength, v.notes
 FROM garden_threat gt
 CROSS JOIN (VALUES
   ('crop_tag', 'brassicas',   2, 'Shot-holing on seedling leaves'),
@@ -358,7 +358,7 @@ ON CONFLICT DO NOTHING;
 
 -- ---- codling-moth ----
 INSERT INTO garden_threat_host (threat_id, host_kind, host_key, host_strength, notes)
-SELECT gt.id, v.host_kind, v.host_key, v.host_strength, v.notes
+SELECT gt.id, v.host_kind::garden_host_kind, v.host_key, v.host_strength, v.notes
 FROM garden_threat gt
 CROSS JOIN (VALUES
   ('crop_tag', 'apple',      3, 'Primary host; larvae bore into fruit'),
@@ -374,7 +374,7 @@ ON CONFLICT DO NOTHING;
 
 -- ---- sawfly ----
 INSERT INTO garden_threat_host (threat_id, host_kind, host_key, host_strength, notes)
-SELECT gt.id, v.host_kind, v.host_key, v.host_strength, v.notes
+SELECT gt.id, v.host_kind::garden_host_kind, v.host_key, v.host_strength, v.notes
 FROM garden_threat gt
 CROSS JOIN (VALUES
   ('crop_tag', 'apple',       2, 'Apple sawfly scars fruit'),
@@ -392,7 +392,7 @@ ON CONFLICT DO NOTHING;
 
 -- ---- earwigs ----
 INSERT INTO garden_threat_host (threat_id, host_kind, host_key, host_strength, notes)
-SELECT gt.id, v.host_kind, v.host_key, v.host_strength, v.notes
+SELECT gt.id, v.host_kind::garden_host_kind, v.host_key, v.host_strength, v.notes
 FROM garden_threat gt
 CROSS JOIN (VALUES
   ('crop_tag', 'dahlia',      3, 'Classic earwig target; ragged petal damage'),
@@ -410,7 +410,7 @@ ON CONFLICT DO NOTHING;
 
 -- ---- red-lily-beetle ----
 INSERT INTO garden_threat_host (threat_id, host_kind, host_key, host_strength, notes)
-SELECT gt.id, v.host_kind, v.host_key, v.host_strength, v.notes
+SELECT gt.id, v.host_kind::garden_host_kind, v.host_key, v.host_strength, v.notes
 FROM garden_threat gt
 CROSS JOIN (VALUES
   ('crop_tag', 'lily',         3, 'Primary host; adults and larvae defoliate'),
@@ -423,7 +423,7 @@ ON CONFLICT DO NOTHING;
 
 -- ---- rosemary-beetle ----
 INSERT INTO garden_threat_host (threat_id, host_kind, host_key, host_strength, notes)
-SELECT gt.id, v.host_kind, v.host_key, v.host_strength, v.notes
+SELECT gt.id, v.host_kind::garden_host_kind, v.host_key, v.host_strength, v.notes
 FROM garden_threat gt
 CROSS JOIN (VALUES
   ('crop_tag', 'rosemary',  3, 'Primary host; adults and larvae strip leaves'),
@@ -442,7 +442,7 @@ ON CONFLICT DO NOTHING;
 
 -- ---- powdery-mildew ----
 INSERT INTO garden_threat_host (threat_id, host_kind, host_key, host_strength, notes)
-SELECT gt.id, v.host_kind, v.host_key, v.host_strength, v.notes
+SELECT gt.id, v.host_kind::garden_host_kind, v.host_key, v.host_strength, v.notes
 FROM garden_threat gt
 CROSS JOIN (VALUES
   ('crop_tag', 'courgette',        3, 'Very susceptible; white coating on leaves'),
@@ -466,7 +466,7 @@ ON CONFLICT DO NOTHING;
 
 -- ---- downy-mildew ----
 INSERT INTO garden_threat_host (threat_id, host_kind, host_key, host_strength, notes)
-SELECT gt.id, v.host_kind, v.host_key, v.host_strength, v.notes
+SELECT gt.id, v.host_kind::garden_host_kind, v.host_key, v.host_strength, v.notes
 FROM garden_threat gt
 CROSS JOIN (VALUES
   ('crop_tag', 'lettuce',      3, 'Bremia lactucae highly destructive'),
@@ -488,7 +488,7 @@ ON CONFLICT DO NOTHING;
 
 -- ---- late-blight ----
 INSERT INTO garden_threat_host (threat_id, host_kind, host_key, host_strength, notes)
-SELECT gt.id, v.host_kind, v.host_key, v.host_strength, v.notes
+SELECT gt.id, v.host_kind::garden_host_kind, v.host_key, v.host_strength, v.notes
 FROM garden_threat gt
 CROSS JOIN (VALUES
   ('crop_tag', 'tomato',           3, 'Phytophthora infestans; devastating in damp years'),
@@ -501,7 +501,7 @@ ON CONFLICT DO NOTHING;
 
 -- ---- early-blight ----
 INSERT INTO garden_threat_host (threat_id, host_kind, host_key, host_strength, notes)
-SELECT gt.id, v.host_kind, v.host_key, v.host_strength, v.notes
+SELECT gt.id, v.host_kind::garden_host_kind, v.host_key, v.host_strength, v.notes
 FROM garden_threat gt
 CROSS JOIN (VALUES
   ('crop_tag', 'tomato',           2, 'Alternaria solani; concentric ring spots'),
@@ -514,7 +514,7 @@ ON CONFLICT DO NOTHING;
 
 -- ---- damping-off ----
 INSERT INTO garden_threat_host (threat_id, host_kind, host_key, host_strength, notes)
-SELECT gt.id, v.host_kind, v.host_key, v.host_strength, v.notes
+SELECT gt.id, v.host_kind::garden_host_kind, v.host_key, v.host_strength, v.notes
 FROM garden_threat gt
 CROSS JOIN (VALUES
   ('crop_tag', 'greenhouse_crops', 2, 'Seedling trays in warm moist conditions'),
@@ -533,7 +533,7 @@ ON CONFLICT DO NOTHING;
 
 -- ---- rust ----
 INSERT INTO garden_threat_host (threat_id, host_kind, host_key, host_strength, notes)
-SELECT gt.id, v.host_kind, v.host_key, v.host_strength, v.notes
+SELECT gt.id, v.host_kind::garden_host_kind, v.host_key, v.host_strength, v.notes
 FROM garden_threat gt
 CROSS JOIN (VALUES
   ('crop_tag', 'beans',        2, 'Bean rust (Uromyces appendiculatus)'),
@@ -556,7 +556,7 @@ ON CONFLICT DO NOTHING;
 
 -- ---- leaf-spot ----
 INSERT INTO garden_threat_host (threat_id, host_kind, host_key, host_strength, notes)
-SELECT gt.id, v.host_kind, v.host_key, v.host_strength, v.notes
+SELECT gt.id, v.host_kind::garden_host_kind, v.host_key, v.host_strength, v.notes
 FROM garden_threat gt
 CROSS JOIN (VALUES
   ('crop_tag', 'strawberry',   2, 'Mycosphaerella fragariae'),
@@ -575,7 +575,7 @@ ON CONFLICT DO NOTHING;
 
 -- ---- root-rot ----
 INSERT INTO garden_threat_host (threat_id, host_kind, host_key, host_strength, notes)
-SELECT gt.id, v.host_kind, v.host_key, v.host_strength, v.notes
+SELECT gt.id, v.host_kind::garden_host_kind, v.host_key, v.host_strength, v.notes
 FROM garden_threat gt
 CROSS JOIN (VALUES
   ('crop_tag', 'houseplants',      3, 'Overwatered houseplants most at risk'),
@@ -594,7 +594,7 @@ ON CONFLICT DO NOTHING;
 
 -- ---- apple-scab ----
 INSERT INTO garden_threat_host (threat_id, host_kind, host_key, host_strength, notes)
-SELECT gt.id, v.host_kind, v.host_key, v.host_strength, v.notes
+SELECT gt.id, v.host_kind::garden_host_kind, v.host_key, v.host_strength, v.notes
 FROM garden_threat gt
 CROSS JOIN (VALUES
   ('crop_tag', 'apple',      3, 'Venturia inaequalis; scabby lesions on fruit/leaves'),
@@ -608,7 +608,7 @@ ON CONFLICT DO NOTHING;
 
 -- ---- fire-blight ----
 INSERT INTO garden_threat_host (threat_id, host_kind, host_key, host_strength, notes)
-SELECT gt.id, v.host_kind, v.host_key, v.host_strength, v.notes
+SELECT gt.id, v.host_kind::garden_host_kind, v.host_key, v.host_strength, v.notes
 FROM garden_threat gt
 CROSS JOIN (VALUES
   ('crop_tag', 'apple',      3, 'Erwinia amylovora; blackened shoots, cankers'),
@@ -624,7 +624,7 @@ ON CONFLICT DO NOTHING;
 
 -- ---- rose-black-spot ----
 INSERT INTO garden_threat_host (threat_id, host_kind, host_key, host_strength, notes)
-SELECT gt.id, v.host_kind, v.host_key, v.host_strength, v.notes
+SELECT gt.id, v.host_kind::garden_host_kind, v.host_key, v.host_strength, v.notes
 FROM garden_threat gt
 CROSS JOIN (VALUES
   ('crop_tag', 'rose',        3, 'Diplocarpon rosae; black spots cause defoliation'),
@@ -636,7 +636,7 @@ ON CONFLICT DO NOTHING;
 
 -- ---- botrytis-grey-mould ----
 INSERT INTO garden_threat_host (threat_id, host_kind, host_key, host_strength, notes)
-SELECT gt.id, v.host_kind, v.host_key, v.host_strength, v.notes
+SELECT gt.id, v.host_kind::garden_host_kind, v.host_key, v.host_strength, v.notes
 FROM garden_threat gt
 CROSS JOIN (VALUES
   ('crop_tag', 'strawberry',       3, 'Grey fuzzy mould on fruit'),
@@ -657,7 +657,7 @@ ON CONFLICT DO NOTHING;
 
 -- ---- clubroot ----
 INSERT INTO garden_threat_host (threat_id, host_kind, host_key, host_strength, notes)
-SELECT gt.id, v.host_kind, v.host_key, v.host_strength, v.notes
+SELECT gt.id, v.host_kind::garden_host_kind, v.host_key, v.host_strength, v.notes
 FROM garden_threat gt
 CROSS JOIN (VALUES
   ('crop_tag', 'brassicas',        3, 'Plasmodiophora brassicae; swollen distorted roots'),
@@ -683,7 +683,7 @@ ON CONFLICT DO NOTHING;
 
 -- ---- phytophthora ----
 INSERT INTO garden_threat_host (threat_id, host_kind, host_key, host_strength, notes)
-SELECT gt.id, v.host_kind, v.host_key, v.host_strength, v.notes
+SELECT gt.id, v.host_kind::garden_host_kind, v.host_key, v.host_strength, v.notes
 FROM garden_threat gt
 CROSS JOIN (VALUES
   ('crop_tag', 'potato',      3, 'Phytophthora infestans (shared with late-blight)'),
@@ -700,7 +700,7 @@ ON CONFLICT DO NOTHING;
 
 -- ---- pythium ----
 INSERT INTO garden_threat_host (threat_id, host_kind, host_key, host_strength, notes)
-SELECT gt.id, v.host_kind, v.host_key, v.host_strength, v.notes
+SELECT gt.id, v.host_kind::garden_host_kind, v.host_key, v.host_strength, v.notes
 FROM garden_threat gt
 CROSS JOIN (VALUES
   ('crop_tag', 'greenhouse_crops', 2, 'Seedling root and collar rot'),
@@ -719,7 +719,7 @@ ON CONFLICT DO NOTHING;
 
 -- ---- peronospora ----
 INSERT INTO garden_threat_host (threat_id, host_kind, host_key, host_strength, notes)
-SELECT gt.id, v.host_kind, v.host_key, v.host_strength, v.notes
+SELECT gt.id, v.host_kind::garden_host_kind, v.host_key, v.host_strength, v.notes
 FROM garden_threat gt
 CROSS JOIN (VALUES
   ('crop_tag', 'brassicas',    2, 'Peronospora parasitica on brassicas'),
@@ -741,7 +741,7 @@ ON CONFLICT DO NOTHING;
 
 -- ---- bacterial-canker ----
 INSERT INTO garden_threat_host (threat_id, host_kind, host_key, host_strength, notes)
-SELECT gt.id, v.host_kind, v.host_key, v.host_strength, v.notes
+SELECT gt.id, v.host_kind::garden_host_kind, v.host_key, v.host_strength, v.notes
 FROM garden_threat gt
 CROSS JOIN (VALUES
   ('crop_tag', 'cherry',     3, 'Pseudomonas syringae pv. morsprunorum'),
@@ -757,7 +757,7 @@ ON CONFLICT DO NOTHING;
 
 -- ---- bacterial-leaf-spot ----
 INSERT INTO garden_threat_host (threat_id, host_kind, host_key, host_strength, notes)
-SELECT gt.id, v.host_kind, v.host_key, v.host_strength, v.notes
+SELECT gt.id, v.host_kind::garden_host_kind, v.host_key, v.host_strength, v.notes
 FROM garden_threat gt
 CROSS JOIN (VALUES
   ('crop_tag', 'pepper',           2, 'Xanthomonas campestris pv. vesicatoria'),
@@ -773,7 +773,7 @@ ON CONFLICT DO NOTHING;
 
 -- ---- crown-gall ----
 INSERT INTO garden_threat_host (threat_id, host_kind, host_key, host_strength, notes)
-SELECT gt.id, v.host_kind, v.host_key, v.host_strength, v.notes
+SELECT gt.id, v.host_kind::garden_host_kind, v.host_key, v.host_strength, v.notes
 FROM garden_threat gt
 CROSS JOIN (VALUES
   ('crop_tag', 'fruit_tree',  2, 'Agrobacterium tumefaciens'),
@@ -790,7 +790,7 @@ ON CONFLICT DO NOTHING;
 
 -- ---- soft-rot ----
 INSERT INTO garden_threat_host (threat_id, host_kind, host_key, host_strength, notes)
-SELECT gt.id, v.host_kind, v.host_key, v.host_strength, v.notes
+SELECT gt.id, v.host_kind::garden_host_kind, v.host_key, v.host_strength, v.notes
 FROM garden_threat gt
 CROSS JOIN (VALUES
   ('crop_tag', 'potato',      3, 'Pectobacterium spp.; mushy tubers in store'),
@@ -816,7 +816,7 @@ ON CONFLICT DO NOTHING;
 
 -- ---- blossom-end-rot ----
 INSERT INTO garden_threat_host (threat_id, host_kind, host_key, host_strength, notes)
-SELECT gt.id, v.host_kind, v.host_key, v.host_strength, v.notes
+SELECT gt.id, v.host_kind::garden_host_kind, v.host_key, v.host_strength, v.notes
 FROM garden_threat gt
 CROSS JOIN (VALUES
   ('crop_tag', 'tomato',    3, 'Calcium deficiency from irregular watering'),
@@ -833,7 +833,7 @@ ON CONFLICT DO NOTHING;
 
 -- ---- sunscald-leaf-scorch ----
 INSERT INTO garden_threat_host (threat_id, host_kind, host_key, host_strength, notes)
-SELECT gt.id, v.host_kind, v.host_key, v.host_strength, v.notes
+SELECT gt.id, v.host_kind::garden_host_kind, v.host_key, v.host_strength, v.notes
 FROM garden_threat gt
 CROSS JOIN (VALUES
   ('crop_tag', 'tomato',           2, 'Exposed fruit scalds in intense sun'),
@@ -851,7 +851,7 @@ ON CONFLICT DO NOTHING;
 
 -- ---- frost-damage ----
 INSERT INTO garden_threat_host (threat_id, host_kind, host_key, host_strength, notes)
-SELECT gt.id, v.host_kind, v.host_key, v.host_strength, v.notes
+SELECT gt.id, v.host_kind::garden_host_kind, v.host_key, v.host_strength, v.notes
 FROM garden_threat gt
 CROSS JOIN (VALUES
   ('crop_tag', 'tender_plants',    3, 'Cannot survive frost'),
@@ -876,7 +876,7 @@ ON CONFLICT DO NOTHING;
 
 -- ---- heat-stress ----
 INSERT INTO garden_threat_host (threat_id, host_kind, host_key, host_strength, notes)
-SELECT gt.id, v.host_kind, v.host_key, v.host_strength, v.notes
+SELECT gt.id, v.host_kind::garden_host_kind, v.host_key, v.host_strength, v.notes
 FROM garden_threat gt
 CROSS JOIN (VALUES
   ('crop_tag', 'lettuce',      3, 'Bolts readily in heat'),
@@ -897,7 +897,7 @@ ON CONFLICT DO NOTHING;
 
 -- ---- overwatering-poor-drainage ----
 INSERT INTO garden_threat_host (threat_id, host_kind, host_key, host_strength, notes)
-SELECT gt.id, v.host_kind, v.host_key, v.host_strength, v.notes
+SELECT gt.id, v.host_kind::garden_host_kind, v.host_key, v.host_strength, v.notes
 FROM garden_threat gt
 CROSS JOIN (VALUES
   ('crop_tag', 'houseplants',      3, 'Most common cause of houseplant death'),
@@ -916,7 +916,7 @@ ON CONFLICT DO NOTHING;
 
 -- ---- wind-scorch ----
 INSERT INTO garden_threat_host (threat_id, host_kind, host_key, host_strength, notes)
-SELECT gt.id, v.host_kind, v.host_key, v.host_strength, v.notes
+SELECT gt.id, v.host_kind::garden_host_kind, v.host_key, v.host_strength, v.notes
 FROM garden_threat gt
 CROSS JOIN (VALUES
   ('crop_tag', 'tender_plants',    2, 'Thin leaves tear and desiccate'),
@@ -935,7 +935,7 @@ ON CONFLICT DO NOTHING;
 
 -- ---- drought-stress ----
 INSERT INTO garden_threat_host (threat_id, host_kind, host_key, host_strength, notes)
-SELECT gt.id, v.host_kind, v.host_key, v.host_strength, v.notes
+SELECT gt.id, v.host_kind::garden_host_kind, v.host_key, v.host_strength, v.notes
 FROM garden_threat gt
 CROSS JOIN (VALUES
   ('crop_tag', 'lettuce',      3, 'Wilts and bolts quickly without water'),
@@ -958,7 +958,7 @@ ON CONFLICT DO NOTHING;
 
 -- ---- waterlogging ----
 INSERT INTO garden_threat_host (threat_id, host_kind, host_key, host_strength, notes)
-SELECT gt.id, v.host_kind, v.host_key, v.host_strength, v.notes
+SELECT gt.id, v.host_kind::garden_host_kind, v.host_key, v.host_strength, v.notes
 FROM garden_threat gt
 CROSS JOIN (VALUES
   ('crop_tag', 'carrot',      2, 'Roots rot and fork in waterlogged soil'),
@@ -985,7 +985,7 @@ ON CONFLICT DO NOTHING;
 
 -- ---- nitrogen-deficiency ----
 INSERT INTO garden_threat_host (threat_id, host_kind, host_key, host_strength, notes)
-SELECT gt.id, v.host_kind, v.host_key, v.host_strength, v.notes
+SELECT gt.id, v.host_kind::garden_host_kind, v.host_key, v.host_strength, v.notes
 FROM garden_threat gt
 CROSS JOIN (VALUES
   ('crop_tag', 'tomato',           2, 'Heavy feeder; yellowing lower leaves'),
@@ -1014,7 +1014,7 @@ ON CONFLICT DO NOTHING;
 
 -- ---- nematodes ----
 INSERT INTO garden_threat_host (threat_id, host_kind, host_key, host_strength, notes)
-SELECT gt.id, v.host_kind, v.host_key, v.host_strength, v.notes
+SELECT gt.id, v.host_kind::garden_host_kind, v.host_key, v.host_strength, v.notes
 FROM garden_threat gt
 CROSS JOIN (VALUES
   ('crop_tag', 'potato',    3, 'Potato cyst nematode (Globodera spp.)'),
@@ -1034,7 +1034,7 @@ ON CONFLICT DO NOTHING;
 
 -- ---- bolting ----
 INSERT INTO garden_threat_host (threat_id, host_kind, host_key, host_strength, notes)
-SELECT gt.id, v.host_kind, v.host_key, v.host_strength, v.notes
+SELECT gt.id, v.host_kind::garden_host_kind, v.host_key, v.host_strength, v.notes
 FROM garden_threat gt
 CROSS JOIN (VALUES
   ('crop_tag', 'lettuce',      3, 'Bolts quickly in long hot days'),
@@ -1057,7 +1057,7 @@ ON CONFLICT DO NOTHING;
 
 -- ---- bird-damage ----
 INSERT INTO garden_threat_host (threat_id, host_kind, host_key, host_strength, notes)
-SELECT gt.id, v.host_kind, v.host_key, v.host_strength, v.notes
+SELECT gt.id, v.host_kind::garden_host_kind, v.host_key, v.host_strength, v.notes
 FROM garden_threat gt
 CROSS JOIN (VALUES
   ('crop_tag', 'fruit_tree',      2, 'Bullfinches strip buds; pigeons eat fruit'),
@@ -1083,7 +1083,7 @@ ON CONFLICT DO NOTHING;
 
 -- ---- deer-browsing ----
 INSERT INTO garden_threat_host (threat_id, host_kind, host_key, host_strength, notes)
-SELECT gt.id, v.host_kind, v.host_key, v.host_strength, v.notes
+SELECT gt.id, v.host_kind::garden_host_kind, v.host_key, v.host_strength, v.notes
 FROM garden_threat gt
 CROSS JOIN (VALUES
   ('crop_tag', 'ornamentals',  2, 'Rose, hosta, tulip all heavily browsed'),

@@ -1,13 +1,15 @@
 'use client';
 
 import React from 'react';
-import { useRouter, usePathname } from 'next/navigation';
+import Link from 'next/link';
+import { useRouter } from 'next/router';
 import { Home, Mountain, CloudSun, Settings } from 'lucide-react';
 import { supabase } from '../lib/supabase/client';
+import { uiHaptics } from '../lib/capacitor/haptics';
 
 export default function BottomNav() {
   const router = useRouter();
-  const pathname = usePathname();
+  const pathname = router.pathname;
   const [userId, setUserId] = React.useState<string | null>(null);
 
   // Check auth state
@@ -54,7 +56,7 @@ export default function BottomNav() {
 
   return (
     <nav
-      className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-gray-200 h-16 flex items-center justify-around px-2 safe-area-inset-bottom"
+      className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-gray-200 h-16 flex items-center justify-around px-2 safe-area-bottom"
       role="navigation"
       aria-label="Main navigation"
     >
@@ -63,9 +65,10 @@ export default function BottomNav() {
         const isActive = pathname ? item.match(pathname) : false;
 
         return (
-          <button
+          <Link
             key={item.href}
-            onClick={() => router.push(item.href)}
+            href={item.href}
+            onClick={() => uiHaptics.tabChange()}
             style={{
               color: isActive ? '#0e7490' : '#374151',
             }}
@@ -75,7 +78,7 @@ export default function BottomNav() {
           >
             <Icon size={24} strokeWidth={2} aria-hidden="true" />
             <span className="text-[10px] font-medium">{item.label}</span>
-          </button>
+          </Link>
         );
       })}
     </nav>

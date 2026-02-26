@@ -25,6 +25,8 @@ import { WeeklyTaskView } from './WeeklyTaskView';
 import { SkeletonPlanPage } from './GrowSkeletons';
 import { TaskIcon } from './TaskIcon';
 import { useUnifiedLocation } from '../../context/UnifiedLocationContext';
+import { FeatureErrorBoundary } from '../FeatureErrorBoundary';
+
 interface TimelineEvent {
   id: string;
   type: 'planting' | 'maintenance' | 'harvest' | 'alert' | 'reminder';
@@ -201,35 +203,41 @@ export function PlanPage() {
 
   // Load user and dismissed tasks from database
   useEffect(() => {
+    let isMounted = true;
     const loadUserAndDismissals = async () => {
       try {
         const session = await auth.getSession();
+        if (!isMounted) return;
         if (session?.user?.id) {
           setUserId(session.user.id);
-          
+
           // Load dismissed tasks from database
           try {
             const response = await api.getTaskDismissals();
+            if (!isMounted) return;
             if (response?.dismissals && Array.isArray(response.dismissals)) {
               const dismissalMap = new Map<string, { type: 'done' | 'skipped'; year: number }>();
               for (const d of response.dismissals) {
-                dismissalMap.set(d.task_key, { 
-                  type: d.dismissal_type as 'done' | 'skipped', 
-                  year: d.dismissed_for_year 
+                dismissalMap.set(d.task_key, {
+                  type: d.dismissal_type as 'done' | 'skipped',
+                  year: d.dismissed_for_year
                 });
               }
               setDismissedTasks(dismissalMap);
               console.log('📋 Loaded', dismissalMap.size, 'task dismissals from database');
             }
           } catch (dismissErr) {
+            if (!isMounted) return;
             console.log('PlanPage: Could not load dismissals from database, using empty', dismissErr);
           }
         }
       } catch (err) {
+        if (!isMounted) return;
         console.log('PlanPage: Auth check failed', err);
       }
     };
     void loadUserAndDismissals();
+    return () => { isMounted = false; };
   }, []);
 
   /**
@@ -486,8 +494,13 @@ export function PlanPage() {
   }, [location, signalToEvent, weatherTaskToEvent, markFirstData, markInteractive]);
 
   useEffect(() => {
+    let isMounted = true;
     // Reload when location changes
-    loadTimelineEvents();
+    void (async () => {
+      await loadTimelineEvents();
+      if (!isMounted) return;
+    })();
+    return () => { isMounted = false; };
   }, [loadTimelineEvents, location?.lat, location?.lon]);
 
   const getEventColor = (type: string) => {
@@ -764,6 +777,7 @@ export function PlanPage() {
         </Button>
       </div>
 
+      <FeatureErrorBoundary feature="Garden Plan">
       {/* Filters */}
       <Card>
         <CardContent className="p-4">
@@ -1088,6 +1102,8 @@ export function PlanPage() {
           </CardContent>
         </Card>
       )}
+
+      </FeatureErrorBoundary>
 
       {/* Day Details Dialog */}
       <Dialog open={selectedDate !== null} onOpenChange={() => setSelectedDate(null)}>

@@ -37,6 +37,7 @@ import { TranslatedFishName, TranslatedFishBio, TranslatedText } from '../../com
 import { NetworkStatusIndicator } from '../../components/findr/NetworkStatusIndicator';
 import { OfflineStatusBar } from '../../components/findr/OfflineStatusBar';
 import { OfflineFallbackContent } from '../../components/findr/OfflineFallbackContent';
+import { FeatureErrorBoundary } from '../../components/FeatureErrorBoundary';
 
 // Dynamically import non-critical components
 const FishingAreaInfo = dynamic(
@@ -1239,6 +1240,7 @@ const FindrPage: React.FC<FindrPageProps> = ({ initialRectangle: _initialRectang
         )}
 
         {/* Content container - minimal spacing on mobile */}
+        <FeatureErrorBoundary feature="Fishing Predictions">
         <div className="sm:mx-auto pt-0 sm:pt-2 lg:max-w-6xl px-0">
           {/* Success message */}
           {showSuccessMessage && (
@@ -1626,6 +1628,7 @@ const FindrPage: React.FC<FindrPageProps> = ({ initialRectangle: _initialRectang
           )}
 
         </div>
+        </FeatureErrorBoundary>
       </main>
 
       <FindrModal title="Your fishing area" open={settingsOpen} onClose={() => setSettingsOpen(false)}>

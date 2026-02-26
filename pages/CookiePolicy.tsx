@@ -34,7 +34,7 @@ export function CookieConsentBanner() {
     >
       <p className="max-w-lg text-sm">
         We use cookies to enhance your experience. By continuing to use our site, you agree to our use of cookies. See our{" "}
-        <Link href="/privacy-policy" className="underline text-primary">
+        <Link href="/privacy" className="underline text-primary">
           Privacy Policy
         </Link>{" "}
         for more info.
@@ -65,8 +65,40 @@ export default function CookiePolicy() {
           <p>
             This page explains how Go Daisy uses cookies and similar technologies. You can manage your consent using the banner below.
           </p>
-                  We use cookies to personalise the content, so it&apos;s actually useful to you. And if we get round to it, we&apos;ll analyse our traffic. We aren&apos;t sharing any data with anyone else right now, but we&apos;ll update this if that changes. See our{" "}
 
+          <section className="mt-6 space-y-4">
+            <h2 className="text-2xl font-semibold text-secondary">What cookies do we use?</h2>
+            <p>
+              We use cookies to personalise the content so it&apos;s actually useful to you. Specifically:
+            </p>
+            <ul className="list-disc list-inside space-y-1">
+              <li><strong>Essential cookies:</strong> These keep the app working — things like remembering that you&apos;re logged in and storing your cookie consent preference.</li>
+              <li><strong>Preference cookies:</strong> These remember your settings, such as your chosen location, language, and activity interests, so we can show you relevant weather and recommendations.</li>
+              <li><strong>Analytics cookies:</strong> We use Vercel Analytics to understand how people use the app so we can make it better. This data is aggregated and anonymous.</li>
+            </ul>
+          </section>
+
+          <section className="mt-6 space-y-4">
+            <h2 className="text-2xl font-semibold text-secondary">Third-party cookies</h2>
+            <p>
+              We don&apos;t share your data with advertisers. Google Maps may set cookies when you use the location search feature. See{" "}
+              <a href="https://policies.google.com/privacy" target="_blank" rel="noopener noreferrer" className="text-primary underline">
+                Google&apos;s Privacy Policy
+              </a>{" "}
+              for details.
+            </p>
+          </section>
+
+          <section className="mt-6 space-y-4">
+            <h2 className="text-2xl font-semibold text-secondary">Managing your preferences</h2>
+            <p>
+              You can accept or decline cookies using the banner at the bottom of the page. You can also clear cookies at any time through your browser settings. Note that disabling essential cookies may affect how the app works.
+            </p>
+            <p>
+              For more details about how we handle your data, see our{" "}
+              <Link href="/privacy" className="text-primary underline">Privacy Policy</Link>.
+            </p>
+          </section>
         </div>
       </main>
 

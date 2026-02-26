@@ -4,6 +4,7 @@ import { getSupabaseServerClient } from '@/lib/supabase/serverClient';
 import { getWikipediaImageLicense, getWikipediaArticleImageLicense, isWikimediaUrl, getWikipediaSummary, getWikipediaSummaryByScientificName } from '@/lib/grow/wikipediaLicense';
 import { createClient } from '@supabase/supabase-js';
 import { getTierLimits, type GrowSubscriptionTier } from '@/lib/grow/subscription';
+import { checkRateLimit, RateLimitError } from '@/lib/utils/rate-limiter';
 import formidable from 'formidable';
 import fs from 'fs/promises';
 
@@ -48,6 +49,16 @@ export default async function handler(
   if (req.method !== 'POST') {
     res.setHeader('Allow', 'POST');
     return res.status(405).json({ error: 'Method Not Allowed' });
+  }
+
+  // Rate limiting: 5 requests per minute (strict) - before formidable parsing
+  try {
+    await checkRateLimit(req, { maxRequests: 5, windowMs: 60 * 1000 });
+  } catch (error) {
+    if (error instanceof RateLimitError) {
+      return res.status(429).json({ error: error.message, retryAfter: error.retryAfter } as { error: string });
+    }
+    throw error;
   }
 
   try {

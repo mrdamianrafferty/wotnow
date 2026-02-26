@@ -18,6 +18,7 @@
 import { createClient } from '@supabase/supabase-js';
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { sendPushToUser, isPushConfigured } from '../../../lib/notifications/sendPushNotification';
+import { verifyCronAuth } from '@/lib/cron-auth';
 
 const SUPABASE_URL = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
 const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -91,9 +92,7 @@ function getReminderBody(activity: PlannedActivityRow): string {
 }
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  // Verify this is a cron request (Vercel sets this header)
-  const authHeader = req.headers.authorization;
-  if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+  if (!verifyCronAuth(req)) {
     return res.status(401).json({ error: 'Unauthorized' });
   }
 

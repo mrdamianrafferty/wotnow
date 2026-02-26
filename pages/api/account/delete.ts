@@ -4,6 +4,7 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import { createClient } from '@supabase/supabase-js';
 import { getSupabaseServerClient } from '../../../lib/supabase/serverClient';
+import { withRateLimit } from '@/lib/utils/apiMiddleware';
 
 // Use service role for admin operations (deleting user)
 const getServiceRoleClient = () => {
@@ -14,7 +15,7 @@ const getServiceRoleClient = () => {
   });
 };
 
-export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+export default withRateLimit(async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'DELETE') {
     res.setHeader('Allow', ['DELETE']);
     return res.status(405).json({ error: 'Method not allowed' });
@@ -106,4 +107,4 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       details: error instanceof Error ? error.message : 'Unknown error'
     });
   }
-}
+}, 'strict');

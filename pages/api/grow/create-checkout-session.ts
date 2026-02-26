@@ -14,6 +14,7 @@ import { createClient } from '@supabase/supabase-js';
 import { GrowSubscriptionTier, GrowSubscriptionType, GROW_TIERS } from '@/lib/grow/subscription';
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+const SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
 const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 const BASE_URL = process.env.NEXT_PUBLIC_GROW_BASE_URL || 'https://grow.godaisy.io';
 
@@ -31,10 +32,23 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   try {
-    const { userId, email, tier, billingType, voucherCode }: CheckoutRequest = req.body;
+    // Authenticate the caller
+    const authHeader = req.headers.authorization;
+    if (!authHeader?.startsWith('Bearer ')) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+    const authClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    const { data: { user }, error: authError } = await authClient.auth.getUser(authHeader.substring(7));
+    if (authError || !user) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    const userId = user.id;
+    const email = user.email;
+    const { tier, billingType, voucherCode } = req.body as Omit<CheckoutRequest, 'userId' | 'email'>;
 
     // Validate required fields
-    if (!userId || !email || !tier || !billingType) {
+    if (!email || !tier || !billingType) {
       return res.status(400).json({ error: 'Missing required fields' });
     }
 

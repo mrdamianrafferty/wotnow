@@ -1,5 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { seedPlantingCalendar } from '../../../lib/grow/plantingCalendarSeeder';
+import { verifyCronAuth } from '@/lib/cron-auth';
 
 const logger = {
   info: (...args: unknown[]) => console.info('[planting-calendar]', ...args),
@@ -8,10 +9,7 @@ const logger = {
 };
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  const expectedAuth = process.env.CRON_SECRET ? `Bearer ${process.env.CRON_SECRET}` : null;
-  const receivedAuth = req.headers.authorization;
-
-  if (!expectedAuth || receivedAuth !== expectedAuth) {
+  if (!verifyCronAuth(req)) {
     return res.status(401).json({ success: false, error: 'Unauthorized' });
   }
 

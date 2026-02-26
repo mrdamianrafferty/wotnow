@@ -1,5 +1,4 @@
-// Temporarily disabled next/font to fix Vercel build
-// import { Roboto, Indie_Flower } from 'next/font/google'
+import { Roboto } from 'next/font/google'
 
 import '../styles/index.css'
 import '../styles/Card.css'
@@ -46,20 +45,12 @@ const SpeedInsights = dynamic(
   { ssr: false }
 );
 // Optimize font loading with next/font
-// Temporarily disabled to fix Vercel build
-// const roboto = Roboto({
-//   weight: ['300', '400', '500', '700'],
-//   subsets: ['latin'],
-//   display: 'swap',
-//   variable: '--font-roboto',
-// })
-
-// const indieFlower = Indie_Flower({
-//   weight: '400',
-//   subsets: ['latin'],
-//   display: 'swap',
-//   variable: '--font-indie-flower',
-// })
+const roboto = Roboto({
+  weight: ['300', '400', '500', '700'],
+  subsets: ['latin'],
+  display: 'swap',
+  variable: '--font-roboto',
+})
 
 type ThemeName = 'light' | 'wotnow' | string;
 
@@ -80,21 +71,33 @@ export default function App({ Component, pageProps }: AppProps<PagePropsWithThem
   }));
 
   // Domain-based favicon and manifest selection
-  // Detect domain immediately (client-side only, but before first render completes)
-  const [isFindr, setIsFindr] = useState(() => {
-    if (typeof window === 'undefined') return false;
+  // Detect app context immediately (client-side only, but before first render completes)
+  const [appContext, setAppContext] = useState<'findr' | 'grow' | 'godaisy'>(() => {
+    if (typeof window === 'undefined') return 'godaisy';
     const hostname = window.location.hostname;
-    return hostname.includes('fishfindr.eu') || window.location.pathname.startsWith('/findr');
+    const pathname = window.location.pathname;
+    if (hostname.includes('fishfindr.eu') || pathname.startsWith('/findr')) return 'findr';
+    if (hostname.includes('grow.') || pathname.startsWith('/grow')) return 'grow';
+    return 'godaisy';
   });
 
-  // Update if route changes (e.g., navigating from / to /findr)
+  // Update if route changes (e.g., navigating from / to /findr or /grow)
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const hostname = window.location.hostname;
-      const isFindrDomain = hostname.includes('fishfindr.eu') || window.location.pathname.startsWith('/findr');
-      setIsFindr(isFindrDomain);
+      const pathname = window.location.pathname;
+      if (hostname.includes('fishfindr.eu') || pathname.startsWith('/findr')) {
+        setAppContext('findr');
+      } else if (hostname.includes('grow.') || pathname.startsWith('/grow')) {
+        setAppContext('grow');
+      } else {
+        setAppContext('godaisy');
+      }
     }
   }, []);
+
+  const isFindr = appContext === 'findr';
+  const isGrow = appContext === 'grow';
 
   // Note: Service worker cleanup removed to enable offline support
   // The PWA service worker now handles cache management via next-pwa's cleanupOutdatedCaches option
@@ -138,22 +141,22 @@ export default function App({ Component, pageProps }: AppProps<PagePropsWithThem
                 <Head>
                 {/* Ensure proper scaling and colour on iPad/phones */}
                 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-                <meta name="theme-color" content="#111827" />
+                <meta name="theme-color" content={isGrow ? "#10b981" : "#111827"} />
 
-                {/* PWA Manifest - Domain-based */}
-                <link rel="manifest" href={isFindr ? "/manifest.json" : "/manifest-godaisy.json"} />
+                {/* PWA Manifest - App-based */}
+                <link rel="manifest" href={isFindr ? "/manifest.json" : isGrow ? "/manifest-growdaisy.json" : "/manifest-godaisy.json"} />
 
-                {/* Apple Touch Icons - Domain-based */}
-                <link rel="apple-touch-icon" href={isFindr ? "/findr-favicon-v2/apple-touch-icon.png" : "/godaisy-favicon/apple-touch-icon.png"} />
+                {/* Apple Touch Icons - App-based */}
+                <link rel="apple-touch-icon" href={isFindr ? "/findr-favicon-v2/apple-touch-icon.png" : isGrow ? "/growdaisy-favicon/apple-touch-icon.png" : "/godaisy-favicon/apple-touch-icon.png"} />
                 <meta name="mobile-web-app-capable" content="yes" />
                 <meta name="apple-mobile-web-app-capable" content="yes" />
                 <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-                <meta name="apple-mobile-web-app-title" content={isFindr ? "Findr" : "Go Daisy"} />
+                <meta name="apple-mobile-web-app-title" content={isFindr ? "Findr" : isGrow ? "Grow Daisy" : "Go Daisy"} />
 
-                {/* Favicons - Domain-based */}
-                <link rel="icon" type="image/svg+xml" href={isFindr ? "/findr-favicon-v2/favicon.svg" : "/godaisy-favicon/favicon.svg"} />
-                <link rel="icon" type="image/png" sizes="96x96" href={isFindr ? "/findr-favicon-v2/favicon-96x96.png" : "/godaisy-favicon/favicon-96x96.png"} />
-                <link rel="icon" type="image/x-icon" href={isFindr ? "/findr-favicon-v2/favicon.ico" : "/godaisy-favicon/favicon.ico"} />
+                {/* Favicons - App-based */}
+                <link rel="icon" type="image/svg+xml" href={isFindr ? "/findr-favicon-v2/favicon.svg" : isGrow ? "/growdaisy-favicon/favicon.svg" : "/godaisy-favicon/favicon.svg"} />
+                <link rel="icon" type="image/png" sizes="96x96" href={isFindr ? "/findr-favicon-v2/favicon-96x96.png" : isGrow ? "/growdaisy-favicon/favicon-96x96.png" : "/godaisy-favicon/favicon-96x96.png"} />
+                <link rel="icon" type="image/x-icon" href={isFindr ? "/findr-favicon-v2/favicon.ico" : isGrow ? "/growdaisy-favicon/favicon.ico" : "/godaisy-favicon/favicon.ico"} />
                 </Head>
 
                 {/* JSON-LD Structured Data for SEO */}
@@ -161,7 +164,7 @@ export default function App({ Component, pageProps }: AppProps<PagePropsWithThem
                 <WebsiteJsonLd />
 
                 {/* Apply DaisyUI theme globally. If you later store theme in context, bind it here. */}
-                <div data-theme={theme} className="min-h-screen bg-base-100 text-base-content" style={{ fontFamily: 'Roboto, system-ui, -apple-system, Segoe UI, sans-serif' }}>
+                <div data-theme={theme} className={`${roboto.variable} min-h-screen bg-base-100 text-base-content`} style={{ fontFamily: 'var(--font-roboto), system-ui, -apple-system, Segoe UI, sans-serif' }}>
                   {/* Initialize offline storage and sync service */}
                   <OfflineInit />
                   {/* Initialize performance tracking for iOS profiling */}

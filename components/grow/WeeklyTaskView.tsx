@@ -19,6 +19,7 @@ import { TaskIcon } from './TaskIcon';
 import { TaskFeedbackPrompt } from './TaskFeedbackPrompt';
 import { type ClimateZoneCode } from '../../lib/grow/climate';
 import { useScreenTracking } from '../../lib/performance';
+import { toast } from 'sonner';
 
 type FrostTolerance = 'hardy' | 'half_hardy' | 'tender' | null;
 
@@ -352,7 +353,7 @@ export function WeeklyTaskView({ userId: propUserId }: WeeklyTaskViewProps) {
   const handleToggleComplete = useCallback(
     async (task: PlantingCalendarWindow) => {
       if (!userId) {
-        alert('Please sign in to track task completion');
+        toast.error('Please sign in to track task completion');
         return;
       }
 
@@ -392,7 +393,7 @@ export function WeeklyTaskView({ userId: propUserId }: WeeklyTaskViewProps) {
         }
       } catch (err) {
         const errorLike = err as { message?: string };
-        alert(errorLike.message ?? 'Failed to update task. Please try again.');
+        toast.error(errorLike.message ?? 'Failed to update task. Please try again.');
       }
     },
     [completions, getWeekDateRange, isTaskCompleted, userId],

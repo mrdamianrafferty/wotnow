@@ -18,12 +18,11 @@ import {
 } from '@/lib/grow/localSignals';
 import type { WeatherForecast } from '@/lib/grow/weatherTaskEngine';
 import { sendPushNotification, createLocalSignalPayload } from '@/lib/grow/notifications';
+import { verifyCronAuth } from '@/lib/cron-auth';
 
 const SUPABASE_URL = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
 const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const OPENWEATHER_API_KEY = process.env.OPENWEATHER_API_KEY || process.env.NEXT_PUBLIC_OPENWEATHER_KEY;
-const CRON_SECRET = process.env.CRON_SECRET;
-
 if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
   throw new Error('Missing Supabase configuration');
 }
@@ -60,10 +59,7 @@ interface AlertResult {
 // =============================================================================
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  // Verify cron secret
-  const cronSecret = req.headers['authorization']?.replace('Bearer ', '');
-
-  if (process.env.NODE_ENV === 'production' && CRON_SECRET && cronSecret !== CRON_SECRET) {
+  if (!verifyCronAuth(req)) {
     return res.status(401).json({ error: 'Unauthorized' });
   }
 

@@ -6,6 +6,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/router';
+import { Capacitor } from '@capacitor/core';
 import { useSubscription } from '@/hooks/useSubscription';
 import { getStripe } from '@/lib/stripe/client';
 import type { Stripe as BrowserStripe } from '@stripe/stripe-js';
@@ -86,6 +87,37 @@ export default function PremiumPage() {
                 className="btn btn-primary"
               >
                 Manage Subscription
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Block Stripe checkout on native iOS — Apple requires in-app purchases
+  if (Capacitor.getPlatform() === 'ios') {
+    return (
+      <div className="min-h-screen flex items-center justify-center p-4">
+        <div className="card bg-base-100 shadow-xl max-w-md w-full">
+          <div className="card-body text-center">
+            <h2 className="card-title justify-center text-2xl">Premium Coming Soon</h2>
+            <p className="text-base-content/70 mt-2">
+              In-app subscription management is coming soon to the iOS app.
+            </p>
+            <p className="text-base-content/70 mt-2">
+              In the meantime, visit{' '}
+              <a href="https://fishfindr.eu/findr/premium" className="link link-primary">
+                fishfindr.eu
+              </a>{' '}
+              in your browser to subscribe.
+            </p>
+            <div className="card-actions justify-center mt-4">
+              <button
+                onClick={() => router.back()}
+                className="btn btn-outline"
+              >
+                Go Back
               </button>
             </div>
           </div>

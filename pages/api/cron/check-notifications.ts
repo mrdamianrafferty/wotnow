@@ -24,6 +24,7 @@
 
 import { createClient } from '@supabase/supabase-js';
 import type { NextApiRequest, NextApiResponse } from 'next';
+import { verifyCronAuth } from '@/lib/cron-auth';
 import { Resend } from 'resend';
 import {
   generateDailyDigestHTML,
@@ -249,11 +250,13 @@ async function hasReceivedDailyDigestToday(userId: string): Promise<boolean> {
  */
 async function sendPushNotification(notification: NotificationToSend): Promise<boolean> {
   try {
-    // 1. Get ALL user's push tokens from database (iOS and Android)
+    // 1. Get Findr push tokens from database (iOS and Android)
+    // Filter to Findr bundle_id or legacy tokens (null bundle_id)
     const { data: tokens, error: tokenError } = await supabase
       .from('user_push_tokens')
-      .select('token, platform')
-      .eq('user_id', notification.userId);
+      .select('token, platform, bundle_id')
+      .eq('user_id', notification.userId)
+      .or('bundle_id.eq.eu.fishfindr.app,bundle_id.is.null');
 
     if (tokenError || !tokens || tokens.length === 0) {
       console.log('[Push] No tokens found for user:', notification.userId);
@@ -1065,9 +1068,7 @@ async function logNotification(notification: NotificationToSend, channel: 'push'
 }
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  // Verify this is a cron request (Vercel sets this header)
-  const authHeader = req.headers.authorization;
-  if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+  if (!verifyCronAuth(req)) {
     return res.status(401).json({ error: 'Unauthorized' });
   }
 

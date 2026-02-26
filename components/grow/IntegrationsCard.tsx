@@ -350,8 +350,14 @@ export function IntegrationsCard({ className = '' }: IntegrationCardProps) {
     }
   };
 
+  const [confirmDisconnect, setConfirmDisconnect] = useState<Integration | null>(null);
+
+  const handleRequestDisconnect = (integration: Integration) => {
+    setConfirmDisconnect(integration);
+  };
+
   const handleDisconnect = async (integration: Integration) => {
-    if (!confirm(`Disconnect ${integration.device_name}?`)) return;
+    setConfirmDisconnect(null);
 
     try {
       const { data: { session } } = await supabase.auth.getSession();
@@ -745,7 +751,7 @@ export function IntegrationsCard({ className = '' }: IntegrationCardProps) {
                                 <Button
                                   variant="ghost"
                                   size="sm"
-                                  onClick={() => handleDisconnect(integration)}
+                                  onClick={() => handleRequestDisconnect(integration)}
                                   className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50"
                                 >
                                   <Trash2 className="h-4 w-4" />
@@ -879,6 +885,35 @@ export function IntegrationsCard({ className = '' }: IntegrationCardProps) {
                     </div>
                   )}
                 </div>
+              )}
+              {/* Disconnect confirmation */}
+              {confirmDisconnect && (
+                <motion.div
+                  initial={{ opacity: 0, y: -5 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="bg-red-50 border border-red-200 rounded-lg p-4"
+                >
+                  <p className="text-sm font-medium text-red-800 mb-3">
+                    Disconnect {confirmDisconnect.device_name}?
+                  </p>
+                  <div className="flex gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setConfirmDisconnect(null)}
+                      className="flex-1"
+                    >
+                      Cancel
+                    </Button>
+                    <Button
+                      size="sm"
+                      onClick={() => handleDisconnect(confirmDisconnect)}
+                      className="flex-1 bg-red-600 hover:bg-red-700 text-white"
+                    >
+                      Disconnect
+                    </Button>
+                  </div>
+                </motion.div>
               )}
             </div>
           </motion.div>

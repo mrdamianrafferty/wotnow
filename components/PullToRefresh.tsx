@@ -12,6 +12,7 @@
 
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/router';
+import { uiHaptics } from '../lib/capacitor/haptics';
 
 interface PullToRefreshProps {
   children: React.ReactNode;
@@ -101,6 +102,7 @@ export const PullToRefresh: React.FC<PullToRefreshProps> = ({
     setIsPulling(false);
 
     if (pullDistance >= threshold) {
+      uiHaptics.pullToRefresh();
       handleRefresh();
     } else {
       setPullDistance(0);

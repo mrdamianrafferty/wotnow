@@ -10,6 +10,7 @@
 import { createServerSupabaseClient } from '../../../../lib/supabase/pages-api';
 import { createClient } from '@supabase/supabase-js';
 import type { NextApiRequest, NextApiResponse } from 'next';
+import { checkRateLimit, RateLimitError } from '@/lib/utils/rate-limiter';
 
 
 const SUPABASE_URL = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -303,6 +304,17 @@ async function resolveSpeciesRecord(params: {
 }
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+  // Rate limiting: 30 req/min for reads, 10 req/min for writes
+  try {
+    const limit = req.method === 'GET' ? { maxRequests: 30, windowMs: 60000 } : { maxRequests: 10, windowMs: 60000 };
+    await checkRateLimit(req, limit);
+  } catch (error) {
+    if (error instanceof RateLimitError) {
+      return res.status(429).json({ error: error.message, retryAfter: error.retryAfter });
+    }
+    throw error;
+  }
+
   // Create authenticated Supabase client
   const supabase = createServerSupabaseClient({ req, res });
   

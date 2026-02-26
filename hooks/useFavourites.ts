@@ -125,11 +125,13 @@ export function useFavourites(options: UseFavouritesOptions = {}) {
     if (user === undefined) return;
     // Prevent concurrent loads across all hook instances
     if (globalFavouritesLoading) return;
-    
+
+    let isMounted = true;
+
     const loadFavourites = async () => {
       globalFavouritesLoading = true;
       setLoading(true);
-      
+
       try {
         if (user && autoSync) {
           // Authenticated: Load from Supabase
@@ -137,8 +139,10 @@ export function useFavourites(options: UseFavouritesOptions = {}) {
             const response = await fetch('/api/findr/favourites', {
               credentials: 'include', // Send cookies for authentication
             });
+            if (!isMounted) return;
             const data = await response.json();
-            
+            if (!isMounted) return;
+
             if (data.success && Array.isArray(data.favourites)) {
               const speciesIds: string[] = Array.from(
                 new Set(
@@ -162,6 +166,7 @@ export function useFavourites(options: UseFavouritesOptions = {}) {
               setFavouriteDetails([]);
             }
           } catch (error) {
+            if (!isMounted) return;
             console.error('Failed to load favourites from Supabase:', error);
             // Fall back to localStorage
             loadFromLocalStorage();
@@ -171,13 +176,17 @@ export function useFavourites(options: UseFavouritesOptions = {}) {
           loadFromLocalStorage();
         }
       } finally {
-        setLoading(false);
+        if (isMounted) {
+          setLoading(false);
+        }
         // Reset after delay to allow re-fetch if user changes
         setTimeout(() => { globalFavouritesLoading = false; }, 2000);
       }
     };
 
     loadFavourites();
+
+    return () => { isMounted = false; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.id, autoSync]); // Only reload when user ID changes, not when user object reference changes
 

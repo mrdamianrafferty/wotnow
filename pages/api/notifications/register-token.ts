@@ -28,6 +28,7 @@ const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
 interface RegisterTokenRequest {
   token: string;
   platform: 'ios' | 'android';
+  bundle_id?: string;
 }
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
@@ -50,7 +51,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   if (req.method === 'POST') {
     // Register or update push token
-    const { token, platform } = req.body as RegisterTokenRequest;
+    const { token, platform, bundle_id } = req.body as RegisterTokenRequest;
 
     if (!token || !platform) {
       return res.status(400).json({ error: 'Missing token or platform' });
@@ -61,7 +62,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
 
     try {
-      // Upsert the token (one per user per platform)
+      // Upsert the token (one per user per platform per bundle)
       const { error } = await supabase
         .from('user_push_tokens')
         .upsert(
@@ -69,10 +70,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             user_id: userId,
             token,
             platform,
+            bundle_id: bundle_id || null,
             last_used: new Date().toISOString(),
           },
           {
-            onConflict: 'user_id,platform',
+            onConflict: 'user_id,platform,bundle_id',
           }
         );
 
@@ -89,7 +91,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
   } else if (req.method === 'DELETE') {
     // Remove push token (e.g., on logout)
-    const { platform } = req.body as { platform?: 'ios' | 'android' };
+    const { platform, bundle_id: deleteBundleId } = req.body as { platform?: 'ios' | 'android'; bundle_id?: string };
 
     try {
       let query = supabase
@@ -100,6 +102,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       // If platform specified, only delete that one
       if (platform) {
         query = query.eq('platform', platform);
+      }
+
+      // If bundle_id specified, only delete that app's token
+      if (deleteBundleId) {
+        query = query.eq('bundle_id', deleteBundleId);
       }
 
       const { error } = await query;

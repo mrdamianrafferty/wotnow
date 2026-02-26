@@ -5,16 +5,37 @@
 import { createMocks } from 'node-mocks-http';
 import handler from '@/pages/api/vouchers/validate';
 
-// Mock Supabase
+// Track createClient calls to return different mocks for auth vs service role
+const mockRpc = jest.fn();
+const mockGetUser = jest.fn();
+
 jest.mock('@supabase/supabase-js', () => ({
   createClient: jest.fn(() => ({
-    rpc: jest.fn(),
+    rpc: mockRpc,
+    auth: {
+      getUser: mockGetUser,
+    },
   })),
 }));
+
+function createAuthenticatedMocks(body: Record<string, unknown>) {
+  return createMocks({
+    method: 'POST',
+    body,
+    headers: {
+      authorization: 'Bearer valid-token',
+    },
+  });
+}
 
 describe('/api/vouchers/validate', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    // Default: auth succeeds
+    mockGetUser.mockResolvedValue({
+      data: { user: { id: 'user-123', email: 'test@example.com' } },
+      error: null,
+    });
   });
 
   it('should reject non-POST requests', async () => {
@@ -30,23 +51,7 @@ describe('/api/vouchers/validate', () => {
     });
   });
 
-  it('should require voucher code', async () => {
-    const { req, res } = createMocks({
-      method: 'POST',
-      body: {
-        userId: 'user-123',
-      },
-    });
-
-    await handler(req, res);
-
-    expect(res._getStatusCode()).toBe(400);
-    expect(JSON.parse(res._getData())).toEqual({
-      error: 'Voucher code is required',
-    });
-  });
-
-  it('should require user ID', async () => {
+  it('should reject requests without auth', async () => {
     const { req, res } = createMocks({
       method: 'POST',
       body: {
@@ -56,19 +61,38 @@ describe('/api/vouchers/validate', () => {
 
     await handler(req, res);
 
+    expect(res._getStatusCode()).toBe(401);
+  });
+
+  it('should reject requests with invalid auth', async () => {
+    mockGetUser.mockResolvedValue({
+      data: { user: null },
+      error: { message: 'Invalid token' },
+    });
+
+    const { req, res } = createAuthenticatedMocks({
+      voucherCode: 'TEST123',
+    });
+
+    await handler(req, res);
+
+    expect(res._getStatusCode()).toBe(401);
+  });
+
+  it('should require voucher code', async () => {
+    const { req, res } = createAuthenticatedMocks({});
+
+    await handler(req, res);
+
     expect(res._getStatusCode()).toBe(400);
     expect(JSON.parse(res._getData())).toEqual({
-      error: 'User ID is required',
+      error: 'Voucher code is required',
     });
   });
 
   it('should validate voucher code format', async () => {
-    const { req, res } = createMocks({
-      method: 'POST',
-      body: {
-        voucherCode: 123, // Invalid type
-        userId: 'user-123',
-      },
+    const { req, res } = createAuthenticatedMocks({
+      voucherCode: 123, // Invalid type
     });
 
     await handler(req, res);
@@ -77,22 +101,13 @@ describe('/api/vouchers/validate', () => {
   });
 
   it('should call RPC function with correct parameters', async () => {
-    const { createClient } = require('@supabase/supabase-js');
-    const mockRpc = jest.fn().mockResolvedValue({
+    mockRpc.mockResolvedValue({
       data: { valid: true, discount_value: 25 },
       error: null,
     });
 
-    createClient.mockReturnValue({
-      rpc: mockRpc,
-    });
-
-    const { req, res } = createMocks({
-      method: 'POST',
-      body: {
-        voucherCode: 'EARLYBIRD25',
-        userId: 'user-123',
-      },
+    const { req, res } = createAuthenticatedMocks({
+      voucherCode: 'EARLYBIRD25',
     });
 
     await handler(req, res);
@@ -104,8 +119,7 @@ describe('/api/vouchers/validate', () => {
   });
 
   it('should return validation result on success', async () => {
-    const { createClient } = require('@supabase/supabase-js');
-    const mockRpc = jest.fn().mockResolvedValue({
+    mockRpc.mockResolvedValue({
       data: {
         valid: true,
         voucher_id: 'voucher-123',
@@ -116,16 +130,8 @@ describe('/api/vouchers/validate', () => {
       error: null,
     });
 
-    createClient.mockReturnValue({
-      rpc: mockRpc,
-    });
-
-    const { req, res } = createMocks({
-      method: 'POST',
-      body: {
-        voucherCode: 'EARLYBIRD25',
-        userId: 'user-123',
-      },
+    const { req, res } = createAuthenticatedMocks({
+      voucherCode: 'EARLYBIRD25',
     });
 
     await handler(req, res);

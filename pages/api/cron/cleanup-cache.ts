@@ -1,5 +1,6 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import { createClient } from '@supabase/supabase-js';
+import { verifyCronAuth } from '@/lib/cron-auth';
 
 /**
  * API endpoint for scheduled cache cleanup
@@ -18,15 +19,7 @@ export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse
 ) {
-  // Verify the request is from Vercel Cron or has valid secret
-  const authHeader = req.headers.authorization;
-  const cronSecret = process.env.CRON_SECRET;
-  
-  // Check for Vercel cron header or query secret
-  const isVercelCron = authHeader === `Bearer ${cronSecret}`;
-  const hasQuerySecret = req.query.secret === cronSecret;
-  
-  if (!isVercelCron && !hasQuerySecret && process.env.NODE_ENV === 'production') {
+  if (!verifyCronAuth(req)) {
     return res.status(401).json({ error: 'Unauthorized' });
   }
 

@@ -11,6 +11,7 @@
 
 import { NextApiRequest, NextApiResponse } from 'next';
 import { createClient } from '@supabase/supabase-js';
+import { verifyCronAuth } from '@/lib/cron-auth';
 
 // Types for ingestion results
 interface IngestionResult {
@@ -273,12 +274,7 @@ export default async function handler(
 ) {
   const startTime = Date.now();
 
-  // Verify this is a legitimate cron request
-  const authHeader = req.headers['authorization'];
-  const expectedAuth = `Bearer ${process.env.CRON_SECRET}`;
-
-  if (authHeader !== expectedAuth) {
-    console.error('Unauthorized cron request attempt');
+  if (!verifyCronAuth(req)) {
     return res.status(401).json({ error: 'Unauthorized' });
   }
 

@@ -150,6 +150,14 @@ async function handleGenerateToken(
   res: NextApiResponse
 ) {
   try {
+    // This endpoint is internal-only (used by cron/email generators)
+    // Require CRON_SECRET to prevent arbitrary token generation
+    const cronSecret = process.env.CRON_SECRET;
+    const authHeader = req.headers.authorization;
+    if (!cronSecret || authHeader !== `Bearer ${cronSecret}`) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+
     const { userId } = req.body;
 
     if (!userId) {

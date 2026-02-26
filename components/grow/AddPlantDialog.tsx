@@ -1109,11 +1109,12 @@ const cultivarIdForStorage = useMemo(() => {
                     {/* Wikipedia Image or Placeholder */}
                     {prefillFromIdentification?.wikiImageAllowed && prefillFromIdentification?.wikiImageUrl ? (
                       <div className="relative h-24 w-24 overflow-hidden rounded-xl border bg-white shadow-sm">
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img 
-                          src={prefillFromIdentification.wikiImageUrl} 
+                        <Image
+                          src={prefillFromIdentification.wikiImageUrl}
                           alt={customPlantName}
-                          className="h-full w-full object-cover"
+                          fill
+                          sizes="96px"
+                          className="object-cover"
                         />
                         {prefillFromIdentification.wikiImageLicense && (
                           <div className="absolute bottom-1 right-1">

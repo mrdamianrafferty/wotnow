@@ -34,7 +34,7 @@
 	<string>Main</string>
 	<key>UIRequiredDeviceCapabilities</key>
 	<array>
-		<string>armv7</string>
+		<string>arm64</string>
 	</array>
 	<key>UISupportedInterfaceOrientations</key>
 	<array>
@@ -79,9 +79,6 @@
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>Findr needs your location to show fishing predictions for your area and help you discover the best spots nearby.</string>
 
-	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
-	<string>Findr can use your location in the background to send you timely fishing notifications when conditions are ideal.</string>
-
 	<!-- Camera Permission -->
 	<key>NSCameraUsageDescription</key>
 	<string>Findr needs camera access to let you take photos of your catches and document your fishing sessions.</string>
@@ -96,10 +93,6 @@
 	<!-- Notifications Permission -->
 	<key>NSUserNotificationsUsageDescription</key>
 	<string>Findr can send you notifications about optimal fishing conditions and reminders for your scheduled sessions.</string>
-
-	<!-- Motion Permission -->
-	<key>NSMotionUsageDescription</key>
-	<string>Findr uses motion data to detect whether you are fishing from a boat or the shore to give you targeted advice.</string>
 
 	<!-- Google Sign-In Configuration -->
 	<key>GIDClientID</key>
@@ -128,7 +121,6 @@
 	<key>UIBackgroundModes</key>
 	<array>
 		<string>remote-notification</string>
-		<string>fetch</string>
 		<string>processing</string>
 	</array>
 

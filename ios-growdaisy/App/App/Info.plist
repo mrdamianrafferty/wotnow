@@ -34,7 +34,7 @@
 	<string>Main</string>
 	<key>UIRequiredDeviceCapabilities</key>
 	<array>
-		<string>armv7</string>
+		<string>arm64</string>
 	</array>
 	<key>UISupportedInterfaceOrientations</key>
 	<array>
@@ -79,9 +79,6 @@
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>Grow Daisy needs your location to show local climate data and provide planting recommendations for your area.</string>
 
-	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
-	<string>Grow Daisy can use your location in the background to send timely garden reminders based on local weather.</string>
-
 	<!-- Camera Permission -->
 	<key>NSCameraUsageDescription</key>
 	<string>Grow Daisy needs camera access so you can photograph your plants and garden progress.</string>
@@ -96,10 +93,6 @@
 	<!-- Notifications Permission -->
 	<key>NSUserNotificationsUsageDescription</key>
 	<string>Grow Daisy can send you notifications for watering reminders, planting windows, and garden care tips.</string>
-
-	<!-- Motion Permission -->
-	<key>NSMotionUsageDescription</key>
-	<string>Grow Daisy uses motion data to understand if you are at home or travelling so garden reminders stay relevant.</string>
 
 	<!-- Google Sign-In Configuration -->
 	<key>GIDClientID</key>
@@ -128,7 +121,6 @@
 	<key>UIBackgroundModes</key>
 	<array>
 		<string>remote-notification</string>
-		<string>fetch</string>
 		<string>processing</string>
 	</array>
 

@@ -12,6 +12,7 @@ const config: CapacitorConfig = {
     // PRODUCTION: Load content from subdomain (can later point to growdaisy.io)
     // This hybrid architecture keeps all API routes on the server (secure)
     url: 'https://grow.godaisy.io',
+    errorPath: 'index.html',
     cleartext: false,  // Force HTTPS
 
     // DEVELOPMENT: Uncomment to test locally

@@ -9,6 +9,7 @@
 
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { createClient } from '@supabase/supabase-js';
+import { checkRateLimit, RateLimitError } from '@/lib/utils/rate-limiter';
 import {
   sendGoDaisyPushNotification,
   sendGoDaisyBulkNotification,
@@ -19,6 +20,7 @@ import {
   GoDaisyNotificationType,
   PushNotificationPayload,
 } from '@/lib/godaisy/notifications';
+import { sendGoDaisyApnsPushNotification } from '@/lib/godaisy/apnsClient';
 import { sendFcmPushNotification } from '@/lib/notifications/fcmClient';
 
 const SUPABASE_URL = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -76,6 +78,16 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(401).json({ error: 'Unauthorized' });
   }
 
+  // Rate limiting: 10 requests per minute
+  try {
+    await checkRateLimit(req, { maxRequests: 10, windowMs: 60 * 1000 });
+  } catch (error) {
+    if (error instanceof RateLimitError) {
+      return res.status(429).json({ error: error.message, retryAfter: error.retryAfter });
+    }
+    throw error;
+  }
+
   const body = req.body as SendNotificationRequest;
 
   let payload: PushNotificationPayload | undefined = body.payload;
@@ -91,7 +103,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   try {
     // Single user notification
     if (body.userId || (userId && !body.broadcast)) {
-      const targetUserId = body.userId || userId;
+      // When authenticated via Bearer token, enforce self-only sends
+      if (userId && body.userId && body.userId !== userId) {
+        return res.status(403).json({ error: 'Cannot send notifications to another user' });
+      }
+      const targetUserId = userId || body.userId;
       if (!targetUserId) {
         return res.status(400).json({ error: 'Missing userId' });
       }
@@ -202,10 +218,12 @@ async function sendToNativeTokens(
   const errors: string[] = [];
 
   try {
+    // Filter to Go Daisy tokens or legacy tokens (null bundle_id)
     const { data: tokens } = await supabase
       .from('user_push_tokens')
       .select('token, platform')
-      .eq('user_id', targetUserId);
+      .eq('user_id', targetUserId)
+      .or('bundle_id.eq.io.godaisy.app,bundle_id.is.null');
 
     if (!tokens || tokens.length === 0) {
       return { sent: 0, failed: 0, errors: [] };
@@ -219,12 +237,13 @@ async function sendToNativeTokens(
 
     for (const tokenEntry of tokens) {
       try {
-        if (tokenEntry.platform === 'android') {
-          const success = await sendFcmPushNotification(tokenEntry.token, nativePayload);
-          if (success) { sent++; } else { failed++; errors.push('Failed to send via android'); }
+        let success = false;
+        if (tokenEntry.platform === 'ios') {
+          success = await sendGoDaisyApnsPushNotification(tokenEntry.token, nativePayload);
+        } else if (tokenEntry.platform === 'android') {
+          success = await sendFcmPushNotification(tokenEntry.token, nativePayload);
         }
-        // iOS APNs for Go Daisy would need its own bundle ID;
-        // for now, only FCM (Android) and Web Push are supported.
+        if (success) { sent++; } else { failed++; errors.push(`Failed to send via ${tokenEntry.platform}`); }
       } catch (err) {
         failed++;
         errors.push(`${tokenEntry.platform} error: ${err instanceof Error ? err.message : 'Unknown'}`);

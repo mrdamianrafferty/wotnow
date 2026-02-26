@@ -177,6 +177,17 @@ export async function syncPushTokenToServer(accessToken: string): Promise<boolea
     console.warn('[Push] Platform detection failed, defaulting to android:', e);
   }
 
+  // Determine bundle_id from Capacitor App plugin
+  let bundle_id: string | undefined;
+  try {
+    const { App } = await import('@capacitor/app');
+    const appInfo = await App.getInfo();
+    bundle_id = appInfo.id; // e.g., 'eu.fishfindr.app', 'io.godaisy.app', 'io.growdaisy.app'
+    console.log('[Push] Detected bundle_id:', bundle_id);
+  } catch (e) {
+    console.warn('[Push] Bundle ID detection failed:', e);
+  }
+
   try {
     const response = await fetch('/api/notifications/register-token', {
       method: 'POST',
@@ -184,7 +195,7 @@ export async function syncPushTokenToServer(accessToken: string): Promise<boolea
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${accessToken}`,
       },
-      body: JSON.stringify({ token, platform }),
+      body: JSON.stringify({ token, platform, bundle_id }),
     });
 
     if (response.ok) {
@@ -217,13 +228,23 @@ export async function removePushTokenFromServer(accessToken: string): Promise<bo
       // Remove all if we can't determine platform
     }
 
+    // Determine bundle_id
+    let bundle_id: string | undefined;
+    try {
+      const { App } = await import('@capacitor/app');
+      const appInfo = await App.getInfo();
+      bundle_id = appInfo.id;
+    } catch {
+      // Remove all for this platform if we can't determine bundle
+    }
+
     const response = await fetch('/api/notifications/register-token', {
       method: 'DELETE',
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${accessToken}`,
       },
-      body: JSON.stringify({ platform }),
+      body: JSON.stringify({ platform, bundle_id }),
     });
 
     if (response.ok) {

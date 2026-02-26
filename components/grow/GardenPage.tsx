@@ -41,6 +41,7 @@ import type { GuildCompanion } from '../../lib/grow/guild';
 import { api, type GardenPhoto } from '../../lib/grow/api';
 import { useScreenTracking } from '../../lib/performance';
 import type { PlantSpecies } from '../../lib/grow/species';
+import { takePicture, CameraException } from '../../lib/capacitor/camera';
 
 // Code-split heavy dialogs - only loaded when user interacts
 const GuildModalEnhanced = dynamic(() => import('./GuildModalEnhanced').then(mod => ({ default: mod.GuildModalEnhanced })), {
@@ -72,6 +73,7 @@ import type { PlantIdentificationResult } from '../../lib/grow/plantIdentificati
 import { TranslatedText } from '../translation/TranslatedFishCard';
 import { useUnifiedLocation } from '../../context/UnifiedLocationContext';
 import { AILimitPrompt } from './premium/UpgradePrompt';
+import { FeatureErrorBoundary } from '../FeatureErrorBoundary';
 
 type ThreatRiskBand = 'none' | 'low' | 'moderate' | 'high' | 'severe';
 
@@ -569,9 +571,14 @@ export function GardenPage() {
 
   // Load gallery photos when switching to gallery tab
   useEffect(() => {
+    let isMounted = true;
     if (activeTab === 'gallery') {
-      void loadGalleryPhotos();
+      void (async () => {
+        await loadGalleryPhotos();
+        if (!isMounted) return;
+      })();
     }
+    return () => { isMounted = false; };
   }, [activeTab, loadGalleryPhotos]);
 
   const redirectToLogin = useCallback(() => {
@@ -644,20 +651,32 @@ export function GardenPage() {
 
   // Load plants from backend on mount
   useEffect(() => {
+    let isMounted = true;
     startTransition(() => {
-      void loadPlants();
+      void (async () => {
+        await loadPlants();
+        if (!isMounted) return;
+      })();
     });
+    return () => { isMounted = false; };
   }, [loadPlants]);
 
   useEffect(() => {
+    let isMounted = true;
     startTransition(() => {
-      void loadThreats();
+      void (async () => {
+        await loadThreats();
+        if (!isMounted) return;
+      })();
     });
+    return () => { isMounted = false; };
   }, [loadThreats]);
 
   // Fetch species info for all plants when plants change
   useEffect(() => {
     if (plants.length === 0) return;
+
+    let isMounted = true;
 
     const fetchSpeciesInfo = async () => {
       // Get unique plant names that we don't already have cached
@@ -672,9 +691,11 @@ export function GardenPage() {
         return;
       }
 
+      if (!isMounted) return;
       setIsLoadingSpecies(true);
       try {
         const newSpecies = await api.getPlantSpeciesBatch(uncachedNames);
+        if (!isMounted) return;
         console.log('🌱 [Species] Fetched species count:', newSpecies.size);
         console.log('🌱 [Species] Species names found:', [...newSpecies.keys()].slice(0, 5));
         setSpeciesCache(prev => {
@@ -685,14 +706,20 @@ export function GardenPage() {
           return updated;
         });
       } catch (error) {
+        if (!isMounted) return;
         console.error('Failed to fetch species info:', error);
       } finally {
-        setIsLoadingSpecies(false);
+        if (isMounted) {
+          setIsLoadingSpecies(false);
+        }
       }
     };
 
     void fetchSpeciesInfo();
-  }, [plants, speciesCache]);
+
+    return () => { isMounted = false; };
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- speciesCache intentionally excluded to prevent infinite loop
+  }, [plants]);
 
   const handlePlantAdded = (plant: SerializedPlant) => {
     const rawPlant: RawPlant = {
@@ -1025,6 +1052,24 @@ export function GardenPage() {
     fileInputRef.current?.click();
   };
 
+  // Take photo using Capacitor Camera (native) or web fallback
+  const handleCameraCapture = async () => {
+    try {
+      const photo = await takePicture({ quality: 90, optimizeMaxWidth: 1024 });
+      setIdentifyPhotoPreview(photo.dataUrl);
+      // Convert data URL to File for the identify API
+      const response = await fetch(photo.dataUrl);
+      const blob = await response.blob();
+      const file = new File([blob], `capture-${Date.now()}.jpg`, { type: 'image/jpeg' });
+      setIdentifyPhoto(file);
+    } catch (error) {
+      if (error instanceof CameraException && error.type === 'CANCELLED') return;
+      console.error('[GardenPage] Camera capture failed:', error);
+      // Fall back to file input
+      handleChooseFile();
+    }
+  };
+
   const _handleDeletePlant = async (plantId: string, plantName: string) => {
     console.log(`🗑️ [GardenPage] Attempting to delete plant: id=${plantId}, name=${plantName}`);
     
@@ -1293,6 +1338,7 @@ export function GardenPage() {
 
         {/* Tab 1: My Plants */}
         <TabsContent value="plants" className="space-y-4">
+          <FeatureErrorBoundary feature="Garden Plants">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
             <div className="flex items-center gap-3">
               <h2 className="text-xl font-medium">Plant Inventory</h2>
@@ -2159,10 +2205,12 @@ export function GardenPage() {
             </Card>
           </div>
           )}
+          </FeatureErrorBoundary>
         </TabsContent>
 
         {/* Tab 2: Identify */}
         <TabsContent value="identify" className="space-y-4">
+          <FeatureErrorBoundary feature="Plant Identification">
           {/* Mode Toggle */}
           <div className="flex gap-2 mb-4">
             <Button
@@ -2229,6 +2277,10 @@ export function GardenPage() {
                     Supports images up to 20MB (will be optimized automatically)
                   </p>
                   <div className="flex gap-2 justify-center mt-4">
+                    <Button variant="outline" onClick={(e) => { e.stopPropagation(); handleCameraCapture(); }}>
+                      <Camera className="h-4 w-4 mr-2" />
+                      Take Photo
+                    </Button>
                     <Button variant="outline" onClick={(e) => { e.stopPropagation(); handleChooseFile(); }}>
                       <ImageIcon className="h-4 w-4 mr-2" />
                       Choose File
@@ -2238,11 +2290,13 @@ export function GardenPage() {
               ) : (
                 <div className="relative">
                   <div className="relative w-full aspect-video rounded-lg overflow-hidden bg-base-200">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
+                    <Image
                       src={identifyPhotoPreview}
                       alt="Photo to identify"
-                      className="w-full h-full object-contain"
+                      fill
+                      sizes="(max-width: 768px) 100vw, 600px"
+                      className="object-contain"
+                      unoptimized
                     />
                     <button
                       onClick={handleClearPhoto}
@@ -2446,11 +2500,12 @@ export function GardenPage() {
                     {identifyResult.mode === 'pest' && identifyResult.threatImageUrl && (
                       <div className="pt-2 border-t">
                         <div className="relative aspect-video rounded-lg overflow-hidden bg-muted">
-                          {/* eslint-disable-next-line @next/next/no-img-element */}
-                          <img
+                          <Image
                             src={identifyResult.threatImageUrl}
                             alt={identifyResult.diagnosis?.name || 'Threat'}
-                            className="w-full h-full object-cover"
+                            fill
+                            sizes="(max-width: 768px) 100vw, 600px"
+                            className="object-cover"
                           />
                         </div>
                       </div>
@@ -2644,11 +2699,12 @@ export function GardenPage() {
                         {identifyResult.species.wikiImageAllowed && identifyResult.species.wikiImageUrl && (
                           <div className="relative">
                             <div className="relative aspect-video rounded-lg overflow-hidden bg-muted">
-                              {/* eslint-disable-next-line @next/next/no-img-element */}
-                              <img
+                              <Image
                                 src={identifyResult.species.wikiImageUrl}
                                 alt={identifyResult.species.name}
-                                className="w-full h-full object-cover"
+                                fill
+                                sizes="(max-width: 768px) 100vw, 600px"
+                                className="object-cover"
                               />
                             </div>
                             {identifyResult.species.wikiImageLicense && (
@@ -2800,10 +2856,12 @@ export function GardenPage() {
               )}
             </CardContent>
           </Card>
+          </FeatureErrorBoundary>
         </TabsContent>
 
         {/* Tab 3: Gallery */}
         <TabsContent value="gallery" className="space-y-4">
+          <FeatureErrorBoundary feature="Photo Gallery">
           <div className="flex justify-between items-center">
             <h2 className="text-xl font-medium">Garden Gallery</h2>
             <div>
@@ -2900,6 +2958,7 @@ export function GardenPage() {
               ))}
             </div>
           )}
+          </FeatureErrorBoundary>
         </TabsContent>
       </Tabs>
 

@@ -3,6 +3,7 @@ import { fishIdService, type IdentificationResult } from '@/lib/findr/fishIdenti
 import { hfFishIdService } from '@/lib/findr/huggingfaceService';
 import { getFishIdProvider, getProviderConfig } from '@/lib/findr/fishIdProviderConfig';
 import type { QuickLogSpecies } from '@/hooks/useQuickLogSpecies';
+import { checkRateLimit, RateLimitError } from '@/lib/utils/rate-limiter';
 import formidable from 'formidable';
 import fs from 'fs/promises';
 
@@ -47,6 +48,16 @@ export default async function handler(
   if (req.method !== 'POST') {
     res.setHeader('Allow', 'POST');
     return res.status(405).json({ error: 'Method Not Allowed' });
+  }
+
+  // Rate limiting: 5 requests per minute (strict) - before formidable parsing
+  try {
+    await checkRateLimit(req, { maxRequests: 5, windowMs: 60 * 1000 });
+  } catch (error) {
+    if (error instanceof RateLimitError) {
+      return res.status(429).json({ error: error.message, retryAfter: error.retryAfter } as { error: string });
+    }
+    throw error;
   }
 
   try {

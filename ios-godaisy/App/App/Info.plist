@@ -34,7 +34,7 @@
 	<string>Main</string>
 	<key>UIRequiredDeviceCapabilities</key>
 	<array>
-		<string>armv7</string>
+		<string>arm64</string>
 	</array>
 	<key>UISupportedInterfaceOrientations</key>
 	<array>
@@ -79,9 +79,6 @@
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>Go Daisy needs your location to show outdoor windows for your area and recommend the safest spots nearby.</string>
 
-	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
-	<string>Go Daisy can use your location in the background to send timely alerts when activity windows open.</string>
-
 	<!-- Camera Permission -->
 	<key>NSCameraUsageDescription</key>
 	<string>Go Daisy needs camera access so you can capture field notes and share local insights.</string>
@@ -96,10 +93,6 @@
 	<!-- Notifications Permission -->
 	<key>NSUserNotificationsUsageDescription</key>
 	<string>Go Daisy can send you notifications about upcoming activity windows and reminders for scheduled plans.</string>
-
-	<!-- Motion Permission -->
-	<key>NSMotionUsageDescription</key>
-	<string>Go Daisy uses motion data to understand if you are stationary or travelling so recommendations stay accurate.</string>
 
 	<!-- Google Sign-In Configuration -->
 	<key>GIDClientID</key>
@@ -128,7 +121,6 @@
 	<key>UIBackgroundModes</key>
 	<array>
 		<string>remote-notification</string>
-		<string>fetch</string>
 		<string>processing</string>
 	</array>
 

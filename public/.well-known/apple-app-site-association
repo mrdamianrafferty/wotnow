@@ -6,7 +6,9 @@
         "appID": "T7754BV8QM.eu.fishfindr.app",
         "paths": [
           "/auth/callback",
-          "/auth/callback/*"
+          "/auth/callback/*",
+          "/findr",
+          "/findr/*"
         ]
       },
       {

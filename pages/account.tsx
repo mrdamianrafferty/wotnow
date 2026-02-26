@@ -156,14 +156,19 @@ export default function AccountPage() {
     if (deleteConfirmText !== 'DELETE') return;
     setDeleting(true);
     try {
-      const { data } = await supabase.auth.getUser();
-      if (!data?.user) return;
-      await Promise.all([
-        supabase.from('profiles').delete().eq('id', data.user.id),
-        supabase.from('user_location_preferences').delete().eq('user_id', data.user.id),
-        supabase.from('user_favourites').delete().eq('user_id', data.user.id),
-      ]);
-      await supabase.auth.signOut();
+      const { data: sessionData } = await supabase.auth.getSession();
+      const token = sessionData?.session?.access_token;
+      if (!token) throw new Error('Not authenticated');
+
+      const response = await fetch('/api/account/delete', {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!response.ok) {
+        const errData = await response.json();
+        throw new Error(errData.error || 'Failed to delete account');
+      }
+
       localStorage.clear();
       window.location.href = '/';
     } catch (err) {

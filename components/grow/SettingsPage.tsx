@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/router';
+import Link from 'next/link';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../ui/card';
 import { Button } from '../ui/button';
 import { Label } from '../ui/label';
@@ -35,6 +36,8 @@ import {
   RefreshCw,
   Trash2,
   AlertTriangle,
+  FileText,
+  Shield,
 } from 'lucide-react';
 import { auth, type AuthUser } from '../../lib/grow/auth';
 import { api } from '../../lib/grow/api';
@@ -895,6 +898,32 @@ export function SettingsPage() {
               Re-run Onboarding
             </Button>
           </div>
+        </CardContent>
+      </Card>
+
+      {/* Legal */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-lg">
+            <Shield className="h-5 w-5" />
+            Legal
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <Link
+            href="/grow/privacy"
+            className="flex items-center gap-3 p-3 rounded-lg hover:bg-muted/50 transition-colors"
+          >
+            <Shield className="h-4 w-4 text-muted-foreground" />
+            <span className="text-sm font-medium">Privacy Policy</span>
+          </Link>
+          <Link
+            href="/terms"
+            className="flex items-center gap-3 p-3 rounded-lg hover:bg-muted/50 transition-colors"
+          >
+            <FileText className="h-4 w-4 text-muted-foreground" />
+            <span className="text-sm font-medium">Terms of Service</span>
+          </Link>
         </CardContent>
       </Card>
 

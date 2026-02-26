@@ -24,11 +24,12 @@ import {
 } from '@/lib/grow/notifications';
 import { sendGrowApnsPushNotification } from '@/lib/grow/apnsClient';
 import { sendFcmPushNotification } from '@/lib/notifications/fcmClient';
+import { verifyCronAuth } from '@/lib/cron-auth';
 
 const SUPABASE_URL = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
 const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const OPENWEATHER_API_KEY = process.env.OPENWEATHER_API_KEY || process.env.NEXT_PUBLIC_OPENWEATHER_KEY;
-const CRON_SECRET = process.env.CRON_SECRET;
+
 
 if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
   throw new Error('Missing Supabase configuration');
@@ -97,11 +98,7 @@ interface NativePushToken {
 // =============================================================================
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  // Verify cron secret (Vercel cron jobs send this header)
-  const cronSecret = req.headers['authorization']?.replace('Bearer ', '');
-
-  // Allow if it matches cron secret or if we're in development
-  if (process.env.NODE_ENV === 'production' && CRON_SECRET && cronSecret !== CRON_SECRET) {
+  if (!verifyCronAuth(req)) {
     return res.status(401).json({ error: 'Unauthorized' });
   }
 
@@ -164,11 +161,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     const results: AlertResult[] = [];
 
-    // Get native push tokens for all users (iOS/Android apps)
+    // Get Grow Daisy native push tokens for all users (iOS/Android apps)
+    // Filter to Grow Daisy bundle_id or legacy tokens (null bundle_id)
     const { data: nativeTokens } = await supabase
       .from('user_push_tokens')
       .select('user_id, token, platform')
-      .in('user_id', userIds);
+      .in('user_id', userIds)
+      .or('bundle_id.eq.io.growdaisy.app,bundle_id.is.null');
 
     const nativeTokenMap = new Map<string, NativePushToken[]>();
     for (const token of nativeTokens || []) {

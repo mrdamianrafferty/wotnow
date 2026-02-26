@@ -84,6 +84,7 @@ export default function PrivacyPolicy() {
                 <li><strong>Google Maps</strong> - Location search and mapping</li>
                 <li><strong>Copernicus Marine Service</strong> - Marine environmental data</li>
                 <li><strong>OpenWeather</strong> - Weather data</li>
+                <li><strong>Stripe</strong> - Payment processing for premium subscriptions (Findr, Grow Daisy)</li>
                 <li><strong>Resend</strong> - Email notifications</li>
               </ul>
               <p className="mt-2">
@@ -102,7 +103,7 @@ export default function PrivacyPolicy() {
                 <li>Opt out of marketing communications</li>
               </ul>
               <p className="mt-2">
-                To exercise these rights, contact us at privacy@fishfindr.eu.
+                To exercise these rights, contact us at privacy@godaisy.io.
               </p>
             </section>
 
@@ -142,7 +143,7 @@ export default function PrivacyPolicy() {
                 If you have questions about this Privacy Policy, please contact us at:
               </p>
               <ul className="list-none mt-2">
-                <li>Email: privacy@fishfindr.eu</li>
+                <li>Email: privacy@godaisy.io</li>
               </ul>
             </section>
           </div>

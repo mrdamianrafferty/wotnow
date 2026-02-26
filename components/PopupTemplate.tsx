@@ -82,7 +82,7 @@ const PopupTemplate: React.FC<PopupTemplateProps> = ({
                     <li>🔁 <strong>{marineData.swellPeriod}</strong> s swell gap</li>
                   )}
                   {typeof marineData.windSpeed === 'number' && (
-                    <li>💨 <strong>{marineData.windSpeed}</strong> km/h wind</li>
+                    <li>💨 <strong>{Math.round(marineData.windSpeed * 3.6)}</strong> km/h wind</li>
                   )}
                   {typeof marineData.waterTemperature === 'number' && (
                     <li>🏊 <strong>{marineData.waterTemperature.toFixed(1)}</strong>°C water</li>

@@ -22,10 +22,10 @@ interface WaveCardProps {
   currentDirectionDeg?: number | null;
 }
 
-// Temporary fallback data for standalone component
+// Temporary fallback data for standalone component (wind.speed in km/h, converted to m/s at usage)
 const marineNow = {
   wave: { height: 1.2, period: 8, dir: 180 },
-  wind: { speed: 20, dir: 190 },
+  wind: { speed: 20, dir: 190 }, // km/h — divided by 3.6 below for m/s
   seaTemp: 18
 };
 

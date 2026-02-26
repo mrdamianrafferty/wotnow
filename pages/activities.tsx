@@ -29,7 +29,6 @@ import { useUserPreferences } from '../context/UserPreferencesContext';
 import { getActivityEmoji } from '../data/emojiMap';
 import { getActivityBg } from '../data/bgMap';
 import { getOptimizedImageSrc, isImageOptimized } from '../data/bgMapOptimized';
-import _Head from 'next/head';
 import AppHeader, { LocationLite } from '../components/AppHeader';
 import BottomNav from '../components/BottomNav';
 import { SkeletonActivityGrid } from '../components/SkeletonLoader';

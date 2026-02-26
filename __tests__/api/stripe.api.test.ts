@@ -61,6 +61,12 @@ jest.mock('@supabase/supabase-js', () => ({
       insert: jest.fn(() => Promise.resolve({ error: null })),
     })),
     rpc: jest.fn(() => Promise.resolve({ error: null })),
+    auth: {
+      getUser: jest.fn(() => Promise.resolve({
+        data: { user: { id: 'user123', email: 'test@example.com' } },
+        error: null,
+      })),
+    },
   })),
 }));
 
@@ -81,7 +87,7 @@ describe('POST /api/stripe/create-checkout-session', () => {
     expect(JSON.parse(res._getData())).toEqual({ error: 'Method not allowed' });
   });
 
-  it('should return 400 if userId is missing', async () => {
+  it('should return 401 if no auth header', async () => {
     const { req, res } = createMocks<NextApiRequest, NextApiResponse>({
       method: 'POST',
       body: {},
@@ -89,8 +95,8 @@ describe('POST /api/stripe/create-checkout-session', () => {
 
     await checkoutHandler(req, res);
 
-    expect(res._getStatusCode()).toBe(400);
-    expect(JSON.parse(res._getData())).toEqual({ error: 'User ID and email are required' });
+    expect(res._getStatusCode()).toBe(401);
+    expect(JSON.parse(res._getData())).toEqual({ error: 'Unauthorized' });
   });
 
   it('should create a checkout session successfully', async () => {
@@ -103,9 +109,10 @@ describe('POST /api/stripe/create-checkout-session', () => {
     const { req, res } = createMocks<NextApiRequest, NextApiResponse>({
       method: 'POST',
       body: {
-        userId: 'user123',
-        email: 'test@example.com',
         voucherCode: 'SAVE10',
+      },
+      headers: {
+        authorization: 'Bearer valid-token',
       },
     });
 
@@ -135,7 +142,7 @@ describe('POST /api/stripe/create-portal-session', () => {
     expect(JSON.parse(res._getData())).toEqual({ error: 'Method not allowed' });
   });
 
-  it('should return 400 if userId is missing', async () => {
+  it('should return 401 if no auth header', async () => {
     const { req, res } = createMocks<NextApiRequest, NextApiResponse>({
       method: 'POST',
       body: {},
@@ -143,8 +150,8 @@ describe('POST /api/stripe/create-portal-session', () => {
 
     await portalHandler(req, res);
 
-    expect(res._getStatusCode()).toBe(400);
-    expect(JSON.parse(res._getData())).toEqual({ error: 'User ID is required' });
+    expect(res._getStatusCode()).toBe(401);
+    expect(JSON.parse(res._getData())).toEqual({ error: 'Unauthorized' });
   });
 
   it('should create a portal session successfully', async () => {
@@ -155,8 +162,9 @@ describe('POST /api/stripe/create-portal-session', () => {
 
     const { req, res } = createMocks<NextApiRequest, NextApiResponse>({
       method: 'POST',
-      body: {
-        userId: 'user123',
+      body: {},
+      headers: {
+        authorization: 'Bearer valid-token',
       },
     });
 
@@ -170,6 +178,13 @@ describe('POST /api/stripe/create-portal-session', () => {
   it('should return 400 if no customer ID exists', async () => {
     const { createClient } = require('@supabase/supabase-js');
     createClient.mockReturnValueOnce({
+      auth: {
+        getUser: jest.fn(() => Promise.resolve({
+          data: { user: { id: 'user123', email: 'test@example.com' } },
+          error: null,
+        })),
+      },
+    }).mockReturnValueOnce({
       from: jest.fn(() => ({
         select: jest.fn(() => ({
           eq: jest.fn(() => ({
@@ -184,8 +199,9 @@ describe('POST /api/stripe/create-portal-session', () => {
 
     const { req, res } = createMocks<NextApiRequest, NextApiResponse>({
       method: 'POST',
-      body: {
-        userId: 'user123',
+      body: {},
+      headers: {
+        authorization: 'Bearer valid-token',
       },
     });
 
@@ -210,7 +226,7 @@ describe('POST /api/stripe/cancel-subscription', () => {
     expect(JSON.parse(res._getData())).toEqual({ error: 'Method not allowed' });
   });
 
-  it('should return 400 if userId is missing', async () => {
+  it('should return 401 if no auth header', async () => {
     const { req, res } = createMocks<NextApiRequest, NextApiResponse>({
       method: 'POST',
       body: {},
@@ -218,8 +234,8 @@ describe('POST /api/stripe/cancel-subscription', () => {
 
     await cancelHandler(req, res);
 
-    expect(res._getStatusCode()).toBe(400);
-    expect(JSON.parse(res._getData())).toEqual({ error: 'User ID is required' });
+    expect(res._getStatusCode()).toBe(401);
+    expect(JSON.parse(res._getData())).toEqual({ error: 'Unauthorized' });
   });
 
   it('should cancel subscription successfully', async () => {
@@ -235,8 +251,9 @@ describe('POST /api/stripe/cancel-subscription', () => {
 
     const { req, res } = createMocks<NextApiRequest, NextApiResponse>({
       method: 'POST',
-      body: {
-        userId: 'user123',
+      body: {},
+      headers: {
+        authorization: 'Bearer valid-token',
       },
     });
 
@@ -252,6 +269,13 @@ describe('POST /api/stripe/cancel-subscription', () => {
   it('should return 400 if no active subscription', async () => {
     const { createClient } = require('@supabase/supabase-js');
     createClient.mockReturnValueOnce({
+      auth: {
+        getUser: jest.fn(() => Promise.resolve({
+          data: { user: { id: 'user123', email: 'test@example.com' } },
+          error: null,
+        })),
+      },
+    }).mockReturnValueOnce({
       from: jest.fn(() => ({
         select: jest.fn(() => ({
           eq: jest.fn(() => ({
@@ -266,8 +290,9 @@ describe('POST /api/stripe/cancel-subscription', () => {
 
     const { req, res } = createMocks<NextApiRequest, NextApiResponse>({
       method: 'POST',
-      body: {
-        userId: 'user123',
+      body: {},
+      headers: {
+        authorization: 'Bearer valid-token',
       },
     });
 
@@ -280,6 +305,13 @@ describe('POST /api/stripe/cancel-subscription', () => {
   it('should return 400 for iOS subscriptions', async () => {
     const { createClient } = require('@supabase/supabase-js');
     createClient.mockReturnValueOnce({
+      auth: {
+        getUser: jest.fn(() => Promise.resolve({
+          data: { user: { id: 'user123', email: 'test@example.com' } },
+          error: null,
+        })),
+      },
+    }).mockReturnValueOnce({
       from: jest.fn(() => ({
         select: jest.fn(() => ({
           eq: jest.fn(() => ({
@@ -297,8 +329,9 @@ describe('POST /api/stripe/cancel-subscription', () => {
 
     const { req, res } = createMocks<NextApiRequest, NextApiResponse>({
       method: 'POST',
-      body: {
-        userId: 'user123',
+      body: {},
+      headers: {
+        authorization: 'Bearer valid-token',
       },
     });
 

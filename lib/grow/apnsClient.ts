@@ -33,9 +33,20 @@ function getApnsProvider(): apn.Provider | null {
 
   if (!apnsProvider) {
     try {
+      // Normalise the PEM key: handle escaped \n, missing line-breaks, or proper multi-line
+      let pemKey = APNS_KEY.replace(/\\n/g, '\n');
+      // If the key is a single line (no real newlines between header/body/footer), reformat it
+      if (!pemKey.includes('\n')) {
+        const body = pemKey
+          .replace('-----BEGIN PRIVATE KEY-----', '')
+          .replace('-----END PRIVATE KEY-----', '')
+          .trim();
+        pemKey = `-----BEGIN PRIVATE KEY-----\n${body}\n-----END PRIVATE KEY-----`;
+      }
+
       apnsProvider = new apn.Provider({
         token: {
-          key: APNS_KEY.replace(/\\n/g, '\n'),
+          key: Buffer.from(pemKey, 'utf-8'),
           keyId: APNS_KEY_ID,
           teamId: APNS_TEAM_ID,
         },

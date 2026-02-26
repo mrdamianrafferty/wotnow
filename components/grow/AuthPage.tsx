@@ -3,7 +3,7 @@ import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
-import { Cloud, Eye, EyeOff } from 'lucide-react';
+import { Sprout, Eye, EyeOff } from 'lucide-react';
 import { auth, AuthUser } from '../../lib/grow/auth';
 import { api } from '../../lib/grow/api';
 
@@ -101,15 +101,15 @@ export function AuthPage({ onAuthSuccess }: AuthPageProps) {
   };
 
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-to-b from-emerald-50 to-green-100 flex items-center justify-center p-4">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
           <div className="flex items-center justify-center space-x-2 mb-4">
-            <Cloud className="h-10 w-10 text-primary" />
-            <h1 className="text-3xl font-semibold">Grow Daisy</h1>
+            <Sprout className="h-10 w-10 text-emerald-600" />
+            <h1 className="text-3xl font-semibold text-emerald-900">Grow Daisy</h1>
           </div>
-          <p className="text-muted-foreground">
-            Perfect gardening weather, every day
+          <p className="text-emerald-700">
+            Your garden, guided by the weather
           </p>
         </div>
 
@@ -130,6 +130,7 @@ export function AuthPage({ onAuthSuccess }: AuthPageProps) {
                     <Input
                       type="email"
                       placeholder="Email"
+                      autoComplete="email"
                       value={signInData.email}
                       onChange={(event: React.ChangeEvent<HTMLInputElement>) => setSignInData({ ...signInData, email: event.target.value })}
                       required
@@ -139,6 +140,7 @@ export function AuthPage({ onAuthSuccess }: AuthPageProps) {
                     <Input
                       type={showPassword ? 'text' : 'password'}
                       placeholder="Password"
+                      autoComplete="current-password"
                       value={signInData.password}
                       onChange={(event: React.ChangeEvent<HTMLInputElement>) => setSignInData({ ...signInData, password: event.target.value })}
                       required
@@ -170,6 +172,7 @@ export function AuthPage({ onAuthSuccess }: AuthPageProps) {
                     <Input
                       type="text"
                       placeholder="Full Name"
+                      autoComplete="name"
                       value={signUpData.name}
                       onChange={(event: React.ChangeEvent<HTMLInputElement>) => setSignUpData({ ...signUpData, name: event.target.value })}
                       required
@@ -179,6 +182,7 @@ export function AuthPage({ onAuthSuccess }: AuthPageProps) {
                     <Input
                       type="email"
                       placeholder="Email"
+                      autoComplete="email"
                       value={signUpData.email}
                       onChange={(event: React.ChangeEvent<HTMLInputElement>) => setSignUpData({ ...signUpData, email: event.target.value })}
                       required
@@ -188,6 +192,7 @@ export function AuthPage({ onAuthSuccess }: AuthPageProps) {
                     <Input
                       type={showPassword ? 'text' : 'password'}
                       placeholder="Password"
+                      autoComplete="new-password"
                       value={signUpData.password}
                       onChange={(event: React.ChangeEvent<HTMLInputElement>) => setSignUpData({ ...signUpData, password: event.target.value })}
                       required
@@ -206,6 +211,7 @@ export function AuthPage({ onAuthSuccess }: AuthPageProps) {
                     <Input
                       type="password"
                       placeholder="Confirm Password"
+                      autoComplete="new-password"
                       value={signUpData.confirmPassword}
                       onChange={(event: React.ChangeEvent<HTMLInputElement>) => setSignUpData({ ...signUpData, confirmPassword: event.target.value })}
                       required

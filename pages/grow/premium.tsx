@@ -6,6 +6,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/router';
+import { Capacitor } from '@capacitor/core';
 import Head from 'next/head';
 import Link from 'next/link';
 import {
@@ -125,6 +126,35 @@ export default function GrowPremiumPage() {
       <GrowLayout>
         <div className="min-h-screen flex items-center justify-center">
           <div className="loading loading-spinner loading-lg text-emerald-600"></div>
+        </div>
+      </GrowLayout>
+    );
+  }
+
+  // Block Stripe checkout on native iOS — Apple requires in-app purchases
+  if (Capacitor.getPlatform() === 'ios') {
+    return (
+      <GrowLayout>
+        <div className="min-h-screen flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl shadow-lg max-w-md w-full p-8 text-center">
+            <h2 className="text-2xl font-bold mb-3">Premium Coming Soon</h2>
+            <p className="text-gray-600 mb-3">
+              In-app subscription management is coming soon to the iOS app.
+            </p>
+            <p className="text-gray-600 mb-6">
+              In the meantime, visit{' '}
+              <a href="https://godaisy.io/grow/premium" className="text-emerald-600 underline font-medium">
+                godaisy.io
+              </a>{' '}
+              in your browser to subscribe.
+            </p>
+            <button
+              onClick={() => router.back()}
+              className="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
+            >
+              Go Back
+            </button>
+          </div>
         </div>
       </GrowLayout>
     );

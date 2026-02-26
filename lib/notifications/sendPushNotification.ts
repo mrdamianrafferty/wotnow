@@ -7,6 +7,8 @@
 
 import { createClient } from '@supabase/supabase-js';
 import { sendApnsPushNotification } from '../findr/apnsClient';
+import { sendGrowApnsPushNotification } from '../grow/apnsClient';
+import { sendGoDaisyApnsPushNotification } from '../godaisy/apnsClient';
 import { sendFcmPushNotification } from './fcmClient';
 
 const SUPABASE_URL = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -49,10 +51,10 @@ export async function sendPushToUser(
     auth: { autoRefreshToken: false, persistSession: false },
   });
 
-  // Get all push tokens for this user
+  // Get all push tokens for this user (including bundle_id for APNS routing)
   const { data: tokens, error } = await supabase
     .from('user_push_tokens')
-    .select('token, platform')
+    .select('token, platform, bundle_id')
     .eq('user_id', userId);
 
   if (error) {
@@ -76,16 +78,32 @@ export async function sendPushToUser(
     android: { sent: false },
   };
 
-  for (const { token, platform } of tokens) {
+  for (const { token, platform, bundle_id } of tokens) {
     if (platform === 'ios') {
       try {
-        const sent = await sendApnsPushNotification(token, {
+        const apnsPayload = {
           title: payload.title,
           body: payload.body,
           data: payload.data,
           badge: payload.badge,
           sound: payload.sound,
-        });
+        };
+
+        // Route to the correct APNS client based on bundle_id
+        let sent = false;
+        switch (bundle_id) {
+          case 'io.growdaisy.app':
+            sent = await sendGrowApnsPushNotification(token, apnsPayload);
+            break;
+          case 'io.godaisy.app':
+            sent = await sendGoDaisyApnsPushNotification(token, apnsPayload);
+            break;
+          case 'eu.fishfindr.app':
+          default:
+            // Findr client as default (legacy fallback for tokens without bundle_id)
+            sent = await sendApnsPushNotification(token, apnsPayload);
+            break;
+        }
         result.ios.sent = sent;
 
         // Remove invalid token

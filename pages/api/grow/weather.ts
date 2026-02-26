@@ -219,6 +219,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         condition: mapCondition(d.weather?.[0]?.main || 'Clear'),
         rainChance: Math.round((d.pop ?? 0) * 100),
         wind: Math.round(d.wind_speed ?? 0),
+        precipMM: (() => {
+          const r = typeof d.rain === 'number' ? d.rain : 0;
+          const s = typeof d.snow === 'number' ? d.snow : 0;
+          const total = r + s;
+          return Number.isFinite(total) ? total : undefined;
+        })(),
       })),
       // Marine data would require a separate API call - omit for now unless requested
       marine: marine === 'true' ? undefined : undefined,

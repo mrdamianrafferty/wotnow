@@ -36,6 +36,7 @@ import { PlanItSheet, type PlannedActivity } from '../PlanItSheet';
 import { PlannedActivitiesList } from '../PlannedActivitiesList';
 import { LocalSignalsCard } from './LocalSignalsCard';
 import { useLocalSignals } from '../../hooks/useLocalSignals';
+import { FeatureErrorBoundary } from '../FeatureErrorBoundary';
 
 type Translator = (value: string) => string;
 
@@ -633,6 +634,7 @@ export function Homepage() {
   }, [userLocation, markFirstData, markInteractive]);
 
   useEffect(() => {
+    let isMounted = true;
     // Load user location from database (if authenticated) or localStorage
     // Wrap in startTransition to avoid Suspense hydration errors
     startTransition(async () => {
@@ -654,6 +656,7 @@ export function Homepage() {
           });
 
           const { data: { user } } = await supabase.auth.getUser();
+          if (!isMounted) return;
           if (user) {
             const { data: prefs } = await supabase
               .from('user_location_preferences')
@@ -661,12 +664,14 @@ export function Homepage() {
               .eq('user_id', user.id)
               .maybeSingle();
 
+            if (!isMounted) return;
             if (prefs?.home_place_name) {
               location = prefs.home_place_name;
               setUserLocation(location);
             }
           }
         } catch (_error) {
+          if (!isMounted) return;
           // Silent failure - will fall back to localStorage or empty
         }
       }
@@ -679,7 +684,7 @@ export function Homepage() {
             const interests = JSON.parse(interestsStr);
             if (interests.location) {
               location = interests.location;
-              setUserLocation(location);
+              if (isMounted) setUserLocation(location);
             }
           } catch (_error) {
             // Invalid JSON
@@ -689,8 +694,9 @@ export function Homepage() {
 
       // If still no location, leave empty (will trigger location picker)
       // Load tasks with the determined location (or empty to prompt user)
-      loadTasks(location || undefined);
+      if (isMounted) loadTasks(location || undefined);
     });
+    return () => { isMounted = false; };
   }, [loadTasks]);
 
   const handleLocationUpdate = (newLocation: string) => {
@@ -894,6 +900,7 @@ export function Homepage() {
         </div>
       </div>
 
+      <FeatureErrorBoundary feature="Dashboard">
       {/* "Do This Next" Priority Card - Shows top priority task prominently */}
       {activeCards.length > 0 && activeCards[0] && (
         <DoThisNextCard
@@ -1192,6 +1199,7 @@ export function Homepage() {
           })}
         </div>
       </div>
+      </FeatureErrorBoundary>
 
       {/* Plan It Sheet */}
       {taskToPlan && (

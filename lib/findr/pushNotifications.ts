@@ -69,9 +69,10 @@ export async function registerPushNotifications(userId: string): Promise<boolean
           user_id: userId,
           token: token.value,
           platform: 'ios',
+          bundle_id: 'eu.fishfindr.app',
           last_used: new Date().toISOString(),
         }, {
-          onConflict: 'user_id,platform',
+          onConflict: 'user_id,platform,bundle_id',
         });
 
       if (error) {
@@ -147,7 +148,8 @@ export async function unregisterPushNotifications(userId: string): Promise<void>
       .from('user_push_tokens')
       .delete()
       .eq('user_id', userId)
-      .eq('platform', 'ios');
+      .eq('platform', 'ios')
+      .eq('bundle_id', 'eu.fishfindr.app');
 
     if (error) {
       console.error('[Push] Failed to remove token from database:', error);

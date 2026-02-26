@@ -8,6 +8,7 @@ const config: CapacitorConfig = {
   server: {
     // PRODUCTION: Load content from Vercel
     url: 'https://godaisy.io',
+    errorPath: 'index.html',
     cleartext: false,  // Force HTTPS
 
     // DEVELOPMENT: Uncomment to test locally

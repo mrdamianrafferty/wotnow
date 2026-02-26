@@ -689,9 +689,9 @@ const AstronomyCard: React.FC<AstronomyCardProps> = ({ className = '', style = {
     typeof weatherData?.wind_speed === 'number'
       ? weatherData.wind_speed
       : typeof midnightWeather?.wind_speed === 'number'
-      ? midnightWeather.wind_speed / 3.6
+      ? midnightWeather.wind_speed
       : typeof currentWeather?.wind_speed === 'number'
-      ? currentWeather.wind_speed / 3.6
+      ? currentWeather.wind_speed
       : 0
   } />
 </span>

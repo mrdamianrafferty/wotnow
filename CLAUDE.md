@@ -408,7 +408,15 @@ This comprehensive guide covers:
 
 ## Documentation Index
 
-### 🟢 Current & Active (October 2025)
+### 🟢 Current & Active
+
+**Launch Roadmap:**
+- `LAUNCH_ROADMAP.md` - **ACTIVE** - Go Daisy & Grow Daisy launch readiness roadmap (Feb 26, 2026)
+  - Phase 1: Unify design system tokens (DaisyUI + shadcn bridge)
+  - Phase 2: Translation coverage (onboarding, premium, auth pages)
+  - Phase 3: Critical UX & content fixes
+  - Phase 4: Navigation & architecture
+  - Phase 5: Polish & delight
 
 **Getting Started:**
 - `GETTING_STARTED.md` - **START HERE** - Complete architecture & system overview (Oct 18, 2025)

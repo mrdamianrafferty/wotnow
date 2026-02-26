@@ -9,6 +9,21 @@
 import { createMocks } from 'node-mocks-http';
 import { mockUser } from '../../fixtures/mockData.fixtures';
 
+// Mock rate limiter to avoid 429s in tests
+jest.mock('../../../lib/utils/rate-limiter', () => ({
+  checkRateLimit: jest.fn().mockResolvedValue(10),
+  RateLimitError: class RateLimitError extends Error {
+    constructor(message: string, public retryAfter: number, public limit: number, public remaining: number) {
+      super(message);
+      this.name = 'RateLimitError';
+    }
+  },
+  rateLimiter: { check: jest.fn().mockResolvedValue(10), getStatus: jest.fn().mockReturnValue({ count: 0, limit: 10, remaining: 10, resetTime: Date.now() + 60000 }), reset: jest.fn(), clearAll: jest.fn() },
+  strictRateLimiter: { check: jest.fn().mockResolvedValue(5), getStatus: jest.fn().mockReturnValue({ count: 0, limit: 5, remaining: 5, resetTime: Date.now() + 60000 }), reset: jest.fn(), clearAll: jest.fn() },
+  lenientRateLimiter: { check: jest.fn().mockResolvedValue(30), getStatus: jest.fn().mockReturnValue({ count: 0, limit: 30, remaining: 30, resetTime: Date.now() + 60000 }), reset: jest.fn(), clearAll: jest.fn() },
+  addRateLimitHeaders: jest.fn(),
+}));
+
 // Mock the Supabase module - must be before any imports that use it
 jest.mock('@supabase/supabase-js');
 

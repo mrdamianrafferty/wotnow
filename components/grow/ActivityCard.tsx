@@ -8,6 +8,7 @@ import { ImageWithFallback } from './figma/ImageWithFallback';
 import { api } from '../../lib/grow/api';
 import { auth } from '../../lib/grow/auth';
 import { useTranslationMap } from '../../lib/translation/useTranslationMap';
+import { toast } from 'sonner';
 
 export interface Activity {
   id: string;
@@ -111,7 +112,7 @@ export function ActivityCard({ activity, showWeatherReason = false, onJoin }: Ac
       } else {
         // Fallback - copy to clipboard
         await navigator.clipboard.writeText(`${shareData.title} - ${shareData.text} ${shareData.url}`);
-        alert('Activity details copied to clipboard!');
+        toast.success('Activity details copied to clipboard!');
       }
     } catch (error) {
       console.error('Error sharing:', error);
@@ -124,12 +125,12 @@ export function ActivityCard({ activity, showWeatherReason = false, onJoin }: Ac
     try {
       const accessToken = auth.getCurrentAccessToken();
       if (!accessToken) {
-        alert('Please sign in to join activities');
+        toast.error('Please sign in to join activities');
         return;
       }
 
       await api.joinActivity(activity.id);
-      alert(`Successfully joined "${t(activity.name ?? 'this activity')}"!`);
+      toast.success(`Successfully joined "${t(activity.name ?? 'this activity')}"!`);
 
       // Refresh data if callback provided
       if (onJoin) {
@@ -138,7 +139,7 @@ export function ActivityCard({ activity, showWeatherReason = false, onJoin }: Ac
     } catch (error: unknown) {
       const err = error as { message?: string };
       console.error('Failed to join activity:', error);
-      alert(err.message || 'Failed to join activity');
+      toast.error(err.message || 'Failed to join activity');
     }
   };
 

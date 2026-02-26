@@ -161,6 +161,10 @@ interface OpenMeteoGeneralHourly {
     // NEW: include snow arrays so we can map them into unified hourly
     snowfall?: number[]; // cm per hour
     snow_depth?: number[]; // cm
+    // Supplement fields for free providers
+    apparent_temperature?: number[]; // °C
+    uv_index?: number[];
+    weather_code?: number[]; // WMO weather code
   };
 }
 
@@ -422,10 +426,11 @@ async function fetchFromMetNo(lat: number, lon: number, units: string, mode: str
       const { pop, precipMM, symbol } = deriveNextBlock(p);
       const tempC = typeof instDetails?.air_temperature === 'number' ? instDetails.air_temperature : undefined;
       const windMS = typeof instDetails?.wind_speed === 'number' ? instDetails.wind_speed : undefined;
+      const windGustMS = typeof instDetails?.wind_speed_of_gust === 'number' ? instDetails.wind_speed_of_gust : undefined;
       const windDeg = typeof instDetails?.wind_from_direction === 'number' ? instDetails.wind_from_direction : undefined;
       const pressureHpa = typeof instDetails?.air_pressure_at_sea_level === 'number' ? instDetails.air_pressure_at_sea_level : undefined;
       const mappedH = mapMetNoIcon(symbol);
-      hourly.push({ timeISO: tISO, tempC, pop, windMS, windDeg, precipMM, icon: mappedH.icon, pressureHpa });
+      hourly.push({ timeISO: tISO, tempC, pop, windMS, windDeg, precipMM, icon: mappedH.icon, pressureHpa, windGustMS });
     }
 
     // Current from first entry
@@ -447,9 +452,9 @@ async function fetchFromMetNo(lat: number, lon: number, units: string, mode: str
       humidity: inst0?.relative_humidity,
       pressureHpa: inst0?.air_pressure_at_sea_level,
       windSpeedMS: inst0?.wind_speed,
-      windGustMS: undefined,
+      windGustMS: inst0?.wind_speed_of_gust,
       windDeg: inst0?.wind_from_direction,
-      visibilityKm: undefined, // Will be supplemented from OpenWeather below
+      visibilityKm: undefined, // Will be supplemented from Open-Meteo below
       uvi: undefined,
       cloudsPct: inst0?.cloud_area_fraction,
       description: mappedNow.description,
@@ -831,6 +836,8 @@ type Hour = {
   // NEW: snow fields mapped from Open-Meteo
   snowDepthCm?: number
   snowfallRateMmH?: number
+  // WMO weather code from Open-Meteo supplement
+  weatherCode?: number
 }
 
 type Day = {
@@ -933,6 +940,7 @@ type UnifiedWeather = {
   windDeg?: number
   visibilityKm?: number
   uvi?: number
+  pressureTrend?: 'rising' | 'falling' | 'steady'
   cloudsPct?: number
   description?: string
   icon?: string
@@ -2174,9 +2182,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       // NEW: snow arrays (Open-Meteo units: snowfall is cm over last hour; snow_depth is cm)
       const snowDepth: number[] = H.snow_depth || [];
       const snowfallCm: number[] = H.snowfall || [];
+      // Supplement fields for free providers
+      const apparentTemp: number[] = H.apparent_temperature || [];
+      const uvIdx: number[] = H.uv_index || [];
+      const wCode: number[] = H.weather_code || [];
 
       // Build UTC ms for OM times by subtracting offset from the naive-UTC parse
-      const omSamples: Array<{ ms: number; pressure?: number; temp?: number; visibilityKm?: number; snowDepthCm?: number; snowfallRateMmH?: number }> = [];
+      type OmSample = { ms: number; pressure?: number; temp?: number; visibilityKm?: number; snowDepthCm?: number; snowfallRateMmH?: number; feelsLikeC?: number; uvi?: number; weatherCode?: number };
+      const omSamples: OmSample[] = [];
       for (let i = 0; i < t.length; i++) {
         const parsed = Date.parse(String(t[i]) + 'Z'); // interpret string as UTC first
         const utcMs = Number.isFinite(parsed) ? (parsed - offset * 1000) : NaN;
@@ -2188,7 +2201,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         const sfCm = typeof snowfallCm[i] === 'number' ? Number(snowfallCm[i]) : undefined;
         // Convert snowfall cm to mm/h for unified naming consistency
         const sfMmH = typeof sfCm === 'number' && Number.isFinite(sfCm) ? sfCm * 10 : undefined;
-        if (Number.isFinite(utcMs)) omSamples.push({ ms: utcMs, pressure: pr, temp: tm, visibilityKm: visKm, snowDepthCm: sd, snowfallRateMmH: sfMmH });
+        const flC = typeof apparentTemp[i] === 'number' ? Number(apparentTemp[i]) : undefined;
+        const uv = typeof uvIdx[i] === 'number' ? Number(uvIdx[i]) : undefined;
+        const wc = typeof wCode[i] === 'number' ? Number(wCode[i]) : undefined;
+        if (Number.isFinite(utcMs)) omSamples.push({ ms: utcMs, pressure: pr, temp: tm, visibilityKm: visKm, snowDepthCm: sd, snowfallRateMmH: sfMmH, feelsLikeC: flC, uvi: uv, weatherCode: wc });
       }
 
       if (omSamples.length) {
@@ -2202,7 +2218,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           return bestIdx >= 0 ? omSamples[bestIdx] : undefined;
         };
 
-        // Prefer OM pressure and enrich snow fields for hourly series
+        // Prefer OM pressure and enrich snow/supplement fields for hourly series
         if (Array.isArray(normalizedData.hourly) && normalizedData.hourly.length) {
           for (const h of normalizedData.hourly) {
             const ht = Date.parse(h.timeISO);
@@ -2218,6 +2234,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             if (typeof nearest.snowfallRateMmH === 'number') {
               (h as Hour).snowfallRateMmH = nearest.snowfallRateMmH;
             }
+            // Fill uvi from Open-Meteo when primary source doesn't provide it
+            if ((h as Hour).uvi == null && typeof nearest.uvi === 'number') {
+              (h as Hour).uvi = nearest.uvi;
+            }
+            // Fill weatherCode from Open-Meteo WMO codes when missing
+            if ((h as Hour).weatherCode == null && typeof nearest.weatherCode === 'number') {
+              (h as Hour).weatherCode = nearest.weatherCode;
+            }
           }
         } else {
           // If we don't have any hourly yet, synthesize minimal series from OM (including snow)
@@ -2231,21 +2255,43 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           if (hours.length) (normalizedData as UnifiedWeather).hourly = hours;
         }
 
-        // Also set current pressure and visibility if missing, using nearest OM sample to now
-        if (normalizedData.pressureHpa == null || normalizedData.visibilityKm == null) {
-          const nowMs = Date.now();
-          const nearest = nearestOM(nowMs);
+        // Also set current-level fields if missing, using nearest OM sample to now
+        const nowMs = Date.now();
+        const nearestNow = nearestOM(nowMs);
+        if (nearestNow) {
           if (normalizedData.pressureHpa == null) {
-            const prNow = nearest?.pressure;
+            const prNow = nearestNow.pressure;
             if (typeof prNow === 'number' && Number.isFinite(prNow)) {
               (normalizedData as UnifiedWeather).pressureHpa = prNow;
             }
           }
           if (normalizedData.visibilityKm == null) {
-            const visNow = nearest?.visibilityKm;
+            const visNow = nearestNow.visibilityKm;
             if (typeof visNow === 'number' && Number.isFinite(visNow)) {
               (normalizedData as UnifiedWeather).visibilityKm = visNow;
             }
+          }
+          // Fill feelsLikeC from Open-Meteo apparent_temperature when primary source doesn't provide it
+          if (normalizedData.feelsLikeC == null && typeof nearestNow.feelsLikeC === 'number') {
+            (normalizedData as UnifiedWeather).feelsLikeC = Math.round(nearestNow.feelsLikeC * 10) / 10;
+          }
+          // Fill uvi from Open-Meteo when primary source doesn't provide it
+          if (normalizedData.uvi == null && typeof nearestNow.uvi === 'number') {
+            (normalizedData as UnifiedWeather).uvi = nearestNow.uvi;
+          }
+        }
+
+        // Derive pressureTrend from hourly pressure series (compare now vs 3h ago)
+        if (!(normalizedData as UnifiedWeather).pressureTrend && omSamples.length >= 4) {
+          const nowSample = nearestNow;
+          // Find sample closest to 3 hours ago
+          const threeHoursAgoMs = nowMs - 3 * 60 * 60 * 1000;
+          const pastSample = nearestOM(threeHoursAgoMs);
+          if (nowSample && pastSample && typeof nowSample.pressure === 'number' && typeof pastSample.pressure === 'number') {
+            const diff = nowSample.pressure - pastSample.pressure;
+            if (diff > 1) (normalizedData as UnifiedWeather).pressureTrend = 'rising';
+            else if (diff < -1) (normalizedData as UnifiedWeather).pressureTrend = 'falling';
+            else (normalizedData as UnifiedWeather).pressureTrend = 'steady';
           }
         }
       }

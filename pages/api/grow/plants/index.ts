@@ -129,7 +129,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const plants = (data as PlantRow[]).map(serializePlant);
     const { data: profile, error: profileError } = await supabase
       .from('profiles')
-      .select('grow_onboarding_completed, grow_onboarding_completed_at')
+      .select('grow_onboarding_completed, grow_onboarding_completed_at, grow_subscription_tier')
       .eq('id', userId)
       .maybeSingle();
 
@@ -137,14 +137,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       console.warn('[grow] Failed to load onboarding status for user', userId, profileError);
     }
 
-    // Get subscription tier for limit info
-    const { data: tierProfile } = await supabase
-      .from('profiles')
-      .select('grow_subscription_tier')
-      .eq('id', userId)
-      .single();
-
-    const userTier = (tierProfile?.grow_subscription_tier as GrowSubscriptionTier) || 'seed';
+    const userTier = (profile?.grow_subscription_tier as GrowSubscriptionTier) || 'seed';
     const limits = getTierLimits(userTier);
 
     return res.status(200).json({

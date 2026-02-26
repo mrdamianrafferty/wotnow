@@ -884,6 +884,7 @@ async function fetchFromOpenMeteoWeather(lat: number, lon: number): Promise<Full
       current: 'temperature_2m,relative_humidity_2m,wind_speed_10m,wind_direction_10m,weather_code',
       hourly: 'temperature_2m,wind_speed_10m,wind_direction_10m,weather_code',
       daily: 'temperature_2m_max,temperature_2m_min,weather_code,wind_speed_10m_max',
+      wind_speed_unit: 'ms',
       timezone: 'auto',
     });
     
@@ -1755,6 +1756,7 @@ export async function fetchOpenMeteoWeather(lat: number, lon: number, startDate:
   url.searchParams.set('latitude', String(lat));
   url.searchParams.set('longitude', String(lon));
   url.searchParams.set('timezone', 'auto');
+  url.searchParams.set('wind_speed_unit', 'ms');
   url.searchParams.set('start_date', startDate);
   url.searchParams.set('end_date', endDate);
   url.searchParams.set('hourly', [
@@ -1777,7 +1779,11 @@ export async function fetchOpenMeteoWeather(lat: number, lon: number, startDate:
     // Add visibility for MET Norway supplement (meters)
     'visibility',
     // Add cloud cover for bite score calculations (percentage 0-100)
-    'cloud_cover'
+    'cloud_cover',
+    // Supplement fields for free providers (MET Norway, NOAA) that lack these
+    'apparent_temperature',
+    'uv_index',
+    'weather_code'
   ].join(','));
   try {
     const note = JSON.stringify({ start: startDate, end: endDate });

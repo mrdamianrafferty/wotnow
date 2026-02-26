@@ -178,11 +178,29 @@ const nextConfig = {
     NEXT_PUBLIC_FREE_PROVIDERS_ENABLED: process.env.NEXT_PUBLIC_FREE_PROVIDERS_ENABLED ?? process.env.FREE_PROVIDERS_ENABLED ?? '1',
     NEXT_PUBLIC_FREE_PROVIDER_ORDER: process.env.NEXT_PUBLIC_FREE_PROVIDER_ORDER ?? process.env.FREE_PROVIDER_ORDER ?? 'auto',
   },
-  // Headers for Apple App Site Association (Universal Links)
   async headers() {
     return [
       {
+        source: '/:path*',
+        headers: [
+          { key: 'X-Frame-Options', value: 'DENY' },
+          { key: 'X-Content-Type-Options', value: 'nosniff' },
+          { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
+          { key: 'Permissions-Policy', value: 'camera=(), microphone=(), geolocation=(self)' },
+          { key: 'Strict-Transport-Security', value: 'max-age=63072000; includeSubDomains; preload' },
+        ],
+      },
+      {
         source: '/.well-known/apple-app-site-association',
+        headers: [
+          {
+            key: 'Content-Type',
+            value: 'application/json',
+          },
+        ],
+      },
+      {
+        source: '/.well-known/assetlinks.json',
         headers: [
           {
             key: 'Content-Type',
@@ -273,6 +291,44 @@ const pwaConfig = withPWA({
         expiration: {
           maxEntries: 50,
           maxAgeSeconds: 3 * 60 * 60, // 3 hours
+        },
+      },
+    },
+    // GROW DAISY CACHING: Garden pages and API
+    {
+      urlPattern: /\/grow(?:\/|$)/,
+      handler: 'StaleWhileRevalidate',
+      options: {
+        cacheName: 'grow-pages-cache',
+        expiration: {
+          maxEntries: 30,
+          maxAgeSeconds: 7 * 24 * 60 * 60, // 7 days
+        },
+        cacheableResponse: {
+          statuses: [0, 200],
+        },
+      },
+    },
+    {
+      urlPattern: /\/api\/grow\//,
+      handler: 'StaleWhileRevalidate',
+      options: {
+        cacheName: 'grow-api-cache',
+        expiration: {
+          maxEntries: 50,
+          maxAgeSeconds: 3 * 60 * 60, // 3 hours
+        },
+      },
+    },
+    // GO DAISY CACHING: Weather and activity API
+    {
+      urlPattern: /\/api\/(?:weather|unified-weather|tides|moon)\//,
+      handler: 'StaleWhileRevalidate',
+      options: {
+        cacheName: 'godaisy-weather-api-cache',
+        expiration: {
+          maxEntries: 30,
+          maxAgeSeconds: 30 * 60, // 30 minutes (weather data changes frequently)
         },
       },
     },

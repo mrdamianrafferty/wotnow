@@ -14,13 +14,25 @@
       "src": "/godaisy-favicon/web-app-manifest-192x192.png",
       "sizes": "192x192",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
+    },
+    {
+      "src": "/godaisy-favicon/web-app-manifest-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
     },
     {
       "src": "/godaisy-favicon/web-app-manifest-512x512.png",
       "sizes": "512x512",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
+    },
+    {
+      "src": "/godaisy-favicon/web-app-manifest-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
     },
     {
       "src": "/godaisy-favicon/apple-touch-icon.png",
@@ -35,7 +47,7 @@
       "short_name": "Today",
       "description": "View today's best activities",
       "url": "/",
-      "icons": [{ "src": "/icons/shortcut-today.png", "sizes": "96x96" }]
+      "icons": [{ "src": "/godaisy-favicon/favicon-96x96.png", "sizes": "96x96" }]
     }
   ],
   "related_applications": [],
