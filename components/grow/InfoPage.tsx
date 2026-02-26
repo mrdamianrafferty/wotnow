@@ -1516,6 +1516,11 @@ export function InfoPage() {
           <p className="text-xs text-muted-foreground">
             Configure your garden profile, soil type, sun exposure, and interests in <Link href="/grow/settings" className="text-green-600 hover:underline font-medium">Settings</Link> to get the most relevant advice.
           </p>
+          <div className="flex flex-wrap gap-x-4 gap-y-1 pt-2 text-xs">
+            <Link href="/grow/support" className="text-green-600 hover:underline font-medium">Support</Link>
+            <Link href="/grow/privacy" className="text-green-600 hover:underline font-medium">Privacy Policy</Link>
+            <Link href="/grow/terms" className="text-green-600 hover:underline font-medium">Terms of Service</Link>
+          </div>
           <p className="text-xs text-muted-foreground italic">
             Version 1.0 • Powered by real-time weather and horticultural data
           </p>
