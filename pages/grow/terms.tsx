@@ -76,20 +76,23 @@ export default function GrowTermsOfService() {
             <section className="mb-8">
               <h2 className="text-xl font-semibold mb-4">5. Subscriptions and In-App Purchases</h2>
               <p className="mb-2">
-                Grow Daisy offers premium features via subscription plans available as in-app
-                purchases through the Apple App Store:
+                Grow Daisy offers premium features via subscription plans:
               </p>
               <ul className="list-disc pl-6 space-y-1">
                 <li><strong>Monthly</strong> &mdash; auto-renews each month</li>
                 <li><strong>Annual</strong> &mdash; auto-renews each year</li>
                 <li><strong>Lifetime</strong> &mdash; one-time purchase, no renewal</li>
               </ul>
+              <p className="mt-4 mb-2">
+                Subscriptions may be purchased through the web (via Stripe), the Apple App Store
+                (iOS), or Google Play (Android). The billing provider depends on the platform you
+                use to subscribe.
+              </p>
               <p className="mt-4 mb-2"><strong>Billing:</strong></p>
               <ul className="list-disc pl-6 space-y-1">
-                <li>Payment is charged to your Apple ID account at confirmation of purchase</li>
+                <li>Payment is charged at confirmation of purchase via your chosen platform</li>
                 <li>Subscriptions auto-renew unless cancelled at least 24 hours before the end of the current period</li>
-                <li>Your account will be charged for renewal within 24 hours prior to the end of the current period</li>
-                <li>You can manage and cancel subscriptions in your device&apos;s Settings &gt; Apple ID &gt; Subscriptions</li>
+                <li>You can manage and cancel subscriptions through your platform&apos;s subscription settings</li>
               </ul>
               <p className="mt-4 mb-2"><strong>Free trial:</strong></p>
               <p>
@@ -101,32 +104,26 @@ export default function GrowTermsOfService() {
             <section className="mb-8">
               <h2 className="text-xl font-semibold mb-4">6. Cancellation and Refunds</h2>
               <p className="mb-2">
-                You may cancel your subscription at any time through your Apple ID settings. Upon
-                cancellation:
+                You may cancel your subscription at any time. Upon cancellation:
               </p>
               <ul className="list-disc pl-6 space-y-1">
                 <li>You retain access to premium features until the end of your current billing period</li>
                 <li>No further charges will be made after the current period ends</li>
                 <li>Your account reverts to the free tier when the paid period expires</li>
               </ul>
-              <p className="mt-2">
-                Refunds for in-app purchases are handled by Apple in accordance with their{' '}
-                <a
-                  href="https://support.apple.com/en-us/HT204084"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-emerald-600 underline"
-                >
-                  refund policy
-                </a>.
-                To request a refund, visit{' '}
-                <a
-                  href="https://reportaproblem.apple.com"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-emerald-600 underline"
-                >
-                  reportaproblem.apple.com
+              <p className="mt-4 mb-2"><strong>How to cancel:</strong></p>
+              <ul className="list-disc pl-6 space-y-1">
+                <li><strong>Web (Stripe):</strong> Manage your subscription from Settings in the app</li>
+                <li><strong>iOS:</strong> Device Settings &gt; Apple ID &gt; Subscriptions</li>
+                <li><strong>Android:</strong> Google Play &gt; Payments &amp; subscriptions &gt; Subscriptions</li>
+              </ul>
+              <p className="mt-4 mb-2"><strong>Refunds:</strong></p>
+              <p>
+                Refunds for purchases made via the Apple App Store or Google Play are handled by the
+                respective platform in accordance with their refund policies. For web (Stripe)
+                purchases, contact us at{' '}
+                <a href="mailto:hello@godaisy.io" className="text-emerald-600 underline">
+                  hello@godaisy.io
                 </a>.
               </p>
             </section>
@@ -136,8 +133,8 @@ export default function GrowTermsOfService() {
               <p>
                 You can permanently delete your account and all associated data at any time from the
                 Settings page. Deletion is irreversible. If you have an active subscription, deleting
-                your account does not automatically cancel your Apple subscription &mdash; please
-                cancel it separately in your device settings to avoid future charges.
+                your account does not automatically cancel it &mdash; please cancel your subscription
+                separately through your billing platform to avoid future charges.
               </p>
             </section>
 

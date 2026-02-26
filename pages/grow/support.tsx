@@ -52,23 +52,24 @@ export default function GrowSupportPage() {
                     How do subscriptions work?
                   </h3>
                   <p className="text-sm">
-                    Grow Daisy offers monthly, annual, and lifetime premium plans purchased through the
-                    Apple App Store. Your subscription is managed by Apple and renews automatically unless
-                    cancelled. You can manage or cancel your subscription at any time in your device&apos;s
-                    Settings &gt; Apple ID &gt; Subscriptions.
+                    Grow Daisy offers monthly, annual, and lifetime premium plans. Depending on your
+                    platform, subscriptions are handled by Stripe (web), Apple (iOS), or Google Play
+                    (Android). Subscriptions auto-renew unless cancelled before the end of the current
+                    billing period. You can manage or cancel your subscription at any time through your
+                    platform&apos;s subscription settings.
                   </p>
                 </div>
 
                 <div>
                   <h3 className="font-semibold mb-1 flex items-center gap-2">
                     <CreditCard className="h-4 w-4 text-gray-400" />
-                    How do I restore my purchase?
+                    How do I manage or cancel my subscription?
                   </h3>
                   <p className="text-sm">
-                    If you&apos;ve previously purchased a subscription, go to Settings in the app and
-                    tap &quot;Restore Purchases&quot;. Your premium features will be reactivated
-                    automatically. Make sure you&apos;re signed in with the same Apple ID used for
-                    the original purchase.
+                    <strong>Web (Stripe):</strong> Go to Settings in the app and manage your subscription
+                    from the Subscription card.<br />
+                    <strong>iOS:</strong> Go to your device&apos;s Settings &gt; Apple ID &gt; Subscriptions.<br />
+                    <strong>Android:</strong> Open Google Play &gt; Payments &amp; subscriptions &gt; Subscriptions.
                   </p>
                 </div>
 
