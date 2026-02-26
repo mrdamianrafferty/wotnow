@@ -57,6 +57,7 @@ export async function middleware(req: NextRequest) {
                     url.pathname === '/manifest.json' ||
                     url.pathname.startsWith('/manifest-') ||
                     url.pathname.startsWith('/workbox-') ||
+                    url.pathname.startsWith('/fallback-') ||
                     url.pathname.match(/^\/sw\.js/);
   const isSEOFile = url.pathname === '/robots.txt' ||
                     url.pathname === '/sitemap.xml' ||

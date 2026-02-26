@@ -22,16 +22,16 @@ export default function GoDaisyLogin() {
   const [showWebFallback, setShowWebFallback] = useState(false);
   const [nativeAuthFailed, setNativeAuthFailed] = useState(false);
   const [authCallbackUrl, setAuthCallbackUrl] = useState<string>(() => {
-    if (process.env.NEXT_PUBLIC_AUTH_CALLBACK_URL) {
-      return process.env.NEXT_PUBLIC_AUTH_CALLBACK_URL;
-    }
+    // Always prefer the actual browser origin so OAuth callbacks return to the
+    // correct subdomain (e.g. grow.godaisy.io, not godaisy.io).
+    // The env var is only a fallback for SSR where window is unavailable.
     if (typeof window !== 'undefined') {
       const origin = window.location.origin;
       if (origin.startsWith('http')) {
         return `${origin}/auth/callback`;
       }
     }
-    return 'https://godaisy.io/auth/callback';
+    return process.env.NEXT_PUBLIC_AUTH_CALLBACK_URL || 'https://godaisy.io/auth/callback';
   });
 
   // Get returnTo parameter for redirect after login
@@ -40,9 +40,6 @@ export default function GoDaisyLogin() {
   const isGrowContext = returnTo?.startsWith('/grow');
 
   useEffect(() => {
-    if (process.env.NEXT_PUBLIC_AUTH_CALLBACK_URL) {
-      return;
-    }
     if (typeof window === 'undefined') {
       return;
     }

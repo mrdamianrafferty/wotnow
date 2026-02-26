@@ -142,7 +142,7 @@ export default function AuthCallback() {
 
   const [phase, setPhase] = useState<Phase>(Phase.Checking);
   const [error, setError] = useState<string | null>(null);
-  const [detectedApp, setDetectedApp] = useState<'godaisy' | 'findr'>('godaisy');
+  const [detectedApp, setDetectedApp] = useState<'godaisy' | 'findr' | 'growdaisy'>('godaisy');
   const [isExternalBrowser, setIsExternalBrowser] = useState(false);
 
   useEffect(() => {
@@ -172,7 +172,8 @@ export default function AuthCallback() {
         if (hasOAuthParams && isMobileBrowser && !standaloneMode) {
           console.log('[Auth Callback] Mobile browser with OAuth params - showing Universal Link prompt');
           setIsExternalBrowser(true);
-          setDetectedApp(window.location.hostname.includes('fishfindr.eu') ? 'findr' : 'godaisy');
+          const h = window.location.hostname;
+          setDetectedApp(h.includes('fishfindr.eu') ? 'findr' : h.includes('grow.godaisy.io') || h.includes('growdaisy.io') ? 'growdaisy' : 'godaisy');
           // STOP HERE - don't process auth, let Universal Link handle it
           return;
         }
@@ -224,7 +225,14 @@ export default function AuthCallback() {
           window.location.hostname.includes('fishfindr.eu') ||
           origin?.includes('fishfindr.eu') ||
           sessionStorage.getItem('oauth_app') === 'findr';
-        setDetectedApp(isFindr ? 'findr' : 'godaisy');
+        const isGrowDaisy =
+          !isFindr && (
+            app === 'growdaisy' ||
+            window.location.hostname.includes('grow.godaisy.io') ||
+            window.location.hostname.includes('growdaisy.io') ||
+            sessionStorage.getItem('oauth_app') === 'growdaisy'
+          );
+        setDetectedApp(isFindr ? 'findr' : isGrowDaisy ? 'growdaisy' : 'godaisy');
 
         // Log callback initialization
         logAuthStep('Callback initiated', {
@@ -439,7 +447,7 @@ export default function AuthCallback() {
             <svg className="w-20 h-20 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 10l7-7m0 0l7 7m-7-7v18" />
             </svg>
-            <h1 className="text-2xl font-semibold text-center">Continue in the {detectedApp === 'findr' ? 'Findr' : 'Go Daisy'} app</h1>
+            <h1 className="text-2xl font-semibold text-center">Continue in the {detectedApp === 'findr' ? 'Findr' : detectedApp === 'growdaisy' ? 'Grow Daisy' : 'Go Daisy'} app</h1>
             <p className="text-center text-base-content/70">
               Tap <span className="font-semibold text-primary">&quot;OPEN&quot;</span> at the top of this page to complete sign-in
             </p>
@@ -474,17 +482,17 @@ export default function AuthCallback() {
             </div>
           </div>
           <div className="flex gap-2 justify-center">
-            <Link 
-              href={detectedApp === 'findr' ? '/findr/auth' : '/login'} 
+            <Link
+              href={detectedApp === 'findr' ? '/findr/auth' : detectedApp === 'growdaisy' ? '/login?returnTo=/grow' : '/login'}
               className="btn btn-primary btn-sm"
             >
               Try Again
             </Link>
-            <Link 
-              href={detectedApp === 'findr' ? '/findr' : '/'} 
+            <Link
+              href={detectedApp === 'findr' ? '/findr' : detectedApp === 'growdaisy' ? '/grow' : '/'}
               className="btn btn-ghost btn-sm"
             >
-              {detectedApp === 'findr' ? 'Go to Findr' : 'Go to Home'}
+              {detectedApp === 'findr' ? 'Go to Findr' : detectedApp === 'growdaisy' ? 'Go to Grow Daisy' : 'Go to Home'}
             </Link>
           </div>
         </div>
