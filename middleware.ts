@@ -55,6 +55,7 @@ export async function middleware(req: NextRequest) {
   const isWellKnown = url.pathname.startsWith('/.well-known/');
   const isPWAFile = url.pathname === '/sw.js' ||
                     url.pathname === '/manifest.json' ||
+                    url.pathname.startsWith('/manifest-') ||
                     url.pathname.startsWith('/workbox-') ||
                     url.pathname.match(/^\/sw\.js/);
   const isSEOFile = url.pathname === '/robots.txt' ||
