@@ -4,7 +4,7 @@
  * Shows pricing tiers and allows users to subscribe.
  */
 
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/router';
 import { Capacitor } from '@capacitor/core';
 import Head from 'next/head';
@@ -27,6 +27,8 @@ import {
   Radio,
   Wifi,
   Cloud,
+  RotateCcw,
+  Loader2,
 } from 'lucide-react';
 import { useGrowSubscription } from '@/hooks/useGrowSubscription';
 import { getStripe } from '@/lib/stripe/client';
@@ -39,6 +41,7 @@ import {
   getTierDisplayName,
 } from '@/lib/grow/subscription';
 import { GrowLayout } from '@/components/grow/GrowLayout';
+import type { PurchasesOfferings, PurchasesPackage } from '@revenuecat/purchases-capacitor';
 
 type BillingCycle = 'monthly' | 'annual' | 'lifetime';
 
@@ -52,14 +55,130 @@ const TIER_ICONS: Record<GrowSubscriptionTier, React.ComponentType<{ className?:
 
 export default function GrowPremiumPage() {
   const router = useRouter();
-  const { tier: currentTier, isLoading } = useGrowSubscription();
+  const { tier: currentTier, isLoading, refetch } = useGrowSubscription();
   const [billingCycle, setBillingCycle] = useState<BillingCycle>('annual');
   const [loadingTier, setLoadingTier] = useState<GrowSubscriptionTier | null>(null);
   const [error, setError] = useState('');
   const [voucherCode, setVoucherCode] = useState('');
   const supabase = createClient();
 
+  // iOS IAP state
+  const isIOS = Capacitor.getPlatform() === 'ios';
+  const [offerings, setOfferings] = useState<PurchasesOfferings | null>(null);
+  const [offeringsLoading, setOfferingsLoading] = useState(isIOS);
+  const [activating, setActivating] = useState(false);
+  const [restoring, setRestoring] = useState(false);
+
+  // Load RevenueCat offerings on iOS
+  useEffect(() => {
+    if (!isIOS) return;
+
+    let cancelled = false;
+    (async () => {
+      try {
+        const { fetchOfferings } = await import('@/lib/grow/revenueCat');
+        const result = await fetchOfferings();
+        if (!cancelled) {
+          setOfferings(result);
+        }
+      } catch (err) {
+        console.error('[Premium] Failed to load offerings:', err);
+      } finally {
+        if (!cancelled) setOfferingsLoading(false);
+      }
+    })();
+
+    return () => { cancelled = true; };
+  }, [isIOS]);
+
+  /**
+   * Find the RevenueCat package matching a tier + billing cycle.
+   * Packages use identifiers like "$rc_monthly", "$rc_annual", "$rc_lifetime"
+   * and contain product IDs like "growdaisy_bloom_monthly".
+   */
+  const findPackage = useCallback((tier: GrowSubscriptionTier): PurchasesPackage | null => {
+    if (!offerings?.current?.availablePackages) return null;
+
+    const productPrefix = `growdaisy_${tier}_${billingCycle}`;
+    return offerings.current.availablePackages.find(
+      (pkg) => pkg.product.identifier === productPrefix
+    ) ?? null;
+  }, [offerings, billingCycle]);
+
+  /**
+   * Handle iOS In-App Purchase via RevenueCat
+   */
+  const handleIOSPurchase = async (tier: GrowSubscriptionTier) => {
+    try {
+      setLoadingTier(tier);
+      setError('');
+
+      // Ensure user is authenticated
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        router.push('/grow/auth?redirect=/grow/premium');
+        return;
+      }
+
+      const pkg = findPackage(tier);
+      if (!pkg) {
+        setError('This plan is not available. Please try a different billing cycle.');
+        return;
+      }
+
+      const { purchasePackage } = await import('@/lib/grow/revenueCat');
+      const result = await purchasePackage(pkg);
+
+      if (result) {
+        // Purchase succeeded — webhook will update Supabase
+        setActivating(true);
+        // Poll for tier change (webhook → Supabase → realtime)
+        // Give up after 15 seconds, but user will see it on next load either way
+        const start = Date.now();
+        while (Date.now() - start < 15000) {
+          await new Promise(r => setTimeout(r, 2000));
+          await refetch();
+          // Check if tier was updated (refetch triggers state change in hook)
+          break;
+        }
+        setActivating(false);
+      }
+      // null result means user cancelled — do nothing
+    } catch (err) {
+      console.error('iOS purchase error:', err);
+      setError(err instanceof Error ? err.message : 'Purchase failed. Please try again.');
+    } finally {
+      setLoadingTier(null);
+    }
+  };
+
+  /**
+   * Restore previous purchases (Apple requirement)
+   */
+  const handleRestore = async () => {
+    try {
+      setRestoring(true);
+      setError('');
+
+      const { restorePurchases } = await import('@/lib/grow/revenueCat');
+      await restorePurchases();
+      await refetch();
+    } catch (err) {
+      console.error('Restore error:', err);
+      setError('Could not restore purchases. Please try again.');
+    } finally {
+      setRestoring(false);
+    }
+  };
+
+  /**
+   * Handle web Stripe checkout
+   */
   const handleSubscribe = async (tier: GrowSubscriptionTier) => {
+    if (isIOS) {
+      return handleIOSPurchase(tier);
+    }
+
     try {
       setLoadingTier(tier);
       setError('');
@@ -102,7 +221,15 @@ export default function GrowPremiumPage() {
     }
   };
 
+  /**
+   * Get price string — on iOS from RevenueCat (localized), on web from static EUR prices
+   */
   const getPrice = (tier: GrowSubscriptionTier): string => {
+    if (isIOS) {
+      const pkg = findPackage(tier);
+      if (pkg) return pkg.product.priceString;
+      // Fallback to static EUR price if package not found
+    }
     const tierInfo = GROW_TIERS[tier];
     const price = tierInfo.pricing[billingCycle];
     if (price === null) return 'N/A';
@@ -121,7 +248,7 @@ export default function GrowPremiumPage() {
     return savings > 0 ? `Save ${savings}%` : null;
   };
 
-  if (isLoading) {
+  if (isLoading || offeringsLoading) {
     return (
       <GrowLayout>
         <div className="min-h-screen flex items-center justify-center">
@@ -131,29 +258,17 @@ export default function GrowPremiumPage() {
     );
   }
 
-  // Block Stripe checkout on native iOS — Apple requires in-app purchases
-  if (Capacitor.getPlatform() === 'ios') {
+  // Show activating overlay when waiting for webhook confirmation
+  if (activating) {
     return (
       <GrowLayout>
         <div className="min-h-screen flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl shadow-lg max-w-md w-full p-8 text-center">
-            <h2 className="text-2xl font-bold mb-3">Premium Coming Soon</h2>
-            <p className="text-gray-600 mb-3">
-              In-app subscription management is coming soon to the iOS app.
+            <Loader2 className="h-12 w-12 text-emerald-600 mx-auto mb-4 animate-spin" />
+            <h2 className="text-2xl font-bold mb-2">Activating...</h2>
+            <p className="text-gray-600">
+              Your purchase is being activated. This usually takes a few seconds.
             </p>
-            <p className="text-gray-600 mb-6">
-              In the meantime, visit{' '}
-              <a href="https://godaisy.io/grow/premium" className="text-emerald-600 underline font-medium">
-                godaisy.io
-              </a>{' '}
-              in your browser to subscribe.
-            </p>
-            <button
-              onClick={() => router.back()}
-              className="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
-            >
-              Go Back
-            </button>
           </div>
         </div>
       </GrowLayout>
@@ -271,21 +386,41 @@ export default function GrowPremiumPage() {
             />
           </div>
 
-          {/* Voucher Code */}
-          <div className="max-w-md mx-auto mb-8">
-            <div className="bg-white rounded-lg p-4 shadow">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Have a voucher code?
-              </label>
-              <input
-                type="text"
-                placeholder="EARLYBIRD25"
-                className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
-                value={voucherCode}
-                onChange={(e) => setVoucherCode(e.target.value.toUpperCase())}
-              />
+          {/* Voucher Code — hidden on iOS (Apple prohibits bypassing their payment) */}
+          {!isIOS && (
+            <div className="max-w-md mx-auto mb-8">
+              <div className="bg-white rounded-lg p-4 shadow">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Have a voucher code?
+                </label>
+                <input
+                  type="text"
+                  placeholder="EARLYBIRD25"
+                  className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                  value={voucherCode}
+                  onChange={(e) => setVoucherCode(e.target.value.toUpperCase())}
+                />
+              </div>
             </div>
-          </div>
+          )}
+
+          {/* Restore Purchases — iOS only (Apple requirement) */}
+          {isIOS && (
+            <div className="max-w-md mx-auto mb-8 text-center">
+              <button
+                onClick={handleRestore}
+                disabled={restoring}
+                className="inline-flex items-center gap-2 text-sm text-emerald-600 hover:text-emerald-700 font-medium"
+              >
+                {restoring ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <RotateCcw className="h-4 w-4" />
+                )}
+                {restoring ? 'Restoring...' : 'Restore Purchases'}
+              </button>
+            </div>
+          )}
 
           {/* Error Message */}
           {error && (
@@ -646,6 +781,8 @@ function HardwareIntegrations() {
 }
 
 function FAQ() {
+  const isiOS = Capacitor.getPlatform() === 'ios';
+
   const faqs = [
     {
       q: 'How does the free trial work?',
@@ -657,11 +794,15 @@ function FAQ() {
     },
     {
       q: 'Can I upgrade or downgrade later?',
-      a: 'Yes! You can upgrade anytime and only pay the difference. To downgrade, contact support - you\'ll keep your current tier until the end of your billing period.',
+      a: isiOS
+        ? 'Yes! You can manage your subscription in iOS Settings > Apple ID > Subscriptions. Changes take effect at the end of your current billing period.'
+        : 'Yes! You can upgrade anytime and only pay the difference. To downgrade, contact support - you\'ll keep your current tier until the end of your billing period.',
     },
     {
       q: 'What payment methods do you accept?',
-      a: 'We accept all major credit and debit cards through Stripe\'s secure payment processing. Apple Pay and Google Pay are also supported.',
+      a: isiOS
+        ? 'Payments are processed securely through Apple\'s App Store using your Apple ID payment method.'
+        : 'We accept all major credit and debit cards through Stripe\'s secure payment processing. Apple Pay and Google Pay are also supported.',
     },
     {
       q: 'Is there a family plan?',

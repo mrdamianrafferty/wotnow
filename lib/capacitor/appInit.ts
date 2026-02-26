@@ -49,6 +49,11 @@ export async function initializeApp(options: InitOptions = {}): Promise<void> {
     // Run initialization tasks in parallel
     const tasks: Promise<void>[] = [];
 
+    // Initialize RevenueCat for iOS IAP
+    if (isNative && Capacitor.getPlatform() === 'ios') {
+      tasks.push(initRevenueCatWithUser());
+    }
+
     // Initialize Grow Daisy sync if enabled
     if (initGrowSync && isNative) {
       tasks.push(initGrowDaisySync());
@@ -167,6 +172,22 @@ export function isNativePlatform(): boolean {
  */
 export function getPlatform(): 'ios' | 'android' | 'web' {
   return Capacitor.getPlatform() as 'ios' | 'android' | 'web';
+}
+
+/**
+ * Initialize RevenueCat with current Supabase user (if signed in)
+ */
+async function initRevenueCatWithUser(): Promise<void> {
+  try {
+    const { createClient } = await import('@/lib/supabase/client');
+    const { initRevenueCat } = await import('@/lib/grow/revenueCat');
+    const supabase = createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    await initRevenueCat(user?.id ?? null);
+    console.log('[AppInit] RevenueCat initialized');
+  } catch (error) {
+    console.warn('[AppInit] Failed to initialize RevenueCat:', error);
+  }
 }
 
 // Helper

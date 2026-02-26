@@ -5,7 +5,9 @@
  * and easy upgrade options.
  */
 
+import { useState } from 'react';
 import Link from 'next/link';
+import { Capacitor } from '@capacitor/core';
 import {
   Crown,
   Leaf,
@@ -18,6 +20,9 @@ import {
   Radio,
   Camera,
   Infinity,
+  RotateCcw,
+  ExternalLink,
+  Loader2,
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../ui/card';
 import { Button } from '../ui/button';
@@ -241,8 +246,60 @@ export function SubscriptionCard({ compact = false }: SubscriptionCardProps) {
             View all plans & features →
           </Link>
         </div>
+
+        {/* iOS-specific: Manage Subscription + Restore Purchases */}
+        {Capacitor.getPlatform() === 'ios' && (
+          <IOSSubscriptionActions isPaid={isPaid} />
+        )}
       </CardContent>
     </Card>
+  );
+}
+
+function IOSSubscriptionActions({ isPaid }: { isPaid: boolean }) {
+  const [restoring, setRestoring] = useState(false);
+  const { refetch } = useGrowSubscription();
+
+  const handleRestore = async () => {
+    try {
+      setRestoring(true);
+      const { restorePurchases } = await import('@/lib/grow/revenueCat');
+      await restorePurchases();
+      await refetch();
+    } catch {
+      // Error already logged in revenueCat.ts
+    } finally {
+      setRestoring(false);
+    }
+  };
+
+  return (
+    <div className="border-t pt-3 space-y-2">
+      {/* Manage Subscription → iOS Settings */}
+      {isPaid && (
+        <a
+          href="itms-apps://apps.apple.com/account/subscriptions"
+          className="flex items-center justify-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
+        >
+          <ExternalLink className="h-3.5 w-3.5" />
+          Manage Subscription
+        </a>
+      )}
+
+      {/* Restore Purchases */}
+      <button
+        onClick={handleRestore}
+        disabled={restoring}
+        className="flex items-center justify-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors w-full"
+      >
+        {restoring ? (
+          <Loader2 className="h-3.5 w-3.5 animate-spin" />
+        ) : (
+          <RotateCcw className="h-3.5 w-3.5" />
+        )}
+        {restoring ? 'Restoring...' : 'Restore Purchases'}
+      </button>
+    </div>
   );
 }
 

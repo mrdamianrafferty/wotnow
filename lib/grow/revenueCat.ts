@@ -1,0 +1,162 @@
+/**
+ * RevenueCat SDK Wrapper for Grow Daisy iOS
+ *
+ * Wraps @revenuecat/purchases-capacitor for iOS In-App Purchases.
+ * All functions are safe no-ops on non-iOS platforms.
+ *
+ * @module lib/grow/revenueCat
+ */
+
+import { Capacitor } from '@capacitor/core';
+import type {
+  PurchasesOfferings,
+  PurchasesPackage,
+  CustomerInfo,
+  MakePurchaseResult,
+} from '@revenuecat/purchases-capacitor';
+
+const RC_PUBLIC_KEY = process.env.NEXT_PUBLIC_REVENUECAT_IOS_PUBLIC_KEY ?? '';
+
+function isIOS(): boolean {
+  return Capacitor.isNativePlatform() && Capacitor.getPlatform() === 'ios';
+}
+
+/**
+ * Lazily import the Purchases plugin to avoid loading native code on web.
+ */
+async function getPurchases() {
+  const { Purchases } = await import('@revenuecat/purchases-capacitor');
+  return Purchases;
+}
+
+let configured = false;
+
+/**
+ * Configure the RevenueCat SDK and optionally identify the user.
+ * Safe to call on any platform — no-ops on non-iOS.
+ */
+export async function initRevenueCat(supabaseUserId: string | null): Promise<void> {
+  if (!isIOS() || !RC_PUBLIC_KEY) return;
+
+  try {
+    const Purchases = await getPurchases();
+
+    await Purchases.configure({
+      apiKey: RC_PUBLIC_KEY,
+      appUserID: supabaseUserId ?? undefined,
+    });
+
+    configured = true;
+    console.log('[RevenueCat] Configured', supabaseUserId ? `for user ${supabaseUserId}` : 'anonymously');
+  } catch (error) {
+    console.error('[RevenueCat] Failed to configure:', error);
+  }
+}
+
+/**
+ * Identify the current user after sign-in.
+ * Links the Supabase UUID as the RevenueCat App User ID so that
+ * webhook event.app_user_id IS the Supabase UUID.
+ */
+export async function identifyRevenueCatUser(supabaseUserId: string): Promise<void> {
+  if (!isIOS() || !configured) return;
+
+  try {
+    const Purchases = await getPurchases();
+    await Purchases.logIn({ appUserID: supabaseUserId });
+    console.log('[RevenueCat] Identified user:', supabaseUserId);
+  } catch (error) {
+    console.error('[RevenueCat] Failed to identify user:', error);
+  }
+}
+
+/**
+ * Log out from RevenueCat on sign-out. Resets to anonymous user.
+ */
+export async function logOutRevenueCat(): Promise<void> {
+  if (!isIOS() || !configured) return;
+
+  try {
+    const Purchases = await getPurchases();
+    await Purchases.logOut();
+    console.log('[RevenueCat] Logged out');
+  } catch (error) {
+    console.error('[RevenueCat] Failed to log out:', error);
+  }
+}
+
+/**
+ * Fetch current offerings from RevenueCat.
+ * Returns packages with App Store prices in the user's local currency.
+ */
+export async function fetchOfferings(): Promise<PurchasesOfferings | null> {
+  if (!isIOS() || !configured) return null;
+
+  try {
+    const Purchases = await getPurchases();
+    const offerings = await Purchases.getOfferings();
+    return offerings;
+  } catch (error) {
+    console.error('[RevenueCat] Failed to fetch offerings:', error);
+    return null;
+  }
+}
+
+/**
+ * Purchase a package. Triggers the native StoreKit purchase sheet.
+ *
+ * @returns MakePurchaseResult on success, null if user cancelled or error
+ */
+export async function purchasePackage(pkg: PurchasesPackage): Promise<MakePurchaseResult | null> {
+  if (!isIOS() || !configured) return null;
+
+  try {
+    const Purchases = await getPurchases();
+    const result = await Purchases.purchasePackage({ aPackage: pkg });
+    console.log('[RevenueCat] Purchase successful:', result.productIdentifier);
+    return result;
+  } catch (error: unknown) {
+    // RevenueCat throws with userCancelled flag when user dismisses the sheet
+    if (error && typeof error === 'object' && 'userCancelled' in error && (error as { userCancelled: boolean }).userCancelled) {
+      console.log('[RevenueCat] User cancelled purchase');
+      return null;
+    }
+    console.error('[RevenueCat] Purchase failed:', error);
+    throw error;
+  }
+}
+
+/**
+ * Restore previous purchases. Apple requires this in the UI for auto-renewable subscriptions.
+ *
+ * @returns CustomerInfo after restore, or null on non-iOS
+ */
+export async function restorePurchases(): Promise<CustomerInfo | null> {
+  if (!isIOS() || !configured) return null;
+
+  try {
+    const Purchases = await getPurchases();
+    const { customerInfo } = await Purchases.restorePurchases();
+    console.log('[RevenueCat] Purchases restored');
+    return customerInfo;
+  } catch (error) {
+    console.error('[RevenueCat] Failed to restore purchases:', error);
+    throw error;
+  }
+}
+
+/**
+ * Get current customer info (entitlements, active subscriptions).
+ */
+export async function getCustomerInfo(): Promise<CustomerInfo | null> {
+  if (!isIOS() || !configured) return null;
+
+  try {
+    const Purchases = await getPurchases();
+    const { customerInfo } = await Purchases.getCustomerInfo();
+    return customerInfo;
+  } catch (error) {
+    console.error('[RevenueCat] Failed to get customer info:', error);
+    return null;
+  }
+}

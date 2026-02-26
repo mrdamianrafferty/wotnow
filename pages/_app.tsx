@@ -21,6 +21,12 @@ import { ErrorBoundary } from '../components/ErrorBoundary';
 import { PullToRefresh } from '../components/PullToRefresh';
 import { OrganizationJsonLd, WebsiteJsonLd } from '../components/JsonLd';
 
+// Lazy-load RevenueCat auth sync (iOS only, Grow only)
+const RevenueCatAuthSync = dynamic(
+  () => import('../components/grow/RevenueCatAuthSync'),
+  { ssr: false }
+);
+
 // Lazy-load non-critical initialization components
 const OfflineInit = dynamic(
   () => import('../components/OfflineInit').then(mod => ({ default: mod.OfflineInit })),
@@ -99,6 +105,16 @@ export default function App({ Component, pageProps }: AppProps<PagePropsWithThem
   const isFindr = appContext === 'findr';
   const isGrow = appContext === 'grow';
 
+  // Detect iOS native for RevenueCat auth sync
+  const [isIOSNative, setIsIOSNative] = useState(false);
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      import('@capacitor/core').then(({ Capacitor }) => {
+        setIsIOSNative(Capacitor.isNativePlatform() && Capacitor.getPlatform() === 'ios');
+      }).catch(() => { /* Capacitor not available */ });
+    }
+  }, []);
+
   // Note: Service worker cleanup removed to enable offline support
   // The PWA service worker now handles cache management via next-pwa's cleanupOutdatedCaches option
   // If you need to force-clear caches, users can do so via browser settings or app reinstall
@@ -169,6 +185,8 @@ export default function App({ Component, pageProps }: AppProps<PagePropsWithThem
                   <OfflineInit />
                   {/* Initialize performance tracking for iOS profiling */}
                   <PerformanceInit />
+                  {/* RevenueCat auth sync for iOS IAP (Grow only) */}
+                  {isGrow && isIOSNative && <RevenueCatAuthSync />}
                   {/* Offline Indicator - shows at top when offline */}
                   <OfflineIndicator />
                   {/* Toast notifications */}
