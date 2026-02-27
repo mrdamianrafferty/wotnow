@@ -157,7 +157,9 @@ class WotNowAstronomyAPI {
     console.log('[WotNowAstronomyAPI] Cache contents before:', openWeatherDailyCache[cacheKey]);
     const result = await getOneCallData({ lat, lon, apiKey: this.openweatherKey, options: { exclude: 'minutely,hourly,current,alerts' } });
     console.log('[WotNowAstronomyAPI] getOneCallData result:', result);
-    let days = (result as { data?: { daily?: unknown[] } }).data?.daily;
+    const resultData = result as { data?: { daily?: unknown[]; timezone_offset?: number } };
+    const topLevelOffset = resultData.data?.timezone_offset ?? 0;
+    let days = resultData.data?.daily;
     console.log('[WotNowAstronomyAPI] OpenWeather One Call daily response:', days);
     if (!Array.isArray(days) || days.length < 2) {
       // Fallback: create mock days if missing or incomplete
@@ -187,6 +189,14 @@ class WotNowAstronomyAPI {
         }
       ];
       console.warn('[WotNowAstronomyAPI] OpenWeather daily data missing or incomplete, using mock days.');
+    } else {
+      // Inject top-level timezone_offset into each daily object —
+      // OpenWeather puts timezone_offset at the response root, not on individual days
+      for (const day of days) {
+        if (typeof day === 'object' && day !== null && !('timezone_offset' in (day as Record<string, unknown>))) {
+          (day as Record<string, unknown>).timezone_offset = topLevelOffset;
+        }
+      }
     }
     openWeatherDailyCache[cacheKey] = { days, timestamp: Date.now() };
     console.log('[WotNowAstronomyAPI] Cache contents after:', openWeatherDailyCache[cacheKey]);
