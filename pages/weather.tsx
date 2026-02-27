@@ -987,14 +987,14 @@ function HeaderHero({
                   <button
                     type="button"
                     onClick={onToggleLocationType}
-                    className={`badge badge-sm gap-1 cursor-pointer hover:opacity-80 transition-opacity ${activeLocationType === 'coastal' ? 'badge-info' : 'badge-success'}`}
+                    className={`badge badge-md gap-1.5 cursor-pointer hover:opacity-80 transition-opacity text-sm font-semibold min-h-[2rem] ${activeLocationType === 'coastal' ? 'badge-info' : 'badge-success'}`}
                     aria-label={activeLocationType === 'coastal' ? 'Showing beach — tap to switch to home' : 'Showing home — tap to switch to beach'}
                   >
                     {activeLocationType === 'coastal' ? 'Beach' : 'Home'}
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-3 h-3"><path fillRule="evenodd" d="M15.312 11.424a5.5 5.5 0 01-9.201 2.466l-.312-.311h2.433a.75.75 0 000-1.5H4.28a.75.75 0 00-.75.75v3.955a.75.75 0 001.5 0v-2.134l.228.228a7 7 0 0011.709-3.14.75.75 0 00-1.455-.364zm-.441-5.848a7 7 0 00-11.709 3.14.75.75 0 001.455.364 5.5 5.5 0 019.201-2.466l.312.311H12.7a.75.75 0 000 1.5h3.952a.75.75 0 00.75-.75V3.72a.75.75 0 00-1.5 0v2.134l-.228-.228z" clipRule="evenodd" /></svg>
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4"><path fillRule="evenodd" d="M15.312 11.424a5.5 5.5 0 01-9.201 2.466l-.312-.311h2.433a.75.75 0 000-1.5H4.28a.75.75 0 00-.75.75v3.955a.75.75 0 001.5 0v-2.134l.228.228a7 7 0 0011.709-3.14.75.75 0 00-1.455-.364zm-.441-5.848a7 7 0 00-11.709 3.14.75.75 0 001.455.364 5.5 5.5 0 019.201-2.466l.312.311H12.7a.75.75 0 000 1.5h3.952a.75.75 0 00.75-.75V3.72a.75.75 0 00-1.5 0v2.134l-.228-.228z" clipRule="evenodd" /></svg>
                   </button>
                 ) : activeLocationType ? (
-                  <span className={`badge badge-sm ${activeLocationType === 'coastal' ? 'badge-info' : 'badge-success'}`}>
+                  <span className={`badge badge-md text-sm font-semibold ${activeLocationType === 'coastal' ? 'badge-info' : 'badge-success'}`}>
                     {activeLocationType === 'coastal' ? 'Beach' : 'Home'}
                   </span>
                 ) : null}
