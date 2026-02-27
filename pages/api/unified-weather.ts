@@ -320,11 +320,21 @@ type FreeProviderResult = {
 // --- Real MET Norway and NOAA implementations ---
 // Helper: minimal MET Norway icon mapping (should be imported from a helper in real code)
 function mapMetNoIcon(symbol?: string): { icon?: string; description?: string } {
-  // Simplified: just pass through for now, can expand for more robust mapping
   if (!symbol) return { icon: undefined, description: undefined };
-  // Example: "clearsky_day", "cloudy", "lightrain", etc.
-  // Map to OpenWeather-like icon codes if desired, or just use MET Norway's
-  return { icon: symbol, description: undefined };
+  const s = symbol.toLowerCase();
+  const isNight = s.includes('_night') || s.includes('_polartwilight');
+  const suffix = isNight ? 'n' : 'd';
+  // Map MET Norway symbol codes to OpenWeather icon codes
+  if (s.startsWith('clearsky')) return { icon: `01${suffix}`, description: 'clear sky' };
+  if (s.startsWith('nearly_clearsky') || s.startsWith('fair')) return { icon: `02${suffix}`, description: 'few clouds' };
+  if (s.startsWith('partlycloudy')) return { icon: `03${suffix}`, description: 'scattered clouds' };
+  if (s.startsWith('cloudy') || s.startsWith('overcast')) return { icon: `04${suffix}`, description: 'overcast clouds' };
+  if (s.startsWith('fog')) return { icon: `50${suffix}`, description: 'fog' };
+  if (s.includes('thunder')) return { icon: `11${suffix}`, description: 'thunderstorm' };
+  if (s.includes('snow') || s.includes('sleet') || s.includes('heavysnow')) return { icon: `13${suffix}`, description: 'snow' };
+  if (s.includes('heavyrain') || s.includes('heavysleet')) return { icon: `09${suffix}`, description: 'heavy rain' };
+  if (s.includes('rain') || s.includes('drizzle')) return { icon: `10${suffix}`, description: s.includes('light') ? 'light rain' : 'rain' };
+  return { icon: `03${suffix}`, description: symbol };
 }
 // Helper: minimal NWS icon mapping (should be imported from a helper in real code)
 function mapNwsIcon(iconUrl?: string): { icon?: string; description?: string } {

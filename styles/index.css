@@ -1935,28 +1935,28 @@ abbr[title] {
 
 /* Weather card backgrounds - match the old code style with darker, more blue-tinted backgrounds */
 .weather-card-bg {
-  background: rgba(30, 58, 138, 0.3) !important; /* Navy blue, much more transparent - was 0.6 */
+  background: rgba(30, 58, 138, 0.5) !important;
   backdrop-filter: blur(8px) !important;
   border: 1px solid rgba(255, 255, 255, 0.1) !important;
-  color: white !important; /* Force white text */
+  color: white !important;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
 }
 
 /* Variant for cards that need slightly more opacity */
 .weather-card-bg-enhanced {
-  background: rgba(30, 58, 138, 0.35) !important; /* Navy blue, much more transparent - was 0.7 */
+  background: rgba(30, 58, 138, 0.55) !important;
   backdrop-filter: blur(10px) !important;
   border: 1px solid rgba(255, 255, 255, 0.15) !important;
-  color: white !important; /* Force white text */
+  color: white !important;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.08);
 }
 
 /* For small hourly/detail cards that need good contrast */
 .weather-card-bg-small {
-  background: rgba(30, 58, 138, 0.3) !important; /* Navy blue, much more transparent - was 0.6 */
+  background: rgba(30, 58, 138, 0.5) !important;
   backdrop-filter: blur(6px) !important;
   border: 1px solid rgba(255, 255, 255, 0.2) !important;
-  color: white !important; /* Force white text */
+  color: white !important;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 

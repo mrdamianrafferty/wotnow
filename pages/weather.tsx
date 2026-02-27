@@ -557,6 +557,7 @@ export default function WeatherPage() {
             locationName={safeLocationName}
             isLoading={!Array.isArray(data.hourly) || data.hourly.length === 0}
             activeLocationType={activeLocationType}
+            onToggleLocationType={coastalLocation ? () => setActiveLocationType(prev => prev === 'home' ? 'coastal' : 'home') : undefined}
           />
           {apiError && (
             <div className="alert alert-error mt-3 text-sm">
@@ -884,10 +885,10 @@ function Row({ children, className }: { children: React.ReactNode; className?: s
 function SectionHeader({ icon, title }: { icon: string; title: string }) {
   return (
     <div className="col-span-full mb-2 mt-6 first:mt-0">
-      <div className="flex items-center gap-2 text-sm font-semibold text-white/70 uppercase tracking-wide">
+      <div className="flex items-center gap-2 text-sm font-semibold text-white/90 uppercase tracking-wide" style={{ textShadow: '0 1px 3px rgba(0,0,0,0.4)' }}>
         <span className="text-lg">{icon}</span>
         <span>{title}</span>
-        <div className="flex-1 h-px bg-white/20"></div>
+        <div className="flex-1 h-px bg-white/30"></div>
       </div>
     </div>
   );
@@ -914,6 +915,7 @@ function HeaderHero({
   locationName,
   isLoading,
   activeLocationType,
+  onToggleLocationType,
 }: {
   data: Omit<HeaderData, 'minis'> & { minis: MiniItem[] };
   sunriseISO?: string;
@@ -921,12 +923,13 @@ function HeaderHero({
   locationName?: string;
   isLoading?: boolean;
   activeLocationType?: 'home' | 'coastal';
+  onToggleLocationType?: () => void;
 }) {
   const { condition, tempC, feelsLikeC, highC, lowC, minis } = data;
   // If loading, show prominent DaisyUI loader
   if (isLoading) {
     return (
-      <div className="hero rounded-2xl bg-slate-800/25 backdrop-blur-sm text-white border border-white/10 shadow-sm" style={{ minHeight: '180px' }}>
+      <div className="hero rounded-2xl bg-slate-800/40 backdrop-blur-sm text-white border border-white/10 shadow-sm" style={{ minHeight: '180px', textShadow: '0 1px 3px rgba(0,0,0,0.3)' }}>
         <div className="hero-content w-full flex-col items-stretch py-10 md:py-14">
           <div className="flex items-center gap-3 text-lg">
             <span className="loading loading-spinner text-primary"></span>
@@ -963,7 +966,7 @@ function HeaderHero({
   const iconCode = inferIconFromCondition();
   const iconPath = `/weather-icons/design/fill/final/${iconCode}.svg`;
   return (
-    <div className="hero rounded-2xl bg-slate-800/25 backdrop-blur-sm text-white border border-white/10 shadow-sm" style={{ minHeight: '180px' }}>
+    <div className="hero rounded-2xl bg-slate-800/40 backdrop-blur-sm text-white border border-white/10 shadow-sm" style={{ minHeight: '180px', textShadow: '0 1px 3px rgba(0,0,0,0.3)' }}>
       <div className="hero-content w-full flex-col items-stretch py-6 md:py-8">
         <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-6 md:gap-4">
           <div className="flex items-start gap-4">
@@ -978,13 +981,23 @@ function HeaderHero({
           </div>
           <div className="flex flex-col items-start md:items-end gap-1">
             {locationName && (
-              <div className="text-xl md:text-2xl font-medium capitalize text-left md:text-right mb-2 flex items-center gap-2 justify-start md:justify-end">
+              <div className="text-xl md:text-2xl font-medium capitalize text-left md:text-right mb-2 flex items-center gap-2 justify-start md:justify-end flex-wrap">
                 {locationName}
-                {activeLocationType && (
+                {activeLocationType && onToggleLocationType ? (
+                  <button
+                    type="button"
+                    onClick={onToggleLocationType}
+                    className={`badge badge-sm gap-1 cursor-pointer hover:opacity-80 transition-opacity ${activeLocationType === 'coastal' ? 'badge-info' : 'badge-success'}`}
+                    aria-label={activeLocationType === 'coastal' ? 'Showing beach — tap to switch to home' : 'Showing home — tap to switch to beach'}
+                  >
+                    {activeLocationType === 'coastal' ? 'Beach' : 'Home'}
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-3 h-3"><path fillRule="evenodd" d="M15.312 11.424a5.5 5.5 0 01-9.201 2.466l-.312-.311h2.433a.75.75 0 000-1.5H4.28a.75.75 0 00-.75.75v3.955a.75.75 0 001.5 0v-2.134l.228.228a7 7 0 0011.709-3.14.75.75 0 00-1.455-.364zm-.441-5.848a7 7 0 00-11.709 3.14.75.75 0 001.455.364 5.5 5.5 0 019.201-2.466l.312.311H12.7a.75.75 0 000 1.5h3.952a.75.75 0 00.75-.75V3.72a.75.75 0 00-1.5 0v2.134l-.228-.228z" clipRule="evenodd" /></svg>
+                  </button>
+                ) : activeLocationType ? (
                   <span className={`badge badge-sm ${activeLocationType === 'coastal' ? 'badge-info' : 'badge-success'}`}>
                     {activeLocationType === 'coastal' ? 'Beach' : 'Home'}
                   </span>
-                )}
+                ) : null}
               </div>
             )}
             <div className="flex flex-wrap gap-3 justify-start md:justify-end">

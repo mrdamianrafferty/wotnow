@@ -191,7 +191,7 @@ export const HourlyMarineCard: React.FC<HourlyMarineCardProps> = ({
       </h2> */}
       <div className="card bg-transparent shadow-none h-full">
         <div className="card-body p-0 h-full">
-          <div className="carousel rounded-box space-x-2 bg-transparent h-full">
+          <div className="carousel rounded-box space-x-2 bg-transparent h-full touch-pan-x overscroll-x-contain" style={{ WebkitOverflowScrolling: 'touch' }}>
             {hourlyWithEvents.map((it) => (
               <div className="carousel-item" key={it.key}>
                 {isHour(it) ? (
