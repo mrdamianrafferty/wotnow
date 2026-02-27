@@ -2074,7 +2074,7 @@ abbr[title] {
 .pb-nav-safe {
   padding-bottom: calc(5rem + var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 0px)));
 }
-@media (min-width: 768px) {
+@media (min-width: 1024px) {
   .pb-nav-safe {
     padding-bottom: 0;
   }

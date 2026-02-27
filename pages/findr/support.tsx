@@ -48,7 +48,7 @@ export default function FindrSupportPage() {
         <meta name="twitter:image" content="/doggy.jpg" />
       </Head>
 
-      <div data-theme="light" className="min-h-screen bg-base-100 text-base-content pb-16 md:pb-0">
+      <div data-theme="light" className="min-h-screen bg-base-100 text-base-content pb-16 lg:pb-0">
         <FindrHeader />
 
         <main className="max-w-4xl mx-auto px-6 py-12">

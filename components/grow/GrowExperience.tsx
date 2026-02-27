@@ -289,7 +289,7 @@ export function GrowExperience() {
         </div>
       )}
       {/* Add bottom padding for mobile bottom nav */}
-      <main id="main-content" className="container mx-auto px-4 py-8 pb-24 md:pb-8">
+      <main id="main-content" className="container mx-auto px-4 py-8 pb-24 lg:pb-8">
         {currentView}
       </main>
       {/* Mobile bottom navigation — uses shared GrowBottomNav for consistency */}

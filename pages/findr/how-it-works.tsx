@@ -14,7 +14,7 @@ export default function FindrHowItWorksPage() {
         <meta name="description" content="Learn how Findr combines marine data, species biology, and environmental conditions to predict fishing success." />
       </Head>
 
-      <div data-theme="light" className="min-h-screen bg-base-100 text-base-content pb-16 md:pb-0">
+      <div data-theme="light" className="min-h-screen bg-base-100 text-base-content pb-16 lg:pb-0">
         <FindrHeader />
 
         <main className="max-w-4xl mx-auto px-6 py-12">

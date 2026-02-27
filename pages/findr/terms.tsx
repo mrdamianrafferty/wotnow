@@ -10,7 +10,7 @@ export default function FindrTermsAndConditions() {
     <>
       <FindrHeader />
 
-      <main className="min-h-screen bg-base-100 text-base-content p-6 md:p-12 pb-20 md:pb-12" data-theme="corporate">
+      <main className="min-h-screen bg-base-100 text-base-content p-6 lg:p-12 pb-20 lg:pb-12" data-theme="corporate">
         <div className="max-w-3xl mx-auto bg-base-200 p-8 rounded-lg shadow-lg">
           <h1 className="text-4xl font-bold mb-6 text-primary-content">
             <TranslatedText text="Findr Terms and Conditions" />

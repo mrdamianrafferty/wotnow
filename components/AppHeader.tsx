@@ -386,11 +386,11 @@ const AppHeader: React.FC<AppHeaderProps> = ({
         {t('Skip to main content')}
       </a>
 
-      <div className="navbar bg-base-100 shadow-sm py-2 md:py-0">
+      <div className="navbar bg-base-100 shadow-sm py-2 lg:py-0">
         {/* Left: Hamburger + Logo */}
         <div className="navbar-start">
           {/* Hamburger with submenu (desktop only) */}
-          <div className="dropdown hidden md:flex">
+          <div className="dropdown hidden lg:flex">
             <label
               tabIndex={0}
               className="btn btn-ghost swap swap-rotate text-gray-800"
@@ -408,10 +408,10 @@ const AppHeader: React.FC<AppHeaderProps> = ({
               className="menu menu-sm dropdown-content mt-3 z-[1] p-2 shadow bg-white rounded-box w-64"
             >
               {/* Mobile: Location buttons at top */}
-              <li className="menu-title md:hidden">
+              <li className="menu-title lg:hidden">
                 <span>{t('Locations')}</span>
               </li>
-              <li className="md:hidden">
+              <li className="lg:hidden">
                 <button
                   type="button"
                   onClick={() => {
@@ -427,7 +427,7 @@ const AppHeader: React.FC<AppHeaderProps> = ({
                   </span>
                 </button>
               </li>
-              <li className="md:hidden">
+              <li className="lg:hidden">
                 <button
                   type="button"
                   onClick={() => {
@@ -443,7 +443,7 @@ const AppHeader: React.FC<AppHeaderProps> = ({
               </li>
               {/* Toggle button for mobile */}
               {typeof activeLocationType !== 'undefined' && typeof onToggleLocationType === 'function' && (
-                <li className="md:hidden">
+                <li className="lg:hidden">
                   <button
                     type="button"
                     onClick={() => {
@@ -458,9 +458,9 @@ const AppHeader: React.FC<AppHeaderProps> = ({
                   </button>
                 </li>
               )}
-              <li className="mt-1 border-t border-base-200 md:hidden" />
+              <li className="mt-1 border-t border-base-200 lg:hidden" />
 
-              <li className="md:hidden">
+              <li className="lg:hidden">
                 <div className="px-2 py-1">
                   <LanguageSelector className="w-full" showLabel />
                 </div>
@@ -496,7 +496,7 @@ const AppHeader: React.FC<AppHeaderProps> = ({
         {/* Right: Location buttons + Home/Beach switch */}
         <div className="navbar-end gap-2 items-center">
           {/* Desktop: Show all controls (hidden on mobile) */}
-          <div className="hidden md:flex gap-2 items-center">
+          <div className="hidden lg:flex gap-2 items-center">
             {/* LanguageSelector removed for Go Daisy context */}
 
             {/* DaisyUI swap-text toggle (render only when controlled) */}
@@ -572,7 +572,7 @@ const AppHeader: React.FC<AppHeaderProps> = ({
           </div>
 
           {/* Mobile: Language selector stays visible next to auth */}
-          <div className="flex items-center gap-1 md:hidden">
+          <div className="flex items-center gap-1 lg:hidden">
             {/* LanguageSelector removed for Go Daisy context */}
             {authReady && (
               userId ? (

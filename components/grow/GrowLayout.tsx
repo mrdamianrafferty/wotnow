@@ -204,7 +204,7 @@ export function GrowLayout({
       </a>
 
       {/* Desktop Navigation Header */}
-      <header className="hidden md:block bg-card border-b border-border sticky top-0 z-40">
+      <header className="hidden lg:block bg-card border-b border-border sticky top-0 z-40">
         <div className="container mx-auto px-4">
           <div className="flex items-center justify-between h-16">
             {/* Logo */}
@@ -280,7 +280,7 @@ export function GrowLayout({
       </header>
 
       {/* Mobile Header */}
-      <header className="md:hidden bg-card border-b border-border sticky top-0 z-40 safe-area-top">
+      <header className="lg:hidden bg-card border-b border-border sticky top-0 z-40 safe-area-top">
         <div className="flex items-center justify-between h-14 px-4">
           {/* Back Button or Logo */}
           {shouldShowBack ? (

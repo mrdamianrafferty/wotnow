@@ -145,7 +145,7 @@ export default function BaitShopsPage() {
         />
       </Head>
 
-      <div data-theme="light" className="min-h-screen bg-base-100 text-base-content pb-20 md:pb-0">
+      <div data-theme="light" className="min-h-screen bg-base-100 text-base-content pb-20 lg:pb-0">
         <FindrHeader />
 
         <main className="max-w-2xl mx-auto px-4 py-6">

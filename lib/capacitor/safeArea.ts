@@ -42,9 +42,8 @@ export async function initSafeArea(): Promise<void> {
   }
 
   if (!isNative()) {
-    // On web, set variables to 0 so CSS env() fallback is used
+    // On web, leave CSS custom properties undefined so var() falls through to env()
     console.log('[SafeArea] Web platform - using CSS env() fallback');
-    applyInsets({ top: 0, bottom: 0, left: 0, right: 0 });
     initialized = true;
     return;
   }
@@ -67,8 +66,7 @@ export async function initSafeArea(): Promise<void> {
     console.log('[SafeArea] Initialized successfully');
   } catch (error) {
     console.warn('[SafeArea] Failed to initialize plugin, using CSS env() fallback:', error);
-    // Set to 0 so CSS env() fallback is used
-    applyInsets({ top: 0, bottom: 0, left: 0, right: 0 });
+    // Leave CSS custom properties undefined so var() falls through to env()
     initialized = true;
   }
 }

@@ -56,7 +56,7 @@ export default function BottomNav() {
 
   return (
     <nav
-      className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-gray-200 h-16 flex items-center justify-around px-2 safe-area-bottom safe-area-x"
+      className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-gray-200 h-16 flex items-center justify-around px-2 safe-area-bottom safe-area-x"
       role="navigation"
       aria-label="Main navigation"
     >

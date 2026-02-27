@@ -10,8 +10,7 @@
 	"ios": {
 		"allowsLinkPreview": false,
 		"scrollEnabled": true,
-		"backgroundColor": "#065f46",
-		"preferredContentMode": "mobile"
+		"backgroundColor": "#065f46"
 	},
 	"plugins": {
 		"SplashScreen": {
