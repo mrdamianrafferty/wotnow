@@ -576,8 +576,6 @@ const { forecastByDay, loading, error, marineHours, weatherData, marineError } =
     '👍 Good Options Today');
   const stayingIndoors = useUIText('index.heading._staying_indoors__13',
     '👺 Staying Indoors?');
-  const viewForecastButton = useUIText('index.button.view_forecast',
-    'View Forecast');
   const myActivitiesButton = useUIText('index.button.my_activities',
     'My Activities');
 
@@ -1194,17 +1192,11 @@ const popupPayload = buildPopupActivityPayload({
 })()}
           </div> {/* This is the closing tag for activity-suggestions */}
           
-          {/* Action buttons - View Forecast (primary) and My Activities (secondary) */}
+          {/* Action button - My Activities */}
           <div className="activity-card-actions">
             <Link
-              href="/activities"
-              className="activity-card-btn activity-card-btn-primary"
-            >
-              📊 {viewForecastButton}
-            </Link>
-            <Link
               href="/interests"
-              className="activity-card-btn"
+              className="activity-card-btn activity-card-btn-primary"
             >
               ⚙️ {myActivitiesButton}
             </Link>
