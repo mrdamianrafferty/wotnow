@@ -95,7 +95,7 @@ export function TideSummaryCard({
           </div>
           <p className="text-white/90 text-sm">{highLabel}</p>
           {highRelative && highRelative !== 'passed' && (
-            <p className="text-white/60 text-xs">{highRelative}</p>
+            <p className="text-white/75 text-xs">{highRelative}</p>
           )}
         </div>
 
@@ -113,7 +113,7 @@ export function TideSummaryCard({
           </div>
           <p className="text-white/90 text-sm">{lowLabel}</p>
           {lowRelative && lowRelative !== 'passed' && (
-            <p className="text-white/60 text-xs">{lowRelative}</p>
+            <p className="text-white/75 text-xs">{lowRelative}</p>
           )}
         </div>
       </div>

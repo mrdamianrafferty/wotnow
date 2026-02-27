@@ -56,7 +56,6 @@ const AppHeader: React.FC<AppHeaderProps> = ({
       'Showing beach — switch to home',
       'Showing home — switch to beach',
       'My Weather',
-      'Grow garden',
       'Activity dashboard',
       'Set activities',
       'My Account',
@@ -470,7 +469,6 @@ const AppHeader: React.FC<AppHeaderProps> = ({
               {/* Use root path for Home */}
               <li><Link href="/">{t('Home')}</Link></li>
               <li><Link href="/weather">{t('My Weather')}</Link></li>
-              <li><Link href="/grow">{t('Grow garden')}</Link></li>
               <li><Link href="/activities">{t('Activity dashboard')}</Link></li>
               <li><Link href="/interests">{t('Set activities')}</Link></li>
               <li className="mt-1 border-t border-base-200" />
@@ -589,7 +587,7 @@ const AppHeader: React.FC<AppHeaderProps> = ({
               ) : (
                 <Link
                   href="/login"
-                  className="btn btn-primary btn-sm gap-1"
+                  className="btn btn-primary btn-md gap-1"
                   title={t('Log in')}
                   aria-label={t('Log in')}
                 >

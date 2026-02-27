@@ -543,7 +543,7 @@ export default function WeatherPage() {
       </div>
 
       {/* Foreground UI */}
-      <main className="relative z-10 bg-transparent text-base-content min-h-screen overflow-x-hidden">
+      <main id="main-content" className="relative z-10 bg-transparent text-base-content min-h-screen overflow-x-hidden">
         <section className="mx-auto w-full max-w-6xl px-4 py-6" style={{ minHeight: '220px' }}>
           <HeaderHero
             data={data.header as Omit<HeaderData, 'minis'> & { minis: MiniItem[] }}
@@ -551,6 +551,7 @@ export default function WeatherPage() {
             sunsetISO={data.sunsetISO}
             locationName={safeLocationName}
             isLoading={!Array.isArray(data.hourly) || data.hourly.length === 0}
+            activeLocationType={activeLocationType}
           />
           {apiError && (
             <div className="alert alert-error mt-3 text-sm">
@@ -907,12 +908,14 @@ function HeaderHero({
   sunsetISO,
   locationName,
   isLoading,
+  activeLocationType,
 }: {
   data: Omit<HeaderData, 'minis'> & { minis: MiniItem[] };
   sunriseISO?: string;
   sunsetISO?: string;
   locationName?: string;
   isLoading?: boolean;
+  activeLocationType?: 'home' | 'coastal';
 }) {
   const { condition, tempC, feelsLikeC, highC, lowC, minis } = data;
   // If loading, show prominent DaisyUI loader
@@ -974,6 +977,11 @@ function HeaderHero({
                 {locationName}
               </div>
             )}
+            {activeLocationType && (
+              <div className="text-xs font-medium text-white/80 flex items-center gap-1 justify-end">
+                {activeLocationType === 'coastal' ? 'Beach' : 'Home'}
+              </div>
+            )}
             <div className="flex flex-wrap gap-3 justify-end">
               {minis.map((m, i) => (
                 <div
@@ -987,7 +995,7 @@ function HeaderHero({
                       </span>
                     )}
                     <span className="col-start-2 text-base font-semibold leading-tight truncate">{m.value ?? '—'}</span>
-                    <span className="col-start-2 text-[11px] opacity-80 leading-none truncate">{m.sub ?? ' '}</span>
+                    <span className="col-start-2 text-xs opacity-80 leading-none truncate">{m.sub ?? ' '}</span>
                   </div>
                 </div>
               ))}
@@ -1096,7 +1104,7 @@ function useWeatherData({ isMarine, lat, lon, onError }: { isMarine: boolean; la
 
    const bundle: WeatherBundle = {
    header: {
-      condition: w.description || "Clear",
+      condition: w.daily?.[0]?.summary || w.description || "Clear",
       tempC: w.temperatureC || 0,
       feelsLikeC: w.feelsLikeC || 0,
       highC: w.daily?.[0]?.maxC,
