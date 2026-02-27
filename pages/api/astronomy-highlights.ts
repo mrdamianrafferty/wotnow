@@ -424,9 +424,8 @@ class WotNowAstronomyAPI {
 
     // If Open-Meteo succeeded, normalise its data
     if (astronomyData && Array.isArray((astronomyData as { astronomy?: unknown[] }).astronomy) && (astronomyData as { astronomy: unknown[] }).astronomy.length > 0) {
-      // Fetch OpenWeather daily only for timezone offset
+      // Fetch OpenWeather daily for iteration bounds
       const dailyWeather = await this.fetchOpenWeatherDaily(lat, lon);
-      const timezoneOffset = (dailyWeather[0] && typeof dailyWeather[0].timezone_offset === 'number') ? dailyWeather[0].timezone_offset : 0;
       const highlights: AstronomyHighlight[] = [];
       const astronomyArray = (astronomyData as { astronomy: OpenMeteoAstronomyDay[] }).astronomy;
       for (let i = 0; i < numDays && i < astronomyArray.length && i < dailyWeather.length; i++) {
@@ -444,11 +443,12 @@ class WotNowAstronomyAPI {
         const darkWindow = this.calculateDarkWindow(sunset, sunrise);
         // Detect special events
         const events = this.detectSpecialEvents(date, moonPhaseDeg / 360, moonIllumination);
-        // Format times
-        const sunriseLocal = this.formatTimeLocal(sunrise, timezoneOffset);
-        const sunsetLocal = this.formatTimeLocal(sunset, timezoneOffset);
-        const moonriseLocal = this.formatTimeLocal(moonrise, timezoneOffset);
-        const moonsetLocal = this.formatTimeLocal(moonset, timezoneOffset);
+        // Format times — Open-Meteo with timezone=auto already returns local times,
+        // so pass offset=0 to avoid double-applying the timezone shift
+        const sunriseLocal = this.formatTimeLocal(sunrise, 0);
+        const sunsetLocal = this.formatTimeLocal(sunset, 0);
+        const moonriseLocal = this.formatTimeLocal(moonrise, 0);
+        const moonsetLocal = this.formatTimeLocal(moonset, 0);
         // Generate WotNow message
         const wotnowMessage = this.generateWotNowMessage(
           date, moonIllumination, moonsetLocal, darkWindow, events
