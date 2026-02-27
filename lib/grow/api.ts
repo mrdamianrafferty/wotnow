@@ -1546,12 +1546,21 @@ export interface GardenPhotosResponse {
 export interface LocalSignal {
   id: string;
   type: string;
-  name: string;
+  title: string;
+  name?: string;
   severity: 'low' | 'moderate' | 'high' | 'critical';
-  score: number;
+  score?: number;
+  confidence?: number;
   description: string;
-  recommendation: string;
-  factors: Array<{
+  advice: string;
+  recommendation?: string;
+  factors?: Array<{
+    name: string;
+    value: number;
+    unit: string;
+    contribution: 'favorable' | 'neutral' | 'unfavorable';
+  }>;
+  weatherFactors?: Array<{
     name: string;
     value: number;
     unit: string;
@@ -1581,7 +1590,7 @@ export interface WeatherTask {
   severity: 'info' | 'warning' | 'critical';
   forecastValue?: number;
   threshold?: number;
-  recommendation: string;
+  recommendation?: string;
   affectedPlants: string[];
   validFrom: string;
   validUntil?: string;
