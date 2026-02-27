@@ -2065,6 +2065,21 @@ abbr[title] {
   padding-right: var(--safe-area-inset-right, env(safe-area-inset-right, 0px));
 }
 
+.safe-area-x {
+  padding-left: var(--safe-area-inset-left, env(safe-area-inset-left, 0px));
+  padding-right: var(--safe-area-inset-right, env(safe-area-inset-right, 0px));
+}
+
+/* Dynamic bottom padding that accounts for nav bar + safe area inset */
+.pb-nav-safe {
+  padding-bottom: calc(5rem + var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 0px)));
+}
+@media (min-width: 768px) {
+  .pb-nav-safe {
+    padding-bottom: 0;
+  }
+}
+
 /* --- APPLE DESIGN LANGUAGE ENHANCEMENTS (Added: Jan 2025) --- */
 
 /* 1. OUTDOOR READABILITY ENHANCEMENTS */

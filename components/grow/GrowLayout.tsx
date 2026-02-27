@@ -280,7 +280,7 @@ export function GrowLayout({
       </header>
 
       {/* Mobile Header */}
-      <header className="md:hidden bg-card border-b border-border sticky top-0 z-40">
+      <header className="md:hidden bg-card border-b border-border sticky top-0 z-40 safe-area-top">
         <div className="flex items-center justify-between h-14 px-4">
           {/* Back Button or Logo */}
           {shouldShowBack ? (
@@ -343,7 +343,7 @@ export function GrowLayout({
       {/* Main Content */}
       <main 
         id="main-content" 
-        className={`flex-1 ${hideBottomNav ? '' : 'pb-20 md:pb-0'} ${className}`}
+        className={`flex-1 ${hideBottomNav ? '' : 'pb-nav-safe'} ${className}`}
       >
         {children}
       </main>

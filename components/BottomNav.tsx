@@ -56,7 +56,7 @@ export default function BottomNav() {
 
   return (
     <nav
-      className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-gray-200 h-16 flex items-center justify-around px-2 safe-area-bottom"
+      className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-gray-200 h-16 flex items-center justify-around px-2 safe-area-bottom safe-area-x"
       role="navigation"
       aria-label="Main navigation"
     >
@@ -72,7 +72,7 @@ export default function BottomNav() {
             style={{
               color: isActive ? '#0e7490' : '#374151',
             }}
-            className="flex flex-col items-center justify-center gap-0.5 flex-1 h-full transition-colors hover:opacity-80"
+            className="flex flex-col items-center justify-center gap-0.5 flex-1 h-full min-w-[60px] min-h-[48px] transition-colors hover:opacity-80"
             aria-label={item.label}
             aria-current={isActive ? 'page' : undefined}
           >

@@ -36,7 +36,7 @@ export function FindrBottomNav() {
   const pathname = router?.pathname ?? '';
 
   return (
-    <div className="md:hidden fixed bottom-0 left-0 right-0 bg-base-100 border-t border-base-200 z-50 safe-area-bottom">
+    <div className="md:hidden fixed bottom-0 left-0 right-0 bg-base-100 border-t border-base-200 z-50 safe-area-bottom safe-area-x">
       <nav className="flex justify-around items-center h-16">
         {LINKS.map((link) => {
           const isActive = pathname === link.href;

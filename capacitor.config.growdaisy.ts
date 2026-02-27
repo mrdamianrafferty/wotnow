@@ -45,6 +45,10 @@ const config: CapacitorConfig = {
       smallIcon: 'ic_stat_icon',
       iconColor: '#10b981',
     },
+    StatusBar: {
+      style: 'DEFAULT',
+      overlaysWebView: true,
+    },
   },
 };
 

@@ -269,7 +269,7 @@ export default function GoDaisyLogin() {
         <title>Sign In - {appName}</title>
       </Head>
       <div
-        className={`min-h-screen flex items-center justify-center p-4 ${
+        className={`min-h-screen flex items-center justify-center p-4 safe-area-bottom ${
           isGrowContext
             ? 'bg-gradient-to-br from-green-50 via-emerald-50 to-lime-50'
             : 'bg-gradient-to-br from-blue-50 via-green-50 to-yellow-50'
