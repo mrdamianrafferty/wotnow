@@ -187,7 +187,7 @@ function mapWeatherToCondition(data: WeatherBundle, isMarine: boolean): WeatherA
 type HeaderData = WeatherBundle['header'];
 function degToCompass(deg?: number): string {
   if (typeof deg !== 'number') return '—';
-  const dirs = ['N','NNE','NE','ENE','E','ESE','SE','S','SSW','SW','WSW','W','WNW','NW','NNW'];
+  const dirs = ['N','NNE','NE','ENE','E','ESE','SE','SSE','S','SSW','SW','WSW','W','WNW','NW','NNW'];
   const i = Math.round(((deg % 360) / 22.5)) % 16;
   return dirs[i];
 }
@@ -249,6 +249,11 @@ function beaufortFromMS(ms?: number): number {
   if (v < 1.6) return 1;
   if (v < 3.4) return 2;
   if (v < 5.5) return 3;
+  if (v < 8.0) return 4;
+  if (v < 10.8) return 5;
+  if (v < 13.9) return 6;
+  if (v < 17.2) return 7;
+  if (v < 20.8) return 8;
   if (v < 24.5) return 9;
   if (v < 28.5) return 10;
   if (v < 32.7) return 11;
@@ -564,7 +569,7 @@ export default function WeatherPage() {
         </section>
 
         {/* Cards Layout with Sections */}
-        <div className="mx-auto w-full max-w-6xl px-4 pb-10 space-y-4">
+        <div className="mx-auto w-full max-w-6xl px-4 pb-nav-safe md:pb-10 space-y-4">
           {/* Show skeleton until data loaded to prevent marine/inland layout switch CLS */}
           {!Array.isArray(data.hourly) || data.hourly.length === 0 ? (
             <div className="space-y-4" style={{ minHeight: '800px' }}>
@@ -960,35 +965,35 @@ function HeaderHero({
   return (
     <div className="hero rounded-2xl bg-slate-800/25 backdrop-blur-sm text-white border border-white/10 shadow-sm" style={{ minHeight: '180px' }}>
       <div className="hero-content w-full flex-col items-stretch py-6 md:py-8">
-        <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4">
+        <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-6 md:gap-4">
           <div className="flex items-start gap-4">
-            <div className="hidden sm:block w-24 h-24 md:w-28 md:h-28 relative">
-              <Image src={iconPath} alt={condition} fill className="object-contain drop-shadow" priority />
+            <div className="w-14 h-14 sm:w-24 sm:h-24 md:w-28 md:h-28 relative">
+              <Image src={iconPath} alt="" fill className="object-contain drop-shadow" priority />
             </div>
             <div>
               <div className="text-6xl md:text-7xl font-extrabold leading-none flex items-center gap-3"><span>{Math.round(tempC)}°</span></div>
-              <div className="text-xl md:text-2xl capitalize">{condition}</div>
+              <div className="text-lg sm:text-xl md:text-2xl capitalize line-clamp-2">{condition}</div>
               <div className="text-sm opacity-70">Feels like {Math.round(feelsLikeC)}° {highC !== undefined && lowC !== undefined && (<> · High {Math.round(highC)}° · Low {Math.round(lowC)}°</>)}</div>
             </div>
           </div>
-          <div className="flex flex-col items-end gap-1">
+          <div className="flex flex-col items-start md:items-end gap-1">
             {locationName && (
-              <div className="text-xl md:text-2xl font-medium capitalize text-right mb-2">
+              <div className="text-xl md:text-2xl font-medium capitalize text-left md:text-right mb-2 flex items-center gap-2 justify-start md:justify-end">
                 {locationName}
+                {activeLocationType && (
+                  <span className={`badge badge-sm ${activeLocationType === 'coastal' ? 'badge-info' : 'badge-success'}`}>
+                    {activeLocationType === 'coastal' ? 'Beach' : 'Home'}
+                  </span>
+                )}
               </div>
             )}
-            {activeLocationType && (
-              <div className="text-xs font-medium text-white/80 flex items-center gap-1 justify-end">
-                {activeLocationType === 'coastal' ? 'Beach' : 'Home'}
-              </div>
-            )}
-            <div className="flex flex-wrap gap-3 justify-end">
+            <div className="flex flex-wrap gap-3 justify-start md:justify-end">
               {minis.map((m, i) => (
                 <div
                   key={i}
                   className="rounded-md bg-slate-900/80 text-white border border-white/15 px-3 py-2 min-w-[9.5rem] min-h-[3.0rem] shadow-sm"
                 >
-                  <div className="grid grid-cols-[40px,1fr] grid-rows-2 gap-x-2 items-center">
+                  <div className="grid grid-cols-[48px,1fr] grid-rows-2 gap-x-2 items-center">
                     {m.icon && (
                       <span aria-hidden="true" className="row-span-2 col-start-1 flex items-center justify-center w-12 h-12">
                         {m.icon}
@@ -1002,14 +1007,6 @@ function HeaderHero({
             </div>
           </div>
         </div>
-        {isLoading && (
-          <div className="mt-4">
-            <span className="loading loading-spinner text-primary" aria-hidden="true"></span>
-            <span className="ml-2 opacity-70">Communing with the weather gods...</span>
-          <span className="loading loading-spinner text-secondary"></span>
-<span className="loading loading-spinner text-accent"></span>
-          </div>
-        )}
       </div>
     </div>
   );
