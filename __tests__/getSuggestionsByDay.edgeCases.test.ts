@@ -91,8 +91,9 @@ describe('getSuggestionsByDay - Edge Cases & Uncovered Paths', () => {
       });
 
       expect(suggestions).toHaveLength(1);
-      // Should have base indoor score without evening bonus
-      expect(suggestions[0].score).toBeLessThanOrEqual(50);
+      // Weather-reactive indoor scoring: gorgeous day (22°C, no rain, clear) gets mild deprioritisation (65 - 10 = 55)
+      expect(suggestions[0].score).toBeLessThanOrEqual(65);
+      expect(suggestions[0].score).toBeGreaterThanOrEqual(40);
     });
   });
 

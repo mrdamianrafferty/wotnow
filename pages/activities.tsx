@@ -225,7 +225,23 @@ function ActivityCard({ activityId, score, evaluation: _evaluation, reasoning: _
   
   // Build assessment message using same logic as homepage
   const reasonsStrings = activityId ? buildReasons(day, activityId) : [];
-  
+
+  // For indoor activities, prepend weather context as a reason
+  if (isIndoorActivity && assessment.status !== 'offseason') {
+    const precip = day.rain ?? 0;
+    const temp = typeof day.temperature === 'number' ? day.temperature : null;
+
+    if (precip >= 5) {
+      reasonsStrings.unshift('Heavy rain outside—perfect excuse to stay dry');
+    } else if (precip >= 1) {
+      reasonsStrings.unshift('Rain outside—great reason to head indoors');
+    } else if (precip > 0) {
+      reasonsStrings.unshift('Drizzly out there');
+    } else if (temp !== null && temp >= 15 && temp <= 25 && (day.clouds ?? 100) < 30) {
+      reasonsStrings.unshift('Lovely day outside, but this is always a good option');
+    }
+  }
+
   // Convert strings to the expected format for getActivityMessage
   const reasonsObjects = reasonsStrings.map((reason, index) => ({
     key: `reason_${index}`,
@@ -336,8 +352,8 @@ function ActivityCard({ activityId, score, evaluation: _evaluation, reasoning: _
         </div>
       </div>
 
-      {/* Assessment Message - only show for outdoor, in-season activities */}
-      {activityId && isOutdoor(activityId) && assessment.status !== 'offseason' && (
+      {/* Assessment Message - show for all in-season activities */}
+      {activityId && assessment.status !== 'offseason' && (
         <div className="activity-card__message">
           {message || (score < 40 ? 
             `Not ideal weather for ${activity?.name || (activityId ? activityId.replace(/_/g, ' ') : 'Activity')}, but still an option if you're interested.` : 

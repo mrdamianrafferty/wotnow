@@ -91,13 +91,33 @@ function calculateActivityScoreWithSnow(
   console.log(`🎯 Scoring ${activity.id}...`);
   console.log(`🌦️ Raw weather input:`, JSON.stringify(weather, null, 2));
   
-  // Indoor activities: always doable regardless of weather, boosted in evening
+  // Indoor activities: weather-reactive scoring
   if (!activity.weatherSensitive) {
     let score = 65;
+    const precip = weather.precipitation ?? 0;
+    const temp = weather.temperature;
+    const wind = weather.windspeed ?? 0;
+    const clouds = weather.clouds ?? 0;
+
+    // Boost indoor activities in bad weather
+    if (precip >= 5) score += 15;           // heavy rain — strong indoor boost
+    else if (precip >= 1) score += 10;      // moderate rain
+    else if (precip > 0) score += 5;        // light rain/drizzle
+
+    if (wind >= 50) score += 5;             // very windy (km/h)
+    if (typeof temp === 'number' && (temp <= 2 || temp >= 35)) score += 5; // extreme temps
+
+    // Slightly reduce on beautiful days so outdoor activities rise above
+    if (precip === 0 && clouds < 30 && typeof temp === 'number' && temp >= 15 && temp <= 25 && wind < 20) {
+      score -= 10; // gorgeous day — mild deprioritisation
+    }
+
+    // Evening bonus still applies
     const hour = new Date(opts.nowTs).getHours();
     const eveningResult = applyEveningBonus(activity as unknown as ActivityType, hour, contextTags, opts);
     score *= eveningResult.multiplier;
-    return { score: Math.min(95, Math.round(score)) };
+
+    return { score: Math.max(40, Math.min(95, Math.round(score))) };
   }
 
   // Normalize weather to the suitability engine WeatherData

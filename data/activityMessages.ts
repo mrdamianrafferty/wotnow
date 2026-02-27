@@ -69,6 +69,22 @@ export const categoryDefaults: CategoryDefaults = {
       fair: "Decent weather for indoor sports—reliable conditions regardless of what's outside. {reasons}",
       poor: "Indoor sports are your best bet today—weather's not cooperating outdoors. {reasons}"
     }
+  },
+  'Indoor Recreation': {
+    templates: {
+      perfect: "Ideal day to head indoors—{reasons}",
+      good: "Great option rain or shine. {reasons}",
+      fair: "Nice enough outside, but always a good shout. {reasons}",
+      poor: "Lovely day to be outside—but if you fancy it, go for it. {reasons}"
+    }
+  },
+  'Creative & Arts': {
+    templates: {
+      perfect: "Perfect weather to get creative indoors. {reasons}",
+      good: "Good day for some indoor creativity. {reasons}",
+      fair: "Nice out, but creativity doesn't need sunshine. {reasons}",
+      poor: "Beautiful day outside—but inspiration strikes anytime. {reasons}"
+    }
   }
 };
 
@@ -172,6 +188,49 @@ export const activityCategories: { [activityId: string]: string } = {
   'padel': 'Active Sports',
   'pickleball': 'Active Sports',
   'horse_riding': 'Active Sports',
+
+  // Indoor Recreation
+  'cinema': 'Indoor Recreation',
+  'bowling': 'Indoor Recreation',
+  'shopping': 'Indoor Recreation',
+  'museum': 'Indoor Recreation',
+  'gallery': 'Indoor Recreation',
+  'cafe': 'Indoor Recreation',
+  'diy': 'Indoor Recreation',
+  'gaming': 'Indoor Recreation',
+  'going_to_the_pub': 'Indoor Recreation',
+  'playing_cards': 'Indoor Recreation',
+  'watch_tv': 'Indoor Recreation',
+
+  // Creative & Arts
+  'cooking': 'Creative & Arts',
+  'crafts': 'Creative & Arts',
+  'dance': 'Creative & Arts',
+  'knitting': 'Creative & Arts',
+  'making_music': 'Creative & Arts',
+  'painting': 'Creative & Arts',
+  'playing_records': 'Creative & Arts',
+  'reading': 'Creative & Arts',
+
+  // Fitness & Wellness (indoor entries)
+  'boxing': 'Fitness & Wellness',
+  'gym': 'Fitness & Wellness',
+  'martial_arts': 'Fitness & Wellness',
+  'meditation': 'Fitness & Wellness',
+  'pilates': 'Fitness & Wellness',
+  'spinning': 'Fitness & Wellness',
+  'yoga': 'Fitness & Wellness',
+  'zumba': 'Fitness & Wellness',
+  'indoor_climbing': 'Fitness & Wellness',
+
+  // Indoor Sports
+  'squash': 'Indoor Sports',
+  'badminton': 'Indoor Sports',
+  'table_tennis': 'Indoor Sports',
+  'tennis_indoor': 'Indoor Sports',
+  'volleyball_indoor': 'Indoor Sports',
+  'indoor_swimming': 'Indoor Sports',
+  'ice_hockey_indoor': 'Indoor Sports',
 };
 
 // Activity aliases for spelling variations and normalization
@@ -231,10 +290,10 @@ export const activityAliases: { [alias: string]: string } = {
 // Global fallback defaults for when neither activity nor category templates exist
 export const globalDefaults: ActivityMessageConfig = {
   templates: {
-    perfect: "Perfect conditions—ideal weather for outdoor activities. {reasons}",
-    good: "Good conditions—great weather to get outside and enjoy. {reasons}",
-    fair: "Weather's not great but it's still worth getting out of the house. {reasons}",
-    poor: "Weather's not cooperating today—maybe try indoor alternatives. {reasons}"
+    perfect: "Perfect conditions—couldn't ask for better. {reasons}",
+    good: "Good conditions for this today. {reasons}",
+    fair: "Conditions are decent—still worth a go. {reasons}",
+    poor: "Not the best conditions today—but you could make it work. {reasons}"
   }
 };
 
