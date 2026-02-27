@@ -47,10 +47,10 @@ export default function BottomNav() {
       match: (path: string) => path.startsWith('/weather'),
     },
     {
-      href: userId ? '/settings' : '/login',
+      href: userId ? '/account' : '/login',
       icon: Settings,
-      label: 'Settings',
-      match: (path: string) => path.startsWith('/settings') || path.startsWith('/login'),
+      label: 'Account',
+      match: (path: string) => path.startsWith('/account') || path.startsWith('/settings') || path.startsWith('/login'),
     },
   ];
 
