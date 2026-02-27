@@ -201,6 +201,8 @@ export const activityCategories: { [activityId: string]: string } = {
   'going_to_the_pub': 'Indoor Recreation',
   'playing_cards': 'Indoor Recreation',
   'watch_tv': 'Indoor Recreation',
+  'watch_a_movie': 'Indoor Recreation',
+  'going_to_pub': 'Indoor Recreation',
 
   // Creative & Arts
   'cooking': 'Creative & Arts',
@@ -208,6 +210,7 @@ export const activityCategories: { [activityId: string]: string } = {
   'dance': 'Creative & Arts',
   'knitting': 'Creative & Arts',
   'making_music': 'Creative & Arts',
+  'make_music': 'Creative & Arts',
   'painting': 'Creative & Arts',
   'playing_records': 'Creative & Arts',
   'reading': 'Creative & Arts',
@@ -215,6 +218,7 @@ export const activityCategories: { [activityId: string]: string } = {
   // Fitness & Wellness (indoor entries)
   'boxing': 'Fitness & Wellness',
   'gym': 'Fitness & Wellness',
+  'gym_workout': 'Fitness & Wellness',
   'martial_arts': 'Fitness & Wellness',
   'meditation': 'Fitness & Wellness',
   'pilates': 'Fitness & Wellness',
