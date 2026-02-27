@@ -576,10 +576,10 @@ const { forecastByDay, loading, error, marineHours, weatherData, marineError } =
     '👍 Good Options Today');
   const stayingIndoors = useUIText('index.heading._staying_indoors__13',
     '👺 Staying Indoors?');
-  const planItButton = useUIText('index.button.plan_it',
-    'Plan it');
-  const allActivitiesButton = useUIText('index.button.all_activities',
-    'All activities');
+  const viewForecastButton = useUIText('index.button.view_forecast',
+    'View Forecast');
+  const myActivitiesButton = useUIText('index.button.my_activities',
+    'My Activities');
 
 // Helper: Build forecastByDay from One Call 3.0 if available
 function buildForecastFromOneCall(weatherData: WeatherWithPollen): WeatherForecastDay[] {
@@ -1194,19 +1194,19 @@ const popupPayload = buildPopupActivityPayload({
 })()}
           </div> {/* This is the closing tag for activity-suggestions */}
           
-          {/* Action buttons - Plan it (primary) and All activities (secondary) */}
+          {/* Action buttons - View Forecast (primary) and My Activities (secondary) */}
           <div className="activity-card-actions">
             <Link
-              href="/interests"
+              href="/activities"
               className="activity-card-btn activity-card-btn-primary"
             >
-              {planItButton}
+              📊 {viewForecastButton}
             </Link>
             <Link
-              href="/activities"
+              href="/interests"
               className="activity-card-btn"
             >
-              {allActivitiesButton}
+              ⚙️ {myActivitiesButton}
             </Link>
           </div>
           
