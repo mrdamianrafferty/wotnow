@@ -31,7 +31,9 @@ export default function SupportPage() {
         setIsIOSNative(native);
 
         if (native) {
-          const { fetchOfferings } = await import("../lib/grow/revenueCat");
+          const { initRevenueCat, fetchOfferings } = await import("../lib/grow/revenueCat");
+          // Ensure RevenueCat is configured before fetching (idempotent if already initialised)
+          await initRevenueCat(null);
           const offerings = await fetchOfferings();
           if (cancelled) return;
           if (offerings?.current?.availablePackages) {
