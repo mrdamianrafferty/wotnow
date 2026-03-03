@@ -78,6 +78,8 @@
 	<!-- Location Permissions -->
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>Go Daisy needs your location to show outdoor windows for your area and recommend the safest spots nearby.</string>
+	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+	<string>Go Daisy needs your location to show outdoor windows for your area and recommend the safest spots nearby.</string>
 
 	<!-- Camera Permission -->
 	<key>NSCameraUsageDescription</key>
