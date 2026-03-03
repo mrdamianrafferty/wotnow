@@ -210,18 +210,9 @@ export default function SupportPage() {
                         );
                       })
                     ) : (
-                      GODAISY_TIP_PRODUCTS.map((product) => (
-                        <button
-                          key={product.id}
-                          className="btn btn-outline btn-disabled"
-                          disabled
-                        >
-                          <span>{product.emoji} {product.label}</span>
-                          <span className="ml-2 font-semibold">
-                            &euro;{product.defaultPriceEur}
-                          </span>
-                        </button>
-                      ))
+                      <div className="text-sm text-base-content/70">
+                        Tip jar is loading. If this persists, try restarting the app.
+                      </div>
                     )}
                   </>
                 ) : (

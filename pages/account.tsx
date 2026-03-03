@@ -512,8 +512,8 @@ export default function AccountPage() {
             </div>
           </section>
 
-          {/* Notifications */}
-          {isSignedIn && (
+          {/* Notifications — hidden on iOS native (use device settings instead) */}
+          {isSignedIn && !isIOSNative && (
             <section className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 mb-4">
               <h2 className="text-lg font-semibold text-gray-900 mb-1">Notifications</h2>
               <p className="text-sm text-gray-600 mb-3">
@@ -521,17 +521,10 @@ export default function AccountPage() {
               </p>
 
               {!pushSupported ? (
-                isIOSNative ? (
-                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-blue-800 text-sm">
-                    Notifications are managed in your device settings.
-                    Go to Settings &gt; Go Daisy &gt; Notifications to adjust.
-                  </div>
-                ) : (
-                  <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 text-amber-800 text-sm">
-                    Push notifications are not supported in this browser.
-                    Try Chrome, Firefox, or Edge.
-                  </div>
-                )
+                <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 text-amber-800 text-sm">
+                  Push notifications are not supported in this browser.
+                  Try Chrome, Firefox, or Edge.
+                </div>
               ) : pushPermission === 'denied' ? (
                 <div className="bg-red-50 border border-red-200 rounded-lg p-3 text-red-800 text-sm">
                   Notification permission was denied. Update your browser settings to allow notifications.
@@ -693,19 +686,9 @@ export default function AccountPage() {
                     );
                   })
                 ) : (
-                  GODAISY_TIP_PRODUCTS.map((product) => (
-                    <div
-                      key={product.id}
-                      className="w-full flex items-center justify-between p-3 rounded-lg border border-gray-200 opacity-50"
-                    >
-                      <span className="font-medium text-gray-900">
-                        {product.emoji} {product.label}
-                      </span>
-                      <span className="font-semibold text-gray-700">
-                        &euro;{product.defaultPriceEur}
-                      </span>
-                    </div>
-                  ))
+                  <div className="bg-gray-50 border border-gray-200 rounded-lg p-3 text-gray-600 text-sm">
+                    Tip jar is loading. If this persists, try restarting the app.
+                  </div>
                 )}
               </div>
             </section>

@@ -12,12 +12,27 @@
 
 import { useEffect } from 'react';
 import { createClient } from '@/lib/supabase/client';
-import { identifyRevenueCatUser, logOutRevenueCat } from '@/lib/grow/revenueCat';
+import {
+  initRevenueCat,
+  identifyRevenueCatUser,
+  logOutRevenueCat,
+} from '@/lib/grow/revenueCat';
 
 export default function RevenueCatAuthSync() {
   useEffect(() => {
     const supabase = createClient();
 
+    // Initialize RevenueCat SDK, then identify the current user if signed in
+    (async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      await initRevenueCat(session?.user?.id ?? null);
+
+      if (session?.user?.id) {
+        await identifyRevenueCatUser(session.user.id);
+      }
+    })();
+
+    // Listen for future auth state changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         if (event === 'SIGNED_IN' && session?.user?.id) {
