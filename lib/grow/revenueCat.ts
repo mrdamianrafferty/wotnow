@@ -68,33 +68,19 @@ export async function initRevenueCat(supabaseUserId: string | null): Promise<voi
     try {
       const Purchases = await getPurchases();
 
-      // Fire configure without awaiting — Capacitor 7 treats the native
-      // method's CAPPluginReturnNone as fire-and-forget, so the JS promise
-      // from Purchases.configure() never resolves. We fire it, then poll
-      // isConfigured() (which IS a promise-returning method) to confirm.
+      // RevenueCat is configured natively in AppDelegate.swift.
+      // The Capacitor plugin's configure() uses CAPPluginReturnNone which
+      // hangs in Capacitor 7, so we skip it and just fire it as a no-op
+      // fallback (in case native init hasn't happened).
       Purchases.configure({
         apiKey,
         appUserID: supabaseUserId ?? undefined,
       });
 
-      // Poll isConfigured() — this has CAPPluginReturnPromise so it resolves
-      for (let i = 0; i < 20; i++) {
-        await new Promise(resolve => setTimeout(resolve, 250));
-        try {
-          const { isConfigured } = await Purchases.isConfigured();
-          if (isConfigured) {
-            configured = true;
-            console.log('[RevenueCat] Configured', supabaseUserId ? `for user ${supabaseUserId}` : 'anonymously');
-            return;
-          }
-        } catch {
-          // isConfigured not available — fall back to timeout
-        }
-      }
-
-      // Fallback: assume configured after 5s if polling didn't work
+      // Don't await configure — it hangs due to CAPPluginReturnNone.
+      // Just mark as configured since native AppDelegate already did it.
       configured = true;
-      console.warn('[RevenueCat] Assumed configured after timeout');
+      console.log('[RevenueCat] Marked configured (native init in AppDelegate)');
     } catch (error) {
       console.error('[RevenueCat] Failed to configure:', error);
     } finally {

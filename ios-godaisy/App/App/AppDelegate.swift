@@ -5,6 +5,7 @@ import UserNotifications
 import BackgroundTasks
 import FirebaseCore
 import FirebaseMessaging
+import RevenueCat
 
 /// AppDelegate - iOS 17+ optimized with modern Swift patterns
 /// Uses @main instead of deprecated @UIApplicationMain
@@ -19,6 +20,18 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     ) -> Bool {
         // Initialize Firebase
         FirebaseApp.configure()
+
+        // Configure RevenueCat natively (bypasses Capacitor bridge CAPPluginReturnNone hang)
+        Purchases.logLevel = .debug
+        Purchases.configure(withAPIKey: "appl_fUSSbSMORcfnVFSwHweCTCDAsUQ")
+        print("🛒 RevenueCat configured natively, isConfigured: \(Purchases.isConfigured)")
+
+        // Diagnostic: check if PurchasesPlugin class is loadable by Capacitor
+        if let cls = NSClassFromString("PurchasesPlugin") {
+            print("✅ PurchasesPlugin class found: \(cls)")
+        } else {
+            print("❌ PurchasesPlugin class NOT found by NSClassFromString")
+        }
 
         // Configure push notifications delegate
         UNUserNotificationCenter.current().delegate = self
