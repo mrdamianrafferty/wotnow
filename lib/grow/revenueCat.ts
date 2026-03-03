@@ -66,17 +66,35 @@ export async function initRevenueCat(supabaseUserId: string | null): Promise<voi
 
   configurePromise = (async () => {
     try {
-      console.log('[RevenueCat] Importing SDK...');
       const Purchases = await getPurchases();
 
-      console.log('[RevenueCat] Calling configure...');
-      await Purchases.configure({
+      // Fire configure without awaiting — Capacitor 7 treats the native
+      // method's CAPPluginReturnNone as fire-and-forget, so the JS promise
+      // from Purchases.configure() never resolves. We fire it, then poll
+      // isConfigured() (which IS a promise-returning method) to confirm.
+      Purchases.configure({
         apiKey,
         appUserID: supabaseUserId ?? undefined,
       });
 
+      // Poll isConfigured() — this has CAPPluginReturnPromise so it resolves
+      for (let i = 0; i < 20; i++) {
+        await new Promise(resolve => setTimeout(resolve, 250));
+        try {
+          const { isConfigured } = await Purchases.isConfigured();
+          if (isConfigured) {
+            configured = true;
+            console.log('[RevenueCat] Configured', supabaseUserId ? `for user ${supabaseUserId}` : 'anonymously');
+            return;
+          }
+        } catch {
+          // isConfigured not available — fall back to timeout
+        }
+      }
+
+      // Fallback: assume configured after 5s if polling didn't work
       configured = true;
-      console.log('[RevenueCat] Configured', supabaseUserId ? `for user ${supabaseUserId}` : 'anonymously');
+      console.warn('[RevenueCat] Assumed configured after timeout');
     } catch (error) {
       console.error('[RevenueCat] Failed to configure:', error);
     } finally {

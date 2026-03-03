@@ -1,0 +1,13 @@
+diff --git a/node_modules/@revenuecat/purchases-capacitor/ios/Sources/RevenuecatPurchasesCapacitor/PurchasesPlugin.swift b/node_modules/@revenuecat/purchases-capacitor/ios/Sources/RevenuecatPurchasesCapacitor/PurchasesPlugin.swift
+index 1234567..abcdefg 100644
+--- a/node_modules/@revenuecat/purchases-capacitor/ios/Sources/RevenuecatPurchasesCapacitor/PurchasesPlugin.swift
++++ b/node_modules/@revenuecat/purchases-capacitor/ios/Sources/RevenuecatPurchasesCapacitor/PurchasesPlugin.swift
+@@ -14,7 +14,7 @@
+     public let identifier = "PurchasesPlugin"
+     public let jsName = "Purchases"
+     public let pluginMethods: [CAPPluginMethod] = [
+-        CAPPluginMethod(name: "configure", returnType: CAPPluginReturnNone),
++        CAPPluginMethod(name: "configure", returnType: CAPPluginReturnPromise),
+         CAPPluginMethod(name: "getVirtualCurrencies", returnType: CAPPluginReturnPromise),
+         CAPPluginMethod(name: "invalidateVirtualCurrenciesCache", returnType: CAPPluginReturnNone),
+         CAPPluginMethod(name: "getCachedVirtualCurrencies", returnType: CAPPluginReturnPromise),
