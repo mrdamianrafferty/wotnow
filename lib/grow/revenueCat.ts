@@ -16,24 +16,6 @@ import type {
   MakePurchaseResult,
 } from '@revenuecat/purchases-capacitor';
 
-const RC_GROW_KEY = process.env.NEXT_PUBLIC_REVENUECAT_IOS_PUBLIC_KEY ?? '';
-const RC_GODAISY_KEY = process.env.NEXT_PUBLIC_REVENUECAT_GODAISY_IOS_PUBLIC_KEY ?? '';
-
-/**
- * Select the correct RevenueCat API key based on the running app.
- * Grow Daisy loads from grow.godaisy.io; Go Daisy loads from godaisy.io.
- */
-function getRevenueCatKey(): string {
-  if (typeof window !== 'undefined') {
-    const hostname = window.location.hostname;
-    if (hostname.includes('grow.')) {
-      return RC_GROW_KEY;
-    }
-  }
-  // Go Daisy (default) or Findr — all share the Go Daisy RC app for tips
-  return RC_GODAISY_KEY || RC_GROW_KEY;
-}
-
 function isIOS(): boolean {
   return Capacitor.isNativePlatform() && Capacitor.getPlatform() === 'ios';
 }
@@ -47,7 +29,6 @@ async function getPurchases() {
 }
 
 let configured = false;
-let configurePromise: Promise<void> | null = null;
 
 /**
  * Mark RevenueCat as ready for use.
