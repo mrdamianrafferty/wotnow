@@ -20,6 +20,7 @@ export default function SupportPage() {
   const [purchasingId, setPurchasingId] = useState<string | null>(null);
   const [tipError, setTipError] = useState<string | null>(null);
   const [tipSuccess, setTipSuccess] = useState(false);
+  const [tipDebug, setTipDebug] = useState<string>('loading...');
 
   useEffect(() => {
     let cancelled = false;
@@ -30,26 +31,28 @@ export default function SupportPage() {
         const native = Capacitor.isNativePlatform() && Capacitor.getPlatform() === "ios";
         setIsIOSNative(native);
 
-        if (native) {
-          const { initRevenueCat, fetchOfferings } = await import("../lib/grow/revenueCat");
-          await initRevenueCat(null);
-          const offerings = await fetchOfferings();
-          if (cancelled) return;
-          const pkgs = offerings?.current?.availablePackages ?? [];
-          const tipIds = new Set(GODAISY_TIP_PRODUCTS.map((p) => p.id));
-          const matched = pkgs.filter((pkg) =>
-            tipIds.has(pkg.product.identifier)
-          );
-          console.log('[Support] Tip jar debug — offerings:', !!offerings,
-            'current:', offerings?.current?.identifier ?? 'NONE',
-            'pkgs:', pkgs.length,
-            'productIds:', pkgs.map(p => p.product.identifier),
-            'tipIds:', [...tipIds],
-            'matched:', matched.length);
-          setTipPackages(matched);
+        if (!native) {
+          setTipDebug('not iOS native');
+          return;
         }
+
+        const { initRevenueCat, fetchOfferings } = await import("../lib/grow/revenueCat");
+        setTipDebug('calling initRevenueCat...');
+        await initRevenueCat(null);
+        setTipDebug('calling fetchOfferings...');
+        const offerings = await fetchOfferings();
+        if (cancelled) return;
+        const pkgs = offerings?.current?.availablePackages ?? [];
+        const tipIds = new Set(GODAISY_TIP_PRODUCTS.map((p) => p.id));
+        const matched = pkgs.filter((pkg) =>
+          tipIds.has(pkg.product.identifier)
+        );
+        setTipDebug(
+          `offerings: ${!!offerings} | current: ${offerings?.current?.identifier ?? 'NONE'} | pkgs: ${pkgs.length} | ids: [${pkgs.map(p => p.product.identifier).join(', ')}] | tipIds: [${[...tipIds].join(', ')}] | matched: ${matched.length}`
+        );
+        setTipPackages(matched);
       } catch (err) {
-        console.error('[Support] Tip jar load failed:', err);
+        setTipDebug(`ERROR: ${err instanceof Error ? err.message : String(err)}`);
       }
     })();
     return () => { cancelled = true; };
@@ -218,6 +221,7 @@ export default function SupportPage() {
                     ) : (
                       <div className="text-sm text-base-content/70">
                         Tip jar is loading. If this persists, try restarting the app.
+                        <div className="mt-2 text-xs font-mono opacity-50 break-all">{tipDebug}</div>
                       </div>
                     )}
                   </>
