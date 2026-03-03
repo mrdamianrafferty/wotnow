@@ -20,7 +20,7 @@ export default function SupportPage() {
   const [purchasingId, setPurchasingId] = useState<string | null>(null);
   const [tipError, setTipError] = useState<string | null>(null);
   const [tipSuccess, setTipSuccess] = useState(false);
-  const [tipDebug, setTipDebug] = useState('JS:v4 loading...');
+  const [tipDebug, setTipDebug] = useState('JS:v5 loading...');
 
   useEffect(() => {
     let cancelled = false;
@@ -32,37 +32,36 @@ export default function SupportPage() {
         setIsIOSNative(native);
 
         if (!native) {
-          setTipDebug('JS:v4 not-native');
+          setTipDebug('JS:v5 not-native');
           return;
         }
 
-        setTipDebug('JS:v4 importing RC...');
+        setTipDebug('JS:v5 init (native configure)...');
         const { initRevenueCat, fetchOfferings } = await import("../lib/grow/revenueCat");
+        await initRevenueCat(null);
 
-        // Race configure against a timeout so we can see if it hangs
-        setTipDebug('JS:v4 configuring...');
-        const configResult = await Promise.race([
-          initRevenueCat(null).then(() => 'ok' as const),
-          new Promise<'timeout'>(r => setTimeout(() => r('timeout'), 10000)),
+        setTipDebug('JS:v5 fetching offerings...');
+        const offerResult = await Promise.race([
+          fetchOfferings().then(o => ({ status: 'ok' as const, offerings: o })),
+          new Promise<{ status: 'timeout' }>(r => setTimeout(() => r({ status: 'timeout' }), 10000)),
         ]);
 
-        if (configResult === 'timeout') {
-          setTipDebug('JS:v4 configure TIMEOUT (10s)');
+        if (offerResult.status === 'timeout') {
+          setTipDebug('JS:v5 getOfferings TIMEOUT (10s)');
           return;
         }
 
-        setTipDebug('JS:v4 fetching offerings...');
-        const offerings = await fetchOfferings();
         if (cancelled) return;
+        const offerings = offerResult.offerings;
         const pkgs = offerings?.current?.availablePackages ?? [];
         const tipIds = new Set(GODAISY_TIP_PRODUCTS.map((p) => p.id));
         const matched = pkgs.filter((pkg) => tipIds.has(pkg.product.identifier));
         setTipDebug(
-          `JS:v4 done | pkgs:${pkgs.length} matched:${matched.length} current:${offerings?.current?.identifier ?? 'NONE'}`
+          `JS:v5 done | pkgs:${pkgs.length} matched:${matched.length} current:${offerings?.current?.identifier ?? 'NONE'}`
         );
         setTipPackages(matched);
       } catch (err) {
-        setTipDebug(`JS:v4 ERROR: ${err instanceof Error ? err.message : String(err)}`);
+        setTipDebug(`JS:v5 ERROR: ${err instanceof Error ? err.message : String(err)}`);
       }
     })();
     return () => { cancelled = true; };

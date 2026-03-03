@@ -50,35 +50,25 @@ let configured = false;
 let configurePromise: Promise<void> | null = null;
 
 /**
- * Configure the RevenueCat SDK and optionally identify the user.
- * Safe to call on any platform — no-ops on non-iOS.
- * Uses singleton promise so concurrent callers share one configure call.
+ * Mark RevenueCat as ready for use.
+ *
+ * The SDK is configured natively in AppDelegate.swift because the
+ * Capacitor plugin's configure() bridge call hangs (the JS promise
+ * never resolves). All other plugin methods (getOfferings, purchase,
+ * etc.) work through the bridge once the native SDK is configured.
  */
 export async function initRevenueCat(supabaseUserId: string | null): Promise<void> {
   if (configured) return;
-  if (configurePromise) return configurePromise;
+  if (!isIOS()) return;
 
-  const apiKey = getRevenueCatKey();
-  if (!isIOS() || !apiKey) {
-    return;
+  // Native AppDelegate already configured the SDK.
+  // Just mark ready so other methods proceed.
+  configured = true;
+
+  // If we have a user ID, identify them (this bridge call works fine)
+  if (supabaseUserId) {
+    await identifyRevenueCatUser(supabaseUserId);
   }
-
-  configurePromise = (async () => {
-    try {
-      const Purchases = await getPurchases();
-      await Purchases.configure({
-        apiKey,
-        appUserID: supabaseUserId ?? undefined,
-      });
-      configured = true;
-    } catch (error) {
-      console.error('[RevenueCat] Failed to configure:', error);
-    } finally {
-      configurePromise = null;
-    }
-  })();
-
-  return configurePromise;
 }
 
 /**
