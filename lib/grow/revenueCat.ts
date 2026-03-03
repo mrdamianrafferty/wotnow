@@ -51,10 +51,15 @@ let configured = false;
 /**
  * Configure the RevenueCat SDK and optionally identify the user.
  * Safe to call on any platform — no-ops on non-iOS.
+ * Idempotent: calling multiple times is a safe no-op after first success.
  */
 export async function initRevenueCat(supabaseUserId: string | null): Promise<void> {
+  if (configured) return;
   const apiKey = getRevenueCatKey();
-  if (!isIOS() || !apiKey) return;
+  if (!isIOS() || !apiKey) {
+    console.warn('[RevenueCat] Skipping init — isIOS:', isIOS(), 'apiKey:', apiKey ? 'set' : 'MISSING');
+    return;
+  }
 
   try {
     const Purchases = await getPurchases();
@@ -108,11 +113,17 @@ export async function logOutRevenueCat(): Promise<void> {
  * Returns packages with App Store prices in the user's local currency.
  */
 export async function fetchOfferings(): Promise<PurchasesOfferings | null> {
-  if (!isIOS() || !configured) return null;
+  if (!isIOS() || !configured) {
+    console.warn('[RevenueCat] fetchOfferings skipped — isIOS:', isIOS(), 'configured:', configured);
+    return null;
+  }
 
   try {
     const Purchases = await getPurchases();
     const offerings = await Purchases.getOfferings();
+    console.log('[RevenueCat] Offerings fetched — current:', offerings?.current?.identifier ?? 'NONE',
+      'packages:', offerings?.current?.availablePackages?.length ?? 0,
+      'all offering keys:', Object.keys(offerings?.all ?? {}));
     return offerings;
   } catch (error) {
     console.error('[RevenueCat] Failed to fetch offerings:', error);

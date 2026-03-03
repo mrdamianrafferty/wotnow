@@ -32,20 +32,24 @@ export default function SupportPage() {
 
         if (native) {
           const { initRevenueCat, fetchOfferings } = await import("../lib/grow/revenueCat");
-          // Ensure RevenueCat is configured before fetching (idempotent if already initialised)
           await initRevenueCat(null);
           const offerings = await fetchOfferings();
           if (cancelled) return;
-          if (offerings?.current?.availablePackages) {
-            const tipIds = new Set(GODAISY_TIP_PRODUCTS.map((p) => p.id));
-            const matched = offerings.current.availablePackages.filter((pkg) =>
-              tipIds.has(pkg.product.identifier)
-            );
-            setTipPackages(matched);
-          }
+          const pkgs = offerings?.current?.availablePackages ?? [];
+          const tipIds = new Set(GODAISY_TIP_PRODUCTS.map((p) => p.id));
+          const matched = pkgs.filter((pkg) =>
+            tipIds.has(pkg.product.identifier)
+          );
+          console.log('[Support] Tip jar debug — offerings:', !!offerings,
+            'current:', offerings?.current?.identifier ?? 'NONE',
+            'pkgs:', pkgs.length,
+            'productIds:', pkgs.map(p => p.product.identifier),
+            'tipIds:', [...tipIds],
+            'matched:', matched.length);
+          setTipPackages(matched);
         }
-      } catch {
-        // Capacitor or RevenueCat not available — web fallback
+      } catch (err) {
+        console.error('[Support] Tip jar load failed:', err);
       }
     })();
     return () => { cancelled = true; };
