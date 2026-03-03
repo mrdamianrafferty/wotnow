@@ -47,33 +47,44 @@ async function getPurchases() {
 }
 
 let configured = false;
+let configurePromise: Promise<void> | null = null;
 
 /**
  * Configure the RevenueCat SDK and optionally identify the user.
  * Safe to call on any platform — no-ops on non-iOS.
- * Idempotent: calling multiple times is a safe no-op after first success.
+ * Uses singleton promise so concurrent callers share one configure call.
  */
 export async function initRevenueCat(supabaseUserId: string | null): Promise<void> {
   if (configured) return;
+  if (configurePromise) return configurePromise;
+
   const apiKey = getRevenueCatKey();
   if (!isIOS() || !apiKey) {
     console.warn('[RevenueCat] Skipping init — isIOS:', isIOS(), 'apiKey:', apiKey ? 'set' : 'MISSING');
     return;
   }
 
-  try {
-    const Purchases = await getPurchases();
+  configurePromise = (async () => {
+    try {
+      console.log('[RevenueCat] Importing SDK...');
+      const Purchases = await getPurchases();
 
-    await Purchases.configure({
-      apiKey,
-      appUserID: supabaseUserId ?? undefined,
-    });
+      console.log('[RevenueCat] Calling configure...');
+      await Purchases.configure({
+        apiKey,
+        appUserID: supabaseUserId ?? undefined,
+      });
 
-    configured = true;
-    console.log('[RevenueCat] Configured', supabaseUserId ? `for user ${supabaseUserId}` : 'anonymously');
-  } catch (error) {
-    console.error('[RevenueCat] Failed to configure:', error);
-  }
+      configured = true;
+      console.log('[RevenueCat] Configured', supabaseUserId ? `for user ${supabaseUserId}` : 'anonymously');
+    } catch (error) {
+      console.error('[RevenueCat] Failed to configure:', error);
+    } finally {
+      configurePromise = null;
+    }
+  })();
+
+  return configurePromise;
 }
 
 /**

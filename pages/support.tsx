@@ -36,10 +36,13 @@ export default function SupportPage() {
           return;
         }
 
+        setTipDebug('importing revenueCat module...');
         const { initRevenueCat, fetchOfferings } = await import("../lib/grow/revenueCat");
         setTipDebug('calling initRevenueCat...');
+        const initTimeout = setTimeout(() => setTipDebug('initRevenueCat hanging (>5s)...'), 5000);
         await initRevenueCat(null);
-        setTipDebug('calling fetchOfferings...');
+        clearTimeout(initTimeout);
+        setTipDebug('initRevenueCat done, calling fetchOfferings...');
         const offerings = await fetchOfferings();
         if (cancelled) return;
         const pkgs = offerings?.current?.availablePackages ?? [];
