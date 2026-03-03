@@ -19,6 +19,7 @@ import { NextApiRequest, NextApiResponse } from 'next';
 import { buffer } from 'micro';
 import { createClient } from '@supabase/supabase-js';
 import { mapProductToTier } from '@/lib/grow/revenueCatProducts';
+import { isGoDaisyTip } from '@/lib/godaisy/tipProducts';
 import type { GrowSubscriptionTier } from '@/lib/grow/subscription';
 
 // Disable Next.js body parsing for raw body access
@@ -138,6 +139,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       case 'RENEWAL':
       case 'PRODUCT_CHANGE':
       case 'NON_RENEWING_PURCHASE': {
+        // Consumable tips: log and skip — no profile tier update needed
+        if (isGoDaisyTip(event.product_id)) {
+          console.log(`[revenuecat] Tip received from ${userId}: ${event.product_id}`);
+          break;
+        }
+
         if (!mapping) {
           console.error(`[revenuecat] Unknown product ID: ${event.product_id}`);
           break;

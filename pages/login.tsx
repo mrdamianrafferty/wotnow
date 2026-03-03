@@ -5,7 +5,7 @@ import { normalizeEmail, mapAuthError } from '../lib/auth/utils';
 import Link from 'next/link';
 import Head from 'next/head';
 import { Cloud, Sun, Waves, Leaf, Droplets, AlertCircle, RefreshCw } from 'lucide-react';
-import { signInWithApple } from '../lib/auth/appleSignIn';
+import { signInWithApple, APPLE_NATIVE_ERRORS } from '../lib/auth/appleSignIn';
 import { signInWithGoogleNative, resetGoogleNative, GOOGLE_NATIVE_ERRORS } from '../lib/auth/googleNative';
 
 export default function GoDaisyLogin() {
@@ -21,6 +21,7 @@ export default function GoDaisyLogin() {
   const [iosSafeAreaHeight, setIosSafeAreaHeight] = useState(0);
   const [showWebFallback, setShowWebFallback] = useState(false);
   const [nativeAuthFailed, setNativeAuthFailed] = useState(false);
+  const [showAppleWebFallback, setShowAppleWebFallback] = useState(false);
   const [authCallbackUrl, setAuthCallbackUrl] = useState<string>(() => {
     // Always prefer the actual browser origin so OAuth callbacks return to the
     // correct subdomain (e.g. grow.godaisy.io, not godaisy.io).
@@ -178,9 +179,31 @@ export default function GoDaisyLogin() {
         console.log('[Go Daisy Auth] Native platform detected for', provider);
 
         if (provider === 'apple') {
-          await signInWithApple(supabase, authCallbackUrl);
-          window.location.href = destination;
-          return;
+          try {
+            await signInWithApple(supabase, authCallbackUrl);
+            window.location.href = destination;
+            return;
+          } catch (nativeError) {
+            const errorMessage = (nativeError as Error)?.message;
+            if (errorMessage === APPLE_NATIVE_ERRORS.CANCELLED) {
+              console.info('[Go Daisy Auth] Apple sign-in cancelled by user');
+              setLoading(false);
+              return;
+            }
+            if (
+              errorMessage === APPLE_NATIVE_ERRORS.TIMEOUT ||
+              errorMessage === APPLE_NATIVE_ERRORS.SESSION_CREATION_FAILED
+            ) {
+              console.error('[Go Daisy Auth] Native Apple auth failed:', nativeError);
+              setNativeAuthFailed(true);
+              setShowAppleWebFallback(true);
+              setError(mapAuthError(nativeError));
+              setLoading(false);
+              return;
+            }
+            // Other errors — fall through to web OAuth flow
+            console.warn('[Go Daisy Auth] Apple native flow failed, falling back to web OAuth');
+          }
         }
 
         if (provider === 'google') {
@@ -257,6 +280,19 @@ export default function GoDaisyLogin() {
     handleSocialLogin('google', true); // Force web flow
   };
 
+  const handleRetryApple = () => {
+    setError(null);
+    setNativeAuthFailed(false);
+    setShowAppleWebFallback(false);
+    handleSocialLogin('apple');
+  };
+
+  const handleTryAppleWebAuth = () => {
+    setError(null);
+    setShowAppleWebFallback(false);
+    handleSocialLogin('apple', true); // Force web flow
+  };
+
   // Determine app context for branding
   const appName = isGrowContext ? 'Grow Daisy' : 'Go Daisy';
   const appTagline = isGrowContext
@@ -316,11 +352,11 @@ export default function GoDaisyLogin() {
               </div>
             )}
 
-            {/* Native Auth Failed - Show Recovery Options */}
+            {/* Native Google Auth Failed - Show Recovery Options */}
             {nativeAuthFailed && showWebFallback && (
               <div className="alert alert-warning mb-4">
                 <div className="flex flex-col gap-3 w-full">
-                  <p className="text-sm">Having trouble signing in? Try one of these options:</p>
+                  <p className="text-sm">Having trouble signing in with Google? Try one of these options:</p>
                   <div className="flex flex-wrap gap-2">
                     <button
                       onClick={handleRetryNative}
@@ -332,6 +368,32 @@ export default function GoDaisyLogin() {
                     </button>
                     <button
                       onClick={handleTryWebAuth}
+                      disabled={loading}
+                      className="btn btn-sm btn-primary gap-1"
+                    >
+                      Use Browser Sign-In
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Native Apple Auth Failed - Show Recovery Options */}
+            {nativeAuthFailed && showAppleWebFallback && (
+              <div className="alert alert-warning mb-4">
+                <div className="flex flex-col gap-3 w-full">
+                  <p className="text-sm">Having trouble signing in with Apple? Try one of these options:</p>
+                  <div className="flex flex-wrap gap-2">
+                    <button
+                      onClick={handleRetryApple}
+                      disabled={loading}
+                      className="btn btn-sm btn-outline gap-1"
+                    >
+                      <RefreshCw className="w-4 h-4" />
+                      Try Again
+                    </button>
+                    <button
+                      onClick={handleTryAppleWebAuth}
                       disabled={loading}
                       className="btn btn-sm btn-primary gap-1"
                     >

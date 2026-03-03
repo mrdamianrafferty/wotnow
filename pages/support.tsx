@@ -1,10 +1,12 @@
 // pages/support.tsx
 
 import Head from "next/head";
-import { useCallback } from "react";
+import { useEffect, useState } from "react";
 import AppHeader from "../components/AppHeader";
 import Footer from "../components/footer";
 import { useUIText } from "../hooks/useUIText";
+import { GODAISY_TIP_PRODUCTS } from "../lib/godaisy/tipProducts";
+import type { PurchasesPackage } from "@revenuecat/purchases-capacitor";
 
 // Disable static generation
 export async function getServerSideProps() {
@@ -12,6 +14,62 @@ export async function getServerSideProps() {
 }
 
 export default function SupportPage() {
+  // Platform detection
+  const [isIOSNative, setIsIOSNative] = useState(false);
+  const [tipPackages, setTipPackages] = useState<PurchasesPackage[]>([]);
+  const [purchasingId, setPurchasingId] = useState<string | null>(null);
+  const [tipError, setTipError] = useState<string | null>(null);
+  const [tipSuccess, setTipSuccess] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const { Capacitor } = await import("@capacitor/core");
+        if (cancelled) return;
+        const native = Capacitor.isNativePlatform() && Capacitor.getPlatform() === "ios";
+        setIsIOSNative(native);
+
+        if (native) {
+          const { fetchOfferings } = await import("../lib/grow/revenueCat");
+          const offerings = await fetchOfferings();
+          if (cancelled) return;
+          if (offerings?.current?.availablePackages) {
+            const tipIds = new Set(GODAISY_TIP_PRODUCTS.map((p) => p.id));
+            const matched = offerings.current.availablePackages.filter((pkg) =>
+              tipIds.has(pkg.product.identifier)
+            );
+            setTipPackages(matched);
+          }
+        }
+      } catch {
+        // Capacitor or RevenueCat not available — web fallback
+      }
+    })();
+    return () => { cancelled = true; };
+  }, []);
+
+  const handleTipPurchase = async (pkg: PurchasesPackage) => {
+    try {
+      setPurchasingId(pkg.product.identifier);
+      setTipError(null);
+      setTipSuccess(false);
+
+      const { purchasePackage } = await import("../lib/grow/revenueCat");
+      const result = await purchasePackage(pkg);
+
+      if (result) {
+        setTipSuccess(true);
+      }
+      // null = user cancelled — do nothing
+    } catch (err) {
+      console.error("[Support] Tip purchase failed:", err);
+      setTipError(err instanceof Error ? err.message : "Purchase failed. Please try again.");
+    } finally {
+      setPurchasingId(null);
+    }
+  };
+
   // Translation hooks
   const pageTitle = useUIText('support.label.support_go_daisy_14', 'Support Go Daisy');
   const metaDescription = useUIText('support.paragraph.join_the_go_daisy_community_on_15',
@@ -28,15 +86,11 @@ export default function SupportPage() {
   const patreonHeading = useUIText('support.heading.join_us_on_patreon_30', 'Join us on Patreon');
   const patreonText = useUIText('support.paragraph.patreon_description',
     'Be part of the gang who keep Go Daisy buzzing — with early peeks at features, gentle nudges to get outside, and the odd behind-the-scenes chuckle.');
-  const patreonButton = useUIText('support.button.support_via_patreon', '🌼 Support via Patreon');
+  const patreonButton = useUIText('support.button.support_via_patreon', 'Support via Patreon');
 
-  const appleTipHeading = useUIText('support.heading.apple_tip_jar_35', 'Apple Tip Jar');
+  const appleTipHeading = useUIText('support.heading.apple_tip_jar_35', 'Tip Jar');
   const appleTipText = useUIText('support.paragraph.apple_tip_description',
-    'Quick, simple, one-off thanks inside the Apple ecosystem. No perks, just a pat on the back (and a biscuit for Bruno).');
-
-  const tipCoffee = useUIText('support.tip.coffee', '☕ Coffee');
-  const tipPint = useUIText('support.tip.pint', '🍺 Pint');
-  const tipBoost = useUIText('support.tip.daisy_boost', '🌼 Daisy Boost');
+    'Quick, simple, one-off thanks. No perks, just a pat on the back (and a biscuit for Bruno).');
 
   const transparencyHeading = useUIText('support.heading.transparency', 'Transparency');
   const transparencyOptional = useUIText('support.paragraph.memberships_optional',
@@ -54,22 +108,11 @@ export default function SupportPage() {
 
   const faqQ2 = useUIText('support.paragraph.can_i_cancel_any_time__43', 'Can I cancel any time?');
   const faqA2 = useUIText('support.paragraph.yes_patreon_manages_billing_yo_44',
-    'Yes — Patreon manages billing. You can switch tiers or cancel whenever you like. Apple tips are one-off.');
+    'Yes — Patreon manages billing. You can switch tiers or cancel whenever you like. Tips are one-off.');
 
   const faqQ3 = useUIText('support.paragraph.other_ways_to_help__45', 'Other ways to help?');
   const faqA3 = useUIText('support.paragraph.tell_a_friend_start_a_plan_or__46',
     'Tell a friend, start a plan, or share your favourite Go Daisy moment. Word of mouth is golden.');
-
-  const openAppTip = useCallback((amount: number) => {
-    const scheme = `godaisy://support/tip?amount=${amount}`;
-    const fallback = "https://apps.apple.com/app/id6755695873";
-    const start = Date.now();
-    window.location.href = scheme;
-    const t = setTimeout(() => {
-      if (Date.now() - start < 1500) window.location.href = fallback;
-    }, 1200);
-    setTimeout(() => clearTimeout(t), 2500);
-  }, []);
 
   return (
     <>
@@ -106,41 +149,95 @@ export default function SupportPage() {
 
           {/* Support options */}
           <div className="grid gap-6 sm:grid-cols-2">
-            {/* Patreon card */}
-            <div className="card bg-base-200">
-              <div className="card-body space-y-3">
-                <h2 className="card-title text-lg text-base-content">{patreonHeading}</h2>
-                <p className="text-base-content">{patreonText}</p>
-                <a
-                  className="btn btn-primary"
-                  href="https://patreon.com/GoDaisy?utm_medium=unknown&utm_source=join_link&utm_campaign=creatorshare_creator&utm_content=copyLink"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  {patreonButton}
-                </a>
+            {/* Patreon card — web only */}
+            {!isIOSNative && (
+              <div className="card bg-base-200">
+                <div className="card-body space-y-3">
+                  <h2 className="card-title text-lg text-base-content">{patreonHeading}</h2>
+                  <p className="text-base-content">{patreonText}</p>
+                  <a
+                    className="btn btn-primary"
+                    href="https://patreon.com/GoDaisy?utm_medium=unknown&utm_source=join_link&utm_campaign=creatorshare_creator&utm_content=copyLink"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    {patreonButton}
+                  </a>
+                </div>
               </div>
-            </div>
+            )}
 
-            {/* Apple Tip Jar card */}
+            {/* Tip Jar card */}
             <div className="card bg-base-200">
               <div className="card-body space-y-3">
                 <h2 className="card-title text-lg text-base-content">{appleTipHeading}</h2>
                 <p className="text-base-content">{appleTipText}</p>
-                {[
-                  { label: tipCoffee, amount: 2 },
-                  { label: tipPint, amount: 5 },
-                  { label: tipBoost, amount: 10 }
-                ].map((t) => (
-                  <button
-                    key={t.amount}
-                    className="btn btn-outline"
-                    onClick={() => openAppTip(t.amount)}
-                  >
-                    <span>{t.label}</span>
-                    <span className="ml-2 font-semibold">€{t.amount}</span>
-                  </button>
-                ))}
+
+                {/* iOS native: RevenueCat IAP buttons */}
+                {isIOSNative ? (
+                  <>
+                    {tipSuccess && (
+                      <div className="alert alert-success text-sm">
+                        <span>Thank you for the tip! You&apos;re a legend.</span>
+                      </div>
+                    )}
+                    {tipError && (
+                      <div className="alert alert-error text-sm">
+                        <span>{tipError}</span>
+                      </div>
+                    )}
+                    {tipPackages.length > 0 ? (
+                      tipPackages.map((pkg) => {
+                        const product = GODAISY_TIP_PRODUCTS.find(
+                          (p) => p.id === pkg.product.identifier
+                        );
+                        return (
+                          <button
+                            key={pkg.product.identifier}
+                            className="btn btn-outline"
+                            disabled={!!purchasingId}
+                            onClick={() => handleTipPurchase(pkg)}
+                          >
+                            {purchasingId === pkg.product.identifier ? (
+                              <span className="loading loading-spinner loading-sm" />
+                            ) : (
+                              <span>{product?.emoji ?? ''} {product?.label ?? pkg.product.title}</span>
+                            )}
+                            <span className="ml-2 font-semibold">
+                              {pkg.product.priceString}
+                            </span>
+                          </button>
+                        );
+                      })
+                    ) : (
+                      GODAISY_TIP_PRODUCTS.map((product) => (
+                        <button
+                          key={product.id}
+                          className="btn btn-outline btn-disabled"
+                          disabled
+                        >
+                          <span>{product.emoji} {product.label}</span>
+                          <span className="ml-2 font-semibold">
+                            &euro;{product.defaultPriceEur}
+                          </span>
+                        </button>
+                      ))
+                    )}
+                  </>
+                ) : (
+                  /* Web: show message + App Store link */
+                  <div className="text-sm text-base-content/70">
+                    <p>Tips are available in the Go Daisy iOS app.</p>
+                    <a
+                      className="link link-primary mt-2 inline-block"
+                      href="https://apps.apple.com/app/id6755695873"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      Get it on the App Store
+                    </a>
+                  </div>
+                )}
               </div>
             </div>
           </div>

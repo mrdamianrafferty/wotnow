@@ -35,6 +35,23 @@ import { createLogger } from '@/lib/utils/logger';
 import { mapAuthError } from './utils';
 
 const logger = createLogger('AppleSignIn');
+
+// Timeout for the entire native auth flow (matches Google pattern)
+const AUTH_TIMEOUT_MS = 30000;
+
+export const APPLE_NATIVE_ERRORS = {
+  CANCELLED: 'APPLE_NATIVE_CANCELLED',
+  TIMEOUT: 'APPLE_NATIVE_TIMEOUT',
+  MISSING_ID_TOKEN: 'APPLE_NATIVE_MISSING_ID_TOKEN',
+  SESSION_CREATION_FAILED: 'APPLE_NATIVE_SESSION_CREATION_FAILED',
+} as const;
+
+async function withTimeout<T>(promise: Promise<T>, ms: number, errorMessage: string): Promise<T> {
+  const timeout = new Promise<never>((_, reject) =>
+    setTimeout(() => reject(new Error(errorMessage)), ms)
+  );
+  return Promise.race([promise, timeout]);
+}
 const DEFAULT_APPLE_BUNDLE_ID = process.env.NEXT_PUBLIC_APPLE_BUNDLE_ID ?? 'io.godaisy.app';
 const DEFAULT_APPLE_REDIRECT_URI = process.env.NEXT_PUBLIC_APPLE_REDIRECT_URI ?? 'godaisy://auth/callback';
 const DEFAULT_AUTH_CALLBACK = process.env.NEXT_PUBLIC_AUTH_CALLBACK_URL ?? 'https://godaisy.io/auth/callback';
@@ -115,12 +132,16 @@ async function signInWithAppleNative(supabase: SupabaseClient): Promise<void> {
     // Sign in with Apple using official plugin
     // NOTE: redirectURI is required by type but not used for native iOS
     // Using custom URL scheme to ensure no web redirects happen
-    const result = await SignInWithApple.authorize({
-      clientId: DEFAULT_APPLE_BUNDLE_ID,
-      redirectURI: DEFAULT_APPLE_REDIRECT_URI,
-      scopes: 'email name',
-      nonce: hashedNonce, // SHA-256 hashed nonce (required by Apple)
-    });
+    const result = await withTimeout(
+      SignInWithApple.authorize({
+        clientId: DEFAULT_APPLE_BUNDLE_ID,
+        redirectURI: DEFAULT_APPLE_REDIRECT_URI,
+        scopes: 'email name',
+        nonce: hashedNonce, // SHA-256 hashed nonce (required by Apple)
+      }),
+      AUTH_TIMEOUT_MS,
+      APPLE_NATIVE_ERRORS.TIMEOUT
+    );
 
     logger.info('Apple Sign In successful', {
       hasIdentityToken: !!result.response?.identityToken,
@@ -130,7 +151,7 @@ async function signInWithAppleNative(supabase: SupabaseClient): Promise<void> {
 
     // The plugin returns an identity token (JWT)
     if (!result.response?.identityToken) {
-      throw new Error('No identity token returned from Apple Sign In');
+      throw new Error(APPLE_NATIVE_ERRORS.MISSING_ID_TOKEN);
     }
 
     logger.info('Exchanging Apple ID token for Supabase session');
@@ -150,13 +171,37 @@ async function signInWithAppleNative(supabase: SupabaseClient): Promise<void> {
       throw error;
     }
 
-    logger.info('Supabase session created successfully');
+    // Validate session was actually created (matches Google pattern)
+    const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+
+    if (sessionError) {
+      logger.error('Failed to get session after Apple sign-in', sessionError);
+      throw new Error(APPLE_NATIVE_ERRORS.SESSION_CREATION_FAILED);
+    }
+
+    if (!sessionData.session) {
+      logger.error('No session found after successful Apple token exchange');
+      throw new Error(APPLE_NATIVE_ERRORS.SESSION_CREATION_FAILED);
+    }
+
+    logger.info('Supabase session created successfully', {
+      userId: sessionData.session.user.id,
+      email: sessionData.session.user.email,
+    });
   } catch (error: unknown) {
     logger.error('Native Apple Sign In failed', error);
 
-    // Check if user cancelled
+    // Check if user cancelled — throw typed error
     if (isUserCancellation(error)) {
-      throw new Error('Sign in cancelled');
+      throw new Error(APPLE_NATIVE_ERRORS.CANCELLED);
+    }
+
+    // Re-throw known error types as-is
+    if (error instanceof Error) {
+      const knownErrors = Object.values(APPLE_NATIVE_ERRORS);
+      if (knownErrors.includes(error.message as typeof knownErrors[number])) {
+        throw error;
+      }
     }
 
     throw error;
@@ -226,13 +271,15 @@ export async function signInWithApple(
       await signInWithAppleWeb(supabase, redirectTo);
     }
   } catch (error: unknown) {
-    // Special handling for user cancellation (don't show error)
-    if (isUserCancellation(error)) {
-      logger.info('User cancelled Apple Sign In');
-      return; // Silently return, no error needed
+    // Propagate typed errors for login.tsx to handle
+    if (error instanceof Error) {
+      const knownErrors = Object.values(APPLE_NATIVE_ERRORS);
+      if (knownErrors.includes(error.message as typeof knownErrors[number])) {
+        throw error;
+      }
     }
 
-    // Map to user-friendly error message
+    // Map unknown errors to user-friendly message
     const friendlyError = mapAuthError(error);
     throw new Error(friendlyError);
   }

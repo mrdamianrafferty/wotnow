@@ -31,6 +31,30 @@ export function mapAuthError(err: unknown): string {
   const msg = getErrorMessage(err).toLowerCase();
 
   // =========================================================================
+  // Native Apple Auth Errors (from appleSignIn.ts)
+  // =========================================================================
+
+  // User cancelled Apple sign-in
+  if (msg.includes('apple_native_cancelled')) {
+    return 'Sign-in was cancelled. Please try again when you\'re ready.';
+  }
+
+  // Apple sign-in timed out
+  if (msg.includes('apple_native_timeout')) {
+    return 'Apple Sign In took too long. Please check your connection and try again.';
+  }
+
+  // Session wasn't created after Apple auth
+  if (msg.includes('apple_native_session_creation_failed')) {
+    return 'Apple Sign In succeeded but session wasn\'t saved. Please try again.';
+  }
+
+  // Missing ID token from Apple
+  if (msg.includes('apple_native_missing_id_token')) {
+    return 'Apple Sign In failed to complete. Please try again or use email sign-in.';
+  }
+
+  // =========================================================================
   // Native Google Auth Errors (from googleNative.ts)
   // =========================================================================
 

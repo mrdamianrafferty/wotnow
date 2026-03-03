@@ -1,11 +1,13 @@
 // pages/findr/support.tsx
 
 import Head from "next/head";
-import { useCallback } from "react";
+import { useEffect, useState } from "react";
 import FindrHeader from "../../components/findr/FindrHeader";
 import FindrFooter from "../../components/FindrFooter";
 import FindrBottomNav from "../../components/findr/FindrBottomNav";
 import { TranslatedText } from "../../components/translation/TranslatedFishCard";
+import { GODAISY_TIP_PRODUCTS } from "../../lib/godaisy/tipProducts";
+import type { PurchasesPackage } from "@revenuecat/purchases-capacitor";
 
 // Disable static generation
 export async function getServerSideProps() {
@@ -13,16 +15,61 @@ export async function getServerSideProps() {
 }
 
 export default function FindrSupportPage() {
-  const openAppTip = useCallback((amount: number) => {
-    const scheme = `godaisy://support/tip?amount=${amount}`;
-    const fallback = "https://apps.apple.com/app/id6755045700";
-    const start = Date.now();
-    window.location.href = scheme;
-    const t = setTimeout(() => {
-      if (Date.now() - start < 1500) window.location.href = fallback;
-    }, 1200);
-    setTimeout(() => clearTimeout(t), 2500);
+  // Platform detection
+  const [isIOSNative, setIsIOSNative] = useState(false);
+  const [tipPackages, setTipPackages] = useState<PurchasesPackage[]>([]);
+  const [purchasingId, setPurchasingId] = useState<string | null>(null);
+  const [tipError, setTipError] = useState<string | null>(null);
+  const [tipSuccess, setTipSuccess] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const { Capacitor } = await import("@capacitor/core");
+        if (cancelled) return;
+        const native = Capacitor.isNativePlatform() && Capacitor.getPlatform() === "ios";
+        setIsIOSNative(native);
+
+        if (native) {
+          const { fetchOfferings } = await import("../../lib/grow/revenueCat");
+          const offerings = await fetchOfferings();
+          if (cancelled) return;
+          if (offerings?.current?.availablePackages) {
+            const tipIds = new Set(GODAISY_TIP_PRODUCTS.map((p) => p.id));
+            const matched = offerings.current.availablePackages.filter((pkg) =>
+              tipIds.has(pkg.product.identifier)
+            );
+            setTipPackages(matched);
+          }
+        }
+      } catch {
+        // Capacitor or RevenueCat not available — web fallback
+      }
+    })();
+    return () => { cancelled = true; };
   }, []);
+
+  const handleTipPurchase = async (pkg: PurchasesPackage) => {
+    try {
+      setPurchasingId(pkg.product.identifier);
+      setTipError(null);
+      setTipSuccess(false);
+
+      const { purchasePackage } = await import("../../lib/grow/revenueCat");
+      const result = await purchasePackage(pkg);
+
+      if (result) {
+        setTipSuccess(true);
+      }
+      // null = user cancelled — do nothing
+    } catch (err) {
+      console.error("[Findr Support] Tip purchase failed:", err);
+      setTipError(err instanceof Error ? err.message : "Purchase failed. Please try again.");
+    } finally {
+      setPurchasingId(null);
+    }
+  };
 
   return (
     <>
@@ -62,54 +109,111 @@ export default function FindrSupportPage() {
             <section className="mb-12">
               <h2 className="text-3xl font-semibold mb-4"><TranslatedText text="Why Support Findr?" /></h2>
               <ul className="space-y-2">
-                <li><TranslatedText text="🌊 Covers costs for marine and weather data APIs" /></li>
-                <li><TranslatedText text="☁️ Keeps servers running and predictions flowing" /></li>
-                <li><TranslatedText text="🐟 Funds ongoing species data research and improvements" /></li>
-                <li><TranslatedText text="🎣 Supports continued development of new features" /></li>
-                <li><TranslatedText text="🦴 Keeps the developer (and Bruno the dog) in biscuits" /></li>
+                <li><TranslatedText text="Covers costs for marine and weather data APIs" /></li>
+                <li><TranslatedText text="Keeps servers running and predictions flowing" /></li>
+                <li><TranslatedText text="Funds ongoing species data research and improvements" /></li>
+                <li><TranslatedText text="Supports continued development of new features" /></li>
+                <li><TranslatedText text="Keeps the developer (and Bruno the dog) in biscuits" /></li>
               </ul>
             </section>
 
-            <section className="mb-12">
-              <h2 className="text-3xl font-semibold mb-4"><TranslatedText text="Join the Findr Community" /></h2>
-              <div className="card bg-primary text-primary-content p-6 mb-6">
-                <h3 className="text-2xl font-bold mb-2"><TranslatedText text="Become a Patreon" /></h3>
-                <p className="mb-4">
-                  <TranslatedText text="Get exclusive early access to new features, monthly development updates, and have a say in what gets built next." />
-                </p>
-                <a
-                  href="https://patreon.com/GoDaisy?utm_medium=unknown&utm_source=join_link&utm_campaign=creatorshare_creator&utm_content=copyLink"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="btn btn-secondary btn-wide"
-                >
-                  <TranslatedText text="Join on Patreon" />
-                </a>
-              </div>
-            </section>
+            {/* Patreon — web only */}
+            {!isIOSNative && (
+              <section className="mb-12">
+                <h2 className="text-3xl font-semibold mb-4"><TranslatedText text="Join the Findr Community" /></h2>
+                <div className="card bg-primary text-primary-content p-6 mb-6">
+                  <h3 className="text-2xl font-bold mb-2"><TranslatedText text="Become a Patreon" /></h3>
+                  <p className="mb-4">
+                    <TranslatedText text="Get exclusive early access to new features, monthly development updates, and have a say in what gets built next." />
+                  </p>
+                  <a
+                    href="https://patreon.com/GoDaisy?utm_medium=unknown&utm_source=join_link&utm_campaign=creatorshare_creator&utm_content=copyLink"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="btn btn-secondary btn-wide"
+                  >
+                    <TranslatedText text="Join on Patreon" />
+                  </a>
+                </div>
+              </section>
+            )}
 
+            {/* Tip Jar */}
             <section className="mb-12">
-              <h2 className="text-3xl font-semibold mb-4"><TranslatedText text="One-time Tip (Apple Users)" /></h2>
-              <p className="mb-4">
-                <TranslatedText text="If you use the iOS app, you can leave a tip through Apple's in-app purchases. Every contribution helps!" />
-              </p>
-              <div className="flex flex-wrap gap-4">
-                <button onClick={() => openAppTip(99)} className="btn btn-outline">
-                  <TranslatedText text="🍵 Cuppa (£0.99)" />
-                </button>
-                <button onClick={() => openAppTip(299)} className="btn btn-outline">
-                  <TranslatedText text="☕ Coffee (£2.99)" />
-                </button>
-                <button onClick={() => openAppTip(499)} className="btn btn-outline">
-                  <TranslatedText text="🥐 Breakfast (£4.99)" />
-                </button>
-                <button onClick={() => openAppTip(999)} className="btn btn-outline">
-                  <TranslatedText text="🍽️ Dinner (£9.99)" />
-                </button>
-              </div>
-              <p className="text-sm opacity-70 mt-4">
-                <TranslatedText text="Note: These buttons open the Findr iOS app. If you don't have it installed, you'll be redirected to the App Store." />
-              </p>
+              <h2 className="text-3xl font-semibold mb-4"><TranslatedText text="Tip Jar" /></h2>
+
+              {isIOSNative ? (
+                <>
+                  <p className="mb-4">
+                    <TranslatedText text="Leave a one-off tip to help keep Findr running. Every contribution helps!" />
+                  </p>
+
+                  {tipSuccess && (
+                    <div className="alert alert-success text-sm mb-4">
+                      <span><TranslatedText text="Thank you for the tip! You're a legend." /></span>
+                    </div>
+                  )}
+                  {tipError && (
+                    <div className="alert alert-error text-sm mb-4">
+                      <span>{tipError}</span>
+                    </div>
+                  )}
+
+                  <div className="flex flex-wrap gap-4">
+                    {tipPackages.length > 0 ? (
+                      tipPackages.map((pkg) => {
+                        const product = GODAISY_TIP_PRODUCTS.find(
+                          (p) => p.id === pkg.product.identifier
+                        );
+                        return (
+                          <button
+                            key={pkg.product.identifier}
+                            className="btn btn-outline"
+                            disabled={!!purchasingId}
+                            onClick={() => handleTipPurchase(pkg)}
+                          >
+                            {purchasingId === pkg.product.identifier ? (
+                              <span className="loading loading-spinner loading-sm" />
+                            ) : (
+                              <span>{product?.emoji ?? ''} {product?.label ?? pkg.product.title}</span>
+                            )}
+                            <span className="ml-2 font-semibold">
+                              {pkg.product.priceString}
+                            </span>
+                          </button>
+                        );
+                      })
+                    ) : (
+                      GODAISY_TIP_PRODUCTS.map((product) => (
+                        <button
+                          key={product.id}
+                          className="btn btn-outline btn-disabled"
+                          disabled
+                        >
+                          <span>{product.emoji} {product.label}</span>
+                          <span className="ml-2 font-semibold">
+                            &euro;{product.defaultPriceEur}
+                          </span>
+                        </button>
+                      ))
+                    )}
+                  </div>
+                </>
+              ) : (
+                <>
+                  <p className="mb-4">
+                    <TranslatedText text="Tips are available in the Findr iOS app." />
+                  </p>
+                  <a
+                    className="link link-primary"
+                    href="https://apps.apple.com/app/id6755045700"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    <TranslatedText text="Get it on the App Store" />
+                  </a>
+                </>
+              )}
             </section>
 
             <section className="mb-12">

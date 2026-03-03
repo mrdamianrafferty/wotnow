@@ -1,7 +1,8 @@
 /**
- * RevenueCat SDK Wrapper for Grow Daisy iOS
+ * RevenueCat SDK Wrapper for iOS In-App Purchases
  *
  * Wraps @revenuecat/purchases-capacitor for iOS In-App Purchases.
+ * Supports both Grow Daisy and Go Daisy apps with separate API keys.
  * All functions are safe no-ops on non-iOS platforms.
  *
  * @module lib/grow/revenueCat
@@ -15,7 +16,23 @@ import type {
   MakePurchaseResult,
 } from '@revenuecat/purchases-capacitor';
 
-const RC_PUBLIC_KEY = process.env.NEXT_PUBLIC_REVENUECAT_IOS_PUBLIC_KEY ?? '';
+const RC_GROW_KEY = process.env.NEXT_PUBLIC_REVENUECAT_IOS_PUBLIC_KEY ?? '';
+const RC_GODAISY_KEY = process.env.NEXT_PUBLIC_REVENUECAT_GODAISY_IOS_PUBLIC_KEY ?? '';
+
+/**
+ * Select the correct RevenueCat API key based on the running app.
+ * Grow Daisy loads from grow.godaisy.io; Go Daisy loads from godaisy.io.
+ */
+function getRevenueCatKey(): string {
+  if (typeof window !== 'undefined') {
+    const hostname = window.location.hostname;
+    if (hostname.includes('grow.')) {
+      return RC_GROW_KEY;
+    }
+  }
+  // Go Daisy (default) or Findr — all share the Go Daisy RC app for tips
+  return RC_GODAISY_KEY || RC_GROW_KEY;
+}
 
 function isIOS(): boolean {
   return Capacitor.isNativePlatform() && Capacitor.getPlatform() === 'ios';
@@ -36,13 +53,14 @@ let configured = false;
  * Safe to call on any platform — no-ops on non-iOS.
  */
 export async function initRevenueCat(supabaseUserId: string | null): Promise<void> {
-  if (!isIOS() || !RC_PUBLIC_KEY) return;
+  const apiKey = getRevenueCatKey();
+  if (!isIOS() || !apiKey) return;
 
   try {
     const Purchases = await getPurchases();
 
     await Purchases.configure({
-      apiKey: RC_PUBLIC_KEY,
+      apiKey,
       appUserID: supabaseUserId ?? undefined,
     });
 

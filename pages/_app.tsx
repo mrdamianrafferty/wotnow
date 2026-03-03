@@ -186,7 +186,7 @@ export default function App({ Component, pageProps }: AppProps<PagePropsWithThem
                   {/* Initialize performance tracking for iOS profiling */}
                   <PerformanceInit />
                   {/* RevenueCat auth sync for iOS IAP (Grow only) */}
-                  {isGrow && isIOSNative && <RevenueCatAuthSync />}
+                  {(isGrow || appContext === 'godaisy') && isIOSNative && <RevenueCatAuthSync />}
                   {/* Offline Indicator - shows at top when offline */}
                   <OfflineIndicator />
                   {/* Toast notifications */}
