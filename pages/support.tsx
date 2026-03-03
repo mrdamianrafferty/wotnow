@@ -20,6 +20,7 @@ export default function SupportPage() {
   const [purchasingId, setPurchasingId] = useState<string | null>(null);
   const [tipError, setTipError] = useState<string | null>(null);
   const [tipSuccess, setTipSuccess] = useState(false);
+  const [tipDebug, setTipDebug] = useState('JS:v4 loading...');
 
   useEffect(() => {
     let cancelled = false;
@@ -30,17 +31,38 @@ export default function SupportPage() {
         const native = Capacitor.isNativePlatform() && Capacitor.getPlatform() === "ios";
         setIsIOSNative(native);
 
-        if (!native) return;
+        if (!native) {
+          setTipDebug('JS:v4 not-native');
+          return;
+        }
 
+        setTipDebug('JS:v4 importing RC...');
         const { initRevenueCat, fetchOfferings } = await import("../lib/grow/revenueCat");
-        await initRevenueCat(null);
+
+        // Race configure against a timeout so we can see if it hangs
+        setTipDebug('JS:v4 configuring...');
+        const configResult = await Promise.race([
+          initRevenueCat(null).then(() => 'ok' as const),
+          new Promise<'timeout'>(r => setTimeout(() => r('timeout'), 10000)),
+        ]);
+
+        if (configResult === 'timeout') {
+          setTipDebug('JS:v4 configure TIMEOUT (10s)');
+          return;
+        }
+
+        setTipDebug('JS:v4 fetching offerings...');
         const offerings = await fetchOfferings();
         if (cancelled) return;
         const pkgs = offerings?.current?.availablePackages ?? [];
         const tipIds = new Set(GODAISY_TIP_PRODUCTS.map((p) => p.id));
-        setTipPackages(pkgs.filter((pkg) => tipIds.has(pkg.product.identifier)));
+        const matched = pkgs.filter((pkg) => tipIds.has(pkg.product.identifier));
+        setTipDebug(
+          `JS:v4 done | pkgs:${pkgs.length} matched:${matched.length} current:${offerings?.current?.identifier ?? 'NONE'}`
+        );
+        setTipPackages(matched);
       } catch (err) {
-        console.error('[Support] Tip jar load failed:', err);
+        setTipDebug(`JS:v4 ERROR: ${err instanceof Error ? err.message : String(err)}`);
       }
     })();
     return () => { cancelled = true; };
@@ -209,6 +231,7 @@ export default function SupportPage() {
                     ) : (
                       <div className="text-sm text-base-content/70">
                         Tip jar is loading. If this persists, try restarting the app.
+                        <div className="mt-1 text-xs font-mono opacity-60">{tipDebug}</div>
                       </div>
                     )}
                   </>
