@@ -20,7 +20,6 @@ export default function SupportPage() {
   const [purchasingId, setPurchasingId] = useState<string | null>(null);
   const [tipError, setTipError] = useState<string | null>(null);
   const [tipSuccess, setTipSuccess] = useState(false);
-  const [tipDebug, setTipDebug] = useState<string>('loading...');
 
   useEffect(() => {
     let cancelled = false;
@@ -31,31 +30,17 @@ export default function SupportPage() {
         const native = Capacitor.isNativePlatform() && Capacitor.getPlatform() === "ios";
         setIsIOSNative(native);
 
-        if (!native) {
-          setTipDebug('not iOS native');
-          return;
-        }
+        if (!native) return;
 
-        setTipDebug('importing revenueCat module...');
         const { initRevenueCat, fetchOfferings } = await import("../lib/grow/revenueCat");
-        setTipDebug('calling initRevenueCat...');
-        const initTimeout = setTimeout(() => setTipDebug('initRevenueCat hanging (>5s)...'), 5000);
         await initRevenueCat(null);
-        clearTimeout(initTimeout);
-        setTipDebug('initRevenueCat done, calling fetchOfferings...');
         const offerings = await fetchOfferings();
         if (cancelled) return;
         const pkgs = offerings?.current?.availablePackages ?? [];
         const tipIds = new Set(GODAISY_TIP_PRODUCTS.map((p) => p.id));
-        const matched = pkgs.filter((pkg) =>
-          tipIds.has(pkg.product.identifier)
-        );
-        setTipDebug(
-          `offerings: ${!!offerings} | current: ${offerings?.current?.identifier ?? 'NONE'} | pkgs: ${pkgs.length} | ids: [${pkgs.map(p => p.product.identifier).join(', ')}] | tipIds: [${[...tipIds].join(', ')}] | matched: ${matched.length}`
-        );
-        setTipPackages(matched);
+        setTipPackages(pkgs.filter((pkg) => tipIds.has(pkg.product.identifier)));
       } catch (err) {
-        setTipDebug(`ERROR: ${err instanceof Error ? err.message : String(err)}`);
+        console.error('[Support] Tip jar load failed:', err);
       }
     })();
     return () => { cancelled = true; };
@@ -224,7 +209,6 @@ export default function SupportPage() {
                     ) : (
                       <div className="text-sm text-base-content/70">
                         Tip jar is loading. If this persists, try restarting the app.
-                        <div className="mt-2 text-xs font-mono opacity-50 break-all">{tipDebug}</div>
                       </div>
                     )}
                   </>

@@ -60,27 +60,17 @@ export async function initRevenueCat(supabaseUserId: string | null): Promise<voi
 
   const apiKey = getRevenueCatKey();
   if (!isIOS() || !apiKey) {
-    console.warn('[RevenueCat] Skipping init — isIOS:', isIOS(), 'apiKey:', apiKey ? 'set' : 'MISSING');
     return;
   }
 
   configurePromise = (async () => {
     try {
       const Purchases = await getPurchases();
-
-      // RevenueCat is configured natively in AppDelegate.swift.
-      // The Capacitor plugin's configure() uses CAPPluginReturnNone which
-      // hangs in Capacitor 7, so we skip it and just fire it as a no-op
-      // fallback (in case native init hasn't happened).
-      Purchases.configure({
+      await Purchases.configure({
         apiKey,
         appUserID: supabaseUserId ?? undefined,
       });
-
-      // Don't await configure — it hangs due to CAPPluginReturnNone.
-      // Just mark as configured since native AppDelegate already did it.
       configured = true;
-      console.log('[RevenueCat] Marked configured (native init in AppDelegate)');
     } catch (error) {
       console.error('[RevenueCat] Failed to configure:', error);
     } finally {
