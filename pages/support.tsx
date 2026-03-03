@@ -88,8 +88,8 @@ export default function SupportPage() {
     'Be part of the gang who keep Go Daisy buzzing — with early peeks at features, gentle nudges to get outside, and the odd behind-the-scenes chuckle.');
   const patreonButton = useUIText('support.button.support_via_patreon', 'Support via Patreon');
 
-  const appleTipHeading = useUIText('support.heading.apple_tip_jar_35', 'Tip Jar');
-  const appleTipText = useUIText('support.paragraph.apple_tip_description',
+  const appleTipHeading = useUIText('support.heading.tip_jar', 'Tip Jar');
+  const appleTipText = useUIText('support.paragraph.tip_jar_description',
     'Quick, simple, one-off thanks. No perks, just a pat on the back (and a biscuit for Bruno).');
 
   const transparencyHeading = useUIText('support.heading.transparency', 'Transparency');
@@ -226,15 +226,17 @@ export default function SupportPage() {
                   </>
                 ) : (
                   /* Web: show message + App Store link */
-                  <div className="text-sm text-base-content/70">
-                    <p>Tips are available in the Go Daisy iOS app.</p>
+                  <div className="space-y-3">
+                    <p className="text-sm text-base-content">
+                      Tips are available in the Go Daisy iOS app.
+                    </p>
                     <a
-                      className="link link-primary mt-2 inline-block"
+                      className="btn btn-outline btn-sm"
                       href="https://apps.apple.com/app/id6755695873"
                       target="_blank"
                       rel="noopener noreferrer"
                     >
-                      Get it on the App Store
+                      Download on the App Store
                     </a>
                   </div>
                 )}

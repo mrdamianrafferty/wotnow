@@ -201,16 +201,16 @@ export default function FindrSupportPage() {
                 </>
               ) : (
                 <>
-                  <p className="mb-4">
+                  <p className="mb-4 text-base-content">
                     <TranslatedText text="Tips are available in the Findr iOS app." />
                   </p>
                   <a
-                    className="link link-primary"
+                    className="btn btn-outline btn-sm"
                     href="https://apps.apple.com/app/id6755045700"
                     target="_blank"
                     rel="noopener noreferrer"
                   >
-                    <TranslatedText text="Get it on the App Store" />
+                    <TranslatedText text="Download on the App Store" />
                   </a>
                 </>
               )}

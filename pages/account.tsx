@@ -11,6 +11,8 @@ import { Globe, ChevronDown } from 'lucide-react';
 import { useLanguage } from '@/context/LanguageContext';
 import { getSupportedLanguages } from '@/lib/user/language';
 import { useGoDaisyPushNotifications } from '@/hooks/useGoDaisyPushNotifications';
+import { GODAISY_TIP_PRODUCTS } from '@/lib/godaisy/tipProducts';
+import type { PurchasesPackage } from '@revenuecat/purchases-capacitor';
 
 // Flag emojis for each language
 const LANGUAGE_FLAGS: Record<string, string> = {
@@ -55,6 +57,61 @@ export default function AccountPage() {
   const [deleteConfirmText, setDeleteConfirmText] = useState('');
   const [deleting, setDeleting] = useState(false);
   const [langDropdownOpen, setLangDropdownOpen] = useState(false);
+
+  // Platform detection + Tip Jar
+  const [isIOSNative, setIsIOSNative] = useState(false);
+  const [tipPackages, setTipPackages] = useState<PurchasesPackage[]>([]);
+  const [purchasingId, setPurchasingId] = useState<string | null>(null);
+  const [tipError, setTipError] = useState<string | null>(null);
+  const [tipSuccess, setTipSuccess] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const { Capacitor } = await import('@capacitor/core');
+        if (cancelled) return;
+        const native = Capacitor.isNativePlatform() && Capacitor.getPlatform() === 'ios';
+        setIsIOSNative(native);
+
+        if (native) {
+          const { fetchOfferings } = await import('@/lib/grow/revenueCat');
+          const offerings = await fetchOfferings();
+          if (cancelled) return;
+          if (offerings?.current?.availablePackages) {
+            const tipIds = new Set(GODAISY_TIP_PRODUCTS.map((p) => p.id));
+            const matched = offerings.current.availablePackages.filter((pkg) =>
+              tipIds.has(pkg.product.identifier)
+            );
+            setTipPackages(matched);
+          }
+        }
+      } catch {
+        // Capacitor or RevenueCat not available
+      }
+    })();
+    return () => { cancelled = true; };
+  }, []);
+
+  const handleTipPurchase = async (pkg: PurchasesPackage) => {
+    try {
+      setPurchasingId(pkg.product.identifier);
+      setTipError(null);
+      setTipSuccess(false);
+
+      const { purchasePackage } = await import('@/lib/grow/revenueCat');
+      const result = await purchasePackage(pkg);
+
+      if (result) {
+        setTipSuccess(true);
+      }
+    } catch (err) {
+      console.error('[Account] Tip purchase failed:', err);
+      setTipError(err instanceof Error ? err.message : 'Purchase failed. Please try again.');
+    } finally {
+      setPurchasingId(null);
+    }
+  };
 
   const homeSpot = useMemo(() => {
     const home = preferences.locations.find(l => l.type === 'home');
@@ -464,10 +521,17 @@ export default function AccountPage() {
               </p>
 
               {!pushSupported ? (
-                <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 text-amber-800 text-sm">
-                  Push notifications are not supported in this browser.
-                  Try Chrome, Firefox, or Edge.
-                </div>
+                isIOSNative ? (
+                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-blue-800 text-sm">
+                    Notifications are managed in your device settings.
+                    Go to Settings &gt; Go Daisy &gt; Notifications to adjust.
+                  </div>
+                ) : (
+                  <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 text-amber-800 text-sm">
+                    Push notifications are not supported in this browser.
+                    Try Chrome, Firefox, or Edge.
+                  </div>
+                )
               ) : pushPermission === 'denied' ? (
                 <div className="bg-red-50 border border-red-200 rounded-lg p-3 text-red-800 text-sm">
                   Notification permission was denied. Update your browser settings to allow notifications.
@@ -580,6 +644,70 @@ export default function AccountPage() {
                   )}
                 </>
               )}
+            </section>
+          )}
+
+          {/* Tip Jar — iOS native only */}
+          {isIOSNative && (
+            <section className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 mb-4">
+              <h2 className="text-lg font-semibold text-gray-900 mb-1">Tip Jar</h2>
+              <p className="text-sm text-gray-600 mb-3">
+                Love Go Daisy? Leave a one-off tip to help keep things running.
+              </p>
+
+              {tipSuccess && (
+                <div className="bg-green-50 border border-green-200 rounded-lg p-3 text-green-800 text-sm mb-3">
+                  Thank you for the tip! You&apos;re a legend.
+                </div>
+              )}
+              {tipError && (
+                <div className="bg-red-50 border border-red-200 rounded-lg p-3 text-red-800 text-sm mb-3">
+                  {tipError}
+                </div>
+              )}
+
+              <div className="space-y-2">
+                {tipPackages.length > 0 ? (
+                  tipPackages.map((pkg) => {
+                    const product = GODAISY_TIP_PRODUCTS.find(
+                      (p) => p.id === pkg.product.identifier
+                    );
+                    return (
+                      <button
+                        key={pkg.product.identifier}
+                        className="w-full flex items-center justify-between p-3 rounded-lg border border-gray-200 hover:bg-gray-50 disabled:opacity-50"
+                        disabled={!!purchasingId}
+                        onClick={() => handleTipPurchase(pkg)}
+                      >
+                        <span className="font-medium text-gray-900">
+                          {purchasingId === pkg.product.identifier ? (
+                            <span className="loading loading-spinner loading-sm" />
+                          ) : (
+                            <>{product?.emoji ?? ''} {product?.label ?? pkg.product.title}</>
+                          )}
+                        </span>
+                        <span className="font-semibold text-gray-700">
+                          {pkg.product.priceString}
+                        </span>
+                      </button>
+                    );
+                  })
+                ) : (
+                  GODAISY_TIP_PRODUCTS.map((product) => (
+                    <div
+                      key={product.id}
+                      className="w-full flex items-center justify-between p-3 rounded-lg border border-gray-200 opacity-50"
+                    >
+                      <span className="font-medium text-gray-900">
+                        {product.emoji} {product.label}
+                      </span>
+                      <span className="font-semibold text-gray-700">
+                        &euro;{product.defaultPriceEur}
+                      </span>
+                    </div>
+                  ))
+                )}
+              </div>
             </section>
           )}
 
