@@ -1,4 +1,5 @@
 import UIKit
+import WebKit
 import Capacitor
 import GoogleSignIn
 import UserNotifications
@@ -17,6 +18,9 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         _ application: UIApplication,
         didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?
     ) -> Bool {
+        // Clear WKWebView cache on app version change to ensure fresh JS loads
+        clearWebCacheIfVersionChanged()
+
         // Initialize Firebase
         FirebaseApp.configure()
 
@@ -33,6 +37,34 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         registerBackgroundTasks()
 
         return true
+    }
+
+    // MARK: - Web Cache Management
+
+    /// Clear WKWebView disk/memory cache and service worker registrations
+    /// when the app binary version changes (i.e. after an Xcode rebuild).
+    /// This forces the Capacitor webview to fetch fresh JS from Vercel
+    /// instead of serving stale PWA service worker caches.
+    private func clearWebCacheIfVersionChanged() {
+        let currentBuild = Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? "0"
+        let lastBuild = UserDefaults.standard.string(forKey: "lastWebCacheBuild")
+
+        guard currentBuild != lastBuild else { return }
+
+        let clearTypes: Set<String> = [
+            WKWebsiteDataTypeDiskCache,
+            WKWebsiteDataTypeMemoryCache,
+            WKWebsiteDataTypeServiceWorkerRegistrations,
+        ]
+
+        WKWebsiteDataStore.default().removeData(
+            ofTypes: clearTypes,
+            modifiedSince: Date.distantPast
+        ) {
+            print("🧹 Cleared WKWebView caches for build \(currentBuild)")
+        }
+
+        UserDefaults.standard.set(currentBuild, forKey: "lastWebCacheBuild")
     }
 
     // MARK: - Push Notification Setup
