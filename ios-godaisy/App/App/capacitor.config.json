@@ -1,0 +1,54 @@
+{
+	"appId": "io.godaisy.app",
+	"appName": "Go Daisy",
+	"webDir": ".capacitor-assets-godaisy",
+	"server": {
+		"url": "https://godaisy.io",
+		"cleartext": false
+	},
+	"ios": {
+		"scheme": "godaisy"
+	},
+	"android": {
+		"scheme": "godaisy"
+	},
+	"plugins": {
+		"SplashScreen": {
+			"launchShowDuration": 2000,
+			"launchAutoHide": true,
+			"backgroundColor": "#0f172a",
+			"androidSplashResourceName": "splash",
+			"androidScaleType": "CENTER_CROP",
+			"showSpinner": true,
+			"spinnerColor": "#0284c7",
+			"androidSpinnerStyle": "small",
+			"iosSpinnerStyle": "small"
+		},
+		"PushNotifications": {
+			"presentationOptions": [
+				"badge",
+				"sound",
+				"alert"
+			]
+		}
+	},
+	"packageClassList": [
+		"SignInWithApple",
+		"AppPlugin",
+		"CAPBrowserPlugin",
+		"CAPCameraPlugin",
+		"GeolocationPlugin",
+		"HapticsPlugin",
+		"LocalNotificationsPlugin",
+		"CAPNetworkPlugin",
+		"PreferencesPlugin",
+		"PurchasesPlugin",
+		"PushNotificationsPlugin",
+		"SharePlugin",
+		"SplashScreenPlugin",
+		"StatusBarPlugin",
+		"ToastPlugin",
+		"SocialLoginPlugin",
+		"SafeAreaPlugin"
+	]
+}
