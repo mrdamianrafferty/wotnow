@@ -24,7 +24,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
 
         // Configure RevenueCat natively (the Capacitor plugin's configure()
         // hangs due to a bridge issue, so we configure the SDK directly here)
-        Purchases.logLevel = .debug
+        Purchases.logLevel = .warn
         Purchases.configure(withAPIKey: "appl_fUSSbSMORcfnVFSwHweCTCDAsUQ")
 
         // Initialize Firebase
@@ -88,18 +88,6 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
                 application.registerForRemoteNotifications()
                 print("📲 Registered for remote notifications")
             }
-        }
-    }
-
-    private func showDebugAlert(title: String, message: String) {
-        DispatchQueue.main.async {
-            guard let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
-                  let rootViewController = windowScene.windows.first?.rootViewController else {
-                return
-            }
-            let alert = UIAlertController(title: title, message: message, preferredStyle: .alert)
-            alert.addAction(UIAlertAction(title: "OK", style: .default))
-            rootViewController.present(alert, animated: true)
         }
     }
 

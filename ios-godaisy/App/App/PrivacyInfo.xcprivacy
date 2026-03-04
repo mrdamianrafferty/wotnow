@@ -6,7 +6,7 @@
     <key>NSPrivacyTracking</key>
     <false/>
 
-    <!-- Tracking Domains (none for Findr) -->
+    <!-- Tracking Domains (none for Go Daisy) -->
     <key>NSPrivacyTrackingDomains</key>
     <array/>
 

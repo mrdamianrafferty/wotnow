@@ -165,7 +165,7 @@ export default function SurfSiteFAQ() {
                     <li><b>Local knowledge:</b> vetted notes from trusted contributors highlighting wind shelter, rip hotspots and parking tips.</li>
                   </ul>
                   <p>
-                    If you want early access to any of these, drop us a line and we’ll add you to the beta list.
+                    If you want early access to any of these, drop us a line and we’ll let you know when they launch.
                   </p>
                 </Item>
 

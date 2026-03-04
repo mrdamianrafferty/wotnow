@@ -85,6 +85,8 @@ export default function PrivacyPolicy() {
                 <li><strong>Copernicus Marine Service</strong> - Marine environmental data</li>
                 <li><strong>OpenWeather</strong> - Weather data</li>
                 <li><strong>Stripe</strong> - Payment processing for premium subscriptions (Findr, Grow Daisy)</li>
+                <li><strong>Firebase Cloud Messaging</strong> - Push notifications (iOS app)</li>
+                <li><strong>RevenueCat</strong> - In-app purchase management (iOS app)</li>
                 <li><strong>Resend</strong> - Email notifications</li>
               </ul>
               <p className="mt-2">

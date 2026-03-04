@@ -394,7 +394,7 @@ export default function AccountPage() {
           {/* Language */}
           <section className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 mb-4">
             <h2 className="text-lg font-semibold text-gray-900 mb-1">
-              Language <span className="text-xs bg-yellow-100 text-yellow-800 px-2 py-0.5 rounded-full ml-2">Beta</span>
+              Language
             </h2>
             <p className="text-sm text-gray-600 mb-3">Choose your preferred language for Go Daisy.</p>
 

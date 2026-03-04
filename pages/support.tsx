@@ -47,9 +47,6 @@ export default function SupportPage() {
   const [purchasingId, setPurchasingId] = useState<string | null>(null);
   const [tipError, setTipError] = useState<string | null>(null);
   const [tipSuccess, setTipSuccess] = useState(false);
-  const [tipDebug, setTipDebug] = useState('JS:v7 loading...');
-  const [showDebug, setShowDebug] = useState(false);
-
   useEffect(() => {
     let cancelled = false;
     (async () => {
@@ -59,12 +56,8 @@ export default function SupportPage() {
         const native = Capacitor.isNativePlatform() && Capacitor.getPlatform() === "ios";
         setIsIOSNative(native);
 
-        if (!native) {
-          setTipDebug('JS:v7 not-native');
-          return;
-        }
+        if (!native) return;
 
-        setTipDebug('JS:v7 fetchTipPackages (StoreKit2 direct)...');
         const { fetchTipPackages } = await import("../lib/grow/revenueCat");
 
         const fetchResult = await Promise.race([
@@ -72,21 +65,13 @@ export default function SupportPage() {
           new Promise<{ status: 'timeout' }>(r => setTimeout(() => r({ status: 'timeout' }), 10000)),
         ]);
 
-        if (fetchResult.status === 'timeout') {
-          setTipDebug('JS:v7 fetchTipPackages TIMEOUT (10s)');
-          return;
-        }
+        if (fetchResult.status === 'timeout' || cancelled) return;
 
-        if (cancelled) return;
         const pkgs = fetchResult.pkgs;
         const tipIds = new Set(GODAISY_TIP_PRODUCTS.map((p) => p.id));
-        const matched = pkgs.filter((pkg) => tipIds.has(pkg.identifier));
-        setTipDebug(
-          `JS:v7 done | pkgs:${pkgs.length} matched:${matched.length}`
-        );
-        setTipPackages(matched);
+        setTipPackages(pkgs.filter((pkg) => tipIds.has(pkg.identifier)));
       } catch (err) {
-        setTipDebug(`JS:v7 ERROR: ${err instanceof Error ? err.message : String(err)}`);
+        console.error('[Support] Tip jar load failed:', err);
       }
     })();
     return () => { cancelled = true; };
@@ -287,15 +272,6 @@ export default function SupportPage() {
                     <div className="text-center py-6">
                       <Loader2 className="h-6 w-6 text-gray-400 animate-spin mx-auto mb-2" />
                       <p className="text-sm text-gray-500">Loading tip jar...</p>
-                      <button
-                        onClick={() => setShowDebug(!showDebug)}
-                        className="mt-2 text-xs text-gray-400 underline"
-                      >
-                        {showDebug ? 'Hide' : 'Show'} debug info
-                      </button>
-                      {showDebug && (
-                        <p className="mt-1 text-xs font-mono text-gray-400">{tipDebug}</p>
-                      )}
                     </div>
                   )}
                 </div>
