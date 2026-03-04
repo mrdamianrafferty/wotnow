@@ -36,14 +36,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   // Authenticate user
   const authHeader = req.headers.authorization;
   if (!authHeader?.startsWith('Bearer ')) {
-    return res.status(401).json({ error: 'Missing authorization header' });
+    return res.status(401).json({ error: 'Please log in to continue.' });
   }
 
   const accessToken = authHeader.substring(7);
   const { data: { user }, error: authError } = await supabase.auth.getUser(accessToken);
 
   if (authError || !user) {
-    return res.status(401).json({ error: 'Invalid or expired token' });
+    return res.status(401).json({ error: 'Your session has expired. Please log in again.' });
   }
 
   const userId = user.id;
@@ -52,7 +52,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const { hasAccess } = await checkIntegrationAccess(supabase, userId);
   if (!hasAccess) {
     return res.status(403).json({
-      error: 'Hardware integrations require a paid subscription',
+      error: 'Connecting devices is a premium feature. Upgrade your plan to get started.',
       upgradeRequired: true,
     });
   }
@@ -61,7 +61,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const { apiKey } = req.body as ConnectRequest;
 
     if (!apiKey) {
-      return res.status(400).json({ error: 'Hydrawise API key is required' });
+      return res.status(400).json({ error: 'Please paste your Hydrawise connection key.' });
     }
 
     try {
@@ -70,7 +70,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
       if (!validation.valid || !validation.customer) {
         return res.status(400).json({
-          error: validation.error || 'Invalid Hydrawise API key',
+          error: validation.error || 'We couldn\'t verify this key. Please check you copied it correctly from app.hydrawise.com.',
         });
       }
 
@@ -88,7 +88,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
       if (existing) {
         return res.status(409).json({
-          error: 'This controller is already connected',
+          error: 'This controller is already connected.',
           integrationId: existing.id,
         });
       }
@@ -120,7 +120,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
       if (insertError || !integration) {
         console.error('[Hydrawise Connect] Insert error:', insertError);
-        return res.status(500).json({ error: 'Failed to create integration' });
+        return res.status(500).json({ error: 'Could not save the connection. Please try again.' });
       }
 
       // Store zones in irrigation_zones table
@@ -165,13 +165,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       });
     } catch (error) {
       console.error('[Hydrawise Connect] Error:', error);
-      return res.status(500).json({ error: 'Internal server error' });
+      return res.status(500).json({ error: 'Something went wrong on our end. Please try again in a few minutes.' });
     }
   } else if (req.method === 'DELETE') {
     const integrationId = req.query.integrationId as string;
 
     if (!integrationId) {
-      return res.status(400).json({ error: 'integrationId is required' });
+      return res.status(400).json({ error: 'Could not identify the device to disconnect. Please refresh and try again.' });
     }
 
     try {
@@ -187,7 +187,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
       if (updateError) {
         console.error('[Hydrawise Connect] Delete error:', updateError);
-        return res.status(500).json({ error: 'Failed to disconnect integration' });
+        return res.status(500).json({ error: 'Could not disconnect this device. Please try again.' });
       }
 
       // Delete the token
@@ -205,9 +205,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return res.status(200).json({ success: true });
     } catch (error) {
       console.error('[Hydrawise Connect] Delete error:', error);
-      return res.status(500).json({ error: 'Internal server error' });
+      return res.status(500).json({ error: 'Something went wrong on our end. Please try again in a few minutes.' });
     }
   } else {
-    return res.status(405).json({ error: 'Method not allowed' });
+    return res.status(405).json({ error: 'This action is not supported.' });
   }
 }

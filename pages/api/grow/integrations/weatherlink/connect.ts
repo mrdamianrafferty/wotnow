@@ -38,14 +38,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   // Authenticate user
   const authHeader = req.headers.authorization;
   if (!authHeader?.startsWith('Bearer ')) {
-    return res.status(401).json({ error: 'Missing authorization header' });
+    return res.status(401).json({ error: 'Please log in to continue.' });
   }
 
   const accessToken = authHeader.substring(7);
   const { data: { user }, error: authError } = await supabase.auth.getUser(accessToken);
 
   if (authError || !user) {
-    return res.status(401).json({ error: 'Invalid or expired token' });
+    return res.status(401).json({ error: 'Your session has expired. Please log in again.' });
   }
 
   const userId = user.id;
@@ -54,7 +54,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const { hasAccess } = await checkIntegrationAccess(supabase, userId);
   if (!hasAccess) {
     return res.status(403).json({
-      error: 'Hardware integrations require a paid subscription',
+      error: 'Connecting devices is a premium feature. Upgrade your plan to get started.',
       upgradeRequired: true,
     });
   }
@@ -63,7 +63,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const { apiKey, apiSecret, stationId } = req.body as ConnectRequest;
 
     if (!apiKey || !apiSecret) {
-      return res.status(400).json({ error: 'WeatherLink API key and secret are required' });
+      return res.status(400).json({ error: 'Please paste both your key and secret from WeatherLink.' });
     }
 
     try {
@@ -72,7 +72,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
       if (!validation.valid || !validation.stations) {
         return res.status(400).json({
-          error: validation.error || 'Invalid WeatherLink credentials',
+          error: validation.error || 'We couldn\'t verify these credentials. Please check you copied them correctly from weatherlink.com.',
         });
       }
 
@@ -82,7 +82,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       if (stationId) {
         const found = validation.stations.find(s => s.station_id === stationId);
         if (!found) {
-          return res.status(400).json({ error: 'Station not found in your account' });
+          return res.status(400).json({ error: 'We connected to your account but couldn\'t find any stations. Make sure your Davis station is set up and online.' });
         }
         selectedStation = found;
       } else {
@@ -101,7 +101,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
       if (existing) {
         return res.status(409).json({
-          error: 'This station is already connected',
+          error: 'This station is already connected.',
           integrationId: existing.id,
         });
       }
@@ -142,7 +142,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
       if (insertError || !integration) {
         console.error('[WeatherLink Connect] Insert error:', insertError);
-        return res.status(500).json({ error: 'Failed to create integration' });
+        return res.status(500).json({ error: 'Could not save the connection. Please try again.' });
       }
 
       // Store both API key and secret (combined with separator)
@@ -173,13 +173,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       });
     } catch (error) {
       console.error('[WeatherLink Connect] Error:', error);
-      return res.status(500).json({ error: 'Internal server error' });
+      return res.status(500).json({ error: 'Something went wrong on our end. Please try again in a few minutes.' });
     }
   } else if (req.method === 'DELETE') {
     const integrationId = req.query.integrationId as string;
 
     if (!integrationId) {
-      return res.status(400).json({ error: 'integrationId is required' });
+      return res.status(400).json({ error: 'Could not identify the device to disconnect. Please refresh and try again.' });
     }
 
     try {
@@ -195,7 +195,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
       if (updateError) {
         console.error('[WeatherLink Connect] Delete error:', updateError);
-        return res.status(500).json({ error: 'Failed to disconnect integration' });
+        return res.status(500).json({ error: 'Could not disconnect this device. Please try again.' });
       }
 
       // Delete the token
@@ -207,9 +207,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return res.status(200).json({ success: true });
     } catch (error) {
       console.error('[WeatherLink Connect] Delete error:', error);
-      return res.status(500).json({ error: 'Internal server error' });
+      return res.status(500).json({ error: 'Something went wrong on our end. Please try again in a few minutes.' });
     }
   } else {
-    return res.status(405).json({ error: 'Method not allowed' });
+    return res.status(405).json({ error: 'This action is not supported.' });
   }
 }

@@ -10,6 +10,7 @@
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
+import { useRouter } from 'next/router';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
@@ -51,6 +52,7 @@ interface Integration {
   device_name: string;
   status: string;
   last_sync_at?: string;
+  created_at?: string;
   metadata?: Record<string, unknown>;
 }
 
@@ -68,17 +70,19 @@ type IntegrationCategory = 'weather' | 'irrigation';
 interface IntegrationConfig {
   name: string;
   description: string;
-  benefit: string; // Clear user benefit
+  benefit: string;
   icon: typeof Wind;
   color: string;
   bgColor: string;
   setupUrl: string;
   tokenLabel: string;
+  tokenPlaceholder: string;
+  secretPlaceholder?: string;
   tokenHelp: string;
   authType: 'token' | 'oauth' | 'dual_token';
   category: IntegrationCategory;
-  features: string[]; // Feature badges
-  popular?: boolean; // Highlight popular options
+  features: string[];
+  popular?: boolean;
 }
 
 const INTEGRATION_INFO: Record<IntegrationType, IntegrationConfig> = {
@@ -92,7 +96,8 @@ const INTEGRATION_INFO: Record<IntegrationType, IntegrationConfig> = {
     bgColor: 'bg-indigo-50',
     setupUrl: 'https://my.netatmo.com',
     tokenLabel: 'Connect with Netatmo',
-    tokenHelp: 'Click Connect to securely link your Netatmo account - no API keys needed',
+    tokenPlaceholder: '',
+    tokenHelp: 'Click Connect to securely link your Netatmo account. You\'ll sign in to Netatmo — no codes or keys to copy.',
     authType: 'oauth',
     category: 'weather',
     features: ['Easy Setup', 'Indoor + Outdoor'],
@@ -100,14 +105,15 @@ const INTEGRATION_INFO: Record<IntegrationType, IntegrationConfig> = {
   },
   ecowitt: {
     name: 'Ecowitt',
-    description: 'Budget-friendly stations with soil sensors',
+    description: 'Popular stations with built-in soil monitoring',
     benefit: 'Real soil moisture & temperature at multiple depths',
     icon: Thermometer,
     color: 'text-teal-600',
     bgColor: 'bg-teal-50',
     setupUrl: 'https://www.ecowitt.net/home/index',
-    tokenLabel: 'API Key',
-    tokenHelp: 'Find your API key in Settings > API on ecowitt.net',
+    tokenLabel: 'Ecowitt connection key',
+    tokenPlaceholder: 'Paste your Ecowitt key here',
+    tokenHelp: 'Log in to ecowitt.net, go to Settings (top-right menu), then tap API. Copy the Application Key shown on that page and paste it here.',
     authType: 'token',
     category: 'weather',
     features: ['Soil Sensors', 'Great Value'],
@@ -121,69 +127,75 @@ const INTEGRATION_INFO: Record<IntegrationType, IntegrationConfig> = {
     color: 'text-orange-600',
     bgColor: 'bg-orange-50',
     setupUrl: 'https://ambientweather.net/account',
-    tokenLabel: 'API Key',
-    tokenHelp: 'Get your API key from your Ambient Weather account page',
+    tokenLabel: 'Ambient Weather connection key',
+    tokenPlaceholder: 'Paste your Ambient Weather key here',
+    tokenHelp: 'Log in to ambientweather.net, click your name (top-right), then go to the API Keys tab. Create one if you don\'t have one yet, then copy and paste it here.',
     authType: 'token',
     category: 'weather',
     features: ['Soil Sensors', 'Rain Gauge'],
   },
   tempest: {
     name: 'Tempest',
-    description: 'Premium wireless weather system',
-    benefit: 'Professional-grade data including lightning detection',
+    description: 'Premium wireless weather system by WeatherFlow',
+    benefit: 'Ultra-precise wind, rain, and UV data — perfect for protecting delicate plants',
     icon: Wind,
     color: 'text-blue-600',
     bgColor: 'bg-blue-50',
     setupUrl: 'https://tempestwx.com/settings/tokens',
-    tokenLabel: 'Personal Access Token',
-    tokenHelp: 'Create a token in Settings > Data Authorizations in the Tempest web app',
+    tokenLabel: 'Tempest access key',
+    tokenPlaceholder: 'Paste your Tempest key here',
+    tokenHelp: 'Go to tempestwx.com, open Settings > Data Authorizations, and click Create Token. Give it any name (e.g. "Grow Daisy") and copy the key shown.',
     authType: 'token',
     category: 'weather',
-    features: ['Lightning', 'UV Index', 'Haptic Rain'],
+    features: ['Lightning', 'UV Index', 'Precise Rain'],
   },
   weatherlink: {
     name: 'Davis WeatherLink',
-    description: 'Professional-grade Davis instruments',
-    benefit: 'Research-quality data trusted by agricultural pros',
+    description: 'Trusted Davis instruments with optional soil probes',
+    benefit: 'Highly accurate readings that give your garden recommendations an edge',
     icon: Wind,
     color: 'text-amber-600',
     bgColor: 'bg-amber-50',
     setupUrl: 'https://www.weatherlink.com/account',
-    tokenLabel: 'API Key & Secret',
-    tokenHelp: 'Get your API Key and Secret from Account > API v2 in WeatherLink',
+    tokenLabel: 'WeatherLink credentials',
+    tokenPlaceholder: 'Paste your key here',
+    secretPlaceholder: 'Paste your secret here',
+    tokenHelp: 'Log in to weatherlink.com, go to Account Settings, then find the API v2 section. Click Generate Key if you haven\'t already. Copy both the Key and Secret.',
     authType: 'dual_token',
     category: 'weather',
-    features: ['Soil Sensors', 'Pro Grade'],
+    features: ['Soil Sensors', 'High Accuracy'],
   },
   // Irrigation Controllers
   rachio: {
     name: 'Rachio',
-    description: 'Smart WiFi sprinkler controller',
+    description: 'Smart sprinkler controller',
     benefit: 'Auto-skip watering when rain is coming or soil is wet',
     icon: Droplets,
     color: 'text-cyan-600',
     bgColor: 'bg-cyan-50',
     setupUrl: 'https://app.rach.io',
-    tokenLabel: 'API Key',
-    tokenHelp: 'Find your API key in Profile > API key in the Rachio app',
+    tokenLabel: 'Rachio connection key',
+    tokenPlaceholder: 'Paste your Rachio key here',
+    tokenHelp: 'Open app.rach.io in a web browser (not the mobile app). Click the person icon (top-left), then scroll down to find your connection key. Copy and paste it here.',
     authType: 'token',
     category: 'irrigation',
-    features: ['Smart Skip', 'Zone Control'],
+    features: ['Smart Skip', 'Per-Zone Watering'],
     popular: true,
   },
   hydrawise: {
     name: 'Hydrawise',
-    description: 'Hunter Industries smart controller',
+    description: 'Professional smart sprinkler controller',
     benefit: 'Weather-adjusted watering schedules based on your garden',
     icon: Droplets,
     color: 'text-green-600',
     bgColor: 'bg-green-50',
     setupUrl: 'https://app.hydrawise.com/config/account',
-    tokenLabel: 'API Key',
-    tokenHelp: 'Find your API key in Account Settings in the Hydrawise app',
+    tokenLabel: 'Hydrawise connection key',
+    tokenPlaceholder: 'Paste your Hydrawise key here',
+    tokenHelp: 'Log in to app.hydrawise.com, go to Account Details (under your name), and copy the key shown at the bottom of the page.',
     authType: 'token',
     category: 'irrigation',
-    features: ['Zone Control', 'Scheduling'],
+    features: ['Per-Zone Watering', 'Scheduling'],
   },
 };
 
@@ -203,6 +215,49 @@ const CATEGORY_INFO = {
   },
 };
 
+// Map backend errors to user-friendly messages
+function friendlyError(backendError: string, providerName?: string): string {
+  const lower = backendError.toLowerCase();
+
+  // Auth errors — shouldn't normally surface but handle gracefully
+  if (lower.includes('authorization header') || lower.includes('expired token')) {
+    return 'Your session has expired. Please log in again.';
+  }
+  if (lower.includes('require a paid subscription') || lower.includes('upgraderequired')) {
+    return 'Connecting devices is a premium feature. Upgrade your plan to get started.';
+  }
+
+  // Validation errors
+  if (lower.includes('is required') && lower.includes('key')) {
+    return `Please paste your ${providerName || ''} connection key before clicking Connect.`.replace('  ', ' ');
+  }
+  if (lower.includes('invalid') && (lower.includes('key') || lower.includes('token') || lower.includes('credentials'))) {
+    return `We couldn't connect. Please double-check that you copied the key correctly from the ${providerName || 'provider'} website.`;
+  }
+  if (lower.includes('already connected')) {
+    return 'Good news — this device is already connected! Check your connected devices above.';
+  }
+  if (lower.includes('not found in your account') || lower.includes('station not found') || lower.includes('no stations')) {
+    return `We connected to your account but couldn't find any devices. Make sure your ${providerName || ''} device is set up and online.`.replace('  ', ' ');
+  }
+  if (lower.includes('app key not configured') || lower.includes('not configured')) {
+    return 'This connection type is temporarily unavailable. Please try again later or contact support.';
+  }
+
+  // Server errors
+  if (lower.includes('internal server error') || lower.includes('internal error')) {
+    return 'Something went wrong on our end. Please try again in a few minutes.';
+  }
+
+  // Disconnect / generic
+  if (lower.includes('failed to disconnect') || lower.includes('could not identify')) {
+    return 'Could not disconnect. Please refresh and try again.';
+  }
+
+  // Pass through if already friendly
+  return backendError;
+}
+
 // Stable Supabase client (created once outside the component to prevent re-render loops)
 const supabase = createClient();
 
@@ -211,6 +266,7 @@ const supabase = createClient();
 // =============================================================================
 
 export function IntegrationsCard({ className = '' }: IntegrationCardProps) {
+  const router = useRouter();
   const [integrations, setIntegrations] = useState<Integration[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isExpanded, setIsExpanded] = useState(false);
@@ -220,6 +276,7 @@ export function IntegrationsCard({ className = '' }: IntegrationCardProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [syncingId, setSyncingId] = useState<string | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<IntegrationCategory | null>(null);
+  const [justConnected, setJustConnected] = useState<string | null>(null);
 
   const { canUse, isLoading: subscriptionLoading } = useGrowSubscription();
 
@@ -228,11 +285,45 @@ export function IntegrationsCard({ className = '' }: IntegrationCardProps) {
 
   // Helper to determine data source status
   const hasWeatherStation = integrations.some(
-    i => INTEGRATION_INFO[i.provider].category === 'weather'
+    i => INTEGRATION_INFO[i.provider]?.category === 'weather'
   );
   const hasIrrigation = integrations.some(
-    i => INTEGRATION_INFO[i.provider].category === 'irrigation'
+    i => INTEGRATION_INFO[i.provider]?.category === 'irrigation'
   );
+
+  // Handle OAuth callback query params (e.g. ?success=netatmo_connected)
+  useEffect(() => {
+    const { success, error: oauthError } = router.query;
+
+    if (success && typeof success === 'string') {
+      if (success.includes('connected')) {
+        const provider = success.replace('_connected', '').replace('_reconnected', '');
+        const providerName = provider.charAt(0).toUpperCase() + provider.slice(1);
+        toast.success(`${providerName} is now connected! Your garden data just got more accurate.`);
+        setIsExpanded(true);
+      }
+      // Clean query params without full page reload
+      const { success: _s, error: _e, ...rest } = router.query;
+      router.replace({ pathname: router.pathname, query: rest }, undefined, { shallow: true });
+    }
+
+    if (oauthError && typeof oauthError === 'string') {
+      const errorMessages: Record<string, string> = {
+        netatmo_denied: 'Netatmo connection was cancelled. You can try again anytime.',
+        invalid_callback: 'Something went wrong with the connection. Please try again.',
+        invalid_state: 'The connection link expired. Please try connecting again.',
+        state_expired: 'The connection link expired. Please try connecting again.',
+        token_exchange_failed: 'We couldn\'t complete the connection. Please try again.',
+        no_stations: 'No weather stations found on your Netatmo account. Make sure your station is set up.',
+        integration_failed: 'Something went wrong saving the connection. Please try again.',
+        internal_error: 'Something went wrong on our end. Please try again in a few minutes.',
+      };
+      toast.error(errorMessages[oauthError] || 'Connection failed. Please try again.');
+      setIsExpanded(true);
+      const { success: _s, error: _e, ...rest } = router.query;
+      router.replace({ pathname: router.pathname, query: rest }, undefined, { shallow: true });
+    }
+  }, [router.query.success, router.query.error]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const fetchIntegrations = useCallback(async () => {
     try {
@@ -269,7 +360,7 @@ export function IntegrationsCard({ className = '' }: IntegrationCardProps) {
       try {
         const { data: { session } } = await supabase.auth.getSession();
         if (!session?.access_token) {
-          toast.error('Please log in');
+          toast.error('Please log in to continue.');
           return;
         }
 
@@ -285,11 +376,11 @@ export function IntegrationsCard({ className = '' }: IntegrationCardProps) {
           // Redirect to OAuth provider
           window.location.href = data.authUrl;
         } else {
-          toast.error(data.error || 'Failed to start authorization');
+          toast.error(friendlyError(data.error || 'Could not start the connection. Please try again.', info.name));
         }
       } catch (error) {
         console.error('OAuth error:', error);
-        toast.error('Failed to start authorization');
+        toast.error('Could not start the connection. Please try again.');
       } finally {
         setIsSubmitting(false);
       }
@@ -299,11 +390,11 @@ export function IntegrationsCard({ className = '' }: IntegrationCardProps) {
     // Handle dual token (WeatherLink)
     if (info.authType === 'dual_token') {
       if (!tokenInput.trim() || !secretInput.trim()) {
-        toast.error('Please enter both API Key and API Secret');
+        toast.error('Please paste both your key and secret from WeatherLink.');
         return;
       }
     } else if (!tokenInput.trim()) {
-      toast.error('Please enter your API token');
+      toast.error(`Please paste your ${info.name} connection key before clicking Connect.`);
       return;
     }
 
@@ -312,7 +403,7 @@ export function IntegrationsCard({ className = '' }: IntegrationCardProps) {
     try {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session?.access_token) {
-        toast.error('Please log in');
+        toast.error('Please log in to continue.');
         return;
       }
 
@@ -337,17 +428,20 @@ export function IntegrationsCard({ className = '' }: IntegrationCardProps) {
       const data = await response.json();
 
       if (response.ok) {
-        toast.success(`${info.name} connected!`);
+        toast.success(`${info.name} is now connected! Your garden data just got more accurate.`);
+        setJustConnected(type);
         setAddingType(null);
         setTokenInput('');
         setSecretInput('');
         fetchIntegrations();
+        // Clear "just connected" state after 10 seconds
+        setTimeout(() => setJustConnected(null), 10000);
       } else {
-        toast.error(data.error || 'Failed to connect');
+        toast.error(friendlyError(data.error || 'Could not connect. Please try again.', info.name));
       }
     } catch (error) {
       console.error('Connect error:', error);
-      toast.error('Failed to connect integration');
+      toast.error('Could not connect. Please check your internet and try again.');
     } finally {
       setIsSubmitting(false);
     }
@@ -361,6 +455,7 @@ export function IntegrationsCard({ className = '' }: IntegrationCardProps) {
 
   const handleDisconnect = async (integration: Integration) => {
     setConfirmDisconnect(null);
+    const info = INTEGRATION_INFO[integration.provider];
 
     try {
       const { data: { session } } = await supabase.auth.getSession();
@@ -377,20 +472,21 @@ export function IntegrationsCard({ className = '' }: IntegrationCardProps) {
       );
 
       if (response.ok) {
-        toast.success('Integration disconnected');
+        toast.success(`${integration.device_name || info?.name} has been disconnected.`);
         fetchIntegrations();
       } else {
         const data = await response.json();
-        toast.error(data.error || 'Failed to disconnect');
+        toast.error(friendlyError(data.error || 'Could not disconnect. Please try again.', info?.name));
       }
     } catch (error) {
       console.error('Disconnect error:', error);
-      toast.error('Failed to disconnect');
+      toast.error('Could not disconnect. Please try again.');
     }
   };
 
   const handleSync = async (integration: Integration) => {
     setSyncingId(integration.id);
+    const info = INTEGRATION_INFO[integration.provider];
 
     try {
       const { data: { session } } = await supabase.auth.getSession();
@@ -407,22 +503,30 @@ export function IntegrationsCard({ className = '' }: IntegrationCardProps) {
       );
 
       if (response.ok) {
-        toast.success('Data synced successfully');
+        toast.success(`Data updated from your ${info?.name || 'device'}.`);
         fetchIntegrations();
       } else {
         const data = await response.json();
-        toast.error(data.error || 'Failed to sync');
+        toast.error(friendlyError(data.error || 'Could not sync. Please try again.', info?.name));
       }
     } catch (error) {
       console.error('Sync error:', error);
-      toast.error('Failed to sync data');
+      toast.error('Could not sync data. Please try again.');
     } finally {
       setSyncingId(null);
     }
   };
 
-  const formatLastSync = (dateStr?: string) => {
-    if (!dateStr) return 'Never';
+  const formatLastSync = (dateStr?: string, createdAt?: string) => {
+    if (!dateStr) {
+      // If never synced but recently created, show a friendlier message
+      if (createdAt) {
+        const created = new Date(createdAt);
+        const diffMs = Date.now() - created.getTime();
+        if (diffMs < 5 * 60 * 1000) return 'Just connected';
+      }
+      return 'Waiting for first sync';
+    }
     const date = new Date(dateStr);
     const now = new Date();
     const diffMs = now.getTime() - date.getTime();
@@ -448,8 +552,13 @@ export function IntegrationsCard({ className = '' }: IntegrationCardProps) {
 
   // Group connected integrations by category
   const connectedByCategory = {
-    weather: integrations.filter(i => INTEGRATION_INFO[i.provider].category === 'weather'),
-    irrigation: integrations.filter(i => INTEGRATION_INFO[i.provider].category === 'irrigation'),
+    weather: integrations.filter(i => INTEGRATION_INFO[i.provider]?.category === 'weather'),
+    irrigation: integrations.filter(i => INTEGRATION_INFO[i.provider]?.category === 'irrigation'),
+  };
+
+  // Open external link (works on web + Capacitor)
+  const openExternalLink = (url: string) => {
+    window.open(url, '_blank', 'noopener,noreferrer');
   };
 
   return (
@@ -457,7 +566,9 @@ export function IntegrationsCard({ className = '' }: IntegrationCardProps) {
       {/* Header */}
       <button
         onClick={() => setIsExpanded(!isExpanded)}
-        className="w-full flex items-center justify-between p-4 hover:bg-gray-50 transition-colors"
+        className="w-full flex items-center justify-between p-4 hover:bg-gray-50 active:bg-gray-100 transition-colors"
+        aria-expanded={isExpanded}
+        aria-label={isExpanded ? 'Collapse connected devices' : 'Expand connected devices'}
       >
         <div className="flex items-center gap-3">
           <div className={`w-10 h-10 rounded-full flex items-center justify-center ${canAccessIntegrations ? 'bg-purple-100' : 'bg-gray-100'}`}>
@@ -469,7 +580,7 @@ export function IntegrationsCard({ className = '' }: IntegrationCardProps) {
           </div>
           <div className="text-left">
             <div className="flex items-center gap-2">
-              <h3 className="font-semibold text-gray-900">Hardware Integrations</h3>
+              <h3 className="font-semibold text-gray-900">My Devices</h3>
               {!canAccessIntegrations && (
                 <span className="text-[10px] bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded-full font-medium">
                   Premium
@@ -526,7 +637,7 @@ export function IntegrationsCard({ className = '' }: IntegrationCardProps) {
                           Connect Your Weather Station
                         </h4>
                         <p className="text-sm text-gray-700 mt-1">
-                          Hardware integrations are available on paid plans. Connect your weather station or irrigation controller to get:
+                          Connecting devices is available on paid plans. Link your weather station or sprinkler controller to get:
                         </p>
                         <ul className="mt-3 space-y-2">
                           <li className="flex items-center gap-2 text-sm text-gray-700">
@@ -550,7 +661,7 @@ export function IntegrationsCard({ className = '' }: IntegrationCardProps) {
                     </div>
                     <Link
                       href="/grow/premium"
-                      className="mt-4 w-full inline-flex items-center justify-center gap-2 bg-gradient-to-r from-amber-500 to-orange-500 text-white font-medium py-2.5 px-4 rounded-lg hover:from-amber-600 hover:to-orange-600 transition-all shadow-sm"
+                      className="mt-4 w-full inline-flex items-center justify-center gap-2 bg-gradient-to-r from-amber-500 to-orange-500 text-white font-medium py-2.5 px-4 rounded-lg hover:from-amber-600 hover:to-orange-600 active:from-amber-700 active:to-orange-700 transition-all shadow-sm"
                     >
                       <Lock className="h-4 w-4" />
                       Upgrade to Unlock
@@ -558,7 +669,7 @@ export function IntegrationsCard({ className = '' }: IntegrationCardProps) {
                   </div>
 
                   <p className="text-xs text-center text-gray-500">
-                    Starting at €3.99/month • Cancel anytime
+                    Starting at &euro;3.99/month &bull; Cancel anytime
                   </p>
                 </div>
               ) : addingType ? (
@@ -576,7 +687,7 @@ export function IntegrationsCard({ className = '' }: IntegrationCardProps) {
                         {/* Integration header */}
                         <div className={`p-4 rounded-lg ${info.bgColor}`}>
                           <div className="flex items-start gap-3">
-                            <div className={`w-10 h-10 rounded-full bg-white/50 flex items-center justify-center`}>
+                            <div className="w-10 h-10 rounded-full bg-white/50 flex items-center justify-center">
                               <Icon className={`h-5 w-5 ${info.color}`} />
                             </div>
                             <div className="flex-1">
@@ -599,51 +710,50 @@ export function IntegrationsCard({ className = '' }: IntegrationCardProps) {
                             <>
                               <Input
                                 type="password"
-                                placeholder="API Key"
+                                placeholder={info.tokenPlaceholder}
                                 value={tokenInput}
                                 onChange={(e) => setTokenInput(e.target.value)}
                                 className="text-sm"
+                                aria-label={`${info.name} key`}
                               />
                               <Input
                                 type="password"
-                                placeholder="API Secret"
+                                placeholder={info.secretPlaceholder || 'Paste your secret here'}
                                 value={secretInput}
                                 onChange={(e) => setSecretInput(e.target.value)}
                                 className="text-sm"
+                                aria-label={`${info.name} secret`}
                               />
                               <div className="bg-gray-50 rounded-lg p-3">
                                 <p className="text-xs text-gray-600">{info.tokenHelp}</p>
-                                <a
-                                  href={info.setupUrl}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="inline-flex items-center gap-1 text-xs text-emerald-600 hover:underline mt-2"
+                                <button
+                                  onClick={() => openExternalLink(info.setupUrl)}
+                                  className="inline-flex items-center gap-1 text-xs text-emerald-600 hover:underline active:text-emerald-800 mt-2 min-h-[44px] -my-2 py-2"
                                 >
                                   Open {info.name} settings
                                   <ExternalLink className="h-3 w-3" />
-                                </a>
+                                </button>
                               </div>
                             </>
                           ) : (
                             <>
                               <Input
                                 type="password"
-                                placeholder={info.tokenLabel}
+                                placeholder={info.tokenPlaceholder}
                                 value={tokenInput}
                                 onChange={(e) => setTokenInput(e.target.value)}
                                 className="text-sm"
+                                aria-label={`${info.name} connection key`}
                               />
                               <div className="bg-gray-50 rounded-lg p-3">
                                 <p className="text-xs text-gray-600">{info.tokenHelp}</p>
-                                <a
-                                  href={info.setupUrl}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="inline-flex items-center gap-1 text-xs text-emerald-600 hover:underline mt-2"
+                                <button
+                                  onClick={() => openExternalLink(info.setupUrl)}
+                                  className="inline-flex items-center gap-1 text-xs text-emerald-600 hover:underline active:text-emerald-800 mt-2 min-h-[44px] -my-2 py-2"
                                 >
                                   Open {info.name} settings
                                   <ExternalLink className="h-3 w-3" />
-                                </a>
+                                </button>
                               </div>
                             </>
                           )}
@@ -660,7 +770,7 @@ export function IntegrationsCard({ className = '' }: IntegrationCardProps) {
                               setSecretInput('');
                             }}
                             disabled={isSubmitting}
-                            className="flex-1"
+                            className="flex-1 min-h-[44px]"
                           >
                             Back
                           </Button>
@@ -672,10 +782,13 @@ export function IntegrationsCard({ className = '' }: IntegrationCardProps) {
                               (info.authType === 'token' && !tokenInput.trim()) ||
                               (info.authType === 'dual_token' && (!tokenInput.trim() || !secretInput.trim()))
                             }
-                            className="flex-1 bg-emerald-600 hover:bg-emerald-700"
+                            className="flex-1 bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 min-h-[44px]"
                           >
                             {isSubmitting ? (
-                              <Loader2 className="h-4 w-4 animate-spin" />
+                              <span className="flex items-center gap-2">
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                                <span className="text-sm">Verifying...</span>
+                              </span>
                             ) : info.authType === 'oauth' ? (
                               <>
                                 <ExternalLink className="h-4 w-4 mr-1" />
@@ -704,7 +817,8 @@ export function IntegrationsCard({ className = '' }: IntegrationCardProps) {
                   <div className="flex items-center gap-2">
                     <button
                       onClick={() => setSelectedCategory(null)}
-                      className="text-gray-400 hover:text-gray-600"
+                      className="text-gray-400 hover:text-gray-600 active:text-gray-800 min-h-[44px] min-w-[44px] flex items-center justify-center -ml-2"
+                      aria-label="Back to categories"
                     >
                       <ChevronUp className="h-4 w-4 rotate-[-90deg]" />
                     </button>
@@ -720,6 +834,7 @@ export function IntegrationsCard({ className = '' }: IntegrationCardProps) {
                       {connectedByCategory[selectedCategory].map(integration => {
                         const info = INTEGRATION_INFO[integration.provider];
                         const Icon = info.icon;
+                        const isNew = justConnected === integration.provider;
                         return (
                           <div
                             key={integration.id}
@@ -733,7 +848,11 @@ export function IntegrationsCard({ className = '' }: IntegrationCardProps) {
                                     {integration.device_name}
                                   </p>
                                   <p className="text-xs text-gray-500">
-                                    Synced {formatLastSync(integration.last_sync_at)}
+                                    {isNew ? (
+                                      <span className="text-emerald-600 font-medium">Connected — syncing data now</span>
+                                    ) : (
+                                      <>Synced {formatLastSync(integration.last_sync_at, integration.created_at)}</>
+                                    )}
                                   </p>
                                 </div>
                               </div>
@@ -743,7 +862,9 @@ export function IntegrationsCard({ className = '' }: IntegrationCardProps) {
                                   size="sm"
                                   onClick={() => handleSync(integration)}
                                   disabled={syncingId === integration.id}
-                                  className="h-8 w-8 p-0"
+                                  className="h-11 w-11 p-0"
+                                  aria-label={`Refresh data from ${integration.device_name}`}
+                                  title="Refresh data"
                                 >
                                   {syncingId === integration.id ? (
                                     <Loader2 className="h-4 w-4 animate-spin" />
@@ -755,12 +876,24 @@ export function IntegrationsCard({ className = '' }: IntegrationCardProps) {
                                   variant="ghost"
                                   size="sm"
                                   onClick={() => handleRequestDisconnect(integration)}
-                                  className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50"
+                                  className="h-11 w-11 p-0 text-red-600 hover:text-red-700 hover:bg-red-50 active:bg-red-100"
+                                  aria-label={`Disconnect ${integration.device_name}`}
+                                  title="Disconnect"
                                 >
                                   <Trash2 className="h-4 w-4" />
                                 </Button>
                               </div>
                             </div>
+                            {/* Post-connection explanation for newly connected devices */}
+                            {isNew && (
+                              <motion.p
+                                initial={{ opacity: 0, height: 0 }}
+                                animate={{ opacity: 1, height: 'auto' }}
+                                className="text-xs text-gray-600 mt-2 ml-8"
+                              >
+                                Grow Daisy will use readings from this device for more accurate watering reminders, frost alerts, and growing recommendations.
+                              </motion.p>
+                            )}
                           </div>
                         );
                       })}
@@ -778,7 +911,7 @@ export function IntegrationsCard({ className = '' }: IntegrationCardProps) {
                           <button
                             key={type}
                             onClick={() => setAddingType(type)}
-                            className="w-full flex items-start gap-3 p-3 rounded-lg border border-gray-200 hover:border-emerald-300 hover:bg-emerald-50/30 transition-colors text-left cursor-pointer"
+                            className="w-full flex items-start gap-3 p-3 rounded-lg border border-gray-200 hover:border-emerald-300 hover:bg-emerald-50/30 active:bg-emerald-50 transition-colors text-left cursor-pointer min-h-[44px]"
                           >
                             <div className={`w-10 h-10 rounded-full ${info.bgColor} flex items-center justify-center flex-shrink-0`}>
                               <Icon className={`h-5 w-5 ${info.color}`} />
@@ -843,7 +976,8 @@ export function IntegrationsCard({ className = '' }: IntegrationCardProps) {
                       <button
                         key={category}
                         onClick={() => setSelectedCategory(category)}
-                        className="w-full text-left p-4 rounded-lg border border-gray-200 hover:border-gray-300 hover:bg-gray-50 transition-all cursor-pointer"
+                        className="w-full text-left p-4 rounded-lg border border-gray-200 hover:border-gray-300 hover:bg-gray-50 active:bg-gray-100 transition-all cursor-pointer min-h-[44px]"
+                        aria-label={`${catInfo.title} — ${hasConnected ? `${connected.length} connected` : 'none connected'}`}
                       >
                         <div className="flex items-start gap-3">
                           <div className={`w-10 h-10 rounded-full ${hasConnected ? 'bg-emerald-100' : 'bg-gray-100'} flex items-center justify-center`}>
@@ -881,7 +1015,7 @@ export function IntegrationsCard({ className = '' }: IntegrationCardProps) {
                             Improve your growing results
                           </p>
                           <p className="text-xs text-amber-700 mt-1">
-                            Weather forecasts can be off by 2-5°C. A weather station in your garden gives you the exact conditions your plants experience.
+                            Weather forecasts can be off by 2-5&deg;C. A weather station in your garden gives you the exact conditions your plants experience.
                           </p>
                         </div>
                       </div>
@@ -896,22 +1030,25 @@ export function IntegrationsCard({ className = '' }: IntegrationCardProps) {
                   animate={{ opacity: 1, y: 0 }}
                   className="bg-red-50 border border-red-200 rounded-lg p-4"
                 >
-                  <p className="text-sm font-medium text-red-800 mb-3">
+                  <p className="text-sm font-medium text-red-800">
                     Disconnect {confirmDisconnect.device_name}?
+                  </p>
+                  <p className="text-xs text-red-700 mt-1 mb-3">
+                    Grow Daisy will stop reading data from this device. Your garden recommendations will use weather forecasts instead. You can reconnect at any time.
                   </p>
                   <div className="flex gap-2">
                     <Button
                       variant="outline"
                       size="sm"
                       onClick={() => setConfirmDisconnect(null)}
-                      className="flex-1"
+                      className="flex-1 min-h-[44px]"
                     >
-                      Cancel
+                      Keep Connected
                     </Button>
                     <Button
                       size="sm"
                       onClick={() => handleDisconnect(confirmDisconnect)}
-                      className="flex-1 bg-red-600 hover:bg-red-700 text-white"
+                      className="flex-1 bg-red-600 hover:bg-red-700 active:bg-red-800 text-white min-h-[44px]"
                     >
                       Disconnect
                     </Button>

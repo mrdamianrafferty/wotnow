@@ -45,21 +45,21 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   // Authenticate user
   const authHeader = req.headers.authorization;
   if (!authHeader?.startsWith('Bearer ')) {
-    return res.status(401).json({ error: 'Missing authorization header' });
+    return res.status(401).json({ error: 'Please log in to continue.' });
   }
 
   const accessToken = authHeader.substring(7);
   const { data: { user }, error: authError } = await supabase.auth.getUser(accessToken);
 
   if (authError || !user) {
-    return res.status(401).json({ error: 'Invalid or expired token' });
+    return res.status(401).json({ error: 'Your session has expired. Please log in again.' });
   }
 
   const userId = user.id;
   const integrationId = req.query.integrationId as string;
 
   if (!integrationId) {
-    return res.status(400).json({ error: 'integrationId is required' });
+    return res.status(400).json({ error: 'Could not identify the device to disconnect. Please refresh and try again.' });
   }
 
   // Verify user owns this integration
@@ -183,7 +183,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       });
     } catch (error) {
       console.error('[Rachio Control] Error:', error);
-      return res.status(500).json({ error: 'Internal server error' });
+      return res.status(500).json({ error: 'Something went wrong on our end. Please try again in a few minutes.' });
     }
   } else if (req.method === 'GET') {
     try {
@@ -229,9 +229,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       });
     } catch (error) {
       console.error('[Rachio Control] Error:', error);
-      return res.status(500).json({ error: 'Internal server error' });
+      return res.status(500).json({ error: 'Something went wrong on our end. Please try again in a few minutes.' });
     }
   } else {
-    return res.status(405).json({ error: 'Method not allowed' });
+    return res.status(405).json({ error: 'This action is not supported.' });
   }
 }
