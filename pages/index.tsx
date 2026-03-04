@@ -36,6 +36,7 @@ import { WeatherData } from '../types/weatherData';
 import { getOptimizedImageSrc, isImageOptimized } from '../data/bgMapOptimized';
 const BottomNav = dynamic(() => import('../components/BottomNav'), { ssr: false });
 import { SkeletonHomePage } from '../components/SkeletonLoader';
+import SimplifiedShareModal from '../components/sharing/SimplifiedShareModal';
 
 // Code splitting: Lazy load heavy modal/dialog components
 const Popup = dynamic(() => import('../components/Popup'), {
@@ -467,6 +468,7 @@ const _getTargetHourForDay = (dayUnixTimestamp: number): string => {
 export default function Home() {
   // Fish species modal state (for hero/favourites)
   const [popupActivity, setPopupActivity] = useState<ReturnType<typeof buildPopupActivityPayload> | null>(null);
+  const [shareActivity, setShareActivity] = useState<{ id: string; name: string; emoji: string } | null>(null);
   // If Supabase sent us to the homepage with an auth code (query) or OAuth tokens (hash),
   // forward everything to /auth/callback so the session can be established or recovery can run.
   useEffect(() => {
@@ -1167,21 +1169,26 @@ const popupPayload = buildPopupActivityPayload({
       <ul className="also-good-list">
         {indoorListFiltered.map((s) => {
           const activity = activityTypes.find((a) => a.id === s.activityId);
-          
+
           return (
             <li
               key={s.activityId}
               className="also-good-item"
               tabIndex={0}
               style={{
-                cursor: 'default',
+                cursor: 'pointer',
               }}
+              onClick={() => setShareActivity({
+                id: s.activityId,
+                name: activity?.name || s.activityId.replace(/_/g, ' '),
+                emoji: getActivityEmoji(s.activityId),
+              })}
             >
               <span>
                 {getActivityEmoji(s.activityId)} {activity?.name || s.activityId.replace(/_/g, ' ')}
               </span>
-              <span className={`badge badge-sm ${getQualitativeBadge(s.score ?? 0).className}`}>
-                {getQualitativeBadge(s.score ?? 0).label}
+              <span className="badge badge-sm badge-primary badge-outline">
+                Join me?
               </span>
             </li>
           );
@@ -1238,6 +1245,15 @@ const popupPayload = buildPopupActivityPayload({
     onClose={() => setPopupActivity(null)}
   />
 )}
+
+{/* Share modal for indoor "Join me?" */}
+<SimplifiedShareModal
+  isOpen={!!shareActivity}
+  onClose={() => setShareActivity(null)}
+  activityName={shareActivity?.name ?? ''}
+  activityEmoji={shareActivity?.emoji ?? '🎉'}
+  activityId={shareActivity?.id}
+/>
 
 {/* Quick Setup Modal for first-time users */}
 <QuickSetupModal

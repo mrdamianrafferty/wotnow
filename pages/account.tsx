@@ -7,12 +7,22 @@ import AppHeader from '../components/AppHeader';
 import Footer from '../components/footer';
 import { supabase } from '@/lib/supabase/client';
 import { useUserPreferences } from '@/context/UserPreferencesContext';
-import { Globe, ChevronDown } from 'lucide-react';
+import { Globe, ChevronDown, Coffee, Beer, Flower2, Loader2, PartyPopper, AlertCircle } from 'lucide-react';
 import { useLanguage } from '@/context/LanguageContext';
 import { getSupportedLanguages } from '@/lib/user/language';
 import { useGoDaisyPushNotifications } from '@/hooks/useGoDaisyPushNotifications';
 import { GODAISY_TIP_PRODUCTS } from '@/lib/godaisy/tipProducts';
 import type { TipPackage } from '@/lib/grow/revenueCat';
+
+/** Map product IDs to Lucide icons and accent colours */
+const TIP_ICON_MAP: Record<string, { icon: typeof Coffee; accent: string; bg: string }> = {
+  godaisy_tip_coffee: { icon: Coffee, accent: 'text-[#0F766E]', bg: 'bg-[#0F766E]/5 border-[#0F766E]/20' },
+  godaisy_tip_pint:   { icon: Beer,   accent: 'text-[#D4A84A]', bg: 'bg-[#D4A84A]/10 border-[#D4A84A]/25' },
+  godaisy_tip_boost:  { icon: Flower2, accent: 'text-[#4F46E5]', bg: 'bg-[#4F46E5]/5 border-[#4F46E5]/20' },
+};
+
+/** Sort order for tip products — cheapest first */
+const TIP_SORT_ORDER = ['godaisy_tip_coffee', 'godaisy_tip_pint', 'godaisy_tip_boost'];
 
 // Flag emojis for each language
 const LANGUAGE_FLAGS: Record<string, string> = {
@@ -644,37 +654,54 @@ export default function AccountPage() {
               </p>
 
               {tipSuccess && (
-                <div className="bg-green-50 border border-green-200 rounded-lg p-3 text-green-800 text-sm mb-3">
-                  Thank you for the tip! You&apos;re a legend.
+                <div className="flex items-center gap-2 p-3 bg-green-50 border border-green-200 rounded-xl mb-3">
+                  <PartyPopper className="h-5 w-5 text-green-600 shrink-0" />
+                  <p className="text-sm font-medium text-green-800">
+                    Thank you for the tip! You&apos;re a legend.
+                  </p>
                 </div>
               )}
               {tipError && (
-                <div className="bg-red-50 border border-red-200 rounded-lg p-3 text-red-800 text-sm mb-3">
-                  {tipError}
+                <div className="flex items-center gap-2 p-3 bg-red-50 border border-red-200 rounded-xl mb-3">
+                  <AlertCircle className="h-5 w-5 text-red-600 shrink-0" />
+                  <p className="text-sm text-red-800">{tipError}</p>
                 </div>
               )}
 
-              <div className="space-y-2">
+              <div className="space-y-3">
                 {tipPackages.length > 0 ? (
-                  tipPackages.map((pkg) => {
+                  [...tipPackages].sort((a, b) =>
+                    TIP_SORT_ORDER.indexOf(a.identifier) - TIP_SORT_ORDER.indexOf(b.identifier)
+                  ).map((pkg) => {
                     const product = GODAISY_TIP_PRODUCTS.find(
                       (p) => p.id === pkg.identifier
                     );
+                    const style = TIP_ICON_MAP[pkg.identifier];
+                    const Icon = style?.icon ?? Coffee;
+
                     return (
                       <button
                         key={pkg.identifier}
-                        className="w-full flex items-center justify-between p-3 rounded-lg border border-gray-200 hover:bg-gray-50 disabled:opacity-50"
+                        className={`w-full flex items-center gap-3 p-4 rounded-xl border transition-all
+                          ${style?.bg ?? 'bg-gray-50 border-gray-200'}
+                          ${purchasingId ? 'opacity-60 cursor-not-allowed' : 'hover:shadow-md active:scale-[0.98]'}`}
                         disabled={!!purchasingId}
                         onClick={() => handleTipPurchase(pkg)}
                       >
-                        <span className="font-medium text-gray-900">
+                        <div className={`p-2.5 bg-white rounded-lg shadow-sm ${style?.accent ?? 'text-gray-600'}`}>
                           {purchasingId === pkg.identifier ? (
-                            <span className="loading loading-spinner loading-sm" />
+                            <Loader2 className="h-5 w-5 animate-spin" />
                           ) : (
-                            <>{product?.emoji ?? ''} {product?.label ?? pkg.title}</>
+                            <Icon className="h-5 w-5" />
                           )}
-                        </span>
-                        <span className="font-semibold text-gray-700">
+                        </div>
+                        <div className="flex-1 text-left">
+                          <div className="font-semibold text-gray-900">
+                            {product?.label ?? pkg.title}
+                          </div>
+                          <div className="text-xs text-gray-500">One-off tip</div>
+                        </div>
+                        <span className={`font-bold text-base ${style?.accent ?? 'text-gray-700'}`}>
                           {pkg.priceString}
                         </span>
                       </button>
