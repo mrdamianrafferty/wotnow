@@ -3,7 +3,7 @@ import type { ActivityType } from './types';
 export const socialActivities: ActivityType[] = [
   {
     id: 'picnicking',
-    name: 'Picnicking',
+    name: 'Have a Picnic',
     category: 'Outdoor Leisure',
     secondaryCategory: 'Social Activities',
     weatherSensitive: true,
@@ -55,7 +55,7 @@ export const socialActivities: ActivityType[] = [
   },
   {
     id: 'bbq',
-    name: 'Barbecue',
+    name: 'Have a Barbecue',
     category: 'Outdoor Leisure',
     secondaryCategory: 'Social Activities',
     weatherSensitive: true,
@@ -158,7 +158,7 @@ export const socialActivities: ActivityType[] = [
   },
   {
     id: 'cinema',
-    name: 'Cinema',
+    name: 'Go to the Cinema',
     category: 'Indoor Recreation',
     secondaryCategory: 'Social Activities',
     weatherSensitive: false,
@@ -166,7 +166,7 @@ export const socialActivities: ActivityType[] = [
   },
   {
     id: 'bowling',
-    name: 'Bowling',
+    name: 'Go Bowling',
     category: 'Indoor Recreation',
     secondaryCategory: 'Social Activities',
     weatherSensitive: false,
@@ -174,7 +174,7 @@ export const socialActivities: ActivityType[] = [
   },
   {
     id: 'shopping',
-    name: 'Shopping',
+    name: 'Go Shopping',
     category: 'Indoor Recreation',
     secondaryCategory: 'Social Activities',
     weatherSensitive: false,
@@ -182,7 +182,7 @@ export const socialActivities: ActivityType[] = [
   },
   {
     id: 'museum',
-    name: 'Museum',
+    name: 'Visit a Museum',
     category: 'Indoor Recreation',
     secondaryCategory: 'Social Activities',
     weatherSensitive: false,
@@ -190,7 +190,7 @@ export const socialActivities: ActivityType[] = [
   },
   {
     id: 'gallery',
-    name: 'Gallery',
+    name: 'Visit a Gallery',
     category: 'Indoor Recreation',
     secondaryCategory: 'Social Activities',
     weatherSensitive: false,
@@ -198,7 +198,7 @@ export const socialActivities: ActivityType[] = [
   },
   {
     id: 'cafe',
-    name: 'Visiting a Café',
+    name: 'Visit a Café',
     category: 'Indoor Recreation',
     secondaryCategory: 'Social Activities',
     weatherSensitive: false,

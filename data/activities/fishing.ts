@@ -3,7 +3,7 @@ import type { ActivityType } from './types';
 export const fishingActivities: ActivityType[] = [
   {
     id: 'fly_fishing_freshwater',
-    name: 'Fly Fishing',
+    name: 'Go Fly Fishing',
     category: 'Outdoor Activities',
     secondaryCategory: 'Fishing',
     weatherSensitive: true,
@@ -43,7 +43,7 @@ export const fishingActivities: ActivityType[] = [
   },
   {
     id: 'coarse_fishing',
-    name: 'Coarse & Carp Fishing',
+    name: 'Go Coarse Fishing',
     category: 'Outdoor Activities',
     secondaryCategory: 'Fishing',
     weatherSensitive: true,
@@ -86,7 +86,7 @@ export const fishingActivities: ActivityType[] = [
   },
   {
     id: 'sea_fishing_shore',
-    name: 'Sea Fishing (Shore)',
+    name: 'Go Sea Fishing (Shore)',
     category: 'Outdoor Activities',
     secondaryCategory: 'Fishing',
     weatherSensitive: true,
@@ -135,7 +135,7 @@ export const fishingActivities: ActivityType[] = [
   },
   {
     id: 'sea_fishing_boat',
-    name: 'Sea Fishing (Boat)',
+    name: 'Go Sea Fishing (Boat)',
     category: 'Outdoor Activities',
     secondaryCategory: 'Fishing',
     weatherSensitive: true,

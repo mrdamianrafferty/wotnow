@@ -3,7 +3,7 @@ import type { ActivityType } from './types';
 export const waterSports: ActivityType[] = [
   {
     id: 'surfing',
-    name: 'Surfing',
+    name: 'Go Surfing',
     category: 'Active Sports',
     secondaryCategory: 'Water Sports',
     weatherSensitive: true,
@@ -60,7 +60,7 @@ export const waterSports: ActivityType[] = [
   },
   {
     id: 'kayaking',
-    name: 'Kayaking (Inland)',
+    name: 'Go Kayaking',
     category: 'Active Sports',
     secondaryCategory: 'Water Sports',
     weatherSensitive: true,
@@ -109,7 +109,7 @@ export const waterSports: ActivityType[] = [
   },
   {
     id: 'sea_kayaking',
-    name: 'Kayaking (Sea)',
+    name: 'Go Sea Kayaking',
     category: 'Active Sports',
     secondaryCategory: 'Water Sports',
     weatherSensitive: true,
@@ -167,7 +167,7 @@ export const waterSports: ActivityType[] = [
   },
   {
     id: 'canoeing',
-    name: 'Canoeing',
+    name: 'Go Canoeing',
     category: 'Active Sports',
     secondaryCategory: 'Water Sports',
     weatherSensitive: true,
@@ -210,7 +210,7 @@ export const waterSports: ActivityType[] = [
   },
   {
     id: 'stand_up_paddleboarding',
-    name: 'Stand-up Paddleboarding',
+    name: 'Go Paddleboarding',
     category: 'Active Sports',
     secondaryCategory: 'Water Sports',
     weatherSensitive: true,
@@ -253,7 +253,7 @@ export const waterSports: ActivityType[] = [
   },
   {
     id: 'snorkeling',
-    name: 'Snorkelling',
+    name: 'Go Snorkelling',
     category: 'Active Sports',
     secondaryCategory: 'Water Sports',
     weatherSensitive: true,
@@ -320,7 +320,7 @@ export const waterSports: ActivityType[] = [
   },
   {
     id: 'jet_skiing',
-    name: 'Jet Skiing',
+    name: 'Go Jet Skiing',
     category: 'Active Sports',
     secondaryCategory: 'Water Sports',
     weatherSensitive: true,
@@ -381,7 +381,7 @@ export const waterSports: ActivityType[] = [
   },
   {
     id: 'wild_swimming',
-    name: 'Wild Swimming',
+    name: 'Go Wild Swimming',
     category: 'Active Sports',
     secondaryCategory: 'Water Sports',
     weatherSensitive: true,
@@ -424,7 +424,7 @@ export const waterSports: ActivityType[] = [
   },
   {
     id: 'sea_swimming',
-    name: 'Sea Swimming',
+    name: 'Go Sea Swimming',
     category: 'Active Sports',
     secondaryCategory: 'Water Sports',
     weatherSensitive: true,
@@ -477,7 +477,7 @@ export const waterSports: ActivityType[] = [
   },
   {
     id: 'indoor_swimming',
-    name: 'Indoor Swimming',
+    name: 'Go Swimming (Indoor)',
     category: 'Active Sports',
     secondaryCategory: 'Water Sports',
     weatherSensitive: false,
@@ -485,7 +485,7 @@ export const waterSports: ActivityType[] = [
   },
   {
     id: 'sailing',
-    name: 'Sailing (Coastal)',
+    name: 'Go Sailing',
     category: 'Active Sports',
     secondaryCategory: 'Water Sports',
     weatherSensitive: true,
@@ -529,7 +529,7 @@ export const waterSports: ActivityType[] = [
   },
   {
     id: 'sailing_inland',
-    name: 'Sailing (Inland)',
+    name: 'Go Sailing (Inland)',
     category: 'Active Sports',
     secondaryCategory: 'Water Sports',
     weatherSensitive: true,
@@ -574,7 +574,7 @@ export const waterSports: ActivityType[] = [
   },
   {
     id: 'windsurfing',
-    name: 'Windsurfing',
+    name: 'Go Windsurfing',
     category: 'Active Sports',
     secondaryCategory: 'Water Sports',
     weatherSensitive: true,
@@ -628,7 +628,7 @@ export const waterSports: ActivityType[] = [
   },
   {
     id: 'kitesurfing',
-    name: 'Kitesurfing',
+    name: 'Go Kitesurfing',
     category: 'Active Sports',
     secondaryCategory: 'Water Sports',
     weatherSensitive: true,
@@ -682,7 +682,7 @@ export const waterSports: ActivityType[] = [
   },
   {
     id: 'scuba_diving',
-    name: 'Scuba Diving',
+    name: 'Go Scuba Diving',
     category: 'Active Sports',
     secondaryCategory: 'Water Sports',
     weatherSensitive: true,
@@ -733,7 +733,7 @@ export const waterSports: ActivityType[] = [
   },
   {
     id: 'jetskiing',
-    name: 'Jet Skiing',
+    name: 'Go Jet Skiing',
     category: 'Active Sports',
     secondaryCategory: 'Water Sports',
     weatherSensitive: true,
@@ -781,7 +781,7 @@ export const waterSports: ActivityType[] = [
   },
   {
     id: 'sup_sea',
-    name: 'Stand-up Paddleboarding (Sea)',
+    name: 'Go Paddleboarding (Sea)',
     category: 'Active Sports',
     secondaryCategory: 'Water Sports',
     weatherSensitive: true,
@@ -835,7 +835,7 @@ export const waterSports: ActivityType[] = [
   },
   {
     id: 'windsurfing_inland',
-    name: 'Windsurfing (Inland)',
+    name: 'Go Windsurfing (Inland)',
     category: 'Active Sports',
     secondaryCategory: 'Water Sports',
     weatherSensitive: true,

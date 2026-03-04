@@ -3,7 +3,7 @@ import type { ActivityType } from './types';
 export const outdoorRecreation: ActivityType[] = [
   {
     id: 'hiking',
-    name: 'Hiking',
+    name: 'Go Hiking',
     category: 'Outdoor Activities',
     secondaryCategory: 'Outdoor Recreation',
     weatherSensitive: true,
@@ -50,7 +50,7 @@ export const outdoorRecreation: ActivityType[] = [
   },
   {
     id: 'rock_climbing',
-    name: 'Rock Climbing',
+    name: 'Go Rock Climbing',
     category: 'Active Sports',
     secondaryCategory: 'Outdoor Recreation',
     weatherSensitive: true,
@@ -92,7 +92,7 @@ export const outdoorRecreation: ActivityType[] = [
   },
   {
     id: 'rock_hopping',
-    name: 'Rock Hopping',
+    name: 'Go Rock Hopping',
     category: 'Outdoor Activities',
     secondaryCategory: 'Outdoor Recreation',
     weatherSensitive: true,
@@ -133,7 +133,7 @@ export const outdoorRecreation: ActivityType[] = [
   },
   {
     id: 'outdoor_playground',
-    name: 'Playground Time',
+    name: 'Go to the Playground',
     category: 'Outdoor Activities',
     secondaryCategory: 'Outdoor Recreation',
     weatherSensitive: true,
@@ -174,7 +174,7 @@ export const outdoorRecreation: ActivityType[] = [
   },
   {
     id: 'riding_motorbike',
-    name: 'Motorbiking',
+    name: 'Go Motorbiking',
     category: 'Active Sports',
     secondaryCategory: 'Outdoor Recreation',
     weatherSensitive: true,
@@ -215,7 +215,7 @@ export const outdoorRecreation: ActivityType[] = [
   },
   {
     id: 'beekeeping',
-    name: 'Beekeeping',
+    name: 'Do Some Beekeeping',
     category: 'Outdoor Activities',
     secondaryCategory: 'Nature Activities',
     weatherSensitive: true,
@@ -255,7 +255,7 @@ export const outdoorRecreation: ActivityType[] = [
   },
   {
     id: 'foraging',
-    name: 'Foraging',
+    name: 'Go Foraging',
     category: 'Outdoor Activities',
     secondaryCategory: 'Nature Activities',
     weatherSensitive: true,
@@ -301,7 +301,7 @@ export const outdoorRecreation: ActivityType[] = [
   },
   {
     id: 'frisbee',
-    name: 'Frisbee',
+    name: 'Play Frisbee',
     category: 'Outdoor Activities',
     secondaryCategory: 'Outdoor Recreation',
     weatherSensitive: true,
@@ -346,7 +346,7 @@ export const outdoorRecreation: ActivityType[] = [
   },
    {
     id: 'geocaching',
-    name: 'Geocaching',
+    name: 'Go Geocaching',
     category: 'Outdoor Activities',
     secondaryCategory: 'Nature Activities',
     weatherSensitive: true,
@@ -396,7 +396,7 @@ export const outdoorRecreation: ActivityType[] = [
   },
  {
     id: 'horse_riding',
-    name: 'Horse Riding',
+    name: 'Go Horse Riding',
     category: 'Active Sports',
     secondaryCategory: 'Outdoor Recreation',
     weatherSensitive: true,
@@ -443,7 +443,7 @@ export const outdoorRecreation: ActivityType[] = [
   },
   {
     id: 'rollerblading',
-    name: 'Rollerblading',
+    name: 'Go Rollerblading',
     category: 'Outdoor Activities',
     secondaryCategory: 'Outdoor Recreation',
     weatherSensitive: true,
@@ -492,7 +492,7 @@ export const outdoorRecreation: ActivityType[] = [
   },
   {
     id: 'skateboarding',
-    name: 'Skateboarding',
+    name: 'Go Skateboarding',
     category: 'Outdoor Activities',
     secondaryCategory: 'Outdoor Recreation',
     weatherSensitive: true,
@@ -537,7 +537,7 @@ export const outdoorRecreation: ActivityType[] = [
   },
   {
     id: 'stargazing',
-    name: 'Stargazing',
+    name: 'Go Stargazing',
     category: 'Outdoor Activities',
     secondaryCategory: 'Nature Activities',
     weatherSensitive: true,
@@ -616,7 +616,7 @@ export const outdoorRecreation: ActivityType[] = [
   },
   {
     id: 'trail_running',
-    name: 'Trail Running',
+    name: 'Go Trail Running',
     category: 'Active Sports',
     secondaryCategory: 'Cardio & Running',
     weatherSensitive: true,
@@ -629,7 +629,7 @@ export const outdoorRecreation: ActivityType[] = [
   },
   {
     id: 'camping',
-    name: 'Camping',
+    name: 'Go Camping',
     category: 'Outdoor Activities',
     secondaryCategory: 'Nature Activities',
     weatherSensitive: true,

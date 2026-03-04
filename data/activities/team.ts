@@ -3,7 +3,7 @@ import type { ActivityType } from './types';
 export const teamSports: ActivityType[] = [
   {
     id: 'football_soccer',
-    name: 'Football (Soccer)',
+    name: 'Play Football',
     category: 'Active Sports',
     secondaryCategory: 'Team Sports',
     weatherSensitive: true,
@@ -52,7 +52,7 @@ export const teamSports: ActivityType[] = [
 
   {
     id: 'american_football',
-    name: 'American Football',
+    name: 'Play American Football',
     category: 'Active Sports',
     secondaryCategory: 'Team Sports',
     weatherSensitive: true,
@@ -96,7 +96,7 @@ export const teamSports: ActivityType[] = [
   },
   {
     id: 'baseball',
-    name: 'Baseball',
+    name: 'Play Baseball',
     category: 'Active Sports',
     secondaryCategory: 'Team Sports',
     weatherSensitive: true,
@@ -143,7 +143,7 @@ export const teamSports: ActivityType[] = [
 
   {
     id: 'hurling_camogie',
-    name: 'Hurling & Camogie',
+    name: 'Play Hurling',
     category: 'Active Sports',
     secondaryCategory: 'Team Sports',
     weatherSensitive: true,
@@ -183,7 +183,7 @@ export const teamSports: ActivityType[] = [
   },
   {
     id: 'gaelic_football',
-    name: 'Gaelic Football',
+    name: 'Play Gaelic Football',
     category: 'Active Sports',
     secondaryCategory: 'Team Sports',
     weatherSensitive: true,
@@ -223,7 +223,7 @@ export const teamSports: ActivityType[] = [
   },
   {
     id: 'hockey',
-    name: 'Field Hockey',
+    name: 'Play Hockey',
     category: 'Active Sports',
     secondaryCategory: 'Team Sports',
     weatherSensitive: true,
@@ -265,7 +265,7 @@ export const teamSports: ActivityType[] = [
 
   {
     id: 'netball',
-    name: 'Netball',
+    name: 'Play Netball',
     category: 'Active Sports',
     secondaryCategory: 'Team Sports',
     weatherSensitive: true,
@@ -302,7 +302,7 @@ export const teamSports: ActivityType[] = [
   },
   {
     id: 'volleyball_indoor',
-    name: 'Volleyball (Indoor)',
+    name: 'Play Volleyball',
     category: 'Active Sports',
     secondaryCategory: 'Team Sports',
     weatherSensitive: false,
@@ -310,7 +310,7 @@ export const teamSports: ActivityType[] = [
   },
   {
     id: 'basketball_outdoor',
-    name: 'Basketball (Outdoor)',
+    name: 'Play Basketball',
     category: 'Active Sports',
     secondaryCategory: 'Team Sports',
     weatherSensitive: true,
@@ -352,7 +352,7 @@ export const teamSports: ActivityType[] = [
   },
   {
     id: 'beach_volleyball',
-    name: 'Beach Volleyball',
+    name: 'Play Beach Volleyball',
     category: 'Active Sports',
     secondaryCategory: 'Team Sports',
     weatherSensitive: true,
@@ -401,7 +401,7 @@ export const teamSports: ActivityType[] = [
   },
   {
     id: 'cricket',
-    name: 'Cricket',
+    name: 'Play Cricket',
     category: 'Active Sports',
     secondaryCategory: 'Team Sports',
     weatherSensitive: true,
@@ -449,7 +449,7 @@ export const teamSports: ActivityType[] = [
   },
   {
     id: 'rugby',
-    name: 'Rugby',
+    name: 'Play Rugby',
     category: 'Active Sports',
     secondaryCategory: 'Team Sports',
     weatherSensitive: true,

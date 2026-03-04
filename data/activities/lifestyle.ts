@@ -6,7 +6,7 @@ export const lifestyleActivities: ActivityType[] = [
   
   {
     id: 'cooking',
-    name: 'Cooking',
+    name: 'Cook Something',
     category: 'Creative & Arts',
     secondaryCategory: 'Home Activities',
     weatherSensitive: false,
@@ -14,7 +14,7 @@ export const lifestyleActivities: ActivityType[] = [
   },
   {
     id: 'crafts',
-    name: 'Crafts',
+    name: 'Do Some Crafts',
     category: 'Creative & Arts',
     secondaryCategory: 'Home Activities',
     weatherSensitive: false,
@@ -32,7 +32,7 @@ export const lifestyleActivities: ActivityType[] = [
   },
   {
     id: 'diy',
-    name: 'DIY',
+    name: 'Do Some DIY',
     category: 'Indoor Recreation',
     secondaryCategory: 'Home Activities',
     weatherSensitive: false,
@@ -40,7 +40,7 @@ export const lifestyleActivities: ActivityType[] = [
   },
   {
     id: 'dog_walking',
-    name: 'Walking the Dog',
+    name: 'Walk the Dog',
     category: 'Outdoor Activities',
     secondaryCategory: 'Outdoor Recreation',
     weatherSensitive: true,
@@ -94,7 +94,7 @@ export const lifestyleActivities: ActivityType[] = [
   
   {
     id: 'gaming',
-    name: 'Gaming',
+    name: 'Play Some Games',
     category: 'Indoor Recreation',
     secondaryCategory: 'Social Activities',
     weatherSensitive: false,
@@ -103,7 +103,7 @@ export const lifestyleActivities: ActivityType[] = [
  
   {
     id: 'going_to_pub',
-    name: 'Going to the Pub',
+    name: 'Go to the Pub',
     category: 'Indoor Recreation',
     secondaryCategory: 'Social Activities',
     weatherSensitive: false,
@@ -115,7 +115,7 @@ export const lifestyleActivities: ActivityType[] = [
  
   {
     id: 'knitting',
-    name: 'Knitting',
+    name: 'Do Some Knitting',
     category: 'Creative & Arts',
     secondaryCategory: 'Home Activities',
     weatherSensitive: false,
@@ -123,7 +123,7 @@ export const lifestyleActivities: ActivityType[] = [
   },
   {
     id: 'make_music',
-    name: 'Making Music',
+    name: 'Make Music',
     category: 'Creative & Arts',
     secondaryCategory: 'Music & Performance',
     weatherSensitive: false,
@@ -133,7 +133,7 @@ export const lifestyleActivities: ActivityType[] = [
  
   {
     id: 'outdoor_chess',
-    name: 'Park Chess',
+    name: 'Play Chess in the Park',
     category: 'Outdoor Activities',
     secondaryCategory: 'Outdoor Recreation',
     weatherSensitive: true,
@@ -173,7 +173,7 @@ export const lifestyleActivities: ActivityType[] = [
   
   {
     id: 'outdoor_music',
-    name: 'Playing Music Outdoors',
+    name: 'Play Music Outdoors',
     category: 'Creative & Arts',
     secondaryCategory: 'Music & Performance',
     weatherSensitive: true,
@@ -218,7 +218,7 @@ export const lifestyleActivities: ActivityType[] = [
   },
   {
     id: 'outdoor_painting',
-    name: 'Painting Outdoors',
+    name: 'Paint Outdoors',
     category: 'Creative & Arts',
     secondaryCategory: 'Visual Arts',
     weatherSensitive: true,
@@ -271,7 +271,7 @@ export const lifestyleActivities: ActivityType[] = [
   },
   {
     id: 'outdoor_reading',
-    name: 'Reading in the Park',
+    name: 'Read in the Park',
     category: 'Outdoor Activities',
     secondaryCategory: 'Literature',
     weatherSensitive: true,
@@ -325,7 +325,7 @@ export const lifestyleActivities: ActivityType[] = [
   
   {
     id: 'painting',
-    name: 'Painting',
+    name: 'Paint',
     category: 'Creative & Arts',
     secondaryCategory: 'Visual Arts',
     weatherSensitive: false,
@@ -333,7 +333,7 @@ export const lifestyleActivities: ActivityType[] = [
   },
   {
     id: 'photography',
-    name: 'Photography',
+    name: 'Take Photos',
     category: 'Creative & Arts',
     secondaryCategory: 'Visual Arts',
     weatherSensitive: true,
@@ -374,7 +374,7 @@ export const lifestyleActivities: ActivityType[] = [
   
   {
     id: 'playing_cards',
-    name: 'Playing Cards',
+    name: 'Play Cards',
     category: 'Indoor Recreation',
     secondaryCategory: 'Social Activities',
     weatherSensitive: false,
@@ -382,7 +382,7 @@ export const lifestyleActivities: ActivityType[] = [
   },
   {
     id: 'playing_records',
-    name: 'Playing Records',
+    name: 'Play Records',
     category: 'Creative & Arts',
     secondaryCategory: 'Music & Performance',
     weatherSensitive: false,
@@ -390,7 +390,7 @@ export const lifestyleActivities: ActivityType[] = [
   },
   {
     id: 'reading',
-    name: 'Reading',
+    name: 'Read',
     category: 'Creative & Arts',
     secondaryCategory: 'Literature',
     weatherSensitive: false,

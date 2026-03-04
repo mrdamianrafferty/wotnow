@@ -3,7 +3,7 @@ import type { ActivityType } from './types';
 export const snowSports: ActivityType[] = [
   {
     id: 'skiing',
-    name: 'Skiing',
+    name: 'Go Skiing',
     category: 'Winter Sports',
     secondaryCategory: 'Snow Sports',
     weatherSensitive: true,
@@ -41,7 +41,7 @@ export const snowSports: ActivityType[] = [
   },
   {
     id: 'snowboarding',
-    name: 'Snowboarding',
+    name: 'Go Snowboarding',
     category: 'Winter Sports',
     secondaryCategory: 'Snow Sports',
     weatherSensitive: true,
@@ -76,7 +76,7 @@ export const snowSports: ActivityType[] = [
   },
   {
     id: 'cross_country_skiing',
-    name: 'Cross-country Skiing',
+    name: 'Go Cross-country Skiing',
     category: 'Winter Sports',
     secondaryCategory: 'Snow Sports',
     weatherSensitive: true,

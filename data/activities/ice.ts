@@ -3,7 +3,7 @@ import type { ActivityType } from './types';
 export const iceSports: ActivityType[] = [
   {
     id: 'ice_hockey',
-    name: 'Ice Hockey (Outdoor)',
+    name: 'Play Ice Hockey',
     category: 'Winter Sports',
     secondaryCategory: 'Ice Sports',
     weatherSensitive: true,
@@ -40,7 +40,7 @@ export const iceSports: ActivityType[] = [
   },
   {
     id: 'ice_hockey_indoor',
-    name: 'Ice Hockey (Indoor)',
+    name: 'Play Ice Hockey (Indoor)',
     category: 'Winter Sports',
     secondaryCategory: 'Ice Sports',
     weatherSensitive: false,
@@ -53,7 +53,7 @@ export const iceSports: ActivityType[] = [
   },
   {
     id: 'ice_fishing',
-    name: 'Ice Fishing',
+    name: 'Go Ice Fishing',
     category: 'Winter Sports',
     secondaryCategory: 'Ice Sports',
     weatherSensitive: true,
@@ -88,7 +88,7 @@ export const iceSports: ActivityType[] = [
   },
   {
     id: 'curling',
-    name: 'Curling',
+    name: 'Go Curling',
     category: 'Indoor Sports',
     secondaryCategory: 'Ice Sports',
     weatherSensitive: false,
@@ -100,7 +100,7 @@ export const iceSports: ActivityType[] = [
   },
    {
     id: 'ice_skating',
-    name: 'Outdoor Ice Skating',
+    name: 'Go Ice Skating',
     category: 'Winter Sports',
     secondaryCategory: 'Ice Sports',
     weatherSensitive: true,

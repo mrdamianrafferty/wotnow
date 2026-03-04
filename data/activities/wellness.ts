@@ -3,7 +3,7 @@ import type { ActivityType } from './types';
 export const wellnessSports: ActivityType[] = [
   {
     id: 'running',
-    name: 'Running',
+    name: 'Go Running',
     category: 'Fitness & Wellness',
     secondaryCategory: 'Cardio & Running',
     weatherSensitive: true,
@@ -16,7 +16,7 @@ export const wellnessSports: ActivityType[] = [
   
   {
     id: 'cycling',
-    name: 'Cycling',
+    name: 'Go Cycling',
     category: 'Fitness & Wellness',
     secondaryCategory: 'Cardio & Running',
     weatherSensitive: true,
@@ -28,7 +28,7 @@ export const wellnessSports: ActivityType[] = [
   },
   {
     id: 'boxing',
-    name: 'Boxing',
+    name: 'Do Some Boxing',
     category: 'Fitness & Wellness',
     secondaryCategory: 'Strength & Gym',
     weatherSensitive: false,
@@ -37,7 +37,7 @@ export const wellnessSports: ActivityType[] = [
   
   {
     id: 'gym_workout',
-    name: 'Gym',
+    name: 'Hit the Gym',
     category: 'Fitness & Wellness',
     secondaryCategory: 'Strength & Gym',
     weatherSensitive: false,
@@ -45,7 +45,7 @@ export const wellnessSports: ActivityType[] = [
   },
   {
     id: 'martial_arts',
-    name: 'Martial Arts',
+    name: 'Do Martial Arts',
     category: 'Fitness & Wellness',
     secondaryCategory: 'Mindfulness',
     weatherSensitive: false,
@@ -53,7 +53,7 @@ export const wellnessSports: ActivityType[] = [
   },
   {
     id: 'meditation',
-    name: 'Meditation',
+    name: 'Meditate',
     category: 'Fitness & Wellness',
     secondaryCategory: 'Mindfulness',
     weatherSensitive: false,
@@ -61,7 +61,7 @@ export const wellnessSports: ActivityType[] = [
   },
   {
     id: 'outdoor_gym',
-    name: 'Outdoor Gym',
+    name: 'Hit the Outdoor Gym',
     category: 'Fitness & Wellness',
     secondaryCategory: 'Strength & Gym',
     weatherSensitive: true,
@@ -108,7 +108,7 @@ export const wellnessSports: ActivityType[] = [
   },
   {
     id: 'outdoor_meditation',
-    name: 'Outdoor Meditation',
+    name: 'Meditate Outdoors',
     category: 'Fitness & Wellness',
     secondaryCategory: 'Mindfulness',
     weatherSensitive: true,
@@ -157,7 +157,7 @@ export const wellnessSports: ActivityType[] = [
   },
   {
     id: 'outdoor_yoga',
-    name: 'Yoga in the Park',
+    name: 'Do Yoga in the Park',
     category: 'Fitness & Wellness',
     secondaryCategory: 'Mindfulness',
     weatherSensitive: true,
@@ -217,7 +217,7 @@ export const wellnessSports: ActivityType[] = [
   },
   {
     id: 'pilates',
-    name: 'Pilates',
+    name: 'Do Pilates',
     category: 'Fitness & Wellness',
     secondaryCategory: 'Mindfulness',
     weatherSensitive: false,
@@ -225,14 +225,14 @@ export const wellnessSports: ActivityType[] = [
   },
   {
     id: 'spinning',
-    name: 'Spinning',
+    name: 'Do a Spin Class',
     category: 'Fitness & Wellness',
     weatherSensitive: false,
     tags: ['fitness', 'personal', 'cycling', 'health', 'evening', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday', 'self-care'],
   },
     {
     id: 'tai_chi',
-    name: 'Tai Chi',
+    name: 'Do Tai Chi',
     category: 'Fitness & Wellness',
     secondaryCategory: 'Mindfulness',
     weatherSensitive: false,
@@ -240,7 +240,7 @@ export const wellnessSports: ActivityType[] = [
   },
   {
     id: 'yoga',
-    name: 'Yoga',
+    name: 'Do Yoga',
     category: 'Fitness & Wellness',
     secondaryCategory: 'Mindfulness',
     weatherSensitive: false,
@@ -248,7 +248,7 @@ export const wellnessSports: ActivityType[] = [
   },
   {
     id: 'zumba',
-    name: 'Zumba',
+    name: 'Do Zumba',
     category: 'Fitness & Wellness',
     weatherSensitive: false,
     tags: ['fitness', 'personal', 'dance', 'health', 'evening', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday', 'self-care'],

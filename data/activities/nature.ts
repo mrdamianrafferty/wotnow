@@ -3,7 +3,7 @@ import type { ActivityType } from './types';
 export const natureActivities: ActivityType[] = [
   {
     id: 'birdwatching',
-    name: 'Birdwatching',
+    name: 'Go Birdwatching',
     category: 'Outdoor Activities',
     secondaryCategory: 'Nature Activities',
     weatherSensitive: true,
@@ -52,7 +52,7 @@ export const natureActivities: ActivityType[] = [
   },
   {
     id: 'outdoor_gardening',
-    name: 'Gardening',
+    name: 'Do Some Gardening',
     category: 'Outdoor Activities',
     secondaryCategory: 'Nature Activities',
     weatherSensitive: true,
@@ -99,7 +99,7 @@ export const natureActivities: ActivityType[] = [
   },
    {
     id: 'mushroom_hunting',
-    name: 'Mushroom Hunting',
+    name: 'Go Mushroom Hunting',
     category: 'Outdoor Activities',
     secondaryCategory: 'Nature Activities',
     weatherSensitive: true,
@@ -141,7 +141,7 @@ export const natureActivities: ActivityType[] = [
   },
   {
     id: 'orienteering',
-    name: 'Orienteering',
+    name: 'Go Orienteering',
     category: 'Active Sports',
     secondaryCategory: 'Outdoor Recreation',
     weatherSensitive: true,

@@ -3,7 +3,7 @@ import type { ActivityType } from './types';
 export const individualSports: ActivityType[] = [
   {
     id: 'golf',
-    name: 'Golf',
+    name: 'Play Golf',
     category: 'Outdoor Activities',
     secondaryCategory: 'Individual Sports',
     weatherSensitive: true,
@@ -50,7 +50,7 @@ export const individualSports: ActivityType[] = [
   },
   {
     id: 'tennis',
-    name: 'Outdoor Tennis',
+    name: 'Play Tennis',
     category: 'Active Sports',
     secondaryCategory: 'Individual Sports',
     weatherSensitive: true,
@@ -93,7 +93,7 @@ export const individualSports: ActivityType[] = [
   },
   {
     id: 'archery',
-    name: 'Archery',
+    name: 'Do Archery',
     category: 'Active Sports',
     secondaryCategory: 'Individual Sports',
     weatherSensitive: true,
@@ -137,7 +137,7 @@ export const individualSports: ActivityType[] = [
   },
   {
     id: 'padel',
-    name: 'Padel',
+    name: 'Play Padel',
     category: 'Active Sports',
     secondaryCategory: 'Individual Sports',
     weatherSensitive: true,
@@ -170,7 +170,7 @@ export const individualSports: ActivityType[] = [
   },
   {
     id: 'pickleball',
-    name: 'Pickleball',
+    name: 'Play Pickleball',
     category: 'Active Sports',
     secondaryCategory: 'Individual Sports',
     weatherSensitive: true,
@@ -202,7 +202,7 @@ export const individualSports: ActivityType[] = [
   },
   {
     id: 'tennis_indoor',
-    name: 'Tennis (Indoor)',
+    name: 'Play Tennis (Indoor)',
     category: 'Active Sports',
     secondaryCategory: 'Individual Sports',
     weatherSensitive: false,
@@ -210,7 +210,7 @@ export const individualSports: ActivityType[] = [
   },
   {
     id: 'squash',
-    name: 'Squash',
+    name: 'Play Squash',
     category: 'Active Sports',
     secondaryCategory: 'Individual Sports',
     weatherSensitive: false,
@@ -218,7 +218,7 @@ export const individualSports: ActivityType[] = [
   },
   {
     id: 'badminton',
-    name: 'Badminton',
+    name: 'Play Badminton',
     category: 'Active Sports',
     secondaryCategory: 'Individual Sports',
     weatherSensitive: false,
@@ -226,7 +226,7 @@ export const individualSports: ActivityType[] = [
   },
   {
     id: 'table_tennis',
-    name: 'Table Tennis',
+    name: 'Play Table Tennis',
     category: 'Active Sports',
     secondaryCategory: 'Individual Sports',
     weatherSensitive: false,
@@ -234,7 +234,7 @@ export const individualSports: ActivityType[] = [
   },
    {
     id: 'indoor_climbing',
-    name: 'Indoor Climbing',
+    name: 'Go Climbing (Indoor)',
     category: 'Fitness & Wellness',
     secondaryCategory: 'Indoor Recreation',
     weatherSensitive: false,

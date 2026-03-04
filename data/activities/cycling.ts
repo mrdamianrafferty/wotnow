@@ -3,7 +3,7 @@ import type { ActivityType } from './types';
 export const cyclingSports: ActivityType[] = [
   {
     id: 'road_cycling',
-    name: 'Road Cycling',
+    name: 'Go Road Cycling',
     category: 'Active Sports',
     secondaryCategory: 'Outdoor Recreation',
     weatherSensitive: true,
@@ -43,7 +43,7 @@ export const cyclingSports: ActivityType[] = [
   },
   {
     id: 'mountain_biking',
-    name: 'Mountain Biking',
+    name: 'Go Mountain Biking',
     category: 'Active Sports',
     secondaryCategory: 'Outdoor Recreation',
     weatherSensitive: true,
@@ -88,7 +88,7 @@ export const cyclingSports: ActivityType[] = [
   },
   {
     id: 'gravel_biking',
-    name: 'Gravel Biking',
+    name: 'Go Gravel Biking',
     category: 'Active Sports',
     secondaryCategory: 'Outdoor Recreation',
     weatherSensitive: true,
