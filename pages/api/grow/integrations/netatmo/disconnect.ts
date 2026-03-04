@@ -54,7 +54,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const { error: updateError } = await supabase
       .from('grow_user_integrations')
       .update({
-        is_active: false,
+        status: 'disconnected',
         updated_at: new Date().toISOString(),
       })
       .eq('id', integrationId)

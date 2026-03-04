@@ -73,7 +73,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       });
 
     // Construct redirect URI
-    const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://growdaisy.io';
+    const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://grow.godaisy.io';
     const redirectUri = `${APP_URL}/api/grow/integrations/netatmo/callback`;
 
     const authUrl = getNetatmoAuthUrl(redirectUri, state);
