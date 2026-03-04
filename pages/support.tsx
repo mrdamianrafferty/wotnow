@@ -32,10 +32,13 @@ export async function getServerSideProps() {
 
 /** Map product IDs to Lucide icons and accent colours */
 const TIP_ICON_MAP: Record<string, { icon: typeof Coffee; accent: string; bg: string }> = {
-  godaisy_tip_coffee: { icon: Coffee, accent: "text-amber-700", bg: "bg-amber-50 border-amber-200" },
-  godaisy_tip_pint:   { icon: Beer,   accent: "text-yellow-700", bg: "bg-yellow-50 border-yellow-200" },
-  godaisy_tip_boost:  { icon: Flower2, accent: "text-pink-700", bg: "bg-pink-50 border-pink-200" },
+  godaisy_tip_coffee: { icon: Coffee, accent: "text-[#0F766E]", bg: "bg-[#0F766E]/5 border-[#0F766E]/20" },
+  godaisy_tip_pint:   { icon: Beer,   accent: "text-[#D4A84A]", bg: "bg-[#D4A84A]/10 border-[#D4A84A]/25" },
+  godaisy_tip_boost:  { icon: Flower2, accent: "text-[#4F46E5]", bg: "bg-[#4F46E5]/5 border-[#4F46E5]/20" },
 };
+
+/** Sort order for tip products — cheapest first */
+const TIP_SORT_ORDER = ["godaisy_tip_coffee", "godaisy_tip_pint", "godaisy_tip_boost"];
 
 export default function SupportPage() {
   // Platform detection
@@ -243,7 +246,9 @@ export default function SupportPage() {
                   )}
 
                   {tipPackages.length > 0 ? (
-                    tipPackages.map((pkg) => {
+                    [...tipPackages].sort((a, b) =>
+                      TIP_SORT_ORDER.indexOf(a.identifier) - TIP_SORT_ORDER.indexOf(b.identifier)
+                    ).map((pkg) => {
                       const product = GODAISY_TIP_PRODUCTS.find(
                         (p) => p.id === pkg.identifier
                       );
