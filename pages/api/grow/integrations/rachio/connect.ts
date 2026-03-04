@@ -96,9 +96,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         .from('grow_user_integrations')
         .select('id')
         .eq('user_id', userId)
-        .eq('integration_type', 'rachio')
-        .eq('station_id', selectedDevice.id)
-        .eq('is_active', true)
+        .eq('provider', 'rachio')
+        .eq('device_id', selectedDevice.id)
+        .eq('status', 'active')
         .single();
 
       if (existing) {
@@ -113,12 +113,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         .from('grow_user_integrations')
         .insert({
           user_id: userId,
-          integration_type: 'rachio',
-          external_user_id: validation.person.id,
-          station_id: selectedDevice.id,
+          provider: 'rachio',
+          provider_name: 'Rachio',
+          external_id: selectedDevice.id,
+          device_id: selectedDevice.id,
           device_name: selectedDevice.name || 'Rachio Controller',
-          is_active: true,
+          status: 'active',
           metadata: {
+            external_user_id: validation.person.id,
             model: selectedDevice.model,
             serial: selectedDevice.serialNumber,
             latitude: selectedDevice.latitude,
@@ -139,10 +141,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       if (selectedDevice.zones && selectedDevice.zones.length > 0) {
         const zonesToInsert = selectedDevice.zones.map(zone => ({
           integration_id: integration.id,
-          zone_id: zone.id,
+          user_id: userId,
+          external_zone_id: zone.id,
           zone_number: zone.zoneNumber,
           zone_name: zone.name,
-          is_enabled: zone.enabled,
+          enabled: zone.enabled,
           metadata: {
             nozzle: zone.customNozzle,
             soil: zone.customSoil,
@@ -205,7 +208,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       const { error: updateError } = await supabase
         .from('grow_user_integrations')
         .update({
-          is_active: false,
+          status: 'disconnected',
           updated_at: new Date().toISOString(),
         })
         .eq('id', integrationId)

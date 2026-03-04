@@ -55,14 +55,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     .select('*')
     .eq('id', integrationId)
     .eq('user_id', userId)
-    .eq('is_active', true)
+    .eq('status', 'active')
     .single();
 
   if (integrationError || !integration) {
     return res.status(404).json({ error: 'Integration not found' });
   }
 
-  if (integration.integration_type !== 'hydrawise') {
+  if (integration.provider !== 'hydrawise') {
     return res.status(400).json({ error: 'This endpoint is for Hydrawise integrations only' });
   }
 
@@ -97,7 +97,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                   .from('grow_irrigation_zones')
                   .select('metadata')
                   .eq('integration_id', integrationId)
-                  .eq('zone_id', relay.relay_id.toString())
+                  .eq('external_zone_id', relay.relay_id.toString())
                   .single()).data?.metadata || {}),
                 last_run_time: relay.run,
                 time_remaining: relay.time,
@@ -107,7 +107,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
               updated_at: new Date().toISOString(),
             })
             .eq('integration_id', integrationId)
-            .eq('zone_id', relay.relay_id.toString());
+            .eq('external_zone_id', relay.relay_id.toString());
         }
       }
 
@@ -141,7 +141,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         zones: zones || [],
         integration: {
           id: integration.id,
-          station_id: integration.station_id,
+          station_id: integration.device_id,
           device_name: integration.device_name,
           last_sync_at: integration.last_sync_at,
         },

@@ -100,9 +100,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       .from('grow_user_integrations')
       .select('id')
       .eq('user_id', userId)
-      .eq('integration_type', 'netatmo')
-      .eq('station_id', station._id)
-      .eq('is_active', true)
+      .eq('provider', 'netatmo')
+      .eq('device_id', station._id)
+      .eq('status', 'active')
       .single();
 
     if (existing) {
@@ -122,10 +122,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       .from('grow_user_integrations')
       .insert({
         user_id: userId,
-        integration_type: 'netatmo',
-        station_id: station._id,
+        provider: 'netatmo',
+        provider_name: 'Netatmo',
+        external_id: station._id,
+        device_id: station._id,
         device_name: station.station_name || station.module_name || 'Netatmo Station',
-        is_active: true,
+        status: 'active',
         metadata: {
           place: station.place,
           modules: modules?.map((m: NetatmoModule) => ({

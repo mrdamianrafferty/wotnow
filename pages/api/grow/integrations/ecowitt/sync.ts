@@ -59,14 +59,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     .select('*')
     .eq('id', integrationId)
     .eq('user_id', userId)
-    .eq('is_active', true)
+    .eq('status', 'active')
     .single();
 
   if (integrationError || !integration) {
     return res.status(404).json({ error: 'Integration not found' });
   }
 
-  if (integration.integration_type !== 'ecowitt') {
+  if (integration.provider !== 'ecowitt') {
     return res.status(400).json({ error: 'This endpoint is for Ecowitt integrations only' });
   }
 
@@ -82,7 +82,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       }
 
       // Fetch data from Ecowitt API
-      const result = await fetchEcowittData(integration.station_id, apiKey);
+      const result = await fetchEcowittData(integration.device_id, apiKey);
 
       if (!result.success || !result.data) {
         return res.status(502).json({
@@ -122,7 +122,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         .from('grow_weather_station_data')
         .select('*')
         .eq('integration_id', integrationId)
-        .order('recorded_at', { ascending: false })
+        .order('observed_at', { ascending: false })
         .limit(1)
         .single();
 
@@ -135,7 +135,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         data: latestData || null,
         integration: {
           id: integration.id,
-          station_id: integration.station_id,
+          station_id: integration.device_id,
           device_name: integration.device_name,
           last_sync_at: integration.last_sync_at,
           has_soil_sensors: integration.metadata?.has_soil_sensors || false,

@@ -45,10 +45,11 @@ type IntegrationType = 'tempest' | 'ambient_weather' | 'rachio' | 'hydrawise' | 
 
 interface Integration {
   id: string;
-  integration_type: IntegrationType;
-  station_id: string;
+  provider: IntegrationType;
+  external_id?: string;
+  device_id?: string;
   device_name: string;
-  is_active: boolean;
+  status: string;
   last_sync_at?: string;
   metadata?: Record<string, unknown>;
 }
@@ -227,10 +228,10 @@ export function IntegrationsCard({ className = '' }: IntegrationCardProps) {
 
   // Helper to determine data source status
   const hasWeatherStation = integrations.some(
-    i => INTEGRATION_INFO[i.integration_type].category === 'weather'
+    i => INTEGRATION_INFO[i.provider].category === 'weather'
   );
   const hasIrrigation = integrations.some(
-    i => INTEGRATION_INFO[i.integration_type].category === 'irrigation'
+    i => INTEGRATION_INFO[i.provider].category === 'irrigation'
   );
 
   const fetchIntegrations = useCallback(async () => {
@@ -366,7 +367,7 @@ export function IntegrationsCard({ className = '' }: IntegrationCardProps) {
       if (!session?.access_token) return;
 
       const response = await fetch(
-        `/api/grow/integrations/${integration.integration_type}/connect?integrationId=${integration.id}`,
+        `/api/grow/integrations/${integration.provider}/connect?integrationId=${integration.id}`,
         {
           method: 'DELETE',
           headers: {
@@ -396,7 +397,7 @@ export function IntegrationsCard({ className = '' }: IntegrationCardProps) {
       if (!session?.access_token) return;
 
       const response = await fetch(
-        `/api/grow/integrations/${integration.integration_type}/sync?integrationId=${integration.id}`,
+        `/api/grow/integrations/${integration.provider}/sync?integrationId=${integration.id}`,
         {
           method: 'POST',
           headers: {
@@ -434,7 +435,7 @@ export function IntegrationsCard({ className = '' }: IntegrationCardProps) {
     return date.toLocaleDateString();
   };
 
-  const connectedTypes = integrations.map(i => i.integration_type);
+  const connectedTypes = integrations.map(i => i.provider);
   const availableTypes = Object.keys(INTEGRATION_INFO).filter(
     type => !connectedTypes.includes(type as IntegrationType)
   ) as IntegrationType[];
@@ -447,8 +448,8 @@ export function IntegrationsCard({ className = '' }: IntegrationCardProps) {
 
   // Group connected integrations by category
   const connectedByCategory = {
-    weather: integrations.filter(i => INTEGRATION_INFO[i.integration_type].category === 'weather'),
-    irrigation: integrations.filter(i => INTEGRATION_INFO[i.integration_type].category === 'irrigation'),
+    weather: integrations.filter(i => INTEGRATION_INFO[i.provider].category === 'weather'),
+    irrigation: integrations.filter(i => INTEGRATION_INFO[i.provider].category === 'irrigation'),
   };
 
   return (
@@ -717,7 +718,7 @@ export function IntegrationsCard({ className = '' }: IntegrationCardProps) {
                     <div className="space-y-2">
                       <p className="text-xs font-medium text-gray-500 uppercase">Connected</p>
                       {connectedByCategory[selectedCategory].map(integration => {
-                        const info = INTEGRATION_INFO[integration.integration_type];
+                        const info = INTEGRATION_INFO[integration.provider];
                         const Icon = info.icon;
                         return (
                           <div

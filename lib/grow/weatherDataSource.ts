@@ -90,10 +90,10 @@ export async function getBestWeatherSource(
   // Check for personal weather station
   const { data: stationIntegration } = await supabase
     .from('grow_user_integrations')
-    .select('id, device_name, last_sync_at, integration_type')
+    .select('id, device_name, last_sync_at, provider')
     .eq('user_id', userId)
-    .eq('is_active', true)
-    .in('integration_type', ['tempest', 'ambient_weather', 'netatmo', 'ecowitt', 'weatherlink'])
+    .eq('status', 'active')
+    .in('provider', ['tempest', 'ambient_weather', 'netatmo', 'ecowitt', 'weatherlink'])
     .order('last_sync_at', { ascending: false })
     .limit(1)
     .single();
@@ -128,7 +128,7 @@ export async function getUnifiedWeatherData(
       .from('grow_weather_station_data')
       .select('*')
       .eq('integration_id', source.integrationId)
-      .order('recorded_at', { ascending: false })
+      .order('observed_at', { ascending: false })
       .limit(1)
       .single();
 
@@ -138,19 +138,20 @@ export async function getUnifiedWeatherData(
     }
 
     // Check if data is stale (older than 1 hour)
-    const recordedAt = new Date(stationData.recorded_at);
-    const isStale = Date.now() - recordedAt.getTime() > 60 * 60 * 1000;
+    const observedAt = new Date(stationData.observed_at);
+    const isStale = Date.now() - observedAt.getTime() > 60 * 60 * 1000;
 
+    // Map DB column names to interface field names
     return {
       source,
-      temperature_c: stationData.temperature_c,
+      temperature_c: stationData.air_temp_c,
       humidity_percent: stationData.humidity_percent,
       pressure_mb: stationData.pressure_mb,
-      wind_speed_mps: stationData.wind_speed_mps,
+      wind_speed_mps: stationData.wind_speed_ms,
       wind_direction_deg: stationData.wind_direction_deg,
-      wind_gust_mps: stationData.wind_gust_mps,
-      rain_mm_hour: stationData.rain_mm_hour,
-      rain_mm_day: stationData.rain_mm_day,
+      wind_gust_mps: stationData.wind_gust_ms,
+      rain_mm_hour: stationData.rain_rate_mm_hr,
+      rain_mm_day: stationData.rain_daily_mm,
       uv_index: stationData.uv_index,
       solar_radiation_wm2: stationData.solar_radiation_wm2,
       dew_point_c: stationData.dew_point_c,
@@ -164,7 +165,7 @@ export async function getUnifiedWeatherData(
       soil_moisture_2_pct: stationData.soil_moisture_2_pct,
       soil_moisture_3_pct: stationData.soil_moisture_3_pct,
       soil_moisture_4_pct: stationData.soil_moisture_4_pct,
-      recorded_at: stationData.recorded_at,
+      recorded_at: stationData.observed_at,
       is_stale: isStale,
     };
   }
@@ -199,8 +200,8 @@ export async function hasWeatherIntegration(
     .from('grow_user_integrations')
     .select('*', { count: 'exact', head: true })
     .eq('user_id', userId)
-    .eq('is_active', true)
-    .in('integration_type', ['tempest', 'ambient_weather', 'netatmo', 'ecowitt', 'weatherlink']);
+    .eq('status', 'active')
+    .in('provider', ['tempest', 'ambient_weather', 'netatmo', 'ecowitt', 'weatherlink']);
 
   return (count ?? 0) > 0;
 }
@@ -216,8 +217,8 @@ export async function hasSoilSensors(
     .from('grow_user_integrations')
     .select('metadata')
     .eq('user_id', userId)
-    .eq('is_active', true)
-    .in('integration_type', ['ambient_weather', 'ecowitt', 'weatherlink']);
+    .eq('status', 'active')
+    .in('provider', ['ambient_weather', 'ecowitt', 'weatherlink']);
 
   if (!integrations || integrations.length === 0) return false;
 

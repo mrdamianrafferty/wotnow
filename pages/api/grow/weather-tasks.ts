@@ -21,6 +21,7 @@ import {
 import { generateSmartTasks } from '@/lib/grow/smartTasks';
 import type { SmartTaskContext, PlantInfo } from '@/lib/grow/smartTasks';
 import type { ClimateZoneCode } from '@/lib/grow/climate';
+import { getUnifiedWeatherData } from '@/lib/grow/weatherDataSource';
 
 const SUPABASE_URL = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
 const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -326,12 +327,56 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       });
     }
 
+    // Check for personal weather station data first
+    let stationData = null;
+    let dataSource: 'personal_station' | 'forecast' = 'forecast';
+    try {
+      stationData = await getUnifiedWeatherData(supabase, userId, location.lat, location.lon);
+      if (stationData && !stationData.is_stale) {
+        dataSource = 'personal_station';
+      }
+    } catch (err) {
+      console.warn('[WeatherTasks] Station data check failed, using forecast:', err);
+    }
+
     // Fetch all data in parallel
     const [forecast, soil, plants] = await Promise.all([
       fetchWeatherForecast(location.lat, location.lon),
       fetchSoilConditions(location.lat, location.lon),
       fetchUserPlants(userId),
     ]);
+
+    // If we have fresh personal station data, override current conditions in today's forecast
+    if (dataSource === 'personal_station' && stationData && forecast.length > 0) {
+      const today = forecast[0];
+      if (stationData.temperature_c != null) {
+        today.tempMin = Math.min(today.tempMin, stationData.temperature_c);
+        today.tempMax = Math.max(today.tempMax, stationData.temperature_c);
+      }
+      if (stationData.humidity_percent != null) {
+        today.humidity = stationData.humidity_percent;
+      }
+      if (stationData.wind_speed_mps != null) {
+        today.windSpeed = stationData.wind_speed_mps * 3.6; // m/s to km/h
+      }
+    }
+
+    // If personal station has soil sensors, override Open-Meteo soil data
+    if (dataSource === 'personal_station' && stationData) {
+      if (stationData.soil_temp_1_c != null) {
+        soil.temp0cm = stationData.soil_temp_1_c;
+      }
+      if (stationData.soil_temp_2_c != null) {
+        soil.temp6cm = stationData.soil_temp_2_c;
+      }
+      if (stationData.soil_moisture_1_pct != null) {
+        soil.moisture0to1cm = stationData.soil_moisture_1_pct;
+        soil.moisture1to3cm = stationData.soil_moisture_1_pct;
+      }
+      if (stationData.soil_moisture_2_pct != null) {
+        soil.moisture3to9cm = stationData.soil_moisture_2_pct;
+      }
+    }
 
     // Get planned activities from query (optional)
     const plannedActivities = (req.query.activities as string)?.split(',') || [];
@@ -419,6 +464,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     return res.status(200).json({
       success: true,
+      dataSource,
       location: {
         latitude: location.lat,
         longitude: location.lon,

@@ -25,11 +25,12 @@ export type IntegrationType =
 export interface Integration {
   id: string;
   user_id: string;
-  integration_type: IntegrationType;
-  external_user_id?: string;
-  station_id?: string;
+  provider: IntegrationType;
+  provider_name?: string;
+  external_id?: string;
+  device_id?: string;
   device_name?: string;
-  is_active: boolean;
+  status: 'pending' | 'active' | 'error' | 'disconnected';
   metadata?: Record<string, unknown>;
   created_at: string;
   updated_at: string;
@@ -107,10 +108,10 @@ export async function getUserIntegrations(
     .from('grow_user_integrations')
     .select('*')
     .eq('user_id', userId)
-    .eq('is_active', true);
+    .eq('status', 'active');
 
   if (type) {
-    query = query.eq('integration_type', type);
+    query = query.eq('provider', type);
   }
 
   const { data, error } = await query;
@@ -213,21 +214,35 @@ export async function storeWeatherStationData(
     moisture4?: number;
   }
 ): Promise<boolean> {
-  // Build the insert object with weather data
+  // Look up user_id from the integration record
+  const { data: integration } = await supabase
+    .from('grow_user_integrations')
+    .select('user_id')
+    .eq('id', integrationId)
+    .single();
+
+  if (!integration) {
+    console.error('[Integrations] Integration not found for storing data:', integrationId);
+    return false;
+  }
+
+  // Map interface field names to DB column names
   const insertData: Record<string, unknown> = {
     integration_id: integrationId,
-    temperature_c: data.temperature_c,
+    user_id: integration.user_id,
+    observed_at: new Date().toISOString(),
+    air_temp_c: data.temperature_c,
     humidity_percent: data.humidity_percent,
     pressure_mb: data.pressure_mb,
-    wind_speed_mps: data.wind_speed_mps,
+    wind_speed_ms: data.wind_speed_mps,
     wind_direction_deg: data.wind_direction_deg,
-    wind_gust_mps: data.wind_gust_mps,
-    rain_mm_hour: data.rain_mm_hour,
-    rain_mm_day: data.rain_mm_day,
+    wind_gust_ms: data.wind_gust_mps,
+    rain_rate_mm_hr: data.rain_mm_hour,
+    rain_daily_mm: data.rain_mm_day,
     uv_index: data.uv_index,
     solar_radiation_wm2: data.solar_radiation_wm2,
     lightning_count: data.lightning_count,
-    lightning_distance_km: data.lightning_distance_km,
+    lightning_avg_distance_km: data.lightning_distance_km,
     feels_like_c: data.feels_like_c,
     dew_point_c: data.dew_point_c,
   };
@@ -267,7 +282,7 @@ export async function deactivateIntegration(
   const { error } = await supabase
     .from('grow_user_integrations')
     .update({
-      is_active: false,
+      status: 'disconnected',
       updated_at: new Date().toISOString(),
     })
     .eq('id', integrationId)

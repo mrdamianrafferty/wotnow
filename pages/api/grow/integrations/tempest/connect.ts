@@ -94,9 +94,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         .from('grow_user_integrations')
         .select('id')
         .eq('user_id', userId)
-        .eq('integration_type', 'tempest')
-        .eq('station_id', selectedStation.station_id.toString())
-        .eq('is_active', true)
+        .eq('provider', 'tempest')
+        .eq('device_id', selectedStation.station_id.toString())
+        .eq('status', 'active')
         .single();
 
       if (existing) {
@@ -111,10 +111,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         .from('grow_user_integrations')
         .insert({
           user_id: userId,
-          integration_type: 'tempest',
-          station_id: selectedStation.station_id.toString(),
+          provider: 'tempest',
+          provider_name: 'Tempest',
+          external_id: selectedStation.station_id.toString(),
+          device_id: selectedStation.station_id.toString(),
           device_name: selectedStation.name || selectedStation.public_name,
-          is_active: true,
+          status: 'active',
           metadata: {
             latitude: selectedStation.latitude,
             longitude: selectedStation.longitude,
@@ -171,7 +173,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       const { error: updateError } = await supabase
         .from('grow_user_integrations')
         .update({
-          is_active: false,
+          status: 'disconnected',
           updated_at: new Date().toISOString(),
         })
         .eq('id', integrationId)

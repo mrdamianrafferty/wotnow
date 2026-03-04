@@ -106,14 +106,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     .select('*')
     .eq('id', integrationId)
     .eq('user_id', userId)
-    .eq('is_active', true)
+    .eq('status', 'active')
     .single();
 
   if (integrationError || !integration) {
     return res.status(404).json({ error: 'Integration not found' });
   }
 
-  if (integration.integration_type !== 'netatmo') {
+  if (integration.provider !== 'netatmo') {
     return res.status(400).json({ error: 'This endpoint is for Netatmo integrations only' });
   }
 
@@ -130,7 +130,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       }
 
       // Fetch data from Netatmo API (accessToken first, then optional deviceId)
-      const result = await fetchNetatmoData(token, integration.station_id);
+      const result = await fetchNetatmoData(token, integration.device_id);
 
       if (!result.success || !result.data) {
         return res.status(502).json({
@@ -164,7 +164,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         .from('grow_weather_station_data')
         .select('*')
         .eq('integration_id', integrationId)
-        .order('recorded_at', { ascending: false })
+        .order('observed_at', { ascending: false })
         .limit(1)
         .single();
 
@@ -177,7 +177,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         data: latestData || null,
         integration: {
           id: integration.id,
-          station_id: integration.station_id,
+          station_id: integration.device_id,
           device_name: integration.device_name,
           last_sync_at: integration.last_sync_at,
         },

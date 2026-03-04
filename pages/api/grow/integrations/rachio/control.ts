@@ -68,14 +68,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     .select('*')
     .eq('id', integrationId)
     .eq('user_id', userId)
-    .eq('is_active', true)
+    .eq('status', 'active')
     .single();
 
   if (integrationError || !integration) {
     return res.status(404).json({ error: 'Integration not found' });
   }
 
-  if (integration.integration_type !== 'rachio') {
+  if (integration.provider !== 'rachio') {
     return res.status(400).json({ error: 'This endpoint is for Rachio integrations only' });
   }
 
@@ -88,7 +88,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     });
   }
 
-  const deviceId = integration.station_id;
+  const deviceId = integration.device_id;
 
   if (req.method === 'POST') {
     const { action, zoneId, duration } = req.body as ControlRequest;
@@ -114,9 +114,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           // Verify the zone belongs to this device
           const { data: zone } = await supabase
             .from('grow_irrigation_zones')
-            .select('zone_id')
+            .select('external_zone_id')
             .eq('integration_id', integrationId)
-            .eq('zone_id', zoneId)
+            .eq('external_zone_id', zoneId)
             .single();
 
           if (!zone) {
@@ -126,28 +126,32 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           result = await startRachioZone(zoneId, duration, apiKey);
 
           // Log the watering event
-          if (result.success) {
-            await supabase.from('grow_irrigation_history').insert({
-              integration_id: integrationId,
-              zone_id: zoneId,
-              event_type: 'manual_start',
-              duration_seconds: duration,
-              trigger_source: 'grow_app',
-            });
+          if (result.success && zone) {
+            // Look up the internal zone UUID
+            const { data: zoneRow } = await supabase
+              .from('grow_irrigation_zones')
+              .select('id')
+              .eq('integration_id', integrationId)
+              .eq('external_zone_id', zoneId)
+              .single();
+
+            if (zoneRow) {
+              await supabase.from('grow_irrigation_history').insert({
+                zone_id: zoneRow.id,
+                user_id: userId,
+                started_at: new Date().toISOString(),
+                event_type: 'manual',
+                duration_minutes: Math.ceil(duration / 60),
+                trigger_source: 'grow_app',
+              });
+            }
           }
           break;
 
         case 'stop':
           result = await stopRachioDevice(deviceId, apiKey);
 
-          // Log the stop event
-          if (result.success) {
-            await supabase.from('grow_irrigation_history').insert({
-              integration_id: integrationId,
-              event_type: 'manual_stop',
-              trigger_source: 'grow_app',
-            });
-          }
+          // Note: stop events don't have a specific zone, skip history logging
           break;
 
         case 'rain_delay':
@@ -159,15 +163,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
           result = await setRachioRainDelay(deviceId, duration, apiKey);
 
-          // Log the rain delay
-          if (result.success) {
-            await supabase.from('grow_irrigation_history').insert({
-              integration_id: integrationId,
-              event_type: 'rain_delay_set',
-              duration_seconds: duration * 24 * 60 * 60,
-              trigger_source: 'grow_app',
-            });
-          }
+          // Note: rain delay applies to device, not a specific zone, skip history logging
           break;
 
         default:
@@ -215,7 +211,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         .from('grow_irrigation_zones')
         .select('*')
         .eq('integration_id', integrationId)
-        .eq('is_enabled', true)
+        .eq('enabled', true)
         .order('zone_number', { ascending: true });
 
       return res.status(200).json({

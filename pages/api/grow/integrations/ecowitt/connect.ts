@@ -93,9 +93,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         .from('grow_user_integrations')
         .select('id')
         .eq('user_id', userId)
-        .eq('integration_type', 'ecowitt')
-        .eq('station_id', selectedDevice.mac)
-        .eq('is_active', true)
+        .eq('provider', 'ecowitt')
+        .eq('device_id', selectedDevice.mac)
+        .eq('status', 'active')
         .single();
 
       if (existing) {
@@ -117,10 +117,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         .from('grow_user_integrations')
         .insert({
           user_id: userId,
-          integration_type: 'ecowitt',
-          station_id: selectedDevice.mac,
+          provider: 'ecowitt',
+          provider_name: 'Ecowitt',
+          external_id: selectedDevice.mac,
+          device_id: selectedDevice.mac,
           device_name: selectedDevice.name || 'Ecowitt Station',
-          is_active: true,
+          status: 'active',
           metadata: {
             type: selectedDevice.type,
             timezone: selectedDevice.timezone,
@@ -171,7 +173,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       const { error: updateError } = await supabase
         .from('grow_user_integrations')
         .update({
-          is_active: false,
+          status: 'disconnected',
           updated_at: new Date().toISOString(),
         })
         .eq('id', integrationId)

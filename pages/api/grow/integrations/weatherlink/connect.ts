@@ -94,9 +94,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         .from('grow_user_integrations')
         .select('id')
         .eq('user_id', userId)
-        .eq('integration_type', 'weatherlink')
-        .eq('station_id', selectedStation.station_id.toString())
-        .eq('is_active', true)
+        .eq('provider', 'weatherlink')
+        .eq('device_id', selectedStation.station_id.toString())
+        .eq('status', 'active')
         .single();
 
       if (existing) {
@@ -118,10 +118,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         .from('grow_user_integrations')
         .insert({
           user_id: userId,
-          integration_type: 'weatherlink',
-          station_id: selectedStation.station_id.toString(),
+          provider: 'weatherlink',
+          provider_name: 'Davis WeatherLink',
+          external_id: selectedStation.station_id.toString(),
+          device_id: selectedStation.station_id.toString(),
           device_name: selectedStation.station_name || 'Davis Weather Station',
-          is_active: true,
+          status: 'active',
           metadata: {
             gateway_id: selectedStation.gateway_id,
             product_number: selectedStation.product_number,
@@ -185,7 +187,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       const { error: updateError } = await supabase
         .from('grow_user_integrations')
         .update({
-          is_active: false,
+          status: 'disconnected',
           updated_at: new Date().toISOString(),
         })
         .eq('id', integrationId)

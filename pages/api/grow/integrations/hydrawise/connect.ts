@@ -81,9 +81,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         .from('grow_user_integrations')
         .select('id')
         .eq('user_id', userId)
-        .eq('integration_type', 'hydrawise')
-        .eq('station_id', controller.controller_id.toString())
-        .eq('is_active', true)
+        .eq('provider', 'hydrawise')
+        .eq('device_id', controller.controller_id.toString())
+        .eq('status', 'active')
         .single();
 
       if (existing) {
@@ -102,12 +102,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         .from('grow_user_integrations')
         .insert({
           user_id: userId,
-          integration_type: 'hydrawise',
-          external_user_id: validation.customer.customer_id.toString(),
-          station_id: controller.controller_id.toString(),
+          provider: 'hydrawise',
+          provider_name: 'Hydrawise',
+          external_id: controller.controller_id.toString(),
+          device_id: controller.controller_id.toString(),
           device_name: controller.name || 'Hydrawise Controller',
-          is_active: true,
+          status: 'active',
           metadata: {
+            external_user_id: validation.customer.customer_id.toString(),
             serial_number: controller.serial_number,
             zone_count: zoneCount,
             status: controller.status,
@@ -125,10 +127,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       if (status.status?.relays && status.status.relays.length > 0) {
         const zonesToInsert = status.status.relays.map(zone => ({
           integration_id: integration.id,
-          zone_id: zone.relay_id.toString(),
+          user_id: userId,
+          external_zone_id: zone.relay_id.toString(),
           zone_number: zone.relay,
           zone_name: zone.name,
-          is_enabled: true,
+          enabled: true,
           metadata: {
             type: zone.type,
           },
@@ -176,7 +179,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       const { error: updateError } = await supabase
         .from('grow_user_integrations')
         .update({
-          is_active: false,
+          status: 'disconnected',
           updated_at: new Date().toISOString(),
         })
         .eq('id', integrationId)

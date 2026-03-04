@@ -51,11 +51,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         .from('grow_user_integrations')
         .select('*')
         .eq('user_id', userId)
-        .eq('is_active', true)
+        .eq('status', 'active')
         .order('created_at', { ascending: false });
 
       if (type) {
-        query = query.eq('integration_type', type);
+        query = query.eq('provider', type);
       }
 
       const { data: integrations, error: intError } = await query;
@@ -69,27 +69,22 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       let integrationsWithData = integrations || [];
 
       if (includeData && integrations && integrations.length > 0) {
-        const integrationIds = integrations.map(i => i.id);
-
-        // Get latest weather station data for each integration
+        // Get latest weather station data using the RPC (takes p_user_id)
         const { data: latestData } = await supabase
-          .rpc('grow_get_latest_station_data', { integration_ids: integrationIds });
+          .rpc('grow_get_latest_station_data', { p_user_id: userId });
 
         // Merge data with integrations
-        integrationsWithData = integrations.map(integration => {
-          const data = latestData?.find((d: { integration_id: string }) => d.integration_id === integration.id);
-          return {
-            ...integration,
-            latest_data: data || null,
-          };
-        });
+        integrationsWithData = integrations.map(integration => ({
+          ...integration,
+          latest_data: latestData || null,
+        }));
       }
 
       // Calculate summary
       const summary = {
         total: integrationsWithData.length,
         by_type: integrationsWithData.reduce((acc: Record<string, number>, int) => {
-          const t = int.integration_type;
+          const t = int.provider;
           acc[t] = (acc[t] || 0) + 1;
           return acc;
         }, {}),
