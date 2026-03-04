@@ -41,8 +41,9 @@ const TIP_ICON_MAP: Record<string, { icon: typeof Coffee; accent: string; bg: st
 const TIP_SORT_ORDER = ["godaisy_tip_coffee", "godaisy_tip_pint", "godaisy_tip_boost"];
 
 export default function SupportPage() {
-  // Platform detection
+  // Platform detection — default to hiding external payment links until resolved
   const [isIOSNative, setIsIOSNative] = useState(false);
+  const [platformResolved, setPlatformResolved] = useState(false);
   const [tipPackages, setTipPackages] = useState<TipPackage[]>([]);
   const [purchasingId, setPurchasingId] = useState<string | null>(null);
   const [tipError, setTipError] = useState<string | null>(null);
@@ -55,6 +56,7 @@ export default function SupportPage() {
         if (cancelled) return;
         const native = Capacitor.isNativePlatform() && Capacitor.getPlatform() === "ios";
         setIsIOSNative(native);
+        setPlatformResolved(true);
 
         if (!native) return;
 
@@ -100,7 +102,9 @@ export default function SupportPage() {
   // Translation hooks
   const pageTitle = useUIText('support.label.support_go_daisy_14', 'Support Go Daisy');
   const metaDescription = useUIText('support.paragraph.join_the_go_daisy_community_on_15',
-    'Join the Go Daisy community on Patreon or tip via Apple. Help cover weather data, hosting, and keep Damian — and Bruno — in biscuits.');
+    isIOSNative
+      ? 'Support Go Daisy with a tip. Help cover weather data, hosting, and keep Damian — and Bruno — in biscuits.'
+      : 'Join the Go Daisy community on Patreon or tip via Apple. Help cover weather data, hosting, and keep Damian — and Bruno — in biscuits.');
 
   const heroHeading = useUIText('support.heading.keep_go_daisy_blooming_21', 'Keep Go Daisy Blooming');
   const heroText = useUIText('support.paragraph.hero_description',
@@ -121,7 +125,9 @@ export default function SupportPage() {
   const transparencyNoGating = useUIText('support.paragraph.no_features_are_gated_behind_s_38',
     'No features are gated behind support. Everyone gets the same forecast.');
   const transparencyUpdates = useUIText('support.paragraph.patreon_updates_and_progress_n_39',
-    'Patreon updates and progress notes are shared with supporters; feature launches land for all users.');
+    isIOSNative
+      ? 'Progress notes are shared with supporters; feature launches land for all users.'
+      : 'Patreon updates and progress notes are shared with supporters; feature launches land for all users.');
 
   const faqHeading = useUIText('support.heading.frequently_asked_questions_40', 'Frequently asked questions');
 
@@ -131,7 +137,9 @@ export default function SupportPage() {
 
   const faqQ2 = useUIText('support.paragraph.can_i_cancel_any_time__43', 'Can I cancel any time?');
   const faqA2 = useUIText('support.paragraph.yes_patreon_manages_billing_yo_44',
-    'Yes — Patreon manages billing. You can switch tiers or cancel whenever you like. Tips are one-off.');
+    isIOSNative
+      ? 'Yes — you can manage your tips any time via your Apple ID settings. Tips are one-off.'
+      : 'Yes — Patreon manages billing. You can switch tiers or cancel whenever you like. Tips are one-off.');
 
   const faqQ3 = useUIText('support.paragraph.other_ways_to_help__45', 'Other ways to help?');
   const faqA3 = useUIText('support.paragraph.tell_a_friend_start_a_plan_or__46',
@@ -179,9 +187,9 @@ export default function SupportPage() {
           </section>
 
           {/* Support options */}
-          <div className={`grid gap-6 ${!isIOSNative ? 'sm:grid-cols-2' : ''}`}>
-            {/* Patreon card — web only */}
-            {!isIOSNative && (
+          <div className={`grid gap-6 ${platformResolved && !isIOSNative ? 'sm:grid-cols-2' : ''}`}>
+            {/* Patreon card — web only (hidden until platform resolved) */}
+            {platformResolved && !isIOSNative && (
               <section className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 flex flex-col">
                 <div className="flex items-center gap-2.5 mb-3">
                   <div className="p-2 bg-orange-100 rounded-lg">

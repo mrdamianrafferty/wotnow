@@ -36,8 +36,8 @@ import { mapAuthError } from './utils';
 
 const logger = createLogger('AppleSignIn');
 
-// Timeout for the entire native auth flow (matches Google pattern)
-const AUTH_TIMEOUT_MS = 30000;
+// Timeout for the entire native auth flow
+const AUTH_TIMEOUT_MS = 10000;
 
 export const APPLE_NATIVE_ERRORS = {
   CANCELLED: 'APPLE_NATIVE_CANCELLED',

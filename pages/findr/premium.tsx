@@ -104,13 +104,7 @@ export default function PremiumPage() {
             <h2 className="card-title justify-center text-2xl">Premium Coming Soon</h2>
             <p className="text-base-content/70 mt-2">
               In-app subscription management is coming soon to the iOS app.
-            </p>
-            <p className="text-base-content/70 mt-2">
-              In the meantime, visit{' '}
-              <a href="https://fishfindr.eu/findr/premium" className="link link-primary">
-                fishfindr.eu
-              </a>{' '}
-              in your browser to subscribe.
+              We&apos;ll notify you as soon as it&apos;s available.
             </p>
             <div className="card-actions justify-center mt-4">
               <button

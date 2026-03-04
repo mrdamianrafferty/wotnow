@@ -5,7 +5,7 @@
   "scripts": {
     "prebuild": "",
     "prevercel-build": "",
-    "postinstall": "git config core.hooksPath .githooks || true",
+    "postinstall": "(git config core.hooksPath .githooks || true) && (bash patches/apply-apple-sign-in-fix.sh || true)",
     "clean:dev": "bash ./scripts/clean-dev.sh",
     "dev": "node ./scripts/ensure-next-manifests.cjs && next dev --webpack",
     "dev:turbo": "node ./scripts/ensure-next-manifests.cjs && next dev",
