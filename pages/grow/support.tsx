@@ -1,10 +1,63 @@
-import React from 'react';
+import React, { useState } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
-import { ArrowLeft, Mail, HelpCircle, CreditCard, Shield, UserX } from 'lucide-react';
+import { Capacitor } from '@capacitor/core';
+import { ArrowLeft, Mail, HelpCircle, CreditCard, Shield, UserX, Settings, Loader2, ExternalLink } from 'lucide-react';
 import { GrowLayout } from '@/components/grow/GrowLayout';
+import { useGrowSubscription } from '@/hooks/useGrowSubscription';
+import { getTierDisplayName } from '@/lib/grow/subscription';
+import { createClient } from '@/lib/supabase/client';
 
 export default function GrowSupportPage() {
+  const { tier, subscription, isLoading } = useGrowSubscription();
+  const isIOS = Capacitor.getPlatform() === 'ios';
+  const isPaidTier = tier !== 'seed';
+  const subscriptionType = subscription?.subscriptionType;
+  const [portalLoading, setPortalLoading] = useState(false);
+  const [portalError, setPortalError] = useState('');
+  const supabase = createClient();
+
+  const handleManageSubscription = async () => {
+    if (isIOS) {
+      // Deep link to iOS subscription settings
+      window.open('https://apps.apple.com/account/subscriptions', '_blank');
+      return;
+    }
+
+    // Web: open Stripe Customer Portal
+    try {
+      setPortalLoading(true);
+      setPortalError('');
+
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        setPortalError('Please sign in to manage your subscription.');
+        return;
+      }
+
+      const response = await fetch('/api/grow/create-portal-session', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${session.access_token}`,
+        },
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to open subscription portal');
+      }
+
+      window.location.href = data.url;
+    } catch (err) {
+      console.error('Portal error:', err);
+      setPortalError(err instanceof Error ? err.message : 'Something went wrong');
+    } finally {
+      setPortalLoading(false);
+    }
+  };
+
   return (
     <GrowLayout>
       <Head>
@@ -23,6 +76,81 @@ export default function GrowSupportPage() {
           <p className="text-gray-500 mb-8">We&apos;re here to help you get the most out of Grow Daisy.</p>
 
           <div className="prose prose-lg max-w-none text-gray-800">
+            {/* Subscription Management */}
+            <section className="mb-8">
+              <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
+                <Settings className="h-5 w-5 text-emerald-600" />
+                Manage Subscription
+              </h2>
+
+              {isLoading ? (
+                <div className="flex items-center gap-2 text-gray-500">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Loading subscription info...
+                </div>
+              ) : (
+                <div className="bg-gray-50 rounded-lg p-4 not-prose">
+                  <div className="flex items-center justify-between mb-3">
+                    <div>
+                      <p className="font-medium text-gray-900">
+                        Current plan: <span className="text-emerald-600">{getTierDisplayName(tier)}</span>
+                      </p>
+                      {isPaidTier && subscriptionType && (
+                        <p className="text-sm text-gray-500">
+                          Billing: {subscriptionType === 'lifetime' ? 'Lifetime (one-time)' : subscriptionType}
+                        </p>
+                      )}
+                    </div>
+                    <Link
+                      href="/grow/premium"
+                      className="text-sm text-emerald-600 hover:text-emerald-700 font-medium"
+                    >
+                      View plans
+                    </Link>
+                  </div>
+
+                  {isPaidTier && (
+                    <>
+                      <button
+                        onClick={handleManageSubscription}
+                        disabled={portalLoading}
+                        className="w-full flex items-center justify-center gap-2 py-2.5 px-4 bg-white border border-gray-200 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+                      >
+                        {portalLoading ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                          <ExternalLink className="h-4 w-4" />
+                        )}
+                        {isIOS
+                          ? 'Manage in iOS Settings'
+                          : portalLoading
+                          ? 'Opening...'
+                          : 'Manage Subscription'}
+                      </button>
+                      <p className="text-xs text-gray-500 mt-2">
+                        {isIOS
+                          ? 'You can change your plan, cancel, or view billing history in iOS Settings > Apple ID > Subscriptions.'
+                          : 'Change your plan, update payment method, or cancel via the Stripe billing portal.'}
+                      </p>
+                    </>
+                  )}
+
+                  {!isPaidTier && (
+                    <p className="text-sm text-gray-500">
+                      You&apos;re on the free Seed plan.{' '}
+                      <Link href="/grow/premium" className="text-emerald-600 underline">
+                        Upgrade to unlock premium features
+                      </Link>.
+                    </p>
+                  )}
+
+                  {portalError && (
+                    <p className="text-sm text-red-600 mt-2">{portalError}</p>
+                  )}
+                </div>
+              )}
+            </section>
+
             {/* Contact */}
             <section className="mb-8">
               <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
@@ -53,23 +181,41 @@ export default function GrowSupportPage() {
                   </h3>
                   <p className="text-sm">
                     Grow Daisy offers monthly, annual, and lifetime premium plans. Depending on your
-                    platform, subscriptions are handled by Stripe (web), Apple (iOS), or Google Play
-                    (Android). Subscriptions auto-renew unless cancelled before the end of the current
-                    billing period. You can manage or cancel your subscription at any time through your
-                    platform&apos;s subscription settings.
+                    platform, subscriptions are handled by Stripe (web) or Apple (iOS).
+                    Subscriptions auto-renew unless cancelled before the end of the current
+                    billing period.
                   </p>
                 </div>
 
                 <div>
                   <h3 className="font-semibold mb-1 flex items-center gap-2">
                     <CreditCard className="h-4 w-4 text-gray-400" />
-                    How do I manage or cancel my subscription?
+                    How do I downgrade my plan?
                   </h3>
                   <p className="text-sm">
-                    <strong>Web (Stripe):</strong> Go to Settings in the app and manage your subscription
-                    from the Subscription card.<br />
-                    <strong>iOS:</strong> Go to your device&apos;s Settings &gt; Apple ID &gt; Subscriptions.<br />
-                    <strong>Android:</strong> Open Google Play &gt; Payments &amp; subscriptions &gt; Subscriptions.
+                    <strong>iOS:</strong> Go to Settings &gt; Apple ID &gt; Subscriptions &gt; Grow Daisy.
+                    Select the plan you&apos;d like to switch to. The change takes effect at the end of your
+                    current billing period.<br />
+                    <strong>Web:</strong> Use the &quot;Manage Subscription&quot; button above to open the billing
+                    portal where you can change or cancel your plan. You&apos;ll keep your current tier until
+                    the end of your billing period.
+                  </p>
+                </div>
+
+                <div>
+                  <h3 className="font-semibold mb-1 flex items-center gap-2">
+                    <CreditCard className="h-4 w-4 text-gray-400" />
+                    Can I get a refund?
+                  </h3>
+                  <p className="text-sm">
+                    <strong>iOS:</strong> Refunds are handled by Apple. Visit{' '}
+                    <a href="https://reportaproblem.apple.com" className="text-emerald-600 underline" target="_blank" rel="noopener noreferrer">
+                      reportaproblem.apple.com
+                    </a>
+                    {' '}to request a refund.<br />
+                    <strong>Web:</strong> Contact us at{' '}
+                    <a href="mailto:hello@godaisy.io" className="text-emerald-600 underline">hello@godaisy.io</a>
+                    {' '}and we&apos;ll sort it out.
                   </p>
                 </div>
 
