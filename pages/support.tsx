@@ -7,11 +7,35 @@ import Footer from "../components/footer";
 import { useUIText } from "../hooks/useUIText";
 import { GODAISY_TIP_PRODUCTS } from "../lib/godaisy/tipProducts";
 import type { TipPackage } from "../lib/grow/revenueCat";
+import {
+  Heart,
+  Coffee,
+  Beer,
+  Flower2,
+  Eye,
+  EyeOff,
+  Users,
+  ShieldCheck,
+  HelpCircle,
+  ChevronDown,
+  Smartphone,
+  ExternalLink,
+  PartyPopper,
+  AlertCircle,
+  Loader2,
+} from "lucide-react";
 
 // Disable static generation
 export async function getServerSideProps() {
   return { props: { theme: "light" } };
 }
+
+/** Map product IDs to Lucide icons and accent colours */
+const TIP_ICON_MAP: Record<string, { icon: typeof Coffee; accent: string; bg: string }> = {
+  godaisy_tip_coffee: { icon: Coffee, accent: "text-amber-700", bg: "bg-amber-50 border-amber-200" },
+  godaisy_tip_pint:   { icon: Beer,   accent: "text-yellow-700", bg: "bg-yellow-50 border-yellow-200" },
+  godaisy_tip_boost:  { icon: Flower2, accent: "text-pink-700", bg: "bg-pink-50 border-pink-200" },
+};
 
 export default function SupportPage() {
   // Platform detection
@@ -21,6 +45,7 @@ export default function SupportPage() {
   const [tipError, setTipError] = useState<string | null>(null);
   const [tipSuccess, setTipSuccess] = useState(false);
   const [tipDebug, setTipDebug] = useState('JS:v7 loading...');
+  const [showDebug, setShowDebug] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -76,7 +101,6 @@ export default function SupportPage() {
       if (purchased) {
         setTipSuccess(true);
       }
-      // false = user cancelled — do nothing
     } catch (err) {
       console.error("[Support] Tip purchase failed:", err);
       setTipError(err instanceof Error ? err.message : "Purchase failed. Please try again.");
@@ -93,10 +117,6 @@ export default function SupportPage() {
   const heroHeading = useUIText('support.heading.keep_go_daisy_blooming_21', 'Keep Go Daisy Blooming');
   const heroText = useUIText('support.paragraph.hero_description',
     'Go Daisy isn\'t just an app — it\'s a small, friendly community of people who prefer doing to doom-scrolling. If our forecasts and nudges helped you rally mates, discover a cracking day out, or dodge a downpour, you can support the project and keep it blooming.');
-
-  const badgeCommunity = useUIText('support.badge.community_first', 'Community-first');
-  const badgeNoPaywalls = useUIText('support.label.no_paywalls_24', 'No paywalls');
-  const badgeIndie = useUIText('support.label.indie_friendly_26', 'Indie & friendly');
 
   const patreonHeading = useUIText('support.heading.join_us_on_patreon_30', 'Join us on Patreon');
   const patreonText = useUIText('support.paragraph.patreon_description',
@@ -144,101 +164,146 @@ export default function SupportPage() {
         <meta name="twitter:image" content="/doggy.jpg" />
       </Head>
 
-      {/* THEME SCOPE — everything inside uses DaisyUI "light" regardless of the rest of the site */}
-      <div data-theme="light" className="min-h-screen bg-base-100 text-base-content">
+      <div data-theme="light" className="min-h-screen bg-gray-50">
         <AppHeader onOpenHomeDialog={() => {}} onOpenCoastDialog={() => {}} />
 
-        <main className="container mx-auto max-w-3xl px-4 py-10 space-y-10">
+        <main className="max-w-2xl mx-auto px-4 py-8 space-y-8">
           {/* Hero */}
-          <div className="card bg-base-200 shadow-sm">
-            <div className="card-body space-y-4">
-              <h2 className="card-title text-3xl text-base-content">{heroHeading}</h2>
-              <p className="leading-relaxed text-base-content">{heroText}</p>
-              <div className="flex flex-wrap gap-2 text-xs opacity-80 text-base-content">
-                <span className="badge badge-outline">{badgeCommunity}</span>
-                <span className="badge badge-outline">{badgeNoPaywalls}</span>
-                <span className="badge badge-outline">{badgeIndie}</span>
+          <section className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
+            <div className="bg-gradient-to-br from-sky-500 to-blue-600 px-6 py-8 text-white">
+              <div className="flex items-center gap-3 mb-3">
+                <Heart className="h-7 w-7 shrink-0" />
+                <h1 className="text-2xl font-bold">{heroHeading}</h1>
               </div>
+              <p className="text-blue-100 leading-relaxed text-[15px]">{heroText}</p>
             </div>
-          </div>
+            <div className="flex gap-2 px-6 py-3 bg-gray-50 border-t border-gray-100">
+              <span className="inline-flex items-center gap-1.5 text-xs font-medium text-gray-600 bg-white border border-gray-200 rounded-full px-3 py-1">
+                <Users className="h-3.5 w-3.5" /> Community-first
+              </span>
+              <span className="inline-flex items-center gap-1.5 text-xs font-medium text-gray-600 bg-white border border-gray-200 rounded-full px-3 py-1">
+                <EyeOff className="h-3.5 w-3.5" /> No paywalls
+              </span>
+              <span className="inline-flex items-center gap-1.5 text-xs font-medium text-gray-600 bg-white border border-gray-200 rounded-full px-3 py-1">
+                <Heart className="h-3.5 w-3.5" /> Indie &amp; friendly
+              </span>
+            </div>
+          </section>
 
           {/* Support options */}
-          <div className="grid gap-6 sm:grid-cols-2">
+          <div className={`grid gap-6 ${!isIOSNative ? 'sm:grid-cols-2' : ''}`}>
             {/* Patreon card — web only */}
             {!isIOSNative && (
-              <div className="card bg-base-200">
-                <div className="card-body space-y-3">
-                  <h2 className="card-title text-lg text-base-content">{patreonHeading}</h2>
-                  <p className="text-base-content">{patreonText}</p>
-                  <a
-                    className="btn btn-primary"
-                    href="https://patreon.com/GoDaisy?utm_medium=unknown&utm_source=join_link&utm_campaign=creatorshare_creator&utm_content=copyLink"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    {patreonButton}
-                  </a>
+              <section className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 flex flex-col">
+                <div className="flex items-center gap-2.5 mb-3">
+                  <div className="p-2 bg-orange-100 rounded-lg">
+                    <ExternalLink className="h-5 w-5 text-orange-600" />
+                  </div>
+                  <h2 className="text-lg font-semibold text-gray-900">{patreonHeading}</h2>
                 </div>
-              </div>
+                <p className="text-sm text-gray-600 leading-relaxed mb-4 flex-1">{patreonText}</p>
+                <a
+                  className="inline-flex items-center justify-center gap-2 w-full px-4 py-3 bg-orange-500 hover:bg-orange-600 text-white font-medium rounded-xl transition-colors"
+                  href="https://patreon.com/GoDaisy?utm_medium=unknown&utm_source=join_link&utm_campaign=creatorshare_creator&utm_content=copyLink"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  <ExternalLink className="h-4 w-4" />
+                  {patreonButton}
+                </a>
+              </section>
             )}
 
             {/* Tip Jar card */}
-            <div className="card bg-base-200">
-              <div className="card-body space-y-3">
-                <h2 className="card-title text-lg text-base-content">{appleTipHeading}</h2>
-                <p className="text-base-content">{appleTipText}</p>
+            <section className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
+              <div className="flex items-center gap-2.5 mb-2">
+                <div className="p-2 bg-pink-100 rounded-lg">
+                  <Heart className="h-5 w-5 text-pink-600" />
+                </div>
+                <h2 className="text-lg font-semibold text-gray-900">{appleTipHeading}</h2>
+              </div>
+              <p className="text-sm text-gray-600 leading-relaxed mb-4">{appleTipText}</p>
 
-                {/* iOS native: RevenueCat IAP buttons */}
-                {isIOSNative ? (
-                  <>
-                    {tipSuccess && (
-                      <div className="alert alert-success text-sm">
-                        <span>Thank you for the tip! You&apos;re a legend.</span>
-                      </div>
-                    )}
-                    {tipError && (
-                      <div className="alert alert-error text-sm">
-                        <span>{tipError}</span>
-                      </div>
-                    )}
-                    {tipPackages.length > 0 ? (
-                      tipPackages.map((pkg) => {
-                        const product = GODAISY_TIP_PRODUCTS.find(
-                          (p) => p.id === pkg.identifier
-                        );
-                        return (
-                          <button
-                            key={pkg.identifier}
-                            className="btn btn-outline"
-                            disabled={!!purchasingId}
-                            onClick={() => handleTipPurchase(pkg)}
-                          >
+              {/* iOS native: StoreKit IAP buttons */}
+              {isIOSNative ? (
+                <div className="space-y-3">
+                  {tipSuccess && (
+                    <div className="flex items-center gap-2 p-3 bg-green-50 border border-green-200 rounded-xl">
+                      <PartyPopper className="h-5 w-5 text-green-600 shrink-0" />
+                      <p className="text-sm font-medium text-green-800">
+                        Thank you for the tip! You&apos;re a legend.
+                      </p>
+                    </div>
+                  )}
+                  {tipError && (
+                    <div className="flex items-center gap-2 p-3 bg-red-50 border border-red-200 rounded-xl">
+                      <AlertCircle className="h-5 w-5 text-red-600 shrink-0" />
+                      <p className="text-sm text-red-800">{tipError}</p>
+                    </div>
+                  )}
+
+                  {tipPackages.length > 0 ? (
+                    tipPackages.map((pkg) => {
+                      const product = GODAISY_TIP_PRODUCTS.find(
+                        (p) => p.id === pkg.identifier
+                      );
+                      const style = TIP_ICON_MAP[pkg.identifier];
+                      const Icon = style?.icon ?? Coffee;
+
+                      return (
+                        <button
+                          key={pkg.identifier}
+                          className={`w-full flex items-center gap-3 p-4 rounded-xl border transition-all
+                            ${style?.bg ?? 'bg-gray-50 border-gray-200'}
+                            ${purchasingId ? 'opacity-60 cursor-not-allowed' : 'hover:shadow-md active:scale-[0.98]'}`}
+                          disabled={!!purchasingId}
+                          onClick={() => handleTipPurchase(pkg)}
+                        >
+                          <div className={`p-2.5 bg-white rounded-lg shadow-sm ${style?.accent ?? 'text-gray-600'}`}>
                             {purchasingId === pkg.identifier ? (
-                              <span className="loading loading-spinner loading-sm" />
+                              <Loader2 className="h-5 w-5 animate-spin" />
                             ) : (
-                              <span>{product?.emoji ?? ''} {product?.label ?? pkg.title}</span>
+                              <Icon className="h-5 w-5" />
                             )}
-                            <span className="ml-2 font-semibold">
-                              {pkg.priceString}
-                            </span>
-                          </button>
-                        );
-                      })
-                    ) : (
-                      <div className="text-sm text-base-content/70">
-                        Tip jar is loading. If this persists, try restarting the app.
-                        <div className="mt-1 text-xs font-mono opacity-60">{tipDebug}</div>
-                      </div>
-                    )}
-                  </>
-                ) : (
-                  /* Web: show message + App Store link */
-                  <div className="space-y-3">
-                    <p className="text-sm text-base-content">
+                          </div>
+                          <div className="flex-1 text-left">
+                            <div className="font-semibold text-gray-900">
+                              {product?.label ?? pkg.title}
+                            </div>
+                            <div className="text-xs text-gray-500">One-off tip</div>
+                          </div>
+                          <div className="text-lg font-bold text-gray-900">
+                            {pkg.priceString}
+                          </div>
+                        </button>
+                      );
+                    })
+                  ) : (
+                    <div className="text-center py-6">
+                      <Loader2 className="h-6 w-6 text-gray-400 animate-spin mx-auto mb-2" />
+                      <p className="text-sm text-gray-500">Loading tip jar...</p>
+                      <button
+                        onClick={() => setShowDebug(!showDebug)}
+                        className="mt-2 text-xs text-gray-400 underline"
+                      >
+                        {showDebug ? 'Hide' : 'Show'} debug info
+                      </button>
+                      {showDebug && (
+                        <p className="mt-1 text-xs font-mono text-gray-400">{tipDebug}</p>
+                      )}
+                    </div>
+                  )}
+                </div>
+              ) : (
+                /* Web: show message + App Store link */
+                <div className="flex items-center gap-3 p-4 bg-blue-50 border border-blue-200 rounded-xl">
+                  <Smartphone className="h-5 w-5 text-blue-600 shrink-0" />
+                  <div className="flex-1">
+                    <p className="text-sm font-medium text-blue-900">
                       Tips are available in the Go Daisy iOS app.
                     </p>
                     <a
-                      className="btn btn-outline btn-sm"
+                      className="text-sm text-blue-600 hover:text-blue-700 font-medium underline"
                       href="https://apps.apple.com/app/id6755695873"
                       target="_blank"
                       rel="noopener noreferrer"
@@ -246,51 +311,66 @@ export default function SupportPage() {
                       Download on the App Store
                     </a>
                   </div>
-                )}
-              </div>
-            </div>
+                </div>
+              )}
+            </section>
           </div>
 
           {/* Transparency */}
-          <div className="card bg-base-200">
-            <div className="card-body">
-              <h2 className="card-title text-lg text-base-content">{transparencyHeading}</h2>
-              <ul className="list-disc pl-5 space-y-2 text-sm text-base-content">
-                <li>{transparencyOptional}</li>
-                <li>{transparencyNoGating}</li>
-                <li>{transparencyUpdates}</li>
-              </ul>
+          <section className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
+            <div className="flex items-center gap-2.5 mb-4">
+              <div className="p-2 bg-emerald-100 rounded-lg">
+                <ShieldCheck className="h-5 w-5 text-emerald-600" />
+              </div>
+              <h2 className="text-lg font-semibold text-gray-900">{transparencyHeading}</h2>
             </div>
-          </div>
+            <ul className="space-y-3">
+              <li className="flex items-start gap-3">
+                <Eye className="h-4 w-4 text-emerald-500 mt-0.5 shrink-0" />
+                <span className="text-sm text-gray-700 leading-relaxed">{transparencyOptional}</span>
+              </li>
+              <li className="flex items-start gap-3">
+                <Eye className="h-4 w-4 text-emerald-500 mt-0.5 shrink-0" />
+                <span className="text-sm text-gray-700 leading-relaxed">{transparencyNoGating}</span>
+              </li>
+              <li className="flex items-start gap-3">
+                <Eye className="h-4 w-4 text-emerald-500 mt-0.5 shrink-0" />
+                <span className="text-sm text-gray-700 leading-relaxed">{transparencyUpdates}</span>
+              </li>
+            </ul>
+          </section>
 
           {/* FAQ */}
-          <div className="space-y-3">
-            <h2 className="text-lg font-semibold text-base-content">{faqHeading}</h2>
-
-            <div className="collapse collapse-arrow bg-base-200">
-              <input type="checkbox" defaultChecked />
-              <div className="collapse-title text-base font-medium text-base-content">{faqQ1}</div>
-              <div className="collapse-content">
-                <p className="text-base-content">{faqA1}</p>
+          <section>
+            <div className="flex items-center gap-2.5 mb-4">
+              <div className="p-2 bg-violet-100 rounded-lg">
+                <HelpCircle className="h-5 w-5 text-violet-600" />
               </div>
+              <h2 className="text-lg font-semibold text-gray-900">{faqHeading}</h2>
             </div>
 
-            <div className="collapse collapse-arrow bg-base-200">
-              <input type="checkbox" />
-              <div className="collapse-title text-base font-medium text-base-content">{faqQ2}</div>
-              <div className="collapse-content">
-                <p className="text-base-content">{faqA2}</p>
-              </div>
+            <div className="space-y-2">
+              {[
+                { q: faqQ1, a: faqA1, open: true },
+                { q: faqQ2, a: faqA2, open: false },
+                { q: faqQ3, a: faqA3, open: false },
+              ].map((faq, i) => (
+                <details
+                  key={i}
+                  className="bg-white rounded-xl border border-gray-200 shadow-sm group"
+                  open={faq.open || undefined}
+                >
+                  <summary className="flex items-center justify-between px-5 py-4 cursor-pointer list-none select-none">
+                    <span className="text-sm font-medium text-gray-900 pr-4">{faq.q}</span>
+                    <ChevronDown className="h-4 w-4 text-gray-400 shrink-0 transition-transform group-open:rotate-180" />
+                  </summary>
+                  <div className="px-5 pb-4">
+                    <p className="text-sm text-gray-600 leading-relaxed">{faq.a}</p>
+                  </div>
+                </details>
+              ))}
             </div>
-
-            <div className="collapse collapse-arrow bg-base-200">
-              <input type="checkbox" />
-              <div className="collapse-title text-base font-medium text-base-content">{faqQ3}</div>
-              <div className="collapse-content">
-                <p className="text-base-content">{faqA3}</p>
-              </div>
-            </div>
-          </div>
+          </section>
         </main>
 
         <Footer />

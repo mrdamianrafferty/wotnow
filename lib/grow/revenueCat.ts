@@ -77,13 +77,14 @@ function callNative(action: string, params: Record<string, string> = {}): Promis
       reject(err);
     }
 
-    // Timeout after 15 seconds
+    // Timeout — purchases need longer (StoreKit sheet + sandbox delays)
+    const timeoutMs = action === 'purchase' ? 120000 : 15000;
     setTimeout(() => {
       if (pendingCalls.has(callbackId)) {
         pendingCalls.delete(callbackId);
-        reject(new Error(`${action} timed out after 15s`));
+        reject(new Error(`${action} timed out`));
       }
-    }, 15000);
+    }, timeoutMs);
   });
 }
 
