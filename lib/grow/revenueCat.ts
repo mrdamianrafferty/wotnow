@@ -1,167 +1,113 @@
 /**
  * RevenueCat SDK Wrapper for iOS In-App Purchases
  *
- * Wraps @revenuecat/purchases-capacitor for iOS In-App Purchases.
- * Supports both Grow Daisy and Go Daisy apps with separate API keys.
- * All functions are safe no-ops on non-iOS platforms.
+ * The official @revenuecat/purchases-capacitor plugin's Capacitor bridge is
+ * completely broken — all methods (configure, getOfferings, purchase) hang
+ * indefinitely. The native SDK is configured in AppDelegate.swift.
+ *
+ * For tips (consumable IAP), we use a custom native Capacitor plugin
+ * (GoDaisyTipsPlugin.swift) that calls Purchases.shared directly and
+ * is guaranteed to load because it's in the App target.
+ *
+ * Legacy exports (initRevenueCat, identifyRevenueCatUser, etc.) are kept
+ * as no-ops for build compatibility with other pages.
  *
  * @module lib/grow/revenueCat
  */
 
-import { Capacitor } from '@capacitor/core';
-import type {
-  PurchasesOfferings,
-  PurchasesPackage,
-  CustomerInfo,
-  MakePurchaseResult,
-} from '@revenuecat/purchases-capacitor';
+import { Capacitor, registerPlugin } from '@capacitor/core';
+
+// ---------------------------------------------------------------------------
+// Custom native plugin (GoDaisyTipsPlugin.swift)
+// ---------------------------------------------------------------------------
+
+/** Shape returned by our custom GoDaisyTipsPlugin */
+export interface TipPackage {
+  identifier: string;
+  title: string;
+  priceString: string;
+  price: number;
+}
+
+interface GoDaisyTipsPlugin {
+  getOfferings(): Promise<{
+    currentIdentifier?: string;
+    packages: TipPackage[];
+  }>;
+  purchase(opts: { productId: string }): Promise<{
+    cancelled: boolean;
+    productIdentifier?: string;
+  }>;
+  restorePurchases(): Promise<{ restored: boolean }>;
+}
+
+const GoDaisyTips = registerPlugin<GoDaisyTipsPlugin>('GoDaisyTips');
 
 function isIOS(): boolean {
   return Capacitor.isNativePlatform() && Capacitor.getPlatform() === 'ios';
 }
 
 /**
- * Lazily import the Purchases plugin to avoid loading native code on web.
+ * Fetch tip packages from RevenueCat via our custom native plugin.
  */
-async function getPurchases() {
-  const { Purchases } = await import('@revenuecat/purchases-capacitor');
-  return Purchases;
-}
+export async function fetchTipPackages(): Promise<TipPackage[]> {
+  if (!isIOS()) return [];
 
-let configured = false;
-
-/**
- * Mark RevenueCat as ready for use.
- *
- * The SDK is configured natively in AppDelegate.swift because the
- * Capacitor plugin's configure() bridge call hangs (the JS promise
- * never resolves). All other plugin methods (getOfferings, purchase,
- * etc.) work through the bridge once the native SDK is configured.
- */
-export async function initRevenueCat(supabaseUserId: string | null): Promise<void> {
-  if (configured) return;
-  if (!isIOS()) return;
-
-  // Native AppDelegate already configured the SDK.
-  // Just mark ready so other methods proceed.
-  configured = true;
-
-  // If we have a user ID, identify them (this bridge call works fine)
-  if (supabaseUserId) {
-    await identifyRevenueCatUser(supabaseUserId);
-  }
+  const result = await GoDaisyTips.getOfferings();
+  return result.packages ?? [];
 }
 
 /**
- * Identify the current user after sign-in.
- * Links the Supabase UUID as the RevenueCat App User ID so that
- * webhook event.app_user_id IS the Supabase UUID.
+ * Purchase a tip by product identifier.
+ * @returns true if purchased, false if user cancelled
  */
-export async function identifyRevenueCatUser(supabaseUserId: string): Promise<void> {
-  if (!isIOS() || !configured) return;
+export async function purchaseTip(productId: string): Promise<boolean> {
+  if (!isIOS()) return false;
 
-  try {
-    const Purchases = await getPurchases();
-    await Purchases.logIn({ appUserID: supabaseUserId });
-    console.log('[RevenueCat] Identified user:', supabaseUserId);
-  } catch (error) {
-    console.error('[RevenueCat] Failed to identify user:', error);
-  }
+  const result = await GoDaisyTips.purchase({ productId });
+  return !result.cancelled;
 }
 
-/**
- * Log out from RevenueCat on sign-out. Resets to anonymous user.
- */
+// ---------------------------------------------------------------------------
+// Legacy exports — kept as no-ops for build compatibility.
+// The Capacitor bridge to @revenuecat/purchases-capacitor is broken.
+// ---------------------------------------------------------------------------
+
+/** @deprecated Native AppDelegate configures the SDK. No-op. */
+export async function initRevenueCat(_supabaseUserId: string | null): Promise<void> {
+  // No-op: Native AppDelegate already configured the SDK.
+}
+
+/** @deprecated Bridge is broken. No-op. */
+export async function identifyRevenueCatUser(_supabaseUserId: string): Promise<void> {
+  // No-op
+}
+
+/** @deprecated Bridge is broken. No-op. */
 export async function logOutRevenueCat(): Promise<void> {
-  if (!isIOS() || !configured) return;
-
-  try {
-    const Purchases = await getPurchases();
-    await Purchases.logOut();
-    console.log('[RevenueCat] Logged out');
-  } catch (error) {
-    console.error('[RevenueCat] Failed to log out:', error);
-  }
+  // No-op
 }
 
-/**
- * Fetch current offerings from RevenueCat.
- * Returns packages with App Store prices in the user's local currency.
- */
-export async function fetchOfferings(): Promise<PurchasesOfferings | null> {
-  if (!isIOS() || !configured) {
-    console.warn('[RevenueCat] fetchOfferings skipped — isIOS:', isIOS(), 'configured:', configured);
-    return null;
-  }
-
-  try {
-    const Purchases = await getPurchases();
-    const offerings = await Purchases.getOfferings();
-    console.log('[RevenueCat] Offerings fetched — current:', offerings?.current?.identifier ?? 'NONE',
-      'packages:', offerings?.current?.availablePackages?.length ?? 0,
-      'all offering keys:', Object.keys(offerings?.all ?? {}));
-    return offerings;
-  } catch (error) {
-    console.error('[RevenueCat] Failed to fetch offerings:', error);
-    return null;
-  }
+/** @deprecated Use fetchTipPackages() instead. Returns null. */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export async function fetchOfferings(): Promise<any> {
+  return null;
 }
 
-/**
- * Purchase a package. Triggers the native StoreKit purchase sheet.
- *
- * @returns MakePurchaseResult on success, null if user cancelled or error
- */
-export async function purchasePackage(pkg: PurchasesPackage): Promise<MakePurchaseResult | null> {
-  if (!isIOS() || !configured) return null;
-
-  try {
-    const Purchases = await getPurchases();
-    const result = await Purchases.purchasePackage({ aPackage: pkg });
-    console.log('[RevenueCat] Purchase successful:', result.productIdentifier);
-    return result;
-  } catch (error: unknown) {
-    // RevenueCat throws with userCancelled flag when user dismisses the sheet
-    if (error && typeof error === 'object' && 'userCancelled' in error && (error as { userCancelled: boolean }).userCancelled) {
-      console.log('[RevenueCat] User cancelled purchase');
-      return null;
-    }
-    console.error('[RevenueCat] Purchase failed:', error);
-    throw error;
-  }
+/** @deprecated Use purchaseTip() instead. Returns null. */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export async function purchasePackage(_pkg?: any): Promise<any> {
+  return null;
 }
 
-/**
- * Restore previous purchases. Apple requires this in the UI for auto-renewable subscriptions.
- *
- * @returns CustomerInfo after restore, or null on non-iOS
- */
-export async function restorePurchases(): Promise<CustomerInfo | null> {
-  if (!isIOS() || !configured) return null;
-
-  try {
-    const Purchases = await getPurchases();
-    const { customerInfo } = await Purchases.restorePurchases();
-    console.log('[RevenueCat] Purchases restored');
-    return customerInfo;
-  } catch (error) {
-    console.error('[RevenueCat] Failed to restore purchases:', error);
-    throw error;
-  }
+/** @deprecated Bridge is broken. Returns null. */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export async function restorePurchases(): Promise<any> {
+  return null;
 }
 
-/**
- * Get current customer info (entitlements, active subscriptions).
- */
-export async function getCustomerInfo(): Promise<CustomerInfo | null> {
-  if (!isIOS() || !configured) return null;
-
-  try {
-    const Purchases = await getPurchases();
-    const { customerInfo } = await Purchases.getCustomerInfo();
-    return customerInfo;
-  } catch (error) {
-    console.error('[RevenueCat] Failed to get customer info:', error);
-    return null;
-  }
+/** @deprecated Bridge is broken. Returns null. */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export async function getCustomerInfo(): Promise<any> {
+  return null;
 }

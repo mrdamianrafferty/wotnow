@@ -6,7 +6,7 @@ import AppHeader from "../components/AppHeader";
 import Footer from "../components/footer";
 import { useUIText } from "../hooks/useUIText";
 import { GODAISY_TIP_PRODUCTS } from "../lib/godaisy/tipProducts";
-import type { PurchasesPackage } from "@revenuecat/purchases-capacitor";
+import type { TipPackage } from "../lib/grow/revenueCat";
 
 // Disable static generation
 export async function getServerSideProps() {
@@ -16,11 +16,11 @@ export async function getServerSideProps() {
 export default function SupportPage() {
   // Platform detection
   const [isIOSNative, setIsIOSNative] = useState(false);
-  const [tipPackages, setTipPackages] = useState<PurchasesPackage[]>([]);
+  const [tipPackages, setTipPackages] = useState<TipPackage[]>([]);
   const [purchasingId, setPurchasingId] = useState<string | null>(null);
   const [tipError, setTipError] = useState<string | null>(null);
   const [tipSuccess, setTipSuccess] = useState(false);
-  const [tipDebug, setTipDebug] = useState('JS:v5 loading...');
+  const [tipDebug, setTipDebug] = useState('JS:v6 loading...');
 
   useEffect(() => {
     let cancelled = false;
@@ -32,54 +32,51 @@ export default function SupportPage() {
         setIsIOSNative(native);
 
         if (!native) {
-          setTipDebug('JS:v5 not-native');
+          setTipDebug('JS:v6 not-native');
           return;
         }
 
-        setTipDebug('JS:v5 init (native configure)...');
-        const { initRevenueCat, fetchOfferings } = await import("../lib/grow/revenueCat");
-        await initRevenueCat(null);
+        setTipDebug('JS:v6 fetchTipPackages (custom plugin)...');
+        const { fetchTipPackages } = await import("../lib/grow/revenueCat");
 
-        setTipDebug('JS:v5 fetching offerings...');
-        const offerResult = await Promise.race([
-          fetchOfferings().then(o => ({ status: 'ok' as const, offerings: o })),
+        const fetchResult = await Promise.race([
+          fetchTipPackages().then(pkgs => ({ status: 'ok' as const, pkgs })),
           new Promise<{ status: 'timeout' }>(r => setTimeout(() => r({ status: 'timeout' }), 10000)),
         ]);
 
-        if (offerResult.status === 'timeout') {
-          setTipDebug('JS:v5 getOfferings TIMEOUT (10s)');
+        if (fetchResult.status === 'timeout') {
+          setTipDebug('JS:v6 fetchTipPackages TIMEOUT (10s)');
           return;
         }
 
         if (cancelled) return;
-        const offerings = offerResult.offerings;
-        const pkgs = offerings?.current?.availablePackages ?? [];
+        const pkgs = fetchResult.pkgs;
         const tipIds = new Set(GODAISY_TIP_PRODUCTS.map((p) => p.id));
-        const matched = pkgs.filter((pkg) => tipIds.has(pkg.product.identifier));
+        const matched = pkgs.filter((pkg) => tipIds.has(pkg.identifier));
         setTipDebug(
-          `JS:v5 done | pkgs:${pkgs.length} matched:${matched.length} current:${offerings?.current?.identifier ?? 'NONE'}`
+          `JS:v6 done | pkgs:${pkgs.length} matched:${matched.length}`
         );
         setTipPackages(matched);
       } catch (err) {
-        setTipDebug(`JS:v5 ERROR: ${err instanceof Error ? err.message : String(err)}`);
+        setTipDebug(`JS:v6 ERROR: ${err instanceof Error ? err.message : String(err)}`);
       }
     })();
     return () => { cancelled = true; };
   }, []);
 
-  const handleTipPurchase = async (pkg: PurchasesPackage) => {
+  const handleTipPurchase = async (pkg: TipPackage) => {
     try {
-      setPurchasingId(pkg.product.identifier);
+      setPurchasingId(pkg.identifier);
       setTipError(null);
       setTipSuccess(false);
 
-      const { purchasePackage } = await import("../lib/grow/revenueCat");
-      const result = await purchasePackage(pkg);
+      const { purchaseTip } = await import("../lib/grow/revenueCat");
+      const purchased = await purchaseTip(pkg.identifier);
 
-      if (result) {
+      if (purchased) {
         setTipSuccess(true);
       }
-      // null = user cancelled — do nothing
+      // false = user cancelled — do nothing
     } catch (err) {
       console.error("[Support] Tip purchase failed:", err);
       setTipError(err instanceof Error ? err.message : "Purchase failed. Please try again.");
@@ -207,22 +204,22 @@ export default function SupportPage() {
                     {tipPackages.length > 0 ? (
                       tipPackages.map((pkg) => {
                         const product = GODAISY_TIP_PRODUCTS.find(
-                          (p) => p.id === pkg.product.identifier
+                          (p) => p.id === pkg.identifier
                         );
                         return (
                           <button
-                            key={pkg.product.identifier}
+                            key={pkg.identifier}
                             className="btn btn-outline"
                             disabled={!!purchasingId}
                             onClick={() => handleTipPurchase(pkg)}
                           >
-                            {purchasingId === pkg.product.identifier ? (
+                            {purchasingId === pkg.identifier ? (
                               <span className="loading loading-spinner loading-sm" />
                             ) : (
-                              <span>{product?.emoji ?? ''} {product?.label ?? pkg.product.title}</span>
+                              <span>{product?.emoji ?? ''} {product?.label ?? pkg.title}</span>
                             )}
                             <span className="ml-2 font-semibold">
-                              {pkg.product.priceString}
+                              {pkg.priceString}
                             </span>
                           </button>
                         );

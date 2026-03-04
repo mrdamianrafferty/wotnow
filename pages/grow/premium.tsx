@@ -82,7 +82,7 @@ export default function GrowPremiumPage() {
           setOfferings(result);
           // Debug: log what RevenueCat returned
           if (result?.current) {
-            console.log('[Premium] Offering packages:', result.current.availablePackages.map(p => ({
+            console.log('[Premium] Offering packages:', result.current.availablePackages.map((p: { identifier: string; product: { identifier: string } }) => ({
               identifier: p.identifier,
               productId: p.product.identifier,
             })));

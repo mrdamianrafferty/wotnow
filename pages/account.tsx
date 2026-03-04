@@ -12,7 +12,7 @@ import { useLanguage } from '@/context/LanguageContext';
 import { getSupportedLanguages } from '@/lib/user/language';
 import { useGoDaisyPushNotifications } from '@/hooks/useGoDaisyPushNotifications';
 import { GODAISY_TIP_PRODUCTS } from '@/lib/godaisy/tipProducts';
-import type { PurchasesPackage } from '@revenuecat/purchases-capacitor';
+import type { TipPackage } from '@/lib/grow/revenueCat';
 
 // Flag emojis for each language
 const LANGUAGE_FLAGS: Record<string, string> = {
@@ -60,7 +60,7 @@ export default function AccountPage() {
 
   // Platform detection + Tip Jar
   const [isIOSNative, setIsIOSNative] = useState(false);
-  const [tipPackages, setTipPackages] = useState<PurchasesPackage[]>([]);
+  const [tipPackages, setTipPackages] = useState<TipPackage[]>([]);
   const [purchasingId, setPurchasingId] = useState<string | null>(null);
   const [tipError, setTipError] = useState<string | null>(null);
   const [tipSuccess, setTipSuccess] = useState(false);
@@ -75,13 +75,11 @@ export default function AccountPage() {
         setIsIOSNative(native);
 
         if (native) {
-          const { initRevenueCat, fetchOfferings } = await import('@/lib/grow/revenueCat');
-          await initRevenueCat(null);
-          const offerings = await fetchOfferings();
+          const { fetchTipPackages } = await import('@/lib/grow/revenueCat');
+          const pkgs = await fetchTipPackages();
           if (cancelled) return;
-          const pkgs = offerings?.current?.availablePackages ?? [];
           const tipIds = new Set(GODAISY_TIP_PRODUCTS.map((p) => p.id));
-          setTipPackages(pkgs.filter((pkg) => tipIds.has(pkg.product.identifier)));
+          setTipPackages(pkgs.filter((pkg) => tipIds.has(pkg.identifier)));
         }
       } catch (err) {
         console.error('[Account] Tip jar load failed:', err);
@@ -90,16 +88,16 @@ export default function AccountPage() {
     return () => { cancelled = true; };
   }, []);
 
-  const handleTipPurchase = async (pkg: PurchasesPackage) => {
+  const handleTipPurchase = async (pkg: TipPackage) => {
     try {
-      setPurchasingId(pkg.product.identifier);
+      setPurchasingId(pkg.identifier);
       setTipError(null);
       setTipSuccess(false);
 
-      const { purchasePackage } = await import('@/lib/grow/revenueCat');
-      const result = await purchasePackage(pkg);
+      const { purchaseTip } = await import('@/lib/grow/revenueCat');
+      const purchased = await purchaseTip(pkg.identifier);
 
-      if (result) {
+      if (purchased) {
         setTipSuccess(true);
       }
     } catch (err) {
@@ -660,24 +658,24 @@ export default function AccountPage() {
                 {tipPackages.length > 0 ? (
                   tipPackages.map((pkg) => {
                     const product = GODAISY_TIP_PRODUCTS.find(
-                      (p) => p.id === pkg.product.identifier
+                      (p) => p.id === pkg.identifier
                     );
                     return (
                       <button
-                        key={pkg.product.identifier}
+                        key={pkg.identifier}
                         className="w-full flex items-center justify-between p-3 rounded-lg border border-gray-200 hover:bg-gray-50 disabled:opacity-50"
                         disabled={!!purchasingId}
                         onClick={() => handleTipPurchase(pkg)}
                       >
                         <span className="font-medium text-gray-900">
-                          {purchasingId === pkg.product.identifier ? (
+                          {purchasingId === pkg.identifier ? (
                             <span className="loading loading-spinner loading-sm" />
                           ) : (
-                            <>{product?.emoji ?? ''} {product?.label ?? pkg.product.title}</>
+                            <>{product?.emoji ?? ''} {product?.label ?? pkg.title}</>
                           )}
                         </span>
                         <span className="font-semibold text-gray-700">
-                          {pkg.product.priceString}
+                          {pkg.priceString}
                         </span>
                       </button>
                     );

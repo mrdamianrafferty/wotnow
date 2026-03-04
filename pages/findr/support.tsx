@@ -7,7 +7,7 @@ import FindrFooter from "../../components/FindrFooter";
 import FindrBottomNav from "../../components/findr/FindrBottomNav";
 import { TranslatedText } from "../../components/translation/TranslatedFishCard";
 import { GODAISY_TIP_PRODUCTS } from "../../lib/godaisy/tipProducts";
-import type { PurchasesPackage } from "@revenuecat/purchases-capacitor";
+import type { TipPackage } from "../../lib/grow/revenueCat";
 
 // Disable static generation
 export async function getServerSideProps() {
@@ -17,7 +17,7 @@ export async function getServerSideProps() {
 export default function FindrSupportPage() {
   // Platform detection
   const [isIOSNative, setIsIOSNative] = useState(false);
-  const [tipPackages, setTipPackages] = useState<PurchasesPackage[]>([]);
+  const [tipPackages, setTipPackages] = useState<TipPackage[]>([]);
   const [purchasingId, setPurchasingId] = useState<string | null>(null);
   const [tipError, setTipError] = useState<string | null>(null);
   const [tipSuccess, setTipSuccess] = useState(false);
@@ -32,16 +32,11 @@ export default function FindrSupportPage() {
         setIsIOSNative(native);
 
         if (native) {
-          const { fetchOfferings } = await import("../../lib/grow/revenueCat");
-          const offerings = await fetchOfferings();
+          const { fetchTipPackages } = await import("../../lib/grow/revenueCat");
+          const pkgs = await fetchTipPackages();
           if (cancelled) return;
-          if (offerings?.current?.availablePackages) {
-            const tipIds = new Set(GODAISY_TIP_PRODUCTS.map((p) => p.id));
-            const matched = offerings.current.availablePackages.filter((pkg) =>
-              tipIds.has(pkg.product.identifier)
-            );
-            setTipPackages(matched);
-          }
+          const tipIds = new Set(GODAISY_TIP_PRODUCTS.map((p) => p.id));
+          setTipPackages(pkgs.filter((pkg) => tipIds.has(pkg.identifier)));
         }
       } catch {
         // Capacitor or RevenueCat not available — web fallback
@@ -50,19 +45,18 @@ export default function FindrSupportPage() {
     return () => { cancelled = true; };
   }, []);
 
-  const handleTipPurchase = async (pkg: PurchasesPackage) => {
+  const handleTipPurchase = async (pkg: TipPackage) => {
     try {
-      setPurchasingId(pkg.product.identifier);
+      setPurchasingId(pkg.identifier);
       setTipError(null);
       setTipSuccess(false);
 
-      const { purchasePackage } = await import("../../lib/grow/revenueCat");
-      const result = await purchasePackage(pkg);
+      const { purchaseTip } = await import("../../lib/grow/revenueCat");
+      const purchased = await purchaseTip(pkg.identifier);
 
-      if (result) {
+      if (purchased) {
         setTipSuccess(true);
       }
-      // null = user cancelled — do nothing
     } catch (err) {
       console.error("[Findr Support] Tip purchase failed:", err);
       setTipError(err instanceof Error ? err.message : "Purchase failed. Please try again.");
@@ -163,22 +157,22 @@ export default function FindrSupportPage() {
                     {tipPackages.length > 0 ? (
                       tipPackages.map((pkg) => {
                         const product = GODAISY_TIP_PRODUCTS.find(
-                          (p) => p.id === pkg.product.identifier
+                          (p) => p.id === pkg.identifier
                         );
                         return (
                           <button
-                            key={pkg.product.identifier}
+                            key={pkg.identifier}
                             className="btn btn-outline"
                             disabled={!!purchasingId}
                             onClick={() => handleTipPurchase(pkg)}
                           >
-                            {purchasingId === pkg.product.identifier ? (
+                            {purchasingId === pkg.identifier ? (
                               <span className="loading loading-spinner loading-sm" />
                             ) : (
-                              <span>{product?.emoji ?? ''} {product?.label ?? pkg.product.title}</span>
+                              <span>{product?.emoji ?? ''} {product?.label ?? pkg.title}</span>
                             )}
                             <span className="ml-2 font-semibold">
-                              {pkg.product.priceString}
+                              {pkg.priceString}
                             </span>
                           </button>
                         );
