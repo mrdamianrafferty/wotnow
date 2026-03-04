@@ -444,7 +444,60 @@ Three config files exist (`.eslintrc.json`, `eslint.config.mjs`, and inline over
 
 ---
 
-## Phase 7: Deferred / Tracked
+## Phase 7: Harvest Tier Feature Completion
+
+**Priority:** High — these features are advertised on the premium page but not yet fully built
+**Effort:** ~20-30 hours
+**Why now:** Harvest tier is live in App Store. Subscribers will expect these features to exist. Database schemas and tier-gating are already in place — the work is building the UI and connecting the dots.
+
+### 7.1 Yield Predictions UI
+
+**Status:** DB schema ready (`grow_harvest_outcomes`, `grow_outcome_statistics` view), tier-gated (`yieldPredictions: true`)
+**What's needed:**
+- Page or section in garden dashboard showing predicted yields per plant/bed
+- Use historical harvest outcome data + weather forecast to generate predictions
+- API endpoint: `/api/grow/predictions/yield` using outcome statistics view
+- Surface in `GardenPage` or dedicated `/grow/yields` page
+- Gate behind Harvest tier via `GrowPremiumGate`
+
+**Effort:** 8-10 hours
+
+### 7.2 Analytics Dashboard
+
+**Status:** DB views ready (`grow_outcome_statistics`), tier-gated (`analyticsAccess: true`)
+**What's needed:**
+- Dedicated `/grow/analytics` page with charts (harvest success rate, seasonal trends, plant health over time)
+- Use existing `grow_outcome_statistics` view + `grow_harvest_outcomes` data
+- Chart library: recharts (already a dependency) or lightweight alternative
+- Sections: harvest success rate, yield trends, weather impact, top performing plants
+- Gate behind Harvest tier via `GrowPremiumGate`
+- Add to `GrowBottomNav` or as a tab within the garden section
+
+**Effort:** 8-12 hours
+
+### 7.3 Crop Rotation Planner
+
+**Status:** Feature flag defined (`cropRotation: true`), `pages/grow/plan.tsx` exists but incomplete
+**What's needed:**
+- Bed/zone selection with plant history timeline
+- Rotation recommendations based on plant family groupings (legumes → brassicas → roots → alliums)
+- Visual calendar or timeline showing what was planted where and when
+- Suggestions for next season based on soil nutrient cycling
+- API endpoint or client-side logic using plant family data
+- Gate behind Bloom+ tier (already set)
+
+**Effort:** 6-10 hours
+
+### Acceptance Criteria
+- [ ] Yield predictions page renders with data from harvest outcomes
+- [ ] Analytics dashboard shows charts with real user data
+- [ ] Crop rotation planner shows bed history and recommendations
+- [ ] All three features gated behind correct tiers
+- [ ] Build passes, no new type errors
+
+---
+
+## Phase 8: Deferred / Tracked
 
 These items are important but out of scope for the initial launch sprint.
 
@@ -476,7 +529,8 @@ These items are important but out of scope for the initial launch sprint.
 | **4** | Navigation & architecture | 6-8h | Phase 1 |
 | **5** | Polish & delight | 8-12h | Phases 1-4 |
 | **6** | Technical debt & code quality | 15-20h | Phases 1-5 |
+| **7** | Harvest tier feature completion | 20-30h | Phase 1 (for UI tokens) |
 
-**Total estimated effort:** ~55-75 hours across all phases
+**Total estimated effort:** ~75-105 hours across all phases
 
-Phases 1 and 2 can run in parallel. Phase 3 should follow Phase 1 (so UI fixes use the unified tokens). Phases 4 and 5 can begin once the foundation is stable. Phase 6 can begin at any time but benefits from stable foundations.
+Phases 1 and 2 can run in parallel. Phase 3 should follow Phase 1 (so UI fixes use the unified tokens). Phases 4 and 5 can begin once the foundation is stable. Phase 6 can begin at any time but benefits from stable foundations. **Phase 7 is urgent** — Harvest subscribers are paying for these features, so prioritize alongside or immediately after Phase 3.

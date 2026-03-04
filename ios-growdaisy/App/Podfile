@@ -59,6 +59,8 @@ target 'App copy' do
   capacitor_pods
   # Firebase for push notifications (FCM)
   pod 'FirebaseMessaging'
+  # RevenueCat for subscription management (native SDK, not Capacitor plugin)
+  pod 'RevenueCat'
 end
 
 post_install do |installer|

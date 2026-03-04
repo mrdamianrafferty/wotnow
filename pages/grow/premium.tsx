@@ -41,7 +41,7 @@ import {
   getTierDisplayName,
 } from '@/lib/grow/subscription';
 import { GrowLayout } from '@/components/grow/GrowLayout';
-import type { PurchasesOfferings, PurchasesPackage } from '@revenuecat/purchases-capacitor';
+import type { GrowDaisyPackage } from '@/lib/grow/growDaisySubs';
 
 type BillingCycle = 'monthly' | 'annual' | 'lifetime';
 
@@ -64,31 +64,33 @@ export default function GrowPremiumPage() {
 
   // iOS IAP state
   const isIOS = Capacitor.getPlatform() === 'ios';
-  const [offerings, setOfferings] = useState<PurchasesOfferings | null>(null);
+  const [packages, setPackages] = useState<GrowDaisyPackage[]>([]);
   const [offeringsLoading, setOfferingsLoading] = useState(isIOS);
   const [activating, setActivating] = useState(false);
   const [restoring, setRestoring] = useState(false);
 
-  // Load RevenueCat offerings on iOS
+  // Load RevenueCat offerings on iOS via native bridge
   useEffect(() => {
     if (!isIOS) return;
 
     let cancelled = false;
     (async () => {
       try {
-        const { fetchOfferings } = await import('@/lib/grow/revenueCat');
+        const { identifyUser, fetchOfferings } = await import('@/lib/grow/growDaisySubs');
+
+        // Identify user with RevenueCat if logged in
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          await identifyUser(user.id);
+        }
+
         const result = await fetchOfferings();
         if (!cancelled) {
-          setOfferings(result);
-          // Debug: log what RevenueCat returned
-          if (result?.current) {
-            console.log('[Premium] Offering packages:', result.current.availablePackages.map((p: { identifier: string; product: { identifier: string } }) => ({
-              identifier: p.identifier,
-              productId: p.product.identifier,
-            })));
-          } else {
-            console.log('[Premium] No current offering found. All offerings:', result);
-          }
+          setPackages(result);
+          console.log('[Premium] Packages:', result.map(p => ({
+            identifier: p.identifier,
+            productId: p.productIdentifier,
+          })));
         }
       } catch (err) {
         console.error('[Premium] Failed to load offerings:', err);
@@ -98,27 +100,21 @@ export default function GrowPremiumPage() {
     })();
 
     return () => { cancelled = true; };
-  }, [isIOS]);
+  }, [isIOS, supabase]);
 
   /**
-   * Find the RevenueCat package matching a tier + billing cycle.
+   * Find the package matching a tier + billing cycle.
    * Packages contain product IDs like "growdaisy_bloom_monthly".
-   * Match by product identifier or by package identifier (custom lookup key).
    */
-  const findPackage = useCallback((tier: GrowSubscriptionTier): PurchasesPackage | null => {
-    if (!offerings?.current?.availablePackages) return null;
+  const findPackage = useCallback((tier: GrowSubscriptionTier): GrowDaisyPackage | null => {
+    if (!packages.length) return null;
 
     const expectedProductId = `growdaisy_${tier}_${billingCycle}`;
-    const expectedPackageKey = `$rc_custom_${tier}_${billingCycle}`;
-
-    return offerings.current.availablePackages.find(
-      (pkg) => pkg.product.identifier === expectedProductId
-        || pkg.identifier === expectedPackageKey
-    ) ?? null;
-  }, [offerings, billingCycle]);
+    return packages.find(p => p.productIdentifier === expectedProductId) ?? null;
+  }, [packages, billingCycle]);
 
   /**
-   * Handle iOS In-App Purchase via RevenueCat
+   * Handle iOS In-App Purchase via native RevenueCat bridge
    */
   const handleIOSPurchase = async (tier: GrowSubscriptionTier) => {
     try {
@@ -138,24 +134,23 @@ export default function GrowPremiumPage() {
         return;
       }
 
-      const { purchasePackage } = await import('@/lib/grow/revenueCat');
-      const result = await purchasePackage(pkg);
+      const { purchaseProduct } = await import('@/lib/grow/growDaisySubs');
+      const result = await purchaseProduct(pkg.productIdentifier);
 
-      if (result) {
+      if (!result.cancelled) {
         // Purchase succeeded — webhook will update Supabase
         setActivating(true);
-        // Poll for tier change (webhook → Supabase → realtime)
+        // Poll for tier change (webhook -> Supabase -> realtime)
         // Give up after 15 seconds, but user will see it on next load either way
         const start = Date.now();
         while (Date.now() - start < 15000) {
           await new Promise(r => setTimeout(r, 2000));
           await refetch();
-          // Check if tier was updated (refetch triggers state change in hook)
           break;
         }
         setActivating(false);
       }
-      // null result means user cancelled — do nothing
+      // cancelled === true means user cancelled — do nothing
     } catch (err) {
       console.error('iOS purchase error:', err);
       setError(err instanceof Error ? err.message : 'Purchase failed. Please try again.');
@@ -172,7 +167,7 @@ export default function GrowPremiumPage() {
       setRestoring(true);
       setError('');
 
-      const { restorePurchases } = await import('@/lib/grow/revenueCat');
+      const { restorePurchases } = await import('@/lib/grow/growDaisySubs');
       await restorePurchases();
       await refetch();
     } catch (err) {
@@ -239,7 +234,7 @@ export default function GrowPremiumPage() {
   const getPrice = (tier: GrowSubscriptionTier): string => {
     if (isIOS) {
       const pkg = findPackage(tier);
-      if (pkg) return pkg.product.priceString;
+      if (pkg) return pkg.priceString;
       // Fallback to static EUR price if package not found
     }
     const tierInfo = GROW_TIERS[tier];
@@ -418,7 +413,7 @@ export default function GrowPremiumPage() {
 
           {/* Restore Purchases — iOS only (Apple requirement) */}
           {isIOS && (
-            <div className="max-w-md mx-auto mb-8 text-center">
+            <div className="max-w-md mx-auto mb-4 text-center">
               <button
                 onClick={handleRestore}
                 disabled={restoring}
@@ -431,6 +426,26 @@ export default function GrowPremiumPage() {
                 )}
                 {restoring ? 'Restoring...' : 'Restore Purchases'}
               </button>
+            </div>
+          )}
+
+          {/* Subscription disclosure + legal links (Apple Guideline 3.1.2) */}
+          {isIOS && (
+            <div className="max-w-md mx-auto mb-8 text-center">
+              <p className="text-xs text-gray-500 mb-2">
+                {billingCycle === 'lifetime'
+                  ? 'One-time purchase. No recurring charges.'
+                  : `Subscription automatically renews ${billingCycle === 'monthly' ? 'monthly' : 'annually'} unless cancelled at least 24 hours before the end of the current period. Manage subscriptions in iOS Settings > Apple ID > Subscriptions.`}
+              </p>
+              <div className="flex items-center justify-center gap-3 text-xs">
+                <Link href="/grow/terms" className="text-emerald-600 hover:text-emerald-700 underline">
+                  Terms of Use
+                </Link>
+                <span className="text-gray-300">|</span>
+                <Link href="/grow/privacy" className="text-emerald-600 hover:text-emerald-700 underline">
+                  Privacy Policy
+                </Link>
+              </div>
             </div>
           )}
 

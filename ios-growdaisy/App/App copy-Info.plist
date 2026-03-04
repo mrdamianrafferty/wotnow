@@ -5,7 +5,7 @@
 	<key>CFBundleDevelopmentRegion</key>
 	<string>en</string>
 	<key>CFBundleDisplayName</key>
-	<string>Go Daisy</string>
+	<string>Grow Daisy</string>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>
@@ -52,11 +52,11 @@
 	<key>NSMotionUsageDescription</key>
 	<string>Grow Daisy uses motion data to understand if you are stationary or travelling so recommendations stay accurate.</string>
 	<key>NSPhotoLibraryAddUsageDescription</key>
-	<string>Go Daisy needs permission to save exported field notes to your photo library.</string>
+	<string>Grow Daisy needs permission to save exported garden photos to your photo library.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>Grow Daisy needs access to your photo library so you can attach existing pictures to your logs.</string>
 	<key>NSUserNotificationsUsageDescription</key>
-	<string>Go Daisy can send you notifications about upcoming activity windows and reminders for scheduled plans.</string>
+	<string>Grow Daisy can send you notifications for watering reminders, planting windows, and garden care tips.</string>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>

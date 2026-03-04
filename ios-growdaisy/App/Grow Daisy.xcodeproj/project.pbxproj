@@ -27,6 +27,7 @@
 		55F7A5682EBE0F5600CC09D6 /* StoreKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 55F7A5672EBE0F5600CC09D6 /* StoreKit.framework */; };
 		A1A044652FC4EF8200C99265 /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = A1A044642FC4EF8200C99265 /* GoogleService-Info.plist */; };
 		A1A044672FC4EF8200C99265 /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = A1A044642FC4EF8200C99265 /* GoogleService-Info.plist */; };
+		AA1234560000000000000003 /* GrowDaisySubscriptionHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA1234560000000000000001 /* GrowDaisySubscriptionHandler.swift */; };
 		D0682B13C2E9C51252A47543 /* Pods_App_copy.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 14A31AC31300120FE157A375 /* Pods_App_copy.framework */; };
 /* End PBXBuildFile section */
 
@@ -48,6 +49,7 @@
 		55F7A5672EBE0F5600CC09D6 /* StoreKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = StoreKit.framework; path = System/Library/Frameworks/StoreKit.framework; sourceTree = SDKROOT; };
 		788C505CF32EE3F98EBA4042 /* Pods-App copy.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-App copy.release.xcconfig"; path = "Pods/Target Support Files/Pods-App copy/Pods-App copy.release.xcconfig"; sourceTree = "<group>"; };
 		A1A044642FC4EF8200C99265 /* GoogleService-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
+		AA1234560000000000000001 /* GrowDaisySubscriptionHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GrowDaisySubscriptionHandler.swift; sourceTree = "<group>"; };
 		AF277DCFFFF123FFC6DF26C7 /* Pods_App.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_App.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		F18FD220DA1891DD968411A2 /* Pods-App copy.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-App copy.debug.xcconfig"; path = "Pods/Target Support Files/Pods-App copy/Pods-App copy.debug.xcconfig"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -110,6 +112,7 @@
 				55F7A5662EBE0DC000CC09D6 /* App.entitlements */,
 				50379B222058CBB4000EE86E /* capacitor.config.json */,
 				504EC3071FED79650016851F /* AppDelegate.swift */,
+				AA1234560000000000000001 /* GrowDaisySubscriptionHandler.swift */,
 				504EC30B1FED79650016851F /* Main.storyboard */,
 				504EC30E1FED79650016851F /* Assets.xcassets */,
 				504EC3101FED79650016851F /* LaunchScreen.storyboard */,
@@ -267,8 +270,12 @@
 			);
 			inputFileListPaths = (
 			);
+			inputPaths = (
+			);
 			name = "[CP] Embed Pods Frameworks";
 			outputFileListPaths = (
+			);
+			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -293,6 +300,7 @@
 			files = (
 				55E8482B2EBFD38D00243AB8 /* AppDelegate.swift in Sources */,
 				55E8482C2EBFD38D00243AB8 /* SceneDelegate.swift in Sources */,
+				AA1234560000000000000003 /* GrowDaisySubscriptionHandler.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -506,7 +514,7 @@
 				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = NO;
 				CODE_SIGN_ENTITLEMENTS = App/App.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 2;
 				ENABLE_USER_SCRIPT_SANDBOXING = NO;
 				INFOPLIST_FILE = "App copy-Info.plist";
 				INFOPLIST_KEY_CFBundleDisplayName = "Grow Daisy";
@@ -516,7 +524,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.0.0;
+				MARKETING_VERSION = 2.0.0;
 				OTHER_SWIFT_FLAGS = "$(inherited) \"-D\" \"COCOAPODS\" \"-DDEBUG\"";
 				PRODUCT_BUNDLE_IDENTIFIER = io.growdaisy.app;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -536,7 +544,7 @@
 				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = NO;
 				CODE_SIGN_ENTITLEMENTS = App/App.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 2;
 				ENABLE_USER_SCRIPT_SANDBOXING = NO;
 				INFOPLIST_FILE = "App copy-Info.plist";
 				INFOPLIST_KEY_CFBundleDisplayName = "Grow Daisy";
@@ -546,7 +554,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.0.0;
+				MARKETING_VERSION = 2.0.0;
 				PRODUCT_BUNDLE_IDENTIFIER = io.growdaisy.app;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "";
