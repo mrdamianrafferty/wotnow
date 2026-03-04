@@ -78,7 +78,7 @@ export function InfoPage() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Radio className="h-5 w-5 text-purple-600" />
-            Hardware Integrations
+            Supported Devices
           </CardTitle>
           <p className="text-sm text-muted-foreground">
             Connect your weather station or irrigation controller for more accurate data
@@ -94,16 +94,20 @@ export function InfoPage() {
               </h4>
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                 {[
-                  { name: 'Netatmo', desc: 'Easy OAuth setup' },
+                  { name: 'Netatmo', desc: 'One-click setup' },
                   { name: 'Ecowitt', desc: 'Soil sensors' },
                   { name: 'Ambient Weather', desc: 'Feature-rich' },
                   { name: 'Tempest', desc: 'Premium wireless' },
-                  { name: 'Davis WeatherLink', desc: 'Pro-grade' },
+                  { name: 'Davis WeatherLink', desc: 'High accuracy' },
                 ].map((station) => (
-                  <div key={station.name} className="p-2 border rounded-lg text-center">
+                  <Link
+                    key={station.name}
+                    href="/grow/settings"
+                    className="p-2 border rounded-lg text-center hover:border-emerald-300 hover:bg-emerald-50/30 active:bg-emerald-50 transition-colors cursor-pointer min-h-[44px] flex flex-col justify-center"
+                  >
                     <p className="font-medium text-sm">{station.name}</p>
                     <p className="text-xs text-muted-foreground">{station.desc}</p>
-                  </div>
+                  </Link>
                 ))}
               </div>
             </div>
@@ -117,21 +121,25 @@ export function InfoPage() {
               <div className="grid grid-cols-2 gap-2">
                 {[
                   { name: 'Rachio', desc: 'Smart watering' },
-                  { name: 'Hunter Hydrawise', desc: 'Pro irrigation' },
+                  { name: 'Hydrawise', desc: 'Pro irrigation' },
                 ].map((controller) => (
-                  <div key={controller.name} className="p-2 border rounded-lg text-center">
+                  <Link
+                    key={controller.name}
+                    href="/grow/settings"
+                    className="p-2 border rounded-lg text-center hover:border-emerald-300 hover:bg-emerald-50/30 active:bg-emerald-50 transition-colors cursor-pointer min-h-[44px] flex flex-col justify-center"
+                  >
                     <p className="font-medium text-sm">{controller.name}</p>
                     <p className="text-xs text-muted-foreground">{controller.desc}</p>
-                  </div>
+                  </Link>
                 ))}
               </div>
             </div>
           </div>
 
-          <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg">
-            <p className="text-sm text-amber-800">
-              <strong>Premium Feature:</strong> Hardware integrations require a paid subscription (Sprout or higher).
-              Connect your own devices to get hyperlocal weather data instead of regional forecasts.
+          <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-lg">
+            <p className="text-sm text-emerald-800">
+              <strong>Premium Feature:</strong> Connecting devices requires a Bloom plan or higher.
+              Tap any device above to set it up in Settings.
             </p>
           </div>
         </CardContent>

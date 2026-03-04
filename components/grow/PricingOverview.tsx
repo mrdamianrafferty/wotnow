@@ -103,6 +103,7 @@ const TIERS = [
       '5-year history',
     ],
     highlight: 'Team Features',
+    comingSoon: true,
   },
 ];
 
@@ -138,7 +139,8 @@ export function PricingOverview({ compact = false }: PricingOverviewProps) {
   if (compact) {
     // Compact version - just shows current tier and upgrade CTA
     const currentTierIndex = TIERS.findIndex(t => t.id === tier);
-    const nextTier = currentTierIndex < TIERS.length - 1 ? TIERS[currentTierIndex + 1] : null;
+    // Find the next available tier (skip Coming Soon tiers)
+    const nextTier = TIERS.slice(currentTierIndex + 1).find(t => !('comingSoon' in t && t.comingSoon)) || null;
 
     return (
       <Card>
@@ -239,6 +241,9 @@ export function PricingOverview({ compact = false }: PricingOverviewProps) {
                         )}
                         {t.popular && !isCurrent && (
                           <Badge className="text-xs bg-emerald-500">Most Popular</Badge>
+                        )}
+                        {'comingSoon' in t && t.comingSoon && (
+                          <Badge variant="secondary" className="text-xs bg-amber-100 text-amber-700">Coming Soon</Badge>
                         )}
                       </div>
                       <p className="text-sm text-muted-foreground">{t.tagline}</p>
