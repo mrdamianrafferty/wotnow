@@ -14,12 +14,6 @@ import {
   Sparkles,
   Check,
   ChevronRight,
-  Thermometer,
-  AlertTriangle,
-  Bug,
-  Radio,
-  Camera,
-  Infinity,
   RotateCcw,
   ExternalLink,
   Loader2,
@@ -27,7 +21,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../ui/card';
 import { Button } from '../ui/button';
 import { useGrowSubscription } from '@/hooks/useGrowSubscription';
-import { GrowSubscriptionTier, GROW_TIERS, formatPrice } from '@/lib/grow/subscription';
+import { GrowSubscriptionTier, GROW_TIERS } from '@/lib/grow/subscription';
 
 const TIER_CONFIG: Record<GrowSubscriptionTier, {
   icon: React.ComponentType<{ className?: string }>;
@@ -124,12 +118,6 @@ export function SubscriptionCard({ compact = false }: SubscriptionCardProps) {
   const Icon = config.icon;
   const highlights = TIER_HIGHLIGHTS[tier];
 
-  // Get next tier for upgrade prompt
-  const tierOrder: GrowSubscriptionTier[] = ['seed', 'sprout', 'bloom', 'harvest', 'orchard'];
-  const currentIndex = tierOrder.indexOf(tier);
-  const nextTier = currentIndex < tierOrder.length - 1 ? tierOrder[currentIndex + 1] : null;
-  const nextTierInfo = nextTier ? GROW_TIERS[nextTier] : null;
-
   if (compact) {
     return (
       <Card className={`${config.borderColor} border-2`}>
@@ -194,48 +182,15 @@ export function SubscriptionCard({ compact = false }: SubscriptionCardProps) {
           </ul>
         </div>
 
-        {/* Upgrade prompt for non-max tiers */}
-        {nextTier && nextTierInfo && (
-          <>
-            <div className="border-t pt-4">
-              <p className="text-sm font-medium mb-3">
-                Upgrade to {nextTierInfo.name} for:
-              </p>
-              <div className="grid grid-cols-2 gap-2 mb-4">
-                {TIER_HIGHLIGHTS[nextTier].slice(0, 4).map((feature, idx) => (
-                  <div key={idx} className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                    <UpgradeFeatureIcon feature={feature} />
-                    <span className="truncate">{feature}</span>
-                  </div>
-                ))}
-              </div>
-              <div className="flex items-center justify-between">
-                <div>
-                  <span className="text-lg font-bold">
-                    {formatPrice(nextTierInfo.pricing.annual)}
-                  </span>
-                  <span className="text-sm text-muted-foreground">/year</span>
-                </div>
-                <Link href="/grow/premium">
-                  <Button className="bg-emerald-600 hover:bg-emerald-700">
-                    Upgrade to {nextTierInfo.name}
-                    <ChevronRight className="h-4 w-4 ml-1" />
-                  </Button>
-                </Link>
-              </div>
-            </div>
-          </>
-        )}
-
-        {/* Already at max tier */}
-        {!nextTier && (
-          <div className="border-t pt-4">
-            <div className="flex items-center gap-2 text-sm text-emerald-600">
-              <Crown className="h-4 w-4" />
-              <span>You have our highest tier - thank you for your support!</span>
-            </div>
-          </div>
-        )}
+        {/* View plans link */}
+        <div className="border-t pt-4">
+          <Link href="/grow/premium">
+            <Button className="w-full bg-emerald-600 hover:bg-emerald-700">
+              View all plans and features
+              <ChevronRight className="h-4 w-4 ml-1" />
+            </Button>
+          </Link>
+        </div>
 
         {/* View all plans link */}
         <div className="text-center pt-2">
@@ -301,19 +256,6 @@ function IOSSubscriptionActions({ isPaid }: { isPaid: boolean }) {
       </button>
     </div>
   );
-}
-
-function UpgradeFeatureIcon({ feature }: { feature: string }) {
-  const lowerFeature = feature.toLowerCase();
-
-  if (lowerFeature.includes('unlimited')) return <Infinity className="h-3 w-3 text-emerald-500" />;
-  if (lowerFeature.includes('soil') || lowerFeature.includes('temperature')) return <Thermometer className="h-3 w-3 text-orange-500" />;
-  if (lowerFeature.includes('frost') || lowerFeature.includes('alert')) return <AlertTriangle className="h-3 w-3 text-blue-500" />;
-  if (lowerFeature.includes('threat') || lowerFeature.includes('pest')) return <Bug className="h-3 w-3 text-red-500" />;
-  if (lowerFeature.includes('hardware') || lowerFeature.includes('integration')) return <Radio className="h-3 w-3 text-purple-500" />;
-  if (lowerFeature.includes('ai') || lowerFeature.includes('id')) return <Camera className="h-3 w-3 text-indigo-500" />;
-
-  return <Check className="h-3 w-3 text-emerald-500" />;
 }
 
 export default SubscriptionCard;

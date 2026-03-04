@@ -202,6 +202,9 @@ const CATEGORY_INFO = {
   },
 };
 
+// Stable Supabase client (created once outside the component to prevent re-render loops)
+const supabase = createClient();
+
 // =============================================================================
 // COMPONENT
 // =============================================================================
@@ -217,7 +220,6 @@ export function IntegrationsCard({ className = '' }: IntegrationCardProps) {
   const [syncingId, setSyncingId] = useState<string | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<IntegrationCategory | null>(null);
 
-  const supabase = createClient();
   const { canUse, isLoading: subscriptionLoading } = useGrowSubscription();
 
   // Check if user can access hardware integrations (paid feature)
@@ -251,7 +253,7 @@ export function IntegrationsCard({ className = '' }: IntegrationCardProps) {
     } finally {
       setIsLoading(false);
     }
-  }, [supabase]);
+  }, []);
 
   useEffect(() => {
     fetchIntegrations();
@@ -775,7 +777,7 @@ export function IntegrationsCard({ className = '' }: IntegrationCardProps) {
                           <button
                             key={type}
                             onClick={() => setAddingType(type)}
-                            className="w-full flex items-start gap-3 p-3 rounded-lg border border-gray-200 hover:border-emerald-300 hover:bg-emerald-50/30 transition-colors text-left"
+                            className="w-full flex items-start gap-3 p-3 rounded-lg border border-gray-200 hover:border-emerald-300 hover:bg-emerald-50/30 transition-colors text-left cursor-pointer"
                           >
                             <div className={`w-10 h-10 rounded-full ${info.bgColor} flex items-center justify-center flex-shrink-0`}>
                               <Icon className={`h-5 w-5 ${info.color}`} />
@@ -840,7 +842,7 @@ export function IntegrationsCard({ className = '' }: IntegrationCardProps) {
                       <button
                         key={category}
                         onClick={() => setSelectedCategory(category)}
-                        className="w-full text-left p-4 rounded-lg border border-gray-200 hover:border-gray-300 hover:bg-gray-50 transition-all"
+                        className="w-full text-left p-4 rounded-lg border border-gray-200 hover:border-gray-300 hover:bg-gray-50 transition-all cursor-pointer"
                       >
                         <div className="flex items-start gap-3">
                           <div className={`w-10 h-10 rounded-full ${hasConnected ? 'bg-emerald-100' : 'bg-gray-100'} flex items-center justify-center`}>
