@@ -1187,7 +1187,7 @@ const popupPayload = buildPopupActivityPayload({
               <span>
                 {getActivityEmoji(s.activityId)} {activity?.name || s.activityId.replace(/_/g, ' ')}
               </span>
-              <span className="badge badge-sm badge-primary badge-outline">
+              <span className="badge badge-sm bg-white/90 text-blue-600 border-white/50 font-semibold">
                 Join me?
               </span>
             </li>
