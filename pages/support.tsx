@@ -20,7 +20,7 @@ export default function SupportPage() {
   const [purchasingId, setPurchasingId] = useState<string | null>(null);
   const [tipError, setTipError] = useState<string | null>(null);
   const [tipSuccess, setTipSuccess] = useState(false);
-  const [tipDebug, setTipDebug] = useState('JS:v6 loading...');
+  const [tipDebug, setTipDebug] = useState('JS:v7 loading...');
 
   useEffect(() => {
     let cancelled = false;
@@ -32,11 +32,11 @@ export default function SupportPage() {
         setIsIOSNative(native);
 
         if (!native) {
-          setTipDebug('JS:v6 not-native');
+          setTipDebug('JS:v7 not-native');
           return;
         }
 
-        setTipDebug('JS:v6 fetchTipPackages (custom plugin)...');
+        setTipDebug('JS:v7 fetchTipPackages (StoreKit2 direct)...');
         const { fetchTipPackages } = await import("../lib/grow/revenueCat");
 
         const fetchResult = await Promise.race([
@@ -45,7 +45,7 @@ export default function SupportPage() {
         ]);
 
         if (fetchResult.status === 'timeout') {
-          setTipDebug('JS:v6 fetchTipPackages TIMEOUT (10s)');
+          setTipDebug('JS:v7 fetchTipPackages TIMEOUT (10s)');
           return;
         }
 
@@ -54,11 +54,11 @@ export default function SupportPage() {
         const tipIds = new Set(GODAISY_TIP_PRODUCTS.map((p) => p.id));
         const matched = pkgs.filter((pkg) => tipIds.has(pkg.identifier));
         setTipDebug(
-          `JS:v6 done | pkgs:${pkgs.length} matched:${matched.length}`
+          `JS:v7 done | pkgs:${pkgs.length} matched:${matched.length}`
         );
         setTipPackages(matched);
       } catch (err) {
-        setTipDebug(`JS:v6 ERROR: ${err instanceof Error ? err.message : String(err)}`);
+        setTipDebug(`JS:v7 ERROR: ${err instanceof Error ? err.message : String(err)}`);
       }
     })();
     return () => { cancelled = true; };

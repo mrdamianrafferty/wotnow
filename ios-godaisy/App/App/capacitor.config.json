@@ -49,7 +49,6 @@
 		"StatusBarPlugin",
 		"ToastPlugin",
 		"SocialLoginPlugin",
-		"SafeAreaPlugin",
-		"GoDaisyTipsPlugin"
+		"SafeAreaPlugin"
 	]
 }

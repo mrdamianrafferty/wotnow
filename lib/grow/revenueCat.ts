@@ -1,27 +1,24 @@
 /**
- * RevenueCat SDK Wrapper for iOS In-App Purchases
+ * Go Daisy Tip Jar — StoreKit 2 via WKScriptMessageHandler
  *
- * The official @revenuecat/purchases-capacitor plugin's Capacitor bridge is
- * completely broken — all methods (configure, getOfferings, purchase) hang
- * indefinitely. The native SDK is configured in AppDelegate.swift.
+ * Bypasses both RevenueCat and Capacitor's plugin system entirely.
+ * GoDaisyViewController.swift registers a WKScriptMessageHandler ("GoDaisyTips")
+ * that calls StoreKit 2 directly for consumable tip purchases.
  *
- * For tips (consumable IAP), we use a custom native Capacitor plugin
- * (GoDaisyTipsPlugin.swift) that calls Purchases.shared directly and
- * is guaranteed to load because it's in the App target.
+ * JS sends: window.webkit.messageHandlers.GoDaisyTips.postMessage(...)
+ * Swift replies: window._GoDaisyTipsResolve(callbackId, data)
  *
- * Legacy exports (initRevenueCat, identifyRevenueCatUser, etc.) are kept
- * as no-ops for build compatibility with other pages.
+ * All functions are safe no-ops on non-iOS platforms.
  *
  * @module lib/grow/revenueCat
  */
 
-import { Capacitor, registerPlugin } from '@capacitor/core';
+import { Capacitor } from '@capacitor/core';
 
 // ---------------------------------------------------------------------------
-// Custom native plugin (GoDaisyTipsPlugin.swift)
+// Types
 // ---------------------------------------------------------------------------
 
-/** Shape returned by our custom GoDaisyTipsPlugin */
 export interface TipPackage {
   identifier: string;
   title: string;
@@ -29,32 +26,83 @@ export interface TipPackage {
   price: number;
 }
 
-interface GoDaisyTipsPlugin {
-  getOfferings(): Promise<{
-    currentIdentifier?: string;
-    packages: TipPackage[];
-  }>;
-  purchase(opts: { productId: string }): Promise<{
-    cancelled: boolean;
-    productIdentifier?: string;
-  }>;
-  restorePurchases(): Promise<{ restored: boolean }>;
+// ---------------------------------------------------------------------------
+// Direct WKScriptMessageHandler bridge
+// ---------------------------------------------------------------------------
+
+/** Pending native call promises, keyed by callbackId */
+const pendingCalls = new Map<string, { resolve: (v: unknown) => void; reject: (e: Error) => void }>();
+let nextCallId = 0;
+
+/** Called from Swift via evaluateJavaScript */
+function setupGlobalCallbacks() {
+  if (typeof window === 'undefined') return;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  (window as any)._GoDaisyTipsResolve = (callbackId: string, data: unknown) => {
+    const call = pendingCalls.get(callbackId);
+    if (call) {
+      call.resolve(data);
+      pendingCalls.delete(callbackId);
+    }
+  };
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  (window as any)._GoDaisyTipsReject = (callbackId: string, error: string) => {
+    const call = pendingCalls.get(callbackId);
+    if (call) {
+      call.reject(new Error(error));
+      pendingCalls.delete(callbackId);
+    }
+  };
 }
 
-const GoDaisyTips = registerPlugin<GoDaisyTipsPlugin>('GoDaisyTips');
+/** Send a message to the native TipJarHandler and return a promise for the result */
+function callNative(action: string, params: Record<string, string> = {}): Promise<unknown> {
+  setupGlobalCallbacks();
+
+  return new Promise((resolve, reject) => {
+    const callbackId = String(++nextCallId);
+    pendingCalls.set(callbackId, { resolve, reject });
+
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const handler = (window as any).webkit?.messageHandlers?.GoDaisyTips;
+      if (!handler) {
+        pendingCalls.delete(callbackId);
+        reject(new Error('GoDaisyTips message handler not available'));
+        return;
+      }
+      handler.postMessage({ action, callbackId, ...params });
+    } catch (err) {
+      pendingCalls.delete(callbackId);
+      reject(err);
+    }
+
+    // Timeout after 15 seconds
+    setTimeout(() => {
+      if (pendingCalls.has(callbackId)) {
+        pendingCalls.delete(callbackId);
+        reject(new Error(`${action} timed out after 15s`));
+      }
+    }, 15000);
+  });
+}
+
+// ---------------------------------------------------------------------------
+// Public API
+// ---------------------------------------------------------------------------
 
 function isIOS(): boolean {
   return Capacitor.isNativePlatform() && Capacitor.getPlatform() === 'ios';
 }
 
 /**
- * Fetch tip packages from RevenueCat via our custom native plugin.
+ * Fetch tip products from StoreKit 2 via our native handler.
  */
 export async function fetchTipPackages(): Promise<TipPackage[]> {
   if (!isIOS()) return [];
 
-  const result = await GoDaisyTips.getOfferings();
-  return result.packages ?? [];
+  const result = (await callNative('getProducts')) as TipPackage[];
+  return result ?? [];
 }
 
 /**
@@ -64,49 +112,42 @@ export async function fetchTipPackages(): Promise<TipPackage[]> {
 export async function purchaseTip(productId: string): Promise<boolean> {
   if (!isIOS()) return false;
 
-  const result = await GoDaisyTips.purchase({ productId });
+  const result = (await callNative('purchase', { productId })) as { cancelled: boolean };
   return !result.cancelled;
 }
 
 // ---------------------------------------------------------------------------
 // Legacy exports — kept as no-ops for build compatibility.
-// The Capacitor bridge to @revenuecat/purchases-capacitor is broken.
 // ---------------------------------------------------------------------------
 
-/** @deprecated Native AppDelegate configures the SDK. No-op. */
-export async function initRevenueCat(_supabaseUserId: string | null): Promise<void> {
-  // No-op: Native AppDelegate already configured the SDK.
-}
+/** @deprecated No-op. */
+export async function initRevenueCat(_supabaseUserId: string | null): Promise<void> {}
 
-/** @deprecated Bridge is broken. No-op. */
-export async function identifyRevenueCatUser(_supabaseUserId: string): Promise<void> {
-  // No-op
-}
+/** @deprecated No-op. */
+export async function identifyRevenueCatUser(_supabaseUserId: string): Promise<void> {}
 
-/** @deprecated Bridge is broken. No-op. */
-export async function logOutRevenueCat(): Promise<void> {
-  // No-op
-}
+/** @deprecated No-op. */
+export async function logOutRevenueCat(): Promise<void> {}
 
-/** @deprecated Use fetchTipPackages() instead. Returns null. */
+/** @deprecated Use fetchTipPackages() instead. */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export async function fetchOfferings(): Promise<any> {
   return null;
 }
 
-/** @deprecated Use purchaseTip() instead. Returns null. */
+/** @deprecated Use purchaseTip() instead. */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export async function purchasePackage(_pkg?: any): Promise<any> {
   return null;
 }
 
-/** @deprecated Bridge is broken. Returns null. */
+/** @deprecated No-op. */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export async function restorePurchases(): Promise<any> {
   return null;
 }
 
-/** @deprecated Bridge is broken. Returns null. */
+/** @deprecated No-op. */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export async function getCustomerInfo(): Promise<any> {
   return null;
