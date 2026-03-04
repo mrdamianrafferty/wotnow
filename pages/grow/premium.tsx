@@ -381,6 +381,7 @@ export default function GrowPremiumPage() {
               savings={getSavings('harvest')}
               loading={loadingTier === 'harvest'}
               onSubscribe={() => handleSubscribe('harvest')}
+              comingSoon
               features={[
                 { icon: Check, text: 'Everything in Bloom' },
                 { icon: MessageSquare, text: 'AI Expert (2/mo)' },
@@ -495,6 +496,7 @@ interface PricingCardProps {
   loading: boolean;
   onSubscribe: () => void;
   recommended?: boolean;
+  comingSoon?: boolean;
   features: Array<{
     icon: React.ComponentType<{ className?: string }>;
     text: string;
@@ -511,8 +513,10 @@ function PricingCard({
   loading,
   onSubscribe,
   recommended,
+  comingSoon,
   features,
 }: PricingCardProps) {
+  const router = useRouter();
   const tierInfo = GROW_TIERS[tier];
   const Icon = TIER_ICONS[tier];
   const isCurrentTier = currentTier === tier;
@@ -529,8 +533,13 @@ function PricingCard({
           Most Popular
         </div>
       )}
+      {comingSoon && !recommended && (
+        <div className="absolute top-0 left-0 right-0 bg-amber-400 text-amber-900 text-center py-1 text-sm font-medium">
+          Coming Soon
+        </div>
+      )}
 
-      <div className={`p-6 ${recommended ? 'pt-10' : ''}`}>
+      <div className={`p-6 ${recommended || comingSoon ? 'pt-10' : ''}`}>
         {/* Header */}
         <div className="flex items-center gap-3 mb-4">
           <div className={`p-2 rounded-lg ${recommended ? 'bg-emerald-100' : 'bg-gray-100'}`}>
@@ -580,32 +589,41 @@ function PricingCard({
         </ul>
 
         {/* CTA */}
-        <button
-          onClick={onSubscribe}
-          disabled={loading || isCurrentTier || isDowngrade}
-          className={`w-full py-3 rounded-lg font-medium transition-colors ${
-            isCurrentTier
-              ? 'bg-gray-100 text-gray-500 cursor-not-allowed'
-              : isDowngrade
-              ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-              : recommended
-              ? 'bg-emerald-600 hover:bg-emerald-700 text-white'
-              : 'bg-gray-900 hover:bg-gray-800 text-white'
-          }`}
-        >
-          {loading ? (
-            <span className="flex items-center justify-center gap-2">
-              <Zap className="h-4 w-4 animate-spin" />
-              Loading...
-            </span>
-          ) : isCurrentTier ? (
-            'Current Plan'
-          ) : isDowngrade ? (
-            'Contact Support'
-          ) : (
-            `Get ${getTierDisplayName(tier)}`
-          )}
-        </button>
+        {isDowngrade ? (
+          <button
+            onClick={() => router.push('/grow/support')}
+            className="w-full py-3 rounded-lg font-medium transition-colors bg-gray-100 text-gray-500 hover:bg-gray-200 hover:text-gray-600"
+          >
+            Contact Support to Downgrade
+          </button>
+        ) : (
+          <button
+            onClick={onSubscribe}
+            disabled={loading || isCurrentTier || comingSoon}
+            className={`w-full py-3 rounded-lg font-medium transition-colors ${
+              isCurrentTier
+                ? 'bg-gray-100 text-gray-500 cursor-not-allowed'
+                : comingSoon
+                ? 'bg-amber-50 text-amber-700 cursor-not-allowed'
+                : recommended
+                ? 'bg-emerald-600 hover:bg-emerald-700 text-white'
+                : 'bg-gray-900 hover:bg-gray-800 text-white'
+            }`}
+          >
+            {loading ? (
+              <span className="flex items-center justify-center gap-2">
+                <Zap className="h-4 w-4 animate-spin" />
+                Loading...
+              </span>
+            ) : isCurrentTier ? (
+              'Current Plan'
+            ) : comingSoon ? (
+              'Coming Soon'
+            ) : (
+              `Get ${getTierDisplayName(tier)}`
+            )}
+          </button>
+        )}
       </div>
     </div>
   );
