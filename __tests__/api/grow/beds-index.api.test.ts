@@ -110,7 +110,13 @@ describe('GET /api/grow/beds', () => {
         return chainBuilder({ data: [sampleBed], error: null });
       }
       if (table === 'grow_bed_plantings') {
-        const builder = chainBuilder({ data: [{ bed_id: 'bed-1' }, { bed_id: 'bed-1' }], error: null });
+        const builder = chainBuilder({
+          data: [
+            { bed_id: 'bed-1', quantity: 6, grow_user_plants: { name: 'Tomato' } },
+            { bed_id: 'bed-1', quantity: 3, grow_user_plants: { name: 'Basil' } },
+          ],
+          error: null,
+        });
         return builder;
       }
       return chainBuilder();

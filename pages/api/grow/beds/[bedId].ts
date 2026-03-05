@@ -1,6 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { getAuthenticatedClient } from '../../../../lib/grow/server/auth';
-import { serializeBed, serializeBedPlanting, type BedRow } from '../../../../lib/grow/server/beds';
+import { serializeBed, serializeBedPlanting, buildPlantSummary, type BedRow } from '../../../../lib/grow/server/beds';
 
 const ALLOWED_TYPES = new Set(['raised_bed', 'container', 'in_ground', 'greenhouse', 'polytunnel', 'other']);
 const ALLOWED_SUN = new Set(['full_sun', 'partial_shade', 'full_shade']);
@@ -46,11 +46,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       console.error('[grow] Failed to load plantings for bed', bedId, plantingsError);
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const serializedPlantings = (plantings as any[] || []).map(serializeBedPlanting);
+    const plantingRows = (plantings as any[] || []); // eslint-disable-line @typescript-eslint/no-explicit-any
+    const serializedPlantings = plantingRows.map(serializeBedPlanting);
+    const summary = buildPlantSummary(plantingRows);
 
     return res.status(200).json({
-      bed: serializeBed(bed as BedRow, serializedPlantings.length),
+      bed: serializeBed(bed as BedRow, serializedPlantings.length, summary),
       plantings: serializedPlantings,
     });
   }

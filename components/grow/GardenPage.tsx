@@ -1501,6 +1501,7 @@ export function GardenPage() {
                         type={bed.type}
                         color={bed.color}
                         plantCount={bed.plantCount}
+                        plantSummary={bed.plantSummary}
                         isNew={newlyAddedBedIds.has(bed.id)}
                       />
                     ))}

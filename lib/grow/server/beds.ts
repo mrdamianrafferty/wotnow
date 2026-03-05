@@ -30,9 +30,10 @@ export type SerializedBed = {
   createdAt: string;
   updatedAt: string;
   plantCount: number;
+  plantSummary: string;
 };
 
-export function serializeBed(row: BedRow, plantCount: number = 0): SerializedBed {
+export function serializeBed(row: BedRow, plantCount: number = 0, plantSummary: string = ''): SerializedBed {
   return {
     id: row.id,
     name: row.name,
@@ -46,7 +47,25 @@ export function serializeBed(row: BedRow, plantCount: number = 0): SerializedBed
     createdAt: row.created_at,
     updatedAt: row.updated_at,
     plantCount,
+    plantSummary,
   };
+}
+
+export type PlantingSummaryRow = {
+  bed_id: string;
+  quantity: number;
+  grow_user_plants: { name: string };
+};
+
+/** Build a human-readable summary like "12 Cabbages, 3 Tomatoes" */
+export function buildPlantSummary(rows: PlantingSummaryRow[]): string {
+  if (rows.length === 0) return '';
+  return rows
+    .map(r => {
+      const qty = r.quantity ?? 1;
+      return qty > 1 ? `${qty} ${r.grow_user_plants.name}` : r.grow_user_plants.name;
+    })
+    .join(', ');
 }
 
 export type BedPlantingRow = {

@@ -1,6 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { getAuthenticatedClient } from '../../../../lib/grow/server/auth';
-import { serializeBed, nextBedColor, type BedRow } from '../../../../lib/grow/server/beds';
+import { serializeBed, buildPlantSummary, nextBedColor, type BedRow, type PlantingSummaryRow } from '../../../../lib/grow/server/beds';
 import { getTierLimits, isOverLimit, type GrowSubscriptionTier } from '../../../../lib/grow/subscription';
 
 const ALLOWED_TYPES = new Set(['raised_bed', 'container', 'in_ground', 'greenhouse', 'polytunnel', 'other']);
@@ -28,27 +28,42 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return res.status(500).json({ error: 'Failed to load beds' });
     }
 
-    // Get plant counts per bed from grow_bed_plantings (active only)
+    // Get planting details per bed (active only) — names + quantities for summary
     const bedIds = (beds as BedRow[]).map(b => b.id);
     const plantCounts: Record<string, number> = {};
+    const plantSummaries: Record<string, string> = {};
 
     if (bedIds.length > 0) {
-      const { data: counts, error: countError } = await supabase
+      const { data: plantings, error: plantingsError } = await supabase
         .from('grow_bed_plantings')
-        .select('bed_id')
+        .select('bed_id, quantity, grow_user_plants!inner(name)')
         .in('bed_id', bedIds)
         .is('removed_at', null);
 
-      if (!countError && counts) {
-        for (const row of counts) {
+      if (!plantingsError && plantings) {
+        const byBed: Record<string, PlantingSummaryRow[]> = {};
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        for (const row of plantings as any[]) {
           if (row.bed_id) {
             plantCounts[row.bed_id] = (plantCounts[row.bed_id] || 0) + 1;
+            // Supabase !inner returns the related row as an object (not array) for to-one joins
+            const normalized: PlantingSummaryRow = {
+              bed_id: row.bed_id,
+              quantity: row.quantity,
+              grow_user_plants: row.grow_user_plants,
+            };
+            (byBed[row.bed_id] ??= []).push(normalized);
           }
+        }
+        for (const [bedId, rows] of Object.entries(byBed)) {
+          plantSummaries[bedId] = buildPlantSummary(rows);
         }
       }
     }
 
-    const serialized = (beds as BedRow[]).map(b => serializeBed(b, plantCounts[b.id] || 0));
+    const serialized = (beds as BedRow[]).map(b =>
+      serializeBed(b, plantCounts[b.id] || 0, plantSummaries[b.id] || '')
+    );
 
     return res.status(200).json({ beds: serialized });
   }

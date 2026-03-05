@@ -9,10 +9,11 @@ interface BedCardProps {
   type: BedType;
   color: BedColor;
   plantCount: number;
+  plantSummary?: string;
   isNew?: boolean;
 }
 
-export function BedCard({ id, name, type, color, plantCount, isNew }: BedCardProps) {
+export function BedCard({ id, name, type, color, plantCount, plantSummary, isNew }: BedCardProps) {
   const hexColor = BED_COLOR_HEX[color] || BED_COLOR_HEX.terracotta;
 
   return (
@@ -28,8 +29,10 @@ export function BedCard({ id, name, type, color, plantCount, isNew }: BedCardPro
           <p className="text-xs text-muted-foreground mt-0.5">
             {BED_TYPES[type] || type}
           </p>
-          <p className="text-xs mt-2" style={{ color: hexColor }}>
-            {plantCount === 0 ? 'Empty' : `${plantCount} plant${plantCount !== 1 ? 's' : ''}`}
+          <p className="text-xs mt-2 truncate" style={{ color: hexColor }}>
+            {plantCount === 0
+              ? 'Empty'
+              : plantSummary || `${plantCount} plant${plantCount !== 1 ? 's' : ''}`}
           </p>
         </CardContent>
       </Card>
