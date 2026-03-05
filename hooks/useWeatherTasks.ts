@@ -318,7 +318,7 @@ export function useWeatherTasks(): UseWeatherTasksResult {
   }, [supabase, userId]);
 
   useEffect(() => {
-    if (userId) {
+    if (userId && locationKey) {
       fetchWeatherTasks();
     }
   }, [userId, locationKey, fetchWeatherTasks]);
