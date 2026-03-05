@@ -21,12 +21,16 @@ import {
   X,
   AlertTriangle,
   Leaf,
+  ChevronDown,
+  ChevronUp,
+  MoveRight,
 } from 'lucide-react';
 import Link from 'next/link';
 import { api } from '../../lib/grow/api';
 import { BED_COLOR_HEX, BED_TYPES, type SerializedBed, type SerializedBedPlanting } from '../../lib/grow/server/beds';
 import type { SerializedPlant } from '../../lib/grow/server/plants';
 import { EditBedDialog } from './EditBedDialog';
+import { MovePlantDialog } from './MovePlantDialog';
 import type { BedIntelligenceResponse } from '../../lib/grow/bedIntelligenceTypes';
 
 export function BedDetailPage() {
@@ -38,6 +42,13 @@ export function BedDetailPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+
+  // History
+  const [history, setHistory] = useState<SerializedBedPlanting[]>([]);
+  const [showHistory, setShowHistory] = useState(false);
+
+  // Move plant dialog
+  const [movePlanting, setMovePlanting] = useState<SerializedBedPlanting | null>(null);
 
   // Intelligence
   const [intelligence, setIntelligence] = useState<BedIntelligenceResponse | null>(null);
@@ -57,6 +68,7 @@ export function BedDetailPage() {
       const response = await api.getBed(bedId);
       setBed(response.bed);
       setPlantings(response.plantings || []);
+      setHistory(response.history || []);
     } catch {
       toast.error('Could not load bed');
     } finally {
@@ -563,6 +575,15 @@ export function BedDetailPage() {
                 <Button
                   variant="ghost"
                   size="icon"
+                  onClick={() => setMovePlanting(planting)}
+                  className="h-8 w-8 text-muted-foreground hover:text-green-600 flex-shrink-0"
+                  aria-label={`Move ${planting.plantName} to another bed`}
+                >
+                  <MoveRight className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
                   onClick={() => handleRemovePlant(planting)}
                   className="h-8 w-8 text-muted-foreground hover:text-red-600 flex-shrink-0"
                   aria-label={`Remove ${planting.plantName}`}
@@ -596,6 +617,57 @@ export function BedDetailPage() {
           ))}
         </div>
       )}
+
+      {/* Planting History */}
+      {history.length > 0 && (
+        <div className="space-y-2">
+          <button
+            onClick={() => setShowHistory(prev => !prev)}
+            className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
+          >
+            {showHistory ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+            History ({history.length} past)
+          </button>
+          {showHistory && (
+            <div className="space-y-2">
+              {history.map(h => {
+                const from = new Date(h.plantedAt).toLocaleDateString('en-GB', { month: 'short', year: 'numeric' });
+                const to = h.removedAt ? new Date(h.removedAt).toLocaleDateString('en-GB', { month: 'short', year: 'numeric' }) : 'present';
+                return (
+                  <Card key={h.plantingId} className="overflow-hidden opacity-70">
+                    <CardContent className="p-3">
+                      <p className="font-medium text-sm text-muted-foreground truncate">{h.plantName}</p>
+                      <div className="flex items-center gap-1.5 mt-0.5">
+                        <span className="text-xs text-muted-foreground">{h.plantType}</span>
+                        {h.quantity > 1 && (
+                          <Badge variant="secondary" className="text-[10px] px-1.5 py-0 h-4">
+                            {h.quantity}x
+                          </Badge>
+                        )}
+                        <span className="text-xs text-muted-foreground ml-auto">{from} – {to}</span>
+                      </div>
+                    </CardContent>
+                  </Card>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      )}
+
+      <MovePlantDialog
+        open={!!movePlanting}
+        onOpenChange={(open) => { if (!open) setMovePlanting(null); }}
+        planting={movePlanting}
+        currentBedId={bed.id}
+        onMoved={() => {
+          if (movePlanting) {
+            setPlantings(prev => prev.filter(p => p.plantingId !== movePlanting.plantingId));
+            setBed(prev => prev ? { ...prev, plantCount: Math.max(0, prev.plantCount - 1) } : prev);
+          }
+          setMovePlanting(null);
+        }}
+      />
 
       <EditBedDialog
         open={isEditOpen}

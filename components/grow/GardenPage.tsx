@@ -359,7 +359,9 @@ export function GardenPage() {
   const [isLoadingBeds, setIsLoadingBeds] = useState(false);
   const [isCreateBedOpen, setIsCreateBedOpen] = useState(false);
   const [newlyAddedBedIds, setNewlyAddedBedIds] = useState<Set<string>>(new Set());
-  
+  const [isReorderMode, setIsReorderMode] = useState(false);
+  const reorderTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
   // All species state (for 'all' view mode)
   const [allSpecies, setAllSpecies] = useState<PlantSpecies[]>([]);
   const [isLoadingAllSpecies, setIsLoadingAllSpecies] = useState(false);
@@ -1492,29 +1494,99 @@ export function GardenPage() {
                 </Card>
               ) : (
                 <div className="space-y-4">
-                  <div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-4">
-                    {beds.map(bed => (
-                      <BedCard
-                        key={bed.id}
-                        id={bed.id}
-                        name={bed.name}
-                        type={bed.type}
-                        color={bed.color}
-                        plantCount={bed.plantCount}
-                        plantSummary={bed.plantSummary}
-                        sunExposure={bed.sunExposure}
-                        isNew={newlyAddedBedIds.has(bed.id)}
-                      />
-                    ))}
-                    {/* Add Bed card */}
-                    <button
-                      onClick={() => setIsCreateBedOpen(true)}
-                      className="flex flex-col items-center justify-center gap-2 p-6 rounded-lg border-2 border-dashed border-muted-foreground/25 hover:border-green-500 hover:bg-green-50 transition-all text-muted-foreground hover:text-green-600 min-h-[100px]"
-                    >
-                      <Plus className="h-6 w-6" />
-                      <span className="text-sm font-medium">Add Bed</span>
-                    </button>
-                  </div>
+                  {beds.length > 1 && (
+                    <div className="flex justify-end">
+                      <Button
+                        variant={isReorderMode ? 'default' : 'outline'}
+                        size="sm"
+                        onClick={() => setIsReorderMode(prev => !prev)}
+                        className={isReorderMode ? 'bg-green-600 hover:bg-green-700' : ''}
+                      >
+                        <ArrowUpDown className="h-4 w-4 mr-1" />
+                        {isReorderMode ? 'Done' : 'Reorder'}
+                      </Button>
+                    </div>
+                  )}
+
+                  {isReorderMode ? (
+                    <div className="space-y-2">
+                      {beds.map((bed, idx) => {
+                        const hexColor = ({'terracotta':'#C2714F','sage':'#7A9E7E','cornflower':'#6B8EC4','sunflower':'#D4A843','slate':'#6B7B8D','plum':'#8B6F8E'})[bed.color] || '#C2714F';
+                        return (
+                          <div key={bed.id} className="flex items-center gap-3 p-3 rounded-lg border bg-card">
+                            <div className="w-3 h-3 rounded-full flex-shrink-0" style={{ backgroundColor: hexColor }} />
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-medium truncate">{bed.name}</p>
+                              <p className="text-xs text-muted-foreground truncate">
+                                {bed.plantSummary || (bed.plantCount > 0 ? `${bed.plantCount} plants` : 'Empty')}
+                              </p>
+                            </div>
+                            <div className="flex gap-1 flex-shrink-0">
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8"
+                                disabled={idx === 0}
+                                onClick={() => {
+                                  const next = [...beds];
+                                  [next[idx - 1], next[idx]] = [next[idx], next[idx - 1]];
+                                  setBeds(next);
+                                  if (reorderTimerRef.current) clearTimeout(reorderTimerRef.current);
+                                  reorderTimerRef.current = setTimeout(() => {
+                                    api.reorderBeds(next.map(b => b.id)).catch(() => toast.error('Reorder failed'));
+                                  }, 500);
+                                }}
+                              >
+                                <ChevronUp className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8"
+                                disabled={idx === beds.length - 1}
+                                onClick={() => {
+                                  const next = [...beds];
+                                  [next[idx], next[idx + 1]] = [next[idx + 1], next[idx]];
+                                  setBeds(next);
+                                  if (reorderTimerRef.current) clearTimeout(reorderTimerRef.current);
+                                  reorderTimerRef.current = setTimeout(() => {
+                                    api.reorderBeds(next.map(b => b.id)).catch(() => toast.error('Reorder failed'));
+                                  }, 500);
+                                }}
+                              >
+                                <ChevronDown className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-4">
+                      {beds.map(bed => (
+                        <BedCard
+                          key={bed.id}
+                          id={bed.id}
+                          name={bed.name}
+                          type={bed.type}
+                          color={bed.color}
+                          plantCount={bed.plantCount}
+                          plantSummary={bed.plantSummary}
+                          sunExposure={bed.sunExposure}
+                          lastActivity={bed.lastActivity}
+                          isNew={newlyAddedBedIds.has(bed.id)}
+                        />
+                      ))}
+                      {/* Add Bed card */}
+                      <button
+                        onClick={() => setIsCreateBedOpen(true)}
+                        className="flex flex-col items-center justify-center gap-2 p-6 rounded-lg border-2 border-dashed border-muted-foreground/25 hover:border-green-500 hover:bg-green-50 transition-all text-muted-foreground hover:text-green-600 min-h-[100px]"
+                      >
+                        <Plus className="h-6 w-6" />
+                        <span className="text-sm font-medium">Add Bed</span>
+                      </button>
+                    </div>
+                  )}
 
                   {/* Plants are now shown within each bed detail page */}
                 </div>

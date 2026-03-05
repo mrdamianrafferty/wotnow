@@ -1074,6 +1074,36 @@ export class ApiClient {
     return response.json();
   }
 
+  async reorderBeds(bedIds: string[]) {
+    const response = await this.fetchWithAuth(`${GROW_BEDS_API_BASE}/reorder`, {
+      method: 'POST',
+      headers: this.getHeaders(true),
+      body: JSON.stringify({ bedIds }),
+    });
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({ error: 'Network error' }));
+      throw new Error(error.error || 'Failed to reorder beds');
+    }
+
+    return response.json();
+  }
+
+  async movePlantToBed(sourceBedId: string, plantingId: string, targetBedId: string) {
+    const response = await this.fetchWithAuth(`${GROW_BEDS_API_BASE}/${sourceBedId}/plants/move`, {
+      method: 'POST',
+      headers: this.getHeaders(true),
+      body: JSON.stringify({ plantingId, targetBedId }),
+    });
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({ error: 'Network error' }));
+      throw new Error(error.error || 'Failed to move plant');
+    }
+
+    return response.json();
+  }
+
   async getGardenTimeline() {
     try {
       const response = await this.fetchWithTimeout(`${API_BASE}/garden/timeline`, {

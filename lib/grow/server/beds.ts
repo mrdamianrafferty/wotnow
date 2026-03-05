@@ -31,9 +31,10 @@ export type SerializedBed = {
   updatedAt: string;
   plantCount: number;
   plantSummary: string;
+  lastActivity?: string | null;
 };
 
-export function serializeBed(row: BedRow, plantCount: number = 0, plantSummary: string = ''): SerializedBed {
+export function serializeBed(row: BedRow, plantCount: number = 0, plantSummary: string = '', lastActivity?: string | null): SerializedBed {
   return {
     id: row.id,
     name: row.name,
@@ -48,12 +49,14 @@ export function serializeBed(row: BedRow, plantCount: number = 0, plantSummary: 
     updatedAt: row.updated_at,
     plantCount,
     plantSummary,
+    lastActivity: lastActivity ?? null,
   };
 }
 
 export type PlantingSummaryRow = {
   bed_id: string;
   quantity: number;
+  planted_at?: string;
   grow_user_plants: { name: string };
 };
 
@@ -66,6 +69,33 @@ export function buildPlantSummary(rows: PlantingSummaryRow[]): string {
       return qty > 1 ? `${qty} ${r.grow_user_plants.name}` : r.grow_user_plants.name;
     })
     .join(', ');
+}
+
+/** Build a "last activity" string like "Planted Tomato 3d ago". Returns null if older than 30 days. */
+export function buildLastActivity(rows: PlantingSummaryRow[]): string | null {
+  if (rows.length === 0) return null;
+
+  let newest: PlantingSummaryRow | null = null;
+  let newestDate = 0;
+
+  for (const r of rows) {
+    if (!r.planted_at) continue;
+    const d = new Date(r.planted_at).getTime();
+    if (d > newestDate) {
+      newestDate = d;
+      newest = r;
+    }
+  }
+
+  if (!newest || !newestDate) return null;
+
+  const daysDiff = Math.floor((Date.now() - newestDate) / (1000 * 60 * 60 * 24));
+  if (daysDiff > 30) return null;
+
+  const name = newest.grow_user_plants.name;
+  if (daysDiff === 0) return `Planted ${name} today`;
+  if (daysDiff === 1) return `Planted ${name} 1d ago`;
+  return `Planted ${name} ${daysDiff}d ago`;
 }
 
 export type BedPlantingRow = {
@@ -89,6 +119,7 @@ export type SerializedBedPlanting = {
   photoUrl: string | null;
   quantity: number;
   plantedAt: string;
+  removedAt?: string | null;
 };
 
 type BedPlantingJoinRow = BedPlantingRow & {
@@ -114,6 +145,7 @@ export function serializeBedPlanting(row: BedPlantingJoinRow): SerializedBedPlan
     photoUrl: plant.photo_url,
     quantity: row.quantity ?? 1,
     plantedAt: row.planted_at,
+    removedAt: row.removed_at ?? undefined,
   };
 }
 

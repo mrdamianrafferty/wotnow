@@ -1,6 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { getAuthenticatedClient } from '../../../../lib/grow/server/auth';
-import { serializeBed, buildPlantSummary, nextBedColor, type BedRow, type PlantingSummaryRow } from '../../../../lib/grow/server/beds';
+import { serializeBed, buildPlantSummary, buildLastActivity, nextBedColor, type BedRow, type PlantingSummaryRow } from '../../../../lib/grow/server/beds';
 import { getTierLimits, isOverLimit, type GrowSubscriptionTier } from '../../../../lib/grow/subscription';
 
 const ALLOWED_TYPES = new Set(['raised_bed', 'container', 'in_ground', 'greenhouse', 'polytunnel', 'other']);
@@ -32,11 +32,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const bedIds = (beds as BedRow[]).map(b => b.id);
     const plantCounts: Record<string, number> = {};
     const plantSummaries: Record<string, string> = {};
+    const lastActivities: Record<string, string | null> = {};
 
     if (bedIds.length > 0) {
       const { data: plantings, error: plantingsError } = await supabase
         .from('grow_bed_plantings')
-        .select('bed_id, quantity, grow_user_plants!inner(name)')
+        .select('bed_id, quantity, planted_at, grow_user_plants!inner(name)')
         .in('bed_id', bedIds)
         .is('removed_at', null);
 
@@ -50,6 +51,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             const normalized: PlantingSummaryRow = {
               bed_id: row.bed_id,
               quantity: row.quantity,
+              planted_at: row.planted_at,
               grow_user_plants: row.grow_user_plants,
             };
             (byBed[row.bed_id] ??= []).push(normalized);
@@ -57,12 +59,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         }
         for (const [bedId, rows] of Object.entries(byBed)) {
           plantSummaries[bedId] = buildPlantSummary(rows);
+          lastActivities[bedId] = buildLastActivity(rows);
         }
       }
     }
 
     const serialized = (beds as BedRow[]).map(b =>
-      serializeBed(b, plantCounts[b.id] || 0, plantSummaries[b.id] || '')
+      serializeBed(b, plantCounts[b.id] || 0, plantSummaries[b.id] || '', lastActivities[b.id] ?? null)
     );
 
     return res.status(200).json({ beds: serialized });

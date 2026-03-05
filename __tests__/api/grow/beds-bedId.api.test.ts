@@ -30,7 +30,7 @@ function mockAuthFail() {
 
 function chainBuilder(resolveValue: { data: unknown; error: unknown } = { data: null, error: null }) {
   const builder: Record<string, jest.Mock> = {};
-  const chainMethods = ['select', 'insert', 'update', 'delete', 'eq', 'in', 'is', 'order', 'single', 'maybeSingle'];
+  const chainMethods = ['select', 'insert', 'update', 'delete', 'eq', 'in', 'is', 'not', 'order', 'limit', 'single', 'maybeSingle'];
   chainMethods.forEach(method => {
     builder[method] = jest.fn().mockReturnValue(builder);
   });
@@ -103,15 +103,21 @@ describe('GET /api/grow/beds/[bedId]', () => {
     expect(res._getStatusCode()).toBe(404);
   });
 
-  it('returns bed with plantings', async () => {
+  it('returns bed with plantings and empty history', async () => {
     mockAuth();
 
+    let plantingsCallCount = 0;
     mockSupabaseFrom.mockImplementation((table: string) => {
       if (table === 'grow_garden_beds') {
         return chainBuilder({ data: sampleBed, error: null });
       }
       if (table === 'grow_bed_plantings') {
-        return chainBuilder({ data: [samplePlanting], error: null });
+        plantingsCallCount++;
+        // First call: active plantings, second call: history
+        if (plantingsCallCount === 1) {
+          return chainBuilder({ data: [samplePlanting], error: null });
+        }
+        return chainBuilder({ data: [], error: null });
       }
       return chainBuilder();
     });
@@ -132,6 +138,7 @@ describe('GET /api/grow/beds/[bedId]', () => {
     expect(body.plantings[0].plantName).toBe('Tomato');
     expect(body.plantings[0].quantity).toBe(3);
     expect(body.plantings[0].plantId).toBe('plant-1');
+    expect(body.history).toEqual([]);
   });
 
   it('returns bed with empty plantings array when no plants assigned', async () => {
@@ -158,6 +165,53 @@ describe('GET /api/grow/beds/[bedId]', () => {
     const body = JSON.parse(res._getData());
     expect(body.bed.plantCount).toBe(0);
     expect(body.plantings).toEqual([]);
+    expect(body.history).toEqual([]);
+  });
+
+  it('returns history array with removed plantings including removedAt', async () => {
+    mockAuth();
+
+    const historyPlanting = {
+      ...samplePlanting,
+      id: 'planting-old',
+      removed_at: '2026-02-15',
+      grow_user_plants: {
+        id: 'plant-2',
+        name: 'Lettuce',
+        type: 'vegetable',
+        species_slug: 'lettuce',
+        variety: null,
+        photo_url: null,
+      },
+    };
+
+    let plantingsCallCount = 0;
+    mockSupabaseFrom.mockImplementation((table: string) => {
+      if (table === 'grow_garden_beds') {
+        return chainBuilder({ data: sampleBed, error: null });
+      }
+      if (table === 'grow_bed_plantings') {
+        plantingsCallCount++;
+        if (plantingsCallCount === 1) {
+          return chainBuilder({ data: [samplePlanting], error: null });
+        }
+        return chainBuilder({ data: [historyPlanting], error: null });
+      }
+      return chainBuilder();
+    });
+
+    const { req, res } = createMocks({
+      method: 'GET',
+      headers: { authorization: 'Bearer valid' },
+      query: { bedId: 'bed-1' },
+    });
+
+    await handler(req, res);
+    expect(res._getStatusCode()).toBe(200);
+    const body = JSON.parse(res._getData());
+    expect(body.history).toHaveLength(1);
+    expect(body.history[0].plantName).toBe('Lettuce');
+    expect(body.history[0].removedAt).toBe('2026-02-15');
   });
 });
 

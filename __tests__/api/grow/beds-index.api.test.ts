@@ -112,8 +112,8 @@ describe('GET /api/grow/beds', () => {
       if (table === 'grow_bed_plantings') {
         const builder = chainBuilder({
           data: [
-            { bed_id: 'bed-1', quantity: 6, grow_user_plants: { name: 'Tomato' } },
-            { bed_id: 'bed-1', quantity: 3, grow_user_plants: { name: 'Basil' } },
+            { bed_id: 'bed-1', quantity: 6, planted_at: new Date().toISOString().split('T')[0], grow_user_plants: { name: 'Tomato' } },
+            { bed_id: 'bed-1', quantity: 3, planted_at: new Date().toISOString().split('T')[0], grow_user_plants: { name: 'Basil' } },
           ],
           error: null,
         });
@@ -135,6 +135,90 @@ describe('GET /api/grow/beds', () => {
     expect(body.beds[0].type).toBe('raised_bed');
     expect(body.beds[0].color).toBe('terracotta');
     expect(typeof body.beds[0].plantCount).toBe('number');
+  });
+
+  it('includes lastActivity when recent plantings exist', async () => {
+    mockAuth();
+
+    const today = new Date().toISOString().split('T')[0];
+    mockSupabaseFrom.mockImplementation((table: string) => {
+      if (table === 'grow_garden_beds') {
+        return chainBuilder({ data: [sampleBed], error: null });
+      }
+      if (table === 'grow_bed_plantings') {
+        return chainBuilder({
+          data: [
+            { bed_id: 'bed-1', quantity: 2, planted_at: today, grow_user_plants: { name: 'Tomato' } },
+          ],
+          error: null,
+        });
+      }
+      return chainBuilder();
+    });
+
+    const { req, res } = createMocks({
+      method: 'GET',
+      headers: { authorization: 'Bearer valid' },
+    });
+
+    await handler(req, res);
+    expect(res._getStatusCode()).toBe(200);
+    const body = JSON.parse(res._getData());
+    expect(body.beds[0].lastActivity).toBe('Planted Tomato today');
+  });
+
+  it('returns null lastActivity when no recent plantings', async () => {
+    mockAuth();
+
+    mockSupabaseFrom.mockImplementation((table: string) => {
+      if (table === 'grow_garden_beds') {
+        return chainBuilder({ data: [sampleBed], error: null });
+      }
+      if (table === 'grow_bed_plantings') {
+        return chainBuilder({ data: [], error: null });
+      }
+      return chainBuilder();
+    });
+
+    const { req, res } = createMocks({
+      method: 'GET',
+      headers: { authorization: 'Bearer valid' },
+    });
+
+    await handler(req, res);
+    expect(res._getStatusCode()).toBe(200);
+    const body = JSON.parse(res._getData());
+    expect(body.beds[0].lastActivity).toBeNull();
+  });
+
+  it('returns null lastActivity when plantings are older than 30 days', async () => {
+    mockAuth();
+
+    const oldDate = new Date(Date.now() - 35 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+    mockSupabaseFrom.mockImplementation((table: string) => {
+      if (table === 'grow_garden_beds') {
+        return chainBuilder({ data: [sampleBed], error: null });
+      }
+      if (table === 'grow_bed_plantings') {
+        return chainBuilder({
+          data: [
+            { bed_id: 'bed-1', quantity: 1, planted_at: oldDate, grow_user_plants: { name: 'Lettuce' } },
+          ],
+          error: null,
+        });
+      }
+      return chainBuilder();
+    });
+
+    const { req, res } = createMocks({
+      method: 'GET',
+      headers: { authorization: 'Bearer valid' },
+    });
+
+    await handler(req, res);
+    expect(res._getStatusCode()).toBe(200);
+    const body = JSON.parse(res._getData());
+    expect(body.beds[0].lastActivity).toBeNull();
   });
 });
 

@@ -12,6 +12,7 @@ interface BedCardProps {
   plantCount: number;
   plantSummary?: string;
   sunExposure?: SunExposure | null;
+  lastActivity?: string | null;
   isNew?: boolean;
 }
 
@@ -21,7 +22,7 @@ const SUN_ICONS: Record<SunExposure, React.ReactNode> = {
   full_shade: <Cloud className="h-3.5 w-3.5 text-slate-400" />,
 };
 
-export function BedCard({ id, name, type, color, plantCount, plantSummary, sunExposure, isNew }: BedCardProps) {
+export function BedCard({ id, name, type, color, plantCount, plantSummary, sunExposure, lastActivity, isNew }: BedCardProps) {
   const hexColor = BED_COLOR_HEX[color] || BED_COLOR_HEX.terracotta;
 
   return (
@@ -50,6 +51,9 @@ export function BedCard({ id, name, type, color, plantCount, plantSummary, sunEx
               </>
             )}
           </p>
+          {lastActivity && (
+            <p className="text-[10px] text-muted-foreground mt-1 truncate">{lastActivity}</p>
+          )}
         </CardContent>
       </Card>
     </Link>

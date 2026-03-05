@@ -50,9 +50,25 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const serializedPlantings = plantingRows.map(serializeBedPlanting);
     const summary = buildPlantSummary(plantingRows);
 
+    // Get historical (removed) plantings
+    const { data: historyRows, error: historyError } = await supabase
+      .from('grow_bed_plantings')
+      .select('id, bed_id, plant_id, quantity, planted_at, removed_at, harvest_data, created_at, grow_user_plants!inner(id, name, type, species_slug, variety, photo_url)')
+      .eq('bed_id', bedId)
+      .not('removed_at', 'is', null)
+      .order('removed_at', { ascending: false })
+      .limit(50);
+
+    if (historyError) {
+      console.error('[grow] Failed to load history for bed', bedId, historyError);
+    }
+
+    const history = (historyRows as any[] || []).map(serializeBedPlanting); // eslint-disable-line @typescript-eslint/no-explicit-any
+
     return res.status(200).json({
       bed: serializeBed(bed as BedRow, serializedPlantings.length, summary),
       plantings: serializedPlantings,
+      history,
     });
   }
 
