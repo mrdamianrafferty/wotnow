@@ -19,12 +19,16 @@ import {
   Cloud,
   Droplets,
   X,
+  AlertTriangle,
+  Info,
+  Leaf,
 } from 'lucide-react';
 import Link from 'next/link';
 import { api } from '../../lib/grow/api';
 import { BED_COLOR_HEX, BED_TYPES, type SerializedBed, type SerializedBedPlanting } from '../../lib/grow/server/beds';
 import type { SerializedPlant } from '../../lib/grow/server/plants';
 import { EditBedDialog } from './EditBedDialog';
+import type { BedIntelligenceResponse } from '../../lib/grow/bedIntelligenceTypes';
 
 export function BedDetailPage() {
   const router = useRouter();
@@ -35,6 +39,9 @@ export function BedDetailPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+
+  // Intelligence
+  const [intelligence, setIntelligence] = useState<BedIntelligenceResponse | null>(null);
 
   // Add plants panel
   const [showAddPanel, setShowAddPanel] = useState(false);
@@ -61,6 +68,12 @@ export function BedDetailPage() {
   useEffect(() => {
     loadBed();
   }, [loadBed]);
+
+  // Fetch intelligence (supplementary — silently fails)
+  useEffect(() => {
+    if (!bedId) return;
+    api.getBedIntelligence(bedId).then(setIntelligence).catch(() => {});
+  }, [bedId]);
 
   // Set of plant IDs already in this bed
   const existingPlantIds = useMemo(
@@ -247,6 +260,24 @@ export function BedDetailPage() {
         <p className="text-sm text-muted-foreground">{bed.notes}</p>
       )}
 
+      {/* Rotation Warnings */}
+      {intelligence?.rotationWarnings && intelligence.rotationWarnings.length > 0 && (
+        <div className="space-y-2">
+          {intelligence.rotationWarnings.map((w) => (
+            <div
+              key={w.rotationGroup}
+              className="flex items-start gap-2.5 p-3 rounded-lg bg-amber-50 border border-amber-100"
+            >
+              <AlertTriangle className="h-4 w-4 text-amber-500 mt-0.5 flex-shrink-0" />
+              <div>
+                <p className="text-xs font-medium text-amber-800">Rotation Warning</p>
+                <p className="text-xs text-amber-700 mt-0.5">{w.message}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
       {/* Action buttons */}
       <div className="flex gap-2">
         <Button
@@ -349,6 +380,15 @@ export function BedDetailPage() {
                             onCheckedChange={(checked) => togglePlantSelection(plant.id, !!checked)}
                           />
                           <span className="text-sm truncate">{plant.name}</span>
+                          {/* Companion indicator */}
+                          {intelligence?.companionSets && (plant as any).speciesSlug && (() => {
+                            const slug = (plant as any).speciesSlug;
+                            const isBad = intelligence.companionSets.badCompanions.includes(slug);
+                            const isGood = intelligence.companionSets.goodCompanions.includes(slug);
+                            if (isBad) return <span className="w-2 h-2 rounded-full bg-amber-400 flex-shrink-0" title="Poor companion for current plants" />;
+                            if (isGood) return <span className="w-2 h-2 rounded-full bg-green-500 flex-shrink-0" title="Good companion for current plants" />;
+                            return null;
+                          })()}
                           {plant.type && !typeFilter && (
                             <span className="text-xs text-muted-foreground flex-shrink-0">({plant.type})</span>
                           )}
@@ -468,6 +508,33 @@ export function BedDetailPage() {
               </div>
             </div>
           )}
+
+          {/* Quick Fill Suggestions */}
+          {intelligence?.quickFillSuggestions && intelligence.quickFillSuggestions.length > 0 && (
+            <Card>
+              <CardContent className="p-4">
+                <div className="flex items-center gap-2 mb-3">
+                  <Leaf className="h-4 w-4 text-green-600" />
+                  <h3 className="text-sm font-medium">What to plant now</h3>
+                </div>
+                <div className="space-y-2">
+                  {intelligence.quickFillSuggestions.map((s) => (
+                    <div key={s.speciesSlug} className="flex items-center justify-between gap-2">
+                      <div className="min-w-0">
+                        <p className="text-sm font-medium truncate">{s.speciesName}</p>
+                        <p className="text-xs text-muted-foreground">{s.reason}</p>
+                      </div>
+                      {s.category && (
+                        <Badge variant="secondary" className="text-[10px] flex-shrink-0">
+                          {s.category}
+                        </Badge>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          )}
         </div>
       ) : (
         <div className="space-y-2">
@@ -505,6 +572,28 @@ export function BedDetailPage() {
                 </Button>
               </CardContent>
             </Card>
+          ))}
+        </div>
+      )}
+
+      {/* Succession Prompts */}
+      {intelligence?.successionPrompts && intelligence.successionPrompts.length > 0 && (
+        <div className="space-y-2">
+          {intelligence.successionPrompts.map((sp, i) => (
+            <div
+              key={i}
+              className="flex items-start gap-2.5 p-3 rounded-lg bg-blue-50 border border-blue-100"
+            >
+              <Sprout className="h-4 w-4 text-blue-500 mt-0.5 flex-shrink-0" />
+              <div>
+                <p className="text-xs font-medium text-blue-800">
+                  {sp.removedPlantName} came out in {sp.removedMonth}
+                </p>
+                <p className="text-xs text-blue-700 mt-0.5">
+                  Consider {sp.suggestions.map(s => s.speciesName).join(', ')} for a second crop.
+                </p>
+              </div>
+            </div>
           ))}
         </div>
       )}

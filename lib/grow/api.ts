@@ -4,6 +4,7 @@ import { trackedFetch } from '../performance/api-tracker';
 import { swrCache, CACHE_TTLS } from './cache';
 import { coalesceRequest } from './requestCoalescing';
 import type { PlantSpecies, PlantSpeciesCategoriesResponse, PlantSpeciesSearchResponse } from './species';
+import type { BedIntelligenceResponse } from './bedIntelligenceTypes';
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 const API_BASE = EDGE_FUNCTION_BASE;
@@ -1054,6 +1055,20 @@ export class ApiClient {
     if (!response.ok) {
       const error = await response.json().catch(() => ({ error: 'Network error' }));
       throw new Error(error.error || 'Failed to remove plants');
+    }
+
+    return response.json();
+  }
+
+  async getBedIntelligence(bedId: string): Promise<BedIntelligenceResponse> {
+    const response = await this.fetchWithAuth(`${GROW_BEDS_API_BASE}/${bedId}/intelligence`, {
+      headers: this.getHeaders(true),
+      cache: 'no-store',
+    });
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({ error: 'Network error' }));
+      throw new Error(error.error || 'Failed to load bed intelligence');
     }
 
     return response.json();

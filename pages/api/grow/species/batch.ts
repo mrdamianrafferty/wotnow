@@ -144,6 +144,8 @@ function serializeCustomSpecies(row: CustomSpeciesRow): PlantSpecies {
     // Companion planting - not available for custom species
     companionsWith: [],
     companionsAvoid: [],
+    // Rotation - not available for custom species
+    rotationGroup: null,
   };
 }
 
@@ -225,6 +227,8 @@ const BASE_SELECT = [
   // Companion planting
   'companions_with',
   'companions_avoid',
+  // Rotation
+  'rotation_group',
   ...Object.keys(PLANT_SPECIES_LANGUAGE_FIELDS),
 ].join(',');
 

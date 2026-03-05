@@ -84,6 +84,8 @@ const BASE_SELECT = [
   // Companion planting
   'companions_with',
   'companions_avoid',
+  // Rotation
+  'rotation_group',
   ...Object.keys(PLANT_SPECIES_LANGUAGE_FIELDS),
 ].join(',');
 

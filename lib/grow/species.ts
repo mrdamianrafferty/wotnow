@@ -150,6 +150,9 @@ export type PlantSpeciesRow = {
   // Companion planting
   companions_with: string[] | null;
   companions_avoid: string[] | null;
+
+  // Rotation
+  rotation_group: string | null;
 } & {
   [K in keyof typeof PLANT_SPECIES_LANGUAGE_FIELDS]: string | null;
 };
@@ -264,6 +267,9 @@ export interface PlantSpecies {
   // Companion planting
   companionsWith: string[];
   companionsAvoid: string[];
+
+  // Rotation
+  rotationGroup: string | null;
 }
 
 export interface PlantSpeciesSearchResponse {
@@ -387,5 +393,8 @@ export function serializePlantSpecies(row: PlantSpeciesRow): PlantSpecies {
     // Companion planting
     companionsWith: row.companions_with ?? [],
     companionsAvoid: row.companions_avoid ?? [],
+
+    // Rotation
+    rotationGroup: row.rotation_group ?? null,
   };
 }
