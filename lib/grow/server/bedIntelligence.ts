@@ -187,7 +187,19 @@ export async function getSuccessionPrompts(
   const prompts: SuccessionPrompt[] = [];
   const removedRows = removed as unknown as RemovedPlantingRow[];
 
+  // Deduplicate by plant name, keeping the most recent removal per species
+  const seen = new Map<string, RemovedPlantingRow>();
   for (const r of removedRows) {
+    const name = r.grow_user_plants?.name;
+    if (!name) continue;
+    const existing = seen.get(name);
+    if (!existing || new Date(r.removed_at!) > new Date(existing.removed_at!)) {
+      seen.set(name, r);
+    }
+  }
+  const dedupedRows = [...seen.values()];
+
+  for (const r of dedupedRows) {
     const plantName = r.grow_user_plants?.name;
     if (!plantName) continue;
 
