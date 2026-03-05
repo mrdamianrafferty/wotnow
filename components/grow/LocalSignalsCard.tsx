@@ -55,7 +55,7 @@ interface LocalSignalsCardProps {
 // STYLING HELPERS
 // =============================================================================
 
-const SEVERITY_COLORS: Record<SignalSeverity, { bg: string; border: string; text: string; badge: string }> = {
+export const SEVERITY_COLORS: Record<SignalSeverity, { bg: string; border: string; text: string; badge: string }> = {
   low: {
     bg: 'bg-blue-50',
     border: 'border-blue-200',
@@ -88,7 +88,7 @@ const _CATEGORY_LABELS: Record<SignalCategory, { label: string; icon: React.Comp
   weather_damage: { label: 'Weather Damage', icon: AlertTriangle },
 };
 
-function getSignalIcon(signalType: string): React.ComponentType<{ className?: string }> {
+export function getSignalIcon(signalType: string): React.ComponentType<{ className?: string }> {
   const icons: Record<string, React.ComponentType<{ className?: string }>> = {
     // Pest pressure
     aphid_conditions: Bug,

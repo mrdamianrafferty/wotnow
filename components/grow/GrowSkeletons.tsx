@@ -2,55 +2,44 @@ import React from 'react';
 import { Skeleton, SkeletonText } from '../SkeletonLoader';
 
 /**
- * Skeleton loader for Grow Homepage with task cards
+ * Skeleton loader for Grow Homepage — garden status dashboard
  */
 export const SkeletonGrowHomepage: React.FC = () => {
   return (
     <div className="space-y-6">
-      {/* Header with location */}
-      <div className="flex justify-between items-center">
-        <Skeleton className="h-8 w-48" />
-        <Skeleton className="h-10 w-32 rounded-lg" />
-      </div>
-
-      {/* Weather context card */}
-      <div className="card bg-base-100 shadow-md">
-        <div className="card-body">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4 flex-1">
-              <Skeleton className="w-16 h-16 rounded-full" />
-              <div className="space-y-2 flex-1">
-                <Skeleton className="h-6 w-40" />
-                <Skeleton className="h-4 w-32" />
-              </div>
-            </div>
-            <Skeleton className="w-20 h-20 rounded-xl" />
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <Skeleton className="h-7 w-7 rounded-full" />
+          <div className="space-y-1.5">
+            <Skeleton className="h-6 w-32" />
+            <Skeleton className="h-3.5 w-48" />
           </div>
+        </div>
+        <div className="flex items-center gap-2">
+          <Skeleton className="h-9 w-9 rounded-lg" />
+          <Skeleton className="h-9 w-9 rounded-lg" />
         </div>
       </div>
 
-      {/* Task cards stack */}
-      {[1, 2, 3].map((i) => (
-        <div key={i} className="card bg-base-100 shadow-lg">
-          <div className="card-body">
-            <div className="flex items-start justify-between mb-4">
-              <div className="flex items-center space-x-3 flex-1">
-                <Skeleton className="w-12 h-12 rounded-full" />
-                <div className="space-y-2 flex-1">
-                  <Skeleton className="h-6 w-3/4" />
-                  <Skeleton className="h-4 w-1/2" />
-                </div>
-              </div>
-              <Skeleton className="w-16 h-8 rounded-full" />
-            </div>
-            <SkeletonText lines={2} />
-            <div className="flex justify-between items-center mt-4">
-              <Skeleton className="h-4 w-24" />
-              <Skeleton className="h-4 w-32" />
-            </div>
-          </div>
-        </div>
-      ))}
+      {/* Bed pills row */}
+      <div className="flex gap-3 overflow-hidden">
+        {[1, 2, 3, 4].map(i => (
+          <Skeleton key={i} className="h-[60px] w-[120px] rounded-xl shrink-0" />
+        ))}
+      </div>
+
+      {/* Weather pulse card */}
+      <div className="space-y-2">
+        <Skeleton className="h-4 w-28" />
+        <Skeleton className="h-16 w-full rounded-xl" />
+      </div>
+
+      {/* Compact card */}
+      <div className="space-y-2">
+        <Skeleton className="h-4 w-36" />
+        <Skeleton className="h-14 w-full rounded-xl" />
+      </div>
     </div>
   );
 };

@@ -4,7 +4,7 @@
  * All colours use rgba with 40% opacity for subtlety.
  */
 
-type SeasonalTint = {
+export type SeasonalTint = {
   backgroundColor: string;
   borderColor: string;
   label: string;
