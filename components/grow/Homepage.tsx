@@ -3,6 +3,16 @@
 import React, { useState, useEffect, useCallback, useMemo, startTransition } from 'react';
 import { motion } from 'framer-motion';
 import { getSeasonalTint } from '../../lib/grow/seasonalColors';
+import {
+  getTimeGreeting,
+  getSeasonalWisdom,
+  getEncouragement,
+  getTimeOfDayOverlay,
+  updateStreak,
+  getSunGlowOpacity,
+  shouldShowRain,
+  shouldShowFrost,
+} from '../../lib/grow/homepageDelight';
 import { auth } from '../../lib/grow/auth';
 import { api } from '../../lib/grow/api';
 import { useLocalSignals } from '../../hooks/useLocalSignals';
@@ -26,6 +36,10 @@ import { HomepageSkeleton } from './homepage/HomepageSkeleton';
 const STATIC_COPY = [
   'My Garden',
   'My Beds',
+  'Good morning, gardener',
+  'Afternoon in the garden',
+  'Evening garden check',
+  'Garden at rest',
   'Harvest Horizon',
   'Garden Pulse',
   'What to Start This Week',
@@ -41,11 +55,6 @@ const STATIC_COPY = [
   'Empty',
 ];
 
-const staggerContainer = {
-  hidden: {},
-  show: { transition: { staggerChildren: 0.07 } },
-};
-
 const staggerItem = {
   hidden: { opacity: 0, y: 12 },
   show: { opacity: 1, y: 0, transition: { duration: 0.3, ease: 'easeOut' as const } },
@@ -57,6 +66,18 @@ export function Homepage() {
   const seasonal = getSeasonalTint();
   const { t } = useTranslationMap(useMemo(() => STATIC_COPY, []));
   const { isBloomOrHigher } = useGrowSubscription();
+
+  // Delight: stagger speed adapts to season
+  const staggerContainer = useMemo(() => ({
+    hidden: {},
+    show: { transition: { staggerChildren: seasonal.staggerSpeed } },
+  }), [seasonal.staggerSpeed]);
+
+  // Delight: time-of-day + seasonal content
+  const greeting = useMemo(() => t(getTimeGreeting()), [t]);
+  const wisdom = useMemo(() => getSeasonalWisdom(), []);
+  const timeOverlay = useMemo(() => getTimeOfDayOverlay(), []);
+  const streak = useMemo(() => updateStreak(), []);
 
   // Core state
   const [isLoading, setIsLoading] = useState(true);
@@ -209,9 +230,29 @@ export function Homepage() {
     return ids;
   }, [weatherData?.alerts]);
 
+  // Delight: weather-driven atmosphere
+  const forecast = weatherData?.forecast?.[0];
+  const showRain = forecast ? shouldShowRain(forecast.precipitation) : false;
+  const showFrost = forecast && weatherData?.soil
+    ? shouldShowFrost(forecast.tempMin, weatherData.soil.temperature6cm)
+    : false;
+  const sunGlowOpacity = forecast && !showRain && forecast.precipitation === 0
+    ? getSunGlowOpacity(forecast.tempMax)
+    : 0;
+
   if (isLoading) {
     return <HomepageSkeleton />;
   }
+
+  // Delight: encouragement (needs harvest data from children — approximate from beds)
+  const totalPlants = beds.reduce((sum, b) => sum + (b.plantCount || 0), 0);
+  const readyCount = beds.filter(b => b.bedStatus === 'ready_to_harvest').length;
+  const encouragement = getEncouragement({
+    bedCount: beds.length,
+    totalPlants,
+    readyToHarvest: readyCount,
+    nearHarvest: beds.filter(b => b.bedStatus === 'approaching_harvest').length,
+  });
 
   return (
     <motion.div
@@ -219,11 +260,50 @@ export function Homepage() {
       initial="hidden"
       animate="show"
       style={{ backgroundColor: seasonal.backgroundColor }}
-      className="space-y-6 pb-24 -mx-4 px-4 -mt-8 pt-8 min-h-screen"
+      className="space-y-6 pb-24 -mx-4 px-4 -mt-8 pt-8 min-h-screen relative overflow-hidden"
+      data-frost={showFrost ? 'true' : undefined}
     >
+      {/* Time-of-day atmospheric overlay */}
+      <div
+        className="absolute inset-0 pointer-events-none"
+        style={{ backgroundImage: timeOverlay }}
+        aria-hidden="true"
+      />
+
+      {/* Sun warmth glow */}
+      {sunGlowOpacity > 0 && (
+        <div
+          className="absolute -top-10 -right-10 w-[200px] h-[200px] rounded-full pointer-events-none motion-safe:animate-sun-breathe"
+          style={{
+            background: `radial-gradient(circle, rgba(251,191,36,${sunGlowOpacity}) 0%, transparent 70%)`,
+          }}
+          aria-hidden="true"
+        />
+      )}
+
+      {/* Rain whisper */}
+      {showRain && (
+        <div className="absolute inset-x-0 top-0 h-20 pointer-events-none overflow-hidden" aria-hidden="true">
+          {[0, 1, 2, 3, 4].map(i => (
+            <div
+              key={i}
+              className="homepage-rain-drop"
+              style={{
+                left: `${15 + i * 17}%`,
+                animationDelay: `${i * 0.25}s`,
+              }}
+            />
+          ))}
+        </div>
+      )}
+
       <motion.div variants={staggerItem}>
         <HomepageHeader
           seasonal={seasonal}
+          greeting={greeting}
+          wisdom={wisdom}
+          encouragement={encouragement}
+          streak={streak}
           currentLocation={userLocation}
           onLocationUpdate={handleLocationUpdate}
           onRefresh={handleRefresh}

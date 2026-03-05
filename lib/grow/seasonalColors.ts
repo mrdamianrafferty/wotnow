@@ -11,56 +11,72 @@ export type SeasonalTint = {
   gradient: string;
   accentColor: string;
   iconName: 'Sprout' | 'Flower2' | 'Sun' | 'Apple' | 'Snowflake';
+  /** Framer Motion stagger delay — faster in spring, slower in winter */
+  staggerSpeed: number;
+  /** Internal season key for content lookup */
+  seasonKey: string;
 };
 
 const SEASONS: Record<string, SeasonalTint> = {
   awakening: {
-    backgroundColor: 'rgba(219, 234, 254, 0.4)', // blue-50
-    borderColor: 'rgba(191, 219, 254, 0.6)',       // blue-200
+    backgroundColor: 'rgba(219, 234, 254, 0.4)',
+    borderColor: 'rgba(191, 219, 254, 0.6)',
     label: 'Awakening',
     gradient: 'linear-gradient(135deg, rgba(239,246,255,0.6), rgba(209,250,229,0.6))',
     accentColor: '#3b82f6',
     iconName: 'Sprout',
+    staggerSpeed: 0.12,
+    seasonKey: 'awakening',
   },
   spring: {
-    backgroundColor: 'rgba(209, 250, 229, 0.4)', // emerald-50
-    borderColor: 'rgba(167, 243, 208, 0.6)',       // emerald-200
+    backgroundColor: 'rgba(209, 250, 229, 0.4)',
+    borderColor: 'rgba(167, 243, 208, 0.6)',
     label: 'Spring',
     gradient: 'linear-gradient(135deg, rgba(209,250,229,0.6), rgba(220,252,231,0.6))',
     accentColor: '#10b981',
     iconName: 'Flower2',
+    staggerSpeed: 0.05,
+    seasonKey: 'spring',
   },
   midsummer: {
-    backgroundColor: 'rgba(220, 252, 231, 0.4)', // green-50
-    borderColor: 'rgba(187, 247, 208, 0.6)',       // green-200
+    backgroundColor: 'rgba(220, 252, 231, 0.4)',
+    borderColor: 'rgba(187, 247, 208, 0.6)',
     label: 'Midsummer',
     gradient: 'linear-gradient(135deg, rgba(220,252,231,0.6), rgba(254,243,199,0.6))',
     accentColor: '#22c55e',
     iconName: 'Sun',
+    staggerSpeed: 0.05,
+    seasonKey: 'midsummer',
   },
   highSummer: {
-    backgroundColor: 'rgba(254, 243, 199, 0.4)', // amber-50
-    borderColor: 'rgba(253, 230, 138, 0.6)',       // amber-200
+    backgroundColor: 'rgba(254, 243, 199, 0.4)',
+    borderColor: 'rgba(253, 230, 138, 0.6)',
     label: 'High Summer',
     gradient: 'linear-gradient(135deg, rgba(254,243,199,0.6), rgba(255,237,213,0.6))',
     accentColor: '#f59e0b',
     iconName: 'Sun',
+    staggerSpeed: 0.06,
+    seasonKey: 'highSummer',
   },
   autumn: {
-    backgroundColor: 'rgba(255, 237, 213, 0.4)', // orange-50
-    borderColor: 'rgba(254, 215, 170, 0.6)',       // orange-200
+    backgroundColor: 'rgba(255, 237, 213, 0.4)',
+    borderColor: 'rgba(254, 215, 170, 0.6)',
     label: 'Autumn',
     gradient: 'linear-gradient(135deg, rgba(255,237,213,0.6), rgba(254,243,199,0.6))',
     accentColor: '#f97316',
     iconName: 'Apple',
+    staggerSpeed: 0.09,
+    seasonKey: 'autumn',
   },
   winter: {
-    backgroundColor: 'rgba(248, 250, 252, 0.4)', // slate-50
-    borderColor: 'rgba(226, 232, 240, 0.6)',       // slate-200
+    backgroundColor: 'rgba(248, 250, 252, 0.4)',
+    borderColor: 'rgba(226, 232, 240, 0.6)',
     label: 'Winter Rest',
     gradient: 'linear-gradient(135deg, rgba(248,250,252,0.6), rgba(241,245,249,0.6))',
     accentColor: '#64748b',
     iconName: 'Snowflake',
+    staggerSpeed: 0.14,
+    seasonKey: 'winter',
   },
 };
 

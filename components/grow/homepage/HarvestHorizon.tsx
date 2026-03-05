@@ -1,4 +1,5 @@
 import React from 'react';
+import { motion } from 'framer-motion';
 import { Cherry, Sparkles } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { auth } from '../../../lib/grow/auth';
@@ -82,10 +83,12 @@ export function HarvestHorizon({ seasonal, t }: HarvestHorizonProps) {
                 </div>
               </div>
               <div className="mt-2 h-1.5 w-full rounded-full bg-muted overflow-hidden">
-                <div
-                  className="h-full rounded-full transition-all"
+                <motion.div
+                  className="h-full rounded-full"
+                  initial={{ width: '0%' }}
+                  animate={{ width: `${Math.min(plant.growthProgress * 100, 100)}%` }}
+                  transition={{ duration: 1.2, delay: 0.3, ease: 'easeOut' as const }}
                   style={{
-                    width: `${Math.min(plant.growthProgress * 100, 100)}%`,
                     backgroundImage: `linear-gradient(to right, ${seasonal.accentColor}, ${seasonal.accentColor}cc)`,
                   }}
                 />

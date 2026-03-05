@@ -34,7 +34,7 @@ export function BedPill({ bed, seasonal, t }: BedPillProps) {
       href={`/grow/garden/beds/${bed.id}`}
       role="listitem"
       aria-label={`${bed.name} — ${bed.plantCount || 0} plants, ${bed.bedStatus?.replace(/_/g, ' ') || 'empty'}`}
-      className="snap-start shrink-0 block w-[120px] rounded-xl border border-border/60 shadow-sm overflow-hidden hover:shadow-md hover:scale-[1.03] active:scale-[0.97] transition-all duration-200"
+      className={`snap-start shrink-0 block w-[120px] rounded-xl border border-border/60 shadow-sm overflow-hidden hover:shadow-md hover:scale-[1.03] active:scale-[0.97] transition-all duration-200${bed.bedStatus === 'ready_to_harvest' ? ' motion-safe:animate-harvest-glow' : ''}`}
       style={{ backgroundImage: seasonal.gradient }}
     >
       <div className="h-1" style={{ backgroundColor: stripe }} />

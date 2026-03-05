@@ -335,7 +335,31 @@ The FAQ is entirely surf-focused (`SurfSiteFAQ`). Add sections for Grow Daisy, s
 
 The premium FAQ uses the brilliant term "weather moats" but it's buried in a collapsed accordion. Surface it in the premium page header or Bloom tier description.
 
-### 5.8 Fix GrowPremiumGate loading flash
+### 5.8 Homepage Delight — Tier 3: Medium Effort, High Impact
+
+**Status:** Planned
+**Depends on:** Tier 1 & 2 (shipped)
+
+| Item | Description | Effort |
+|------|-------------|--------|
+| **Garden Rings** | Apple Fitness-inspired SVG rings (watering, tasks, harvest) in header — `stroke-dashoffset` animated with Framer Motion | Medium |
+| **Contextual Quick Actions** | 2-3 adaptive pill buttons below header that change with weather/garden state (e.g. "Water today", "Harvest!", "Check for slugs") | Medium |
+| **Today's Focus Hero** | Elevate the most important section daily to a hero card — rain warning, harvest celebration, or planting window opening | Medium |
+| **Wind-Responsive Icon** | Header season icon switches from `gentle-sway` to `windy-sway` when wind > 8 m/s from weather data | Tiny |
+
+### 5.9 Homepage Delight — Tier 4: Polish
+
+**Status:** Planned
+
+| Item | Description | Effort |
+|------|-------------|--------|
+| **Seasonal Card Textures** | CSS-only: spring diagonal stripes, summer dappled light, autumn warm radials, winter frost glass — all at `opacity: 0.05-0.08` | Small |
+| **Parallax Header** | Framer Motion `useScroll` + `useTransform` — header moves slightly slower than content on scroll (30px max) | Small |
+| **Garden Age** | "Your garden: 47 days old" from first bed creation date. Milestones at 7, 30, 90, 365 days with celebration banners | Small |
+| **Season Icon Tap Surprise** | `whileTap={{ scale: 1.3, rotate: 15 }}` with spring physics on header icon — hidden delight | Tiny |
+| **Haptic Feedback** | `navigator.vibrate()` on bed pill tap (10ms), refresh (20ms), harvest celebration ([10, 50, 20]ms) | Tiny |
+
+### 5.10 Fix GrowPremiumGate loading flash
 
 **File:** `components/grow/premium/GrowPremiumGate.tsx` (lines 92-95)
 
