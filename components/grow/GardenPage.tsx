@@ -27,11 +27,6 @@ import {
   Filter,
   ExternalLink,
   Library,
-  User,
-  LayoutGrid,
-  List,
-  Expand,
-  Shrink,
   ChevronDown,
   ChevronUp,
   Fence
@@ -351,8 +346,8 @@ export function GardenPage() {
   // Track plants being deleted for exit animation
   const [deletingPlantIds, setDeletingPlantIds] = useState<Set<string>>(new Set());
 
-  // View mode toggle: 'my' = user's plants, 'beds' = garden beds, 'all' = all species in system
-  const [viewMode, setViewMode] = useState<'my' | 'beds' | 'all'>('my');
+  // View mode toggle: 'garden' = beds + unassigned plants, 'all' = all species in system
+  const [viewMode, setViewMode] = useState<'garden' | 'all'>('garden');
 
   // Garden beds state
   const [beds, setBeds] = useState<SerializedBed[]>([]);
@@ -1392,32 +1387,20 @@ export function GardenPage() {
           <FeatureErrorBoundary feature="Garden Plants">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
             <div className="flex items-center gap-3">
-              <h2 className="text-xl font-medium">Plant Inventory</h2>
+              <h2 className="text-xl font-medium">My Garden</h2>
               {/* View Mode Toggle */}
               <div className="flex items-center bg-muted rounded-lg p-1">
                 <button
-                  onClick={() => setViewMode('my')}
+                  onClick={() => setViewMode('garden')}
                   className={`flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-md transition-all ${
-                    viewMode === 'my'
-                      ? 'bg-white shadow-sm text-green-700 font-medium'
-                      : 'text-muted-foreground hover:text-foreground'
-                  }`}
-                >
-                  <User className="h-3.5 w-3.5" />
-                  <span className="hidden sm:inline">My Plants</span>
-                  <span className="sm:hidden">Mine</span>
-                </button>
-                <button
-                  onClick={() => setViewMode('beds')}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-md transition-all ${
-                    viewMode === 'beds'
+                    viewMode === 'garden'
                       ? 'bg-white shadow-sm text-green-700 font-medium'
                       : 'text-muted-foreground hover:text-foreground'
                   }`}
                 >
                   <Fence className="h-3.5 w-3.5" />
-                  <span className="hidden sm:inline">Beds</span>
-                  <span className="sm:hidden">Beds</span>
+                  <span className="hidden sm:inline">My Garden</span>
+                  <span className="sm:hidden">Garden</span>
                 </button>
                 <button
                   onClick={() => setViewMode('all')}
@@ -1433,69 +1416,41 @@ export function GardenPage() {
                 </button>
               </div>
             </div>
-            {viewMode === 'my' && (
-              <div className="flex gap-2">
-                <Button
-                  variant="outline"
-                  onClick={() => setGuildModalOpen(true)}
-                  disabled={isSaving}
-                  className="flex items-center gap-2 border-green-600 text-green-600 hover:bg-green-50"
-                >
-                  {isSaving ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : (
-                    <Trees className="h-4 w-4" />
-                  )}
-                  Make a Guild
-                </Button>
-                <Button
-                  className="flex items-center gap-2 bg-green-600 hover:bg-green-700"
-                  disabled={isSaving}
-                  onClick={() => setIsAddPlantDialogOpen(true)}
-                  aria-label="Add a new plant to your garden"
-                >
-                  <Plus className="h-4 w-4" aria-hidden="true" />
-                  Add Plant
-                </Button>
-              </div>
-            )}
-            {viewMode === 'beds' && (
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                onClick={() => setGuildModalOpen(true)}
+                disabled={isSaving}
+                className="flex items-center gap-2 border-green-600 text-green-600 hover:bg-green-50"
+              >
+                {isSaving ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Trees className="h-4 w-4" />
+                )}
+                Make a Guild
+              </Button>
               <Button
                 className="flex items-center gap-2 bg-green-600 hover:bg-green-700"
-                onClick={() => setIsCreateBedOpen(true)}
+                disabled={isSaving}
+                onClick={() => setIsAddPlantDialogOpen(true)}
+                aria-label="Add a new plant to your garden"
               >
-                <Plus className="h-4 w-4" />
-                Add Bed
+                <Plus className="h-4 w-4" aria-hidden="true" />
+                Add Plant
               </Button>
-            )}
+            </div>
           </div>
 
-          {/* Beds View */}
-          {viewMode === 'beds' && (
+          {/* Garden View — Beds first, then unassigned plants */}
+          {viewMode === 'garden' && (
             <>
-              {isLoadingBeds ? (
-                <div className="flex items-center justify-center py-12">
-                  <Loader2 className="h-6 w-6 animate-spin text-green-600" />
-                </div>
-              ) : beds.length === 0 ? (
-                <Card className="p-12 text-center">
-                  <Fence className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                  <h3 className="text-lg font-medium mb-2">Organize your garden</h3>
-                  <p className="text-muted-foreground mb-4">
-                    Create beds to group your plants by location, type, or growing zone.
-                  </p>
-                  <Button
-                    onClick={() => setIsCreateBedOpen(true)}
-                    className="bg-green-600 hover:bg-green-700"
-                  >
-                    <Plus className="h-4 w-4 mr-2" />
-                    Create your first bed
-                  </Button>
-                </Card>
-              ) : (
-                <div className="space-y-4">
-                  {beds.length > 1 && (
-                    <div className="flex justify-end">
+              {/* Beds section */}
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-lg font-medium">Beds</h3>
+                  <div className="flex gap-2">
+                    {beds.length > 1 && (
                       <Button
                         variant={isReorderMode ? 'default' : 'outline'}
                         size="sm"
@@ -1505,92 +1460,221 @@ export function GardenPage() {
                         <ArrowUpDown className="h-4 w-4 mr-1" />
                         {isReorderMode ? 'Done' : 'Reorder'}
                       </Button>
-                    </div>
-                  )}
-
-                  {isReorderMode ? (
-                    <div className="space-y-2">
-                      {beds.map((bed, idx) => {
-                        const hexColor = ({'terracotta':'#C2714F','sage':'#7A9E7E','cornflower':'#6B8EC4','sunflower':'#D4A843','slate':'#6B7B8D','plum':'#8B6F8E'})[bed.color] || '#C2714F';
-                        return (
-                          <div key={bed.id} className="flex items-center gap-3 p-3 rounded-lg border bg-card">
-                            <div className="w-3 h-3 rounded-full flex-shrink-0" style={{ backgroundColor: hexColor }} />
-                            <div className="flex-1 min-w-0">
-                              <p className="text-sm font-medium truncate">{bed.name}</p>
-                              <p className="text-xs text-muted-foreground truncate">
-                                {bed.plantSummary || (bed.plantCount > 0 ? `${bed.plantCount} plants` : 'Empty')}
-                              </p>
-                            </div>
-                            <div className="flex gap-1 flex-shrink-0">
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-8 w-8"
-                                disabled={idx === 0}
-                                onClick={() => {
-                                  const next = [...beds];
-                                  [next[idx - 1], next[idx]] = [next[idx], next[idx - 1]];
-                                  setBeds(next);
-                                  if (reorderTimerRef.current) clearTimeout(reorderTimerRef.current);
-                                  reorderTimerRef.current = setTimeout(() => {
-                                    api.reorderBeds(next.map(b => b.id)).catch(() => toast.error('Reorder failed'));
-                                  }, 500);
-                                }}
-                              >
-                                <ChevronUp className="h-4 w-4" />
-                              </Button>
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-8 w-8"
-                                disabled={idx === beds.length - 1}
-                                onClick={() => {
-                                  const next = [...beds];
-                                  [next[idx], next[idx + 1]] = [next[idx + 1], next[idx]];
-                                  setBeds(next);
-                                  if (reorderTimerRef.current) clearTimeout(reorderTimerRef.current);
-                                  reorderTimerRef.current = setTimeout(() => {
-                                    api.reorderBeds(next.map(b => b.id)).catch(() => toast.error('Reorder failed'));
-                                  }, 500);
-                                }}
-                              >
-                                <ChevronDown className="h-4 w-4" />
-                              </Button>
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  ) : (
-                    <div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-4">
-                      {beds.map(bed => (
-                        <BedCard
-                          key={bed.id}
-                          id={bed.id}
-                          name={bed.name}
-                          type={bed.type}
-                          color={bed.color}
-                          plantCount={bed.plantCount}
-                          plantSummary={bed.plantSummary}
-                          sunExposure={bed.sunExposure}
-                          lastActivity={bed.lastActivity}
-                          isNew={newlyAddedBedIds.has(bed.id)}
-                        />
-                      ))}
-                      {/* Add Bed card */}
-                      <button
-                        onClick={() => setIsCreateBedOpen(true)}
-                        className="flex flex-col items-center justify-center gap-2 p-6 rounded-lg border-2 border-dashed border-muted-foreground/25 hover:border-green-500 hover:bg-green-50 transition-all text-muted-foreground hover:text-green-600 min-h-[100px]"
-                      >
-                        <Plus className="h-6 w-6" />
-                        <span className="text-sm font-medium">Add Bed</span>
-                      </button>
-                    </div>
-                  )}
-
-                  {/* Plants are now shown within each bed detail page */}
+                    )}
+                    <Button
+                      size="sm"
+                      className="bg-green-600 hover:bg-green-700"
+                      onClick={() => setIsCreateBedOpen(true)}
+                    >
+                      <Plus className="h-4 w-4 mr-1" />
+                      Add Bed
+                    </Button>
+                  </div>
                 </div>
-              )}
+
+                {isLoadingBeds ? (
+                  <div className="flex items-center justify-center py-12">
+                    <Loader2 className="h-6 w-6 animate-spin text-green-600" />
+                  </div>
+                ) : beds.length === 0 ? (
+                  <Card className="p-12 text-center">
+                    <Fence className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                    <h3 className="text-lg font-medium mb-2">Organize your garden</h3>
+                    <p className="text-muted-foreground mb-4">
+                      Create beds to group your plants by location, type, or growing zone.
+                    </p>
+                    <Button
+                      onClick={() => setIsCreateBedOpen(true)}
+                      className="bg-green-600 hover:bg-green-700"
+                    >
+                      <Plus className="h-4 w-4 mr-2" />
+                      Create your first bed
+                    </Button>
+                  </Card>
+                ) : isReorderMode ? (
+                  <div className="space-y-2">
+                    {beds.map((bed, idx) => {
+                      const hexColor = ({'terracotta':'#C2714F','sage':'#7A9E7E','cornflower':'#6B8EC4','sunflower':'#D4A843','slate':'#6B7B8D','plum':'#8B6F8E'})[bed.color] || '#C2714F';
+                      return (
+                        <div key={bed.id} className="flex items-center gap-3 p-3 rounded-lg border bg-card">
+                          <div className="w-3 h-3 rounded-full flex-shrink-0" style={{ backgroundColor: hexColor }} />
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium truncate">{bed.name}</p>
+                            <p className="text-xs text-muted-foreground truncate">
+                              {bed.plantSummary || (bed.plantCount > 0 ? `${bed.plantCount} plants` : 'Empty')}
+                            </p>
+                          </div>
+                          <div className="flex gap-1 flex-shrink-0">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8"
+                              disabled={idx === 0}
+                              onClick={() => {
+                                const next = [...beds];
+                                [next[idx - 1], next[idx]] = [next[idx], next[idx - 1]];
+                                setBeds(next);
+                                if (reorderTimerRef.current) clearTimeout(reorderTimerRef.current);
+                                reorderTimerRef.current = setTimeout(() => {
+                                  api.reorderBeds(next.map(b => b.id)).catch(() => toast.error('Reorder failed'));
+                                }, 500);
+                              }}
+                            >
+                              <ChevronUp className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8"
+                              disabled={idx === beds.length - 1}
+                              onClick={() => {
+                                const next = [...beds];
+                                [next[idx], next[idx + 1]] = [next[idx + 1], next[idx]];
+                                setBeds(next);
+                                if (reorderTimerRef.current) clearTimeout(reorderTimerRef.current);
+                                reorderTimerRef.current = setTimeout(() => {
+                                  api.reorderBeds(next.map(b => b.id)).catch(() => toast.error('Reorder failed'));
+                                }, 500);
+                              }}
+                            >
+                              <ChevronDown className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-4">
+                    {beds.map(bed => (
+                      <BedCard
+                        key={bed.id}
+                        id={bed.id}
+                        name={bed.name}
+                        type={bed.type}
+                        color={bed.color}
+                        plantCount={bed.plantCount}
+                        plantSummary={bed.plantSummary}
+                        sunExposure={bed.sunExposure}
+                        lastActivity={bed.lastActivity}
+                        isNew={newlyAddedBedIds.has(bed.id)}
+                      />
+                    ))}
+                    {/* Add Bed card */}
+                    <button
+                      onClick={() => setIsCreateBedOpen(true)}
+                      className="flex flex-col items-center justify-center gap-2 p-6 rounded-lg border-2 border-dashed border-muted-foreground/25 hover:border-green-500 hover:bg-green-50 transition-all text-muted-foreground hover:text-green-600 min-h-[100px]"
+                    >
+                      <Plus className="h-6 w-6" />
+                      <span className="text-sm font-medium">Add Bed</span>
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              {/* Unassigned plants section — only shown when plants exist without a bed */}
+              {(() => {
+                const unassignedPlants = plants.filter(p => !p.bedId);
+                if (unassignedPlants.length === 0) return null;
+                const groups = groupPlantsByName(unassignedPlants);
+                return (
+                  <div className="space-y-3 mt-6">
+                    <div className="flex items-center justify-between">
+                      <h3 className="text-lg font-medium">
+                        Not in a Bed <span className="text-sm font-normal text-muted-foreground">({unassignedPlants.reduce((sum, p) => sum + ((p.quantity ?? 1) || 1), 0)})</span>
+                      </h3>
+                    </div>
+                    <div className="border rounded-lg overflow-hidden">
+                      <div className="divide-y">
+                        {groups.sort((a, b) => a.name.localeCompare(b.name)).map((group) => {
+                          const healthDotColor = {
+                            excellent: 'bg-green-500',
+                            good: 'bg-emerald-400',
+                            fair: 'bg-yellow-500',
+                            poor: 'bg-red-500',
+                          }[group.worstHealth] || 'bg-gray-400';
+
+                          const primaryInstance = group.instances
+                            .slice()
+                            .sort((a, b) => b.planted.getTime() - a.planted.getTime())[0];
+
+                          return (
+                            <div key={group.key} className="flex items-center gap-3 px-3 py-2.5 hover:bg-muted/30 transition-colors">
+                              <div className={`w-2.5 h-2.5 rounded-full flex-shrink-0 ${healthDotColor}`} title={group.worstHealth} />
+                              <div className="flex-1 min-w-0">
+                                <p className="text-sm font-medium truncate">{group.name}</p>
+                                <p className="text-xs text-muted-foreground truncate">
+                                  {group.type}
+                                  {group.varieties.length > 0 && ` · ${group.varieties.slice(0, 2).join(', ')}${group.varieties.length > 2 ? '...' : ''}`}
+                                  {' · '}×{group.totalQuantity}
+                                </p>
+                              </div>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="h-7 text-xs flex-shrink-0"
+                                onClick={() => {
+                                  if (primaryInstance) {
+                                    setEditingPlant(primaryInstance);
+                                    setIsEditPlantDialogOpen(true);
+                                  }
+                                }}
+                              >
+                                <Fence className="h-3 w-3 mr-1" />
+                                Add to bed
+                              </Button>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })()}
+
+              {/* Stats */}
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6">
+                <Card>
+                  <CardContent className="p-4 text-center">
+                    <p className="text-2xl font-semibold text-green-600">
+                      {plants.reduce((sum, p) => sum + ((p.quantity ?? 1) || 1), 0)}
+                    </p>
+                    <p className="text-sm text-muted-foreground">Total Plants (count)</p>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardContent className="p-4 text-center">
+                    <p className="text-2xl font-semibold text-green-600">
+                      {groupPlantsByName(plants).length}
+                    </p>
+                    <p className="text-sm text-muted-foreground">Plant Types</p>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardContent className="p-4 text-center">
+                    <p className="text-2xl font-semibold text-green-600">
+                      {plants.filter(p => p.health === 'excellent').length}
+                    </p>
+                    <p className="text-sm text-muted-foreground">Excellent Health</p>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardContent className="p-4 text-center">
+                    <p className="text-2xl font-semibold text-yellow-600">
+                      {plants.filter(p => p.health === 'fair' || p.health === 'poor').length}
+                    </p>
+                    <p className="text-sm text-muted-foreground">Need Attention</p>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardContent className="p-4 text-center">
+                    <p className="text-2xl font-semibold text-blue-600">
+                      {new Set(plants.map(p => p.location)).size}
+                    </p>
+                    <p className="text-sm text-muted-foreground">Locations</p>
+                  </CardContent>
+                </Card>
+              </div>
             </>
           )}
 
@@ -1797,612 +1881,9 @@ export function GardenPage() {
             </>
           )}
 
-          {/* My Plants View - Search, Sort, and Filter Controls */}
-          {viewMode === 'my' && plants.length > 0 && (
-            <div className="space-y-3">
-              {/* Search Row */}
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                <Input
-                  type="text"
-                  placeholder="Search plants..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-9"
-                />
-                {searchQuery && (
-                  <button
-                    onClick={() => setSearchQuery('')}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                    aria-label="Clear search"
-                  >
-                    <X className="h-4 w-4" />
-                  </button>
-                )}
-              </div>
-              
-              {/* Sort and View Controls Row - always horizontal */}
-              <div className="flex items-center gap-2">
-                <Select value={sortBy} onValueChange={(v) => setSortBy(v as typeof sortBy)}>
-                  <SelectTrigger className="flex-1 sm:flex-none sm:w-[160px]">
-                    <ArrowUpDown className="h-4 w-4 mr-2" />
-                    <SelectValue placeholder="Sort by" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="name-asc">A → Z</SelectItem>
-                    <SelectItem value="name-desc">Z → A</SelectItem>
-                    <SelectItem value="recent">Recently Added</SelectItem>
-                    <SelectItem value="health">Health (needs attention)</SelectItem>
-                  </SelectContent>
-                </Select>
-                
-                {/* View toggle: Cards vs List */}
-                <div className="flex border rounded-md overflow-hidden">
-                  <button
-                    onClick={() => setCardView('cards')}
-                    className={`p-2 ${cardView === 'cards' ? 'bg-green-600 text-white' : 'bg-muted hover:bg-muted/80 text-muted-foreground'}`}
-                    aria-label="Card view"
-                    title="Card view"
-                  >
-                    <LayoutGrid className="h-4 w-4" />
-                  </button>
-                  <button
-                    onClick={() => setCardView('list')}
-                    className={`p-2 ${cardView === 'list' ? 'bg-green-600 text-white' : 'bg-muted hover:bg-muted/80 text-muted-foreground'}`}
-                    aria-label="List view"
-                    title="List view"
-                  >
-                    <List className="h-4 w-4" />
-                  </button>
-                </div>
-                
-                {/* Expand/Collapse toggle (cards only) */}
-                {cardView === 'cards' && (
-                  <button
-                    onClick={toggleExpandedDefault}
-                    className="flex items-center gap-1 px-2 py-1.5 text-xs border rounded-md bg-muted hover:bg-muted/80 text-muted-foreground"
-                    aria-label={expandedCardsDefault ? 'Compact all cards' : 'Expand all cards'}
-                    title={expandedCardsDefault ? 'Compact all cards' : 'Expand all cards'}
-                  >
-                    {expandedCardsDefault ? (
-                      <><Shrink className="h-3.5 w-3.5" /><span className="hidden sm:inline">Compact All</span></>
-                    ) : (
-                      <><Expand className="h-3.5 w-3.5" /><span className="hidden sm:inline">Expand All</span></>
-                    )}
-                  </button>
-                )}
-              </div>
-
-              {/* Filter Pills Row */}
-              {(uniqueTypes.length > 1 || uniqueLocations.length > 1) && (
-                <div className="flex flex-wrap gap-2 items-center">
-                  <Filter className="h-4 w-4 text-muted-foreground" />
-                  
-                  {/* Type filter pills */}
-                  {uniqueTypes.length > 1 && (
-                    <>
-                      <button
-                        onClick={() => setFilterType('all')}
-                        className={`px-3 py-1 text-sm rounded-full transition-all duration-200 ${
-                          filterType === 'all' 
-                            ? 'bg-green-600 text-white' 
-                            : 'bg-muted hover:bg-muted/80 text-muted-foreground'
-                        }`}
-                      >
-                        All Types
-                      </button>
-                      {uniqueTypes.map(type => (
-                        <button
-                          key={type}
-                          onClick={() => setFilterType(filterType === type ? 'all' : type)}
-                          className={`px-3 py-1 text-sm rounded-full transition-all duration-200 ${
-                            filterType === type 
-                              ? 'bg-green-600 text-white' 
-                              : 'bg-muted hover:bg-muted/80 text-muted-foreground'
-                          }`}
-                        >
-                          {type}
-                        </button>
-                      ))}
-                    </>
-                  )}
-                  
-                  {/* Location filter pills */}
-                  {uniqueLocations.length > 1 && (
-                    <>
-                      <span className="text-muted-foreground mx-1">|</span>
-                      <button
-                        onClick={() => setFilterLocation('all')}
-                        className={`px-3 py-1 text-sm rounded-full transition-all duration-200 flex items-center gap-1 ${
-                          filterLocation === 'all' 
-                            ? 'bg-blue-600 text-white' 
-                            : 'bg-muted hover:bg-muted/80 text-muted-foreground'
-                        }`}
-                      >
-                        <MapPin className="h-3 w-3" />
-                        All
-                      </button>
-                      {uniqueLocations.map(loc => (
-                        <button
-                          key={loc}
-                          onClick={() => setFilterLocation(filterLocation === loc ? 'all' : loc)}
-                          className={`px-3 py-1 text-sm rounded-full transition-all duration-200 flex items-center gap-1 ${
-                            filterLocation === loc 
-                              ? 'bg-blue-600 text-white' 
-                              : 'bg-muted hover:bg-muted/80 text-muted-foreground'
-                          }`}
-                        >
-                          <MapPin className="h-3 w-3" />
-                          {loc}
-                        </button>
-                      ))}
-                    </>
-                  )}
-                </div>
-              )}
-
-              {/* Results count */}
-              {(searchQuery || filterType !== 'all' || filterLocation !== 'all') && (
-                <p className="text-sm text-muted-foreground">
-                  Showing {filteredAndSortedPlants.length} of {groupPlantsByName(plants).length} plant types
-                  {searchQuery && <span> matching &quot;{searchQuery}&quot;</span>}
-                </p>
-              )}
-            </div>
-          )}
-
-          {viewMode === 'my' && plants.length === 0 ? (
-            <Card className="p-12 text-center">
-              <Sprout className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-              <h3 className="text-lg font-medium mb-2">No plants yet</h3>
-              <p className="text-muted-foreground mb-4">
-                Start your garden by adding plants or creating a guild!
-              </p>
-              <div className="flex gap-2 justify-center">
-                <Button 
-                  onClick={() => setGuildModalOpen(true)}
-                  className="bg-green-600 hover:bg-green-700"
-                >
-                  <Trees className="h-4 w-4 mr-2" />
-                  Make a Guild
-                </Button>
-                <Button variant="outline" onClick={() => setIsAddPlantDialogOpen(true)}>
-                  <Plus className="h-4 w-4 mr-2" />
-                  Add Plant
-                </Button>
-              </div>
-            </Card>
-          ) : viewMode === 'my' && filteredAndSortedPlants.length === 0 ? (
-            <Card className="p-12 text-center">
-              <Search className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-              <h3 className="text-lg font-medium mb-2">No plants match your filters</h3>
-              <p className="text-muted-foreground mb-4">
-                Try adjusting your search or filters to see more plants.
-              </p>
-              <Button 
-                variant="outline"
-                onClick={() => {
-                  setSearchQuery('');
-                  setFilterType('all');
-                  setFilterLocation('all');
-                }}
-              >
-                Clear Filters
-              </Button>
-            </Card>
-          ) : viewMode === 'my' && cardView === 'cards' ? (
-            /* CARD VIEW - Compact or Expanded grid */
-            <div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-4">
-              {filteredAndSortedPlants.map((group) => {
-                const nameLower = group.name.toLowerCase();
-                const resolvedSlug =
-                  group.speciesSlug ??
-                  speciesCache.get(nameLower)?.slug ??
-                  group.name.toLowerCase().replace(/\s+/g, '-');
-                const speciesUrl = `/grow/species/${encodeURIComponent(resolvedSlug)}`;
-
-                const isNewlyAdded = group.instances.some((p) => newlyAddedPlantIds.has(p.id));
-                const isDeleting = group.instances.some((p) => deletingPlantIds.has(p.id));
-
-                // Build animation classes
-                let animationClass = '';
-                if (isDeleting) {
-                  animationClass = 'motion-safe:animate-leaf-fall motion-reduce:animate-fade-out';
-                } else if (isNewlyAdded) {
-                  animationClass = 'motion-safe:animate-sprout motion-reduce:animate-fade-in';
-                }
-
-                const cardHealthClass = getHealthColor(group.worstHealth);
-                const mixedHealthLabel = group.mixedHealth ? 'mixed' : group.worstHealth;
-
-                // Pick the latest planted instance as "primary" for main card actions
-                const primaryInstance = group.instances
-                  .slice()
-                  .sort((a, b) => b.planted.getTime() - a.planted.getTime())[0];
-
-                // Check if this specific card is expanded
-                const cardExpanded = isCardExpanded(group.key);
-
-                // Get plant image - larger for expanded view
-                const imgKey = findBestPlantImageKey(group.name);
-                const imgSrc = imgKey 
-                  ? (cardExpanded 
-                      ? (getPlantImage(imgKey, 'xl') ?? getPlantImage(imgKey, 'lg') ?? getPlantImage(imgKey, 'medium'))
-                      : (getPlantImage(imgKey, 'medium') ?? getPlantImage(imgKey, 'lg'))
-                    ) 
-                  : null;
-
-                return (
-                  <Card
-                    key={group.key}
-                    className={`border-2 ${cardHealthClass} ${animationClass} transition-all duration-200 hover:shadow-lg overflow-hidden ${cardExpanded ? 'col-span-2 md:col-span-1' : ''}`}
-                  >
-                    {cardExpanded ? (
-                      /* EXPANDED CARD LAYOUT */
-                      <>
-                        <CardHeader className="pb-2">
-                          <div className="flex justify-between items-start">
-                            <div className="pr-2 flex-1">
-                              <Link href={speciesUrl} className="hover:underline">
-                                <CardTitle className="text-lg cursor-pointer hover:text-green-600 transition-colors">{group.name}</CardTitle>
-                              </Link>
-                              <p className="text-sm text-muted-foreground">{group.type}</p>
-                              <p className="text-xs text-muted-foreground mt-0.5">
-                                {group.instances.length > 1
-                                  ? `${group.totalQuantity} in garden • ${group.instances.length} entries`
-                                  : `${group.totalQuantity} in garden`}
-                              </p>
-                            </div>
-                            <div className="flex flex-col items-end gap-2">
-                              <Badge variant="outline" className={group.mixedHealth ? 'text-gray-600 bg-white border border-l-4 border-l-gray-400 border-gray-200' : getHealthColor(group.worstHealth)}>
-                                {mixedHealthLabel}
-                              </Badge>
-                              {primaryInstance && (
-                                <div className="flex items-center gap-1">
-                                  <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    className="h-8 w-8"
-                                    onClick={() => {
-                                      const cachedSpecies = speciesCache.get(nameLower);
-                                      setAddPlantPrefill({
-                                        name: cachedSpecies?.name ?? group.name,
-                                        type: cachedSpecies?.category ?? group.type,
-                                        scientificName: cachedSpecies?.scientificName ?? undefined,
-                                      });
-                                      setIsAddPlantDialogOpen(true);
-                                    }}
-                                    aria-label={`Add another ${group.name}`}
-                                  >
-                                    <Plus className="h-4 w-4" />
-                                  </Button>
-                                  <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    className="h-8 w-8"
-                                    onClick={() => handleEditPlant(primaryInstance)}
-                                    aria-label={`Edit ${group.name}`}
-                                  >
-                                    <Pencil className="h-4 w-4" />
-                                  </Button>
-                                </div>
-                              )}
-                              {imgSrc && (
-                                <Link href={speciesUrl} className="block">
-                                  <div className="relative h-24 w-24 shrink-0 overflow-hidden rounded-md border bg-white cursor-pointer hover:ring-2 hover:ring-green-500 transition-all">
-                                    <Image src={imgSrc} alt={group.name} fill className="object-contain p-1" sizes="96px" />
-                                  </div>
-                                </Link>
-                              )}
-                            </div>
-                          </div>
-                        </CardHeader>
-                        <CardContent className="space-y-3">
-                          {/* Cultivars */}
-                          {(() => {
-                            const counts = new Map<string, { label: string; count: number }>();
-                            for (const inst of group.instances) {
-                              const v = inst.variety?.trim();
-                              if (!v) continue;
-                              const key = v.toLowerCase();
-                              const add = (inst.quantity ?? 1) || 1;
-                              const existing = counts.get(key);
-                              if (existing) existing.count += add;
-                              else counts.set(key, { label: v, count: add });
-                            }
-                            const items = Array.from(counts.values()).sort((a, b) => a.label.localeCompare(b.label));
-                            if (items.length === 0) return null;
-                            return (
-                              <div className="space-y-2">
-                                <p className="text-xs text-muted-foreground">Cultivars</p>
-                                <div className="flex flex-wrap gap-2">
-                                  {items.map((c) => (
-                                    <Button key={c.label} type="button" variant="outline" size="sm" className="h-7 rounded-full px-2 text-xs">
-                                      {c.label}{c.count > 1 ? ` ×${c.count}` : null}
-                                    </Button>
-                                  ))}
-                                </div>
-                              </div>
-                            );
-                          })()}
-                          <PlantSpeciesInfo
-                            species={speciesCache.get(nameLower) ?? null}
-                            isLoading={isLoadingSpecies && !speciesCache.has(nameLower)}
-                          />
-                          <div className="flex gap-2 pt-2">
-                            <Button asChild variant="outline" size="sm" className="flex-1">
-                              <Link href={speciesUrl}>
-                                <Info className="h-3 w-3 mr-1" />
-                                Find out more
-                              </Link>
-                            </Button>
-                          </div>
-                          {/* Collapse chevron */}
-                          <button
-                            onClick={() => toggleCardExpanded(group.key)}
-                            className="w-full flex items-center justify-center pt-2 text-muted-foreground hover:text-foreground transition-colors"
-                            aria-label="Collapse card"
-                          >
-                            <ChevronUp className="h-5 w-5" />
-                          </button>
-                        </CardContent>
-                      </>
-                    ) : (
-                      /* COMPACT CARD LAYOUT */
-                      <>
-                        <div className="p-2 pb-0">
-                          <div className="flex gap-2">
-                            {imgSrc && (
-                              <Link href={speciesUrl} className="shrink-0">
-                                <div className="relative h-12 w-12 overflow-hidden rounded border bg-white cursor-pointer hover:ring-2 hover:ring-green-500 transition-all">
-                                  <Image src={imgSrc} alt={group.name} fill className="object-contain p-0.5" sizes="48px" />
-                                </div>
-                              </Link>
-                            )}
-                            <div className="flex-1 min-w-0">
-                              <Link href={speciesUrl} className="hover:underline">
-                                <h3 className="font-medium text-sm leading-tight truncate hover:text-green-600 transition-colors">{group.name}</h3>
-                              </Link>
-                              <p className="text-xs text-muted-foreground truncate">{group.type}</p>
-                              <p className="text-[10px] text-muted-foreground">×{group.totalQuantity}</p>
-                            </div>
-                          </div>
-                        </div>
-                        <CardContent className="p-2 pt-1 space-y-1">
-                          <div className="flex items-center justify-between">
-                            <Badge variant="outline" className={`text-[10px] px-1.5 py-0 h-5 ${group.mixedHealth ? 'text-gray-600 bg-white border border-l-4 border-l-gray-400 border-gray-200' : getHealthColor(group.worstHealth)}`}>
-                              {mixedHealthLabel}
-                            </Badge>
-                            {primaryInstance && (
-                              <div className="flex items-center gap-0.5">
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  className="h-6 w-6"
-                                  onClick={() => {
-                                    const cachedSpecies = speciesCache.get(nameLower);
-                                    setAddPlantPrefill({
-                                      name: cachedSpecies?.name ?? group.name,
-                                      type: cachedSpecies?.category ?? group.type,
-                                      scientificName: cachedSpecies?.scientificName ?? undefined,
-                                    });
-                                    setIsAddPlantDialogOpen(true);
-                                  }}
-                                  aria-label={`Add another ${group.name}`}
-                                >
-                                  <Plus className="h-3 w-3" />
-                                </Button>
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  className="h-6 w-6"
-                                  onClick={() => handleEditPlant(primaryInstance)}
-                                  aria-label={`Edit ${group.name}`}
-                                >
-                                  <Pencil className="h-3 w-3" />
-                                </Button>
-                              </div>
-                            )}
-                          </div>
-                          {(() => {
-                            const counts = new Map<string, { label: string; count: number }>();
-                            for (const inst of group.instances) {
-                              const v = inst.variety?.trim();
-                              if (!v) continue;
-                              const key = v.toLowerCase();
-                              const add = (inst.quantity ?? 1) || 1;
-                              const existing = counts.get(key);
-                              if (existing) existing.count += add;
-                              else counts.set(key, { label: v, count: add });
-                            }
-                            const items = Array.from(counts.values()).sort((a, b) => a.label.localeCompare(b.label));
-                            if (items.length === 0) return null;
-                            return (
-                              <div className="flex flex-wrap gap-1">
-                                {items.slice(0, 3).map((c) => (
-                                  <span key={c.label} className="text-[10px] px-1.5 py-0.5 bg-muted rounded-full truncate max-w-[80px]">
-                                    {c.label}{c.count > 1 ? ` ×${c.count}` : ''}
-                                  </span>
-                                ))}
-                                {items.length > 3 && (
-                                  <span className="text-[10px] px-1.5 py-0.5 bg-muted rounded-full">+{items.length - 3}</span>
-                                )}
-                              </div>
-                            );
-                          })()}
-                          <PlantSpeciesInfo
-                            species={speciesCache.get(nameLower) ?? null}
-                            isLoading={isLoadingSpecies && !speciesCache.has(nameLower)}
-                            compact={true}
-                          />
-                          {/* Expand chevron */}
-                          <button
-                            onClick={() => toggleCardExpanded(group.key)}
-                            className="w-full flex items-center justify-center pt-1 text-muted-foreground hover:text-foreground transition-colors"
-                            aria-label="Expand card"
-                          >
-                            <ChevronDown className="h-4 w-4" />
-                          </button>
-                        </CardContent>
-                      </>
-                    )}
-                  </Card>
-                );
-              })}
-            </div>
-          ) : viewMode === 'my' && cardView === 'list' ? (
-            /* LIST VIEW - Compact table */
-            <div className="border rounded-lg overflow-hidden">
-              {/* Header */}
-              <div className="hidden sm:grid sm:grid-cols-12 gap-2 px-3 py-2 bg-muted/50 text-xs font-medium text-muted-foreground border-b">
-                <div className="col-span-4">Plant</div>
-                <div className="col-span-2">Type</div>
-                <div className="col-span-2">Health</div>
-                <div className="col-span-2">Qty</div>
-                <div className="col-span-2 text-right">Actions</div>
-              </div>
-              {/* Rows */}
-              <div className="divide-y">
-                {filteredAndSortedPlants.map((group) => {
-                  const nameLower = group.name.toLowerCase();
-                  const resolvedSlug =
-                    group.speciesSlug ??
-                    speciesCache.get(nameLower)?.slug ??
-                    group.name.toLowerCase().replace(/\s+/g, '-');
-                  const speciesUrl = `/grow/species/${encodeURIComponent(resolvedSlug)}`;
-                  
-                  const isNewlyAdded = group.instances.some((p) => newlyAddedPlantIds.has(p.id));
-                  const isDeleting = group.instances.some((p) => deletingPlantIds.has(p.id));
-                  let animationClass = '';
-                  if (isDeleting) animationClass = 'motion-safe:animate-leaf-fall motion-reduce:animate-fade-out';
-                  else if (isNewlyAdded) animationClass = 'motion-safe:animate-sprout motion-reduce:animate-fade-in';
-
-                  const mixedHealthLabel = group.mixedHealth ? 'mixed' : group.worstHealth;
-                  const primaryInstance = group.instances.slice().sort((a, b) => b.planted.getTime() - a.planted.getTime())[0];
-                  
-                  const imgKey = findBestPlantImageKey(group.name);
-                  const imgSrc = imgKey ? getPlantImage(imgKey, 'medium') : null;
-
-                  return (
-                    <div
-                      key={group.key}
-                      className={`grid grid-cols-12 gap-2 px-3 py-2 items-center hover:bg-muted/30 transition-colors ${animationClass}`}
-                    >
-                      {/* Plant name with mini thumbnail */}
-                      <div className="col-span-6 sm:col-span-4 flex items-center gap-2 min-w-0">
-                        {imgSrc && (
-                          <div className="relative h-8 w-8 shrink-0 overflow-hidden rounded border bg-white">
-                            <Image src={imgSrc} alt="" fill className="object-contain" sizes="32px" />
-                          </div>
-                        )}
-                        <div className="min-w-0">
-                          <Link href={speciesUrl} className="hover:underline">
-                            <span className="text-sm font-medium truncate block hover:text-green-600">{group.name}</span>
-                          </Link>
-                          {/* Cultivars inline on mobile */}
-                          {group.varieties.length > 0 && (
-                            <span className="text-[10px] text-muted-foreground truncate block sm:hidden">
-                              {group.varieties.slice(0, 2).join(', ')}{group.varieties.length > 2 ? '...' : ''}
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                      {/* Type */}
-                      <div className="hidden sm:block col-span-2 text-sm text-muted-foreground truncate">{group.type}</div>
-                      {/* Health */}
-                      <div className="col-span-3 sm:col-span-2">
-                        <Badge variant="outline" className={`text-[10px] px-1.5 py-0 h-5 ${group.mixedHealth ? 'text-gray-600 bg-white border-l-4 border-l-gray-400' : getHealthColor(group.worstHealth)}`}>
-                          {mixedHealthLabel}
-                        </Badge>
-                      </div>
-                      {/* Quantity */}
-                      <div className="hidden sm:block col-span-2 text-sm">{group.totalQuantity}</div>
-                      {/* Actions */}
-                      <div className="col-span-3 sm:col-span-2 flex justify-end gap-1">
-                        {primaryInstance && (
-                          <>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-7 w-7"
-                              onClick={() => {
-                                const cachedSpecies = speciesCache.get(nameLower);
-                                setAddPlantPrefill({
-                                  name: cachedSpecies?.name ?? group.name,
-                                  type: cachedSpecies?.category ?? group.type,
-                                  scientificName: cachedSpecies?.scientificName ?? undefined,
-                                });
-                                setIsAddPlantDialogOpen(true);
-                              }}
-                              aria-label={`Add ${group.name}`}
-                            >
-                              <Plus className="h-3.5 w-3.5" />
-                            </Button>
-                            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleEditPlant(primaryInstance)} aria-label={`Edit ${group.name}`}>
-                              <Pencil className="h-3.5 w-3.5" />
-                            </Button>
-                          </>
-                        )}
-                        <Button asChild variant="ghost" size="icon" className="h-7 w-7">
-                          <Link href={speciesUrl} aria-label={`View ${group.name} details`}>
-                            <Info className="h-3.5 w-3.5" />
-                          </Link>
-                        </Button>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          ) : null}
-
-          {/* Stats - only show for My Plants view */}
-          {viewMode === 'my' && (
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6">
-            <Card>
-              <CardContent className="p-4 text-center">
-                <p className="text-2xl font-semibold text-green-600">
-                  {plants.reduce((sum, p) => sum + ((p.quantity ?? 1) || 1), 0)}
-                </p>
-                <p className="text-sm text-muted-foreground">Total Plants (count)</p>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardContent className="p-4 text-center">
-                <p className="text-2xl font-semibold text-green-600">
-                  {groupPlantsByName(plants).length}
-                </p>
-                <p className="text-sm text-muted-foreground">Plant Types</p>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardContent className="p-4 text-center">
-                <p className="text-2xl font-semibold text-green-600">
-                  {plants.filter(p => p.health === 'excellent').length}
-                </p>
-                <p className="text-sm text-muted-foreground">Excellent Health</p>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardContent className="p-4 text-center">
-                <p className="text-2xl font-semibold text-yellow-600">
-                  {plants.filter(p => p.health === 'fair' || p.health === 'poor').length}
-                </p>
-                <p className="text-sm text-muted-foreground">Need Attention</p>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardContent className="p-4 text-center">
-                <p className="text-2xl font-semibold text-blue-600">
-                  {new Set(plants.map(p => p.location)).size}
-                </p>
-                <p className="text-sm text-muted-foreground">Locations</p>
-              </CardContent>
-            </Card>
-          </div>
-          )}
           </FeatureErrorBoundary>
         </TabsContent>
+
 
         {/* Tab 2: Identify */}
         <TabsContent value="identify" className="space-y-4">
