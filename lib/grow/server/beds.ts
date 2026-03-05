@@ -35,9 +35,10 @@ export type SerializedBed = {
   plantSummary: string;
   lastActivity?: string | null;
   bedStatus?: BedStatus;
+  speciesSlugs?: string[];
 };
 
-export function serializeBed(row: BedRow, plantCount: number = 0, plantSummary: string = '', lastActivity?: string | null, bedStatus?: BedStatus): SerializedBed {
+export function serializeBed(row: BedRow, plantCount: number = 0, plantSummary: string = '', lastActivity?: string | null, bedStatus?: BedStatus, speciesSlugs?: string[]): SerializedBed {
   return {
     id: row.id,
     name: row.name,
@@ -54,6 +55,7 @@ export function serializeBed(row: BedRow, plantCount: number = 0, plantSummary: 
     plantSummary,
     lastActivity: lastActivity ?? null,
     bedStatus,
+    speciesSlugs,
   };
 }
 

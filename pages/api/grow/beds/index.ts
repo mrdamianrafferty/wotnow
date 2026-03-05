@@ -151,8 +151,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       }
     }
 
+    // Collect unique species slugs per bed for thumbnails
+    const speciesSlugsByBed: Record<string, string[]> = {};
+    for (const [bedId, rows] of Object.entries(plantingsByBedWithDates)) {
+      const slugs = [...new Set(rows.map(r => r.speciesSlug).filter((s): s is string => !!s))];
+      if (slugs.length > 0) speciesSlugsByBed[bedId] = slugs;
+    }
+
     const serialized = (beds as BedRow[]).map(b =>
-      serializeBed(b, plantCounts[b.id] || 0, plantSummaries[b.id] || '', lastActivities[b.id] ?? null, bedStatuses[b.id])
+      serializeBed(b, plantCounts[b.id] || 0, plantSummaries[b.id] || '', lastActivities[b.id] ?? null, bedStatuses[b.id], speciesSlugsByBed[b.id])
     );
 
     return res.status(200).json({ beds: serialized });
