@@ -239,6 +239,7 @@ export function Homepage() {
   const sunGlowOpacity = forecast && !showRain && forecast.precipitation === 0
     ? getSunGlowOpacity(forecast.tempMax)
     : 0;
+  const isWindy = weatherData?.alerts?.some(a => a.type === 'wind' || a.type === 'wind_desiccation') ?? false;
 
   if (isLoading) {
     return <HomepageSkeleton />;
@@ -304,6 +305,7 @@ export function Homepage() {
           wisdom={wisdom}
           encouragement={encouragement}
           streak={streak}
+          isWindy={isWindy}
           currentLocation={userLocation}
           onLocationUpdate={handleLocationUpdate}
           onRefresh={handleRefresh}

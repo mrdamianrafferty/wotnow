@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { Sprout, Flower2, Sun, Apple, Snowflake, RefreshCw, Flame } from 'lucide-react';
 import { Button } from '../../ui/button';
 import { LocationSettings } from '../LocationSettings';
+import { haptic } from '../../../lib/grow/haptics';
 import type { SeasonalTint } from '../../../lib/grow/seasonalColors';
 
 const SEASON_ICONS = { Sprout, Flower2, Sun, Apple, Snowflake } as const;
@@ -13,6 +14,7 @@ interface HomepageHeaderProps {
   wisdom: string;
   encouragement: string | null;
   streak: { count: number; isNewDay: boolean; milestone: number | null };
+  isWindy?: boolean;
   currentLocation?: string;
   onLocationUpdate?: (location: string) => void;
   onRefresh: () => void;
@@ -26,6 +28,7 @@ export function HomepageHeader({
   wisdom,
   encouragement,
   streak,
+  isWindy,
   currentLocation,
   onLocationUpdate,
   onRefresh,
@@ -44,12 +47,17 @@ export function HomepageHeader({
     <div className="relative z-10">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <SeasonIcon
-            size={28}
-            style={{ color: seasonal.accentColor }}
-            className="motion-safe:animate-gentle-sway"
-            aria-hidden="true"
-          />
+          <motion.div
+            whileTap={{ scale: 1.3, rotate: 15 }}
+            transition={{ type: 'spring', stiffness: 400, damping: 15 }}
+          >
+            <SeasonIcon
+              size={28}
+              style={{ color: seasonal.accentColor }}
+              className={isWindy ? 'motion-safe:animate-windy-sway' : 'motion-safe:animate-gentle-sway'}
+              aria-hidden="true"
+            />
+          </motion.div>
           <div>
             <div className="flex items-center gap-2">
               <h1 className="text-xl font-bold text-foreground">{greeting}</h1>
@@ -90,7 +98,7 @@ export function HomepageHeader({
           <Button
             variant="ghost"
             size="icon"
-            onClick={onRefresh}
+            onClick={() => { haptic('medium'); onRefresh(); }}
             disabled={isRefreshing}
             aria-label="Refresh"
             className="h-9 w-9"

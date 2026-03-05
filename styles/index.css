@@ -74,6 +74,13 @@
   50% { transform: rotate(1deg); }
 }
 
+@keyframes windySway {
+  0%, 100% { transform: rotate(-8deg) translateX(-2px); }
+  25% { transform: rotate(6deg) translateX(3px); }
+  50% { transform: rotate(-5deg) translateX(-1px); }
+  75% { transform: rotate(8deg) translateX(2px); }
+}
+
 @keyframes sunBreathe {
   0%, 100% { transform: scale(1); opacity: 0.8; }
   50% { transform: scale(1.15); opacity: 1; }
@@ -101,6 +108,7 @@
   .motion-safe\:animate-check-pop { animation: checkPop 300ms ease-out; }
   .motion-safe\:animate-leaf-fall { animation: leafFall 500ms ease-in forwards; }
   .motion-safe\:animate-gentle-sway { animation: gentleSway 2s ease-in-out infinite; }
+  .motion-safe\:animate-windy-sway { animation: windySway 1.5s ease-in-out infinite; }
   .motion-safe\:animate-sun-breathe { animation: sunBreathe 6s ease-in-out infinite; }
   .motion-safe\:animate-harvest-glow { animation: harvestGlow 3s ease-in-out infinite; }
 }
