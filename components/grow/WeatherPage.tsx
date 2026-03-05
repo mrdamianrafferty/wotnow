@@ -425,6 +425,37 @@ export function WeatherPage() {
         console.debug('Could not sync unit preference from server');
       }
 
+      // If no location in localStorage, try fetching from grow_user_preferences (Supabase)
+      if (!hasLocation) {
+        try {
+          const token = localStorage.getItem('access_token');
+          if (token) {
+            const { createClient } = await import('@supabase/supabase-js');
+            const { SUPABASE_URL, SUPABASE_ANON_KEY } = await import('../../lib/supabase/env');
+            const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+              global: { headers: { Authorization: `Bearer ${token}` } },
+            });
+            const { data: { user } } = await supabase.auth.getUser();
+            if (user) {
+              const { data: prefs } = await supabase
+                .from('grow_user_preferences')
+                .select('latitude, longitude, location')
+                .eq('user_id', user.id)
+                .single();
+              if (prefs?.latitude && prefs?.longitude) {
+                setUserCoords({ lat: prefs.latitude, lon: prefs.longitude });
+                hasLocation = true;
+                if (prefs.location) {
+                  setUserLocation(prefs.location);
+                }
+              }
+            }
+          }
+        } catch (_err) {
+          console.debug('Could not fetch location from grow_user_preferences');
+        }
+      }
+
       // If no location was found, stop loading to show the "Location not set" UI
       if (!hasLocation) {
         setIsLoading(false);
