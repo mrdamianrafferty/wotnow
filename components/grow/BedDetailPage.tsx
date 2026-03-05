@@ -443,10 +443,14 @@ export function BedDetailPage() {
   const allFilteredSelected = selectablePlants.length > 0 && selectablePlants.every(p => selectedQuantities.has(p.id));
 
   // Plant thumbnail images for header (Tier 3a)
-  const headerThumbnails = plantings.slice(0, 5).map(p => ({
-    name: p.plantName,
-    src: p.speciesSlug ? getPlantImage(p.speciesSlug, 'emoji') : null,
-  }));
+  const headerThumbnails = plantings.slice(0, 5).map(p => {
+    const species = speciesMap.get(p.plantName.toLowerCase());
+    const imageKey = species?.imageKey || p.speciesSlug;
+    return {
+      name: p.plantName,
+      src: imageKey ? getPlantImage(imageKey, 'emoji') : null,
+    };
+  });
 
   return (
     <div className="space-y-6">
@@ -947,10 +951,11 @@ export function BedDetailPage() {
             Plants ({plantings.length})
           </h3>
           {plantings.map(planting => {
-            const imgSrc = planting.speciesSlug
-              ? (getPlantImage(planting.speciesSlug, 'medium') || getPlantImage(planting.speciesSlug, 'emoji'))
-              : null;
             const species = speciesMap.get(planting.plantName.toLowerCase());
+            const imageKey = species?.imageKey || planting.speciesSlug;
+            const imgSrc = imageKey
+              ? (getPlantImage(imageKey, 'medium') || getPlantImage(imageKey, 'emoji'))
+              : null;
             const isExpanded = expandedPlanting === planting.plantingId;
 
             // Dimensions (Tier 2d)
@@ -960,8 +965,8 @@ export function BedDetailPage() {
                 )
               : null;
 
-            const lgImgSrc = planting.speciesSlug
-              ? getPlantImage(planting.speciesSlug, 'lg') || getPlantImage(planting.speciesSlug, 'medium')
+            const lgImgSrc = imageKey
+              ? getPlantImage(imageKey, 'lg') || getPlantImage(imageKey, 'medium')
               : null;
 
             return (
@@ -1209,7 +1214,8 @@ export function BedDetailPage() {
               {plantsWithCareGuides.map(planting => {
                 const species = speciesMap.get(planting.plantName.toLowerCase());
                 if (!species) return null;
-                const thumbSrc = planting.speciesSlug ? getPlantImage(planting.speciesSlug, 'emoji') : null;
+                const careImageKey = species.imageKey || planting.speciesSlug;
+                const thumbSrc = careImageKey ? getPlantImage(careImageKey, 'emoji') : null;
                 return (
                   <Card key={planting.plantingId}>
                     <CardContent className="p-3 space-y-3">

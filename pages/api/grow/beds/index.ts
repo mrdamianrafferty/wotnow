@@ -68,6 +68,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     // Compute bedStatus using species maturity data (single query for all active species)
     const bedStatuses: Record<string, BedStatus> = {};
     const plantingsByBedWithDates: Record<string, { plantedAt: string; speciesSlug: string | null }[]> = {};
+    const imageKeyMap = new Map<string, string>();
 
     if (bedIds.length > 0) {
       // Fetch plantings with species slug for maturity lookup
@@ -96,12 +97,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           }
         }
 
-        // Single query for maturity data
+        // Single query for maturity + image data
         if (allSlugs.size > 0) {
           const serviceClient = getSupabaseServerClient();
           const { data: speciesData } = await serviceClient
             .from('plant_species')
-            .select('slug, days_to_maturity_min, days_to_maturity_max')
+            .select('slug, days_to_maturity_min, days_to_maturity_max, image_key')
             .in('slug', [...allSlugs]);
 
           const maturityMap = new Map<string, { min: number | null; max: number | null }>();
@@ -111,6 +112,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                 min: s.days_to_maturity_min,
                 max: s.days_to_maturity_max,
               });
+              if (s.image_key) imageKeyMap.set(s.slug, s.image_key);
             }
           }
 
@@ -151,11 +153,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       }
     }
 
-    // Collect unique species slugs per bed for thumbnails
+    // Collect image keys per bed for thumbnails (resolve slug → image_key)
     const speciesSlugsByBed: Record<string, string[]> = {};
     for (const [bedId, rows] of Object.entries(plantingsByBedWithDates)) {
-      const slugs = [...new Set(rows.map(r => r.speciesSlug).filter((s): s is string => !!s))];
-      if (slugs.length > 0) speciesSlugsByBed[bedId] = slugs;
+      const keys = [...new Set(
+        rows
+          .map(r => r.speciesSlug ? (imageKeyMap.get(r.speciesSlug) || r.speciesSlug) : null)
+          .filter((s): s is string => !!s)
+      )];
+      if (keys.length > 0) speciesSlugsByBed[bedId] = keys;
     }
 
     const serialized = (beds as BedRow[]).map(b =>

@@ -94,6 +94,9 @@ export async function getRotationWarnings(
   const warnings: RotationWarning[] = [];
 
   for (const [group, lastYear] of groupMaxYear) {
+    // Only show rotation advice starting the year AFTER the crop was removed
+    if (currentYear <= lastYear) continue;
+
     const avoidUntil = lastYear + ROTATION_YEARS;
     if (currentYear < avoidUntil) {
       const friendly = ROTATION_GROUP_FRIENDLY[group];
