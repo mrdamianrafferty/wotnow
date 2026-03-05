@@ -69,6 +69,11 @@
   100% { transform: scale(1); }
 }
 
+@keyframes gentleSway {
+  0%, 100% { transform: rotate(-1deg); }
+  50% { transform: rotate(1deg); }
+}
+
 /* Utility classes for motion-safe animations */
 /* Use: class="motion-safe:animate-sprout motion-reduce:opacity-100" */
 @media (prefers-reduced-motion: no-preference) {
@@ -79,6 +84,7 @@
   .motion-safe\:animate-fade-out { animation: fadeOut 200ms ease-in forwards; }
   .motion-safe\:animate-check-pop { animation: checkPop 300ms ease-out; }
   .motion-safe\:animate-leaf-fall { animation: leafFall 500ms ease-in forwards; }
+  .motion-safe\:animate-gentle-sway { animation: gentleSway 2s ease-in-out infinite; }
 }
 
 /* Fallback for reduced motion - instant state changes */

@@ -1,8 +1,9 @@
 import React from 'react';
-import { Cherry } from 'lucide-react';
+import { Cherry, Sparkles } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { auth } from '../../../lib/grow/auth';
 import { BED_COLOR_HEX, type BedColor } from '../../../lib/grow/server/beds';
+import type { SeasonalTint } from '../../../lib/grow/seasonalColors';
 
 export interface HarvestHorizonItem {
   plantingId: string;
@@ -18,6 +19,7 @@ export interface HarvestHorizonItem {
 }
 
 interface HarvestHorizonProps {
+  seasonal: SeasonalTint;
   t: (value: string) => string;
 }
 
@@ -33,7 +35,7 @@ async function fetchHarvestHorizon(): Promise<HarvestHorizonItem[]> {
   return data.plants ?? [];
 }
 
-export function HarvestHorizon({ t }: HarvestHorizonProps) {
+export function HarvestHorizon({ seasonal, t }: HarvestHorizonProps) {
   const { data: plants = [] } = useQuery({
     queryKey: ['harvestHorizon'],
     queryFn: fetchHarvestHorizon,
@@ -45,14 +47,19 @@ export function HarvestHorizon({ t }: HarvestHorizonProps) {
   return (
     <section aria-labelledby="harvest-heading">
       <h2 id="harvest-heading" className="flex items-center gap-2 text-sm font-semibold text-foreground mb-3">
-        <Cherry size={16} className="text-amber-600" aria-hidden="true" />
+        <Cherry size={16} style={{ color: seasonal.accentColor }} aria-hidden="true" />
         {t('Harvest Horizon')}
       </h2>
       <div className="space-y-2">
         {plants.map(plant => {
           const dotColor = BED_COLOR_HEX[plant.bedColor as BedColor] || '#6B7B8D';
+          const isReady = plant.daysRemaining <= 0;
           return (
-            <div key={plant.plantingId} className="rounded-lg border border-border/50 bg-card p-3">
+            <div
+              key={plant.plantingId}
+              className="rounded-lg border border-border/50 p-3 hover:shadow-sm hover:scale-[1.01] transition-all duration-200"
+              style={{ backgroundImage: seasonal.gradient }}
+            >
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2 min-w-0">
                   <span
@@ -63,8 +70,9 @@ export function HarvestHorizon({ t }: HarvestHorizonProps) {
                   <span className="text-sm font-medium text-foreground truncate">{plant.plantName}</span>
                 </div>
                 <div className="flex items-center gap-2 shrink-0">
-                  <span className="text-xs text-muted-foreground">
-                    {plant.daysRemaining <= 0
+                  <span className="text-xs text-muted-foreground flex items-center gap-1">
+                    {isReady && <Sparkles size={12} className="text-yellow-500 animate-pulse" aria-hidden="true" />}
+                    {isReady
                       ? t('Ready now')
                       : `~${plant.daysRemaining} ${t('days remaining')}`}
                   </span>
@@ -75,8 +83,11 @@ export function HarvestHorizon({ t }: HarvestHorizonProps) {
               </div>
               <div className="mt-2 h-1.5 w-full rounded-full bg-muted overflow-hidden">
                 <div
-                  className="h-full rounded-full bg-gradient-to-r from-amber-400 to-yellow-300 transition-all"
-                  style={{ width: `${Math.min(plant.growthProgress * 100, 100)}%` }}
+                  className="h-full rounded-full transition-all"
+                  style={{
+                    width: `${Math.min(plant.growthProgress * 100, 100)}%`,
+                    backgroundImage: `linear-gradient(to right, ${seasonal.accentColor}, ${seasonal.accentColor}cc)`,
+                  }}
                 />
               </div>
             </div>

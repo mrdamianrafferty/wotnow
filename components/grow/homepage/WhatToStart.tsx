@@ -1,5 +1,6 @@
 import React from 'react';
-import { Sprout } from 'lucide-react';
+import { Sprout, Snowflake } from 'lucide-react';
+import type { SeasonalTint } from '../../../lib/grow/seasonalColors';
 
 interface CalendarWindow {
   plantSlug: string;
@@ -17,14 +18,15 @@ interface CalendarWindow {
 interface WhatToStartProps {
   windows: CalendarWindow[];
   userPlantSlugs: Set<string>;
+  seasonal: SeasonalTint;
   t: (value: string) => string;
 }
 
-const TASK_BADGES: Record<string, { label: string; className: string }> = {
-  sow_indoors: { label: 'Sow indoors', className: 'bg-violet-100 text-violet-700' },
-  direct_sow: { label: 'Direct sow', className: 'bg-green-100 text-green-700' },
-  transplant: { label: 'Transplant', className: 'bg-blue-100 text-blue-700' },
-  plant_out: { label: 'Plant out', className: 'bg-emerald-100 text-emerald-700' },
+const TASK_BADGES: Record<string, { label: string; emoji: string; className: string }> = {
+  sow_indoors: { label: 'Sow indoors', emoji: '\u{1F331}', className: 'bg-violet-100 text-violet-700' },
+  direct_sow: { label: 'Direct sow', emoji: '\u{1F33F}', className: 'bg-green-100 text-green-700' },
+  transplant: { label: 'Transplant', emoji: '\u{1FAB4}', className: 'bg-blue-100 text-blue-700' },
+  plant_out: { label: 'Plant out', emoji: '\u{1F33B}', className: 'bg-emerald-100 text-emerald-700' },
 };
 
 function isInCurrentWindow(w: CalendarWindow): boolean {
@@ -40,7 +42,7 @@ function isInCurrentWindow(w: CalendarWindow): boolean {
   return currentIdx >= startIdx && currentIdx <= endIdx;
 }
 
-export function WhatToStart({ windows, userPlantSlugs, t }: WhatToStartProps) {
+export function WhatToStart({ windows, userPlantSlugs, seasonal, t }: WhatToStartProps) {
   // Filter to windows active now, excluding species user already grows
   const active = windows
     .filter(w => isInCurrentWindow(w) && !userPlantSlugs.has(w.plantSlug))
@@ -51,21 +53,28 @@ export function WhatToStart({ windows, userPlantSlugs, t }: WhatToStartProps) {
   return (
     <section aria-labelledby="start-heading">
       <h2 id="start-heading" className="flex items-center gap-2 text-sm font-semibold text-foreground mb-3">
-        <Sprout size={16} className="text-green-600" aria-hidden="true" />
+        <Sprout size={16} style={{ color: seasonal.accentColor }} aria-hidden="true" />
         {t('What to Start This Week')}
       </h2>
       <div className="space-y-2">
         {active.map(w => {
-          const badge = TASK_BADGES[w.taskCode] || { label: w.taskName || w.taskCode, className: 'bg-gray-100 text-gray-700' };
+          const badge = TASK_BADGES[w.taskCode] || { label: w.taskName || w.taskCode, emoji: '', className: 'bg-gray-100 text-gray-700' };
           return (
-            <div key={`${w.plantSlug}-${w.taskCode}`} className="flex items-center justify-between rounded-lg border border-border/50 bg-card px-3 py-2.5">
+            <div
+              key={`${w.plantSlug}-${w.taskCode}`}
+              className="flex items-center justify-between rounded-lg border border-border/50 px-3 py-2.5 hover:shadow-sm hover:scale-[1.01] transition-all duration-200"
+              style={{ backgroundImage: seasonal.gradient }}
+            >
               <span className="text-sm font-medium text-foreground">{w.plantName || w.plantSlug}</span>
               <div className="flex items-center gap-2">
                 <span className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${badge.className}`}>
-                  {badge.label}
+                  {badge.emoji ? `${badge.emoji} ` : ''}{badge.label}
                 </span>
                 {w.frostTolerance === 'tender' && (
-                  <span className="text-[10px] text-amber-600">Frost tender</span>
+                  <span className="flex items-center gap-0.5 text-[10px] text-amber-600">
+                    <Snowflake size={10} aria-hidden="true" />
+                    Frost tender
+                  </span>
                 )}
               </div>
             </div>

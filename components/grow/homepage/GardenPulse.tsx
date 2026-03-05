@@ -1,10 +1,12 @@
 import React from 'react';
-import { CloudSun } from 'lucide-react';
+import { CloudSun, Sparkles } from 'lucide-react';
 import type { WeatherTasksData } from '../../../hooks/useWeatherTasks';
+import type { SeasonalTint } from '../../../lib/grow/seasonalColors';
 
 interface GardenPulseProps {
   weatherData: WeatherTasksData;
   isPremium: boolean;
+  seasonal: SeasonalTint;
   t: (value: string) => string;
 }
 
@@ -50,7 +52,7 @@ function buildPulseText(
   return parts.join(' ');
 }
 
-export function GardenPulse({ weatherData, isPremium, t }: GardenPulseProps) {
+export function GardenPulse({ weatherData, isPremium, seasonal, t }: GardenPulseProps) {
   const text = buildPulseText(
     weatherData.forecast as ForecastWithDescription[],
     weatherData.soil,
@@ -62,16 +64,27 @@ export function GardenPulse({ weatherData, isPremium, t }: GardenPulseProps) {
   return (
     <section aria-labelledby="pulse-heading">
       <h2 id="pulse-heading" className="flex items-center gap-2 text-sm font-semibold text-foreground mb-3">
-        <CloudSun size={16} className="text-sky-500" aria-hidden="true" />
+        <CloudSun size={16} style={{ color: seasonal.accentColor }} aria-hidden="true" />
         {t('Garden Pulse')}
       </h2>
-      <div className="rounded-xl border border-border/50 bg-card p-4">
-        <p className="text-sm text-foreground/90 leading-relaxed">{text}</p>
-        {!isPremium && weatherData.soil.temperature6cm > 0 && (
-          <p className="mt-2 text-[10px] text-muted-foreground">
-            Soil insights available with Bloom+
-          </p>
-        )}
+      <div
+        className="rounded-xl border border-border/50 p-4 flex overflow-hidden"
+        style={{ backgroundImage: seasonal.gradient }}
+      >
+        <div
+          className="w-1 rounded-full shrink-0 -ml-1 mr-3"
+          style={{ backgroundColor: seasonal.accentColor }}
+          aria-hidden="true"
+        />
+        <div className="flex-1 min-w-0">
+          <p className="text-sm text-foreground/90 leading-relaxed">{text}</p>
+          {!isPremium && weatherData.soil.temperature6cm > 0 && (
+            <p className="mt-2 text-[10px] text-muted-foreground flex items-center gap-1">
+              <Sparkles size={10} aria-hidden="true" />
+              Soil insights available with Bloom+
+            </p>
+          )}
+        </div>
       </div>
     </section>
   );

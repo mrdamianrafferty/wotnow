@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useCallback, useMemo, startTransition } from 'react';
+import { motion } from 'framer-motion';
 import { getSeasonalTint } from '../../lib/grow/seasonalColors';
 import { auth } from '../../lib/grow/auth';
 import { api } from '../../lib/grow/api';
@@ -24,11 +25,13 @@ import { HomepageSkeleton } from './homepage/HomepageSkeleton';
 // Static strings for translation
 const STATIC_COPY = [
   'My Garden',
+  'My Beds',
   'Harvest Horizon',
   'Garden Pulse',
   'What to Start This Week',
   'Start your garden',
   'Create your first bed',
+  'Plant me!',
   'Skip today',
   'Your plants need water today',
   'days remaining',
@@ -37,6 +40,16 @@ const STATIC_COPY = [
   'Ready now',
   'Empty',
 ];
+
+const staggerContainer = {
+  hidden: {},
+  show: { transition: { staggerChildren: 0.07 } },
+};
+
+const staggerItem = {
+  hidden: { opacity: 0, y: 12 },
+  show: { opacity: 1, y: 0, transition: { duration: 0.3, ease: 'easeOut' as const } },
+};
 
 export function Homepage() {
   useScreenTracking('Homepage');
@@ -201,68 +214,88 @@ export function Homepage() {
   }
 
   return (
-    <div
+    <motion.div
+      variants={staggerContainer}
+      initial="hidden"
+      animate="show"
       style={{ backgroundColor: seasonal.backgroundColor }}
       className="space-y-6 pb-24 -mx-4 px-4 -mt-8 pt-8 min-h-screen"
     >
-      <HomepageHeader
-        seasonal={seasonal}
-        currentLocation={userLocation}
-        onLocationUpdate={handleLocationUpdate}
-        onRefresh={handleRefresh}
-        isRefreshing={isRefreshing}
-        t={t}
-      />
-
-      <FeatureErrorBoundary feature="urgency-banner">
-        <UrgencyBanner
-          signals={localSignals}
-          weatherAlerts={weatherData?.alerts ?? []}
-          onDismissSignal={dismissSignal}
-        />
-      </FeatureErrorBoundary>
-
-      <FeatureErrorBoundary feature="beds-at-glance">
-        <BedsAtGlance
-          beds={beds}
-          isAuthenticated={isAuthenticated}
+      <motion.div variants={staggerItem}>
+        <HomepageHeader
+          seasonal={seasonal}
+          currentLocation={userLocation}
+          onLocationUpdate={handleLocationUpdate}
+          onRefresh={handleRefresh}
+          isRefreshing={isRefreshing}
           t={t}
         />
-      </FeatureErrorBoundary>
+      </motion.div>
 
-      <FeatureErrorBoundary feature="harvest-horizon">
-        <HarvestHorizon t={t} />
-      </FeatureErrorBoundary>
+      <motion.div variants={staggerItem}>
+        <FeatureErrorBoundary feature="urgency-banner">
+          <UrgencyBanner
+            signals={localSignals}
+            weatherAlerts={weatherData?.alerts ?? []}
+            onDismissSignal={dismissSignal}
+          />
+        </FeatureErrorBoundary>
+      </motion.div>
 
-      {weatherData && hasLocation && (
-        <FeatureErrorBoundary feature="garden-pulse">
-          <GardenPulse
-            weatherData={weatherData}
-            isPremium={isBloomOrHigher}
+      <motion.div variants={staggerItem}>
+        <FeatureErrorBoundary feature="beds-at-glance">
+          <BedsAtGlance
+            beds={beds}
+            isAuthenticated={isAuthenticated}
+            seasonal={seasonal}
             t={t}
           />
         </FeatureErrorBoundary>
+      </motion.div>
+
+      <motion.div variants={staggerItem}>
+        <FeatureErrorBoundary feature="harvest-horizon">
+          <HarvestHorizon seasonal={seasonal} t={t} />
+        </FeatureErrorBoundary>
+      </motion.div>
+
+      {weatherData && hasLocation && (
+        <motion.div variants={staggerItem}>
+          <FeatureErrorBoundary feature="garden-pulse">
+            <GardenPulse
+              weatherData={weatherData}
+              isPremium={isBloomOrHigher}
+              seasonal={seasonal}
+              t={t}
+            />
+          </FeatureErrorBoundary>
+        </motion.div>
       )}
 
       {calendarWindows.length > 0 && (
-        <FeatureErrorBoundary feature="what-to-start">
-          <WhatToStart
-            windows={calendarWindows}
-            userPlantSlugs={userPlantSlugs}
-            t={t}
-          />
-        </FeatureErrorBoundary>
+        <motion.div variants={staggerItem}>
+          <FeatureErrorBoundary feature="what-to-start">
+            <WhatToStart
+              windows={calendarWindows}
+              userPlantSlugs={userPlantSlugs}
+              seasonal={seasonal}
+              t={t}
+            />
+          </FeatureErrorBoundary>
+        </motion.div>
       )}
 
       {weatherData && (
-        <FeatureErrorBoundary feature="smart-nudge">
-          <SmartNudge
-            weatherData={weatherData}
-            urgentAlertIds={urgentAlertIds}
-            t={t}
-          />
-        </FeatureErrorBoundary>
+        <motion.div variants={staggerItem}>
+          <FeatureErrorBoundary feature="smart-nudge">
+            <SmartNudge
+              weatherData={weatherData}
+              urgentAlertIds={urgentAlertIds}
+              t={t}
+            />
+          </FeatureErrorBoundary>
+        </motion.div>
       )}
-    </div>
+    </motion.div>
   );
 }

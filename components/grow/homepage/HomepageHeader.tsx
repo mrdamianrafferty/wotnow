@@ -1,8 +1,10 @@
 import React from 'react';
-import { Sprout, RefreshCw } from 'lucide-react';
+import { Sprout, Flower2, Sun, Apple, Snowflake, RefreshCw } from 'lucide-react';
 import { Button } from '../../ui/button';
 import { LocationSettings } from '../LocationSettings';
 import type { SeasonalTint } from '../../../lib/grow/seasonalColors';
+
+const SEASON_ICONS = { Sprout, Flower2, Sun, Apple, Snowflake } as const;
 
 interface HomepageHeaderProps {
   seasonal: SeasonalTint;
@@ -27,12 +29,15 @@ export function HomepageHeader({
     month: 'long',
   });
 
+  const SeasonIcon = SEASON_ICONS[seasonal.iconName] || Sprout;
+
   return (
     <div className="flex items-center justify-between">
       <div className="flex items-center gap-3">
-        <Sprout
+        <SeasonIcon
           size={28}
-          style={{ color: seasonal.borderColor }}
+          style={{ color: seasonal.accentColor }}
+          className="motion-safe:animate-gentle-sway"
           aria-hidden="true"
         />
         <div>
@@ -41,7 +46,12 @@ export function HomepageHeader({
             {dateStr}
             <span
               className="ml-2 inline-block rounded-full px-2 py-0.5 text-[10px] font-medium"
-              style={{ backgroundColor: seasonal.backgroundColor, color: seasonal.borderColor }}
+              style={{
+                backgroundImage: seasonal.gradient,
+                borderWidth: '1px',
+                borderColor: seasonal.borderColor,
+                color: seasonal.accentColor,
+              }}
             >
               {seasonal.label}
             </span>

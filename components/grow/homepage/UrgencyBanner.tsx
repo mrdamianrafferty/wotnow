@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { X, ChevronDown, Snowflake, Thermometer, Wind, CloudLightning, CloudRain, Sun, AlertTriangle } from 'lucide-react';
 import { SEVERITY_COLORS, getSignalIcon } from '../LocalSignalsCard';
 import type { LocalSignal } from '../../../lib/grow/localSignals';
@@ -80,7 +81,14 @@ export function UrgencyBanner({ signals, weatherAlerts, onDismissSignal }: Urgen
   };
 
   return (
-    <div role="alert" aria-live="assertive" className="space-y-2">
+    <motion.div
+      role="alert"
+      aria-live="assertive"
+      className="space-y-2"
+      initial={{ opacity: 0, y: -8 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.25, ease: 'easeOut' }}
+    >
       <div className={`rounded-xl border p-3 ${colors.bg} ${colors.border}`}>
         <div className="flex items-start gap-3">
           <PrimaryIcon className={`mt-0.5 h-5 w-5 shrink-0 ${colors.text}`} />
@@ -108,28 +116,37 @@ export function UrgencyBanner({ signals, weatherAlerts, onDismissSignal }: Urgen
         )}
       </div>
 
-      {expanded && remaining.map(item => {
-        const itemColors = SEVERITY_COLORS[item.severity];
-        const ItemIcon = item.icon;
-        return (
-          <div key={item.id} className={`rounded-xl border p-3 ${itemColors.bg} ${itemColors.border}`}>
-            <div className="flex items-start gap-3">
-              <ItemIcon className={`mt-0.5 h-5 w-5 shrink-0 ${itemColors.text}`} />
-              <div className="flex-1 min-w-0">
-                <p className={`text-sm font-semibold ${itemColors.text}`}>{item.title}</p>
-                <p className={`text-xs mt-0.5 ${itemColors.text} opacity-80`}>{item.description}</p>
+      <AnimatePresence>
+        {expanded && remaining.map((item, i) => {
+          const itemColors = SEVERITY_COLORS[item.severity];
+          const ItemIcon = item.icon;
+          return (
+            <motion.div
+              key={item.id}
+              initial={{ opacity: 0, y: -8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -8 }}
+              transition={{ duration: 0.2, delay: i * 0.05 }}
+              className={`rounded-xl border p-3 ${itemColors.bg} ${itemColors.border}`}
+            >
+              <div className="flex items-start gap-3">
+                <ItemIcon className={`mt-0.5 h-5 w-5 shrink-0 ${itemColors.text}`} />
+                <div className="flex-1 min-w-0">
+                  <p className={`text-sm font-semibold ${itemColors.text}`}>{item.title}</p>
+                  <p className={`text-xs mt-0.5 ${itemColors.text} opacity-80`}>{item.description}</p>
+                </div>
+                <button
+                  onClick={() => handleDismiss(item)}
+                  className={`shrink-0 p-1 rounded-md hover:bg-black/5 ${itemColors.text}`}
+                  aria-label="Dismiss alert"
+                >
+                  <X size={14} />
+                </button>
               </div>
-              <button
-                onClick={() => handleDismiss(item)}
-                className={`shrink-0 p-1 rounded-md hover:bg-black/5 ${itemColors.text}`}
-                aria-label="Dismiss alert"
-              >
-                <X size={14} />
-              </button>
-            </div>
-          </div>
-        );
-      })}
-    </div>
+            </motion.div>
+          );
+        })}
+      </AnimatePresence>
+    </motion.div>
   );
 }
