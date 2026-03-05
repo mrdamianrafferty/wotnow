@@ -1433,49 +1433,104 @@ export function GardenPage() {
                         Not in a Bed <span className="text-sm font-normal text-muted-foreground">({unassignedPlants.reduce((sum, p) => sum + ((p.quantity ?? 1) || 1), 0)})</span>
                       </h3>
                     </div>
-                    <div className="border rounded-lg overflow-hidden">
-                      <div className="divide-y">
-                        {groups.sort((a, b) => a.name.localeCompare(b.name)).map((group) => {
-                          const healthDotColor = {
-                            excellent: 'bg-green-500',
-                            good: 'bg-emerald-400',
-                            fair: 'bg-yellow-500',
-                            poor: 'bg-red-500',
-                          }[group.worstHealth] || 'bg-gray-400';
+                    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                      {groups.sort((a, b) => a.name.localeCompare(b.name)).map((group) => {
+                        const nameLower = group.name.toLowerCase();
+                        const cached = speciesCache.get(nameLower);
+                        const resolvedSlug =
+                          group.speciesSlug ??
+                          cached?.slug ??
+                          group.name.toLowerCase().replace(/\s+/g, '-');
+                        const speciesUrl = `/grow/species/${encodeURIComponent(resolvedSlug)}`;
+                        const imageKey = cached?.imageKey || resolvedSlug;
+                        const imageSrc = getPlantImage(imageKey, 'xl') ?? getPlantImage(imageKey, 'lg') ?? getPlantImage(imageKey, 'medium');
 
-                          const primaryInstance = group.instances
-                            .slice()
-                            .sort((a, b) => b.planted.getTime() - a.planted.getTime())[0];
+                        const healthBadgeClass = {
+                          excellent: 'bg-green-100 text-green-700 border-green-300',
+                          good: 'bg-blue-100 text-blue-700 border-blue-300',
+                          fair: 'bg-yellow-100 text-yellow-700 border-yellow-300',
+                          poor: 'bg-red-100 text-red-700 border-red-300',
+                        }[group.worstHealth] || '';
 
-                          return (
-                            <div key={group.key} className="flex items-center gap-3 px-3 py-2.5 hover:bg-muted/30 transition-colors">
-                              <div className={`w-2.5 h-2.5 rounded-full flex-shrink-0 ${healthDotColor}`} title={group.worstHealth} />
-                              <div className="flex-1 min-w-0">
-                                <p className="text-sm font-medium truncate">{group.name}</p>
-                                <p className="text-xs text-muted-foreground truncate">
-                                  {group.type}
-                                  {group.varieties.length > 0 && ` · ${group.varieties.slice(0, 2).join(', ')}${group.varieties.length > 2 ? '...' : ''}`}
-                                  {' · '}×{group.totalQuantity}
-                                </p>
+                        const primaryInstance = group.instances
+                          .slice()
+                          .sort((a, b) => b.planted.getTime() - a.planted.getTime())[0];
+
+                        return (
+                          <Card
+                            key={group.key}
+                            className="border hover:shadow-lg transition-all duration-200"
+                          >
+                            <CardHeader>
+                              <div className="flex justify-between items-start">
+                                <div className="pr-2 flex-1">
+                                  <Link href={speciesUrl} className="hover:underline">
+                                    <CardTitle className="text-lg cursor-pointer hover:text-green-600 transition-colors">
+                                      {group.name}
+                                    </CardTitle>
+                                  </Link>
+                                  <p className="text-sm text-muted-foreground">{group.type}</p>
+                                  <div className="flex items-center gap-2 mt-1">
+                                    <Badge variant="outline" className={`text-xs ${healthBadgeClass}`}>
+                                      {group.mixedHealth ? 'mixed' : group.worstHealth}
+                                    </Badge>
+                                    <span className="text-xs text-muted-foreground">×{group.totalQuantity}</span>
+                                  </div>
+                                </div>
+                                {imageSrc && (
+                                  <Link href={speciesUrl} className="block shrink-0">
+                                    <div className="relative h-20 w-20 overflow-hidden rounded-md border bg-white cursor-pointer hover:ring-2 hover:ring-green-500 transition-all">
+                                      <Image
+                                        src={imageSrc}
+                                        alt={group.name}
+                                        fill
+                                        className="object-contain p-1"
+                                        sizes="80px"
+                                      />
+                                    </div>
+                                  </Link>
+                                )}
                               </div>
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                className="h-7 text-xs flex-shrink-0"
-                                onClick={() => {
-                                  if (primaryInstance) {
-                                    setEditingPlant(primaryInstance);
-                                    setIsEditPlantDialogOpen(true);
-                                  }
-                                }}
-                              >
-                                <Fence className="h-3 w-3 mr-1" />
-                                Add to bed
-                              </Button>
-                            </div>
-                          );
-                        })}
-                      </div>
+                            </CardHeader>
+                            <CardContent className="space-y-2">
+                              {group.varieties.length > 0 && (
+                                <div className="flex flex-wrap gap-1">
+                                  {group.varieties.slice(0, 4).map((v) => (
+                                    <span key={v} className="text-xs px-2 py-0.5 bg-muted rounded-full truncate max-w-[120px]">
+                                      {v}
+                                    </span>
+                                  ))}
+                                  {group.varieties.length > 4 && (
+                                    <span className="text-xs px-2 py-0.5 bg-muted rounded-full">+{group.varieties.length - 4}</span>
+                                  )}
+                                </div>
+                              )}
+                              <div className="flex gap-2 pt-2">
+                                <Button asChild variant="outline" size="sm" className="flex-1">
+                                  <Link href={speciesUrl}>
+                                    <Info className="h-3 w-3 mr-1" />
+                                    View Details
+                                  </Link>
+                                </Button>
+                                <Button
+                                  variant="default"
+                                  size="sm"
+                                  className="flex-1 bg-green-600 hover:bg-green-700"
+                                  onClick={() => {
+                                    if (primaryInstance) {
+                                      setEditingPlant(primaryInstance);
+                                      setIsEditPlantDialogOpen(true);
+                                    }
+                                  }}
+                                >
+                                  <Fence className="h-3 w-3 mr-1" />
+                                  Add to Bed
+                                </Button>
+                              </div>
+                            </CardContent>
+                          </Card>
+                        );
+                      })}
                     </div>
                   </div>
                 );
