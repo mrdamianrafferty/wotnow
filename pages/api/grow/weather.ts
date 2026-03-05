@@ -199,6 +199,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         humidity: current.humidity ?? 0,
         uvIndex: Math.round(current.uvi ?? 0),
         precipitation: Math.round((daily[0]?.pop ?? 0) * 100),
+        precipMM: (() => {
+          // Current precipitation from the current hour rain/snow data
+          const r = typeof current.rain === 'object' ? (current.rain?.['1h'] ?? 0) : 0;
+          const s = typeof current.snow === 'object' ? (current.snow?.['1h'] ?? 0) : 0;
+          // Also add today's total from daily forecast
+          const dailyR = typeof daily[0]?.rain === 'number' ? daily[0].rain : 0;
+          const dailyS = typeof daily[0]?.snow === 'number' ? daily[0].snow : 0;
+          return dailyR + dailyS + r + s;
+        })(),
         visibility: Math.round((current.visibility ?? 10000) / 1000),
         pressure: current.pressure ?? 1013,
         dewPoint: Math.round(current.dew_point ?? 0),
@@ -216,6 +225,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         time: formatHour(h.dt),
         temperature: Math.round(h.temp ?? 0),
         precipitation: Math.round((h.pop ?? 0) * 100),
+        precipMM: (() => {
+          const r = typeof h.rain === 'object' ? (h.rain?.['1h'] ?? 0) : 0;
+          const s = typeof h.snow === 'object' ? (h.snow?.['1h'] ?? 0) : 0;
+          return r + s;
+        })(),
         condition: mapCondition(h.weather?.[0]?.main || 'Clear'),
         windSpeed: Math.round(h.wind_speed ?? 0),
         humidity: h.humidity ?? 0,

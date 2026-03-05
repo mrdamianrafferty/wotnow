@@ -70,6 +70,7 @@ interface HourlyForecastEntry {
   time: string;
   temperature: number;
   precipitation: number;
+  precipMM?: number;
   condition: string;
   windSpeed: number;
   humidity: number;
@@ -82,6 +83,7 @@ interface DailyForecastEntry {
   condition: string;
   rainChance: number;
   wind: number;
+  precipMM?: number;
 }
 
 interface MarineConditions {
@@ -156,6 +158,7 @@ interface CurrentWeather {
   humidity: number;
   uvIndex: number;
   precipitation: number;
+  precipMM?: number;
   visibility: number;
   pressure: number;
   dewPoint: number;
@@ -826,6 +829,9 @@ function HeroWeatherCard({
               <div className="text-center">
                 <Umbrella className="mx-auto h-5 w-5 text-muted-foreground" />
                 <div className="text-sm font-medium">{data.precipitation}%</div>
+                {data.precipMM != null && data.precipMM > 0 && (
+                  <div className="text-xs font-medium text-blue-600">{data.precipMM.toFixed(1)}mm</div>
+                )}
                 <div className="text-xs text-muted-foreground">{t('Precip')}</div>
               </div>
             )}
@@ -859,7 +865,12 @@ function DailyForecastCard({ data, unitSystem, t }: { data: DailyForecastEntry[]
                 <Icon className="h-5 w-5 text-blue-500" />
                 <div>
                   <p className="text-sm font-medium">{entry.day}</p>
-                  <p className="text-xs text-muted-foreground">{t('Rain chance')} {entry.rainChance}%</p>
+                  <p className="text-xs text-muted-foreground">
+                    {t('Rain chance')} {entry.rainChance}%
+                    {entry.precipMM != null && entry.precipMM > 0 && (
+                      <span className="text-blue-600 font-medium"> ({entry.precipMM.toFixed(1)}mm)</span>
+                    )}
+                  </p>
                 </div>
               </div>
               <div className="flex items-center gap-6 text-sm">
@@ -1077,16 +1088,22 @@ function SoilConditionsCard({ data, hourly, unitSystem, t }: { data: SoilData; h
   const depth = depths[depthIdx];
 
   // Calculate next rain from hourly forecast
-  const getNextRain = (): { time: string; hoursAway: number; chance: number } | null => {
+  const getNextRain = (): { time: string; hoursAway: number; chance: number; expectedMM: number } | null => {
     if (!hourly || hourly.length === 0) return null;
 
     const RAIN_THRESHOLD = 30; // Consider rain likely at 30%+ chance
     for (let i = 0; i < hourly.length; i++) {
       if (hourly[i].precipitation >= RAIN_THRESHOLD) {
+        // Sum expected mm from this hour through the rain window
+        let totalMM = 0;
+        for (let j = i; j < hourly.length && hourly[j].precipitation >= RAIN_THRESHOLD; j++) {
+          totalMM += hourly[j].precipMM ?? 0;
+        }
         return {
           time: hourly[i].time,
           hoursAway: i,
           chance: hourly[i].precipitation,
+          expectedMM: totalMM,
         };
       }
     }
@@ -1107,6 +1124,20 @@ function SoilConditionsCard({ data, hourly, unitSystem, t }: { data: SoilData; h
 
   const nextRain = getNextRain();
   const rainFreeHours = getRainFreeHours();
+
+  // Calculate recent rainfall from the first few hours of hourly data
+  // OpenWeather hourly starts from "now", and precipMM shows actual/expected mm
+  // The first few hours often include very recent rain that's just happened
+  const getRecentRainMM = (): number => {
+    if (!hourly || hourly.length === 0) return 0;
+    let total = 0;
+    // Sum precipMM from first 3 hours (recent + imminent rain)
+    for (let i = 0; i < Math.min(3, hourly.length); i++) {
+      total += hourly[i].precipMM ?? 0;
+    }
+    return total;
+  };
+  const recentRainMM = getRecentRainMM();
 
   // Get temperature at selected depth
   const getTempAtDepth = (): number | null => {
@@ -1242,6 +1273,27 @@ function SoilConditionsCard({ data, hourly, unitSystem, t }: { data: SoilData; h
           </div>
         )}
 
+        {/* Recent Rain Banner */}
+        {recentRainMM >= 2 && (
+          <div className="rounded-lg p-3 flex items-center gap-3 bg-blue-50 border border-blue-200">
+            <div className="p-2 rounded-full bg-blue-100">
+              <Droplets className="h-5 w-5 text-blue-600" />
+            </div>
+            <div className="flex-1">
+              <p className="text-sm font-medium text-blue-900">
+                {t('Recent rain')}: ~{recentRainMM.toFixed(1)}mm
+              </p>
+              <p className="text-xs text-blue-700">
+                {recentRainMM >= 10
+                  ? t('Heavy rain recently - skip watering for 1-2 days')
+                  : recentRainMM >= 5
+                    ? t('Good rain recently - check soil before watering')
+                    : t('Light rain recently - may still need watering')}
+              </p>
+            </div>
+          </div>
+        )}
+
         {/* Next Rain Indicator */}
         {hourly && hourly.length > 0 && (
           <div className={`rounded-lg p-3 flex items-center gap-3 ${
@@ -1261,6 +1313,9 @@ function SoilConditionsCard({ data, hourly, unitSystem, t }: { data: SoilData; h
                 <>
                   <p className="text-sm font-medium text-blue-900">
                     {t('Rain expected')}: {nextRain.time} ({nextRain.chance}%)
+                    {nextRain.expectedMM > 0 && (
+                      <span className="ml-1 text-blue-700">~{nextRain.expectedMM.toFixed(1)}mm</span>
+                    )}
                   </p>
                   <p className="text-xs text-blue-700">
                     {nextRain.hoursAway === 0

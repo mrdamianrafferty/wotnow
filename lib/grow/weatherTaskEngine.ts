@@ -1098,6 +1098,21 @@ export function calculateWateringRecommendation(
     adjustmentFactor = 1.2; // Water more
   }
 
+  // 1b. Check if recent rain has already saturated soil
+  // Today's accumulated precipitation tells us what's already fallen or is falling
+  const todayAccumulatedMM = today.precipitation;
+  if (todayAccumulatedMM >= 10) {
+    shouldWater = false;
+    reason = `Heavy rain today (${todayAccumulatedMM.toFixed(0)}mm) - soil is well watered`;
+    details.push(`${todayAccumulatedMM.toFixed(0)}mm of rain today - skip watering for 1-2 days`);
+  } else if (todayAccumulatedMM >= 5) {
+    adjustmentFactor *= 0.3;
+    details.push(`${todayAccumulatedMM.toFixed(0)}mm of rain today - significantly reduce watering`);
+  } else if (todayAccumulatedMM >= 2) {
+    adjustmentFactor *= 0.6;
+    details.push(`Light rain today (${todayAccumulatedMM.toFixed(1)}mm) - reduce watering`);
+  }
+
   // 2. Check incoming rain (aligned with UI thresholds - 30%+ is considered likely)
   const rainNext24h = today.precipitation + (tomorrow?.precipitation || 0);
   const todayRainProb = today.precipProbability;
@@ -1107,19 +1122,19 @@ export function calculateWateringRecommendation(
   // Check if rain is likely TODAY (matches soil status UI threshold of 30%)
   const rainLikelyToday = todayRainProb >= 30;
 
-  if (rainNext24h >= 10 && rainProbability >= 60) {
+  if (shouldWater && rainNext24h >= 10 && rainProbability >= 60) {
     shouldWater = false;
     reason = `Significant rain expected (${rainNext24h.toFixed(0)}mm)`;
     details.push(`Rain forecast: ${rainNext24h.toFixed(0)}mm in next 24-48h (${rainProbability}% chance)`);
-  } else if (rainLikelyToday) {
+  } else if (shouldWater && rainLikelyToday) {
     // Rain likely today (≥30%) - skip watering to align with UI messaging
     shouldWater = false;
     reason = `Rain likely today (${todayRainProb}% chance)`;
     details.push(`Rain expected today (${todayRainProb}% chance) - skip watering`);
-  } else if (rainNext24h >= 5 && rainProbability >= 40) {
+  } else if (shouldWater && rainNext24h >= 5 && rainProbability >= 40) {
     adjustmentFactor *= 0.5;
     details.push(`Light rain expected: ${rainNext24h.toFixed(0)}mm - reduce watering`);
-  } else {
+  } else if (shouldWater) {
     details.push('No significant rain expected');
   }
 
