@@ -954,6 +954,7 @@ export class ApiClient {
   async getBeds() {
     const response = await this.fetchWithAuth(GROW_BEDS_API_BASE, {
       headers: this.getHeaders(true),
+      cache: 'no-store',
     });
 
     if (!response.ok) {
@@ -988,6 +989,7 @@ export class ApiClient {
   async getBed(bedId: string) {
     const response = await this.fetchWithAuth(`${GROW_BEDS_API_BASE}/${bedId}`, {
       headers: this.getHeaders(true),
+      cache: 'no-store',
     });
 
     if (!response.ok) {
