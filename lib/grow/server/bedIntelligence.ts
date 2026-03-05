@@ -1,6 +1,7 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import {
   ROTATION_GROUP_LABELS,
+  ROTATION_GROUP_FRIENDLY,
   type RotationGroup,
   type RotationWarning,
   type CompanionSets,
@@ -37,11 +38,12 @@ export async function getRotationWarnings(
   bedId: string,
   currentYear: number,
 ): Promise<RotationWarning[]> {
-  // Get ALL plantings for this bed (including removed) with species slug
+  // Only consider REMOVED plantings — active crops should not warn against themselves
   const { data: plantings, error } = await userClient
     .from('grow_bed_plantings')
-    .select('planted_at, grow_user_plants!inner(species_slug)')
-    .eq('bed_id', bedId);
+    .select('planted_at, removed_at, grow_user_plants!inner(species_slug)')
+    .eq('bed_id', bedId)
+    .not('removed_at', 'is', null);
 
   if (error || !plantings || plantings.length === 0) return [];
 
@@ -80,7 +82,8 @@ export async function getRotationWarnings(
     const group = slugToGroup.get(slug);
     if (!group || group === 'permanent' || group === 'non_rotating') continue;
 
-    const year = new Date(p.planted_at).getFullYear();
+    // Use the year the crop was removed — that's when the bed was last occupied by this group
+    const year = new Date(p.removed_at || p.planted_at).getFullYear();
     const existing = groupMaxYear.get(group);
     if (!existing || year > existing) {
       groupMaxYear.set(group, year);
@@ -93,13 +96,24 @@ export async function getRotationWarnings(
   for (const [group, lastYear] of groupMaxYear) {
     const avoidUntil = lastYear + ROTATION_YEARS;
     if (currentYear < avoidUntil) {
-      const label = ROTATION_GROUP_LABELS[group] || group;
+      const friendly = ROTATION_GROUP_FRIENDLY[group];
+      const label = friendly?.label || ROTATION_GROUP_LABELS[group] || group;
+      const followWith = friendly?.followWith;
+
+      // Positive framing: tell the user what TO plant, not just what to avoid
+      let message: string;
+      if (followWith) {
+        message = `${label} were in this bed in ${lastYear}. This year, try planting ${followWith} for a healthier crop.`;
+      } else {
+        message = `${label} were in this bed in ${lastYear} — best to rotate until ${avoidUntil}.`;
+      }
+
       warnings.push({
         rotationGroup: group,
         groupLabel: label,
         lastPlantedYear: lastYear,
         avoidUntilYear: avoidUntil,
-        message: `${label} were in this bed in ${lastYear} — avoid until ${avoidUntil}.`,
+        message,
       });
     }
   }
