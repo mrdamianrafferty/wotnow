@@ -1,7 +1,8 @@
 import React from 'react';
 import Link from 'next/link';
 import { Card, CardContent } from '../ui/card';
-import { BED_COLOR_HEX, BED_TYPES, type BedColor, type BedType } from '../../lib/grow/server/beds';
+import { Sun, CloudSun, Cloud, Sprout } from 'lucide-react';
+import { BED_COLOR_HEX, BED_TYPES, type BedColor, type BedType, type SunExposure } from '../../lib/grow/server/beds';
 
 interface BedCardProps {
   id: string;
@@ -10,10 +11,17 @@ interface BedCardProps {
   color: BedColor;
   plantCount: number;
   plantSummary?: string;
+  sunExposure?: SunExposure | null;
   isNew?: boolean;
 }
 
-export function BedCard({ id, name, type, color, plantCount, plantSummary, isNew }: BedCardProps) {
+const SUN_ICONS: Record<SunExposure, React.ReactNode> = {
+  full_sun: <Sun className="h-3.5 w-3.5 text-amber-500" />,
+  partial_shade: <CloudSun className="h-3.5 w-3.5 text-amber-400" />,
+  full_shade: <Cloud className="h-3.5 w-3.5 text-slate-400" />,
+};
+
+export function BedCard({ id, name, type, color, plantCount, plantSummary, sunExposure, isNew }: BedCardProps) {
   const hexColor = BED_COLOR_HEX[color] || BED_COLOR_HEX.terracotta;
 
   return (
@@ -23,16 +31,24 @@ export function BedCard({ id, name, type, color, plantCount, plantSummary, isNew
           isNew ? 'motion-safe:animate-sprout motion-reduce:animate-fade-in' : ''
         }`}
       >
-        <div className="h-1" style={{ backgroundColor: hexColor }} />
+        <div className="h-1.5" style={{ backgroundColor: hexColor }} />
         <CardContent className="p-4">
-          <h3 className="font-semibold text-sm truncate">{name}</h3>
+          <div className="flex items-start justify-between gap-1">
+            <h3 className="font-semibold text-sm truncate">{name}</h3>
+            {sunExposure && SUN_ICONS[sunExposure]}
+          </div>
           <p className="text-xs text-muted-foreground mt-0.5">
             {BED_TYPES[type] || type}
           </p>
-          <p className="text-xs mt-2 truncate" style={{ color: hexColor }}>
-            {plantCount === 0
-              ? 'Empty'
-              : plantSummary || `${plantCount} plant${plantCount !== 1 ? 's' : ''}`}
+          <p className="text-xs mt-2 flex items-center gap-1 truncate" style={{ color: plantCount > 0 ? hexColor : undefined }}>
+            {plantCount === 0 ? (
+              <span className="text-muted-foreground">Empty</span>
+            ) : (
+              <>
+                <Sprout className="h-3.5 w-3.5 shrink-0" />
+                {plantSummary || `${plantCount} plant${plantCount !== 1 ? 's' : ''}`}
+              </>
+            )}
           </p>
         </CardContent>
       </Card>

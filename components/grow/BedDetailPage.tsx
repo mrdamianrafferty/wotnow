@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useRouter } from 'next/router';
 import { Card, CardContent } from '../ui/card';
 import { Button } from '../ui/button';
@@ -13,7 +13,12 @@ import {
   Plus,
   Loader2,
   Sprout,
-  MoveRight,
+  Search,
+  Sun,
+  CloudSun,
+  Cloud,
+  Droplets,
+  X,
 } from 'lucide-react';
 import Link from 'next/link';
 import { api } from '../../lib/grow/api';
@@ -31,12 +36,13 @@ export function BedDetailPage() {
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
-  // Move plants mode
-  const [showMovePanel, setShowMovePanel] = useState(false);
+  // Add plants panel
+  const [showAddPanel, setShowAddPanel] = useState(false);
   const [allPlants, setAllPlants] = useState<SerializedPlant[]>([]);
   const [selectedQuantities, setSelectedQuantities] = useState<Map<string, number>>(new Map());
-  const [isMoving, setIsMoving] = useState(false);
+  const [isAdding, setIsAdding] = useState(false);
   const [typeFilter, setTypeFilter] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
 
   const loadBed = useCallback(async () => {
     if (!bedId) return;
@@ -55,6 +61,12 @@ export function BedDetailPage() {
   useEffect(() => {
     loadBed();
   }, [loadBed]);
+
+  // Set of plant IDs already in this bed
+  const existingPlantIds = useMemo(
+    () => new Set(plantings.map(p => p.plantId)),
+    [plantings]
+  );
 
   const handleDelete = async () => {
     if (!bed) return;
@@ -75,14 +87,15 @@ export function BedDetailPage() {
     setBed(updated);
   };
 
-  const handleShowMovePanel = async () => {
+  const handleShowAddPanel = async () => {
     try {
       const response = await api.getUserPlants();
       const plants = (response.plants || []) as SerializedPlant[];
       setAllPlants(plants);
       setSelectedQuantities(new Map());
       setTypeFilter(null);
-      setShowMovePanel(true);
+      setSearchQuery('');
+      setShowAddPanel(true);
     } catch {
       toast.error('Could not load plants');
     }
@@ -108,22 +121,51 @@ export function BedDetailPage() {
     });
   };
 
-  const handleMoveSelected = async () => {
+  // Filtered plants for the assignment panel
+  const filteredPlants = useMemo(() => {
+    return allPlants
+      .filter(p => !typeFilter || p.type === typeFilter)
+      .filter(p => !searchQuery || p.name.toLowerCase().includes(searchQuery.toLowerCase()));
+  }, [allPlants, typeFilter, searchQuery]);
+
+  // Selectable (non-already-in-bed) plants in current filter
+  const selectablePlants = useMemo(() => {
+    return filteredPlants.filter(p => !existingPlantIds.has(p.id));
+  }, [filteredPlants, existingPlantIds]);
+
+  const handleSelectAll = () => {
+    setSelectedQuantities(prev => {
+      const next = new Map(prev);
+      const allSelected = selectablePlants.every(p => next.has(p.id));
+      if (allSelected) {
+        // Deselect all in current filter
+        for (const p of selectablePlants) next.delete(p.id);
+      } else {
+        // Select all in current filter
+        for (const p of selectablePlants) {
+          if (!next.has(p.id)) next.set(p.id, 1);
+        }
+      }
+      return next;
+    });
+  };
+
+  const handleAddSelected = async () => {
     if (!bed || selectedQuantities.size === 0) return;
-    setIsMoving(true);
+    setIsAdding(true);
     try {
       const assignments = Array.from(selectedQuantities.entries()).map(([plantId, quantity]) => ({
         plantId,
         quantity,
       }));
       await api.assignPlantsToBed(bed.id, assignments);
-      toast.success(`${assignments.length} plant${assignments.length !== 1 ? 's' : ''} moved to ${bed.name}`);
-      setShowMovePanel(false);
+      toast.success(`${assignments.length} plant${assignments.length !== 1 ? 's' : ''} added to ${bed.name}`);
+      setShowAddPanel(false);
       await loadBed();
     } catch {
-      toast.error('Could not move plants');
+      toast.error('Could not add plants');
     } finally {
-      setIsMoving(false);
+      setIsAdding(false);
     }
   };
 
@@ -159,19 +201,20 @@ export function BedDetailPage() {
   }
 
   const hexColor = BED_COLOR_HEX[bed.color] || BED_COLOR_HEX.terracotta;
+  const allFilteredSelected = selectablePlants.length > 0 && selectablePlants.every(p => selectedQuantities.has(p.id));
 
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-start justify-between">
-        <div className="flex items-center gap-3">
-          <Link href="/grow/garden" className="text-muted-foreground hover:text-foreground">
+      <div className="flex items-start justify-between gap-2">
+        <div className="flex items-center gap-3 min-w-0">
+          <Link href="/grow/garden" className="text-muted-foreground hover:text-foreground flex-shrink-0">
             <ArrowLeft className="h-5 w-5" />
           </Link>
-          <div>
+          <div className="min-w-0">
             <div className="flex items-center gap-2">
-              <div className="w-3 h-3 rounded-full" style={{ backgroundColor: hexColor }} />
-              <h1 className="text-xl font-semibold">{bed.name}</h1>
+              <div className="w-3 h-3 rounded-full flex-shrink-0" style={{ backgroundColor: hexColor }} />
+              <h1 className="text-xl font-semibold truncate">{bed.name}</h1>
             </div>
             <div className="flex items-center gap-2 mt-1">
               <Badge variant="secondary" className="text-xs">
@@ -183,7 +226,7 @@ export function BedDetailPage() {
             </div>
           </div>
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-shrink-0">
           <Button variant="outline" size="sm" onClick={() => setIsEditOpen(true)}>
             <Pencil className="h-4 w-4" />
           </Button>
@@ -209,32 +252,45 @@ export function BedDetailPage() {
         <Button
           variant="outline"
           size="sm"
-          onClick={handleShowMovePanel}
+          onClick={handleShowAddPanel}
           className="text-green-600 border-green-600 hover:bg-green-50"
         >
-          <MoveRight className="h-4 w-4 mr-1" />
-          Move plants here
+          <Plus className="h-4 w-4 mr-1" />
+          Add plants
         </Button>
       </div>
 
-      {/* Move plants panel */}
-      {showMovePanel && (
+      {/* Add plants panel */}
+      {showAddPanel && (
         <Card>
           <CardContent className="p-4 space-y-3">
             <div className="flex items-center justify-between">
               <h3 className="text-sm font-medium">Select plants to add</h3>
-              <Button variant="ghost" size="sm" onClick={() => setShowMovePanel(false)}>Cancel</Button>
+              <Button variant="ghost" size="sm" onClick={() => setShowAddPanel(false)}>Cancel</Button>
             </div>
+
             {allPlants.length === 0 ? (
               <p className="text-sm text-muted-foreground">No plants found. Add plants first.</p>
             ) : (
               <>
-                {/* Type filter tabs */}
+                {/* Search input */}
+                <div className="relative">
+                  <Search className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+                  <Input
+                    type="text"
+                    placeholder="Search plants..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="pl-8 h-8 text-sm"
+                  />
+                </div>
+
+                {/* Type filter tabs + Select all */}
                 {(() => {
                   const types = [...new Set(allPlants.map(p => p.type).filter(Boolean))].sort();
                   if (types.length <= 1) return null;
                   return (
-                    <div className="flex gap-1.5 flex-wrap">
+                    <div className="flex items-center gap-1.5 flex-wrap">
                       <button
                         onClick={() => setTypeFilter(null)}
                         className={`px-2.5 py-1 rounded-full text-xs font-medium transition-colors ${
@@ -261,48 +317,77 @@ export function BedDetailPage() {
                     </div>
                   );
                 })()}
-                <div className="max-h-60 overflow-y-auto space-y-2">
-                  {allPlants
-                    .filter(plant => !typeFilter || plant.type === typeFilter)
-                    .map(plant => {
+
+                {/* Select all toggle */}
+                {selectablePlants.length > 1 && (
+                  <button
+                    onClick={handleSelectAll}
+                    className="text-xs text-green-600 hover:text-green-700 font-medium"
+                  >
+                    {allFilteredSelected
+                      ? `Deselect all ${selectablePlants.length}`
+                      : `Select all ${selectablePlants.length}${typeFilter ? ` ${typeFilter}` : ''}`}
+                  </button>
+                )}
+
+                {/* Plant list */}
+                <div className="max-h-72 overflow-y-auto space-y-1">
+                  {filteredPlants.map(plant => {
                     const isSelected = selectedQuantities.has(plant.id);
+                    const alreadyInBed = existingPlantIds.has(plant.id);
                     return (
-                      <div key={plant.id} className="flex items-center gap-2 py-1">
-                        <label className="flex items-center gap-2 flex-1 cursor-pointer">
+                      <div
+                        key={plant.id}
+                        className={`flex items-center gap-2 py-1.5 px-2 rounded-lg transition-colors ${
+                          isSelected ? 'bg-green-50 ring-1 ring-green-200' : ''
+                        } ${alreadyInBed ? 'opacity-50' : ''}`}
+                      >
+                        <label className="flex items-center gap-2 flex-1 cursor-pointer min-w-0">
                           <Checkbox
-                            checked={isSelected}
+                            checked={isSelected || alreadyInBed}
+                            disabled={alreadyInBed}
                             onCheckedChange={(checked) => togglePlantSelection(plant.id, !!checked)}
                           />
-                          <span className="text-sm">{plant.name}</span>
+                          <span className="text-sm truncate">{plant.name}</span>
                           {plant.type && !typeFilter && (
-                            <span className="text-xs text-muted-foreground">({plant.type})</span>
+                            <span className="text-xs text-muted-foreground flex-shrink-0">({plant.type})</span>
+                          )}
+                          {alreadyInBed && (
+                            <span className="text-[10px] text-green-600 flex-shrink-0">In bed</span>
                           )}
                         </label>
-                        {isSelected && (
+                        {isSelected && !alreadyInBed && (
                           <Input
                             type="number"
                             min={1}
                             value={selectedQuantities.get(plant.id) ?? 1}
                             onChange={(e) => updateQuantity(plant.id, parseInt(e.target.value, 10) || 1)}
-                            className="w-16 h-7 text-xs"
+                            className="w-16 h-7 text-xs flex-shrink-0"
                           />
                         )}
                       </div>
                     );
                   })}
-                </div>
-                <Button
-                  onClick={handleMoveSelected}
-                  disabled={selectedQuantities.size === 0 || isMoving}
-                  className="w-full bg-green-600 hover:bg-green-700"
-                  size="sm"
-                >
-                  {isMoving ? (
-                    <><Loader2 className="h-4 w-4 animate-spin mr-2" />Moving…</>
-                  ) : (
-                    `Move ${selectedQuantities.size} plant${selectedQuantities.size !== 1 ? 's' : ''}`
+                  {filteredPlants.length === 0 && (
+                    <p className="text-sm text-muted-foreground text-center py-4">No plants match your search.</p>
                   )}
-                </Button>
+                </div>
+
+                {/* Sticky confirm button */}
+                <div className="sticky bottom-0 pt-2 bg-card">
+                  <Button
+                    onClick={handleAddSelected}
+                    disabled={selectedQuantities.size === 0 || isAdding}
+                    className="w-full bg-green-600 hover:bg-green-700"
+                    size="sm"
+                  >
+                    {isAdding ? (
+                      <><Loader2 className="h-4 w-4 animate-spin mr-2" />Adding…</>
+                    ) : (
+                      `Add ${selectedQuantities.size} plant${selectedQuantities.size !== 1 ? 's' : ''}`
+                    )}
+                  </Button>
+                </div>
               </>
             )}
           </CardContent>
@@ -311,21 +396,79 @@ export function BedDetailPage() {
 
       {/* Plants list */}
       {plantings.length === 0 ? (
-        <Card className="p-8 text-center">
-          <Sprout className="h-10 w-10 text-muted-foreground mx-auto mb-3" />
-          <h3 className="font-medium mb-1">No plants in this bed yet</h3>
-          <p className="text-sm text-muted-foreground mb-4">
-            Add a plant or move existing plants here.
-          </p>
-          <Button
-            variant="outline"
-            onClick={handleShowMovePanel}
-            className="text-green-600 border-green-600 hover:bg-green-50"
-          >
-            <Plus className="h-4 w-4 mr-1" />
-            Add plants
-          </Button>
-        </Card>
+        <div className="space-y-3">
+          {/* Rich empty state */}
+          <Card className="overflow-hidden border-dashed border-2 border-green-200">
+            <div
+              className="py-10 flex items-center justify-center"
+              style={{ background: `linear-gradient(135deg, ${hexColor}08, ${hexColor}18)` }}
+            >
+              <div className="text-center px-6">
+                <div className="relative inline-block">
+                  <Sprout className="h-12 w-12 text-green-300" />
+                  <Plus className="h-5 w-5 text-green-500 absolute -top-1 -right-1 bg-white rounded-full p-0.5" />
+                </div>
+                <p className="text-sm font-medium mt-3">
+                  {bed.name} is ready for planting
+                </p>
+                <p className="text-xs text-muted-foreground mt-1 max-w-[260px] mx-auto">
+                  Add your plants to track what grows where and get tailored advice for this bed.
+                </p>
+                <Button
+                  onClick={handleShowAddPanel}
+                  className="mt-4 bg-green-600 hover:bg-green-700"
+                  size="sm"
+                >
+                  <Plus className="h-4 w-4 mr-1" />
+                  Add plants to this bed
+                </Button>
+              </div>
+            </div>
+          </Card>
+
+          {/* Contextual tips based on bed metadata */}
+          {bed.sunExposure && (
+            <div className="flex items-start gap-2.5 p-3 rounded-lg bg-amber-50 border border-amber-100">
+              {bed.sunExposure === 'full_sun' && <Sun className="h-4 w-4 text-amber-500 mt-0.5 flex-shrink-0" />}
+              {bed.sunExposure === 'partial_shade' && <CloudSun className="h-4 w-4 text-amber-400 mt-0.5 flex-shrink-0" />}
+              {bed.sunExposure === 'full_shade' && <Cloud className="h-4 w-4 text-slate-400 mt-0.5 flex-shrink-0" />}
+              <div>
+                <p className="text-xs font-medium text-amber-800">
+                  {bed.sunExposure === 'full_sun' && 'Full Sun Bed'}
+                  {bed.sunExposure === 'partial_shade' && 'Partial Shade Bed'}
+                  {bed.sunExposure === 'full_shade' && 'Shade Bed'}
+                </p>
+                <p className="text-xs text-amber-700 mt-0.5">
+                  {bed.sunExposure === 'full_sun' && 'Great for tomatoes, peppers, courgettes, and herbs like basil.'}
+                  {bed.sunExposure === 'partial_shade' && 'Ideal for lettuce, spinach, kale, and root vegetables.'}
+                  {bed.sunExposure === 'full_shade' && 'Consider shade-loving plants like hostas, ferns, or wild garlic.'}
+                </p>
+              </div>
+            </div>
+          )}
+          {bed.type === 'container' && (
+            <div className="flex items-start gap-2.5 p-3 rounded-lg bg-blue-50 border border-blue-100">
+              <Droplets className="h-4 w-4 text-blue-500 mt-0.5 flex-shrink-0" />
+              <div>
+                <p className="text-xs font-medium text-blue-800">Container Tip</p>
+                <p className="text-xs text-blue-700 mt-0.5">
+                  Containers dry out faster than ground beds. Check soil moisture daily in warm weather.
+                </p>
+              </div>
+            </div>
+          )}
+          {bed.type === 'greenhouse' && (
+            <div className="flex items-start gap-2.5 p-3 rounded-lg bg-green-50 border border-green-100">
+              <Sprout className="h-4 w-4 text-green-500 mt-0.5 flex-shrink-0" />
+              <div>
+                <p className="text-xs font-medium text-green-800">Greenhouse Tip</p>
+                <p className="text-xs text-green-700 mt-0.5">
+                  Ventilate on warm days to prevent fungal diseases. Tomatoes, cucumbers, and peppers thrive here.
+                </p>
+              </div>
+            </div>
+          )}
+        </div>
       ) : (
         <div className="space-y-2">
           <h3 className="text-sm font-medium text-muted-foreground">
@@ -333,21 +476,32 @@ export function BedDetailPage() {
           </h3>
           {plantings.map(planting => (
             <Card key={planting.plantingId} className="overflow-hidden">
-              <CardContent className="p-3 flex items-center justify-between">
-                <div>
-                  <p className="font-medium text-sm">{planting.plantName}</p>
-                  <p className="text-xs text-muted-foreground">
-                    {planting.plantType}
-                    {planting.quantity > 1 ? ` · ${planting.quantity}x` : ''}
-                  </p>
+              <CardContent className="p-3 flex items-center gap-3">
+                <div className="flex-1 min-w-0">
+                  <p className="font-medium text-sm truncate">{planting.plantName}</p>
+                  <div className="flex items-center gap-1.5 mt-0.5">
+                    <span className="text-xs text-muted-foreground">{planting.plantType}</span>
+                    {planting.variety && (
+                      <>
+                        <span className="text-xs text-muted-foreground">·</span>
+                        <span className="text-xs text-muted-foreground italic">{planting.variety}</span>
+                      </>
+                    )}
+                    {planting.quantity > 1 && (
+                      <Badge variant="secondary" className="text-[10px] px-1.5 py-0 h-4 ml-0.5">
+                        {planting.quantity}x
+                      </Badge>
+                    )}
+                  </div>
                 </div>
                 <Button
                   variant="ghost"
-                  size="sm"
+                  size="icon"
                   onClick={() => handleRemovePlant(planting)}
-                  className="text-muted-foreground hover:text-red-600 text-xs"
+                  className="h-8 w-8 text-muted-foreground hover:text-red-600 flex-shrink-0"
+                  aria-label={`Remove ${planting.plantName}`}
                 >
-                  Remove
+                  <X className="h-4 w-4" />
                 </Button>
               </CardContent>
             </Card>

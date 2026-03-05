@@ -1502,6 +1502,7 @@ export function GardenPage() {
                         color={bed.color}
                         plantCount={bed.plantCount}
                         plantSummary={bed.plantSummary}
+                        sunExposure={bed.sunExposure}
                         isNew={newlyAddedBedIds.has(bed.id)}
                       />
                     ))}
