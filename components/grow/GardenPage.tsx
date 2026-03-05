@@ -21,7 +21,6 @@ import {
   CheckCircle2,
   Trees,
   X,
-  Pencil,
   Info,
   ArrowUpDown,
   Filter,
@@ -55,10 +54,6 @@ const EditPlantDialog = dynamic(() => import('./EditPlantDialog').then(mod => ({
   loading: () => null
 });
 
-const PlantSpeciesInfo = dynamic(() => import('./PlantSpeciesInfo').then(mod => ({ default: mod.PlantSpeciesInfo })), {
-  ssr: false,
-  loading: () => null
-});
 const CreateBedSheet = dynamic(() => import('./CreateBedSheet').then(mod => ({ default: mod.CreateBedSheet })), {
   ssr: false,
   loading: () => null
@@ -69,7 +64,6 @@ import { buildGrowLoginUrl, GROW_ROOT_PATH } from '../../lib/grow/routes';
 import { SkeletonGardenPage } from './GrowSkeletons';
 import { getPlantImage } from '../../lib/grow/plantImages';
 import { ThreatCard } from './ThreatCard';
-import { PLANT_IMAGE_MAP } from '../../lib/grow/plantImages';
 import type { PlantIdentificationResult } from '../../lib/grow/plantIdentificationService';
 import { TranslatedText } from '../translation/TranslatedFishCard';
 import { useUnifiedLocation } from '../../context/UnifiedLocationContext';
@@ -140,47 +134,6 @@ type RawPlant = {
   bed_id?: string | null;
   bedId?: string | null;
 };
-
-function slugifyForImageKey(value: string): string {
-  return value
-    .trim()
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/-+/g, '-')
-    .replace(/^-|-$/g, '');
-}
-
-function stripParentheticals(value: string): string {
-  return value.replace(/\s*\([^)]*\)\s*/g, ' ').replace(/\s+/g, ' ').trim();
-}
-
-function findBestPlantImageKey(plantName: string): string | null {
-  const raw = plantName?.trim();
-  if (!raw) return null;
-
-  const candidates = [raw, stripParentheticals(raw)]
-    .map(slugifyForImageKey)
-    .filter(Boolean);
-
-  for (const key of candidates) {
-    if (PLANT_IMAGE_MAP[key]) return key;
-  }
-
-  // Most map keys are "common-name-scientific-name". Try matching by common-name prefix.
-  const prefixes = new Set<string>();
-  for (const c of candidates) {
-    prefixes.add(c);
-    prefixes.add(`${c}-`);
-  }
-
-  const keys = Object.keys(PLANT_IMAGE_MAP);
-  for (const prefix of prefixes) {
-    const hit = keys.find((k) => k.startsWith(prefix));
-    if (hit) return hit;
-  }
-
-  return null;
-}
 
 const normalizePlant = (raw: RawPlant): Plant => {
   const plantedValue = raw.planted ? new Date(raw.planted) : new Date();
@@ -341,10 +294,10 @@ export function GardenPage() {
   const [plants, setPlants] = useState<Plant[]>([]);
   
   // Track recently added plants for animation
-  const [newlyAddedPlantIds, setNewlyAddedPlantIds] = useState<Set<string>>(new Set());
+  const [_newlyAddedPlantIds, setNewlyAddedPlantIds] = useState<Set<string>>(new Set());
   
   // Track plants being deleted for exit animation
-  const [deletingPlantIds, setDeletingPlantIds] = useState<Set<string>>(new Set());
+  const [_deletingPlantIds, setDeletingPlantIds] = useState<Set<string>>(new Set());
 
   // View mode toggle: 'garden' = beds + unassigned plants, 'all' = all species in system
   const [viewMode, setViewMode] = useState<'garden' | 'all'>('garden');
@@ -366,43 +319,6 @@ export function GardenPage() {
 
   // Filter and sort state
   const [searchQuery, setSearchQuery] = useState('');
-  const [sortBy, setSortBy] = useState<'name-asc' | 'name-desc' | 'recent' | 'health'>('name-asc');
-  const [filterType, setFilterType] = useState<string>('all');
-  const [filterLocation, setFilterLocation] = useState<string>('all');
-  
-  // View style: 'cards' = card grid, 'list' = compact table
-  const [cardView, setCardView] = useState<'cards' | 'list'>('cards');
-  
-  // Expanded cards toggle - global default + per-card overrides
-  const [expandedCardsDefault, setExpandedCardsDefault] = useState(false);
-  const [expandedCardKeys, setExpandedCardKeys] = useState<Set<string>>(new Set());
-  
-  // Toggle individual card expansion
-  const toggleCardExpanded = useCallback((key: string) => {
-    setExpandedCardKeys(prev => {
-      const next = new Set(prev);
-      if (next.has(key)) {
-        next.delete(key);
-      } else {
-        next.add(key);
-      }
-      return next;
-    });
-  }, []);
-  
-  // Check if a card is expanded (respects per-card override, falls back to default)
-  const isCardExpanded = useCallback((key: string) => {
-    if (expandedCardKeys.has(key)) {
-      return !expandedCardsDefault; // Override: opposite of default
-    }
-    return expandedCardsDefault;
-  }, [expandedCardsDefault, expandedCardKeys]);
-  
-  // When toggling global default, clear individual overrides
-  const toggleExpandedDefault = useCallback(() => {
-    setExpandedCardsDefault(prev => !prev);
-    setExpandedCardKeys(new Set());
-  }, []);
 
   // Threats state
   const [isLoadingThreats, setIsLoadingThreats] = useState(false);
@@ -424,7 +340,7 @@ export function GardenPage() {
   
   // Species info cache - maps plant type (species name) to species data
   const [speciesCache, setSpeciesCache] = useState<Map<string, PlantSpecies>>(new Map());
-  const [isLoadingSpecies, setIsLoadingSpecies] = useState(false);
+  const [_isLoadingSpecies, setIsLoadingSpecies] = useState(false);
   
   // Get user's location for regional context in pest identification
   const { location: userLocation } = useUnifiedLocation();
@@ -432,62 +348,10 @@ export function GardenPage() {
   // Climate zone - default to atlantic_mild for Ireland/UK users
   const userClimateZone = 'atlantic_mild';
 
-  // Derive unique plant types and locations for filter options
-  const uniqueTypes = useMemo(() => {
-    const types = [...new Set(plants.map(p => p.type))].filter(Boolean).sort();
-    return types;
-  }, [plants]);
-
   const uniqueLocations = useMemo(() => {
     const locations = [...new Set(plants.map(p => p.location))].filter(Boolean).sort();
     return locations;
   }, [plants]);
-
-  // Filter and sort plants (grouped by name/species)
-  const filteredAndSortedPlants = useMemo(() => {
-    let result = groupPlantsByName(plants);
-
-    // Apply search filter
-    if (searchQuery.trim()) {
-      const query = searchQuery.toLowerCase().trim();
-      result = result.filter((g) => {
-        const nameHit = g.name.toLowerCase().includes(query);
-        const typeHit = g.type.toLowerCase().includes(query);
-        const locationHit = g.locations.some((l) => l.toLowerCase().includes(query));
-        const varietyHit = g.varieties.some((v) => v.toLowerCase().includes(query));
-        return nameHit || typeHit || locationHit || varietyHit;
-      });
-    }
-
-    // Apply type filter
-    if (filterType !== 'all') {
-      result = result.filter((g) => g.type === filterType);
-    }
-
-    // Apply location filter
-    if (filterLocation !== 'all') {
-      result = result.filter((g) => g.instances.some((p) => p.location === filterLocation));
-    }
-
-    // Apply sorting
-    switch (sortBy) {
-      case 'name-asc':
-        result.sort((a, b) => a.name.localeCompare(b.name));
-        break;
-      case 'name-desc':
-        result.sort((a, b) => b.name.localeCompare(a.name));
-        break;
-      case 'recent':
-        result.sort((a, b) => b.latestPlanted.getTime() - a.latestPlanted.getTime());
-        break;
-      case 'health':
-        // needs attention first
-        result.sort((a, b) => healthScore(a.worstHealth) - healthScore(b.worstHealth));
-        break;
-    }
-
-    return result;
-  }, [plants, searchQuery, filterType, filterLocation, sortBy]);
 
   // Load all species for "All Plants" view
   const loadAllSpecies = useCallback(async (category?: string) => {
@@ -799,11 +663,6 @@ export function GardenPage() {
     }, 600);
   };
 
-  const handleEditPlant = (plant: Plant) => {
-    setEditingPlant(plant);
-    setIsEditPlantDialogOpen(true);
-  };
-
   const handlePlantUpdated = (updatedPlant: Plant) => {
     setPlants((previous) =>
       previous.map((p) => (p.id === updatedPlant.id ? updatedPlant : p))
@@ -908,16 +767,6 @@ export function GardenPage() {
     setNewPhotoLocation('');
     setNewPhotoTags([]);
     setNewPhotoPlantIds([]);
-  };
-
-  const getHealthColor = (health: string) => {
-    switch (health) {
-      case 'excellent': return 'text-green-600 bg-white border border-l-4 border-l-green-500 border-green-200';
-      case 'good': return 'text-blue-600 bg-white border border-l-4 border-l-blue-500 border-blue-200';
-      case 'fair': return 'text-yellow-600 bg-white border border-l-4 border-l-yellow-500 border-yellow-200';
-      case 'poor': return 'text-red-600 bg-white border border-l-4 border-l-red-500 border-red-200';
-      default: return 'text-gray-600 bg-white border border-l-4 border-l-gray-400 border-gray-200';
-    }
   };
 
   const handleIdentifyPhoto = async () => {
