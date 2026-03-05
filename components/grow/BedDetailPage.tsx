@@ -20,7 +20,6 @@ import {
   Droplets,
   X,
   AlertTriangle,
-  Info,
   Leaf,
 } from 'lucide-react';
 import Link from 'next/link';
@@ -381,8 +380,8 @@ export function BedDetailPage() {
                           />
                           <span className="text-sm truncate">{plant.name}</span>
                           {/* Companion indicator */}
-                          {intelligence?.companionSets && (plant as any).speciesSlug && (() => {
-                            const slug = (plant as any).speciesSlug;
+                          {intelligence?.companionSets && plant.speciesSlug && (() => {
+                            const slug = plant.speciesSlug;
                             const isBad = intelligence.companionSets.badCompanions.includes(slug);
                             const isGood = intelligence.companionSets.goodCompanions.includes(slug);
                             if (isBad) return <span className="w-2 h-2 rounded-full bg-amber-400 flex-shrink-0" title="Poor companion for current plants" />;

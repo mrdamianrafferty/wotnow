@@ -57,10 +57,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     .eq('bed_id', bedId)
     .is('removed_at', null);
 
+  type PlantingJoin = { grow_user_plants: { species_slug: string | null } | { species_slug: string | null }[] };
   const activeSlugs = [
     ...new Set(
-      (activePlantings || [])
-        .map((p: any) => p.grow_user_plants?.species_slug)
+      ((activePlantings || []) as PlantingJoin[])
+        .map((p) => {
+          const joined = p.grow_user_plants;
+          if (Array.isArray(joined)) return joined[0]?.species_slug ?? null;
+          return joined?.species_slug ?? null;
+        })
         .filter(Boolean) as string[]
     ),
   ];

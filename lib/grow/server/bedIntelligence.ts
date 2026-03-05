@@ -10,6 +10,18 @@ import {
 
 const ROTATION_YEARS = 3;
 
+// Supabase join result shapes
+interface PlantingWithSpecies {
+  planted_at: string;
+  removed_at: string | null;
+  grow_user_plants: { species_slug: string | null; name?: string };
+}
+
+interface RemovedPlantingRow {
+  removed_at: string | null;
+  grow_user_plants: { name: string; species_slug: string | null };
+}
+
 const MONTH_NAMES = [
   'January', 'February', 'March', 'April', 'May', 'June',
   'July', 'August', 'September', 'October', 'November', 'December',
@@ -34,10 +46,11 @@ export async function getRotationWarnings(
   if (error || !plantings || plantings.length === 0) return [];
 
   // Collect unique species slugs
+  const rows = plantings as unknown as PlantingWithSpecies[];
   const slugs = [
     ...new Set(
-      plantings
-        .map((p: any) => p.grow_user_plants?.species_slug)
+      rows
+        .map((p) => p.grow_user_plants?.species_slug)
         .filter(Boolean) as string[]
     ),
   ];
@@ -61,8 +74,8 @@ export async function getRotationWarnings(
   // Group plantings by rotation group, track max year
   const groupMaxYear = new Map<RotationGroup, number>();
 
-  for (const p of plantings) {
-    const slug = (p as any).grow_user_plants?.species_slug;
+  for (const p of rows) {
+    const slug = p.grow_user_plants?.species_slug;
     if (!slug) continue;
     const group = slugToGroup.get(slug);
     if (!group || group === 'permanent' || group === 'non_rotating') continue;
@@ -172,9 +185,10 @@ export async function getSuccessionPrompts(
   if (!calendar || calendar.length === 0) return [];
 
   const prompts: SuccessionPrompt[] = [];
+  const removedRows = removed as unknown as RemovedPlantingRow[];
 
-  for (const r of removed) {
-    const plantName = (r as any).grow_user_plants?.name;
+  for (const r of removedRows) {
+    const plantName = r.grow_user_plants?.name;
     if (!plantName) continue;
 
     const removedDate = new Date(r.removed_at!);
