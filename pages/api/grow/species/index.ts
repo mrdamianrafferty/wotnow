@@ -166,7 +166,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const { data, error, count } = await query as PostgrestResponse<PlantSpeciesRow>;
 
   if (error) {
-    console.error('Failed to query plant_species:', error);
+    console.error('Failed to query plant_species:', error.message, error.code, error.details, error.hint);
     return res.status(500).json({ error: 'Failed to load plant species' });
   }
 
