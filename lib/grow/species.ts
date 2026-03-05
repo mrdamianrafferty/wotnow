@@ -153,6 +153,12 @@ export type PlantSpeciesRow = {
 
   // Rotation
   rotation_group: string | null;
+
+  // Maturity
+  days_to_maturity_min: number | null;
+  days_to_maturity_max: number | null;
+  maturity_basis: string | null;
+  maturity_notes: string | null;
 } & {
   [K in keyof typeof PLANT_SPECIES_LANGUAGE_FIELDS]: string | null;
 };
@@ -270,6 +276,12 @@ export interface PlantSpecies {
 
   // Rotation
   rotationGroup: string | null;
+
+  // Maturity
+  daysToMaturityMin: number | null;
+  daysToMaturityMax: number | null;
+  maturityBasis: string | null;
+  maturityNotes: string | null;
 }
 
 export interface PlantSpeciesSearchResponse {
@@ -396,5 +408,11 @@ export function serializePlantSpecies(row: PlantSpeciesRow): PlantSpecies {
 
     // Rotation
     rotationGroup: row.rotation_group ?? null,
+
+    // Maturity
+    daysToMaturityMin: row.days_to_maturity_min ?? null,
+    daysToMaturityMax: row.days_to_maturity_max ?? null,
+    maturityBasis: row.maturity_basis ?? null,
+    maturityNotes: row.maturity_notes ?? null,
   };
 }

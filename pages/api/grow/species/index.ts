@@ -87,6 +87,11 @@ const BASE_SELECT = [
   'companions_avoid',
   // Rotation
   'rotation_group',
+  // Maturity
+  'days_to_maturity_min',
+  'days_to_maturity_max',
+  'maturity_basis',
+  'maturity_notes',
   ...Object.keys(PLANT_SPECIES_LANGUAGE_FIELDS),
 ].join(',');
 

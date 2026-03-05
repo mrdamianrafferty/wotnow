@@ -12,6 +12,7 @@ import {
   Pencil,
   Trash2,
   Plus,
+  Minus,
   Loader2,
   Sprout,
   Search,
@@ -39,6 +40,9 @@ import { MovePlantDialog } from './MovePlantDialog';
 import type { BedIntelligenceResponse } from '../../lib/grow/bedIntelligenceTypes';
 import { getPlantImage } from '../../lib/grow/plantImages';
 import type { PlantSpecies } from '../../lib/grow/species';
+import { getGrowthStage, type GrowthStageInfo } from '../../lib/grow/growthStage';
+import { getPostHarvestAdvice } from '../../lib/grow/postHarvestAdvice';
+import { ROTATION_GROUP_FRIENDLY, type RotationGroup } from '../../lib/grow/bedIntelligenceTypes';
 import { CareGuideCard } from './CareGuideCard';
 import { PlantSpeciesInfo } from './PlantSpeciesInfo';
 
@@ -397,6 +401,25 @@ export function BedDetailPage() {
     }
   };
 
+  const handleQuantityChange = async (planting: SerializedBedPlanting, delta: number) => {
+    if (!bed) return;
+    const newQty = planting.quantity + delta;
+    if (newQty < 1) return;
+    // Optimistic update
+    setPlantings(prev =>
+      prev.map(p => p.plantingId === planting.plantingId ? { ...p, quantity: newQty } : p)
+    );
+    try {
+      await api.assignPlantsToBed(bed.id, [{ plantId: planting.plantId, quantity: newQty }]);
+    } catch {
+      // Revert on error
+      setPlantings(prev =>
+        prev.map(p => p.plantingId === planting.plantingId ? { ...p, quantity: planting.quantity } : p)
+      );
+      toast.error('Could not update quantity');
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-20">
@@ -554,18 +577,18 @@ export function BedDetailPage() {
         </div>
       )}
 
-      {/* Rotation Warnings */}
+      {/* Rotation Tips */}
       {intelligence?.rotationWarnings && intelligence.rotationWarnings.length > 0 && (
         <div className="space-y-2">
           {intelligence.rotationWarnings.map((w) => (
             <div
               key={w.rotationGroup}
-              className="flex items-start gap-2.5 p-3 rounded-lg bg-amber-50 border border-amber-100"
+              className="flex items-start gap-2.5 p-3 rounded-lg bg-green-50 border border-green-100"
             >
-              <AlertTriangle className="h-4 w-4 text-amber-500 mt-0.5 flex-shrink-0" />
+              <Leaf className="h-4 w-4 text-green-500 mt-0.5 flex-shrink-0" />
               <div>
-                <p className="text-xs font-medium text-amber-800">Rotation Warning</p>
-                <p className="text-xs text-amber-700 mt-0.5">{w.message}</p>
+                <p className="text-xs font-medium text-green-800">Crop Rotation Tip</p>
+                <p className="text-xs text-green-700 mt-0.5">{w.message}</p>
               </div>
             </div>
           ))}
@@ -756,79 +779,130 @@ export function BedDetailPage() {
       {/* Plants list */}
       {plantings.length === 0 ? (
         <div className="space-y-3">
-          {/* Rich empty state */}
-          <Card className="overflow-hidden border-dashed border-2 border-green-200">
-            <div
-              className="py-10 flex items-center justify-center"
-              style={{ background: `linear-gradient(135deg, ${hexColor}08, ${hexColor}18)` }}
-            >
-              <div className="text-center px-6">
-                <div className="relative inline-block">
-                  <Sprout className="h-12 w-12 text-green-300" />
-                  <Plus className="h-5 w-5 text-green-500 absolute -top-1 -right-1 bg-white rounded-full p-0.5" />
-                </div>
-                <p className="text-sm font-medium mt-3">
-                  {bed.name} is ready for planting
-                </p>
-                <p className="text-xs text-muted-foreground mt-1 max-w-[260px] mx-auto">
-                  Add your plants to track what grows where and get tailored advice for this bed.
-                </p>
-                <Button
-                  onClick={handleShowAddPanel}
-                  className="mt-4 bg-green-600 hover:bg-green-700"
-                  size="sm"
+          {history.length > 0 ? (
+            <>
+              {/* Post-harvest state — bed had plants, all removed */}
+              <Card className="overflow-hidden">
+                <div className="h-1.5" style={{ backgroundColor: hexColor }} />
+                <CardContent className="p-4">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Leaf className="h-4 w-4" style={{ color: hexColor }} />
+                    <p className="text-sm font-medium">
+                      Your {history[0]?.plantName || 'crop'} has been harvested
+                    </p>
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Well done! Time to think about what comes next for {bed.name}.
+                  </p>
+                </CardContent>
+              </Card>
+
+              {/* Seasonal bed care advice */}
+              {(() => {
+                const lastSpecies = history[0]?.speciesSlug
+                  ? speciesMap.get(history[0].plantName.toLowerCase())
+                  : null;
+                const rotGroup = (lastSpecies?.rotationGroup ?? null) as RotationGroup | null;
+                const advice = getPostHarvestAdvice(new Date().getMonth() + 1, rotGroup);
+                return (
+                  <>
+                    <div className="flex items-start gap-2.5 p-3 rounded-lg bg-amber-50 border border-amber-100">
+                      <Calendar className="h-4 w-4 text-amber-600 mt-0.5 flex-shrink-0" />
+                      <div>
+                        <p className="text-xs font-medium text-amber-800">Seasonal Bed Care</p>
+                        <p className="text-xs text-amber-700 mt-0.5">{advice.seasonalAdvice}</p>
+                      </div>
+                    </div>
+                    {advice.nextSteps && (
+                      <div className="flex items-start gap-2.5 p-3 rounded-lg bg-green-50 border border-green-100">
+                        <MoveRight className="h-4 w-4 text-green-600 mt-0.5 flex-shrink-0" />
+                        <div>
+                          <p className="text-xs font-medium text-green-800">Next Steps</p>
+                          <p className="text-xs text-green-700 mt-0.5">{advice.nextSteps}</p>
+                        </div>
+                      </div>
+                    )}
+                  </>
+                );
+              })()}
+            </>
+          ) : (
+            <>
+              {/* Never-had-plants empty state */}
+              <Card className="overflow-hidden border-dashed border-2 border-green-200">
+                <div
+                  className="py-10 flex items-center justify-center"
+                  style={{ background: `linear-gradient(135deg, ${hexColor}08, ${hexColor}18)` }}
                 >
-                  <Plus className="h-4 w-4 mr-1" />
-                  Add plants to this bed
-                </Button>
-              </div>
-            </div>
-          </Card>
+                  <div className="text-center px-6">
+                    <div className="relative inline-block">
+                      <Sprout className="h-12 w-12 text-green-300" />
+                      <Plus className="h-5 w-5 text-green-500 absolute -top-1 -right-1 bg-white rounded-full p-0.5" />
+                    </div>
+                    <p className="text-sm font-medium mt-3">
+                      {bed.name} is ready for planting
+                    </p>
+                    <p className="text-xs text-muted-foreground mt-1 max-w-[260px] mx-auto">
+                      Add your plants to track what grows where and get tailored advice for this bed.
+                    </p>
+                    <Button
+                      onClick={handleShowAddPanel}
+                      className="mt-4 bg-green-600 hover:bg-green-700"
+                      size="sm"
+                    >
+                      <Plus className="h-4 w-4 mr-1" />
+                      Add plants to this bed
+                    </Button>
+                  </div>
+                </div>
+              </Card>
 
-          {/* Contextual tips based on bed metadata */}
-          {bed.sunExposure && (
-            <div className="flex items-start gap-2.5 p-3 rounded-lg bg-amber-50 border border-amber-100">
-              {bed.sunExposure === 'full_sun' && <Sun className="h-4 w-4 text-amber-500 mt-0.5 flex-shrink-0" />}
-              {bed.sunExposure === 'partial_shade' && <CloudSun className="h-4 w-4 text-amber-400 mt-0.5 flex-shrink-0" />}
-              {bed.sunExposure === 'full_shade' && <Cloud className="h-4 w-4 text-slate-400 mt-0.5 flex-shrink-0" />}
-              <div>
-                <p className="text-xs font-medium text-amber-800">
-                  {bed.sunExposure === 'full_sun' && 'Full Sun Bed'}
-                  {bed.sunExposure === 'partial_shade' && 'Partial Shade Bed'}
-                  {bed.sunExposure === 'full_shade' && 'Shade Bed'}
-                </p>
-                <p className="text-xs text-amber-700 mt-0.5">
-                  {bed.sunExposure === 'full_sun' && 'Great for tomatoes, peppers, courgettes, and herbs like basil.'}
-                  {bed.sunExposure === 'partial_shade' && 'Ideal for lettuce, spinach, kale, and root vegetables.'}
-                  {bed.sunExposure === 'full_shade' && 'Consider shade-loving plants like hostas, ferns, or wild garlic.'}
-                </p>
-              </div>
-            </div>
-          )}
-          {bed.type === 'container' && (
-            <div className="flex items-start gap-2.5 p-3 rounded-lg bg-blue-50 border border-blue-100">
-              <Droplets className="h-4 w-4 text-blue-500 mt-0.5 flex-shrink-0" />
-              <div>
-                <p className="text-xs font-medium text-blue-800">Container Tip</p>
-                <p className="text-xs text-blue-700 mt-0.5">
-                  Containers dry out faster than ground beds. Check soil moisture daily in warm weather.
-                </p>
-              </div>
-            </div>
-          )}
-          {bed.type === 'greenhouse' && (
-            <div className="flex items-start gap-2.5 p-3 rounded-lg bg-green-50 border border-green-100">
-              <Sprout className="h-4 w-4 text-green-500 mt-0.5 flex-shrink-0" />
-              <div>
-                <p className="text-xs font-medium text-green-800">Greenhouse Tip</p>
-                <p className="text-xs text-green-700 mt-0.5">
-                  Ventilate on warm days to prevent fungal diseases. Tomatoes, cucumbers, and peppers thrive here.
-                </p>
-              </div>
-            </div>
+              {/* Contextual tips based on bed metadata */}
+              {bed.sunExposure && (
+                <div className="flex items-start gap-2.5 p-3 rounded-lg bg-amber-50 border border-amber-100">
+                  {bed.sunExposure === 'full_sun' && <Sun className="h-4 w-4 text-amber-500 mt-0.5 flex-shrink-0" />}
+                  {bed.sunExposure === 'partial_shade' && <CloudSun className="h-4 w-4 text-amber-400 mt-0.5 flex-shrink-0" />}
+                  {bed.sunExposure === 'full_shade' && <Cloud className="h-4 w-4 text-slate-400 mt-0.5 flex-shrink-0" />}
+                  <div>
+                    <p className="text-xs font-medium text-amber-800">
+                      {bed.sunExposure === 'full_sun' && 'Full Sun Bed'}
+                      {bed.sunExposure === 'partial_shade' && 'Partial Shade Bed'}
+                      {bed.sunExposure === 'full_shade' && 'Shade Bed'}
+                    </p>
+                    <p className="text-xs text-amber-700 mt-0.5">
+                      {bed.sunExposure === 'full_sun' && 'Great for tomatoes, peppers, courgettes, and herbs like basil.'}
+                      {bed.sunExposure === 'partial_shade' && 'Ideal for lettuce, spinach, kale, and root vegetables.'}
+                      {bed.sunExposure === 'full_shade' && 'Consider shade-loving plants like hostas, ferns, or wild garlic.'}
+                    </p>
+                  </div>
+                </div>
+              )}
+              {bed.type === 'container' && (
+                <div className="flex items-start gap-2.5 p-3 rounded-lg bg-blue-50 border border-blue-100">
+                  <Droplets className="h-4 w-4 text-blue-500 mt-0.5 flex-shrink-0" />
+                  <div>
+                    <p className="text-xs font-medium text-blue-800">Container Tip</p>
+                    <p className="text-xs text-blue-700 mt-0.5">
+                      Containers dry out faster than ground beds. Check soil moisture daily in warm weather.
+                    </p>
+                  </div>
+                </div>
+              )}
+              {bed.type === 'greenhouse' && (
+                <div className="flex items-start gap-2.5 p-3 rounded-lg bg-green-50 border border-green-100">
+                  <Sprout className="h-4 w-4 text-green-500 mt-0.5 flex-shrink-0" />
+                  <div>
+                    <p className="text-xs font-medium text-green-800">Greenhouse Tip</p>
+                    <p className="text-xs text-green-700 mt-0.5">
+                      Ventilate on warm days to prevent fungal diseases. Tomatoes, cucumbers, and peppers thrive here.
+                    </p>
+                  </div>
+                </div>
+              )}
+            </>
           )}
 
-          {/* Quick Fill Suggestions */}
+          {/* Quick Fill Suggestions — shown in both branches */}
           {intelligence?.quickFillSuggestions && intelligence.quickFillSuggestions.length > 0 && (
             <Card>
               <CardContent className="p-4">
@@ -854,6 +928,18 @@ export function BedDetailPage() {
               </CardContent>
             </Card>
           )}
+
+          {/* Add plants CTA — shown in both branches */}
+          {history.length > 0 && (
+            <Button
+              onClick={handleShowAddPanel}
+              className="w-full bg-green-600 hover:bg-green-700"
+              size="sm"
+            >
+              <Plus className="h-4 w-4 mr-1" />
+              Add plants to this bed
+            </Button>
+          )}
         </div>
       ) : (
         <div className="space-y-2">
@@ -861,7 +947,9 @@ export function BedDetailPage() {
             Plants ({plantings.length})
           </h3>
           {plantings.map(planting => {
-            const imgSrc = planting.speciesSlug ? getPlantImage(planting.speciesSlug, 'emoji') : null;
+            const imgSrc = planting.speciesSlug
+              ? (getPlantImage(planting.speciesSlug, 'medium') || getPlantImage(planting.speciesSlug, 'emoji'))
+              : null;
             const species = speciesMap.get(planting.plantName.toLowerCase());
             const isExpanded = expandedPlanting === planting.plantingId;
 
@@ -872,11 +960,15 @@ export function BedDetailPage() {
                 )
               : null;
 
+            const lgImgSrc = planting.speciesSlug
+              ? getPlantImage(planting.speciesSlug, 'lg') || getPlantImage(planting.speciesSlug, 'medium')
+              : null;
+
             return (
               <Card key={planting.plantingId} className="overflow-hidden">
                 <CardContent className="p-3">
                   <div className="flex items-center gap-3">
-                    {/* Plant thumbnail (Tier 1a) */}
+                    {/* Plant thumbnail */}
                     <div
                       className="w-10 h-10 rounded-lg bg-green-50 overflow-hidden flex items-center justify-center flex-shrink-0 cursor-pointer"
                       onClick={() => setExpandedPlanting(isExpanded ? null : planting.plantingId)}
@@ -892,8 +984,20 @@ export function BedDetailPage() {
                       className="flex-1 min-w-0 cursor-pointer"
                       onClick={() => setExpandedPlanting(isExpanded ? null : planting.plantingId)}
                     >
-                      <p className="font-medium text-sm truncate">{planting.plantName}</p>
-                      <div className="flex items-center gap-1.5 mt-0.5">
+                      <p className="font-medium text-sm truncate">
+                        {planting.speciesSlug ? (
+                          <Link
+                            href={`/grow/species/${encodeURIComponent(planting.speciesSlug)}`}
+                            className="hover:text-green-700 hover:underline"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            {planting.plantName}
+                          </Link>
+                        ) : (
+                          planting.plantName
+                        )}
+                      </p>
+                      <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
                         <span className="text-xs text-muted-foreground">{planting.plantType}</span>
                         {planting.variety && (
                           <>
@@ -901,14 +1005,20 @@ export function BedDetailPage() {
                             <span className="text-xs text-muted-foreground italic">{planting.variety}</span>
                           </>
                         )}
-                        {planting.quantity > 1 && (
-                          <Badge variant="secondary" className="text-[10px] px-1.5 py-0 h-4 ml-0.5">
-                            {planting.quantity}x
-                          </Badge>
-                        )}
+                        {/* Growth stage badge */}
+                        {(() => {
+                          const stageInfo = species
+                            ? getGrowthStage(planting.plantedAt, species.daysToMaturityMin, species.daysToMaturityMax)
+                            : null;
+                          return stageInfo ? (
+                            <span className={`inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] leading-tight ${stageInfo.badgeClass}`}>
+                              {stageInfo.label}
+                            </span>
+                          ) : null;
+                        })()}
                       </div>
 
-                      {/* Quick care facts (Tier 1d + 2d) */}
+                      {/* Quick care facts */}
                       {species && (
                         <div className="flex items-center gap-2 mt-1 text-[10px] text-muted-foreground">
                           {species.sunRequirements && (
@@ -936,30 +1046,122 @@ export function BedDetailPage() {
                       )}
                     </div>
 
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => setMovePlanting(planting)}
-                      className="h-8 w-8 text-muted-foreground hover:text-green-600 flex-shrink-0"
-                      aria-label={`Move ${planting.plantName} to another bed`}
+                    {/* Quantity stepper */}
+                    <div className="flex items-center gap-1 flex-shrink-0">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-6 w-6"
+                        disabled={planting.quantity <= 1}
+                        onClick={() => handleQuantityChange(planting, -1)}
+                        aria-label="Decrease quantity"
+                      >
+                        <Minus className="h-3 w-3" />
+                      </Button>
+                      <span className="text-sm font-medium w-5 text-center">{planting.quantity}</span>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-6 w-6"
+                        onClick={() => handleQuantityChange(planting, 1)}
+                        aria-label="Increase quantity"
+                      >
+                        <Plus className="h-3 w-3" />
+                      </Button>
+                    </div>
+
+                    {/* Expand indicator */}
+                    <button
+                      type="button"
+                      className="flex-shrink-0 text-muted-foreground"
+                      onClick={() => setExpandedPlanting(isExpanded ? null : planting.plantingId)}
+                      aria-label={isExpanded ? 'Collapse' : 'Expand'}
                     >
-                      <MoveRight className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => handleRemovePlant(planting)}
-                      className="h-8 w-8 text-muted-foreground hover:text-red-600 flex-shrink-0"
-                      aria-label={`Remove ${planting.plantName}`}
-                    >
-                      <X className="h-4 w-4" />
-                    </Button>
+                      {isExpanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                    </button>
                   </div>
 
-                  {/* Expanded species info (Tier 3d) */}
-                  {isExpanded && species && (
-                    <div className="mt-3 pt-3 border-t">
-                      <PlantSpeciesInfo species={species} compact />
+                  {/* Expanded view — large image + full species info + actions */}
+                  {isExpanded && (
+                    <div className="mt-3 pt-3 border-t space-y-4">
+                      {/* Large plant image */}
+                      {lgImgSrc && (
+                        <div className="flex justify-center">
+                          <div className="rounded-xl bg-green-50 overflow-hidden">
+                            <Image
+                              src={lgImgSrc}
+                              alt={planting.plantName}
+                              width={300}
+                              height={300}
+                              className="object-cover"
+                            />
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Growth stage care tip */}
+                      {(() => {
+                        const stageInfo = species
+                          ? getGrowthStage(planting.plantedAt, species.daysToMaturityMin, species.daysToMaturityMax)
+                          : null;
+                        if (!stageInfo) return null;
+                        return (
+                          <div className="flex items-start gap-2.5 p-3 rounded-lg bg-green-50 border border-green-100">
+                            <Sprout className="h-4 w-4 text-green-600 mt-0.5 flex-shrink-0" />
+                            <div>
+                              <p className="text-xs font-medium text-green-800">
+                                {stageInfo.label}
+                                {stageInfo.isPerennial && stageInfo.perennialNote && (
+                                  <span className="font-normal text-green-600"> — {stageInfo.perennialNote}</span>
+                                )}
+                              </p>
+                              <p className="text-xs text-green-700 mt-0.5">{stageInfo.careTip}</p>
+                            </div>
+                          </div>
+                        );
+                      })()}
+
+                      {/* Full PlantSpeciesInfo */}
+                      {species && (
+                        <PlantSpeciesInfo species={species} />
+                      )}
+
+                      {/* Action buttons */}
+                      <div className="flex flex-wrap gap-2 pt-2 border-t border-gray-100">
+                        {planting.speciesSlug && (
+                          <Link
+                            href={`/grow/species/${encodeURIComponent(planting.speciesSlug)}`}
+                            className="flex-1"
+                          >
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="w-full text-blue-700 border-blue-200 hover:bg-blue-50"
+                            >
+                              <BookOpen className="h-4 w-4 mr-1.5" />
+                              View details
+                            </Button>
+                          </Link>
+                        )}
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="flex-1 text-green-700 border-green-200 hover:bg-green-50"
+                          onClick={() => setMovePlanting(planting)}
+                        >
+                          <MoveRight className="h-4 w-4 mr-1.5" />
+                          Move to bed
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="flex-1 text-red-600 border-red-200 hover:bg-red-50"
+                          onClick={() => handleRemovePlant(planting)}
+                        >
+                          <X className="h-4 w-4 mr-1.5" />
+                          Remove
+                        </Button>
+                      </div>
                     </div>
                   )}
                 </CardContent>

@@ -1407,6 +1407,7 @@ export function GardenPage() {
                         sunExposure={bed.sunExposure}
                         lastActivity={bed.lastActivity}
                         isNew={newlyAddedBedIds.has(bed.id)}
+                        bedStatus={bed.bedStatus}
                       />
                     ))}
                     {/* Add Bed card */}

@@ -17,6 +17,8 @@ export type BedRow = {
   updated_at: string;
 };
 
+export type BedStatus = 'empty' | 'healthy' | 'approaching_harvest' | 'ready_to_harvest';
+
 export type SerializedBed = {
   id: string;
   name: string;
@@ -32,9 +34,10 @@ export type SerializedBed = {
   plantCount: number;
   plantSummary: string;
   lastActivity?: string | null;
+  bedStatus?: BedStatus;
 };
 
-export function serializeBed(row: BedRow, plantCount: number = 0, plantSummary: string = '', lastActivity?: string | null): SerializedBed {
+export function serializeBed(row: BedRow, plantCount: number = 0, plantSummary: string = '', lastActivity?: string | null, bedStatus?: BedStatus): SerializedBed {
   return {
     id: row.id,
     name: row.name,
@@ -50,6 +53,7 @@ export function serializeBed(row: BedRow, plantCount: number = 0, plantSummary: 
     plantCount,
     plantSummary,
     lastActivity: lastActivity ?? null,
+    bedStatus,
   };
 }
 
