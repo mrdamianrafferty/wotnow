@@ -29,7 +29,10 @@ interface Plant {
   cultivarId?: string | null;
   cultivar_id?: string | null;
   quantity?: number;
+  bedId?: string | null;
 }
+
+type BedOption = { id: string; name: string };
 
 type CultivarSearchResult = {
   cultivar_id?: string;
@@ -65,9 +68,10 @@ interface EditPlantDialogProps {
   onOpenChange: (open: boolean) => void;
   plant: Plant | null;
   onPlantUpdated: (plant: Plant) => void;
+  beds?: BedOption[];
 }
 
-export function EditPlantDialog({ open, onOpenChange, plant, onPlantUpdated }: EditPlantDialogProps) {
+export function EditPlantDialog({ open, onOpenChange, plant, onPlantUpdated, beds }: EditPlantDialogProps) {
   const [name, setName] = useState('');
   const [location, setLocation] = useState('');
   const [plantedDate, setPlantedDate] = useState('');
@@ -77,6 +81,7 @@ export function EditPlantDialog({ open, onOpenChange, plant, onPlantUpdated }: E
   const [variety, setVariety] = useState('');
   const [cultivarId, setCultivarId] = useState<string | null>(null);
   const [quantity, setQuantity] = useState<number | '' | undefined>('');
+  const [selectedBedId, setSelectedBedId] = useState<string>('');
   const [cultivarResults, setCultivarResults] = useState<CultivarSearchResult[]>([]);
   const [isSearchingCultivars, setIsSearchingCultivars] = useState(false);
   const [showCultivarResults, setShowCultivarResults] = useState(false);
@@ -94,6 +99,7 @@ export function EditPlantDialog({ open, onOpenChange, plant, onPlantUpdated }: E
       setVariety(plant.variety || '');
       setCultivarId((plant.cultivarId ?? plant.cultivar_id ?? null) as string | null);
       setQuantity(typeof plant.quantity === 'number' ? plant.quantity : undefined);
+      setSelectedBedId(plant.bedId || '');
       setCultivarResults([]);
       setIsSearchingCultivars(false);
       setShowCultivarResults(false);
@@ -150,6 +156,7 @@ export function EditPlantDialog({ open, onOpenChange, plant, onPlantUpdated }: E
       notes: notes.trim() || null,
       variety: variety.trim() || null,
       cultivarId: cultivarId || null,
+      bedId: selectedBedId && selectedBedId !== 'none' ? selectedBedId : null,
     };
 
     if (quantity !== undefined) {
@@ -180,6 +187,7 @@ export function EditPlantDialog({ open, onOpenChange, plant, onPlantUpdated }: E
         quantity: Object.prototype.hasOwnProperty.call(updates, 'quantity')
           ? (updates.quantity === null ? undefined : Number(updates.quantity))
           : plant.quantity,
+        bedId: (updates.bedId as string) || null,
       };
 
       onPlantUpdated(updatedPlant);
@@ -227,6 +235,23 @@ export function EditPlantDialog({ open, onOpenChange, plant, onPlantUpdated }: E
                 required
               />
             </div>
+
+            {beds && beds.length > 0 && (
+            <div className="space-y-2">
+              <Label>Garden bed</Label>
+              <Select value={selectedBedId || 'none'} onValueChange={setSelectedBedId}>
+                <SelectTrigger>
+                  <SelectValue placeholder="No bed (unassigned)" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">No bed (unassigned)</SelectItem>
+                  {beds.map(b => (
+                    <SelectItem key={b.id} value={b.id}>{b.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            )}
 
             <div className="space-y-2">
               <Label htmlFor="edit-plant-location">Location</Label>

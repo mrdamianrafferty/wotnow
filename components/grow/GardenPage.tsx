@@ -33,7 +33,8 @@ import {
   Expand,
   Shrink,
   ChevronDown,
-  ChevronUp
+  ChevronUp,
+  Fence
 } from 'lucide-react';
 import Link from 'next/link';
 import dynamic from 'next/dynamic';
@@ -63,7 +64,12 @@ const PlantSpeciesInfo = dynamic(() => import('./PlantSpeciesInfo').then(mod => 
   ssr: false,
   loading: () => null
 });
+const CreateBedSheet = dynamic(() => import('./CreateBedSheet').then(mod => ({ default: mod.CreateBedSheet })), {
+  ssr: false,
+  loading: () => null
+});
 import type { SerializedPlant } from '../../lib/grow/server/plants';
+import type { SerializedBed } from '../../lib/grow/server/beds';
 import { buildGrowLoginUrl, GROW_ROOT_PATH } from '../../lib/grow/routes';
 import { SkeletonGardenPage } from './GrowSkeletons';
 import { getPlantImage } from '../../lib/grow/plantImages';
@@ -74,6 +80,7 @@ import { TranslatedText } from '../translation/TranslatedFishCard';
 import { useUnifiedLocation } from '../../context/UnifiedLocationContext';
 import { AILimitPrompt } from './premium/UpgradePrompt';
 import { FeatureErrorBoundary } from '../FeatureErrorBoundary';
+import { BedCard } from './BedCard';
 
 type ThreatRiskBand = 'none' | 'low' | 'moderate' | 'high' | 'severe';
 
@@ -112,6 +119,7 @@ interface Plant {
   cultivarId?: string | null;
   quantity?: number;
   createdAt?: Date;
+  bedId?: string | null;
 }
 
 // GardenPhoto type is now imported from api.ts
@@ -134,6 +142,8 @@ type RawPlant = {
   cultivar_id?: string | null;
   cultivarId?: string | null;
   quantity?: number | null;
+  bed_id?: string | null;
+  bedId?: string | null;
 };
 
 function slugifyForImageKey(value: string): string {
@@ -207,6 +217,7 @@ const normalizePlant = (raw: RawPlant): Plant => {
     cultivarId,
     quantity,
     createdAt: createdAtValue,
+    bedId: (raw.bedId ?? raw.bed_id) ?? null,
   };
 };
 
@@ -340,8 +351,14 @@ export function GardenPage() {
   // Track plants being deleted for exit animation
   const [deletingPlantIds, setDeletingPlantIds] = useState<Set<string>>(new Set());
 
-  // View mode toggle: 'my' = user's plants, 'all' = all species in system
-  const [viewMode, setViewMode] = useState<'my' | 'all'>('my');
+  // View mode toggle: 'my' = user's plants, 'beds' = garden beds, 'all' = all species in system
+  const [viewMode, setViewMode] = useState<'my' | 'beds' | 'all'>('my');
+
+  // Garden beds state
+  const [beds, setBeds] = useState<SerializedBed[]>([]);
+  const [isLoadingBeds, setIsLoadingBeds] = useState(false);
+  const [isCreateBedOpen, setIsCreateBedOpen] = useState(false);
+  const [newlyAddedBedIds, setNewlyAddedBedIds] = useState<Set<string>>(new Set());
   
   // All species state (for 'all' view mode)
   const [allSpecies, setAllSpecies] = useState<PlantSpecies[]>([]);
@@ -649,17 +666,33 @@ export function GardenPage() {
     }
   }, [markFirstData, markInteractive]);
 
-  // Load plants from backend on mount
+  const loadBeds = useCallback(async () => {
+    const token = localStorage.getItem('access_token');
+    if (!token) return;
+    setIsLoadingBeds(true);
+    try {
+      const response = await api.getBeds();
+      if (Array.isArray(response?.beds)) {
+        setBeds(response.beds);
+      }
+    } catch (error) {
+      console.warn('[GardenPage] Failed to load beds:', error);
+    } finally {
+      setIsLoadingBeds(false);
+    }
+  }, []);
+
+  // Load plants and beds from backend on mount
   useEffect(() => {
     let isMounted = true;
     startTransition(() => {
       void (async () => {
-        await loadPlants();
+        await Promise.all([loadPlants(), loadBeds()]);
         if (!isMounted) return;
       })();
     });
     return () => { isMounted = false; };
-  }, [loadPlants]);
+  }, [loadPlants, loadBeds]);
 
   useEffect(() => {
     let isMounted = true;
@@ -751,6 +784,22 @@ export function GardenPage() {
     }, 600);
 
     setPlants((previous) => [...previous, normalizePlant(rawPlant)]);
+    // If plant was added to a bed, refresh beds to update counts
+    if ((plant as Record<string, unknown>).bedId) {
+      loadBeds();
+    }
+  };
+
+  const handleBedCreated = (bed: SerializedBed) => {
+    setBeds(prev => [...prev, bed]);
+    setNewlyAddedBedIds(prev => new Set([...prev, bed.id]));
+    setTimeout(() => {
+      setNewlyAddedBedIds(prev => {
+        const next = new Set(prev);
+        next.delete(bed.id);
+        return next;
+      });
+    }, 600);
   };
 
   const handleEditPlant = (plant: Plant) => {
@@ -1357,6 +1406,18 @@ export function GardenPage() {
                   <span className="sm:hidden">Mine</span>
                 </button>
                 <button
+                  onClick={() => setViewMode('beds')}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-md transition-all ${
+                    viewMode === 'beds'
+                      ? 'bg-white shadow-sm text-green-700 font-medium'
+                      : 'text-muted-foreground hover:text-foreground'
+                  }`}
+                >
+                  <Fence className="h-3.5 w-3.5" />
+                  <span className="hidden sm:inline">Beds</span>
+                  <span className="sm:hidden">Beds</span>
+                </button>
+                <button
                   onClick={() => setViewMode('all')}
                   className={`flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-md transition-all ${
                     viewMode === 'all'
@@ -1372,7 +1433,7 @@ export function GardenPage() {
             </div>
             {viewMode === 'my' && (
               <div className="flex gap-2">
-                <Button 
+                <Button
                   variant="outline"
                   onClick={() => setGuildModalOpen(true)}
                   disabled={isSaving}
@@ -1396,7 +1457,89 @@ export function GardenPage() {
                 </Button>
               </div>
             )}
+            {viewMode === 'beds' && (
+              <Button
+                className="flex items-center gap-2 bg-green-600 hover:bg-green-700"
+                onClick={() => setIsCreateBedOpen(true)}
+              >
+                <Plus className="h-4 w-4" />
+                Add Bed
+              </Button>
+            )}
           </div>
+
+          {/* Beds View */}
+          {viewMode === 'beds' && (
+            <>
+              {isLoadingBeds ? (
+                <div className="flex items-center justify-center py-12">
+                  <Loader2 className="h-6 w-6 animate-spin text-green-600" />
+                </div>
+              ) : beds.length === 0 ? (
+                <Card className="p-12 text-center">
+                  <Fence className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                  <h3 className="text-lg font-medium mb-2">Organize your garden</h3>
+                  <p className="text-muted-foreground mb-4">
+                    Create beds to group your plants by location, type, or growing zone.
+                  </p>
+                  <Button
+                    onClick={() => setIsCreateBedOpen(true)}
+                    className="bg-green-600 hover:bg-green-700"
+                  >
+                    <Plus className="h-4 w-4 mr-2" />
+                    Create your first bed
+                  </Button>
+                </Card>
+              ) : (
+                <div className="space-y-4">
+                  <div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-4">
+                    {beds.map(bed => (
+                      <BedCard
+                        key={bed.id}
+                        id={bed.id}
+                        name={bed.name}
+                        type={bed.type}
+                        color={bed.color}
+                        plantCount={bed.plantCount}
+                        isNew={newlyAddedBedIds.has(bed.id)}
+                      />
+                    ))}
+                    {/* Add Bed card */}
+                    <button
+                      onClick={() => setIsCreateBedOpen(true)}
+                      className="flex flex-col items-center justify-center gap-2 p-6 rounded-lg border-2 border-dashed border-muted-foreground/25 hover:border-green-500 hover:bg-green-50 transition-all text-muted-foreground hover:text-green-600 min-h-[100px]"
+                    >
+                      <Plus className="h-6 w-6" />
+                      <span className="text-sm font-medium">Add Bed</span>
+                    </button>
+                  </div>
+
+                  {/* Unassigned plants section */}
+                  {(() => {
+                    const unassigned = plants.filter(p => !p.bedId);
+                    if (unassigned.length === 0) return null;
+                    return (
+                      <div className="mt-6">
+                        <h3 className="text-sm font-medium text-muted-foreground mb-3">
+                          Unassigned ({unassigned.length})
+                        </h3>
+                        <div className="grid grid-cols-2 gap-2 md:grid-cols-3 lg:grid-cols-4">
+                          {groupPlantsByName(unassigned).map(group => (
+                            <Card key={group.key} className="p-3">
+                              <p className="text-sm font-medium truncate">{group.name}</p>
+                              <p className="text-xs text-muted-foreground">
+                                {group.totalQuantity > 1 ? `${group.totalQuantity}x · ` : ''}{group.type}
+                              </p>
+                            </Card>
+                          ))}
+                        </div>
+                      </div>
+                    );
+                  })()}
+                </div>
+              )}
+            </>
+          )}
 
           {/* All Species View */}
           {viewMode === 'all' && (
@@ -3127,12 +3270,20 @@ export function GardenPage() {
         }}
         onPlantAdded={handlePlantAdded}
         prefillFromIdentification={addPlantPrefill}
+        beds={beds}
       />
       <EditPlantDialog
         open={isEditPlantDialogOpen}
         onOpenChange={setIsEditPlantDialogOpen}
         plant={editingPlant}
         onPlantUpdated={handlePlantUpdated}
+        beds={beds}
+      />
+      <CreateBedSheet
+        open={isCreateBedOpen}
+        onOpenChange={setIsCreateBedOpen}
+        onBedCreated={handleBedCreated}
+        existingBedCount={beds.length}
       />
     </div>
     </>

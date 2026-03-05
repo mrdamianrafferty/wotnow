@@ -213,6 +213,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     identificationData,
     isCommunityPhoto,
     communityPhotoUrl,
+    bedId,
   } = req.body ?? {};
 
   if (!name || !type) {
@@ -255,6 +256,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     identification_data: identificationData && typeof identificationData === 'object' ? identificationData : null,
     is_community_photo: typeof isCommunityPhoto === 'boolean' ? isCommunityPhoto : false,
     community_photo_url: communityPhotoUrl ? String(communityPhotoUrl).trim() : null,
+    bed_id: bedId && typeof bedId === 'string' ? bedId : null,
   };
 
   const { data, error } = await supabase

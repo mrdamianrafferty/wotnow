@@ -52,7 +52,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(200).json({ success: true, plant: serializePlant(data as PlantRow) });
   }
 
-  const { name, type, location, health, planted, lastWatered, notes, quantity } = req.body ?? {};
+  const { name, type, location, health, planted, lastWatered, notes, quantity, bedId } = req.body ?? {};
 
   const updates: Partial<InsertPlantRow> = {};
 
@@ -89,6 +89,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         // ignore invalid quantity values (do not treat as fatal)
       }
     }
+  }
+
+  if (bedId !== undefined) {
+    updates.bed_id = typeof bedId === 'string' ? bedId : null;
   }
 
   if (Object.keys(updates).length === 0) {

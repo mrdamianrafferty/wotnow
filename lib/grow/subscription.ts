@@ -131,7 +131,7 @@ export const GROW_TIERS: Record<GrowSubscriptionTier, GrowTierInfo> = {
     tagline: 'The Organized Gardener',
     limits: {
       maxPlants: 75,
-      maxBeds: 5,
+      maxBeds: -1,  // Unlimited for paid tiers
       maxGardens: 1,
       plantIdCalls: 20,
       pestDiseaseCalls: 10,
@@ -174,7 +174,7 @@ export const GROW_TIERS: Record<GrowSubscriptionTier, GrowTierInfo> = {
     recommended: true,
     limits: {
       maxPlants: -1,  // Unlimited
-      maxBeds: 10,
+      maxBeds: -1,  // Unlimited for paid tiers
       maxGardens: 3,
       plantIdCalls: -1,  // Unlimited
       pestDiseaseCalls: 30,

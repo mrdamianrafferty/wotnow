@@ -172,18 +172,21 @@ export interface IdentificationPrefill {
   identificationData?: PlantIdentificationResult;
 }
 
+type BedOption = { id: string; name: string };
+
 interface AddPlantDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onPlantAdded: (plant: SerializedPlant) => void;
   prefillFromIdentification?: IdentificationPrefill | null;
+  beds?: BedOption[];
 }
 
 type DialogStep = 'select' | 'details';
 
 type PlantListVariant = 'search' | 'category';
 
-export function AddPlantDialog({ open, onOpenChange, onPlantAdded, prefillFromIdentification }: AddPlantDialogProps) {
+export function AddPlantDialog({ open, onOpenChange, onPlantAdded, prefillFromIdentification, beds }: AddPlantDialogProps) {
   const [activeTab, setActiveTab] = useState<'search' | 'browse'>('search');
   const [step, setStep] = useState<DialogStep>('select');
   const [searchQuery, setSearchQuery] = useState('');
@@ -203,6 +206,7 @@ export function AddPlantDialog({ open, onOpenChange, onPlantAdded, prefillFromId
   const [health, setHealth] = useState<'excellent' | 'good' | 'fair' | 'poor'>('good');
   const [nickname, setNickname] = useState('');
   const [location, setLocation] = useState('');
+  const [selectedBedId, setSelectedBedId] = useState<string>('');
   const [plantedDate, setPlantedDate] = useState(formatDateInput(new Date()));
   const [notes, setNotes] = useState('');
   
@@ -252,6 +256,7 @@ const [cultivarSearchQuery, setCultivarSearchQuery] = useState('');
     setHealth('good');
     setNickname('');
     setLocation('');
+    setSelectedBedId('');
     setPlantedDate(formatDateInput(new Date()));
     setNotes('');
     setCultivarEntries([{ query: '', selected: null }]);
@@ -596,6 +601,7 @@ const cultivarIdForStorage = useMemo(() => {
         variety: cultivarValueForStorage.trim().length > 0 ? cultivarValueForStorage.trim() : null,
         quantity: quantity > 0 ? quantity : 1,
         source: source.length > 0 ? source : null,
+        bedId: selectedBedId && selectedBedId !== 'none' ? selectedBedId : null,
       };
 
       setIsSaving(true);
@@ -653,6 +659,7 @@ const cultivarIdForStorage = useMemo(() => {
 ...(cultivarIdForStorage ? { cultivarId: cultivarIdForStorage } : {}),
       quantity: quantity > 0 ? quantity : 1,
       source: source.length > 0 ? source : null,
+      bedId: selectedBedId && selectedBedId !== 'none' ? selectedBedId : null,
     };
 
     setIsSaving(true);
@@ -1374,6 +1381,23 @@ const cultivarIdForStorage = useMemo(() => {
       : 'Search to find cultivars, or type 3+ characters and press Enter.'}
   </p>
 </div>
+
+                  {beds && beds.length > 0 && (
+                  <div className="space-y-2">
+                    <Label>Garden bed</Label>
+                    <Select value={selectedBedId} onValueChange={setSelectedBedId}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="No bed (unassigned)" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="none">No bed (unassigned)</SelectItem>
+                        {beds.map(b => (
+                          <SelectItem key={b.id} value={b.id}>{b.name}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  )}
 
                   <div className="space-y-2">
                     <Label htmlFor="plant-location">Location</Label>

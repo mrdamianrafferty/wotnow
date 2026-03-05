@@ -18,6 +18,7 @@ export type PlantRow = {
   expected_harvest_at: string | null;
   cost_cents: number | null;
   photo_url: string | null;
+  bed_id: string | null;
 };
 
 export type SerializedPlant = {
@@ -39,6 +40,7 @@ export type SerializedPlant = {
   expectedHarvest?: string | null;
   costCents?: number | null;
   photoUrl?: string | null;
+  bedId?: string | null;
 };
 
 export type InsertPlantRow = {
@@ -67,6 +69,7 @@ export type InsertPlantRow = {
   identification_data?: Record<string, unknown> | null;
   is_community_photo?: boolean;
   community_photo_url?: string | null;
+  bed_id?: string | null;
 };
 
 export function serializePlant(row: PlantRow): SerializedPlant {
@@ -89,5 +92,6 @@ export function serializePlant(row: PlantRow): SerializedPlant {
     expectedHarvest: row.expected_harvest_at,
     costCents: row.cost_cents,
     photoUrl: row.photo_url,
+    bedId: row.bed_id,
   };
 }

@@ -8,6 +8,7 @@ import type { PlantSpecies, PlantSpeciesCategoriesResponse, PlantSpeciesSearchRe
 /* eslint-disable @typescript-eslint/no-explicit-any */
 const API_BASE = EDGE_FUNCTION_BASE;
 const GROW_PLANTS_API_BASE = '/api/grow/plants';
+const GROW_BEDS_API_BASE = '/api/grow/beds';
 const GROW_SPECIES_API_BASE = '/api/grow/species';
 const GROW_CULTIVARS_API_BASE = '/api/grow/cultivars';
 const GROW_ONBOARDING_COMPLETE_API = '/api/grow/onboarding/complete';
@@ -944,6 +945,116 @@ export class ApiClient {
       console.error('❌ Update plant error:', error.message || error);
       throw error;
     }
+  }
+
+  // =========================================================================
+  // Garden Beds
+  // =========================================================================
+
+  async getBeds() {
+    const response = await this.fetchWithAuth(GROW_BEDS_API_BASE, {
+      headers: this.getHeaders(true),
+    });
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({ error: 'Network error' }));
+      throw new Error(error.error || 'Failed to load beds');
+    }
+
+    return response.json();
+  }
+
+  async createBed(bedData: { name: string; type: string }) {
+    const response = await this.fetchWithAuth(GROW_BEDS_API_BASE, {
+      method: 'POST',
+      headers: this.getHeaders(true),
+      body: JSON.stringify(bedData),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({ error: 'Network error' }));
+      const error = new Error(errorData.error || errorData.message || 'Failed to create bed') as Error & {
+        status: number;
+        response: typeof errorData;
+      };
+      error.status = response.status;
+      error.response = errorData;
+      throw error;
+    }
+
+    return response.json();
+  }
+
+  async getBed(bedId: string) {
+    const response = await this.fetchWithAuth(`${GROW_BEDS_API_BASE}/${bedId}`, {
+      headers: this.getHeaders(true),
+    });
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({ error: 'Network error' }));
+      throw new Error(error.error || 'Failed to load bed');
+    }
+
+    return response.json();
+  }
+
+  async updateBed(bedId: string, updates: Record<string, unknown>) {
+    const response = await this.fetchWithAuth(`${GROW_BEDS_API_BASE}/${bedId}`, {
+      method: 'PUT',
+      headers: this.getHeaders(true),
+      body: JSON.stringify(updates),
+    });
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({ error: 'Network error' }));
+      throw new Error(error.error || 'Failed to update bed');
+    }
+
+    return response.json();
+  }
+
+  async deleteBed(bedId: string) {
+    const response = await this.fetchWithAuth(`${GROW_BEDS_API_BASE}/${bedId}`, {
+      method: 'DELETE',
+      headers: this.getHeaders(true),
+    });
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({ error: 'Network error' }));
+      throw new Error(error.error || 'Failed to delete bed');
+    }
+
+    return response.json();
+  }
+
+  async assignPlantsToBed(bedId: string, plantIds: string[]) {
+    const response = await this.fetchWithAuth(`${GROW_BEDS_API_BASE}/${bedId}/plants`, {
+      method: 'POST',
+      headers: this.getHeaders(true),
+      body: JSON.stringify({ plantIds }),
+    });
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({ error: 'Network error' }));
+      throw new Error(error.error || 'Failed to assign plants');
+    }
+
+    return response.json();
+  }
+
+  async removePlantsFromBed(bedId: string, plantIds: string[]) {
+    const response = await this.fetchWithAuth(`${GROW_BEDS_API_BASE}/${bedId}/plants`, {
+      method: 'DELETE',
+      headers: this.getHeaders(true),
+      body: JSON.stringify({ plantIds }),
+    });
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({ error: 'Network error' }));
+      throw new Error(error.error || 'Failed to remove plants');
+    }
+
+    return response.json();
   }
 
   async getGardenTimeline() {
