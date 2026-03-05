@@ -40,9 +40,9 @@ import { MovePlantDialog } from './MovePlantDialog';
 import type { BedIntelligenceResponse } from '../../lib/grow/bedIntelligenceTypes';
 import { getPlantImage } from '../../lib/grow/plantImages';
 import type { PlantSpecies } from '../../lib/grow/species';
-import { getGrowthStage, type GrowthStageInfo } from '../../lib/grow/growthStage';
+import { getGrowthStage } from '../../lib/grow/growthStage';
 import { getPostHarvestAdvice } from '../../lib/grow/postHarvestAdvice';
-import { ROTATION_GROUP_FRIENDLY, type RotationGroup } from '../../lib/grow/bedIntelligenceTypes';
+import type { RotationGroup } from '../../lib/grow/bedIntelligenceTypes';
 import { CareGuideCard } from './CareGuideCard';
 import { PlantSpeciesInfo } from './PlantSpeciesInfo';
 

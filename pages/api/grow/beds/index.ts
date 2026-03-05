@@ -67,7 +67,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     // Compute bedStatus using species maturity data (single query for all active species)
     const bedStatuses: Record<string, BedStatus> = {};
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const plantingsByBedWithDates: Record<string, { plantedAt: string; speciesSlug: string | null }[]> = {};
 
     if (bedIds.length > 0) {
