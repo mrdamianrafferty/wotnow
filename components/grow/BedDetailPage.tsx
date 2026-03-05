@@ -177,7 +177,6 @@ export function BedDetailPage() {
       api.getWeather().then(setWeather).catch(() => {});
       api.getPlantingCalendar().then(setCalendarData).catch(() => {});
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [plantings.length]);
 
   // Set of plant IDs already in this bed
