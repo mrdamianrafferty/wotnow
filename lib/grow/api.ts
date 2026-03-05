@@ -1027,11 +1027,11 @@ export class ApiClient {
     return response.json();
   }
 
-  async assignPlantsToBed(bedId: string, plantIds: string[]) {
+  async assignPlantsToBed(bedId: string, assignments: { plantId: string; quantity: number }[]) {
     const response = await this.fetchWithAuth(`${GROW_BEDS_API_BASE}/${bedId}/plants`, {
       method: 'POST',
       headers: this.getHeaders(true),
-      body: JSON.stringify({ plantIds }),
+      body: JSON.stringify({ assignments }),
     });
 
     if (!response.ok) {

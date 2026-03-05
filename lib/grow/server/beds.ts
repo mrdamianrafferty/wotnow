@@ -49,6 +49,55 @@ export function serializeBed(row: BedRow, plantCount: number = 0): SerializedBed
   };
 }
 
+export type BedPlantingRow = {
+  id: string;
+  bed_id: string;
+  plant_id: string;
+  quantity: number;
+  planted_at: string;
+  removed_at: string | null;
+  harvest_data: Record<string, unknown> | null;
+  created_at: string;
+};
+
+export type SerializedBedPlanting = {
+  plantingId: string;
+  plantId: string;
+  plantName: string;
+  plantType: string;
+  speciesSlug: string | null;
+  variety: string | null;
+  photoUrl: string | null;
+  quantity: number;
+  plantedAt: string;
+};
+
+type BedPlantingJoinRow = BedPlantingRow & {
+  grow_user_plants: {
+    id: string;
+    name: string;
+    type: string;
+    species_slug: string | null;
+    variety: string | null;
+    photo_url: string | null;
+  };
+};
+
+export function serializeBedPlanting(row: BedPlantingJoinRow): SerializedBedPlanting {
+  const plant = row.grow_user_plants;
+  return {
+    plantingId: row.id,
+    plantId: plant.id,
+    plantName: plant.name,
+    plantType: plant.type,
+    speciesSlug: plant.species_slug,
+    variety: plant.variety,
+    photoUrl: plant.photo_url,
+    quantity: row.quantity ?? 1,
+    plantedAt: row.planted_at,
+  };
+}
+
 export const BED_COLORS: BedColor[] = ['terracotta', 'sage', 'cornflower', 'sunflower', 'slate', 'plum'];
 
 export const BED_COLOR_HEX: Record<BedColor, string> = {

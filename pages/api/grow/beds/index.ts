@@ -28,15 +28,16 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return res.status(500).json({ error: 'Failed to load beds' });
     }
 
-    // Get plant counts per bed in a single query
+    // Get plant counts per bed from grow_bed_plantings (active only)
     const bedIds = (beds as BedRow[]).map(b => b.id);
     const plantCounts: Record<string, number> = {};
 
     if (bedIds.length > 0) {
       const { data: counts, error: countError } = await supabase
-        .from('grow_user_plants')
+        .from('grow_bed_plantings')
         .select('bed_id')
-        .in('bed_id', bedIds);
+        .in('bed_id', bedIds)
+        .is('removed_at', null);
 
       if (!countError && counts) {
         for (const row of counts) {

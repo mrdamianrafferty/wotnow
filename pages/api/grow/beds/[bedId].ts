@@ -1,7 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { getAuthenticatedClient } from '../../../../lib/grow/server/auth';
-import { serializeBed, type BedRow } from '../../../../lib/grow/server/beds';
-import { serializePlant, type PlantRow } from '../../../../lib/grow/server/plants';
+import { serializeBed, serializeBedPlanting, type BedRow } from '../../../../lib/grow/server/beds';
 
 const ALLOWED_TYPES = new Set(['raised_bed', 'container', 'in_ground', 'greenhouse', 'polytunnel', 'other']);
 const ALLOWED_SUN = new Set(['full_sun', 'partial_shade', 'full_shade']);
@@ -35,23 +34,24 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return res.status(404).json({ error: 'Bed not found' });
     }
 
-    // Get plants in this bed
-    const { data: plants, error: plantsError } = await supabase
-      .from('grow_user_plants')
-      .select('*')
+    // Get active plantings via grow_bed_plantings junction table
+    const { data: plantings, error: plantingsError } = await supabase
+      .from('grow_bed_plantings')
+      .select('id, bed_id, plant_id, quantity, planted_at, removed_at, harvest_data, created_at, grow_user_plants!inner(id, name, type, species_slug, variety, photo_url)')
       .eq('bed_id', bedId)
-      .eq('user_id', userId)
-      .order('created_at', { ascending: true });
+      .is('removed_at', null)
+      .order('planted_at', { ascending: true });
 
-    if (plantsError) {
-      console.error('[grow] Failed to load plants for bed', bedId, plantsError);
+    if (plantingsError) {
+      console.error('[grow] Failed to load plantings for bed', bedId, plantingsError);
     }
 
-    const serializedPlants = (plants as PlantRow[] || []).map(serializePlant);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const serializedPlantings = (plantings as any[] || []).map(serializeBedPlanting);
 
     return res.status(200).json({
-      bed: serializeBed(bed as BedRow, serializedPlants.length),
-      plants: serializedPlants,
+      bed: serializeBed(bed as BedRow, serializedPlantings.length),
+      plantings: serializedPlantings,
     });
   }
 
@@ -131,11 +131,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(404).json({ error: 'Bed not found' });
   }
 
-  // Get plant count for the response
+  // Get plant count from grow_bed_plantings (active only)
   const { count: plantCount } = await supabase
-    .from('grow_user_plants')
+    .from('grow_bed_plantings')
     .select('id', { count: 'exact', head: true })
-    .eq('bed_id', bedId);
+    .eq('bed_id', bedId)
+    .is('removed_at', null);
 
   return res.status(200).json({ bed: serializeBed(data as BedRow, plantCount ?? 0) });
 }

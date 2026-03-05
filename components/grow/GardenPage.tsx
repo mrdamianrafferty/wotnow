@@ -1514,28 +1514,7 @@ export function GardenPage() {
                     </button>
                   </div>
 
-                  {/* Unassigned plants section */}
-                  {(() => {
-                    const unassigned = plants.filter(p => !p.bedId);
-                    if (unassigned.length === 0) return null;
-                    return (
-                      <div className="mt-6">
-                        <h3 className="text-sm font-medium text-muted-foreground mb-3">
-                          Unassigned ({unassigned.length})
-                        </h3>
-                        <div className="grid grid-cols-2 gap-2 md:grid-cols-3 lg:grid-cols-4">
-                          {groupPlantsByName(unassigned).map(group => (
-                            <Card key={group.key} className="p-3">
-                              <p className="text-sm font-medium truncate">{group.name}</p>
-                              <p className="text-xs text-muted-foreground">
-                                {group.totalQuantity > 1 ? `${group.totalQuantity}x · ` : ''}{group.type}
-                              </p>
-                            </Card>
-                          ))}
-                        </div>
-                      </div>
-                    );
-                  })()}
+                  {/* Plants are now shown within each bed detail page */}
                 </div>
               )}
             </>

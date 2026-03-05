@@ -1,6 +1,8 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { getAuthenticatedClient } from '../../../../../lib/grow/server/auth';
 
+type Assignment = { plantId: string; quantity: number };
+
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   const { bedId } = req.query;
 
@@ -30,6 +32,93 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(404).json({ error: 'Bed not found' });
   }
 
+  if (req.method === 'POST') {
+    // Accept new { assignments } format or legacy { plantIds } format
+    let assignments: Assignment[];
+    const body = req.body ?? {};
+
+    if (Array.isArray(body.assignments) && body.assignments.length > 0) {
+      assignments = body.assignments.map((a: { plantId?: string; quantity?: number }) => ({
+        plantId: a.plantId,
+        quantity: typeof a.quantity === 'number' && a.quantity >= 1 ? Math.floor(a.quantity) : 1,
+      }));
+    } else if (Array.isArray(body.plantIds) && body.plantIds.length > 0) {
+      // Backward compat: convert plantIds to assignments with quantity=1
+      assignments = body.plantIds.map((id: string) => ({ plantId: id, quantity: 1 }));
+    } else {
+      return res.status(400).json({ error: 'assignments array (or legacy plantIds) is required' });
+    }
+
+    const plantIds = assignments.map(a => a.plantId);
+
+    // Validate all plantIds belong to the user
+    const { data: plants, error: plantsError } = await supabase
+      .from('grow_user_plants')
+      .select('id')
+      .in('id', plantIds)
+      .eq('user_id', userId);
+
+    if (plantsError || !plants) {
+      return res.status(500).json({ error: 'Failed to validate plants' });
+    }
+
+    const validIdSet = new Set(plants.map(p => p.id));
+    const validAssignments = assignments.filter(a => validIdSet.has(a.plantId));
+    if (validAssignments.length === 0) {
+      return res.status(400).json({ error: 'No valid plant IDs found' });
+    }
+
+    // Check for existing active plantings to avoid duplicates / update quantity
+    const { data: existing } = await supabase
+      .from('grow_bed_plantings')
+      .select('id, plant_id, quantity')
+      .eq('bed_id', bedId)
+      .in('plant_id', validAssignments.map(a => a.plantId))
+      .is('removed_at', null);
+
+    const existingMap = new Map((existing || []).map(e => [e.plant_id, e]));
+
+    const toInsert: { bed_id: string; plant_id: string; quantity: number; planted_at: string }[] = [];
+    const toUpdate: { id: string; quantity: number }[] = [];
+
+    for (const a of validAssignments) {
+      const ex = existingMap.get(a.plantId);
+      if (ex) {
+        // Already assigned — update quantity
+        toUpdate.push({ id: ex.id, quantity: a.quantity });
+      } else {
+        toInsert.push({
+          bed_id: bedId,
+          plant_id: a.plantId,
+          quantity: a.quantity,
+          planted_at: new Date().toISOString().split('T')[0],
+        });
+      }
+    }
+
+    if (toInsert.length > 0) {
+      const { error: insertError } = await supabase
+        .from('grow_bed_plantings')
+        .insert(toInsert);
+
+      if (insertError) {
+        console.error('[grow] Failed to insert plantings', insertError);
+        return res.status(500).json({ error: 'Failed to assign plants' });
+      }
+    }
+
+    // Update quantities for existing plantings
+    for (const u of toUpdate) {
+      await supabase
+        .from('grow_bed_plantings')
+        .update({ quantity: u.quantity })
+        .eq('id', u.id);
+    }
+
+    return res.status(200).json({ success: true, assignedCount: validAssignments.length });
+  }
+
+  // DELETE: Unassign plants from bed
   const { plantIds } = req.body ?? {};
 
   if (!Array.isArray(plantIds) || plantIds.length === 0) {
@@ -52,52 +141,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(400).json({ error: 'No valid plant IDs found' });
   }
 
-  if (req.method === 'POST') {
-    // Assign plants to bed: update bed_id + insert planting history
-    const { error: updateError } = await supabase
-      .from('grow_user_plants')
-      .update({ bed_id: bedId })
-      .in('id', validIds)
-      .eq('user_id', userId);
-
-    if (updateError) {
-      console.error('[grow] Failed to assign plants to bed', bedId, updateError);
-      return res.status(500).json({ error: 'Failed to assign plants' });
-    }
-
-    // Insert planting history records
-    const historyRows = validIds.map(plantId => ({
-      bed_id: bedId,
-      plant_id: plantId,
-      planted_at: new Date().toISOString().split('T')[0],
-    }));
-
-    const { error: historyError } = await supabase
-      .from('grow_bed_plantings')
-      .insert(historyRows);
-
-    if (historyError) {
-      // Non-fatal: plants are assigned but history didn't save
-      console.warn('[grow] Failed to record planting history', historyError);
-    }
-
-    return res.status(200).json({ success: true, assignedCount: validIds.length });
-  }
-
-  // DELETE: Unassign plants from bed
-  const { error: updateError } = await supabase
-    .from('grow_user_plants')
-    .update({ bed_id: null })
-    .in('id', validIds)
-    .eq('user_id', userId)
-    .eq('bed_id', bedId);
-
-  if (updateError) {
-    console.error('[grow] Failed to unassign plants from bed', bedId, updateError);
-    return res.status(500).json({ error: 'Failed to unassign plants' });
-  }
-
-  // Set removed_at on history records
+  // Set removed_at on active planting records
   const today = new Date().toISOString().split('T')[0];
   const { error: historyError } = await supabase
     .from('grow_bed_plantings')
@@ -107,7 +151,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     .is('removed_at', null);
 
   if (historyError) {
-    console.warn('[grow] Failed to update planting history', historyError);
+    console.error('[grow] Failed to remove plantings', historyError);
+    return res.status(500).json({ error: 'Failed to unassign plants' });
   }
 
   return res.status(200).json({ success: true, removedCount: validIds.length });
