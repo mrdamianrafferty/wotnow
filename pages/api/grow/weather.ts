@@ -109,14 +109,22 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     latitude = parseFloat(lat as string);
     longitude = parseFloat(lon as string);
     locationName = `${latitude.toFixed(2)}, ${longitude.toFixed(2)}`;
-  } 
-  // Otherwise geocode the location string
+  }
+  // Otherwise check if the location string is actually coordinates (e.g. "43.4702, -5.2995")
   else if (location) {
-    const geo = await geocodeLocation(location as string);
-    if (geo) {
-      latitude = geo.lat;
-      longitude = geo.lon;
-      locationName = `${geo.name}, ${geo.country}`;
+    const locStr = (location as string).trim();
+    const coordMatch = locStr.match(/^(-?\d+(?:\.\d+)?)\s*,\s*(-?\d+(?:\.\d+)?)$/);
+    if (coordMatch) {
+      latitude = parseFloat(coordMatch[1]);
+      longitude = parseFloat(coordMatch[2]);
+      locationName = `${latitude.toFixed(2)}, ${longitude.toFixed(2)}`;
+    } else {
+      const geo = await geocodeLocation(locStr);
+      if (geo) {
+        latitude = geo.lat;
+        longitude = geo.lon;
+        locationName = `${geo.name}, ${geo.country}`;
+      }
     }
   }
 
