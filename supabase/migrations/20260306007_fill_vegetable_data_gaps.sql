@@ -804,104 +804,104 @@ WHERE slug = 'melon-cantaloupe' AND (days_to_maturity_min IS NULL OR days_to_mat
 -- ============================================================================
 
 -- Tomato
-UPDATE public.plant_species SET companions_with = '["basil","carrot","parsley","marigold","garlic","chive"]'::jsonb
+UPDATE public.plant_species SET companions_with = '{"basil","carrot","parsley","marigold","garlic","chive"}'::text[]
 WHERE slug IN ('tomato','tomato-cherry','tomato-plum')
-AND (companions_with IS NULL OR companions_with = '{}'::integer[] OR companions_with::text = '');
+AND (companions_with IS NULL OR companions_with = '{}'::text[] OR companions_with::text = '');
 
 -- Carrot
-UPDATE public.plant_species SET companions_with = '["onion-bulb","spring-onion","leek","rosemary","sage","chive"]'::jsonb
+UPDATE public.plant_species SET companions_with = '{"onion-bulb","spring-onion","leek","rosemary","sage","chive"}'::text[]
 WHERE slug = 'carrot'
-AND (companions_with IS NULL OR companions_with = '{}'::integer[] OR companions_with::text = '');
+AND (companions_with IS NULL OR companions_with = '{}'::text[] OR companions_with::text = '');
 
 -- Beetroot
-UPDATE public.plant_species SET companions_with = '["onion-bulb","garlic","lettuce","cabbage"]'::jsonb
+UPDATE public.plant_species SET companions_with = '{"onion-bulb","garlic","lettuce","cabbage"}'::text[]
 WHERE slug = 'beetroot'
-AND (companions_with IS NULL OR companions_with = '{}'::integer[] OR companions_with::text = '');
+AND (companions_with IS NULL OR companions_with = '{}'::text[] OR companions_with::text = '');
 
 -- Cucumber
-UPDATE public.plant_species SET companions_with = '["pea","broad-bean","lettuce","radish","sunflower"]'::jsonb
+UPDATE public.plant_species SET companions_with = '{"pea","broad-bean","lettuce","radish","sunflower"}'::text[]
 WHERE slug IN ('cucumber','cucumber-pickling')
-AND (companions_with IS NULL OR companions_with = '{}'::integer[] OR companions_with::text = '');
+AND (companions_with IS NULL OR companions_with = '{}'::text[] OR companions_with::text = '');
 
 -- Courgette
-UPDATE public.plant_species SET companions_with = '["sweetcorn","runner-bean","nasturtium","borage"]'::jsonb
+UPDATE public.plant_species SET companions_with = '{"sweetcorn","runner-bean","nasturtium","borage"}'::text[]
 WHERE slug = 'courgette'
-AND (companions_with IS NULL OR companions_with = '{}'::integer[] OR companions_with::text = '');
+AND (companions_with IS NULL OR companions_with = '{}'::text[] OR companions_with::text = '');
 
 -- Pumpkin
-UPDATE public.plant_species SET companions_with = '["sweetcorn","runner-bean","nasturtium"]'::jsonb
+UPDATE public.plant_species SET companions_with = '{"sweetcorn","runner-bean","nasturtium"}'::text[]
 WHERE slug IN ('pumpkin','squash-winter','squash-spaghetti')
-AND (companions_with IS NULL OR companions_with = '{}'::integer[] OR companions_with::text = '');
+AND (companions_with IS NULL OR companions_with = '{}'::text[] OR companions_with::text = '');
 
 -- Pea
-UPDATE public.plant_species SET companions_with = '["carrot","turnip","radish","broad-bean","mint"]'::jsonb
+UPDATE public.plant_species SET companions_with = '{"carrot","turnip","radish","broad-bean","mint"}'::text[]
 WHERE slug IN ('pea','peas-garden','peas-snap','peas-snow')
-AND (companions_with IS NULL OR companions_with = '{}'::integer[] OR companions_with::text = '');
+AND (companions_with IS NULL OR companions_with = '{}'::text[] OR companions_with::text = '');
 
 -- Runner bean
-UPDATE public.plant_species SET companions_with = '["sweetcorn","courgette","marigold"]'::jsonb
+UPDATE public.plant_species SET companions_with = '{"sweetcorn","courgette","marigold"}'::text[]
 WHERE slug IN ('runner-bean','scarlet-runner-bean')
-AND (companions_with IS NULL OR companions_with = '{}'::integer[] OR companions_with::text = '');
+AND (companions_with IS NULL OR companions_with = '{}'::text[] OR companions_with::text = '');
 
 -- French bean
-UPDATE public.plant_species SET companions_with = '["sweetcorn","courgette","carrot","celery"]'::jsonb
+UPDATE public.plant_species SET companions_with = '{"sweetcorn","courgette","carrot","celery"}'::text[]
 WHERE slug IN ('french-bean','bean')
-AND (companions_with IS NULL OR companions_with = '{}'::integer[] OR companions_with::text = '');
+AND (companions_with IS NULL OR companions_with = '{}'::text[] OR companions_with::text = '');
 
 -- Broad bean
-UPDATE public.plant_species SET companions_with = '["potato","spinach","lettuce"]'::jsonb
+UPDATE public.plant_species SET companions_with = '{"potato","spinach","lettuce"}'::text[]
 WHERE slug IN ('broad-bean','fava-bean')
-AND (companions_with IS NULL OR companions_with = '{}'::integer[] OR companions_with::text = '');
+AND (companions_with IS NULL OR companions_with = '{}'::text[] OR companions_with::text = '');
 
 -- Garlic
-UPDATE public.plant_species SET companions_with = '["carrot","tomato","beetroot","lettuce","wild-strawberry"]'::jsonb
+UPDATE public.plant_species SET companions_with = '{"carrot","tomato","beetroot","lettuce","wild-strawberry"}'::text[]
 WHERE slug = 'garlic'
-AND (companions_with IS NULL OR companions_with = '{}'::integer[] OR companions_with::text = '');
+AND (companions_with IS NULL OR companions_with = '{}'::text[] OR companions_with::text = '');
 
 -- Onion
-UPDATE public.plant_species SET companions_with = '["carrot","beetroot","lettuce","tomato"]'::jsonb
+UPDATE public.plant_species SET companions_with = '{"carrot","beetroot","lettuce","tomato"}'::text[]
 WHERE slug = 'onion-bulb'
-AND (companions_with IS NULL OR companions_with = '{}'::integer[] OR companions_with::text = '');
+AND (companions_with IS NULL OR companions_with = '{}'::text[] OR companions_with::text = '');
 
 -- Leek
-UPDATE public.plant_species SET companions_with = '["carrot","celery","onion-bulb"]'::jsonb
+UPDATE public.plant_species SET companions_with = '{"carrot","celery","onion-bulb"}'::text[]
 WHERE slug = 'leek'
-AND (companions_with IS NULL OR companions_with = '{}'::integer[] OR companions_with::text = '');
+AND (companions_with IS NULL OR companions_with = '{}'::text[] OR companions_with::text = '');
 
 -- Radish
-UPDATE public.plant_species SET companions_with = '["lettuce","pea","spinach","carrot"]'::jsonb
+UPDATE public.plant_species SET companions_with = '{"lettuce","pea","spinach","carrot"}'::text[]
 WHERE slug = 'radish'
-AND (companions_with IS NULL OR companions_with = '{}'::integer[] OR companions_with::text = '');
+AND (companions_with IS NULL OR companions_with = '{}'::text[] OR companions_with::text = '');
 
 -- Turnip
-UPDATE public.plant_species SET companions_with = '["pea","broad-bean"]'::jsonb
+UPDATE public.plant_species SET companions_with = '{"pea","broad-bean"}'::text[]
 WHERE slug = 'turnip'
-AND (companions_with IS NULL OR companions_with = '{}'::integer[] OR companions_with::text = '');
+AND (companions_with IS NULL OR companions_with = '{}'::text[] OR companions_with::text = '');
 
 -- Sweetcorn
-UPDATE public.plant_species SET companions_with = '["runner-bean","courgette","pumpkin","squash-winter"]'::jsonb
+UPDATE public.plant_species SET companions_with = '{"runner-bean","courgette","pumpkin","squash-winter"}'::text[]
 WHERE slug = 'sweetcorn'
-AND (companions_with IS NULL OR companions_with = '{}'::integer[] OR companions_with::text = '');
+AND (companions_with IS NULL OR companions_with = '{}'::text[] OR companions_with::text = '');
 
 -- Cabbage family
-UPDATE public.plant_species SET companions_with = '["nasturtium","onion-bulb","garlic","dill"]'::jsonb
+UPDATE public.plant_species SET companions_with = '{"nasturtium","onion-bulb","garlic","dill"}'::text[]
 WHERE slug IN ('cabbage','cabbage-red','cabbage-green','cabbage-savoy','broccoli','sprouting-broccoli','romanesco','brussels-sprout','cauliflower')
-AND (companions_with IS NULL OR companions_with = '{}'::integer[] OR companions_with::text = '');
+AND (companions_with IS NULL OR companions_with = '{}'::text[] OR companions_with::text = '');
 
 -- Pepper
-UPDATE public.plant_species SET companions_with = '["tomato","basil","carrot","onion-bulb"]'::jsonb
+UPDATE public.plant_species SET companions_with = '{"tomato","basil","carrot","onion-bulb"}'::text[]
 WHERE slug IN ('pepper','pepper-sweet','pepper-chilli','pepper-hot')
-AND (companions_with IS NULL OR companions_with = '{}'::integer[] OR companions_with::text = '');
+AND (companions_with IS NULL OR companions_with = '{}'::text[] OR companions_with::text = '');
 
 -- Aubergine
-UPDATE public.plant_species SET companions_with = '["pepper","tomato","basil","marigold"]'::jsonb
+UPDATE public.plant_species SET companions_with = '{"pepper","tomato","basil","marigold"}'::text[]
 WHERE slug = 'aubergine'
-AND (companions_with IS NULL OR companions_with = '{}'::integer[] OR companions_with::text = '');
+AND (companions_with IS NULL OR companions_with = '{}'::text[] OR companions_with::text = '');
 
 -- Parsnip
-UPDATE public.plant_species SET companions_with = '["pea","radish","onion-bulb"]'::jsonb
+UPDATE public.plant_species SET companions_with = '{"pea","radish","onion-bulb"}'::text[]
 WHERE slug = 'parsnip'
-AND (companions_with IS NULL OR companions_with = '{}'::integer[] OR companions_with::text = '');
+AND (companions_with IS NULL OR companions_with = '{}'::text[] OR companions_with::text = '');
 
 
 -- ============================================================================
@@ -909,59 +909,59 @@ AND (companions_with IS NULL OR companions_with = '{}'::integer[] OR companions_
 -- ============================================================================
 
 -- Tomato
-UPDATE public.plant_species SET companions_avoid = '["cabbage","fennel-bulb","potato"]'::jsonb
+UPDATE public.plant_species SET companions_avoid = '{"cabbage","fennel-bulb","potato"}'::text[]
 WHERE slug IN ('tomato','tomato-cherry','tomato-plum')
-AND (companions_avoid IS NULL OR companions_avoid = '{}'::integer[] OR companions_avoid::text = '');
+AND (companions_avoid IS NULL OR companions_avoid = '{}'::text[] OR companions_avoid::text = '');
 
 -- Cucumber
-UPDATE public.plant_species SET companions_avoid = '["potato","sage"]'::jsonb
+UPDATE public.plant_species SET companions_avoid = '{"potato","sage"}'::text[]
 WHERE slug IN ('cucumber','cucumber-pickling')
-AND (companions_avoid IS NULL OR companions_avoid = '{}'::integer[] OR companions_avoid::text = '');
+AND (companions_avoid IS NULL OR companions_avoid = '{}'::text[] OR companions_avoid::text = '');
 
 -- Pea
-UPDATE public.plant_species SET companions_avoid = '["onion-bulb","garlic","shallot"]'::jsonb
+UPDATE public.plant_species SET companions_avoid = '{"onion-bulb","garlic","shallot"}'::text[]
 WHERE slug IN ('pea','peas-garden','peas-snap','peas-snow')
-AND (companions_avoid IS NULL OR companions_avoid = '{}'::integer[] OR companions_avoid::text = '');
+AND (companions_avoid IS NULL OR companions_avoid = '{}'::text[] OR companions_avoid::text = '');
 
 -- Broad bean / runner bean
-UPDATE public.plant_species SET companions_avoid = '["onion-bulb","garlic","fennel-bulb"]'::jsonb
+UPDATE public.plant_species SET companions_avoid = '{"onion-bulb","garlic","fennel-bulb"}'::text[]
 WHERE slug IN ('broad-bean','fava-bean','runner-bean','scarlet-runner-bean','french-bean','bean')
-AND (companions_avoid IS NULL OR companions_avoid = '{}'::integer[] OR companions_avoid::text = '');
+AND (companions_avoid IS NULL OR companions_avoid = '{}'::text[] OR companions_avoid::text = '');
 
 -- Carrot
-UPDATE public.plant_species SET companions_avoid = '["dill","parsnip"]'::jsonb
+UPDATE public.plant_species SET companions_avoid = '{"dill","parsnip"}'::text[]
 WHERE slug = 'carrot'
-AND (companions_avoid IS NULL OR companions_avoid = '{}'::integer[] OR companions_avoid::text = '');
+AND (companions_avoid IS NULL OR companions_avoid = '{}'::text[] OR companions_avoid::text = '');
 
 -- Garlic
-UPDATE public.plant_species SET companions_avoid = '["pea","broad-bean","runner-bean"]'::jsonb
+UPDATE public.plant_species SET companions_avoid = '{"pea","broad-bean","runner-bean"}'::text[]
 WHERE slug = 'garlic'
-AND (companions_avoid IS NULL OR companions_avoid = '{}'::integer[] OR companions_avoid::text = '');
+AND (companions_avoid IS NULL OR companions_avoid = '{}'::text[] OR companions_avoid::text = '');
 
 -- Onion
-UPDATE public.plant_species SET companions_avoid = '["pea","broad-bean","runner-bean"]'::jsonb
+UPDATE public.plant_species SET companions_avoid = '{"pea","broad-bean","runner-bean"}'::text[]
 WHERE slug = 'onion-bulb'
-AND (companions_avoid IS NULL OR companions_avoid = '{}'::integer[] OR companions_avoid::text = '');
+AND (companions_avoid IS NULL OR companions_avoid = '{}'::text[] OR companions_avoid::text = '');
 
 -- Cabbage family: avoid strawberry
-UPDATE public.plant_species SET companions_avoid = '["wild-strawberry","runner-bean"]'::jsonb
+UPDATE public.plant_species SET companions_avoid = '{"wild-strawberry","runner-bean"}'::text[]
 WHERE slug IN ('cabbage','cabbage-red','cabbage-green','cabbage-savoy','broccoli','sprouting-broccoli','romanesco','brussels-sprout','cauliflower')
-AND (companions_avoid IS NULL OR companions_avoid = '{}'::integer[] OR companions_avoid::text = '');
+AND (companions_avoid IS NULL OR companions_avoid = '{}'::text[] OR companions_avoid::text = '');
 
 -- Pepper / aubergine
-UPDATE public.plant_species SET companions_avoid = '["fennel-bulb"]'::jsonb
+UPDATE public.plant_species SET companions_avoid = '{"fennel-bulb"}'::text[]
 WHERE slug IN ('pepper','pepper-sweet','pepper-chilli','pepper-hot','aubergine')
-AND (companions_avoid IS NULL OR companions_avoid = '{}'::integer[] OR companions_avoid::text = '');
+AND (companions_avoid IS NULL OR companions_avoid = '{}'::text[] OR companions_avoid::text = '');
 
 -- Sweetcorn
-UPDATE public.plant_species SET companions_avoid = '["tomato"]'::jsonb
+UPDATE public.plant_species SET companions_avoid = '{"tomato"}'::text[]
 WHERE slug = 'sweetcorn'
-AND (companions_avoid IS NULL OR companions_avoid = '{}'::integer[] OR companions_avoid::text = '');
+AND (companions_avoid IS NULL OR companions_avoid = '{}'::text[] OR companions_avoid::text = '');
 
 -- Fennel (bulb) - bad neighbour to most things
-UPDATE public.plant_species SET companions_avoid = '["tomato","pepper","runner-bean","carrot"]'::jsonb
+UPDATE public.plant_species SET companions_avoid = '{"tomato","pepper","runner-bean","carrot"}'::text[]
 WHERE slug = 'fennel-bulb'
-AND (companions_avoid IS NULL OR companions_avoid = '{}'::integer[] OR companions_avoid::text = '');
+AND (companions_avoid IS NULL OR companions_avoid = '{}'::text[] OR companions_avoid::text = '');
 
 
 -- ============================================================================
@@ -1540,22 +1540,22 @@ UPDATE public.plant_species SET min_temp_c = -25
 WHERE slug = 'wild-strawberry' AND (min_temp_c IS NULL);
 
 -- Fruit: companions_with
-UPDATE public.plant_species SET companions_with = '["herb-chives-common","nasturtium","herb-comfrey","garlic"]'::jsonb
+UPDATE public.plant_species SET companions_with = '{"herb-chives-common","nasturtium","herb-comfrey","garlic"}'::text[]
 WHERE slug IN ('fruit-apple','fruit-pear')
-AND (companions_with IS NULL OR companions_with = '{}'::integer[] OR companions_with::text = '');
+AND (companions_with IS NULL OR companions_with = '{}'::text[] OR companions_with::text = '');
 
-UPDATE public.plant_species SET companions_with = '["garlic","herb-chives-common","nasturtium"]'::jsonb
+UPDATE public.plant_species SET companions_with = '{"garlic","herb-chives-common","nasturtium"}'::text[]
 WHERE slug IN ('fruit-cherry-sour','fruit-cherry-sweet','fruit-plum','fruit-damson','fruit-gage',
                'fruit-peach','fruit-nectarine','fruit-apricot')
-AND (companions_with IS NULL OR companions_with = '{}'::integer[] OR companions_with::text = '');
+AND (companions_with IS NULL OR companions_with = '{}'::text[] OR companions_with::text = '');
 
-UPDATE public.plant_species SET companions_with = '["herb-borage","garlic","onion-bulb"]'::jsonb
+UPDATE public.plant_species SET companions_with = '{"herb-borage","garlic","onion-bulb"}'::text[]
 WHERE slug = 'wild-strawberry'
-AND (companions_with IS NULL OR companions_with = '{}'::integer[] OR companions_with::text = '');
+AND (companions_with IS NULL OR companions_with = '{}'::text[] OR companions_with::text = '');
 
-UPDATE public.plant_species SET companions_with = '["herb-comfrey","garlic","nasturtium"]'::jsonb
+UPDATE public.plant_species SET companions_with = '{"herb-comfrey","garlic","nasturtium"}'::text[]
 WHERE slug IN ('fruit-currant','fruit-gooseberry','fruit-blackcurrant')
-AND (companions_with IS NULL OR companions_with = '{}'::integer[] OR companions_with::text = '');
+AND (companions_with IS NULL OR companions_with = '{}'::text[] OR companions_with::text = '');
 
 
 -- ============================================================================
