@@ -591,74 +591,74 @@ UPDATE public.plant_species SET days_to_maturity_min = 65, days_to_maturity_max 
 WHERE slug = 'aubergine' AND (days_to_maturity_min IS NULL OR days_to_maturity_min = 0);
 
 -- Courgette
-UPDATE public.plant_species SET days_to_maturity_min = 45, days_to_maturity_max = 65, maturity_basis = 'from_seed'
+UPDATE public.plant_species SET days_to_maturity_min = 45, days_to_maturity_max = 65, maturity_basis = 'from_sowing'
 WHERE slug = 'courgette' AND (days_to_maturity_min IS NULL OR days_to_maturity_min = 0);
 
 -- Cucumber
-UPDATE public.plant_species SET days_to_maturity_min = 50, days_to_maturity_max = 70, maturity_basis = 'from_seed'
+UPDATE public.plant_species SET days_to_maturity_min = 50, days_to_maturity_max = 70, maturity_basis = 'from_sowing'
 WHERE slug IN ('cucumber','cucumber-pickling')
 AND (days_to_maturity_min IS NULL OR days_to_maturity_min = 0);
 
 -- Pumpkin
-UPDATE public.plant_species SET days_to_maturity_min = 90, days_to_maturity_max = 120, maturity_basis = 'from_seed'
+UPDATE public.plant_species SET days_to_maturity_min = 90, days_to_maturity_max = 120, maturity_basis = 'from_sowing'
 WHERE slug = 'pumpkin' AND (days_to_maturity_min IS NULL OR days_to_maturity_min = 0);
 
 -- Winter squash
-UPDATE public.plant_species SET days_to_maturity_min = 85, days_to_maturity_max = 110, maturity_basis = 'from_seed'
+UPDATE public.plant_species SET days_to_maturity_min = 85, days_to_maturity_max = 110, maturity_basis = 'from_sowing'
 WHERE slug IN ('squash-winter','squash-spaghetti')
 AND (days_to_maturity_min IS NULL OR days_to_maturity_min = 0);
 
 -- Summer squash
-UPDATE public.plant_species SET days_to_maturity_min = 45, days_to_maturity_max = 60, maturity_basis = 'from_seed'
+UPDATE public.plant_species SET days_to_maturity_min = 45, days_to_maturity_max = 60, maturity_basis = 'from_sowing'
 WHERE slug IN ('squash-yellow','squash-pattypan')
 AND (days_to_maturity_min IS NULL OR days_to_maturity_min = 0);
 
 -- Sweetcorn
-UPDATE public.plant_species SET days_to_maturity_min = 70, days_to_maturity_max = 100, maturity_basis = 'from_seed'
+UPDATE public.plant_species SET days_to_maturity_min = 70, days_to_maturity_max = 100, maturity_basis = 'from_sowing'
 WHERE slug = 'sweetcorn' AND (days_to_maturity_min IS NULL OR days_to_maturity_min = 0);
 
 -- Runner bean
-UPDATE public.plant_species SET days_to_maturity_min = 60, days_to_maturity_max = 75, maturity_basis = 'from_seed'
+UPDATE public.plant_species SET days_to_maturity_min = 60, days_to_maturity_max = 75, maturity_basis = 'from_sowing'
 WHERE slug IN ('runner-bean','scarlet-runner-bean')
 AND (days_to_maturity_min IS NULL OR days_to_maturity_min = 0);
 
 -- French bean
-UPDATE public.plant_species SET days_to_maturity_min = 55, days_to_maturity_max = 70, maturity_basis = 'from_seed'
+UPDATE public.plant_species SET days_to_maturity_min = 55, days_to_maturity_max = 70, maturity_basis = 'from_sowing'
 WHERE slug IN ('french-bean','bean')
 AND (days_to_maturity_min IS NULL OR days_to_maturity_min = 0);
 
 -- Broad bean
-UPDATE public.plant_species SET days_to_maturity_min = 80, days_to_maturity_max = 120, maturity_basis = 'from_seed'
+UPDATE public.plant_species SET days_to_maturity_min = 80, days_to_maturity_max = 120, maturity_basis = 'from_sowing'
 WHERE slug IN ('broad-bean','fava-bean')
 AND (days_to_maturity_min IS NULL OR days_to_maturity_min = 0);
 
 -- Pea
-UPDATE public.plant_species SET days_to_maturity_min = 60, days_to_maturity_max = 90, maturity_basis = 'from_seed'
+UPDATE public.plant_species SET days_to_maturity_min = 60, days_to_maturity_max = 90, maturity_basis = 'from_sowing'
 WHERE slug IN ('pea','peas-garden','peas-snap','peas-snow')
 AND (days_to_maturity_min IS NULL OR days_to_maturity_min = 0);
 
 -- Beetroot
-UPDATE public.plant_species SET days_to_maturity_min = 50, days_to_maturity_max = 70, maturity_basis = 'from_seed'
+UPDATE public.plant_species SET days_to_maturity_min = 50, days_to_maturity_max = 70, maturity_basis = 'from_sowing'
 WHERE slug = 'beetroot' AND (days_to_maturity_min IS NULL OR days_to_maturity_min = 0);
 
 -- Carrot
-UPDATE public.plant_species SET days_to_maturity_min = 60, days_to_maturity_max = 80, maturity_basis = 'from_seed'
+UPDATE public.plant_species SET days_to_maturity_min = 60, days_to_maturity_max = 80, maturity_basis = 'from_sowing'
 WHERE slug = 'carrot' AND (days_to_maturity_min IS NULL OR days_to_maturity_min = 0);
 
 -- Parsnip
-UPDATE public.plant_species SET days_to_maturity_min = 100, days_to_maturity_max = 130, maturity_basis = 'from_seed'
+UPDATE public.plant_species SET days_to_maturity_min = 100, days_to_maturity_max = 130, maturity_basis = 'from_sowing'
 WHERE slug = 'parsnip' AND (days_to_maturity_min IS NULL OR days_to_maturity_min = 0);
 
 -- Turnip
-UPDATE public.plant_species SET days_to_maturity_min = 40, days_to_maturity_max = 80, maturity_basis = 'from_seed'
+UPDATE public.plant_species SET days_to_maturity_min = 40, days_to_maturity_max = 80, maturity_basis = 'from_sowing'
 WHERE slug = 'turnip' AND (days_to_maturity_min IS NULL OR days_to_maturity_min = 0);
 
 -- Radish
-UPDATE public.plant_species SET days_to_maturity_min = 25, days_to_maturity_max = 45, maturity_basis = 'from_seed'
+UPDATE public.plant_species SET days_to_maturity_min = 25, days_to_maturity_max = 45, maturity_basis = 'from_sowing'
 WHERE slug = 'radish' AND (days_to_maturity_min IS NULL OR days_to_maturity_min = 0);
 
 -- Swede
-UPDATE public.plant_species SET days_to_maturity_min = 80, days_to_maturity_max = 110, maturity_basis = 'from_seed'
+UPDATE public.plant_species SET days_to_maturity_min = 80, days_to_maturity_max = 110, maturity_basis = 'from_sowing'
 WHERE slug = 'swede-rutabaga' AND (days_to_maturity_min IS NULL OR days_to_maturity_min = 0);
 
 -- Onion (from sets)
@@ -666,7 +666,7 @@ UPDATE public.plant_species SET days_to_maturity_min = 90, days_to_maturity_max 
 WHERE slug = 'onion-bulb' AND (days_to_maturity_min IS NULL OR days_to_maturity_min = 0);
 
 -- Spring onion
-UPDATE public.plant_species SET days_to_maturity_min = 60, days_to_maturity_max = 90, maturity_basis = 'from_seed'
+UPDATE public.plant_species SET days_to_maturity_min = 60, days_to_maturity_max = 90, maturity_basis = 'from_sowing'
 WHERE slug = 'spring-onion' AND (days_to_maturity_min IS NULL OR days_to_maturity_min = 0);
 
 -- Shallot
@@ -674,11 +674,11 @@ UPDATE public.plant_species SET days_to_maturity_min = 90, days_to_maturity_max 
 WHERE slug = 'shallot' AND (days_to_maturity_min IS NULL OR days_to_maturity_min = 0);
 
 -- Leek
-UPDATE public.plant_species SET days_to_maturity_min = 120, days_to_maturity_max = 180, maturity_basis = 'from_seed'
+UPDATE public.plant_species SET days_to_maturity_min = 120, days_to_maturity_max = 180, maturity_basis = 'from_sowing'
 WHERE slug = 'leek' AND (days_to_maturity_min IS NULL OR days_to_maturity_min = 0);
 
 -- Brussels sprout
-UPDATE public.plant_species SET days_to_maturity_min = 150, days_to_maturity_max = 200, maturity_basis = 'from_seed'
+UPDATE public.plant_species SET days_to_maturity_min = 150, days_to_maturity_max = 200, maturity_basis = 'from_sowing'
 WHERE slug = 'brussels-sprout' AND (days_to_maturity_min IS NULL OR days_to_maturity_min = 0);
 
 -- Broccoli
@@ -686,7 +686,7 @@ UPDATE public.plant_species SET days_to_maturity_min = 60, days_to_maturity_max 
 WHERE slug = 'broccoli' AND (days_to_maturity_min IS NULL OR days_to_maturity_min = 0);
 
 -- Sprouting broccoli
-UPDATE public.plant_species SET days_to_maturity_min = 180, days_to_maturity_max = 270, maturity_basis = 'from_seed'
+UPDATE public.plant_species SET days_to_maturity_min = 180, days_to_maturity_max = 270, maturity_basis = 'from_sowing'
 WHERE slug = 'sprouting-broccoli' AND (days_to_maturity_min IS NULL OR days_to_maturity_min = 0);
 
 -- Cabbage
@@ -700,37 +700,37 @@ WHERE slug IN ('kale','kale-curly','kale-lacinato')
 AND (days_to_maturity_min IS NULL OR days_to_maturity_min = 0);
 
 -- Chard
-UPDATE public.plant_species SET days_to_maturity_min = 50, days_to_maturity_max = 60, maturity_basis = 'from_seed'
+UPDATE public.plant_species SET days_to_maturity_min = 50, days_to_maturity_max = 60, maturity_basis = 'from_sowing'
 WHERE slug = 'chard' AND (days_to_maturity_min IS NULL OR days_to_maturity_min = 0);
 
 -- Rocket
-UPDATE public.plant_species SET days_to_maturity_min = 25, days_to_maturity_max = 40, maturity_basis = 'from_seed'
+UPDATE public.plant_species SET days_to_maturity_min = 25, days_to_maturity_max = 40, maturity_basis = 'from_sowing'
 WHERE slug = 'rocket' AND (days_to_maturity_min IS NULL OR days_to_maturity_min = 0);
 
 -- Pak choi
-UPDATE public.plant_species SET days_to_maturity_min = 30, days_to_maturity_max = 50, maturity_basis = 'from_seed'
+UPDATE public.plant_species SET days_to_maturity_min = 30, days_to_maturity_max = 50, maturity_basis = 'from_sowing'
 WHERE slug = 'pak-choi' AND (days_to_maturity_min IS NULL OR days_to_maturity_min = 0);
 
 -- Mizuna / tatsoi
-UPDATE public.plant_species SET days_to_maturity_min = 25, days_to_maturity_max = 45, maturity_basis = 'from_seed'
+UPDATE public.plant_species SET days_to_maturity_min = 25, days_to_maturity_max = 45, maturity_basis = 'from_sowing'
 WHERE slug IN ('mizuna','tatsoi')
 AND (days_to_maturity_min IS NULL OR days_to_maturity_min = 0);
 
 -- Kohlrabi
-UPDATE public.plant_species SET days_to_maturity_min = 45, days_to_maturity_max = 60, maturity_basis = 'from_seed'
+UPDATE public.plant_species SET days_to_maturity_min = 45, days_to_maturity_max = 60, maturity_basis = 'from_sowing'
 WHERE slug = 'kohlrabi' AND (days_to_maturity_min IS NULL OR days_to_maturity_min = 0);
 
 -- Chinese cabbage
-UPDATE public.plant_species SET days_to_maturity_min = 50, days_to_maturity_max = 70, maturity_basis = 'from_seed'
+UPDATE public.plant_species SET days_to_maturity_min = 50, days_to_maturity_max = 70, maturity_basis = 'from_sowing'
 WHERE slug = 'chinese-cabbage' AND (days_to_maturity_min IS NULL OR days_to_maturity_min = 0);
 
 -- Endive / escarole
-UPDATE public.plant_species SET days_to_maturity_min = 60, days_to_maturity_max = 90, maturity_basis = 'from_seed'
+UPDATE public.plant_species SET days_to_maturity_min = 60, days_to_maturity_max = 90, maturity_basis = 'from_sowing'
 WHERE slug IN ('endive','escarole')
 AND (days_to_maturity_min IS NULL OR days_to_maturity_min = 0);
 
 -- Radicchio
-UPDATE public.plant_species SET days_to_maturity_min = 60, days_to_maturity_max = 100, maturity_basis = 'from_seed'
+UPDATE public.plant_species SET days_to_maturity_min = 60, days_to_maturity_max = 100, maturity_basis = 'from_sowing'
 WHERE slug = 'radicchio' AND (days_to_maturity_min IS NULL OR days_to_maturity_min = 0);
 
 -- Celery
@@ -742,7 +742,7 @@ UPDATE public.plant_species SET days_to_maturity_min = 100, days_to_maturity_max
 WHERE slug = 'celeriac' AND (days_to_maturity_min IS NULL OR days_to_maturity_min = 0);
 
 -- Fennel (bulb)
-UPDATE public.plant_species SET days_to_maturity_min = 65, days_to_maturity_max = 90, maturity_basis = 'from_seed'
+UPDATE public.plant_species SET days_to_maturity_min = 65, days_to_maturity_max = 90, maturity_basis = 'from_sowing'
 WHERE slug = 'fennel-bulb' AND (days_to_maturity_min IS NULL OR days_to_maturity_min = 0);
 
 -- Tomatillo
@@ -750,7 +750,7 @@ UPDATE public.plant_species SET days_to_maturity_min = 70, days_to_maturity_max 
 WHERE slug = 'tomatillo' AND (days_to_maturity_min IS NULL OR days_to_maturity_min = 0);
 
 -- Okra
-UPDATE public.plant_species SET days_to_maturity_min = 55, days_to_maturity_max = 75, maturity_basis = 'from_seed'
+UPDATE public.plant_species SET days_to_maturity_min = 55, days_to_maturity_max = 75, maturity_basis = 'from_sowing'
 WHERE slug = 'okra' AND (days_to_maturity_min IS NULL OR days_to_maturity_min = 0);
 
 -- Sweet potato
@@ -762,7 +762,7 @@ UPDATE public.plant_species SET days_to_maturity_min = 730, days_to_maturity_max
 WHERE slug = 'asparagus' AND (days_to_maturity_min IS NULL OR days_to_maturity_min = 0);
 
 -- Globe artichoke
-UPDATE public.plant_species SET days_to_maturity_min = 365, days_to_maturity_max = 545, maturity_basis = 'from_seed'
+UPDATE public.plant_species SET days_to_maturity_min = 365, days_to_maturity_max = 545, maturity_basis = 'from_sowing'
 WHERE slug = 'artichoke-globe' AND (days_to_maturity_min IS NULL OR days_to_maturity_min = 0);
 
 -- Rhubarb
@@ -774,20 +774,20 @@ UPDATE public.plant_species SET days_to_maturity_min = 180, days_to_maturity_max
 WHERE slug = 'garlic' AND (days_to_maturity_min IS NULL OR days_to_maturity_min = 0);
 
 -- Daikon radish
-UPDATE public.plant_species SET days_to_maturity_min = 50, days_to_maturity_max = 70, maturity_basis = 'from_seed'
+UPDATE public.plant_species SET days_to_maturity_min = 50, days_to_maturity_max = 70, maturity_basis = 'from_sowing'
 WHERE slug = 'daikon-radish' AND (days_to_maturity_min IS NULL OR days_to_maturity_min = 0);
 
 -- Salsify / scorzonera
-UPDATE public.plant_species SET days_to_maturity_min = 120, days_to_maturity_max = 150, maturity_basis = 'from_seed'
+UPDATE public.plant_species SET days_to_maturity_min = 120, days_to_maturity_max = 150, maturity_basis = 'from_sowing'
 WHERE slug IN ('salsify','black-salsify')
 AND (days_to_maturity_min IS NULL OR days_to_maturity_min = 0);
 
 -- Mustard greens
-UPDATE public.plant_species SET days_to_maturity_min = 30, days_to_maturity_max = 50, maturity_basis = 'from_seed'
+UPDATE public.plant_species SET days_to_maturity_min = 30, days_to_maturity_max = 50, maturity_basis = 'from_sowing'
 WHERE slug = 'mustard-greens' AND (days_to_maturity_min IS NULL OR days_to_maturity_min = 0);
 
 -- Edamame
-UPDATE public.plant_species SET days_to_maturity_min = 80, days_to_maturity_max = 110, maturity_basis = 'from_seed'
+UPDATE public.plant_species SET days_to_maturity_min = 80, days_to_maturity_max = 110, maturity_basis = 'from_sowing'
 WHERE slug = 'soybean-edamame' AND (days_to_maturity_min IS NULL OR days_to_maturity_min = 0);
 
 -- Watermelon
@@ -1103,79 +1103,79 @@ WHERE slug = 'herb-lovage'
 AND (sow_months IS NULL OR sow_months = '{}'::integer[]);
 
 -- Herb days to maturity
-UPDATE public.plant_species SET days_to_maturity_min = 60, days_to_maturity_max = 90, maturity_basis = 'from_seed'
+UPDATE public.plant_species SET days_to_maturity_min = 60, days_to_maturity_max = 90, maturity_basis = 'from_sowing'
 WHERE slug IN ('herb-basil-sweet','herb-basil-thai','herb-basil-greek','herb-holy-basil')
 AND (days_to_maturity_min IS NULL OR days_to_maturity_min = 0);
 
-UPDATE public.plant_species SET days_to_maturity_min = 40, days_to_maturity_max = 60, maturity_basis = 'from_seed'
+UPDATE public.plant_species SET days_to_maturity_min = 40, days_to_maturity_max = 60, maturity_basis = 'from_sowing'
 WHERE slug IN ('herb-dill-leaf','dill')
 AND (days_to_maturity_min IS NULL OR days_to_maturity_min = 0);
 
-UPDATE public.plant_species SET days_to_maturity_min = 70, days_to_maturity_max = 90, maturity_basis = 'from_seed'
+UPDATE public.plant_species SET days_to_maturity_min = 70, days_to_maturity_max = 90, maturity_basis = 'from_sowing'
 WHERE slug IN ('herb-parsley-flat','herb-parsley-curly','parsley')
 AND (days_to_maturity_min IS NULL OR days_to_maturity_min = 0);
 
-UPDATE public.plant_species SET days_to_maturity_min = 40, days_to_maturity_max = 60, maturity_basis = 'from_seed'
+UPDATE public.plant_species SET days_to_maturity_min = 40, days_to_maturity_max = 60, maturity_basis = 'from_sowing'
 WHERE slug IN ('herb-coriander-leaf')
 AND (days_to_maturity_min IS NULL OR days_to_maturity_min = 0);
 
-UPDATE public.plant_species SET days_to_maturity_min = 60, days_to_maturity_max = 90, maturity_basis = 'from_seed'
+UPDATE public.plant_species SET days_to_maturity_min = 60, days_to_maturity_max = 90, maturity_basis = 'from_sowing'
 WHERE slug IN ('herb-oregano','herb-oregano-greek','herb-marjoram-sweet')
 AND (days_to_maturity_min IS NULL OR days_to_maturity_min = 0);
 
-UPDATE public.plant_species SET days_to_maturity_min = 85, days_to_maturity_max = 120, maturity_basis = 'from_seed'
+UPDATE public.plant_species SET days_to_maturity_min = 85, days_to_maturity_max = 120, maturity_basis = 'from_sowing'
 WHERE slug IN ('herb-thyme-common','herb-thyme-lemon')
 AND (days_to_maturity_min IS NULL OR days_to_maturity_min = 0);
 
-UPDATE public.plant_species SET days_to_maturity_min = 75, days_to_maturity_max = 100, maturity_basis = 'from_seed'
+UPDATE public.plant_species SET days_to_maturity_min = 75, days_to_maturity_max = 100, maturity_basis = 'from_sowing'
 WHERE slug IN ('herb-sage-common','herb-sage-purple')
 AND (days_to_maturity_min IS NULL OR days_to_maturity_min = 0);
 
-UPDATE public.plant_species SET days_to_maturity_min = 60, days_to_maturity_max = 90, maturity_basis = 'from_seed'
+UPDATE public.plant_species SET days_to_maturity_min = 60, days_to_maturity_max = 90, maturity_basis = 'from_sowing'
 WHERE slug = 'herb-chives-common'
 AND (days_to_maturity_min IS NULL OR days_to_maturity_min = 0);
 
-UPDATE public.plant_species SET days_to_maturity_min = 50, days_to_maturity_max = 70, maturity_basis = 'from_seed'
+UPDATE public.plant_species SET days_to_maturity_min = 50, days_to_maturity_max = 70, maturity_basis = 'from_sowing'
 WHERE slug = 'herb-borage'
 AND (days_to_maturity_min IS NULL OR days_to_maturity_min = 0);
 
-UPDATE public.plant_species SET days_to_maturity_min = 40, days_to_maturity_max = 55, maturity_basis = 'from_seed'
+UPDATE public.plant_species SET days_to_maturity_min = 40, days_to_maturity_max = 55, maturity_basis = 'from_sowing'
 WHERE slug IN ('herb-chervil','chervil')
 AND (days_to_maturity_min IS NULL OR days_to_maturity_min = 0);
 
-UPDATE public.plant_species SET days_to_maturity_min = 60, days_to_maturity_max = 90, maturity_basis = 'from_seed'
+UPDATE public.plant_species SET days_to_maturity_min = 60, days_to_maturity_max = 90, maturity_basis = 'from_sowing'
 WHERE slug = 'herb-calendula'
 AND (days_to_maturity_min IS NULL OR days_to_maturity_min = 0);
 
-UPDATE public.plant_species SET days_to_maturity_min = 60, days_to_maturity_max = 80, maturity_basis = 'from_seed'
+UPDATE public.plant_species SET days_to_maturity_min = 60, days_to_maturity_max = 80, maturity_basis = 'from_sowing'
 WHERE slug IN ('herb-chamomile-german','herb-chamomile-roman')
 AND (days_to_maturity_min IS NULL OR days_to_maturity_min = 0);
 
-UPDATE public.plant_species SET days_to_maturity_min = 65, days_to_maturity_max = 90, maturity_basis = 'from_seed'
+UPDATE public.plant_species SET days_to_maturity_min = 65, days_to_maturity_max = 90, maturity_basis = 'from_sowing'
 WHERE slug = 'herb-fennel-leaf'
 AND (days_to_maturity_min IS NULL OR days_to_maturity_min = 0);
 
-UPDATE public.plant_species SET days_to_maturity_min = 70, days_to_maturity_max = 90, maturity_basis = 'from_seed'
+UPDATE public.plant_species SET days_to_maturity_min = 70, days_to_maturity_max = 90, maturity_basis = 'from_sowing'
 WHERE slug = 'herb-lovage'
 AND (days_to_maturity_min IS NULL OR days_to_maturity_min = 0);
 
-UPDATE public.plant_species SET days_to_maturity_min = 60, days_to_maturity_max = 90, maturity_basis = 'from_seed'
+UPDATE public.plant_species SET days_to_maturity_min = 60, days_to_maturity_max = 90, maturity_basis = 'from_sowing'
 WHERE slug IN ('herb-lemon-balm','herb-mint-spearmint','herb-mint-peppermint')
 AND (days_to_maturity_min IS NULL OR days_to_maturity_min = 0);
 
-UPDATE public.plant_species SET days_to_maturity_min = 50, days_to_maturity_max = 70, maturity_basis = 'from_seed'
+UPDATE public.plant_species SET days_to_maturity_min = 50, days_to_maturity_max = 70, maturity_basis = 'from_sowing'
 WHERE slug = 'herb-savoury-summer'
 AND (days_to_maturity_min IS NULL OR days_to_maturity_min = 0);
 
-UPDATE public.plant_species SET days_to_maturity_min = 90, days_to_maturity_max = 120, maturity_basis = 'from_seed'
+UPDATE public.plant_species SET days_to_maturity_min = 90, days_to_maturity_max = 120, maturity_basis = 'from_sowing'
 WHERE slug = 'herb-savoury-winter'
 AND (days_to_maturity_min IS NULL OR days_to_maturity_min = 0);
 
-UPDATE public.plant_species SET days_to_maturity_min = 60, days_to_maturity_max = 90, maturity_basis = 'from_seed'
+UPDATE public.plant_species SET days_to_maturity_min = 60, days_to_maturity_max = 90, maturity_basis = 'from_sowing'
 WHERE slug = 'herb-sorrel-common'
 AND (days_to_maturity_min IS NULL OR days_to_maturity_min = 0);
 
-UPDATE public.plant_species SET days_to_maturity_min = 80, days_to_maturity_max = 120, maturity_basis = 'from_seed'
+UPDATE public.plant_species SET days_to_maturity_min = 80, days_to_maturity_max = 120, maturity_basis = 'from_sowing'
 WHERE slug = 'herb-tarragon-french'
 AND (days_to_maturity_min IS NULL OR days_to_maturity_min = 0);
 
