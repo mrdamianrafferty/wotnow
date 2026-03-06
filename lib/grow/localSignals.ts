@@ -246,7 +246,7 @@ function detectSlugActivity(forecast: WeatherForecast[]): LocalSignal | null {
     title: 'Slug activity expected',
     description: `Recent rain (${rain.toFixed(0)}mm) with mild temperatures (${temp.toFixed(0)}°C) and ${humidity}% humidity creates ideal slug conditions.`,
     advice:
-      'Go slug hunting after dark with a torch. Set beer traps. Apply slug pellets or wool barriers around vulnerable plants.',
+      'Go slug hunting after dark with a torch. Set beer traps. Encourage natural predators such as frogs, toads, hedgehogs and birds.',
     affectedPlants: ['lettuce', 'hostas', 'strawberries', 'cabbage', 'beans', 'seedlings'],
     validFrom: today.date,
     validUntil: today.date,

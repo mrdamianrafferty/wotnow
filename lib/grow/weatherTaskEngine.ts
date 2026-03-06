@@ -918,7 +918,7 @@ export function detectSlugRisk(
       forecastDate: today.date,
       forecastValue: rain,
       affectedPlantIds: susceptiblePlants.map(p => p.id),
-      suggestedAction: 'Go slug hunting after dark with a torch. Set beer traps. Apply slug pellets or wool barriers around vulnerable plants.',
+      suggestedAction: 'Go slug hunting after dark with a torch. Set beer traps. Encourage natural predators such as frogs, toads, hedgehogs and birds.',
     });
   }
 
