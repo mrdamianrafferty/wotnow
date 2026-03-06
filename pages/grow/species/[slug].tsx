@@ -13,6 +13,7 @@ import { GrowLayout } from "@/components/grow/GrowLayout";
 import { QuickFactsCard } from "@/components/grow/QuickFactsCard";
 import { SafetyCard, SafetyAlerts } from "@/components/grow/SafetyCard";
 import { PestResilienceCard } from "@/components/grow/PestResilienceCard";
+import { CroppingTimelineCard } from "@/components/grow/CroppingTimelineCard";
 import { VisualCharacteristicsCard } from "@/components/grow/VisualCharacteristicsCard";
 import { WildlifeCard } from "@/components/grow/WildlifeCard";
 import { PropagationCard } from "@/components/grow/PropagationCard";
@@ -1092,6 +1093,9 @@ export default function GrowSpeciesPage() {
 
         {/* Pest Resilience Card - score + practical note */}
         {species && <PestResilienceCard species={species} />}
+
+        {/* Cropping Timeline Card - years to fruit for trees */}
+        {species && <CroppingTimelineCard species={species} />}
 
         {/* Visual Characteristics Card - flowers, fruits, colors */}
         {species && <VisualCharacteristicsCard species={species} />}

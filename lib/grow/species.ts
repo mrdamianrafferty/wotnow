@@ -161,6 +161,9 @@ export type PlantSpeciesRow = {
   days_to_maturity_max: number | null;
   maturity_basis: string | null;
   maturity_notes: string | null;
+  years_to_first_crop: number | null;
+  years_to_full_production: number | null;
+  cropping_timeline_note: string | null;
 } & {
   [K in keyof typeof PLANT_SPECIES_LANGUAGE_FIELDS]: string | null;
 };
@@ -286,6 +289,9 @@ export interface PlantSpecies {
   daysToMaturityMax: number | null;
   maturityBasis: string | null;
   maturityNotes: string | null;
+  yearsToFirstCrop: number | null;
+  yearsToFullProduction: number | null;
+  croppingTimelineNote: string | null;
 }
 
 export interface PlantSpeciesSearchResponse {
@@ -420,5 +426,8 @@ export function serializePlantSpecies(row: PlantSpeciesRow): PlantSpecies {
     daysToMaturityMax: row.days_to_maturity_max ?? null,
     maturityBasis: row.maturity_basis ?? null,
     maturityNotes: row.maturity_notes ?? null,
+    yearsToFirstCrop: row.years_to_first_crop ?? null,
+    yearsToFullProduction: row.years_to_full_production ?? null,
+    croppingTimelineNote: row.cropping_timeline_note ?? null,
   };
 }

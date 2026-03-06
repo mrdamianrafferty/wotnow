@@ -153,6 +153,9 @@ function serializeCustomSpecies(row: CustomSpeciesRow): PlantSpecies {
     daysToMaturityMax: null,
     maturityBasis: null,
     maturityNotes: null,
+    yearsToFirstCrop: null,
+    yearsToFullProduction: null,
+    croppingTimelineNote: null,
   };
 }
 
@@ -243,6 +246,9 @@ const BASE_SELECT = [
   'days_to_maturity_max',
   'maturity_basis',
   'maturity_notes',
+  'years_to_first_crop',
+  'years_to_full_production',
+  'cropping_timeline_note',
   ...Object.keys(PLANT_SPECIES_LANGUAGE_FIELDS),
 ].join(',');
 
