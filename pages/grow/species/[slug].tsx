@@ -14,6 +14,7 @@ import { QuickFactsCard } from "@/components/grow/QuickFactsCard";
 import { SafetyCard, SafetyAlerts } from "@/components/grow/SafetyCard";
 import { PestResilienceCard } from "@/components/grow/PestResilienceCard";
 import { CroppingTimelineCard } from "@/components/grow/CroppingTimelineCard";
+import { CompanionPlantingCard } from "@/components/grow/CompanionPlantingCard";
 import { VisualCharacteristicsCard } from "@/components/grow/VisualCharacteristicsCard";
 import { WildlifeCard } from "@/components/grow/WildlifeCard";
 import { PropagationCard } from "@/components/grow/PropagationCard";
@@ -1056,32 +1057,6 @@ export default function GrowSpeciesPage() {
                   </div>
                 ) : null}
 
-                {/* Companion planting notes */}
-                {(species.companionsWith?.length > 0 || species.companionsAvoid?.length > 0) && (
-                  <div className="pt-2 border-t space-y-2">
-                    <div className="text-xs font-medium text-muted-foreground">
-                      Companion notes
-                    </div>
-                    {species.companionsWith?.length > 0 && (
-                      <div className="flex items-start gap-2 text-sm">
-                        <span className="text-green-600 shrink-0">✓</span>
-                        <span className="text-muted-foreground">
-                          <span className="font-medium text-foreground">Often paired with:</span>{" "}
-                          {species.companionsWith.join(", ")}
-                        </span>
-                      </div>
-                    )}
-                    {species.companionsAvoid?.length > 0 && (
-                      <div className="flex items-start gap-2 text-sm">
-                        <span className="text-amber-600 shrink-0">⚠</span>
-                        <span className="text-muted-foreground">
-                          <span className="font-medium text-foreground">Often avoided near:</span>{" "}
-                          {species.companionsAvoid.join(", ")}
-                        </span>
-                      </div>
-                    )}
-                  </div>
-                )}
               </div>
             ) : (
               <p className="text-sm text-muted-foreground">
@@ -1096,6 +1071,9 @@ export default function GrowSpeciesPage() {
 
         {/* Pest Resilience Card - score + practical note */}
         {species && <PestResilienceCard species={species} />}
+
+        {/* Companion Planting Card - good/bad companions with links */}
+        {species && <CompanionPlantingCard species={species} />}
 
         {/* Visual Characteristics Card - flowers, fruits, colors */}
         {species && <VisualCharacteristicsCard species={species} />}
