@@ -50,8 +50,20 @@ function FactItem({ icon, label, value, subValue, valueColor }: FactItemProps) {
  * Uses a 2-column grid layout for compact display.
  */
 export function QuickFactsCard({ species, userLat, userLon: _userLon }: QuickFactsCardProps) {
-  // Parse dimensions from Perenual data
-  const dimensions = formatDimensions(species.dimensions as Dimension[] | null);
+  // Prefer our curated numeric columns; fall back to Perenual JSON
+  const perenualDims = formatDimensions(species.dimensions as Dimension[] | null);
+  const dimensions = {
+    height: species.averageHeightCm
+      ? species.maximumHeightCm && species.maximumHeightCm !== species.averageHeightCm
+        ? `${(species.averageHeightCm / 100).toFixed(1)}-${(species.maximumHeightCm / 100).toFixed(1)}m`
+        : `${(species.averageHeightCm / 100).toFixed(1)}m`
+      : perenualDims.height,
+    spread: species.averageSpreadCm
+      ? species.maximumSpreadCm && species.maximumSpreadCm !== species.averageSpreadCm
+        ? `${(species.averageSpreadCm / 100).toFixed(1)}-${(species.maximumSpreadCm / 100).toFixed(1)}m`
+        : `${(species.averageSpreadCm / 100).toFixed(1)}m`
+      : perenualDims.spread,
+  };
   const growthRate = formatGrowthRate(species.growthRate);
   const careLevel = formatCareLevel(species.careLevel);
   const maintenance = formatMaintenance(species.maintenance);
