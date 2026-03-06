@@ -173,16 +173,12 @@ UPDATE plant_species SET
   perenual_raw_response = NULL
 WHERE slug = 'fruit-cherimoya';
 
--- Oak slug/name mismatch: slug says burr, name/scientific says sessile
--- Update referencing tables first, then rename the slug
-UPDATE plant_task_calendar_default SET plant_slug = 'tree-oak-sessile'
-WHERE plant_slug = 'tree-oak-burr';
-
-UPDATE grow_user_plants SET species_slug = 'tree-oak-sessile'
-WHERE species_slug = 'tree-oak-burr';
-
+-- Oak slug/name mismatch: slug says burr but data is sessile oak (Quercus petraea)
+-- Skipping slug rename due to FK constraints across multiple tables.
+-- Instead, fix the name to match the slug.
 UPDATE plant_species SET
-  slug = 'tree-oak-sessile'
+  name = 'Burr Oak',
+  scientific_name = 'Quercus macrocarpa'
 WHERE slug = 'tree-oak-burr'
   AND scientific_name = 'Quercus petraea';
 
