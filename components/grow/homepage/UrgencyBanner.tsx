@@ -1,5 +1,5 @@
 import React, { useState, useCallback } from 'react';
-import { motion, AnimatePresence, useMotionValue, useTransform, useReducedMotion, PanInfo } from 'framer-motion';
+import { motion, AnimatePresence, useMotionValue, useTransform, useReducedMotion, PanInfo, type TargetAndTransition, type Transition } from 'framer-motion';
 import Link from 'next/link';
 import { X, ChevronDown, ChevronRight, Snowflake, Thermometer, Wind, CloudLightning, CloudRain, Sun, AlertTriangle, Snail, Bug } from 'lucide-react';
 import { getSignalIcon, getAlertTheme } from '../LocalSignalsCard';
@@ -106,16 +106,52 @@ function getGuidanceSlug(alertType: string): string | null {
   return map[alertType] || null;
 }
 
-/** Per-type idle CSS class for border/gradient animation */
-function getIdleClass(alertType: string): string {
+/** Per-type idle Framer Motion animation for the card wrapper */
+function getIdleAnimation(alertType: string): { animate: TargetAndTransition; transition: Transition } | null {
   const cat = getAlertCategory(alertType);
   switch (cat) {
-    case 'frost': return 'urgency-idle-frost';
-    case 'wind': return 'urgency-idle-wind';
-    case 'heat': return 'urgency-idle-heat';
-    case 'pest': return 'urgency-idle-pest';
-    case 'disease': return 'urgency-idle-disease';
-    default: return '';
+    case 'frost':
+      return {
+        animate: { boxShadow: ['inset 0 0 0 0 rgba(147,197,253,0)', 'inset 0 0 20px 4px rgba(147,197,253,0.25)', 'inset 0 0 0 0 rgba(147,197,253,0)'] },
+        transition: { duration: 4, repeat: Infinity, ease: 'easeInOut' },
+      };
+    case 'wind':
+      return {
+        animate: { backgroundPosition: ['0% 50%', '100% 50%', '0% 50%'] },
+        transition: { duration: 5, repeat: Infinity, ease: 'easeInOut' },
+      };
+    case 'heat':
+      return {
+        animate: { backgroundPosition: ['0% 50%', '100% 50%', '0% 50%'] },
+        transition: { duration: 5, repeat: Infinity, ease: 'easeInOut' },
+      };
+    case 'pest':
+      return {
+        animate: { backgroundPosition: ['0% 0%', '100% 100%', '0% 0%'] },
+        transition: { duration: 6, repeat: Infinity, ease: 'easeInOut' },
+      };
+    case 'disease':
+      return {
+        animate: { boxShadow: ['inset 0 0 0 0 rgba(120,113,108,0)', 'inset 0 0 20px 4px rgba(120,113,108,0.2)', 'inset 0 0 0 0 rgba(120,113,108,0)'] },
+        transition: { duration: 5, repeat: Infinity, ease: 'easeInOut' },
+      };
+    default:
+      return null;
+  }
+}
+
+/** Inline style for gradient-based idle animations (wind/heat/pest) */
+function getIdleStyle(alertType: string): React.CSSProperties | undefined {
+  const cat = getAlertCategory(alertType);
+  switch (cat) {
+    case 'wind':
+      return { backgroundSize: '200% 100%', backgroundImage: 'linear-gradient(90deg, transparent 0%, rgba(148,163,184,0.12) 25%, transparent 50%, rgba(148,163,184,0.12) 75%, transparent 100%)' };
+    case 'heat':
+      return { backgroundSize: '200% 100%', backgroundImage: 'linear-gradient(90deg, transparent 0%, rgba(251,146,60,0.15) 30%, transparent 50%, rgba(251,146,60,0.15) 70%, transparent 100%)' };
+    case 'pest':
+      return { backgroundSize: '200% 200%', backgroundImage: 'linear-gradient(135deg, transparent 0%, rgba(101,163,13,0.12) 25%, transparent 50%, rgba(101,163,13,0.12) 75%, transparent 100%)' };
+    default:
+      return undefined;
   }
 }
 
@@ -272,7 +308,8 @@ function SwipeableAlertCard({
   const theme = getAlertTheme(item.alertType);
   const Icon = item.icon;
   const guidanceSlug = getGuidanceSlug(item.alertType);
-  const idleClass = reducedMotion ? '' : getIdleClass(item.alertType);
+  const idleAnim = reducedMotion ? null : getIdleAnimation(item.alertType);
+  const idleStyle = reducedMotion ? undefined : getIdleStyle(item.alertType);
 
   const handleDragEnd = (_: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
     if (Math.abs(info.offset.x) > 100) {
@@ -289,7 +326,12 @@ function SwipeableAlertCard({
       style={reducedMotion ? undefined : { x, opacity }}
       className="touch-pan-y"
     >
-      <div className={`rounded-xl border border-l-4 ${theme.borderColor} ${theme.bgColor} p-3 ${idleClass}`}>
+      <motion.div
+        className={`rounded-xl border border-l-4 ${theme.borderColor} ${theme.bgColor} p-3`}
+        style={idleStyle}
+        animate={idleAnim?.animate}
+        transition={idleAnim?.transition}
+      >
         <div className="flex items-start gap-3">
           {/* Animated icon — gentle breathe, respects reduced motion */}
           <motion.div
@@ -320,7 +362,7 @@ function SwipeableAlertCard({
             <X size={14} />
           </button>
         </div>
-      </div>
+      </motion.div>
     </motion.div>
   );
 }
