@@ -984,6 +984,9 @@ export default function GrowSpeciesPage() {
         {/* Quick Facts Card - dimensions, growth, care summary */}
         {species && <QuickFactsCard species={species} userLat={userLat} userLon={userLon} />}
 
+        {/* Cropping Timeline Card - years to fruit (fruit trees & vines) */}
+        {species && <CroppingTimelineCard species={species} />}
+
         <Card>
           <CardHeader>
             <CardTitle>About</CardTitle>
@@ -1093,9 +1096,6 @@ export default function GrowSpeciesPage() {
 
         {/* Pest Resilience Card - score + practical note */}
         {species && <PestResilienceCard species={species} />}
-
-        {/* Cropping Timeline Card - years to fruit for trees */}
-        {species && <CroppingTimelineCard species={species} />}
 
         {/* Visual Characteristics Card - flowers, fruits, colors */}
         {species && <VisualCharacteristicsCard species={species} />}

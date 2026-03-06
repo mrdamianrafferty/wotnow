@@ -40,6 +40,7 @@ import {
   Bug,
   Heart,
   Leaf,
+  Clock,
   X,
 } from 'lucide-react';
 import { toast } from 'sonner';
@@ -943,6 +944,22 @@ const cultivarIdForStorage = useMemo(() => {
                 <div className="text-xs font-medium text-blue-900">Growing Tips</div>
                 <div className="text-sm text-blue-800 line-clamp-3">
                   {selectedSpecies.advice}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Cropping timeline for fruit trees / vines */}
+          {selectedSpecies.yearsToFirstCrop != null && (
+            <div className="flex items-start gap-2 p-3 rounded-lg bg-amber-50 border border-amber-100">
+              <Clock className="h-4 w-4 text-amber-600 mt-0.5 shrink-0" />
+              <div>
+                <div className="text-xs font-medium text-amber-900">Cropping Timeline</div>
+                <div className="text-sm text-amber-800">
+                  First crop in ~{selectedSpecies.yearsToFirstCrop} {selectedSpecies.yearsToFirstCrop === 1 ? 'year' : 'years'}
+                  {selectedSpecies.yearsToFullProduction != null && (
+                    <> &middot; Full production ~{selectedSpecies.yearsToFullProduction} years</>
+                  )}
                 </div>
               </div>
             </div>
