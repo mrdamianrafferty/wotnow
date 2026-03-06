@@ -19,11 +19,12 @@ const WEATHER_ALERT_ICONS: Record<string, React.ComponentType<{ className?: stri
 };
 
 /** Classify alert type into a motion category */
-function getAlertCategory(alertType: string): 'frost' | 'wind' | 'heat' | 'pest' | 'default' {
+function getAlertCategory(alertType: string): 'frost' | 'wind' | 'heat' | 'pest' | 'disease' | 'default' {
   if (['frost_damage', 'frost'].includes(alertType)) return 'frost';
   if (['wind_damage', 'wind', 'wind_desiccation', 'storm'].includes(alertType)) return 'wind';
   if (['heat_stress', 'heat', 'drought_stress', 'drought'].includes(alertType)) return 'heat';
   if (['slug_activity', 'slugs', 'aphid_conditions', 'aphids', 'caterpillar_conditions'].includes(alertType)) return 'pest';
+  if (['late_blight_risk', 'late_blight', 'powdery_mildew_risk', 'powdery_mildew', 'botrytis_risk', 'botrytis', 'rust_risk', 'rust'].includes(alertType)) return 'disease';
   return 'default';
 }
 
@@ -43,6 +44,9 @@ function getEntranceVariant(alertType: string) {
     case 'pest':
       // Creep up from below
       return { initial: { opacity: 0, y: 16 }, animate: { opacity: 1, y: 0 } };
+    case 'disease':
+      // Spread outward from centre
+      return { initial: { opacity: 0, scale: 0.9, filter: 'blur(2px)' }, animate: { opacity: 1, scale: 1, filter: 'blur(0px)' } };
     default:
       return { initial: { opacity: 0, y: -8 }, animate: { opacity: 1, y: 0 } };
   }
@@ -64,6 +68,9 @@ function getExitVariant(alertType: string) {
     case 'pest':
       // Slide down and away
       return { opacity: 0, y: 24 };
+    case 'disease':
+      // Fade and blur away
+      return { opacity: 0, scale: 0.92, filter: 'blur(4px)' };
     default:
       return { opacity: 0, x: 80 };
   }
@@ -106,6 +113,8 @@ function getIdleClass(alertType: string): string {
     case 'frost': return 'urgency-idle-frost';
     case 'wind': return 'urgency-idle-wind';
     case 'heat': return 'urgency-idle-heat';
+    case 'pest': return 'urgency-idle-pest';
+    case 'disease': return 'urgency-idle-disease';
     default: return '';
   }
 }
@@ -184,7 +193,7 @@ export function UrgencyBanner({ signals, weatherAlerts, onDismissSignal }: Urgen
       className="space-y-2"
       initial={prefersReduced ? noMotion.initial : primaryEntrance.initial}
       animate={prefersReduced ? noMotion.animate : primaryEntrance.animate}
-      transition={{ duration: 0.35, ease: 'easeOut' }}
+      transition={{ duration: 0.5, ease: 'easeOut' }}
     >
       <SwipeableAlertCard
         item={primary}
