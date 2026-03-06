@@ -3,7 +3,6 @@ import { motion, AnimatePresence, useMotionValue, useTransform, PanInfo } from '
 import Link from 'next/link';
 import { X, ChevronDown, ChevronRight, Snowflake, Thermometer, Wind, CloudLightning, CloudRain, Sun, AlertTriangle, Snail, Bug } from 'lucide-react';
 import { getSignalIcon, getAlertTheme } from '../LocalSignalsCard';
-import type { AlertTheme } from '../LocalSignalsCard';
 import type { LocalSignal } from '../../../lib/grow/localSignals';
 import type { WeatherAlert } from '../../../hooks/useWeatherTasks';
 
@@ -119,14 +118,14 @@ export function UrgencyBanner({ signals, weatherAlerts, onDismissSignal }: Urgen
     })),
   ];
 
-  if (items.length === 0) return null;
-
   const handleDismiss = useCallback((item: UrgentItem) => {
     setDismissed(prev => new Set(prev).add(item.id));
     if (item.source === 'signal' && item.expiresAt && onDismissSignal) {
       onDismissSignal(item.id, item.expiresAt);
     }
   }, [onDismissSignal]);
+
+  if (items.length === 0) return null;
 
   const primary = items[0];
   const remaining = items.slice(1);
