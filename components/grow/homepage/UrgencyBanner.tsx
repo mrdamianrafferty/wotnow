@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, ChevronDown, Snowflake, Thermometer, Wind, CloudLightning, CloudRain, Sun, AlertTriangle, Snail, Bug } from 'lucide-react';
-import { SEVERITY_COLORS, getSignalIcon, getAlertTheme } from '../LocalSignalsCard';
+import { getSignalIcon, getAlertTheme } from '../LocalSignalsCard';
 import type { AlertTheme } from '../LocalSignalsCard';
 import type { LocalSignal } from '../../../lib/grow/localSignals';
 import type { WeatherAlert } from '../../../hooks/useWeatherTasks';
