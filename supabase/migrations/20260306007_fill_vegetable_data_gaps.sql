@@ -11,126 +11,126 @@ BEGIN;
 -- ============================================================================
 
 -- Tomato
-UPDATE public.plant_species SET sow_indoors_months = '["2","3","4"]'::jsonb
-WHERE slug = 'tomato' AND (sow_indoors_months IS NULL OR sow_indoors_months = '[]'::jsonb);
+UPDATE public.plant_species SET sow_indoors_months = '{2,3,4}'::integer[]
+WHERE slug = 'tomato' AND (sow_indoors_months IS NULL OR sow_indoors_months = '{}'::integer[]);
 
-UPDATE public.plant_species SET sow_indoors_months = '["2","3","4"]'::jsonb
-WHERE slug = 'tomato-cherry' AND (sow_indoors_months IS NULL OR sow_indoors_months = '[]'::jsonb);
+UPDATE public.plant_species SET sow_indoors_months = '{2,3,4}'::integer[]
+WHERE slug = 'tomato-cherry' AND (sow_indoors_months IS NULL OR sow_indoors_months = '{}'::integer[]);
 
-UPDATE public.plant_species SET sow_indoors_months = '["2","3","4"]'::jsonb
-WHERE slug = 'tomato-plum' AND (sow_indoors_months IS NULL OR sow_indoors_months = '[]'::jsonb);
+UPDATE public.plant_species SET sow_indoors_months = '{2,3,4}'::integer[]
+WHERE slug = 'tomato-plum' AND (sow_indoors_months IS NULL OR sow_indoors_months = '{}'::integer[]);
 
 -- Peppers & chillies
-UPDATE public.plant_species SET sow_indoors_months = '["1","2","3"]'::jsonb
-WHERE slug = 'pepper-chilli' AND (sow_indoors_months IS NULL OR sow_indoors_months = '[]'::jsonb);
+UPDATE public.plant_species SET sow_indoors_months = '{1,2,3}'::integer[]
+WHERE slug = 'pepper-chilli' AND (sow_indoors_months IS NULL OR sow_indoors_months = '{}'::integer[]);
 
-UPDATE public.plant_species SET sow_indoors_months = '["2","3"]'::jsonb
-WHERE slug = 'pepper' AND (sow_indoors_months IS NULL OR sow_indoors_months = '[]'::jsonb);
+UPDATE public.plant_species SET sow_indoors_months = '{2,3}'::integer[]
+WHERE slug = 'pepper' AND (sow_indoors_months IS NULL OR sow_indoors_months = '{}'::integer[]);
 
-UPDATE public.plant_species SET sow_indoors_months = '["2","3"]'::jsonb
-WHERE slug = 'pepper-sweet' AND (sow_indoors_months IS NULL OR sow_indoors_months = '[]'::jsonb);
+UPDATE public.plant_species SET sow_indoors_months = '{2,3}'::integer[]
+WHERE slug = 'pepper-sweet' AND (sow_indoors_months IS NULL OR sow_indoors_months = '{}'::integer[]);
 
-UPDATE public.plant_species SET sow_indoors_months = '["1","2","3"]'::jsonb
-WHERE slug = 'pepper-hot' AND (sow_indoors_months IS NULL OR sow_indoors_months = '[]'::jsonb);
+UPDATE public.plant_species SET sow_indoors_months = '{1,2,3}'::integer[]
+WHERE slug = 'pepper-hot' AND (sow_indoors_months IS NULL OR sow_indoors_months = '{}'::integer[]);
 
 -- Aubergine
-UPDATE public.plant_species SET sow_indoors_months = '["2","3"]'::jsonb
-WHERE slug = 'aubergine' AND (sow_indoors_months IS NULL OR sow_indoors_months = '[]'::jsonb);
+UPDATE public.plant_species SET sow_indoors_months = '{2,3}'::integer[]
+WHERE slug = 'aubergine' AND (sow_indoors_months IS NULL OR sow_indoors_months = '{}'::integer[]);
 
 -- Cucurbits
-UPDATE public.plant_species SET sow_indoors_months = '["4","5"]'::jsonb
+UPDATE public.plant_species SET sow_indoors_months = '{4,5}'::integer[]
 WHERE slug IN ('courgette','cucumber','pumpkin','squash-winter','squash-yellow','squash-pattypan','squash-spaghetti','melon-cantaloupe','watermelon')
-AND (sow_indoors_months IS NULL OR sow_indoors_months = '[]'::jsonb);
+AND (sow_indoors_months IS NULL OR sow_indoors_months = '{}'::integer[]);
 
 -- Sweetcorn
-UPDATE public.plant_species SET sow_indoors_months = '["4"]'::jsonb
-WHERE slug = 'sweetcorn' AND (sow_indoors_months IS NULL OR sow_indoors_months = '[]'::jsonb);
+UPDATE public.plant_species SET sow_indoors_months = '{4}'::integer[]
+WHERE slug = 'sweetcorn' AND (sow_indoors_months IS NULL OR sow_indoors_months = '{}'::integer[]);
 
 -- Runner & French beans
-UPDATE public.plant_species SET sow_indoors_months = '["4","5"]'::jsonb
+UPDATE public.plant_species SET sow_indoors_months = '{4,5}'::integer[]
 WHERE slug IN ('runner-bean','french-bean','scarlet-runner-bean')
-AND (sow_indoors_months IS NULL OR sow_indoors_months = '[]'::jsonb);
+AND (sow_indoors_months IS NULL OR sow_indoors_months = '{}'::integer[]);
 
 -- Broad bean
-UPDATE public.plant_species SET sow_indoors_months = '["1","2"]'::jsonb
+UPDATE public.plant_species SET sow_indoors_months = '{1,2}'::integer[]
 WHERE slug IN ('broad-bean','fava-bean')
-AND (sow_indoors_months IS NULL OR sow_indoors_months = '[]'::jsonb);
+AND (sow_indoors_months IS NULL OR sow_indoors_months = '{}'::integer[]);
 
 -- Cauliflower
-UPDATE public.plant_species SET sow_indoors_months = '["1","2","3","4"]'::jsonb
-WHERE slug = 'cauliflower' AND (sow_indoors_months IS NULL OR sow_indoors_months = '[]'::jsonb);
+UPDATE public.plant_species SET sow_indoors_months = '{1,2,3,4}'::integer[]
+WHERE slug = 'cauliflower' AND (sow_indoors_months IS NULL OR sow_indoors_months = '{}'::integer[]);
 
 -- Broccoli / sprouting broccoli
-UPDATE public.plant_species SET sow_indoors_months = '["2","3","4"]'::jsonb
+UPDATE public.plant_species SET sow_indoors_months = '{2,3,4}'::integer[]
 WHERE slug IN ('broccoli','sprouting-broccoli','romanesco')
-AND (sow_indoors_months IS NULL OR sow_indoors_months = '[]'::jsonb);
+AND (sow_indoors_months IS NULL OR sow_indoors_months = '{}'::integer[]);
 
 -- Cabbage
-UPDATE public.plant_species SET sow_indoors_months = '["2","3","4"]'::jsonb
+UPDATE public.plant_species SET sow_indoors_months = '{2,3,4}'::integer[]
 WHERE slug IN ('cabbage','cabbage-red','cabbage-green','cabbage-savoy')
-AND (sow_indoors_months IS NULL OR sow_indoors_months = '[]'::jsonb);
+AND (sow_indoors_months IS NULL OR sow_indoors_months = '{}'::integer[]);
 
 -- Brussels sprouts
-UPDATE public.plant_species SET sow_indoors_months = '["2","3","4"]'::jsonb
-WHERE slug = 'brussels-sprout' AND (sow_indoors_months IS NULL OR sow_indoors_months = '[]'::jsonb);
+UPDATE public.plant_species SET sow_indoors_months = '{2,3,4}'::integer[]
+WHERE slug = 'brussels-sprout' AND (sow_indoors_months IS NULL OR sow_indoors_months = '{}'::integer[]);
 
 -- Kale
-UPDATE public.plant_species SET sow_indoors_months = '["3","4","5"]'::jsonb
+UPDATE public.plant_species SET sow_indoors_months = '{3,4,5}'::integer[]
 WHERE slug IN ('kale','kale-curly','kale-lacinato')
-AND (sow_indoors_months IS NULL OR sow_indoors_months = '[]'::jsonb);
+AND (sow_indoors_months IS NULL OR sow_indoors_months = '{}'::integer[]);
 
 -- Leek
-UPDATE public.plant_species SET sow_indoors_months = '["1","2","3"]'::jsonb
-WHERE slug = 'leek' AND (sow_indoors_months IS NULL OR sow_indoors_months = '[]'::jsonb);
+UPDATE public.plant_species SET sow_indoors_months = '{1,2,3}'::integer[]
+WHERE slug = 'leek' AND (sow_indoors_months IS NULL OR sow_indoors_months = '{}'::integer[]);
 
 -- Onion (from seed)
-UPDATE public.plant_species SET sow_indoors_months = '["1","2"]'::jsonb
-WHERE slug = 'onion-bulb' AND (sow_indoors_months IS NULL OR sow_indoors_months = '[]'::jsonb);
+UPDATE public.plant_species SET sow_indoors_months = '{1,2}'::integer[]
+WHERE slug = 'onion-bulb' AND (sow_indoors_months IS NULL OR sow_indoors_months = '{}'::integer[]);
 
 -- Lettuce
-UPDATE public.plant_species SET sow_indoors_months = '["2","3","4"]'::jsonb
+UPDATE public.plant_species SET sow_indoors_months = '{2,3,4}'::integer[]
 WHERE slug IN ('lettuce','lettuce-butterhead','lettuce-iceberg','lettuce-looseleaf','lettuce-romaine')
-AND (sow_indoors_months IS NULL OR sow_indoors_months = '[]'::jsonb);
+AND (sow_indoors_months IS NULL OR sow_indoors_months = '{}'::integer[]);
 
 -- Celery / celeriac
-UPDATE public.plant_species SET sow_indoors_months = '["2","3"]'::jsonb
+UPDATE public.plant_species SET sow_indoors_months = '{2,3}'::integer[]
 WHERE slug IN ('celery','celeriac')
-AND (sow_indoors_months IS NULL OR sow_indoors_months = '[]'::jsonb);
+AND (sow_indoors_months IS NULL OR sow_indoors_months = '{}'::integer[]);
 
 -- Fennel (bulb)
-UPDATE public.plant_species SET sow_indoors_months = '["3","4"]'::jsonb
-WHERE slug = 'fennel-bulb' AND (sow_indoors_months IS NULL OR sow_indoors_months = '[]'::jsonb);
+UPDATE public.plant_species SET sow_indoors_months = '{3,4}'::integer[]
+WHERE slug = 'fennel-bulb' AND (sow_indoors_months IS NULL OR sow_indoors_months = '{}'::integer[]);
 
 -- Tomatillo
-UPDATE public.plant_species SET sow_indoors_months = '["2","3","4"]'::jsonb
-WHERE slug = 'tomatillo' AND (sow_indoors_months IS NULL OR sow_indoors_months = '[]'::jsonb);
+UPDATE public.plant_species SET sow_indoors_months = '{2,3,4}'::integer[]
+WHERE slug = 'tomatillo' AND (sow_indoors_months IS NULL OR sow_indoors_months = '{}'::integer[]);
 
 -- Ground cherry
-UPDATE public.plant_species SET sow_indoors_months = '["2","3"]'::jsonb
-WHERE slug = 'ground-cherry' AND (sow_indoors_months IS NULL OR sow_indoors_months = '[]'::jsonb);
+UPDATE public.plant_species SET sow_indoors_months = '{2,3}'::integer[]
+WHERE slug = 'ground-cherry' AND (sow_indoors_months IS NULL OR sow_indoors_months = '{}'::integer[]);
 
 -- Okra
-UPDATE public.plant_species SET sow_indoors_months = '["3","4"]'::jsonb
-WHERE slug = 'okra' AND (sow_indoors_months IS NULL OR sow_indoors_months = '[]'::jsonb);
+UPDATE public.plant_species SET sow_indoors_months = '{3,4}'::integer[]
+WHERE slug = 'okra' AND (sow_indoors_months IS NULL OR sow_indoors_months = '{}'::integer[]);
 
 -- Basil herbs (indoor start essential in UK)
-UPDATE public.plant_species SET sow_indoors_months = '["3","4","5"]'::jsonb
+UPDATE public.plant_species SET sow_indoors_months = '{3,4,5}'::integer[]
 WHERE slug IN ('herb-basil-sweet','herb-basil-thai','herb-basil-greek','herb-holy-basil')
-AND (sow_indoors_months IS NULL OR sow_indoors_months = '[]'::jsonb);
+AND (sow_indoors_months IS NULL OR sow_indoors_months = '{}'::integer[]);
 
 -- Parsley
-UPDATE public.plant_species SET sow_indoors_months = '["2","3"]'::jsonb
+UPDATE public.plant_species SET sow_indoors_months = '{2,3}'::integer[]
 WHERE slug IN ('herb-parsley-flat','herb-parsley-curly','parsley')
-AND (sow_indoors_months IS NULL OR sow_indoors_months = '[]'::jsonb);
+AND (sow_indoors_months IS NULL OR sow_indoors_months = '{}'::integer[]);
 
 -- Coriander
-UPDATE public.plant_species SET sow_indoors_months = '["3","4"]'::jsonb
+UPDATE public.plant_species SET sow_indoors_months = '{3,4}'::integer[]
 WHERE slug IN ('coriander','herb-coriander-leaf')
-AND (sow_indoors_months IS NULL OR sow_indoors_months = '[]'::jsonb);
+AND (sow_indoors_months IS NULL OR sow_indoors_months = '{}'::integer[]);
 
 -- Edamame / soybean
-UPDATE public.plant_species SET sow_indoors_months = '["4","5"]'::jsonb
-WHERE slug = 'soybean-edamame' AND (sow_indoors_months IS NULL OR sow_indoors_months = '[]'::jsonb);
+UPDATE public.plant_species SET sow_indoors_months = '{4,5}'::integer[]
+WHERE slug = 'soybean-edamame' AND (sow_indoors_months IS NULL OR sow_indoors_months = '{}'::integer[]);
 
 
 -- ============================================================================
@@ -138,135 +138,135 @@ WHERE slug = 'soybean-edamame' AND (sow_indoors_months IS NULL OR sow_indoors_mo
 -- ============================================================================
 
 -- Pea
-UPDATE public.plant_species SET direct_sow_months = '["3","4","5","6","7"]'::jsonb
+UPDATE public.plant_species SET direct_sow_months = '{3,4,5,6,7}'::integer[]
 WHERE slug IN ('pea','peas-garden','peas-snap','peas-snow')
-AND (direct_sow_months IS NULL OR direct_sow_months = '[]'::jsonb);
+AND (direct_sow_months IS NULL OR direct_sow_months = '{}'::integer[]);
 
 -- Broad bean
-UPDATE public.plant_species SET direct_sow_months = '["2","3","4","10","11"]'::jsonb
+UPDATE public.plant_species SET direct_sow_months = '{2,3,4,10,11}'::integer[]
 WHERE slug IN ('broad-bean','fava-bean')
-AND (direct_sow_months IS NULL OR direct_sow_months = '[]'::jsonb);
+AND (direct_sow_months IS NULL OR direct_sow_months = '{}'::integer[]);
 
 -- Runner & French beans (outdoor sow after frost)
-UPDATE public.plant_species SET direct_sow_months = '["5","6"]'::jsonb
+UPDATE public.plant_species SET direct_sow_months = '{5,6}'::integer[]
 WHERE slug IN ('runner-bean','french-bean','scarlet-runner-bean','bean')
-AND (direct_sow_months IS NULL OR direct_sow_months = '[]'::jsonb);
+AND (direct_sow_months IS NULL OR direct_sow_months = '{}'::integer[]);
 
 -- Beetroot
-UPDATE public.plant_species SET direct_sow_months = '["4","5","6","7"]'::jsonb
-WHERE slug = 'beetroot' AND (direct_sow_months IS NULL OR direct_sow_months = '[]'::jsonb);
+UPDATE public.plant_species SET direct_sow_months = '{4,5,6,7}'::integer[]
+WHERE slug = 'beetroot' AND (direct_sow_months IS NULL OR direct_sow_months = '{}'::integer[]);
 
 -- Carrot
-UPDATE public.plant_species SET direct_sow_months = '["3","4","5","6","7"]'::jsonb
-WHERE slug = 'carrot' AND (direct_sow_months IS NULL OR direct_sow_months = '[]'::jsonb);
+UPDATE public.plant_species SET direct_sow_months = '{3,4,5,6,7}'::integer[]
+WHERE slug = 'carrot' AND (direct_sow_months IS NULL OR direct_sow_months = '{}'::integer[]);
 
 -- Parsnip
-UPDATE public.plant_species SET direct_sow_months = '["2","3","4","5"]'::jsonb
-WHERE slug = 'parsnip' AND (direct_sow_months IS NULL OR direct_sow_months = '[]'::jsonb);
+UPDATE public.plant_species SET direct_sow_months = '{2,3,4,5}'::integer[]
+WHERE slug = 'parsnip' AND (direct_sow_months IS NULL OR direct_sow_months = '{}'::integer[]);
 
 -- Turnip
-UPDATE public.plant_species SET direct_sow_months = '["3","4","5","6","7","8"]'::jsonb
-WHERE slug = 'turnip' AND (direct_sow_months IS NULL OR direct_sow_months = '[]'::jsonb);
+UPDATE public.plant_species SET direct_sow_months = '{3,4,5,6,7,8}'::integer[]
+WHERE slug = 'turnip' AND (direct_sow_months IS NULL OR direct_sow_months = '{}'::integer[]);
 
 -- Radish
-UPDATE public.plant_species SET direct_sow_months = '["3","4","5","6","7","8","9"]'::jsonb
-WHERE slug = 'radish' AND (direct_sow_months IS NULL OR direct_sow_months = '[]'::jsonb);
+UPDATE public.plant_species SET direct_sow_months = '{3,4,5,6,7,8,9}'::integer[]
+WHERE slug = 'radish' AND (direct_sow_months IS NULL OR direct_sow_months = '{}'::integer[]);
 
 -- Swede
-UPDATE public.plant_species SET direct_sow_months = '["5","6"]'::jsonb
-WHERE slug = 'swede-rutabaga' AND (direct_sow_months IS NULL OR direct_sow_months = '[]'::jsonb);
+UPDATE public.plant_species SET direct_sow_months = '{5,6}'::integer[]
+WHERE slug = 'swede-rutabaga' AND (direct_sow_months IS NULL OR direct_sow_months = '{}'::integer[]);
 
 -- Spinach
-UPDATE public.plant_species SET direct_sow_months = '["3","4","5","8","9"]'::jsonb
-WHERE slug = 'spinach' AND (direct_sow_months IS NULL OR direct_sow_months = '[]'::jsonb);
+UPDATE public.plant_species SET direct_sow_months = '{3,4,5,8,9}'::integer[]
+WHERE slug = 'spinach' AND (direct_sow_months IS NULL OR direct_sow_months = '{}'::integer[]);
 
 -- Lettuce
-UPDATE public.plant_species SET direct_sow_months = '["3","4","5","6","7","8"]'::jsonb
+UPDATE public.plant_species SET direct_sow_months = '{3,4,5,6,7,8}'::integer[]
 WHERE slug IN ('lettuce','lettuce-butterhead','lettuce-iceberg','lettuce-looseleaf','lettuce-romaine')
-AND (direct_sow_months IS NULL OR direct_sow_months = '[]'::jsonb);
+AND (direct_sow_months IS NULL OR direct_sow_months = '{}'::integer[]);
 
 -- Sweetcorn (direct sow late May only in mild areas)
-UPDATE public.plant_species SET direct_sow_months = '["5"]'::jsonb
-WHERE slug = 'sweetcorn' AND (direct_sow_months IS NULL OR direct_sow_months = '[]'::jsonb);
+UPDATE public.plant_species SET direct_sow_months = '{5}'::integer[]
+WHERE slug = 'sweetcorn' AND (direct_sow_months IS NULL OR direct_sow_months = '{}'::integer[]);
 
 -- Courgette / cucumber (direct sow late May/June)
-UPDATE public.plant_species SET direct_sow_months = '["5","6"]'::jsonb
+UPDATE public.plant_species SET direct_sow_months = '{5,6}'::integer[]
 WHERE slug IN ('courgette','cucumber','pumpkin','squash-winter','squash-yellow','squash-pattypan','squash-spaghetti')
-AND (direct_sow_months IS NULL OR direct_sow_months = '[]'::jsonb);
+AND (direct_sow_months IS NULL OR direct_sow_months = '{}'::integer[]);
 
 -- Spring onion
-UPDATE public.plant_species SET direct_sow_months = '["3","4","5","6","7","8","9"]'::jsonb
-WHERE slug = 'spring-onion' AND (direct_sow_months IS NULL OR direct_sow_months = '[]'::jsonb);
+UPDATE public.plant_species SET direct_sow_months = '{3,4,5,6,7,8,9}'::integer[]
+WHERE slug = 'spring-onion' AND (direct_sow_months IS NULL OR direct_sow_months = '{}'::integer[]);
 
 -- Coriander (direct sow preferred, dislikes transplant)
-UPDATE public.plant_species SET direct_sow_months = '["3","4","5","6","7","8","9"]'::jsonb
+UPDATE public.plant_species SET direct_sow_months = '{3,4,5,6,7,8,9}'::integer[]
 WHERE slug IN ('coriander','herb-coriander-leaf')
-AND (direct_sow_months IS NULL OR direct_sow_months = '[]'::jsonb);
+AND (direct_sow_months IS NULL OR direct_sow_months = '{}'::integer[]);
 
 -- Dill (direct sow, dislikes transplant)
-UPDATE public.plant_species SET direct_sow_months = '["4","5","6","7"]'::jsonb
+UPDATE public.plant_species SET direct_sow_months = '{4,5,6,7}'::integer[]
 WHERE slug IN ('dill','herb-dill-leaf')
-AND (direct_sow_months IS NULL OR direct_sow_months = '[]'::jsonb);
+AND (direct_sow_months IS NULL OR direct_sow_months = '{}'::integer[]);
 
 -- Rocket / arugula
-UPDATE public.plant_species SET direct_sow_months = '["3","4","5","6","7","8","9"]'::jsonb
-WHERE slug = 'rocket' AND (direct_sow_months IS NULL OR direct_sow_months = '[]'::jsonb);
+UPDATE public.plant_species SET direct_sow_months = '{3,4,5,6,7,8,9}'::integer[]
+WHERE slug = 'rocket' AND (direct_sow_months IS NULL OR direct_sow_months = '{}'::integer[]);
 
 -- Chard / Swiss chard
-UPDATE public.plant_species SET direct_sow_months = '["4","5","6","7"]'::jsonb
-WHERE slug = 'chard' AND (direct_sow_months IS NULL OR direct_sow_months = '[]'::jsonb);
+UPDATE public.plant_species SET direct_sow_months = '{4,5,6,7}'::integer[]
+WHERE slug = 'chard' AND (direct_sow_months IS NULL OR direct_sow_months = '{}'::integer[]);
 
 -- Kale (direct sow)
-UPDATE public.plant_species SET direct_sow_months = '["4","5","6","7"]'::jsonb
+UPDATE public.plant_species SET direct_sow_months = '{4,5,6,7}'::integer[]
 WHERE slug IN ('kale','kale-curly','kale-lacinato')
-AND (direct_sow_months IS NULL OR direct_sow_months = '[]'::jsonb);
+AND (direct_sow_months IS NULL OR direct_sow_months = '{}'::integer[]);
 
 -- Pak choi / mizuna / tatsoi (direct sow)
-UPDATE public.plant_species SET direct_sow_months = '["4","5","6","7","8","9"]'::jsonb
+UPDATE public.plant_species SET direct_sow_months = '{4,5,6,7,8,9}'::integer[]
 WHERE slug IN ('pak-choi','mizuna','tatsoi')
-AND (direct_sow_months IS NULL OR direct_sow_months = '[]'::jsonb);
+AND (direct_sow_months IS NULL OR direct_sow_months = '{}'::integer[]);
 
 -- Mustard greens
-UPDATE public.plant_species SET direct_sow_months = '["3","4","5","8","9"]'::jsonb
-WHERE slug = 'mustard-greens' AND (direct_sow_months IS NULL OR direct_sow_months = '[]'::jsonb);
+UPDATE public.plant_species SET direct_sow_months = '{3,4,5,8,9}'::integer[]
+WHERE slug = 'mustard-greens' AND (direct_sow_months IS NULL OR direct_sow_months = '{}'::integer[]);
 
 -- Endive / escarole / radicchio
-UPDATE public.plant_species SET direct_sow_months = '["4","5","6","7"]'::jsonb
+UPDATE public.plant_species SET direct_sow_months = '{4,5,6,7}'::integer[]
 WHERE slug IN ('endive','escarole','radicchio')
-AND (direct_sow_months IS NULL OR direct_sow_months = '[]'::jsonb);
+AND (direct_sow_months IS NULL OR direct_sow_months = '{}'::integer[]);
 
 -- Kohlrabi
-UPDATE public.plant_species SET direct_sow_months = '["3","4","5","6","7","8"]'::jsonb
-WHERE slug = 'kohlrabi' AND (direct_sow_months IS NULL OR direct_sow_months = '[]'::jsonb);
+UPDATE public.plant_species SET direct_sow_months = '{3,4,5,6,7,8}'::integer[]
+WHERE slug = 'kohlrabi' AND (direct_sow_months IS NULL OR direct_sow_months = '{}'::integer[]);
 
 -- Chinese cabbage
-UPDATE public.plant_species SET direct_sow_months = '["6","7","8"]'::jsonb
-WHERE slug = 'chinese-cabbage' AND (direct_sow_months IS NULL OR direct_sow_months = '[]'::jsonb);
+UPDATE public.plant_species SET direct_sow_months = '{6,7,8}'::integer[]
+WHERE slug = 'chinese-cabbage' AND (direct_sow_months IS NULL OR direct_sow_months = '{}'::integer[]);
 
 -- Borage
-UPDATE public.plant_species SET direct_sow_months = '["4","5","6"]'::jsonb
-WHERE slug = 'herb-borage' AND (direct_sow_months IS NULL OR direct_sow_months = '[]'::jsonb);
+UPDATE public.plant_species SET direct_sow_months = '{4,5,6}'::integer[]
+WHERE slug = 'herb-borage' AND (direct_sow_months IS NULL OR direct_sow_months = '{}'::integer[]);
 
 -- Calendula
-UPDATE public.plant_species SET direct_sow_months = '["3","4","5","9"]'::jsonb
-WHERE slug = 'herb-calendula' AND (direct_sow_months IS NULL OR direct_sow_months = '[]'::jsonb);
+UPDATE public.plant_species SET direct_sow_months = '{3,4,5,9}'::integer[]
+WHERE slug = 'herb-calendula' AND (direct_sow_months IS NULL OR direct_sow_months = '{}'::integer[]);
 
 -- Chervil
-UPDATE public.plant_species SET direct_sow_months = '["3","4","5","8","9"]'::jsonb
+UPDATE public.plant_species SET direct_sow_months = '{3,4,5,8,9}'::integer[]
 WHERE slug IN ('herb-chervil','chervil')
-AND (direct_sow_months IS NULL OR direct_sow_months = '[]'::jsonb);
+AND (direct_sow_months IS NULL OR direct_sow_months = '{}'::integer[]);
 
 -- Daikon radish
-UPDATE public.plant_species SET direct_sow_months = '["7","8","9"]'::jsonb
-WHERE slug = 'daikon-radish' AND (direct_sow_months IS NULL OR direct_sow_months = '[]'::jsonb);
+UPDATE public.plant_species SET direct_sow_months = '{7,8,9}'::integer[]
+WHERE slug = 'daikon-radish' AND (direct_sow_months IS NULL OR direct_sow_months = '{}'::integer[]);
 
 -- Garlic (plant cloves directly)
-UPDATE public.plant_species SET direct_sow_months = '["10","11","12","1","2"]'::jsonb
-WHERE slug = 'garlic' AND (direct_sow_months IS NULL OR direct_sow_months = '[]'::jsonb);
+UPDATE public.plant_species SET direct_sow_months = '{10,11,12,1,2}'::integer[]
+WHERE slug = 'garlic' AND (direct_sow_months IS NULL OR direct_sow_months = '{}'::integer[]);
 
 -- Shallot (plant sets directly)
-UPDATE public.plant_species SET direct_sow_months = '["2","3","11","12"]'::jsonb
-WHERE slug = 'shallot' AND (direct_sow_months IS NULL OR direct_sow_months = '[]'::jsonb);
+UPDATE public.plant_species SET direct_sow_months = '{2,3,11,12}'::integer[]
+WHERE slug = 'shallot' AND (direct_sow_months IS NULL OR direct_sow_months = '{}'::integer[]);
 
 
 -- ============================================================================
@@ -274,78 +274,78 @@ WHERE slug = 'shallot' AND (direct_sow_months IS NULL OR direct_sow_months = '[]
 -- ============================================================================
 
 -- Tomato
-UPDATE public.plant_species SET plant_out_months = '["5","6"]'::jsonb
+UPDATE public.plant_species SET plant_out_months = '{5,6}'::integer[]
 WHERE slug IN ('tomato','tomato-cherry','tomato-plum')
-AND (plant_out_months IS NULL OR plant_out_months = '[]'::jsonb);
+AND (plant_out_months IS NULL OR plant_out_months = '{}'::integer[]);
 
 -- Peppers
-UPDATE public.plant_species SET plant_out_months = '["5","6"]'::jsonb
+UPDATE public.plant_species SET plant_out_months = '{5,6}'::integer[]
 WHERE slug IN ('pepper','pepper-sweet','pepper-chilli','pepper-hot')
-AND (plant_out_months IS NULL OR plant_out_months = '[]'::jsonb);
+AND (plant_out_months IS NULL OR plant_out_months = '{}'::integer[]);
 
 -- Aubergine
-UPDATE public.plant_species SET plant_out_months = '["5","6"]'::jsonb
-WHERE slug = 'aubergine' AND (plant_out_months IS NULL OR plant_out_months = '[]'::jsonb);
+UPDATE public.plant_species SET plant_out_months = '{5,6}'::integer[]
+WHERE slug = 'aubergine' AND (plant_out_months IS NULL OR plant_out_months = '{}'::integer[]);
 
 -- Cucurbits
-UPDATE public.plant_species SET plant_out_months = '["5","6"]'::jsonb
+UPDATE public.plant_species SET plant_out_months = '{5,6}'::integer[]
 WHERE slug IN ('courgette','cucumber','pumpkin','squash-winter','squash-yellow','squash-pattypan','squash-spaghetti','melon-cantaloupe','watermelon')
-AND (plant_out_months IS NULL OR plant_out_months = '[]'::jsonb);
+AND (plant_out_months IS NULL OR plant_out_months = '{}'::integer[]);
 
 -- Runner & French beans
-UPDATE public.plant_species SET plant_out_months = '["5","6"]'::jsonb
+UPDATE public.plant_species SET plant_out_months = '{5,6}'::integer[]
 WHERE slug IN ('runner-bean','french-bean','scarlet-runner-bean','bean')
-AND (plant_out_months IS NULL OR plant_out_months = '[]'::jsonb);
+AND (plant_out_months IS NULL OR plant_out_months = '{}'::integer[]);
 
 -- Sweetcorn
-UPDATE public.plant_species SET plant_out_months = '["5","6"]'::jsonb
-WHERE slug = 'sweetcorn' AND (plant_out_months IS NULL OR plant_out_months = '[]'::jsonb);
+UPDATE public.plant_species SET plant_out_months = '{5,6}'::integer[]
+WHERE slug = 'sweetcorn' AND (plant_out_months IS NULL OR plant_out_months = '{}'::integer[]);
 
 -- Brassicas (transplant)
-UPDATE public.plant_species SET plant_out_months = '["5","6","7"]'::jsonb
+UPDATE public.plant_species SET plant_out_months = '{5,6,7}'::integer[]
 WHERE slug IN ('cabbage','cabbage-red','cabbage-green','cabbage-savoy','broccoli','sprouting-broccoli','romanesco','brussels-sprout')
-AND (plant_out_months IS NULL OR plant_out_months = '[]'::jsonb);
+AND (plant_out_months IS NULL OR plant_out_months = '{}'::integer[]);
 
 -- Cauliflower
-UPDATE public.plant_species SET plant_out_months = '["4","5","6","7"]'::jsonb
-WHERE slug = 'cauliflower' AND (plant_out_months IS NULL OR plant_out_months = '[]'::jsonb);
+UPDATE public.plant_species SET plant_out_months = '{4,5,6,7}'::integer[]
+WHERE slug = 'cauliflower' AND (plant_out_months IS NULL OR plant_out_months = '{}'::integer[]);
 
 -- Kale
-UPDATE public.plant_species SET plant_out_months = '["5","6","7"]'::jsonb
+UPDATE public.plant_species SET plant_out_months = '{5,6,7}'::integer[]
 WHERE slug IN ('kale','kale-curly','kale-lacinato')
-AND (plant_out_months IS NULL OR plant_out_months = '[]'::jsonb);
+AND (plant_out_months IS NULL OR plant_out_months = '{}'::integer[]);
 
 -- Leek
-UPDATE public.plant_species SET plant_out_months = '["5","6","7"]'::jsonb
-WHERE slug = 'leek' AND (plant_out_months IS NULL OR plant_out_months = '[]'::jsonb);
+UPDATE public.plant_species SET plant_out_months = '{5,6,7}'::integer[]
+WHERE slug = 'leek' AND (plant_out_months IS NULL OR plant_out_months = '{}'::integer[]);
 
 -- Celery / celeriac
-UPDATE public.plant_species SET plant_out_months = '["5","6"]'::jsonb
+UPDATE public.plant_species SET plant_out_months = '{5,6}'::integer[]
 WHERE slug IN ('celery','celeriac')
-AND (plant_out_months IS NULL OR plant_out_months = '[]'::jsonb);
+AND (plant_out_months IS NULL OR plant_out_months = '{}'::integer[]);
 
 -- Lettuce (transplants)
-UPDATE public.plant_species SET plant_out_months = '["4","5","6","7","8"]'::jsonb
+UPDATE public.plant_species SET plant_out_months = '{4,5,6,7,8}'::integer[]
 WHERE slug IN ('lettuce','lettuce-butterhead','lettuce-iceberg','lettuce-looseleaf','lettuce-romaine')
-AND (plant_out_months IS NULL OR plant_out_months = '[]'::jsonb);
+AND (plant_out_months IS NULL OR plant_out_months = '{}'::integer[]);
 
 -- Tomatillo / ground cherry
-UPDATE public.plant_species SET plant_out_months = '["5","6"]'::jsonb
+UPDATE public.plant_species SET plant_out_months = '{5,6}'::integer[]
 WHERE slug IN ('tomatillo','ground-cherry')
-AND (plant_out_months IS NULL OR plant_out_months = '[]'::jsonb);
+AND (plant_out_months IS NULL OR plant_out_months = '{}'::integer[]);
 
 -- Okra
-UPDATE public.plant_species SET plant_out_months = '["6"]'::jsonb
-WHERE slug = 'okra' AND (plant_out_months IS NULL OR plant_out_months = '[]'::jsonb);
+UPDATE public.plant_species SET plant_out_months = '{6}'::integer[]
+WHERE slug = 'okra' AND (plant_out_months IS NULL OR plant_out_months = '{}'::integer[]);
 
 -- Basil
-UPDATE public.plant_species SET plant_out_months = '["6"]'::jsonb
+UPDATE public.plant_species SET plant_out_months = '{6}'::integer[]
 WHERE slug IN ('herb-basil-sweet','herb-basil-thai','herb-basil-greek','herb-holy-basil')
-AND (plant_out_months IS NULL OR plant_out_months = '[]'::jsonb);
+AND (plant_out_months IS NULL OR plant_out_months = '{}'::integer[]);
 
 -- Edamame
-UPDATE public.plant_species SET plant_out_months = '["5","6"]'::jsonb
-WHERE slug = 'soybean-edamame' AND (plant_out_months IS NULL OR plant_out_months = '[]'::jsonb);
+UPDATE public.plant_species SET plant_out_months = '{5,6}'::integer[]
+WHERE slug = 'soybean-edamame' AND (plant_out_months IS NULL OR plant_out_months = '{}'::integer[]);
 
 
 -- ============================================================================
@@ -353,215 +353,215 @@ WHERE slug = 'soybean-edamame' AND (plant_out_months IS NULL OR plant_out_months
 -- ============================================================================
 
 -- Beetroot
-UPDATE public.plant_species SET harvest_months = '["6","7","8","9","10","11"]'::jsonb
-WHERE slug = 'beetroot' AND (harvest_months IS NULL OR harvest_months = '[]'::jsonb);
+UPDATE public.plant_species SET harvest_months = '{6,7,8,9,10,11}'::integer[]
+WHERE slug = 'beetroot' AND (harvest_months IS NULL OR harvest_months = '{}'::integer[]);
 
 -- Carrot
-UPDATE public.plant_species SET harvest_months = '["6","7","8","9","10","11","12"]'::jsonb
-WHERE slug = 'carrot' AND (harvest_months IS NULL OR harvest_months = '[]'::jsonb);
+UPDATE public.plant_species SET harvest_months = '{6,7,8,9,10,11,12}'::integer[]
+WHERE slug = 'carrot' AND (harvest_months IS NULL OR harvest_months = '{}'::integer[]);
 
 -- Parsnip
-UPDATE public.plant_species SET harvest_months = '["10","11","12","1","2","3"]'::jsonb
-WHERE slug = 'parsnip' AND (harvest_months IS NULL OR harvest_months = '[]'::jsonb);
+UPDATE public.plant_species SET harvest_months = '{10,11,12,1,2,3}'::integer[]
+WHERE slug = 'parsnip' AND (harvest_months IS NULL OR harvest_months = '{}'::integer[]);
 
 -- Turnip
-UPDATE public.plant_species SET harvest_months = '["5","6","7","8","9","10","11"]'::jsonb
-WHERE slug = 'turnip' AND (harvest_months IS NULL OR harvest_months = '[]'::jsonb);
+UPDATE public.plant_species SET harvest_months = '{5,6,7,8,9,10,11}'::integer[]
+WHERE slug = 'turnip' AND (harvest_months IS NULL OR harvest_months = '{}'::integer[]);
 
 -- Radish
-UPDATE public.plant_species SET harvest_months = '["4","5","6","7","8","9","10"]'::jsonb
-WHERE slug = 'radish' AND (harvest_months IS NULL OR harvest_months = '[]'::jsonb);
+UPDATE public.plant_species SET harvest_months = '{4,5,6,7,8,9,10}'::integer[]
+WHERE slug = 'radish' AND (harvest_months IS NULL OR harvest_months = '{}'::integer[]);
 
 -- Swede
-UPDATE public.plant_species SET harvest_months = '["9","10","11","12","1","2"]'::jsonb
-WHERE slug = 'swede-rutabaga' AND (harvest_months IS NULL OR harvest_months = '[]'::jsonb);
+UPDATE public.plant_species SET harvest_months = '{9,10,11,12,1,2}'::integer[]
+WHERE slug = 'swede-rutabaga' AND (harvest_months IS NULL OR harvest_months = '{}'::integer[]);
 
 -- Chard
-UPDATE public.plant_species SET harvest_months = '["6","7","8","9","10","11"]'::jsonb
-WHERE slug = 'chard' AND (harvest_months IS NULL OR harvest_months = '[]'::jsonb);
+UPDATE public.plant_species SET harvest_months = '{6,7,8,9,10,11}'::integer[]
+WHERE slug = 'chard' AND (harvest_months IS NULL OR harvest_months = '{}'::integer[]);
 
 -- Rocket
-UPDATE public.plant_species SET harvest_months = '["4","5","6","7","8","9","10"]'::jsonb
-WHERE slug = 'rocket' AND (harvest_months IS NULL OR harvest_months = '[]'::jsonb);
+UPDATE public.plant_species SET harvest_months = '{4,5,6,7,8,9,10}'::integer[]
+WHERE slug = 'rocket' AND (harvest_months IS NULL OR harvest_months = '{}'::integer[]);
 
 -- Pak choi / mizuna / tatsoi
-UPDATE public.plant_species SET harvest_months = '["5","6","7","8","9","10","11"]'::jsonb
+UPDATE public.plant_species SET harvest_months = '{5,6,7,8,9,10,11}'::integer[]
 WHERE slug IN ('pak-choi','mizuna','tatsoi')
-AND (harvest_months IS NULL OR harvest_months = '[]'::jsonb);
+AND (harvest_months IS NULL OR harvest_months = '{}'::integer[]);
 
 -- Endive / escarole
-UPDATE public.plant_species SET harvest_months = '["7","8","9","10","11"]'::jsonb
+UPDATE public.plant_species SET harvest_months = '{7,8,9,10,11}'::integer[]
 WHERE slug IN ('endive','escarole')
-AND (harvest_months IS NULL OR harvest_months = '[]'::jsonb);
+AND (harvest_months IS NULL OR harvest_months = '{}'::integer[]);
 
 -- Radicchio
-UPDATE public.plant_species SET harvest_months = '["9","10","11","12"]'::jsonb
-WHERE slug = 'radicchio' AND (harvest_months IS NULL OR harvest_months = '[]'::jsonb);
+UPDATE public.plant_species SET harvest_months = '{9,10,11,12}'::integer[]
+WHERE slug = 'radicchio' AND (harvest_months IS NULL OR harvest_months = '{}'::integer[]);
 
 -- Kohlrabi
-UPDATE public.plant_species SET harvest_months = '["5","6","7","8","9","10"]'::jsonb
-WHERE slug = 'kohlrabi' AND (harvest_months IS NULL OR harvest_months = '[]'::jsonb);
+UPDATE public.plant_species SET harvest_months = '{5,6,7,8,9,10}'::integer[]
+WHERE slug = 'kohlrabi' AND (harvest_months IS NULL OR harvest_months = '{}'::integer[]);
 
 -- Chinese cabbage
-UPDATE public.plant_species SET harvest_months = '["8","9","10","11"]'::jsonb
-WHERE slug = 'chinese-cabbage' AND (harvest_months IS NULL OR harvest_months = '[]'::jsonb);
+UPDATE public.plant_species SET harvest_months = '{8,9,10,11}'::integer[]
+WHERE slug = 'chinese-cabbage' AND (harvest_months IS NULL OR harvest_months = '{}'::integer[]);
 
 -- Brussels sprout
-UPDATE public.plant_species SET harvest_months = '["10","11","12","1","2","3"]'::jsonb
-WHERE slug = 'brussels-sprout' AND (harvest_months IS NULL OR harvest_months = '[]'::jsonb);
+UPDATE public.plant_species SET harvest_months = '{10,11,12,1,2,3}'::integer[]
+WHERE slug = 'brussels-sprout' AND (harvest_months IS NULL OR harvest_months = '{}'::integer[]);
 
 -- Kale
-UPDATE public.plant_species SET harvest_months = '["9","10","11","12","1","2","3"]'::jsonb
+UPDATE public.plant_species SET harvest_months = '{9,10,11,12,1,2,3}'::integer[]
 WHERE slug IN ('kale','kale-curly','kale-lacinato')
-AND (harvest_months IS NULL OR harvest_months = '[]'::jsonb);
+AND (harvest_months IS NULL OR harvest_months = '{}'::integer[]);
 
 -- Broccoli / sprouting broccoli
-UPDATE public.plant_species SET harvest_months = '["7","8","9","10"]'::jsonb
-WHERE slug = 'broccoli' AND (harvest_months IS NULL OR harvest_months = '[]'::jsonb);
+UPDATE public.plant_species SET harvest_months = '{7,8,9,10}'::integer[]
+WHERE slug = 'broccoli' AND (harvest_months IS NULL OR harvest_months = '{}'::integer[]);
 
-UPDATE public.plant_species SET harvest_months = '["2","3","4","5"]'::jsonb
-WHERE slug = 'sprouting-broccoli' AND (harvest_months IS NULL OR harvest_months = '[]'::jsonb);
+UPDATE public.plant_species SET harvest_months = '{2,3,4,5}'::integer[]
+WHERE slug = 'sprouting-broccoli' AND (harvest_months IS NULL OR harvest_months = '{}'::integer[]);
 
 -- Romanesco
-UPDATE public.plant_species SET harvest_months = '["9","10","11"]'::jsonb
-WHERE slug = 'romanesco' AND (harvest_months IS NULL OR harvest_months = '[]'::jsonb);
+UPDATE public.plant_species SET harvest_months = '{9,10,11}'::integer[]
+WHERE slug = 'romanesco' AND (harvest_months IS NULL OR harvest_months = '{}'::integer[]);
 
 -- Cabbage
-UPDATE public.plant_species SET harvest_months = '["6","7","8","9","10","11","12"]'::jsonb
+UPDATE public.plant_species SET harvest_months = '{6,7,8,9,10,11,12}'::integer[]
 WHERE slug IN ('cabbage','cabbage-red','cabbage-green','cabbage-savoy')
-AND (harvest_months IS NULL OR harvest_months = '[]'::jsonb);
+AND (harvest_months IS NULL OR harvest_months = '{}'::integer[]);
 
 -- Tomato
-UPDATE public.plant_species SET harvest_months = '["7","8","9","10"]'::jsonb
+UPDATE public.plant_species SET harvest_months = '{7,8,9,10}'::integer[]
 WHERE slug IN ('tomato','tomato-cherry','tomato-plum')
-AND (harvest_months IS NULL OR harvest_months = '[]'::jsonb);
+AND (harvest_months IS NULL OR harvest_months = '{}'::integer[]);
 
 -- Pepper
-UPDATE public.plant_species SET harvest_months = '["7","8","9","10"]'::jsonb
+UPDATE public.plant_species SET harvest_months = '{7,8,9,10}'::integer[]
 WHERE slug IN ('pepper','pepper-sweet','pepper-hot')
-AND (harvest_months IS NULL OR harvest_months = '[]'::jsonb);
+AND (harvest_months IS NULL OR harvest_months = '{}'::integer[]);
 
 -- Pepper chilli
-UPDATE public.plant_species SET harvest_months = '["8","9","10"]'::jsonb
-WHERE slug = 'pepper-chilli' AND (harvest_months IS NULL OR harvest_months = '[]'::jsonb);
+UPDATE public.plant_species SET harvest_months = '{8,9,10}'::integer[]
+WHERE slug = 'pepper-chilli' AND (harvest_months IS NULL OR harvest_months = '{}'::integer[]);
 
 -- Aubergine
-UPDATE public.plant_species SET harvest_months = '["7","8","9","10"]'::jsonb
-WHERE slug = 'aubergine' AND (harvest_months IS NULL OR harvest_months = '[]'::jsonb);
+UPDATE public.plant_species SET harvest_months = '{7,8,9,10}'::integer[]
+WHERE slug = 'aubergine' AND (harvest_months IS NULL OR harvest_months = '{}'::integer[]);
 
 -- Courgette
-UPDATE public.plant_species SET harvest_months = '["7","8","9","10"]'::jsonb
-WHERE slug = 'courgette' AND (harvest_months IS NULL OR harvest_months = '[]'::jsonb);
+UPDATE public.plant_species SET harvest_months = '{7,8,9,10}'::integer[]
+WHERE slug = 'courgette' AND (harvest_months IS NULL OR harvest_months = '{}'::integer[]);
 
 -- Cucumber
-UPDATE public.plant_species SET harvest_months = '["7","8","9"]'::jsonb
+UPDATE public.plant_species SET harvest_months = '{7,8,9}'::integer[]
 WHERE slug IN ('cucumber','cucumber-pickling')
-AND (harvest_months IS NULL OR harvest_months = '[]'::jsonb);
+AND (harvest_months IS NULL OR harvest_months = '{}'::integer[]);
 
 -- Pumpkin / winter squash
-UPDATE public.plant_species SET harvest_months = '["9","10"]'::jsonb
+UPDATE public.plant_species SET harvest_months = '{9,10}'::integer[]
 WHERE slug IN ('pumpkin','squash-winter','squash-spaghetti')
-AND (harvest_months IS NULL OR harvest_months = '[]'::jsonb);
+AND (harvest_months IS NULL OR harvest_months = '{}'::integer[]);
 
 -- Summer squash
-UPDATE public.plant_species SET harvest_months = '["7","8","9"]'::jsonb
+UPDATE public.plant_species SET harvest_months = '{7,8,9}'::integer[]
 WHERE slug IN ('squash-yellow','squash-pattypan')
-AND (harvest_months IS NULL OR harvest_months = '[]'::jsonb);
+AND (harvest_months IS NULL OR harvest_months = '{}'::integer[]);
 
 -- Sweetcorn
-UPDATE public.plant_species SET harvest_months = '["8","9","10"]'::jsonb
-WHERE slug = 'sweetcorn' AND (harvest_months IS NULL OR harvest_months = '[]'::jsonb);
+UPDATE public.plant_species SET harvest_months = '{8,9,10}'::integer[]
+WHERE slug = 'sweetcorn' AND (harvest_months IS NULL OR harvest_months = '{}'::integer[]);
 
 -- Celery
-UPDATE public.plant_species SET harvest_months = '["8","9","10","11"]'::jsonb
-WHERE slug = 'celery' AND (harvest_months IS NULL OR harvest_months = '[]'::jsonb);
+UPDATE public.plant_species SET harvest_months = '{8,9,10,11}'::integer[]
+WHERE slug = 'celery' AND (harvest_months IS NULL OR harvest_months = '{}'::integer[]);
 
 -- Celeriac
-UPDATE public.plant_species SET harvest_months = '["10","11","12","1","2","3"]'::jsonb
-WHERE slug = 'celeriac' AND (harvest_months IS NULL OR harvest_months = '[]'::jsonb);
+UPDATE public.plant_species SET harvest_months = '{10,11,12,1,2,3}'::integer[]
+WHERE slug = 'celeriac' AND (harvest_months IS NULL OR harvest_months = '{}'::integer[]);
 
 -- Fennel (bulb)
-UPDATE public.plant_species SET harvest_months = '["7","8","9","10"]'::jsonb
-WHERE slug = 'fennel-bulb' AND (harvest_months IS NULL OR harvest_months = '[]'::jsonb);
+UPDATE public.plant_species SET harvest_months = '{7,8,9,10}'::integer[]
+WHERE slug = 'fennel-bulb' AND (harvest_months IS NULL OR harvest_months = '{}'::integer[]);
 
 -- Tomatillo
-UPDATE public.plant_species SET harvest_months = '["8","9","10"]'::jsonb
-WHERE slug = 'tomatillo' AND (harvest_months IS NULL OR harvest_months = '[]'::jsonb);
+UPDATE public.plant_species SET harvest_months = '{8,9,10}'::integer[]
+WHERE slug = 'tomatillo' AND (harvest_months IS NULL OR harvest_months = '{}'::integer[]);
 
 -- Ground cherry
-UPDATE public.plant_species SET harvest_months = '["8","9","10"]'::jsonb
-WHERE slug = 'ground-cherry' AND (harvest_months IS NULL OR harvest_months = '[]'::jsonb);
+UPDATE public.plant_species SET harvest_months = '{8,9,10}'::integer[]
+WHERE slug = 'ground-cherry' AND (harvest_months IS NULL OR harvest_months = '{}'::integer[]);
 
 -- Okra
-UPDATE public.plant_species SET harvest_months = '["7","8","9"]'::jsonb
-WHERE slug = 'okra' AND (harvest_months IS NULL OR harvest_months = '[]'::jsonb);
+UPDATE public.plant_species SET harvest_months = '{7,8,9}'::integer[]
+WHERE slug = 'okra' AND (harvest_months IS NULL OR harvest_months = '{}'::integer[]);
 
 -- Pea
-UPDATE public.plant_species SET harvest_months = '["6","7","8","9"]'::jsonb
+UPDATE public.plant_species SET harvest_months = '{6,7,8,9}'::integer[]
 WHERE slug IN ('pea','peas-garden','peas-snap','peas-snow')
-AND (harvest_months IS NULL OR harvest_months = '[]'::jsonb);
+AND (harvest_months IS NULL OR harvest_months = '{}'::integer[]);
 
 -- Broad bean
-UPDATE public.plant_species SET harvest_months = '["6","7","8"]'::jsonb
+UPDATE public.plant_species SET harvest_months = '{6,7,8}'::integer[]
 WHERE slug IN ('broad-bean','fava-bean')
-AND (harvest_months IS NULL OR harvest_months = '[]'::jsonb);
+AND (harvest_months IS NULL OR harvest_months = '{}'::integer[]);
 
 -- Edamame
-UPDATE public.plant_species SET harvest_months = '["8","9","10"]'::jsonb
-WHERE slug = 'soybean-edamame' AND (harvest_months IS NULL OR harvest_months = '[]'::jsonb);
+UPDATE public.plant_species SET harvest_months = '{8,9,10}'::integer[]
+WHERE slug = 'soybean-edamame' AND (harvest_months IS NULL OR harvest_months = '{}'::integer[]);
 
 -- Potato (already has harvest months but check)
-UPDATE public.plant_species SET harvest_months = '["6","7","8","9","10"]'::jsonb
-WHERE slug = 'potato' AND (harvest_months IS NULL OR harvest_months = '[]'::jsonb);
+UPDATE public.plant_species SET harvest_months = '{6,7,8,9,10}'::integer[]
+WHERE slug = 'potato' AND (harvest_months IS NULL OR harvest_months = '{}'::integer[]);
 
 -- Garlic
-UPDATE public.plant_species SET harvest_months = '["6","7"]'::jsonb
-WHERE slug = 'garlic' AND (harvest_months IS NULL OR harvest_months = '[]'::jsonb);
+UPDATE public.plant_species SET harvest_months = '{6,7}'::integer[]
+WHERE slug = 'garlic' AND (harvest_months IS NULL OR harvest_months = '{}'::integer[]);
 
 -- Shallot
-UPDATE public.plant_species SET harvest_months = '["7","8"]'::jsonb
-WHERE slug = 'shallot' AND (harvest_months IS NULL OR harvest_months = '[]'::jsonb);
+UPDATE public.plant_species SET harvest_months = '{7,8}'::integer[]
+WHERE slug = 'shallot' AND (harvest_months IS NULL OR harvest_months = '{}'::integer[]);
 
 -- Sweet potato
-UPDATE public.plant_species SET harvest_months = '["9","10"]'::jsonb
-WHERE slug = 'sweet-potato' AND (harvest_months IS NULL OR harvest_months = '[]'::jsonb);
+UPDATE public.plant_species SET harvest_months = '{9,10}'::integer[]
+WHERE slug = 'sweet-potato' AND (harvest_months IS NULL OR harvest_months = '{}'::integer[]);
 
 -- Artichoke globe
-UPDATE public.plant_species SET harvest_months = '["6","7","8","9"]'::jsonb
-WHERE slug = 'artichoke-globe' AND (harvest_months IS NULL OR harvest_months = '[]'::jsonb);
+UPDATE public.plant_species SET harvest_months = '{6,7,8,9}'::integer[]
+WHERE slug = 'artichoke-globe' AND (harvest_months IS NULL OR harvest_months = '{}'::integer[]);
 
 -- Asparagus
-UPDATE public.plant_species SET harvest_months = '["4","5","6"]'::jsonb
-WHERE slug = 'asparagus' AND (harvest_months IS NULL OR harvest_months = '[]'::jsonb);
+UPDATE public.plant_species SET harvest_months = '{4,5,6}'::integer[]
+WHERE slug = 'asparagus' AND (harvest_months IS NULL OR harvest_months = '{}'::integer[]);
 
 -- Rhubarb
-UPDATE public.plant_species SET harvest_months = '["3","4","5","6","7"]'::jsonb
-WHERE slug = 'rhubarb' AND (harvest_months IS NULL OR harvest_months = '[]'::jsonb);
+UPDATE public.plant_species SET harvest_months = '{3,4,5,6,7}'::integer[]
+WHERE slug = 'rhubarb' AND (harvest_months IS NULL OR harvest_months = '{}'::integer[]);
 
 -- Horseradish
-UPDATE public.plant_species SET harvest_months = '["10","11","12","1","2"]'::jsonb
-WHERE slug = 'horseradish' AND (harvest_months IS NULL OR harvest_months = '[]'::jsonb);
+UPDATE public.plant_species SET harvest_months = '{10,11,12,1,2}'::integer[]
+WHERE slug = 'horseradish' AND (harvest_months IS NULL OR harvest_months = '{}'::integer[]);
 
 -- Mustard greens
-UPDATE public.plant_species SET harvest_months = '["5","6","7","8","9","10"]'::jsonb
-WHERE slug = 'mustard-greens' AND (harvest_months IS NULL OR harvest_months = '[]'::jsonb);
+UPDATE public.plant_species SET harvest_months = '{5,6,7,8,9,10}'::integer[]
+WHERE slug = 'mustard-greens' AND (harvest_months IS NULL OR harvest_months = '{}'::integer[]);
 
 -- Watercress
-UPDATE public.plant_species SET harvest_months = '["4","5","6","7","8","9","10"]'::jsonb
-WHERE slug = 'watercress' AND (harvest_months IS NULL OR harvest_months = '[]'::jsonb);
+UPDATE public.plant_species SET harvest_months = '{4,5,6,7,8,9,10}'::integer[]
+WHERE slug = 'watercress' AND (harvest_months IS NULL OR harvest_months = '{}'::integer[]);
 
 -- Daikon radish
-UPDATE public.plant_species SET harvest_months = '["10","11","12"]'::jsonb
-WHERE slug = 'daikon-radish' AND (harvest_months IS NULL OR harvest_months = '[]'::jsonb);
+UPDATE public.plant_species SET harvest_months = '{10,11,12}'::integer[]
+WHERE slug = 'daikon-radish' AND (harvest_months IS NULL OR harvest_months = '{}'::integer[]);
 
 -- Salsify / scorzonera
-UPDATE public.plant_species SET harvest_months = '["10","11","12","1","2","3"]'::jsonb
+UPDATE public.plant_species SET harvest_months = '{10,11,12,1,2,3}'::integer[]
 WHERE slug IN ('salsify','black-salsify')
-AND (harvest_months IS NULL OR harvest_months = '[]'::jsonb);
+AND (harvest_months IS NULL OR harvest_months = '{}'::integer[]);
 
 -- Jerusalem artichoke
-UPDATE public.plant_species SET harvest_months = '["10","11","12","1","2","3"]'::jsonb
-WHERE slug = 'artichoke-jerusalem' AND (harvest_months IS NULL OR harvest_months = '[]'::jsonb);
+UPDATE public.plant_species SET harvest_months = '{10,11,12,1,2,3}'::integer[]
+WHERE slug = 'artichoke-jerusalem' AND (harvest_months IS NULL OR harvest_months = '{}'::integer[]);
 
 
 -- ============================================================================
@@ -806,102 +806,102 @@ WHERE slug = 'melon-cantaloupe' AND (days_to_maturity_min IS NULL OR days_to_mat
 -- Tomato
 UPDATE public.plant_species SET companions_with = '["basil","carrot","parsley","marigold","garlic","chive"]'::jsonb
 WHERE slug IN ('tomato','tomato-cherry','tomato-plum')
-AND (companions_with IS NULL OR companions_with = '[]'::jsonb OR companions_with::text = '');
+AND (companions_with IS NULL OR companions_with = '{}'::integer[] OR companions_with::text = '');
 
 -- Carrot
 UPDATE public.plant_species SET companions_with = '["onion-bulb","spring-onion","leek","rosemary","sage","chive"]'::jsonb
 WHERE slug = 'carrot'
-AND (companions_with IS NULL OR companions_with = '[]'::jsonb OR companions_with::text = '');
+AND (companions_with IS NULL OR companions_with = '{}'::integer[] OR companions_with::text = '');
 
 -- Beetroot
 UPDATE public.plant_species SET companions_with = '["onion-bulb","garlic","lettuce","cabbage"]'::jsonb
 WHERE slug = 'beetroot'
-AND (companions_with IS NULL OR companions_with = '[]'::jsonb OR companions_with::text = '');
+AND (companions_with IS NULL OR companions_with = '{}'::integer[] OR companions_with::text = '');
 
 -- Cucumber
 UPDATE public.plant_species SET companions_with = '["pea","broad-bean","lettuce","radish","sunflower"]'::jsonb
 WHERE slug IN ('cucumber','cucumber-pickling')
-AND (companions_with IS NULL OR companions_with = '[]'::jsonb OR companions_with::text = '');
+AND (companions_with IS NULL OR companions_with = '{}'::integer[] OR companions_with::text = '');
 
 -- Courgette
 UPDATE public.plant_species SET companions_with = '["sweetcorn","runner-bean","nasturtium","borage"]'::jsonb
 WHERE slug = 'courgette'
-AND (companions_with IS NULL OR companions_with = '[]'::jsonb OR companions_with::text = '');
+AND (companions_with IS NULL OR companions_with = '{}'::integer[] OR companions_with::text = '');
 
 -- Pumpkin
 UPDATE public.plant_species SET companions_with = '["sweetcorn","runner-bean","nasturtium"]'::jsonb
 WHERE slug IN ('pumpkin','squash-winter','squash-spaghetti')
-AND (companions_with IS NULL OR companions_with = '[]'::jsonb OR companions_with::text = '');
+AND (companions_with IS NULL OR companions_with = '{}'::integer[] OR companions_with::text = '');
 
 -- Pea
 UPDATE public.plant_species SET companions_with = '["carrot","turnip","radish","broad-bean","mint"]'::jsonb
 WHERE slug IN ('pea','peas-garden','peas-snap','peas-snow')
-AND (companions_with IS NULL OR companions_with = '[]'::jsonb OR companions_with::text = '');
+AND (companions_with IS NULL OR companions_with = '{}'::integer[] OR companions_with::text = '');
 
 -- Runner bean
 UPDATE public.plant_species SET companions_with = '["sweetcorn","courgette","marigold"]'::jsonb
 WHERE slug IN ('runner-bean','scarlet-runner-bean')
-AND (companions_with IS NULL OR companions_with = '[]'::jsonb OR companions_with::text = '');
+AND (companions_with IS NULL OR companions_with = '{}'::integer[] OR companions_with::text = '');
 
 -- French bean
 UPDATE public.plant_species SET companions_with = '["sweetcorn","courgette","carrot","celery"]'::jsonb
 WHERE slug IN ('french-bean','bean')
-AND (companions_with IS NULL OR companions_with = '[]'::jsonb OR companions_with::text = '');
+AND (companions_with IS NULL OR companions_with = '{}'::integer[] OR companions_with::text = '');
 
 -- Broad bean
 UPDATE public.plant_species SET companions_with = '["potato","spinach","lettuce"]'::jsonb
 WHERE slug IN ('broad-bean','fava-bean')
-AND (companions_with IS NULL OR companions_with = '[]'::jsonb OR companions_with::text = '');
+AND (companions_with IS NULL OR companions_with = '{}'::integer[] OR companions_with::text = '');
 
 -- Garlic
 UPDATE public.plant_species SET companions_with = '["carrot","tomato","beetroot","lettuce","wild-strawberry"]'::jsonb
 WHERE slug = 'garlic'
-AND (companions_with IS NULL OR companions_with = '[]'::jsonb OR companions_with::text = '');
+AND (companions_with IS NULL OR companions_with = '{}'::integer[] OR companions_with::text = '');
 
 -- Onion
 UPDATE public.plant_species SET companions_with = '["carrot","beetroot","lettuce","tomato"]'::jsonb
 WHERE slug = 'onion-bulb'
-AND (companions_with IS NULL OR companions_with = '[]'::jsonb OR companions_with::text = '');
+AND (companions_with IS NULL OR companions_with = '{}'::integer[] OR companions_with::text = '');
 
 -- Leek
 UPDATE public.plant_species SET companions_with = '["carrot","celery","onion-bulb"]'::jsonb
 WHERE slug = 'leek'
-AND (companions_with IS NULL OR companions_with = '[]'::jsonb OR companions_with::text = '');
+AND (companions_with IS NULL OR companions_with = '{}'::integer[] OR companions_with::text = '');
 
 -- Radish
 UPDATE public.plant_species SET companions_with = '["lettuce","pea","spinach","carrot"]'::jsonb
 WHERE slug = 'radish'
-AND (companions_with IS NULL OR companions_with = '[]'::jsonb OR companions_with::text = '');
+AND (companions_with IS NULL OR companions_with = '{}'::integer[] OR companions_with::text = '');
 
 -- Turnip
 UPDATE public.plant_species SET companions_with = '["pea","broad-bean"]'::jsonb
 WHERE slug = 'turnip'
-AND (companions_with IS NULL OR companions_with = '[]'::jsonb OR companions_with::text = '');
+AND (companions_with IS NULL OR companions_with = '{}'::integer[] OR companions_with::text = '');
 
 -- Sweetcorn
 UPDATE public.plant_species SET companions_with = '["runner-bean","courgette","pumpkin","squash-winter"]'::jsonb
 WHERE slug = 'sweetcorn'
-AND (companions_with IS NULL OR companions_with = '[]'::jsonb OR companions_with::text = '');
+AND (companions_with IS NULL OR companions_with = '{}'::integer[] OR companions_with::text = '');
 
 -- Cabbage family
 UPDATE public.plant_species SET companions_with = '["nasturtium","onion-bulb","garlic","dill"]'::jsonb
 WHERE slug IN ('cabbage','cabbage-red','cabbage-green','cabbage-savoy','broccoli','sprouting-broccoli','romanesco','brussels-sprout','cauliflower')
-AND (companions_with IS NULL OR companions_with = '[]'::jsonb OR companions_with::text = '');
+AND (companions_with IS NULL OR companions_with = '{}'::integer[] OR companions_with::text = '');
 
 -- Pepper
 UPDATE public.plant_species SET companions_with = '["tomato","basil","carrot","onion-bulb"]'::jsonb
 WHERE slug IN ('pepper','pepper-sweet','pepper-chilli','pepper-hot')
-AND (companions_with IS NULL OR companions_with = '[]'::jsonb OR companions_with::text = '');
+AND (companions_with IS NULL OR companions_with = '{}'::integer[] OR companions_with::text = '');
 
 -- Aubergine
 UPDATE public.plant_species SET companions_with = '["pepper","tomato","basil","marigold"]'::jsonb
 WHERE slug = 'aubergine'
-AND (companions_with IS NULL OR companions_with = '[]'::jsonb OR companions_with::text = '');
+AND (companions_with IS NULL OR companions_with = '{}'::integer[] OR companions_with::text = '');
 
 -- Parsnip
 UPDATE public.plant_species SET companions_with = '["pea","radish","onion-bulb"]'::jsonb
 WHERE slug = 'parsnip'
-AND (companions_with IS NULL OR companions_with = '[]'::jsonb OR companions_with::text = '');
+AND (companions_with IS NULL OR companions_with = '{}'::integer[] OR companions_with::text = '');
 
 
 -- ============================================================================
@@ -911,57 +911,57 @@ AND (companions_with IS NULL OR companions_with = '[]'::jsonb OR companions_with
 -- Tomato
 UPDATE public.plant_species SET companions_avoid = '["cabbage","fennel-bulb","potato"]'::jsonb
 WHERE slug IN ('tomato','tomato-cherry','tomato-plum')
-AND (companions_avoid IS NULL OR companions_avoid = '[]'::jsonb OR companions_avoid::text = '');
+AND (companions_avoid IS NULL OR companions_avoid = '{}'::integer[] OR companions_avoid::text = '');
 
 -- Cucumber
 UPDATE public.plant_species SET companions_avoid = '["potato","sage"]'::jsonb
 WHERE slug IN ('cucumber','cucumber-pickling')
-AND (companions_avoid IS NULL OR companions_avoid = '[]'::jsonb OR companions_avoid::text = '');
+AND (companions_avoid IS NULL OR companions_avoid = '{}'::integer[] OR companions_avoid::text = '');
 
 -- Pea
 UPDATE public.plant_species SET companions_avoid = '["onion-bulb","garlic","shallot"]'::jsonb
 WHERE slug IN ('pea','peas-garden','peas-snap','peas-snow')
-AND (companions_avoid IS NULL OR companions_avoid = '[]'::jsonb OR companions_avoid::text = '');
+AND (companions_avoid IS NULL OR companions_avoid = '{}'::integer[] OR companions_avoid::text = '');
 
 -- Broad bean / runner bean
 UPDATE public.plant_species SET companions_avoid = '["onion-bulb","garlic","fennel-bulb"]'::jsonb
 WHERE slug IN ('broad-bean','fava-bean','runner-bean','scarlet-runner-bean','french-bean','bean')
-AND (companions_avoid IS NULL OR companions_avoid = '[]'::jsonb OR companions_avoid::text = '');
+AND (companions_avoid IS NULL OR companions_avoid = '{}'::integer[] OR companions_avoid::text = '');
 
 -- Carrot
 UPDATE public.plant_species SET companions_avoid = '["dill","parsnip"]'::jsonb
 WHERE slug = 'carrot'
-AND (companions_avoid IS NULL OR companions_avoid = '[]'::jsonb OR companions_avoid::text = '');
+AND (companions_avoid IS NULL OR companions_avoid = '{}'::integer[] OR companions_avoid::text = '');
 
 -- Garlic
 UPDATE public.plant_species SET companions_avoid = '["pea","broad-bean","runner-bean"]'::jsonb
 WHERE slug = 'garlic'
-AND (companions_avoid IS NULL OR companions_avoid = '[]'::jsonb OR companions_avoid::text = '');
+AND (companions_avoid IS NULL OR companions_avoid = '{}'::integer[] OR companions_avoid::text = '');
 
 -- Onion
 UPDATE public.plant_species SET companions_avoid = '["pea","broad-bean","runner-bean"]'::jsonb
 WHERE slug = 'onion-bulb'
-AND (companions_avoid IS NULL OR companions_avoid = '[]'::jsonb OR companions_avoid::text = '');
+AND (companions_avoid IS NULL OR companions_avoid = '{}'::integer[] OR companions_avoid::text = '');
 
 -- Cabbage family: avoid strawberry
 UPDATE public.plant_species SET companions_avoid = '["wild-strawberry","runner-bean"]'::jsonb
 WHERE slug IN ('cabbage','cabbage-red','cabbage-green','cabbage-savoy','broccoli','sprouting-broccoli','romanesco','brussels-sprout','cauliflower')
-AND (companions_avoid IS NULL OR companions_avoid = '[]'::jsonb OR companions_avoid::text = '');
+AND (companions_avoid IS NULL OR companions_avoid = '{}'::integer[] OR companions_avoid::text = '');
 
 -- Pepper / aubergine
 UPDATE public.plant_species SET companions_avoid = '["fennel-bulb"]'::jsonb
 WHERE slug IN ('pepper','pepper-sweet','pepper-chilli','pepper-hot','aubergine')
-AND (companions_avoid IS NULL OR companions_avoid = '[]'::jsonb OR companions_avoid::text = '');
+AND (companions_avoid IS NULL OR companions_avoid = '{}'::integer[] OR companions_avoid::text = '');
 
 -- Sweetcorn
 UPDATE public.plant_species SET companions_avoid = '["tomato"]'::jsonb
 WHERE slug = 'sweetcorn'
-AND (companions_avoid IS NULL OR companions_avoid = '[]'::jsonb OR companions_avoid::text = '');
+AND (companions_avoid IS NULL OR companions_avoid = '{}'::integer[] OR companions_avoid::text = '');
 
 -- Fennel (bulb) - bad neighbour to most things
 UPDATE public.plant_species SET companions_avoid = '["tomato","pepper","runner-bean","carrot"]'::jsonb
 WHERE slug = 'fennel-bulb'
-AND (companions_avoid IS NULL OR companions_avoid = '[]'::jsonb OR companions_avoid::text = '');
+AND (companions_avoid IS NULL OR companions_avoid = '{}'::integer[] OR companions_avoid::text = '');
 
 
 -- ============================================================================
@@ -1042,65 +1042,65 @@ WHERE slug = 'radicchio' AND (min_temp_c IS NULL);
 -- ============================================================================
 
 -- Herb sow months (fill gaps only)
-UPDATE public.plant_species SET sow_months = '["3","4","5"]'::jsonb
+UPDATE public.plant_species SET sow_months = '{3,4,5}'::integer[]
 WHERE slug IN ('herb-basil-sweet','herb-basil-thai','herb-basil-greek','herb-holy-basil')
-AND (sow_months IS NULL OR sow_months = '[]'::jsonb);
+AND (sow_months IS NULL OR sow_months = '{}'::integer[]);
 
-UPDATE public.plant_species SET sow_months = '["3","4","5","6","7"]'::jsonb
+UPDATE public.plant_species SET sow_months = '{3,4,5,6,7}'::integer[]
 WHERE slug IN ('herb-dill-leaf','dill')
-AND (sow_months IS NULL OR sow_months = '[]'::jsonb);
+AND (sow_months IS NULL OR sow_months = '{}'::integer[]);
 
-UPDATE public.plant_species SET sow_months = '["3","4","5"]'::jsonb
+UPDATE public.plant_species SET sow_months = '{3,4,5}'::integer[]
 WHERE slug IN ('herb-parsley-flat','herb-parsley-curly','parsley')
-AND (sow_months IS NULL OR sow_months = '[]'::jsonb);
+AND (sow_months IS NULL OR sow_months = '{}'::integer[]);
 
-UPDATE public.plant_species SET sow_months = '["3","4","5","6","7"]'::jsonb
+UPDATE public.plant_species SET sow_months = '{3,4,5,6,7}'::integer[]
 WHERE slug IN ('herb-chervil','chervil')
-AND (sow_months IS NULL OR sow_months = '[]'::jsonb);
+AND (sow_months IS NULL OR sow_months = '{}'::integer[]);
 
-UPDATE public.plant_species SET sow_months = '["3","4","5"]'::jsonb
+UPDATE public.plant_species SET sow_months = '{3,4,5}'::integer[]
 WHERE slug = 'herb-marjoram-sweet'
-AND (sow_months IS NULL OR sow_months = '[]'::jsonb);
+AND (sow_months IS NULL OR sow_months = '{}'::integer[]);
 
-UPDATE public.plant_species SET sow_months = '["3","4","5"]'::jsonb
+UPDATE public.plant_species SET sow_months = '{3,4,5}'::integer[]
 WHERE slug = 'herb-savoury-summer'
-AND (sow_months IS NULL OR sow_months = '[]'::jsonb);
+AND (sow_months IS NULL OR sow_months = '{}'::integer[]);
 
-UPDATE public.plant_species SET sow_months = '["4","5"]'::jsonb
+UPDATE public.plant_species SET sow_months = '{4,5}'::integer[]
 WHERE slug = 'herb-borage'
-AND (sow_months IS NULL OR sow_months = '[]'::jsonb);
+AND (sow_months IS NULL OR sow_months = '{}'::integer[]);
 
-UPDATE public.plant_species SET sow_months = '["3","4","5","9"]'::jsonb
+UPDATE public.plant_species SET sow_months = '{3,4,5,9}'::integer[]
 WHERE slug = 'herb-calendula'
-AND (sow_months IS NULL OR sow_months = '[]'::jsonb);
+AND (sow_months IS NULL OR sow_months = '{}'::integer[]);
 
-UPDATE public.plant_species SET sow_months = '["3","4"]'::jsonb
+UPDATE public.plant_species SET sow_months = '{3,4}'::integer[]
 WHERE slug IN ('herb-oregano','herb-oregano-greek')
-AND (sow_months IS NULL OR sow_months = '[]'::jsonb);
+AND (sow_months IS NULL OR sow_months = '{}'::integer[]);
 
-UPDATE public.plant_species SET sow_months = '["3","4"]'::jsonb
+UPDATE public.plant_species SET sow_months = '{3,4}'::integer[]
 WHERE slug IN ('herb-thyme-common','herb-thyme-lemon')
-AND (sow_months IS NULL OR sow_months = '[]'::jsonb);
+AND (sow_months IS NULL OR sow_months = '{}'::integer[]);
 
-UPDATE public.plant_species SET sow_months = '["3","4"]'::jsonb
+UPDATE public.plant_species SET sow_months = '{3,4}'::integer[]
 WHERE slug IN ('herb-sage-common','herb-sage-purple')
-AND (sow_months IS NULL OR sow_months = '[]'::jsonb);
+AND (sow_months IS NULL OR sow_months = '{}'::integer[]);
 
-UPDATE public.plant_species SET sow_months = '["3","4"]'::jsonb
+UPDATE public.plant_species SET sow_months = '{3,4}'::integer[]
 WHERE slug = 'herb-chives-common'
-AND (sow_months IS NULL OR sow_months = '[]'::jsonb);
+AND (sow_months IS NULL OR sow_months = '{}'::integer[]);
 
-UPDATE public.plant_species SET sow_months = '["3","4"]'::jsonb
+UPDATE public.plant_species SET sow_months = '{3,4}'::integer[]
 WHERE slug IN ('herb-chamomile-german','herb-chamomile-roman')
-AND (sow_months IS NULL OR sow_months = '[]'::jsonb);
+AND (sow_months IS NULL OR sow_months = '{}'::integer[]);
 
-UPDATE public.plant_species SET sow_months = '["3","4","5"]'::jsonb
+UPDATE public.plant_species SET sow_months = '{3,4,5}'::integer[]
 WHERE slug = 'herb-fennel-leaf'
-AND (sow_months IS NULL OR sow_months = '[]'::jsonb);
+AND (sow_months IS NULL OR sow_months = '{}'::integer[]);
 
-UPDATE public.plant_species SET sow_months = '["3","4"]'::jsonb
+UPDATE public.plant_species SET sow_months = '{3,4}'::integer[]
 WHERE slug = 'herb-lovage'
-AND (sow_months IS NULL OR sow_months = '[]'::jsonb);
+AND (sow_months IS NULL OR sow_months = '{}'::integer[]);
 
 -- Herb days to maturity
 UPDATE public.plant_species SET days_to_maturity_min = 60, days_to_maturity_max = 90, maturity_basis = 'from_seed'
@@ -1542,20 +1542,20 @@ WHERE slug = 'wild-strawberry' AND (min_temp_c IS NULL);
 -- Fruit: companions_with
 UPDATE public.plant_species SET companions_with = '["herb-chives-common","nasturtium","herb-comfrey","garlic"]'::jsonb
 WHERE slug IN ('fruit-apple','fruit-pear')
-AND (companions_with IS NULL OR companions_with = '[]'::jsonb OR companions_with::text = '');
+AND (companions_with IS NULL OR companions_with = '{}'::integer[] OR companions_with::text = '');
 
 UPDATE public.plant_species SET companions_with = '["garlic","herb-chives-common","nasturtium"]'::jsonb
 WHERE slug IN ('fruit-cherry-sour','fruit-cherry-sweet','fruit-plum','fruit-damson','fruit-gage',
                'fruit-peach','fruit-nectarine','fruit-apricot')
-AND (companions_with IS NULL OR companions_with = '[]'::jsonb OR companions_with::text = '');
+AND (companions_with IS NULL OR companions_with = '{}'::integer[] OR companions_with::text = '');
 
 UPDATE public.plant_species SET companions_with = '["herb-borage","garlic","onion-bulb"]'::jsonb
 WHERE slug = 'wild-strawberry'
-AND (companions_with IS NULL OR companions_with = '[]'::jsonb OR companions_with::text = '');
+AND (companions_with IS NULL OR companions_with = '{}'::integer[] OR companions_with::text = '');
 
 UPDATE public.plant_species SET companions_with = '["herb-comfrey","garlic","nasturtium"]'::jsonb
 WHERE slug IN ('fruit-currant','fruit-gooseberry','fruit-blackcurrant')
-AND (companions_with IS NULL OR companions_with = '[]'::jsonb OR companions_with::text = '');
+AND (companions_with IS NULL OR companions_with = '{}'::integer[] OR companions_with::text = '');
 
 
 -- ============================================================================

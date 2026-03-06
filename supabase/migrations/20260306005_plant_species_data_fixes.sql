@@ -187,38 +187,38 @@ WHERE slug = 'tree-oak-burr'
 -- ============================================================================
 
 UPDATE plant_species SET
-  pruning_months = '["6","7","8"]'::jsonb
+  pruning_months = '{6,7,8}'::integer[]
 WHERE slug = 'fruit-plum';
 
 UPDATE plant_species SET
-  pruning_months = '["6","7","8"]'::jsonb
+  pruning_months = '{6,7,8}'::integer[]
 WHERE slug = 'fruit-damson';
 
 UPDATE plant_species SET
-  pruning_months = '["7","8"]'::jsonb
+  pruning_months = '{7,8}'::integer[]
 WHERE slug = 'fruit-apricot';
 
 UPDATE plant_species SET
-  pruning_months = '["7","8","9"]'::jsonb
+  pruning_months = '{7,8,9}'::integer[]
 WHERE slug = 'fruit-cherry-sour';
 
 UPDATE plant_species SET
-  pruning_months = '["6","7","8"]'::jsonb
+  pruning_months = '{6,7,8}'::integer[]
 WHERE slug IN ('fruit-nectarine', 'fruit-gage', 'fruit-mirabelle');
 
 -- Missing pruning months for other species
-UPDATE plant_species SET pruning_months = '["2","3"]'::jsonb
-WHERE slug = 'fruit-elder' AND (pruning_months IS NULL OR pruning_months = '[]'::jsonb);
+UPDATE plant_species SET pruning_months = '{2,3}'::integer[]
+WHERE slug = 'fruit-elder' AND (pruning_months IS NULL OR pruning_months = '{}'::integer[]);
 
-UPDATE plant_species SET pruning_months = '["1","2"]'::jsonb
-WHERE slug = 'fruit-hazelnut' AND (pruning_months IS NULL OR pruning_months = '[]'::jsonb);
+UPDATE plant_species SET pruning_months = '{1,2}'::integer[]
+WHERE slug = 'fruit-hazelnut' AND (pruning_months IS NULL OR pruning_months = '{}'::integer[]);
 
-UPDATE plant_species SET pruning_months = '["7","8"]'::jsonb
+UPDATE plant_species SET pruning_months = '{7,8}'::integer[]
 WHERE slug IN ('fruit-walnut', 'fruit-black-walnut')
-  AND (pruning_months IS NULL OR pruning_months = '[]'::jsonb);
+  AND (pruning_months IS NULL OR pruning_months = '{}'::integer[]);
 
-UPDATE plant_species SET pruning_months = '["1","2","7","8"]'::jsonb
-WHERE slug = 'fruit-hardy-kiwi' AND (pruning_months IS NULL OR pruning_months = '[]'::jsonb);
+UPDATE plant_species SET pruning_months = '{1,2,7,8}'::integer[]
+WHERE slug = 'fruit-hardy-kiwi' AND (pruning_months IS NULL OR pruning_months = '{}'::integer[]);
 
 -- ============================================================================
 -- SECTION 5: CALENDAR — Sow / harvest month corrections for UK/Ireland
@@ -226,108 +226,108 @@ WHERE slug = 'fruit-hardy-kiwi' AND (pruning_months IS NULL OR pruning_months = 
 
 -- Broad bean / fava bean: add autumn sowing (Oct/Nov) and February
 UPDATE plant_species SET
-  sow_months = '["2","3","4","5","10","11"]'::jsonb
+  sow_months = '{2,3,4,5,10,11}'::integer[]
 WHERE slug IN ('broad-bean', 'fava-bean');
 
 -- Garlic: extend planting window
 UPDATE plant_species SET
-  sow_months = '["10","11","12","1","2"]'::jsonb
+  sow_months = '{10,11,12,1,2}'::integer[]
 WHERE slug = 'garlic';
 
 -- Peas: can sow from Feb under cloches, succession through July
 UPDATE plant_species SET
-  sow_months = '["2","3","4","5","6","7"]'::jsonb
+  sow_months = '{2,3,4,5,6,7}'::integer[]
 WHERE slug = 'pea';
 
 -- Runner bean: not March in UK (too cold), harvest from July not June
 UPDATE plant_species SET
-  sow_months = '["4","5","6"]'::jsonb,
-  harvest_months = '["7","8","9","10"]'::jsonb
+  sow_months = '{4,5,6}'::integer[],
+  harvest_months = '{7,8,9,10}'::integer[]
 WHERE slug = 'runner-bean';
 
 -- French bean: April earliest, harvest from July
 UPDATE plant_species SET
-  sow_months = '["4","5","6","7"]'::jsonb,
-  harvest_months = '["7","8","9","10"]'::jsonb
+  sow_months = '{4,5,6,7}'::integer[],
+  harvest_months = '{7,8,9,10}'::integer[]
 WHERE slug = 'french-bean';
 
 -- Chilli peppers: benefit from January sowing in UK
 UPDATE plant_species SET
-  sow_months = '["1","2","3"]'::jsonb
+  sow_months = '{1,2,3}'::integer[]
 WHERE slug = 'pepper-chilli';
 
 -- Leek: winter veg, harvested autumn through spring
 UPDATE plant_species SET
-  harvest_months = '["9","10","11","12","1","2","3"]'::jsonb
+  harvest_months = '{9,10,11,12,1,2,3}'::integer[]
 WHERE slug = 'leek';
 
 -- Spring onion: harvestable from May
 UPDATE plant_species SET
-  harvest_months = '["5","6","7","8","9","10"]'::jsonb
+  harvest_months = '{5,6,7,8,9,10}'::integer[]
 WHERE slug = 'spring-onion';
 
 -- Bare-root currant/gooseberry planting months
 UPDATE plant_species SET
-  planting_months = '["10","11","12","1","2","3"]'::jsonb
+  planting_months = '{10,11,12,1,2,3}'::integer[]
 WHERE slug IN ('fruit-currant', 'fruit-gooseberry', 'fruit-blackcurrant')
-  AND (planting_months IS NULL OR planting_months = '[]'::jsonb);
+  AND (planting_months IS NULL OR planting_months = '{}'::integer[]);
 
 -- ============================================================================
 -- SECTION 6: HERB HARVEST MONTHS (systematic gap — ~28 herbs missing)
 -- ============================================================================
 
 -- Perennial herbs with long harvest windows
-UPDATE plant_species SET harvest_months = '["1","2","3","4","5","6","7","8","9","10","11","12"]'::jsonb
+UPDATE plant_species SET harvest_months = '{1,2,3,4,5,6,7,8,9,10,11,12}'::integer[]
 WHERE slug IN ('herb-rosemary', 'herb-bay-laurel')
-  AND (harvest_months IS NULL OR harvest_months = '[]'::jsonb);
+  AND (harvest_months IS NULL OR harvest_months = '{}'::integer[]);
 
-UPDATE plant_species SET harvest_months = '["4","5","6","7","8","9","10"]'::jsonb
+UPDATE plant_species SET harvest_months = '{4,5,6,7,8,9,10}'::integer[]
 WHERE slug IN ('herb-thyme-common', 'herb-sorrel-common', 'herb-lemon-balm', 'herb-savoury-winter')
-  AND (harvest_months IS NULL OR harvest_months = '[]'::jsonb);
+  AND (harvest_months IS NULL OR harvest_months = '{}'::integer[]);
 
-UPDATE plant_species SET harvest_months = '["5","6","7","8","9","10"]'::jsonb
+UPDATE plant_species SET harvest_months = '{5,6,7,8,9,10}'::integer[]
 WHERE slug IN ('herb-sage-common', 'herb-sage-purple')
-  AND (harvest_months IS NULL OR harvest_months = '[]'::jsonb);
+  AND (harvest_months IS NULL OR harvest_months = '{}'::integer[]);
 
-UPDATE plant_species SET harvest_months = '["5","6","7","8","9"]'::jsonb
+UPDATE plant_species SET harvest_months = '{5,6,7,8,9}'::integer[]
 WHERE slug IN ('herb-tarragon-french', 'herb-coriander-leaf')
-  AND (harvest_months IS NULL OR harvest_months = '[]'::jsonb);
+  AND (harvest_months IS NULL OR harvest_months = '{}'::integer[]);
 
-UPDATE plant_species SET harvest_months = '["3","4","5","6","7","8","9","10"]'::jsonb
+UPDATE plant_species SET harvest_months = '{3,4,5,6,7,8,9,10}'::integer[]
 WHERE slug = 'herb-chives-common'
-  AND (harvest_months IS NULL OR harvest_months = '[]'::jsonb);
+  AND (harvest_months IS NULL OR harvest_months = '{}'::integer[]);
 
-UPDATE plant_species SET harvest_months = '["4","5","6","7","8","9"]'::jsonb
+UPDATE plant_species SET harvest_months = '{4,5,6,7,8,9}'::integer[]
 WHERE slug = 'herb-lovage'
-  AND (harvest_months IS NULL OR harvest_months = '[]'::jsonb);
+  AND (harvest_months IS NULL OR harvest_months = '{}'::integer[]);
 
-UPDATE plant_species SET harvest_months = '["4","5","6","7","8","9","10"]'::jsonb
+UPDATE plant_species SET harvest_months = '{4,5,6,7,8,9,10}'::integer[]
 WHERE slug IN ('herb-mint-spearmint', 'herb-mint-peppermint')
-  AND (harvest_months IS NULL OR harvest_months = '[]'::jsonb);
+  AND (harvest_months IS NULL OR harvest_months = '{}'::integer[]);
 
-UPDATE plant_species SET harvest_months = '["6","7","8","9"]'::jsonb
+UPDATE plant_species SET harvest_months = '{6,7,8,9}'::integer[]
 WHERE slug IN ('herb-oregano', 'herb-dill-leaf', 'herb-borage')
-  AND (harvest_months IS NULL OR harvest_months = '[]'::jsonb);
+  AND (harvest_months IS NULL OR harvest_months = '{}'::integer[]);
 
-UPDATE plant_species SET harvest_months = '["4","5","6","7","8","9","10","11"]'::jsonb
+UPDATE plant_species SET harvest_months = '{4,5,6,7,8,9,10,11}'::integer[]
 WHERE slug IN ('herb-parsley-flat', 'herb-parsley-curly')
-  AND (harvest_months IS NULL OR harvest_months = '[]'::jsonb);
+  AND (harvest_months IS NULL OR harvest_months = '{}'::integer[]);
 
-UPDATE plant_species SET harvest_months = '["6","7","8","9","10"]'::jsonb
+UPDATE plant_species SET harvest_months = '{6,7,8,9,10}'::integer[]
 WHERE slug IN ('herb-fennel-leaf', 'herb-calendula')
-  AND (harvest_months IS NULL OR harvest_months = '[]'::jsonb);
+  AND (harvest_months IS NULL OR harvest_months = '{}'::integer[]);
 
-UPDATE plant_species SET harvest_months = '["7","8","9"]'::jsonb
+UPDATE plant_species SET harvest_months = '{7,8,9}'::integer[]
 WHERE slug IN ('herb-basil-sweet', 'herb-basil-thai', 'herb-basil-greek', 'herb-holy-basil', 'herb-savoury-summer')
-  AND (harvest_months IS NULL OR harvest_months = '[]'::jsonb);
+  AND (harvest_months IS NULL OR harvest_months = '{}'::integer[]);
 
-UPDATE plant_species SET harvest_months = '["5","6","7","8","9"]'::jsonb
+UPDATE plant_species SET harvest_months = '{5,6,7,8,9}'::integer[]
 WHERE slug = 'herb-chervil'
-  AND (harvest_months IS NULL OR harvest_months = '[]'::jsonb);
+  AND (harvest_months IS NULL OR harvest_months = '{}'::integer[]);
 
-UPDATE plant_species SET harvest_months = '["6","7","8","9"]'::jsonb
+UPDATE plant_species SET harvest_months = '{6,7,8,9}'::integer[]
 WHERE slug IN ('herb-marjoram-sweet', 'herb-chamomile-german', 'herb-chamomile-roman')
-  AND (harvest_months IS NULL OR harvest_months = '[]'::jsonb);
+  AND (harvest_months IS NULL OR harvest_months = '{}'::integer[]);
 
 -- ============================================================================
 -- SECTION 7: GROWING CONDITIONS — Zones, sun, frost, min_temp
