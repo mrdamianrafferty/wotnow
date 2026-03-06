@@ -122,6 +122,7 @@ export function useWeatherTasks(): UseWeatherTasksResult {
 
         // Get user's location to use as a cache key
         if (user?.id) {
+          // Try grow_user_preferences first (primary source)
           const { data: prefs, error: prefsError } = await supabase
             .from('grow_user_preferences')
             .select('latitude, longitude')
@@ -129,7 +130,6 @@ export function useWeatherTasks(): UseWeatherTasksResult {
             .single();
 
           if (prefsError && prefsError.code !== 'PGRST116') {
-            // PGRST116 = no rows returned (user has no prefs yet)
             console.error('[useWeatherTasks] Prefs error:', prefsError);
           }
 
@@ -139,7 +139,31 @@ export function useWeatherTasks(): UseWeatherTasksResult {
             const newKey = `${prefs.latitude.toFixed(2)},${prefs.longitude.toFixed(2)}`;
             setLocationKey(newKey);
           } else {
-            setLocationKey(null);
+            // Fallback: check user_location_preferences (legacy location source)
+            const { data: locPrefs } = await supabase
+              .from('user_location_preferences')
+              .select('home_coordinates')
+              .eq('user_id', user.id)
+              .maybeSingle();
+
+            if (!isMounted.current) return;
+
+            const coords = locPrefs?.home_coordinates as { lat?: number; lon?: number } | null;
+            if (coords?.lat && coords?.lon) {
+              const newKey = `${coords.lat.toFixed(2)},${coords.lon.toFixed(2)}`;
+              setLocationKey(newKey);
+
+              // Backfill grow_user_preferences so weather-tasks API works
+              await supabase
+                .from('grow_user_preferences')
+                .upsert({
+                  user_id: user.id,
+                  latitude: coords.lat,
+                  longitude: coords.lon,
+                }, { onConflict: 'user_id' });
+            } else {
+              setLocationKey(null);
+            }
           }
         }
       } catch (err) {

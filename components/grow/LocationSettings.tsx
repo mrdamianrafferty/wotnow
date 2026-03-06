@@ -339,7 +339,7 @@ export function LocationSettings({ currentLocation = '', onLocationUpdate }: Loc
 
           const { data: { user } } = await supabase.auth.getUser();
           if (user) {
-            // Update home_place_name and coordinates in database
+            // Update home_place_name and coordinates in user_location_preferences
             const updatePayload: {
               home_place_name: string;
               home_coordinates?: { lat: number; lon: number };
@@ -366,6 +366,30 @@ export function LocationSettings({ currentLocation = '', onLocationUpdate }: Loc
                   user_id: user.id,
                   ...updatePayload,
                 });
+            }
+
+            // Also sync to grow_user_preferences so weather-tasks API can find coordinates
+            if (lat !== undefined && lon !== undefined) {
+              const { error: growError } = await supabase
+                .from('grow_user_preferences')
+                .update({
+                  location: locationName,
+                  latitude: lat,
+                  longitude: lon,
+                })
+                .eq('user_id', user.id);
+
+              if (growError) {
+                // Row may not exist yet — try upsert
+                await supabase
+                  .from('grow_user_preferences')
+                  .upsert({
+                    user_id: user.id,
+                    location: locationName,
+                    latitude: lat,
+                    longitude: lon,
+                  }, { onConflict: 'user_id' });
+              }
             }
           }
         }
@@ -418,8 +442,7 @@ export function LocationSettings({ currentLocation = '', onLocationUpdate }: Loc
       <DialogTrigger asChild>
         <Button variant="outline" size="sm" className="flex items-center gap-2">
           <MapPin className="h-4 w-4" />
-          <span className="hidden sm:inline">{getDisplayLocation()}</span>
-          <span className="sm:hidden">Location</span>
+          <span className="truncate max-w-[120px]">{getDisplayLocation()}</span>
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-md bg-white dark:bg-gray-900">
