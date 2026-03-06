@@ -178,6 +178,36 @@ const nextConfig = {
     NEXT_PUBLIC_FREE_PROVIDERS_ENABLED: process.env.NEXT_PUBLIC_FREE_PROVIDERS_ENABLED ?? process.env.FREE_PROVIDERS_ENABLED ?? '1',
     NEXT_PUBLIC_FREE_PROVIDER_ORDER: process.env.NEXT_PUBLIC_FREE_PROVIDER_ORDER ?? process.env.FREE_PROVIDER_ORDER ?? 'auto',
   },
+  async redirects() {
+    return [
+      // grow.godaisy.io root → /grow
+      {
+        source: '/',
+        has: [{ type: 'host', value: 'grow.godaisy.io' }],
+        destination: '/grow',
+        permanent: false,
+      },
+      {
+        source: '/',
+        has: [{ type: 'host', value: 'www.grow.godaisy.io' }],
+        destination: '/grow',
+        permanent: false,
+      },
+      // fishfindr.eu root → /findr
+      {
+        source: '/',
+        has: [{ type: 'host', value: 'fishfindr.eu' }],
+        destination: '/findr',
+        permanent: false,
+      },
+      {
+        source: '/',
+        has: [{ type: 'host', value: 'www.fishfindr.eu' }],
+        destination: '/findr',
+        permanent: false,
+      },
+    ];
+  },
   async headers() {
     return [
       {
