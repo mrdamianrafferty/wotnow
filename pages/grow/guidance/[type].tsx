@@ -1,4 +1,3 @@
-import { useRouter } from 'next/router';
 import Head from 'next/head';
 import Link from 'next/link';
 import { GrowLayout } from '../../../components/grow/GrowLayout';
@@ -32,7 +31,6 @@ export const getStaticProps: GetStaticProps<GuidancePageProps> = async ({ params
 };
 
 export default function GuidancePage({ guidance }: GuidancePageProps) {
-  const router = useRouter();
   const theme = getAlertTheme(guidance.slug);
   const Icon = getSignalIcon(guidance.slug);
 
@@ -45,13 +43,13 @@ export default function GuidancePage({ guidance }: GuidancePageProps) {
       <GrowLayout title="Guidance">
         <div className="container mx-auto px-4 py-6 max-w-2xl">
           {/* Back link */}
-          <button
-            onClick={() => router.back()}
+          <Link
+            href="/grow"
             className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground mb-4"
           >
             <ArrowLeft className="h-4 w-4" />
             Back
-          </button>
+          </Link>
 
           {/* Header */}
           <div className={`rounded-xl border border-l-4 ${theme.borderColor} ${theme.bgColor} p-4 mb-6`}>
