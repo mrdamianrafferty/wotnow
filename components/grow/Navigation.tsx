@@ -73,7 +73,7 @@ export function Navigation({ currentPage, onPageChange, currentUser, onSignOut }
 
           <div className="flex items-center space-x-1">
             {/* Hide nav buttons on mobile - they're in the bottom nav */}
-            <div className="hidden md:flex items-center space-x-1">
+            <div className="hidden lg:flex items-center space-x-1">
               {pageButton('home', currentPage, onPageChange, <Home className="h-4 w-4" aria-hidden="true" />, t('My Home'))}
               {pageButton('plan', currentPage, onPageChange, <Calendar className="h-4 w-4" aria-hidden="true" />, t('Plan'))}
               {pageButton('garden', currentPage, onPageChange, <Sprout className="h-4 w-4" aria-hidden="true" />, t('Garden'))}
