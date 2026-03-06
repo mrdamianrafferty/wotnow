@@ -76,6 +76,8 @@ const BASE_SELECT = [
   'poison_to_pets_cure',
   'attracts',
   'pest_susceptibility',
+  'pest_resilience_score',
+  'pest_resilience_note',
   'propagation',
   'seeds',
   'perenual_default_image',

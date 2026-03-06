@@ -132,6 +132,8 @@ export type PlantSpeciesRow = {
   attracts: string[] | null;
   pest_susceptibility: string[] | null;
   pest_susceptibility_api: string | null;
+  pest_resilience_score: number | null;
+  pest_resilience_note: string | null;
   
   // Propagation
   propagation: string[] | null;
@@ -247,6 +249,8 @@ export interface PlantSpecies {
   // Wildlife
   attracts: string[];
   pestSusceptibility: string[];
+  pestResilienceScore: number | null;
+  pestResilienceNote: string | null;
   
   // Propagation
   propagation: string[];
@@ -388,6 +392,8 @@ export function serializePlantSpecies(row: PlantSpeciesRow): PlantSpecies {
     // Wildlife
     attracts: row.attracts ?? [],
     pestSusceptibility: row.pest_susceptibility ?? [],
+    pestResilienceScore: row.pest_resilience_score ?? null,
+    pestResilienceNote: row.pest_resilience_note ?? null,
     
     // Propagation
     propagation: row.propagation ?? [],

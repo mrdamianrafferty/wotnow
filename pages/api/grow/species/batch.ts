@@ -124,6 +124,8 @@ function serializeCustomSpecies(row: CustomSpeciesRow): PlantSpecies {
     // Wildlife
     attracts: [],
     pestSusceptibility: [],
+    pestResilienceScore: null,
+    pestResilienceNote: null,
     // Propagation
     propagation: row.wiki_data?.propagationMethods || [],
     seeds: 0,
@@ -224,6 +226,8 @@ const BASE_SELECT = [
   'poison_to_pets_cure',
   'attracts',
   'pest_susceptibility',
+  'pest_resilience_score',
+  'pest_resilience_note',
   'propagation',
   'seeds',
   'perenual_default_image',

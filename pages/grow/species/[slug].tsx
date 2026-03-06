@@ -12,6 +12,7 @@ import { ThreatCard } from "@/components/grow/ThreatCard";
 import { GrowLayout } from "@/components/grow/GrowLayout";
 import { QuickFactsCard } from "@/components/grow/QuickFactsCard";
 import { SafetyCard, SafetyAlerts } from "@/components/grow/SafetyCard";
+import { PestResilienceCard } from "@/components/grow/PestResilienceCard";
 import { VisualCharacteristicsCard } from "@/components/grow/VisualCharacteristicsCard";
 import { WildlifeCard } from "@/components/grow/WildlifeCard";
 import { PropagationCard } from "@/components/grow/PropagationCard";
@@ -1088,6 +1089,9 @@ export default function GrowSpeciesPage() {
 
         {/* Safety Card - toxicity warnings (only shows if moderate+ toxicity) */}
         {species && <SafetyCard species={species} />}
+
+        {/* Pest Resilience Card - score + practical note */}
+        {species && <PestResilienceCard species={species} />}
 
         {/* Visual Characteristics Card - flowers, fruits, colors */}
         {species && <VisualCharacteristicsCard species={species} />}
