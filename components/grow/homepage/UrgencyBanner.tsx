@@ -294,8 +294,8 @@ function SwipeableAlertCard({
           {/* Animated icon — gentle breathe, respects reduced motion */}
           <motion.div
             className="p-1.5 rounded-full bg-white/60"
-            animate={reducedMotion ? undefined : { scale: [1, 1.08, 1] }}
-            transition={reducedMotion ? undefined : { duration: 3, repeat: Infinity, ease: 'easeInOut' }}
+            animate={reducedMotion ? undefined : { scale: [1, 1.15, 1] }}
+            transition={reducedMotion ? undefined : { duration: 2.5, repeat: Infinity, ease: 'easeInOut' }}
           >
             <Icon className={`h-5 w-5 shrink-0 ${theme.iconColor}`} />
           </motion.div>
