@@ -14,11 +14,12 @@ jest.mock('framer-motion', () => ({
   AnimatePresence: ({ children }: React.PropsWithChildren) => <>{children}</>,
   useMotionValue: (initial: number) => ({ get: () => initial, set: () => {} }),
   useTransform: () => ({ get: () => 1, set: () => {} }),
+  useReducedMotion: () => false,
 }));
 
 // Strip framer-motion-specific props to avoid React warnings
 function filterProps(props: Record<string, unknown>) {
-  const skip = new Set(['variants', 'initial', 'animate', 'exit', 'transition', 'whileTap', 'whileHover']);
+  const skip = new Set(['variants', 'initial', 'animate', 'exit', 'transition', 'whileTap', 'whileHover', 'drag', 'dragConstraints', 'dragElastic', 'onDragEnd']);
   const filtered: Record<string, unknown> = {};
   for (const [k, v] of Object.entries(props)) {
     if (!skip.has(k)) filtered[k] = v;

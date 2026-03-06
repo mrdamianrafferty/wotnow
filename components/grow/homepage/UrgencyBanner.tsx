@@ -1,5 +1,5 @@
 import React, { useState, useCallback } from 'react';
-import { motion, AnimatePresence, useMotionValue, useTransform, PanInfo } from 'framer-motion';
+import { motion, AnimatePresence, useMotionValue, useTransform, useReducedMotion, PanInfo } from 'framer-motion';
 import Link from 'next/link';
 import { X, ChevronDown, ChevronRight, Snowflake, Thermometer, Wind, CloudLightning, CloudRain, Sun, AlertTriangle, Snail, Bug } from 'lucide-react';
 import { getSignalIcon, getAlertTheme } from '../LocalSignalsCard';
@@ -18,6 +18,57 @@ const WEATHER_ALERT_ICONS: Record<string, React.ComponentType<{ className?: stri
   aphids: Bug,
 };
 
+/** Classify alert type into a motion category */
+function getAlertCategory(alertType: string): 'frost' | 'wind' | 'heat' | 'pest' | 'default' {
+  if (['frost_damage', 'frost'].includes(alertType)) return 'frost';
+  if (['wind_damage', 'wind', 'wind_desiccation', 'storm'].includes(alertType)) return 'wind';
+  if (['heat_stress', 'heat', 'drought_stress', 'drought'].includes(alertType)) return 'heat';
+  if (['slug_activity', 'slugs', 'aphid_conditions', 'aphids', 'caterpillar_conditions'].includes(alertType)) return 'pest';
+  return 'default';
+}
+
+/** Category-specific entrance animation */
+function getEntranceVariant(alertType: string) {
+  const cat = getAlertCategory(alertType);
+  switch (cat) {
+    case 'frost':
+      // Crystallise into view
+      return { initial: { opacity: 0, scale: 0.92, filter: 'blur(4px)' }, animate: { opacity: 1, scale: 1, filter: 'blur(0px)' } };
+    case 'wind':
+      // Blow in from the side
+      return { initial: { opacity: 0, x: -24 }, animate: { opacity: 1, x: 0 } };
+    case 'heat':
+      // Swell into view
+      return { initial: { opacity: 0, scale: 0.95 }, animate: { opacity: 1, scale: 1 } };
+    case 'pest':
+      // Creep up from below
+      return { initial: { opacity: 0, y: 16 }, animate: { opacity: 1, y: 0 } };
+    default:
+      return { initial: { opacity: 0, y: -8 }, animate: { opacity: 1, y: 0 } };
+  }
+}
+
+/** Category-specific exit animation */
+function getExitVariant(alertType: string) {
+  const cat = getAlertCategory(alertType);
+  switch (cat) {
+    case 'frost':
+      // Soften and fade
+      return { opacity: 0, scale: 0.95, filter: 'blur(6px)' };
+    case 'wind':
+      // Blow off-screen
+      return { opacity: 0, x: 200 };
+    case 'heat':
+      // Fade and shrink
+      return { opacity: 0, scale: 0.9 };
+    case 'pest':
+      // Slide down and away
+      return { opacity: 0, y: 24 };
+    default:
+      return { opacity: 0, x: 80 };
+  }
+}
+
 /** Map alert types to guidance page slugs */
 function getGuidanceSlug(alertType: string): string | null {
   const map: Record<string, string> = {
@@ -32,7 +83,6 @@ function getGuidanceSlug(alertType: string): string | null {
     wind_damage: 'wind_damage',
     heat_stress: 'heat_stress',
     drought_stress: 'drought_stress',
-    // Weather engine types
     frost: 'frost_damage',
     heat: 'heat_stress',
     wind: 'wind_damage',
@@ -49,19 +99,15 @@ function getGuidanceSlug(alertType: string): string | null {
   return map[alertType] || null;
 }
 
-/** Category-specific entrance animation */
-function getEntranceVariant(alertType: string) {
-  if (['frost_damage', 'frost'].includes(alertType)) {
-    return { initial: { opacity: 0, y: -12, scale: 0.97 }, animate: { opacity: 1, y: 0, scale: 1 } };
+/** Per-type idle CSS class for border/gradient animation */
+function getIdleClass(alertType: string): string {
+  const cat = getAlertCategory(alertType);
+  switch (cat) {
+    case 'frost': return 'urgency-idle-frost';
+    case 'wind': return 'urgency-idle-wind';
+    case 'heat': return 'urgency-idle-heat';
+    default: return '';
   }
-  if (['wind_damage', 'wind', 'wind_desiccation', 'storm'].includes(alertType)) {
-    return { initial: { opacity: 0, x: -16 }, animate: { opacity: 1, x: 0 } };
-  }
-  if (['heat_stress', 'heat', 'drought_stress', 'drought'].includes(alertType)) {
-    return { initial: { opacity: 0, scale: 0.95 }, animate: { opacity: 1, scale: 1 } };
-  }
-  // Default: slide down
-  return { initial: { opacity: 0, y: -8 }, animate: { opacity: 1, y: 0 } };
 }
 
 interface UrgencyBannerProps {
@@ -84,13 +130,12 @@ type UrgentItem = {
 export function UrgencyBanner({ signals, weatherAlerts, onDismissSignal }: UrgencyBannerProps) {
   const [dismissed, setDismissed] = useState<Set<string>>(new Set());
   const [expanded, setExpanded] = useState(false);
+  const prefersReduced = useReducedMotion();
 
-  // Filter to high/critical signals
   const urgentSignals = signals.filter(
     s => (s.severity === 'high' || s.severity === 'critical') && !dismissed.has(s.id)
   );
 
-  // Filter to critical weather alerts, dedup against signals by title
   const signalTitles = new Set(urgentSignals.map(s => s.title.toLowerCase()));
   const urgentAlerts = weatherAlerts.filter(
     a => a.severity === 'critical' && !signalTitles.has(a.title.toLowerCase())
@@ -130,45 +175,70 @@ export function UrgencyBanner({ signals, weatherAlerts, onDismissSignal }: Urgen
   const primary = items[0];
   const remaining = items.slice(1);
   const primaryEntrance = getEntranceVariant(primary.alertType);
+  const noMotion = { initial: {}, animate: {} };
 
   return (
     <motion.div
       role="alert"
       aria-live="assertive"
       className="space-y-2"
-      initial={primaryEntrance.initial}
-      animate={primaryEntrance.animate}
-      transition={{ duration: 0.3, ease: 'easeOut' }}
+      initial={prefersReduced ? noMotion.initial : primaryEntrance.initial}
+      animate={prefersReduced ? noMotion.animate : primaryEntrance.animate}
+      transition={{ duration: 0.35, ease: 'easeOut' }}
     >
       <SwipeableAlertCard
         item={primary}
         onDismiss={() => handleDismiss(primary)}
+        reducedMotion={!!prefersReduced}
       />
 
-      {remaining.length > 0 && (
+      {/* Stacked "+N more" with depth shadows */}
+      {remaining.length > 0 && !expanded && (
         <button
-          onClick={() => setExpanded(!expanded)}
+          onClick={() => setExpanded(true)}
+          className="relative w-full"
+        >
+          {/* Stacked shadow layers */}
+          {remaining.length >= 2 && (
+            <div className="absolute inset-x-3 top-1 h-4 rounded-xl bg-black/[0.03] border border-black/[0.04]" />
+          )}
+          {remaining.length >= 1 && (
+            <div className="absolute inset-x-1.5 top-0.5 h-4 rounded-xl bg-black/[0.05] border border-black/[0.06]" />
+          )}
+          <div className="relative flex items-center justify-center gap-1 py-2 text-xs font-medium text-muted-foreground opacity-70 hover:opacity-100 transition-opacity">
+            <ChevronDown size={12} />
+            +{remaining.length} more {remaining.length === 1 ? 'alert' : 'alerts'}
+          </div>
+        </button>
+      )}
+
+      {/* Collapse button when expanded */}
+      {remaining.length > 0 && expanded && (
+        <button
+          onClick={() => setExpanded(false)}
           className="flex items-center gap-1 text-xs font-medium text-muted-foreground opacity-70 hover:opacity-100 ml-1"
         >
-          <ChevronDown size={12} className={expanded ? 'rotate-180 transition-transform' : 'transition-transform'} />
-          +{remaining.length} more {remaining.length === 1 ? 'alert' : 'alerts'}
+          <ChevronDown size={12} className="rotate-180 transition-transform" />
+          Collapse
         </button>
       )}
 
       <AnimatePresence>
         {expanded && remaining.map((item, i) => {
           const entrance = getEntranceVariant(item.alertType);
+          const exit = getExitVariant(item.alertType);
           return (
             <motion.div
               key={item.id}
-              initial={entrance.initial}
-              animate={entrance.animate}
-              exit={{ opacity: 0, x: 80 }}
-              transition={{ duration: 0.25, delay: i * 0.06 }}
+              initial={prefersReduced ? {} : entrance.initial}
+              animate={prefersReduced ? {} : entrance.animate}
+              exit={prefersReduced ? { opacity: 0 } : exit}
+              transition={{ duration: 0.3, delay: prefersReduced ? 0 : i * 0.06 }}
             >
               <SwipeableAlertCard
                 item={item}
                 onDismiss={() => handleDismiss(item)}
+                reducedMotion={!!prefersReduced}
               />
             </motion.div>
           );
@@ -178,19 +248,22 @@ export function UrgencyBanner({ signals, weatherAlerts, onDismissSignal }: Urgen
   );
 }
 
-/** Swipe-to-dismiss wrapper */
+/** Swipe-to-dismiss wrapper with per-type idle animation */
 function SwipeableAlertCard({
   item,
   onDismiss,
+  reducedMotion,
 }: {
   item: UrgentItem;
   onDismiss: () => void;
+  reducedMotion: boolean;
 }) {
   const x = useMotionValue(0);
   const opacity = useTransform(x, [-120, 0, 120], [0.3, 1, 0.3]);
   const theme = getAlertTheme(item.alertType);
   const Icon = item.icon;
   const guidanceSlug = getGuidanceSlug(item.alertType);
+  const idleClass = reducedMotion ? '' : getIdleClass(item.alertType);
 
   const handleDragEnd = (_: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
     if (Math.abs(info.offset.x) > 100) {
@@ -200,20 +273,20 @@ function SwipeableAlertCard({
 
   return (
     <motion.div
-      drag="x"
+      drag={reducedMotion ? false : 'x'}
       dragConstraints={{ left: 0, right: 0 }}
       dragElastic={0.4}
       onDragEnd={handleDragEnd}
-      style={{ x, opacity }}
+      style={reducedMotion ? undefined : { x, opacity }}
       className="touch-pan-y"
     >
-      <div className={`rounded-xl border border-l-4 ${theme.borderColor} ${theme.bgColor} p-3`}>
+      <div className={`rounded-xl border border-l-4 ${theme.borderColor} ${theme.bgColor} p-3 ${idleClass}`}>
         <div className="flex items-start gap-3">
-          {/* Animated icon */}
+          {/* Animated icon — gentle breathe, respects reduced motion */}
           <motion.div
             className="p-1.5 rounded-full bg-white/60"
-            animate={{ scale: [1, 1.08, 1] }}
-            transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
+            animate={reducedMotion ? undefined : { scale: [1, 1.08, 1] }}
+            transition={reducedMotion ? undefined : { duration: 3, repeat: Infinity, ease: 'easeInOut' }}
           >
             <Icon className={`h-5 w-5 shrink-0 ${theme.iconColor}`} />
           </motion.div>
