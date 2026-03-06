@@ -174,10 +174,10 @@ function detectAphidConditions(forecast: WeatherForecast[]): LocalSignal | null 
     type: 'aphid_conditions',
     category: 'pest_pressure',
     severity,
-    title: 'Aphid conditions elevated',
-    description: `Warm, calm weather (${temp.toFixed(0)}°C, ${wind.toFixed(0)} km/h wind) promotes aphid reproduction. ${favorableDays} favorable days ahead.`,
+    title: `Aphid watch - ${favorableDays} warm days ahead`,
+    description: `Calm, warm weather (${temp.toFixed(0)}°C, light wind) is ideal for aphid reproduction. Check plants over the next ${favorableDays} days.`,
     advice:
-      'Check new growth and undersides of leaves daily. Encourage natural predators like ladybirds. Blast off with water or use insecticidal soap if found.',
+      'Inspect new growth and leaf undersides today. Blast off with a jet of water. Encourage ladybirds, lacewings and hoverflies.',
     affectedPlants: ['roses', 'beans', 'peppers', 'tomatoes', 'lettuce', 'brassicas'],
     validFrom: today.date,
     validUntil: forecast[Math.min(favorableDays, forecast.length - 1)]?.date || today.date,
@@ -243,10 +243,10 @@ function detectSlugActivity(forecast: WeatherForecast[]): LocalSignal | null {
     type: 'slug_activity',
     category: 'pest_pressure',
     severity,
-    title: 'Slug activity expected',
-    description: `Recent rain (${rain.toFixed(0)}mm) with mild temperatures (${temp.toFixed(0)}°C) and ${humidity}% humidity creates ideal slug conditions.`,
+    title: 'Slug alert - go hunting tonight',
+    description: `Rain (${rain.toFixed(0)}mm), mild nights (${temp.toFixed(0)}°C) and ${humidity}% humidity mean slugs will be active after dark.`,
     advice:
-      'Go slug hunting after dark with a torch. Set beer traps. Encourage natural predators such as frogs, toads, hedgehogs and birds.',
+      'Head out with a torch after dark. Set beer traps near vulnerable plants. Encourage frogs, toads, hedgehogs and birds.',
     affectedPlants: ['lettuce', 'hostas', 'strawberries', 'cabbage', 'beans', 'seedlings'],
     validFrom: today.date,
     validUntil: today.date,
@@ -320,12 +320,12 @@ function detectLateBlightRisk(forecast: WeatherForecast[]): LocalSignal | null {
     type: 'late_blight_risk',
     category: 'disease_risk',
     severity,
-    title: `Late blight risk ${severity === 'critical' ? 'VERY HIGH' : severity === 'high' ? 'HIGH' : 'elevated'}`,
-    description: `Weather conditions favor late blight: ${rain72h.toFixed(0)}mm rain in 72h, ${humidity}% humidity, ${temp.toFixed(0)}°C. Risk window: ${daysAtRisk} days.`,
+    title: `Late blight risk - act within ${daysAtRisk > 1 ? `${daysAtRisk} days` : '24 hours'}`,
+    description: `${rain72h.toFixed(0)}mm rain in 72h plus ${humidity}% humidity at ${temp.toFixed(0)}°C. Classic blight conditions for the next ${daysAtRisk} days.`,
     advice:
       severity === 'critical' || severity === 'high'
-        ? 'Apply copper-based fungicide immediately. Improve air circulation. Remove lower leaves touching soil.'
-        : 'Inspect plants for brown lesions. Consider preventive copper spray. Avoid overhead watering.',
+        ? 'Spray copper-based fungicide today. Remove lower leaves touching soil. Improve airflow around plants.'
+        : 'Check leaves for brown lesions now. Consider a preventive copper spray. Water at soil level only.',
     affectedPlants: ['tomatoes', 'potatoes', 'peppers', 'aubergines'],
     validFrom: today.date,
     validUntil: forecast[Math.min(daysAtRisk, forecast.length - 1)]?.date || today.date,
@@ -417,12 +417,12 @@ function detectPowderyMildewRisk(forecast: WeatherForecast[]): LocalSignal | nul
     type: 'powdery_mildew_risk',
     category: 'disease_risk',
     severity,
-    title: `Powdery mildew risk ${severity === 'high' || severity === 'critical' ? 'HIGH' : 'elevated'}`,
-    description: `${dryDays} consecutive dry days with ${humidity}% humidity and ${temp.toFixed(0)}°C creates ideal conditions for powdery mildew.`,
+    title: `Powdery mildew risk - ${dryDays} dry days and counting`,
+    description: `${dryDays} dry days with humid nights (${humidity}%) at ${temp.toFixed(0)}°C. Perfect for powdery mildew to take hold.`,
     advice:
       severity === 'critical' || severity === 'high'
-        ? 'Apply sulfur-based fungicide or milk spray (1:10 ratio). Remove affected leaves.'
-        : 'Improve air circulation. Water at soil level, not on leaves. Monitor for white patches.',
+        ? 'Apply milk spray (1:10 ratio) or sulphur fungicide today. Remove any affected leaves immediately.'
+        : 'Check squash, courgettes and roses for white patches. Water at soil level. Thin crowded growth for airflow.',
     affectedPlants: ['courgettes', 'cucumbers', 'squash', 'melons', 'pumpkins', 'roses', 'peas'],
     validFrom: today.date,
     validUntil: forecast[Math.min(dryDays + 1, forecast.length - 1)]?.date || today.date,
@@ -488,10 +488,10 @@ function detectBotrytisRisk(forecast: WeatherForecast[]): LocalSignal | null {
     type: 'botrytis_risk',
     category: 'disease_risk',
     severity,
-    title: `Grey mold (Botrytis) risk ${severity === 'high' || severity === 'critical' ? 'HIGH' : 'elevated'}`,
-    description: `Humid conditions (${humidity}%) with ${temp.toFixed(0)}°C temperatures favor botrytis grey mold.`,
+    title: 'Grey mould risk - clear dead material today',
+    description: `${humidity}% humidity at ${temp.toFixed(0)}°C creates the damp conditions grey mould (botrytis) thrives in.`,
     advice:
-      'Remove dead or decaying material. Increase spacing for airflow. Avoid wetting leaves when watering.',
+      'Remove dead flowers, fallen leaves and decaying material now. Space plants for airflow. Water at soil level only.',
     affectedPlants: ['strawberries', 'grapes', 'tomatoes', 'lettuce', 'beans'],
     validFrom: today.date,
     validUntil: today.date,
@@ -544,13 +544,13 @@ function detectFrostDamage(forecast: WeatherForecast[]): LocalSignal | null {
     severity,
     title:
       severity === 'critical'
-        ? `HARD FROST WARNING - ${frostTemp}°C`
-        : `Frost alert - ${frostTemp}°C expected`,
-    description: `Temperature expected to drop to ${frostTemp}°C. ${frostDays.length} frost day(s) in the next 3 days.`,
+        ? `Hard frost tonight - protect plants now (${frostTemp}°C)`
+        : `Frost expected - cover tender plants tonight (${frostTemp}°C)`,
+    description: `Temperatures dropping to ${frostTemp}°C. ${frostDays.length} frosty night${frostDays.length > 1 ? 's' : ''} ahead.`,
     advice:
       severity === 'critical' || severity === 'high'
-        ? 'Move tender plants indoors or cover with fleece/cloches tonight. Bring in containers.'
-        : 'Consider covering tender plants or moving containers to a sheltered spot.',
+        ? 'Cover with fleece or cloches before dark. Move containers indoors. Bring tender plants inside tonight.'
+        : 'Drape fleece over vulnerable plants this evening. Move pots to a sheltered wall.',
     affectedPlants: ['tender plants', 'tomatoes', 'peppers', 'courgettes', 'beans', 'seedlings'],
     validFrom: frostDays[0].date,
     validUntil: frostDays[frostDays.length - 1].date,
@@ -595,13 +595,13 @@ function detectWindDamage(forecast: WeatherForecast[]): LocalSignal | null {
     severity,
     title:
       severity === 'critical'
-        ? `STRONG WIND WARNING - gusts to ${Math.round(windGust)} km/h`
-        : `Wind alert - ${Math.round(windSpeed)} km/h`,
-    description: `Strong winds (${Math.round(windSpeed)} km/h, gusts ${Math.round(windGust)} km/h) may damage tall plants and structures.`,
+        ? `Strong winds today - stake and secure now (gusts ${Math.round(windGust)} km/h)`
+        : `Windy spell ahead - check supports (${Math.round(windSpeed)} km/h)`,
+    description: `Winds of ${Math.round(windSpeed)} km/h with gusts to ${Math.round(windGust)} km/h. Tall plants and containers are at risk.`,
     advice:
       severity === 'critical' || severity === 'high'
-        ? 'Stake tall plants, secure containers, delay all outdoor work. Consider temporary windbreaks.'
-        : 'Check plant supports. Avoid spraying or sowing. Water early morning when calmer.',
+        ? 'Stake tall plants and secure containers before the wind picks up. Delay spraying and sowing.'
+        : 'Firm up plant supports this morning. Avoid spraying. Water early while it is calmer.',
     affectedPlants: ['tall plants', 'climbers', 'sunflowers', 'sweetcorn', 'container plants'],
     validFrom: today.date,
     validUntil: today.date,
@@ -643,13 +643,13 @@ function detectHeatStress(forecast: WeatherForecast[]): LocalSignal | null {
     severity,
     title:
       severity === 'critical'
-        ? `EXTREME HEAT - ${maxTemp}°C expected`
-        : `Heat wave alert - ${consecutiveHotDays} hot days ahead`,
-    description: `High temperatures of ${maxTemp}°C forecast. ${consecutiveHotDays} day(s) above 30°C will stress plants.`,
+        ? `Extreme heat - water twice daily from tomorrow (${maxTemp}°C)`
+        : `Hot spell coming - ${consecutiveHotDays} days above 30°C`,
+    description: `Temperatures reaching ${maxTemp}°C over the next ${consecutiveHotDays} days. Plants will need extra water and shade.`,
     advice:
       severity === 'critical' || severity === 'high'
-        ? 'Water deeply morning and evening. Consider temporary shade cloth for sensitive plants. Mulch to retain moisture.'
-        : 'Increase watering frequency. Water early morning to reduce evaporation. Provide shade for leafy greens.',
+        ? 'Water deeply at dawn and dusk. Rig shade cloth over leafy greens. Mulch exposed soil to lock in moisture.'
+        : 'Water early morning before the heat builds. Move pots into afternoon shade. Mulch around thirsty plants.',
     affectedPlants: ['lettuce', 'spinach', 'leafy greens', 'newly planted', 'container plants'],
     validFrom: hotDays[0].date,
     validUntil: hotDays[hotDays.length - 1].date,
@@ -698,10 +698,10 @@ function detectDroughtStress(forecast: WeatherForecast[]): LocalSignal | null {
     type: 'drought_stress',
     category: 'weather_damage',
     severity,
-    title: `Dry spell - ${dryDays} days without rain`,
-    description: `No significant rain expected for ${dryDays} days. Humidity at ${humidity}%.`,
+    title: `Dry spell - no rain for ${dryDays} days, water deeply now`,
+    description: `No meaningful rain ahead for ${dryDays} days with humidity at just ${humidity}%. Soil moisture is dropping.`,
     advice:
-      'Water deeply every 2-3 days rather than lightly every day. Mulch to retain soil moisture. Prioritize watering newly planted and container plants.',
+      'Give beds a deep soak every 2-3 days rather than a light daily sprinkle. Mulch bare soil. Prioritise containers and new plantings.',
     affectedPlants: ['all plants', 'especially shallow-rooted', 'containers', 'newly planted'],
     validFrom: today?.date || new Date().toISOString().split('T')[0],
     validUntil:

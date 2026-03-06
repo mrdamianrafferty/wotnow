@@ -31,6 +31,10 @@ import {
   BellOff,
   X,
   Gauge,
+  Snail,
+  CloudRain,
+  CloudFog,
+  Droplet,
 } from 'lucide-react';
 import type {
   LocalSignal,
@@ -92,12 +96,12 @@ export function getSignalIcon(signalType: string): React.ComponentType<{ classNa
   const icons: Record<string, React.ComponentType<{ className?: string }>> = {
     // Pest pressure
     aphid_conditions: Bug,
-    slug_activity: Bug,
+    slug_activity: Snail,
     caterpillar_conditions: Bug,
     // Disease risk
-    late_blight_risk: Leaf,
-    powdery_mildew_risk: Leaf,
-    botrytis_risk: Leaf,
+    late_blight_risk: CloudRain,
+    powdery_mildew_risk: CloudFog,
+    botrytis_risk: Droplet,
     rust_risk: Leaf,
     // Weather damage
     frost_damage: Snowflake,
@@ -106,6 +110,173 @@ export function getSignalIcon(signalType: string): React.ComponentType<{ classNa
     drought_stress: Sun,
   };
   return icons[signalType] || AlertTriangle;
+}
+
+/**
+ * Per-type alert theme: distinct border, icon color, and background
+ * for instant visual recognition of each alert category.
+ */
+export interface AlertTheme {
+  borderColor: string;
+  bgColor: string;
+  iconColor: string;
+  accentColor: string;
+}
+
+export const ALERT_THEMES: Record<string, AlertTheme> = {
+  // Pest pressure
+  slug_activity: {
+    borderColor: 'border-l-emerald-500',
+    bgColor: 'bg-emerald-50',
+    iconColor: 'text-emerald-600',
+    accentColor: 'text-emerald-900',
+  },
+  aphid_conditions: {
+    borderColor: 'border-l-lime-500',
+    bgColor: 'bg-lime-50',
+    iconColor: 'text-lime-600',
+    accentColor: 'text-lime-900',
+  },
+  caterpillar_conditions: {
+    borderColor: 'border-l-yellow-500',
+    bgColor: 'bg-yellow-50',
+    iconColor: 'text-yellow-600',
+    accentColor: 'text-yellow-900',
+  },
+  // Disease risk
+  late_blight_risk: {
+    borderColor: 'border-l-rose-500',
+    bgColor: 'bg-rose-50',
+    iconColor: 'text-rose-600',
+    accentColor: 'text-rose-900',
+  },
+  powdery_mildew_risk: {
+    borderColor: 'border-l-violet-500',
+    bgColor: 'bg-violet-50',
+    iconColor: 'text-violet-600',
+    accentColor: 'text-violet-900',
+  },
+  botrytis_risk: {
+    borderColor: 'border-l-slate-500',
+    bgColor: 'bg-slate-50',
+    iconColor: 'text-slate-600',
+    accentColor: 'text-slate-900',
+  },
+  rust_risk: {
+    borderColor: 'border-l-orange-500',
+    bgColor: 'bg-orange-50',
+    iconColor: 'text-orange-600',
+    accentColor: 'text-orange-900',
+  },
+  // Weather damage
+  frost_damage: {
+    borderColor: 'border-l-cyan-500',
+    bgColor: 'bg-cyan-50',
+    iconColor: 'text-cyan-600',
+    accentColor: 'text-cyan-900',
+  },
+  wind_damage: {
+    borderColor: 'border-l-teal-500',
+    bgColor: 'bg-teal-50',
+    iconColor: 'text-teal-600',
+    accentColor: 'text-teal-900',
+  },
+  heat_stress: {
+    borderColor: 'border-l-red-500',
+    bgColor: 'bg-red-50',
+    iconColor: 'text-red-500',
+    accentColor: 'text-red-900',
+  },
+  drought_stress: {
+    borderColor: 'border-l-amber-500',
+    bgColor: 'bg-amber-50',
+    iconColor: 'text-amber-600',
+    accentColor: 'text-amber-900',
+  },
+  // Weather alert types (from weatherTaskEngine)
+  frost: {
+    borderColor: 'border-l-cyan-500',
+    bgColor: 'bg-cyan-50',
+    iconColor: 'text-cyan-600',
+    accentColor: 'text-cyan-900',
+  },
+  heat: {
+    borderColor: 'border-l-red-500',
+    bgColor: 'bg-red-50',
+    iconColor: 'text-red-500',
+    accentColor: 'text-red-900',
+  },
+  wind: {
+    borderColor: 'border-l-teal-500',
+    bgColor: 'bg-teal-50',
+    iconColor: 'text-teal-600',
+    accentColor: 'text-teal-900',
+  },
+  storm: {
+    borderColor: 'border-l-indigo-500',
+    bgColor: 'bg-indigo-50',
+    iconColor: 'text-indigo-600',
+    accentColor: 'text-indigo-900',
+  },
+  rain: {
+    borderColor: 'border-l-blue-500',
+    bgColor: 'bg-blue-50',
+    iconColor: 'text-blue-600',
+    accentColor: 'text-blue-900',
+  },
+  drought: {
+    borderColor: 'border-l-amber-500',
+    bgColor: 'bg-amber-50',
+    iconColor: 'text-amber-600',
+    accentColor: 'text-amber-900',
+  },
+  wind_desiccation: {
+    borderColor: 'border-l-teal-500',
+    bgColor: 'bg-teal-50',
+    iconColor: 'text-teal-600',
+    accentColor: 'text-teal-900',
+  },
+  slugs: {
+    borderColor: 'border-l-emerald-500',
+    bgColor: 'bg-emerald-50',
+    iconColor: 'text-emerald-600',
+    accentColor: 'text-emerald-900',
+  },
+  aphids: {
+    borderColor: 'border-l-lime-500',
+    bgColor: 'bg-lime-50',
+    iconColor: 'text-lime-600',
+    accentColor: 'text-lime-900',
+  },
+  late_blight: {
+    borderColor: 'border-l-rose-500',
+    bgColor: 'bg-rose-50',
+    iconColor: 'text-rose-600',
+    accentColor: 'text-rose-900',
+  },
+  powdery_mildew: {
+    borderColor: 'border-l-violet-500',
+    bgColor: 'bg-violet-50',
+    iconColor: 'text-violet-600',
+    accentColor: 'text-violet-900',
+  },
+  botrytis: {
+    borderColor: 'border-l-slate-500',
+    bgColor: 'bg-slate-50',
+    iconColor: 'text-slate-600',
+    accentColor: 'text-slate-900',
+  },
+};
+
+const DEFAULT_THEME: AlertTheme = {
+  borderColor: 'border-l-gray-400',
+  bgColor: 'bg-gray-50',
+  iconColor: 'text-gray-600',
+  accentColor: 'text-gray-900',
+};
+
+export function getAlertTheme(type: string): AlertTheme {
+  return ALERT_THEMES[type] || DEFAULT_THEME;
 }
 
 function getFactorIcon(factorName: string): React.ComponentType<{ className?: string }> {
@@ -132,18 +303,19 @@ interface SignalItemProps {
 
 function SignalItem({ signal, expanded, onExpand, onDismiss, onMute }: SignalItemProps) {
   const colors = SEVERITY_COLORS[signal.severity];
+  const theme = getAlertTheme(signal.type);
   const Icon = getSignalIcon(signal.type);
   const [showActions, setShowActions] = useState(false);
 
   return (
-    <div className={`rounded-lg border ${colors.border} ${colors.bg} overflow-hidden`}>
+    <div className={`rounded-lg border border-l-4 ${theme.borderColor} ${theme.bgColor} overflow-hidden`}>
       {/* Header - always visible */}
       <button
         onClick={onExpand}
         className="w-full p-3 text-left flex items-start gap-3"
       >
         <div className={`p-2 rounded-full bg-white/70`}>
-          <Icon className={`h-5 w-5 ${colors.text}`} />
+          <Icon className={`h-5 w-5 ${theme.iconColor}`} />
         </div>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
@@ -557,15 +729,17 @@ export function LocalSignalsBanner({ signals }: { signals: LocalSignal[] }) {
   if (urgentSignals.length === 0) return null;
 
   const signal = urgentSignals[0];
-  const colors = SEVERITY_COLORS[signal.severity];
+  const theme = getAlertTheme(signal.type);
   const Icon = getSignalIcon(signal.type);
 
   return (
-    <div className={`rounded-lg border p-3 ${colors.bg} ${colors.border} flex items-center gap-3`}>
-      <Icon className={`h-5 w-5 ${colors.text} flex-shrink-0`} />
+    <div className={`rounded-lg border border-l-4 ${theme.borderColor} ${theme.bgColor} p-3 flex items-center gap-3`}>
+      <div className="p-1.5 rounded-full bg-white/60">
+        <Icon className={`h-5 w-5 ${theme.iconColor} flex-shrink-0`} />
+      </div>
       <div className="flex-1 min-w-0">
-        <p className={`font-medium text-sm ${colors.text} truncate`}>{signal.title}</p>
-        <p className={`text-xs ${colors.text} opacity-80 truncate`}>{signal.advice}</p>
+        <p className={`font-medium text-sm ${theme.accentColor} truncate`}>{signal.title}</p>
+        <p className={`text-xs ${theme.accentColor} opacity-75 truncate`}>{signal.advice}</p>
       </div>
       {urgentSignals.length > 1 && (
         <Badge variant="destructive" className="flex-shrink-0">

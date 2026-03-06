@@ -111,6 +111,12 @@ jest.mock('../../../components/grow/LocalSignalsCard', () => ({
     critical: { bg: 'bg-red-50', border: 'border-red-200', text: 'text-red-900' },
   },
   getSignalIcon: () => ({ className }: { className?: string }) => <span className={className}>icon</span>,
+  getAlertTheme: () => ({
+    borderColor: 'border-l-gray-400',
+    bgColor: 'bg-gray-50',
+    iconColor: 'text-gray-600',
+    accentColor: 'text-gray-900',
+  }),
 }));
 
 describe('UrgencyBanner', () => {

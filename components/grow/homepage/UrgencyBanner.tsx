@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, ChevronDown, Snowflake, Thermometer, Wind, CloudLightning, CloudRain, Sun, AlertTriangle } from 'lucide-react';
-import { SEVERITY_COLORS, getSignalIcon } from '../LocalSignalsCard';
+import { X, ChevronDown, Snowflake, Thermometer, Wind, CloudLightning, CloudRain, Sun, AlertTriangle, Snail, Bug } from 'lucide-react';
+import { SEVERITY_COLORS, getSignalIcon, getAlertTheme } from '../LocalSignalsCard';
+import type { AlertTheme } from '../LocalSignalsCard';
 import type { LocalSignal } from '../../../lib/grow/localSignals';
 import type { WeatherAlert } from '../../../hooks/useWeatherTasks';
 
@@ -13,6 +14,8 @@ const WEATHER_ALERT_ICONS: Record<string, React.ComponentType<{ className?: stri
   rain: CloudRain,
   drought: Sun,
   wind_desiccation: Wind,
+  slugs: Snail,
+  aphids: Bug,
 };
 
 interface UrgencyBannerProps {
@@ -29,6 +32,7 @@ type UrgentItem = {
   icon: React.ComponentType<{ className?: string }>;
   source: 'signal' | 'weather';
   expiresAt?: string;
+  alertType: string;
 };
 
 export function UrgencyBanner({ signals, weatherAlerts, onDismissSignal }: UrgencyBannerProps) {
@@ -55,6 +59,7 @@ export function UrgencyBanner({ signals, weatherAlerts, onDismissSignal }: Urgen
       icon: getSignalIcon(s.type),
       source: 'signal' as const,
       expiresAt: s.validUntil,
+      alertType: s.type,
     })),
     ...urgentAlerts.map(a => ({
       id: `weather-${a.type}-${a.forecastDate}`,
@@ -63,6 +68,7 @@ export function UrgencyBanner({ signals, weatherAlerts, onDismissSignal }: Urgen
       severity: 'critical' as const,
       icon: WEATHER_ALERT_ICONS[a.type] || AlertTriangle,
       source: 'weather' as const,
+      alertType: a.type,
     })),
   ];
 
@@ -70,7 +76,7 @@ export function UrgencyBanner({ signals, weatherAlerts, onDismissSignal }: Urgen
 
   const primary = items[0];
   const remaining = items.slice(1);
-  const colors = SEVERITY_COLORS[primary.severity];
+  const theme = getAlertTheme(primary.alertType);
   const PrimaryIcon = primary.icon;
 
   const handleDismiss = (item: UrgentItem) => {
@@ -89,36 +95,26 @@ export function UrgencyBanner({ signals, weatherAlerts, onDismissSignal }: Urgen
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.25, ease: 'easeOut' }}
     >
-      <div className={`rounded-xl border p-3 ${colors.bg} ${colors.border}`}>
-        <div className="flex items-start gap-3">
-          <PrimaryIcon className={`mt-0.5 h-5 w-5 shrink-0 ${colors.text}`} />
-          <div className="flex-1 min-w-0">
-            <p className={`text-sm font-semibold ${colors.text}`}>{primary.title}</p>
-            <p className={`text-xs mt-0.5 ${colors.text} opacity-80`}>{primary.description}</p>
-          </div>
-          <button
-            onClick={() => handleDismiss(primary)}
-            className={`shrink-0 p-1 rounded-md hover:bg-black/5 ${colors.text}`}
-            aria-label="Dismiss alert"
-          >
-            <X size={14} />
-          </button>
-        </div>
+      <AlertCard
+        item={primary}
+        theme={theme}
+        Icon={PrimaryIcon}
+        onDismiss={() => handleDismiss(primary)}
+      />
 
-        {remaining.length > 0 && (
-          <button
-            onClick={() => setExpanded(!expanded)}
-            className={`mt-2 flex items-center gap-1 text-xs font-medium ${colors.text} opacity-70 hover:opacity-100`}
-          >
-            <ChevronDown size={12} className={expanded ? 'rotate-180 transition-transform' : 'transition-transform'} />
-            +{remaining.length} more {remaining.length === 1 ? 'alert' : 'alerts'}
-          </button>
-        )}
-      </div>
+      {remaining.length > 0 && (
+        <button
+          onClick={() => setExpanded(!expanded)}
+          className={`flex items-center gap-1 text-xs font-medium ${theme.accentColor} opacity-70 hover:opacity-100 ml-1`}
+        >
+          <ChevronDown size={12} className={expanded ? 'rotate-180 transition-transform' : 'transition-transform'} />
+          +{remaining.length} more {remaining.length === 1 ? 'alert' : 'alerts'}
+        </button>
+      )}
 
       <AnimatePresence>
         {expanded && remaining.map((item, i) => {
-          const itemColors = SEVERITY_COLORS[item.severity];
+          const itemTheme = getAlertTheme(item.alertType);
           const ItemIcon = item.icon;
           return (
             <motion.div
@@ -127,26 +123,50 @@ export function UrgencyBanner({ signals, weatherAlerts, onDismissSignal }: Urgen
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -8 }}
               transition={{ duration: 0.2, delay: i * 0.05 }}
-              className={`rounded-xl border p-3 ${itemColors.bg} ${itemColors.border}`}
             >
-              <div className="flex items-start gap-3">
-                <ItemIcon className={`mt-0.5 h-5 w-5 shrink-0 ${itemColors.text}`} />
-                <div className="flex-1 min-w-0">
-                  <p className={`text-sm font-semibold ${itemColors.text}`}>{item.title}</p>
-                  <p className={`text-xs mt-0.5 ${itemColors.text} opacity-80`}>{item.description}</p>
-                </div>
-                <button
-                  onClick={() => handleDismiss(item)}
-                  className={`shrink-0 p-1 rounded-md hover:bg-black/5 ${itemColors.text}`}
-                  aria-label="Dismiss alert"
-                >
-                  <X size={14} />
-                </button>
-              </div>
+              <AlertCard
+                item={item}
+                theme={itemTheme}
+                Icon={ItemIcon}
+                onDismiss={() => handleDismiss(item)}
+              />
             </motion.div>
           );
         })}
       </AnimatePresence>
     </motion.div>
+  );
+}
+
+function AlertCard({
+  item,
+  theme,
+  Icon,
+  onDismiss,
+}: {
+  item: UrgentItem;
+  theme: AlertTheme;
+  Icon: React.ComponentType<{ className?: string }>;
+  onDismiss: () => void;
+}) {
+  return (
+    <div className={`rounded-xl border border-l-4 ${theme.borderColor} ${theme.bgColor} p-3`}>
+      <div className="flex items-start gap-3">
+        <div className="p-1.5 rounded-full bg-white/60">
+          <Icon className={`h-5 w-5 shrink-0 ${theme.iconColor}`} />
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className={`text-sm font-semibold ${theme.accentColor}`}>{item.title}</p>
+          <p className={`text-xs mt-0.5 ${theme.accentColor} opacity-75`}>{item.description}</p>
+        </div>
+        <button
+          onClick={onDismiss}
+          className={`shrink-0 p-1 rounded-md hover:bg-black/5 ${theme.accentColor} opacity-50 hover:opacity-100`}
+          aria-label="Dismiss alert"
+        >
+          <X size={14} />
+        </button>
+      </div>
+    </div>
   );
 }
