@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Badge } from '../ui/badge';
 import { ImageAttribution, PerenualAttribution, type PerenualImageLicense } from './PerenualAttribution';
 import { AlertTriangle, Bug, Leaf, Droplets, Thermometer, Skull, Worm, ExternalLink, X, ZoomIn, ChevronDown, ChevronUp, Shield, Sparkles, Target, Calendar } from 'lucide-react';
+import { getAlertTheme } from './LocalSignalsCard';
 
 type ThreatRiskBand = 'none' | 'low' | 'moderate' | 'high' | 'severe';
 
@@ -93,6 +94,45 @@ const CARD_BORDER_COLORS: Record<ThreatRiskBand, string> = {
   severe: 'border-red-300',
 };
 
+/** Map threat slugs to alert theme types for consistent colour coding */
+function getThreatAlertType(slug: string, threatType: string): string | null {
+  const slugMap: Record<string, string> = {
+    'late-blight': 'late_blight_risk',
+    'phytophthora': 'late_blight_risk',
+    'powdery-mildew': 'powdery_mildew_risk',
+    'botrytis': 'botrytis_risk',
+    'grey-mould': 'botrytis_risk',
+    'gray-mould': 'botrytis_risk',
+    'grey-mold': 'botrytis_risk',
+    'gray-mold': 'botrytis_risk',
+    'rust': 'rust_risk',
+    'aphids': 'aphid_conditions',
+    'greenfly': 'aphid_conditions',
+    'blackfly': 'aphid_conditions',
+    'slugs': 'slug_activity',
+    'snails': 'slug_activity',
+    'slugs-and-snails': 'slug_activity',
+    'caterpillars': 'caterpillar_conditions',
+    'cabbage-white': 'caterpillar_conditions',
+    'frost-damage': 'frost_damage',
+    'wind-damage': 'wind_damage',
+    'heat-stress': 'heat_stress',
+    'drought-stress': 'drought_stress',
+    'sunscald': 'heat_stress',
+  };
+
+  if (slugMap[slug]) return slugMap[slug];
+
+  // Fall back to broad threat type mapping
+  const typeMap: Record<string, string> = {
+    pest: 'aphid_conditions',
+    fungal: 'powdery_mildew_risk',
+    oomycete: 'late_blight_risk',
+    abiotic: 'drought_stress',
+  };
+  return typeMap[threatType] || null;
+}
+
 export function ThreatCard({ threat, compact = false }: ThreatCardProps) {
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [expanded, setExpanded] = useState(false);
@@ -121,10 +161,14 @@ export function ThreatCard({ threat, compact = false }: ThreatCardProps) {
   const hasEscalation = cardJson?.when_to_escalate_bullets && cardJson.when_to_escalate_bullets.length > 0;
   const hasMatchedRules = threat.matchedRules && threat.matchedRules.length > 0;
   const hasExpandableContent = hasPrevention || hasTreatment || hasPerenualSolution || hasConfirmation || hasEscalation;
-  
+
+  // Match alert colour coding from homepage
+  const alertType = getThreatAlertType(threat.slug, threat.threatType);
+  const alertTheme = alertType ? getAlertTheme(alertType) : null;
+
   return (
     <>
-    <Card className={`border-2 ${CARD_BORDER_COLORS[threat.band]} overflow-hidden`}>
+    <Card className={`border-2 ${alertTheme ? `border-l-4 ${alertTheme.borderColor}` : ''} ${CARD_BORDER_COLORS[threat.band]} overflow-hidden`}>
       {/* Image section with attribution */}
       {wikimediaImage ? (
         // Wikimedia Commons image with proper attribution
@@ -186,7 +230,7 @@ export function ThreatCard({ threat, compact = false }: ThreatCardProps) {
         <div className="flex justify-between items-start gap-2">
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-2">
-              <span className="text-muted-foreground">
+              <span className={alertTheme ? alertTheme.iconColor : 'text-muted-foreground'}>
                 {THREAT_TYPE_ICONS[threat.threatType] || <AlertTriangle className="h-4 w-4" />}
               </span>
               <CardTitle className="text-lg truncate">{threat.commonName}</CardTitle>
@@ -396,7 +440,7 @@ function formatThreatType(type: string): string {
   const typeLabels: Record<string, string> = {
     pest: 'Pest',
     fungal: 'Fungal Disease',
-    oomycete: 'Water Mold',
+    oomycete: 'Water Mould',
     bacterial: 'Bacterial Disease',
     viral: 'Viral Disease',
     nematode: 'Nematode',

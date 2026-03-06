@@ -62,7 +62,7 @@ const SYMPTOM_OPTIONS = [
   { value: 'pest_damage', label: 'Pest damage', emoji: '🐛' },
   { value: 'holes_in_leaves', label: 'Holes in leaves', emoji: '🕳️' },
   { value: 'spots', label: 'Spots/discoloration', emoji: '⭕' },
-  { value: 'mold', label: 'Mold/fungus', emoji: '🦠' },
+  { value: 'mold', label: 'Mould/fungus', emoji: '🦠' },
   { value: 'stunted_growth', label: 'Stunted growth', emoji: '📉' },
   { value: 'leggy', label: 'Leggy/stretched', emoji: '📏' },
   { value: 'leaf_drop', label: 'Leaf drop', emoji: '🍂' },

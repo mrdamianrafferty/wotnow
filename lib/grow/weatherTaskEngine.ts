@@ -787,7 +787,7 @@ export function detectPowderyMildew(
 }
 
 /**
- * BOTRYTIS (Grey Mold) RISK
+ * BOTRYTIS (Grey Mould) RISK
  * Conditions: humidity > 85% AND temp 15-25°C AND wet foliage
  */
 export function detectBotrytis(
@@ -817,7 +817,7 @@ export function detectBotrytis(
     alerts.push({
       type: 'botrytis',
       severity,
-      title: `${severity === 'critical' ? 'HIGH' : 'ELEVATED'} Grey Mold (Botrytis) Risk`,
+      title: `${severity === 'critical' ? 'HIGH' : 'ELEVATED'} Grey Mould (Botrytis) Risk`,
       message: `Humid conditions (${humidity}%) with ${temp.toFixed(0)}°C temperatures favor botrytis. ` +
         `Watch your strawberries, tomatoes, and lettuce.`,
       forecastDate: today.date,

@@ -25,26 +25,30 @@ export async function middleware(req: NextRequest) {
   const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
   if (supabaseUrl && supabaseAnonKey) {
-    const supabase = createServerClient(
-      supabaseUrl,
-      supabaseAnonKey,
-      {
-        cookies: {
-          getAll() {
-            return req.cookies.getAll();
+    try {
+      const supabase = createServerClient(
+        supabaseUrl,
+        supabaseAnonKey,
+        {
+          cookies: {
+            getAll() {
+              return req.cookies.getAll();
+            },
+            setAll(cookiesToSet) {
+              cookiesToSet.forEach(({ name, value, options }) => {
+                response.cookies.set(name, value, options);
+              });
+            },
           },
-          setAll(cookiesToSet) {
-            cookiesToSet.forEach(({ name, value, options }) => {
-              response.cookies.set(name, value, options);
-            });
-          },
-        },
-      }
-    );
+        }
+      );
 
-    // Refresh session if expired - but skip during OAuth callback to avoid interfering with PKCE flow
-    if (!isAuthCallback) {
-      await supabase.auth.getUser();
+      // Refresh session if expired - but skip during OAuth callback to avoid interfering with PKCE flow
+      if (!isAuthCallback) {
+        await supabase.auth.getUser();
+      }
+    } catch {
+      // Don't let auth errors prevent domain redirects from running
     }
   }
 

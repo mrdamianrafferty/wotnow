@@ -432,7 +432,7 @@ function detectPowderyMildewRisk(forecast: WeatherForecast[]): LocalSignal | nul
 }
 
 /**
- * Botrytis (grey mold) risk signal
+ * Botrytis (grey mould) risk signal
  * Favorable: high humidity (>80%), moderate temps (12-25°C), wet foliage
  */
 function detectBotrytisRisk(forecast: WeatherForecast[]): LocalSignal | null {

@@ -12,6 +12,8 @@ jest.mock('framer-motion', () => ({
     span: React.forwardRef(({ children, ...props }: React.PropsWithChildren<Record<string, unknown>>, ref: React.Ref<HTMLSpanElement>) => <span ref={ref} {...filterProps(props)}>{children}</span>),
   },
   AnimatePresence: ({ children }: React.PropsWithChildren) => <>{children}</>,
+  useMotionValue: (initial: number) => ({ get: () => initial, set: () => {} }),
+  useTransform: () => ({ get: () => 1, set: () => {} }),
 }));
 
 // Strip framer-motion-specific props to avoid React warnings
