@@ -437,10 +437,10 @@ UPDATE plant_species SET category = 'herb' WHERE slug IN ('dill', 'parsley', 'co
 -- SECTION 10: DAYS TO MATURITY — Wrong basis
 -- ============================================================================
 
-UPDATE plant_species SET maturity_basis = 'from_planting'
+UPDATE plant_species SET maturity_basis = 'from_transplant'
 WHERE slug = 'garlic' AND maturity_basis = 'from_transplant';
 
-UPDATE plant_species SET maturity_basis = 'from_planting'
+UPDATE plant_species SET maturity_basis = 'from_transplant'
 WHERE slug = 'potato' AND maturity_basis = 'from_transplant';
 
 -- ============================================================================

@@ -662,7 +662,7 @@ UPDATE public.plant_species SET days_to_maturity_min = 80, days_to_maturity_max 
 WHERE slug = 'swede-rutabaga' AND (days_to_maturity_min IS NULL OR days_to_maturity_min = 0);
 
 -- Onion (from sets)
-UPDATE public.plant_species SET days_to_maturity_min = 90, days_to_maturity_max = 140, maturity_basis = 'from_planting'
+UPDATE public.plant_species SET days_to_maturity_min = 90, days_to_maturity_max = 140, maturity_basis = 'from_transplant'
 WHERE slug = 'onion-bulb' AND (days_to_maturity_min IS NULL OR days_to_maturity_min = 0);
 
 -- Spring onion
@@ -670,7 +670,7 @@ UPDATE public.plant_species SET days_to_maturity_min = 60, days_to_maturity_max 
 WHERE slug = 'spring-onion' AND (days_to_maturity_min IS NULL OR days_to_maturity_min = 0);
 
 -- Shallot
-UPDATE public.plant_species SET days_to_maturity_min = 90, days_to_maturity_max = 120, maturity_basis = 'from_planting'
+UPDATE public.plant_species SET days_to_maturity_min = 90, days_to_maturity_max = 120, maturity_basis = 'from_transplant'
 WHERE slug = 'shallot' AND (days_to_maturity_min IS NULL OR days_to_maturity_min = 0);
 
 -- Leek
@@ -754,11 +754,11 @@ UPDATE public.plant_species SET days_to_maturity_min = 55, days_to_maturity_max 
 WHERE slug = 'okra' AND (days_to_maturity_min IS NULL OR days_to_maturity_min = 0);
 
 -- Sweet potato
-UPDATE public.plant_species SET days_to_maturity_min = 90, days_to_maturity_max = 130, maturity_basis = 'from_planting'
+UPDATE public.plant_species SET days_to_maturity_min = 90, days_to_maturity_max = 130, maturity_basis = 'from_transplant'
 WHERE slug = 'sweet-potato' AND (days_to_maturity_min IS NULL OR days_to_maturity_min = 0);
 
 -- Asparagus
-UPDATE public.plant_species SET days_to_maturity_min = 730, days_to_maturity_max = 1095, maturity_basis = 'from_planting'
+UPDATE public.plant_species SET days_to_maturity_min = 730, days_to_maturity_max = 1095, maturity_basis = 'from_transplant'
 WHERE slug = 'asparagus' AND (days_to_maturity_min IS NULL OR days_to_maturity_min = 0);
 
 -- Globe artichoke
@@ -766,11 +766,11 @@ UPDATE public.plant_species SET days_to_maturity_min = 365, days_to_maturity_max
 WHERE slug = 'artichoke-globe' AND (days_to_maturity_min IS NULL OR days_to_maturity_min = 0);
 
 -- Rhubarb
-UPDATE public.plant_species SET days_to_maturity_min = 365, days_to_maturity_max = 730, maturity_basis = 'from_planting'
+UPDATE public.plant_species SET days_to_maturity_min = 365, days_to_maturity_max = 730, maturity_basis = 'from_transplant'
 WHERE slug = 'rhubarb' AND (days_to_maturity_min IS NULL OR days_to_maturity_min = 0);
 
 -- Garlic (already corrected in 005, but fill if still empty)
-UPDATE public.plant_species SET days_to_maturity_min = 180, days_to_maturity_max = 270, maturity_basis = 'from_planting'
+UPDATE public.plant_species SET days_to_maturity_min = 180, days_to_maturity_max = 270, maturity_basis = 'from_transplant'
 WHERE slug = 'garlic' AND (days_to_maturity_min IS NULL OR days_to_maturity_min = 0);
 
 -- Daikon radish
@@ -1471,36 +1471,36 @@ AND (average_height_cm IS NULL OR average_height_cm = 0);
 -- ============================================================================
 
 -- Fruit: days to first crop (from planting bare-root/pot)
-UPDATE public.plant_species SET days_to_maturity_min = 730, days_to_maturity_max = 1460, maturity_basis = 'from_planting'
+UPDATE public.plant_species SET days_to_maturity_min = 730, days_to_maturity_max = 1460, maturity_basis = 'from_transplant'
 WHERE slug IN ('fruit-apple','fruit-pear','fruit-plum','fruit-damson','fruit-gage','fruit-mirabelle',
                'fruit-cherry-sour','fruit-cherry-sweet')
 AND (days_to_maturity_min IS NULL OR days_to_maturity_min = 0);
 
-UPDATE public.plant_species SET days_to_maturity_min = 1095, days_to_maturity_max = 1825, maturity_basis = 'from_planting'
+UPDATE public.plant_species SET days_to_maturity_min = 1095, days_to_maturity_max = 1825, maturity_basis = 'from_transplant'
 WHERE slug IN ('fruit-walnut','fruit-black-walnut','fruit-sweet-chestnut')
 AND (days_to_maturity_min IS NULL OR days_to_maturity_min = 0);
 
-UPDATE public.plant_species SET days_to_maturity_min = 365, days_to_maturity_max = 730, maturity_basis = 'from_planting'
+UPDATE public.plant_species SET days_to_maturity_min = 365, days_to_maturity_max = 730, maturity_basis = 'from_transplant'
 WHERE slug IN ('fruit-currant','fruit-gooseberry','fruit-blackcurrant','fruit-jostaberry-treeform')
 AND (days_to_maturity_min IS NULL OR days_to_maturity_min = 0);
 
-UPDATE public.plant_species SET days_to_maturity_min = 730, days_to_maturity_max = 1095, maturity_basis = 'from_planting'
+UPDATE public.plant_species SET days_to_maturity_min = 730, days_to_maturity_max = 1095, maturity_basis = 'from_transplant'
 WHERE slug IN ('fruit-peach','fruit-nectarine','fruit-apricot','fruit-fig','fruit-quince','fruit-medlar')
 AND (days_to_maturity_min IS NULL OR days_to_maturity_min = 0);
 
-UPDATE public.plant_species SET days_to_maturity_min = 365, days_to_maturity_max = 730, maturity_basis = 'from_planting'
+UPDATE public.plant_species SET days_to_maturity_min = 365, days_to_maturity_max = 730, maturity_basis = 'from_transplant'
 WHERE slug = 'wild-strawberry'
 AND (days_to_maturity_min IS NULL OR days_to_maturity_min = 0);
 
-UPDATE public.plant_species SET days_to_maturity_min = 1095, days_to_maturity_max = 1825, maturity_basis = 'from_planting'
+UPDATE public.plant_species SET days_to_maturity_min = 1095, days_to_maturity_max = 1825, maturity_basis = 'from_transplant'
 WHERE slug IN ('fruit-hardy-kiwi','grape-vine','kiwi-hardy','kiwi-common')
 AND (days_to_maturity_min IS NULL OR days_to_maturity_min = 0);
 
-UPDATE public.plant_species SET days_to_maturity_min = 365, days_to_maturity_max = 1095, maturity_basis = 'from_planting'
+UPDATE public.plant_species SET days_to_maturity_min = 365, days_to_maturity_max = 1095, maturity_basis = 'from_transplant'
 WHERE slug IN ('fruit-elder','fruit-elder-black-lace')
 AND (days_to_maturity_min IS NULL OR days_to_maturity_min = 0);
 
-UPDATE public.plant_species SET days_to_maturity_min = 730, days_to_maturity_max = 1460, maturity_basis = 'from_planting'
+UPDATE public.plant_species SET days_to_maturity_min = 730, days_to_maturity_max = 1460, maturity_basis = 'from_transplant'
 WHERE slug IN ('fruit-hazelnut','fruit-mulberry-black','fruit-mulberry-white')
 AND (days_to_maturity_min IS NULL OR days_to_maturity_min = 0);
 

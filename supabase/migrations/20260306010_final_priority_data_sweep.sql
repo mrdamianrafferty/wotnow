@@ -21,140 +21,140 @@ BEGIN;
 -- Perennial soft fruit bush; first crop year 2, full crop year 3.
 UPDATE public.plant_species
 SET days_to_maturity_min = 365, days_to_maturity_max = 730,
-    maturity_basis = 'from_planting'
+    maturity_basis = 'from_transplant'
 WHERE slug = 'fruit-currant'
   AND (days_to_maturity_min IS NULL OR days_to_maturity_min = 0);
 
 -- Gooseberry (fruit- prefixed slug)
 UPDATE public.plant_species
 SET days_to_maturity_min = 365, days_to_maturity_max = 730,
-    maturity_basis = 'from_planting'
+    maturity_basis = 'from_transplant'
 WHERE slug = 'fruit-gooseberry'
   AND (days_to_maturity_min IS NULL OR days_to_maturity_min = 0);
 
 -- Blackcurrant (fruit- prefixed slug)
 UPDATE public.plant_species
 SET days_to_maturity_min = 365, days_to_maturity_max = 540,
-    maturity_basis = 'from_planting'
+    maturity_basis = 'from_transplant'
 WHERE slug = 'fruit-blackcurrant'
   AND (days_to_maturity_min IS NULL OR days_to_maturity_min = 0);
 
 -- Elder — fruit-tree; fruits from year 3-5 on established trees
 UPDATE public.plant_species
 SET days_to_maturity_min = 730, days_to_maturity_max = 1460,
-    maturity_basis = 'from_planting'
+    maturity_basis = 'from_transplant'
 WHERE slug = 'fruit-elder'
   AND (days_to_maturity_min IS NULL OR days_to_maturity_min = 0);
 
 -- Wild strawberry — Fragaria vesca; crops from year 1
 UPDATE public.plant_species
 SET days_to_maturity_min = 90, days_to_maturity_max = 180,
-    maturity_basis = 'from_planting'
+    maturity_basis = 'from_transplant'
 WHERE slug = 'wild-strawberry'
   AND (days_to_maturity_min IS NULL OR days_to_maturity_min = 0);
 
 -- Medlar — fruit tree; 3-5 years to first crop
 UPDATE public.plant_species
 SET days_to_maturity_min = 1095, days_to_maturity_max = 1825,
-    maturity_basis = 'from_planting'
+    maturity_basis = 'from_transplant'
 WHERE slug = 'medlar'
   AND (days_to_maturity_min IS NULL OR days_to_maturity_min = 0);
 
 -- Quince — fruit tree; 3-5 years to first crop
 UPDATE public.plant_species
 SET days_to_maturity_min = 1095, days_to_maturity_max = 1825,
-    maturity_basis = 'from_planting'
+    maturity_basis = 'from_transplant'
 WHERE slug = 'quince'
   AND (days_to_maturity_min IS NULL OR days_to_maturity_min = 0);
 
 -- Mulberry — fruit tree; 3-5 years
 UPDATE public.plant_species
 SET days_to_maturity_min = 1095, days_to_maturity_max = 1825,
-    maturity_basis = 'from_planting'
+    maturity_basis = 'from_transplant'
 WHERE slug = 'mulberry'
   AND (days_to_maturity_min IS NULL OR days_to_maturity_min = 0);
 
 -- Damson — fruit tree; 3-5 years
 UPDATE public.plant_species
 SET days_to_maturity_min = 1095, days_to_maturity_max = 1825,
-    maturity_basis = 'from_planting'
+    maturity_basis = 'from_transplant'
 WHERE slug = 'damson'
   AND (days_to_maturity_min IS NULL OR days_to_maturity_min = 0);
 
 -- Tayberry — hybrid berry; fruits year 2
 UPDATE public.plant_species
 SET days_to_maturity_min = 365, days_to_maturity_max = 540,
-    maturity_basis = 'from_planting'
+    maturity_basis = 'from_transplant'
 WHERE slug = 'tayberry'
   AND (days_to_maturity_min IS NULL OR days_to_maturity_min = 0);
 
 -- Loganberry — hybrid berry; fruits year 2
 UPDATE public.plant_species
 SET days_to_maturity_min = 365, days_to_maturity_max = 540,
-    maturity_basis = 'from_planting'
+    maturity_basis = 'from_transplant'
 WHERE slug = 'loganberry'
   AND (days_to_maturity_min IS NULL OR days_to_maturity_min = 0);
 
 -- Jostaberry — hybrid currant/gooseberry; fruits year 2-3
 UPDATE public.plant_species
 SET days_to_maturity_min = 365, days_to_maturity_max = 730,
-    maturity_basis = 'from_planting'
+    maturity_basis = 'from_transplant'
 WHERE slug = 'jostaberry'
   AND (days_to_maturity_min IS NULL OR days_to_maturity_min = 0);
 
 -- Cranberry — acid-loving fruit; first crop year 3
 UPDATE public.plant_species
 SET days_to_maturity_min = 730, days_to_maturity_max = 1095,
-    maturity_basis = 'from_planting'
+    maturity_basis = 'from_transplant'
 WHERE slug = 'cranberry'
   AND (days_to_maturity_min IS NULL OR days_to_maturity_min = 0);
 
 -- Lingonberry — acid-loving; first harvest year 2-3
 UPDATE public.plant_species
 SET days_to_maturity_min = 730, days_to_maturity_max = 1095,
-    maturity_basis = 'from_planting'
+    maturity_basis = 'from_transplant'
 WHERE slug = 'lingonberry'
   AND (days_to_maturity_min IS NULL OR days_to_maturity_min = 0);
 
 -- Goji berry — first crop year 2-3
 UPDATE public.plant_species
 SET days_to_maturity_min = 730, days_to_maturity_max = 1095,
-    maturity_basis = 'from_planting'
+    maturity_basis = 'from_transplant'
 WHERE slug = 'goji-berry'
   AND (days_to_maturity_min IS NULL OR days_to_maturity_min = 0);
 
 -- Honeyberry / haskap — first crop year 2-3
 UPDATE public.plant_species
 SET days_to_maturity_min = 730, days_to_maturity_max = 1095,
-    maturity_basis = 'from_planting'
+    maturity_basis = 'from_transplant'
 WHERE slug = 'honeyberry'
   AND (days_to_maturity_min IS NULL OR days_to_maturity_min = 0);
 
 -- Hardy kiwi (vine) — first crop year 3-5
 UPDATE public.plant_species
 SET days_to_maturity_min = 1095, days_to_maturity_max = 1825,
-    maturity_basis = 'from_planting'
+    maturity_basis = 'from_transplant'
 WHERE slug = 'kiwi-hardy'
   AND (days_to_maturity_min IS NULL OR days_to_maturity_min = 0);
 
 -- Grape vine — first crop year 3-4
 UPDATE public.plant_species
 SET days_to_maturity_min = 730, days_to_maturity_max = 1460,
-    maturity_basis = 'from_planting'
+    maturity_basis = 'from_transplant'
 WHERE slug = 'grape-vine'
   AND (days_to_maturity_min IS NULL OR days_to_maturity_min = 0);
 
 -- Schisandra berry (vine) — first crop year 3-5
 UPDATE public.plant_species
 SET days_to_maturity_min = 1095, days_to_maturity_max = 1825,
-    maturity_basis = 'from_planting'
+    maturity_basis = 'from_transplant'
 WHERE slug = 'schisandra'
   AND (days_to_maturity_min IS NULL OR days_to_maturity_min = 0);
 
 -- Passionflower — ornamental vine but edible fruit; year 2-3
 UPDATE public.plant_species
 SET days_to_maturity_min = 730, days_to_maturity_max = 1095,
-    maturity_basis = 'from_planting'
+    maturity_basis = 'from_transplant'
 WHERE slug = 'passionflower'
   AND (days_to_maturity_min IS NULL OR days_to_maturity_min = 0);
 
@@ -193,21 +193,21 @@ WHERE slug = 'pepper-capsicum-annuum'
 -- Chayote — 120-150 days from planting
 UPDATE public.plant_species
 SET days_to_maturity_min = 120, days_to_maturity_max = 150,
-    maturity_basis = 'from_planting'
+    maturity_basis = 'from_transplant'
 WHERE slug = 'chayote'
   AND (days_to_maturity_min IS NULL OR days_to_maturity_min = 0);
 
 -- Ginger — 240-300 days from planting rhizome
 UPDATE public.plant_species
 SET days_to_maturity_min = 240, days_to_maturity_max = 300,
-    maturity_basis = 'from_planting'
+    maturity_basis = 'from_transplant'
 WHERE slug = 'ginger'
   AND (days_to_maturity_min IS NULL OR days_to_maturity_min = 0);
 
 -- Turmeric — 240-300 days from planting rhizome
 UPDATE public.plant_species
 SET days_to_maturity_min = 240, days_to_maturity_max = 300,
-    maturity_basis = 'from_planting'
+    maturity_basis = 'from_transplant'
 WHERE slug = 'turmeric'
   AND (days_to_maturity_min IS NULL OR days_to_maturity_min = 0);
 
@@ -298,14 +298,14 @@ WHERE slug = 'romanesco'
 -- Multiplier onion — 90-120 days from planting
 UPDATE public.plant_species
 SET days_to_maturity_min = 90, days_to_maturity_max = 120,
-    maturity_basis = 'from_planting'
+    maturity_basis = 'from_transplant'
 WHERE slug = 'multiplier-onion'
   AND (days_to_maturity_min IS NULL OR days_to_maturity_min = 0);
 
 -- Horseradish — perennial; first harvest year 1 (autumn)
 UPDATE public.plant_species
 SET days_to_maturity_min = 150, days_to_maturity_max = 240,
-    maturity_basis = 'from_planting'
+    maturity_basis = 'from_transplant'
 WHERE slug = 'horseradish'
   AND (days_to_maturity_min IS NULL OR days_to_maturity_min = 0);
 
@@ -356,7 +356,7 @@ WHERE slug IN ('herb-angelica', 'angelica')
 -- Comfrey — perennial; established quickly, 60-90 days to first harvest
 UPDATE public.plant_species
 SET days_to_maturity_min = 60, days_to_maturity_max = 120,
-    maturity_basis = 'from_planting'
+    maturity_basis = 'from_transplant'
 WHERE slug IN ('herb-comfrey', 'comfrey')
   AND (days_to_maturity_min IS NULL OR days_to_maturity_min = 0);
 
@@ -419,7 +419,7 @@ WHERE slug IN ('herb-stevia', 'stevia')
 -- Hop (common) — perennial vine; cone harvest year 2-3
 UPDATE public.plant_species
 SET days_to_maturity_min = 365, days_to_maturity_max = 730,
-    maturity_basis = 'from_planting'
+    maturity_basis = 'from_transplant'
 WHERE slug = 'hop-common'
   AND (days_to_maturity_min IS NULL OR days_to_maturity_min = 0);
 
@@ -495,13 +495,13 @@ WHERE slug IN ('mustard-green-manure', 'white-mustard')
 
 UPDATE public.plant_species
 SET days_to_maturity_min = 1095, days_to_maturity_max = 1825,
-    maturity_basis = 'from_planting'
+    maturity_basis = 'from_transplant'
 WHERE category = 'fruit-tree'
   AND (days_to_maturity_min IS NULL OR days_to_maturity_min = 0);
 
 UPDATE public.plant_species
 SET days_to_maturity_min = 365, days_to_maturity_max = 730,
-    maturity_basis = 'from_planting'
+    maturity_basis = 'from_transplant'
 WHERE category = 'fruit'
   AND (days_to_maturity_min IS NULL OR days_to_maturity_min = 0);
 
