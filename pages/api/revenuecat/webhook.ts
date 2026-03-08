@@ -19,8 +19,10 @@ import { NextApiRequest, NextApiResponse } from 'next';
 import { buffer } from 'micro';
 import { createClient } from '@supabase/supabase-js';
 import { mapProductToTier } from '@/lib/grow/revenueCatProducts';
+import { isGoDaisyPlusProduct, mapGoDaisyProductToTier } from '@/lib/godaisy/revenueCatProducts';
 import { isGoDaisyTip } from '@/lib/godaisy/tipProducts';
 import type { GrowSubscriptionTier } from '@/lib/grow/subscription';
+import type { GoDaisyTier } from '@/lib/godaisy/subscription';
 
 // Disable Next.js body parsing for raw body access
 export const config = {
@@ -117,10 +119,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       auth: { autoRefreshToken: false, persistSession: false },
     });
 
-    // Deduplicate: check if we've already processed this event
+    // Determine if this is a Go Daisy+ product
+    const isGoDaisyPlus = isGoDaisyPlusProduct(event.product_id);
+
+    // Deduplicate: check the appropriate events table
     if (event.id) {
+      const eventsTable = isGoDaisyPlus ? 'godaisy_subscription_events' : 'grow_subscription_events';
       const { data: existing } = await supabase
-        .from('grow_subscription_events')
+        .from(eventsTable)
         .select('id')
         .eq('revenuecat_event_id', event.id)
         .maybeSingle();
@@ -131,100 +137,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       }
     }
 
-    // Map product to tier
-    const mapping = mapProductToTier(event.product_id);
-
-    switch (event.type) {
-      case 'INITIAL_PURCHASE':
-      case 'RENEWAL':
-      case 'PRODUCT_CHANGE':
-      case 'NON_RENEWING_PURCHASE': {
-        // Consumable tips: log and skip — no profile tier update needed
-        if (isGoDaisyTip(event.product_id)) {
-          console.log(`[revenuecat] Tip received from ${userId}: ${event.product_id}`);
-          break;
-        }
-
-        if (!mapping) {
-          console.error(`[revenuecat] Unknown product ID: ${event.product_id}`);
-          break;
-        }
-
-        const isLifetime = mapping.type === 'lifetime';
-
-        const updateData: Record<string, unknown> = {
-          grow_subscription_tier: mapping.tier,
-          grow_subscription_type: mapping.type,
-          grow_subscription_start: event.purchased_at_ms
-            ? new Date(event.purchased_at_ms).toISOString()
-            : new Date().toISOString(),
-          grow_subscription_end: isLifetime
-            ? null
-            : event.expiration_at_ms
-              ? new Date(event.expiration_at_ms).toISOString()
-              : null,
-          grow_stripe_subscription_id: null, // Not a Stripe subscription
-          revenuecat_customer_id: userId,
-        };
-
-        // Set trial end if in trial period
-        if (event.period_type === 'TRIAL' && event.expiration_at_ms) {
-          updateData.grow_trial_ends_at = new Date(event.expiration_at_ms).toISOString();
-        }
-
-        const { error: updateError } = await supabase
-          .from('profiles')
-          .update(updateData)
-          .eq('id', userId);
-
-        if (updateError) {
-          console.error(`[revenuecat] Failed to update profile for ${userId}:`, updateError);
-          // Still return 200 to avoid retry loops for permanent errors
-        } else {
-          console.log(`[revenuecat] Updated user ${userId}: tier=${mapping.tier}, type=${mapping.type}`);
-        }
-        break;
-      }
-
-      case 'CANCELLATION': {
-        // Apple grants access through the end of the billing period.
-        // Do NOT downgrade yet — EXPIRATION event will handle that.
-        console.log(`[revenuecat] User ${userId} cancelled (access continues until period end)`);
-        break;
-      }
-
-      case 'EXPIRATION': {
-        // Subscription has actually expired — downgrade to seed
-        const { error: expireError } = await supabase
-          .from('profiles')
-          .update({
-            grow_subscription_tier: 'seed',
-            grow_subscription_end: new Date().toISOString(),
-          })
-          .eq('id', userId);
-
-        if (expireError) {
-          console.error(`[revenuecat] Failed to expire subscription for ${userId}:`, expireError);
-        } else {
-          console.log(`[revenuecat] Subscription expired for ${userId}, downgraded to seed`);
-        }
-        break;
-      }
-
-      case 'BILLING_ISSUE_DETECTED': {
-        // Log only — RevenueCat handles retry logic. EXPIRATION fires if all retries fail.
-        console.log(`[revenuecat] Billing issue for ${userId}, product ${event.product_id}`);
-        break;
-      }
-
-      default: {
-        console.log(`[revenuecat] Unhandled event type: ${event.type}`);
-      }
+    // Route to Go Daisy+ or Grow Daisy handler
+    if (isGoDaisyPlus) {
+      await handleGoDaisyPlusEvent(supabase, userId, event);
+    } else {
+      await handleGrowDaisyEvent(supabase, userId, event);
     }
-
-    // Record audit trail
-    const newTier = mapping?.tier ?? (event.type === 'EXPIRATION' ? 'seed' : undefined);
-    await recordEvent(supabase, userId, event, newTier as GrowSubscriptionTier | undefined);
 
     return res.status(200).json({ received: true });
   } catch (error) {
@@ -234,10 +152,197 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 }
 
+// =============================================================================
+// GO DAISY+ EVENT HANDLER
+// =============================================================================
+
+async function handleGoDaisyPlusEvent(
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  supabase: any,
+  userId: string,
+  event: RCWebhookEvent['event']
+) {
+  const mapping = mapGoDaisyProductToTier(event.product_id);
+
+  switch (event.type) {
+    case 'INITIAL_PURCHASE':
+    case 'RENEWAL':
+    case 'PRODUCT_CHANGE': {
+      if (!mapping) {
+        console.error(`[revenuecat][godaisy+] Unknown product ID: ${event.product_id}`);
+        break;
+      }
+
+      const updateData: Record<string, unknown> = {
+        godaisy_subscription_tier: 'plus',
+        godaisy_subscription_type: mapping.type,
+        godaisy_subscription_start: event.purchased_at_ms
+          ? new Date(event.purchased_at_ms).toISOString()
+          : new Date().toISOString(),
+        godaisy_subscription_end: event.expiration_at_ms
+          ? new Date(event.expiration_at_ms).toISOString()
+          : null,
+        godaisy_revenuecat_product_id: event.product_id,
+      };
+
+      const { error: updateError } = await supabase
+        .from('profiles')
+        .update(updateData)
+        .eq('id', userId);
+
+      if (updateError) {
+        console.error(`[revenuecat][godaisy+] Failed to update profile for ${userId}:`, updateError);
+      } else {
+        console.log(`[revenuecat][godaisy+] Updated user ${userId}: tier=plus, type=${mapping.type}`);
+      }
+      break;
+    }
+
+    case 'CANCELLATION': {
+      console.log(`[revenuecat][godaisy+] User ${userId} cancelled (access continues until period end)`);
+      break;
+    }
+
+    case 'EXPIRATION': {
+      const { error: expireError } = await supabase
+        .from('profiles')
+        .update({
+          godaisy_subscription_tier: 'free',
+          godaisy_subscription_end: new Date().toISOString(),
+        })
+        .eq('id', userId);
+
+      if (expireError) {
+        console.error(`[revenuecat][godaisy+] Failed to expire subscription for ${userId}:`, expireError);
+      } else {
+        console.log(`[revenuecat][godaisy+] Subscription expired for ${userId}, downgraded to free`);
+      }
+      break;
+    }
+
+    case 'BILLING_ISSUE_DETECTED': {
+      console.log(`[revenuecat][godaisy+] Billing issue for ${userId}, product ${event.product_id}`);
+      break;
+    }
+
+    default: {
+      console.log(`[revenuecat][godaisy+] Unhandled event type: ${event.type}`);
+    }
+  }
+
+  // Record audit trail in godaisy_subscription_events
+  const tier: GoDaisyTier = event.type === 'EXPIRATION' ? 'free' : 'plus';
+  await recordGoDaisyPlusEvent(supabase, userId, event, tier);
+}
+
+// =============================================================================
+// GROW DAISY EVENT HANDLER (refactored from inline)
+// =============================================================================
+
+async function handleGrowDaisyEvent(
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  supabase: any,
+  userId: string,
+  event: RCWebhookEvent['event']
+) {
+  const mapping = mapProductToTier(event.product_id);
+
+  switch (event.type) {
+    case 'INITIAL_PURCHASE':
+    case 'RENEWAL':
+    case 'PRODUCT_CHANGE':
+    case 'NON_RENEWING_PURCHASE': {
+      // Consumable tips: log and skip — no profile tier update needed
+      if (isGoDaisyTip(event.product_id)) {
+        console.log(`[revenuecat] Tip received from ${userId}: ${event.product_id}`);
+        break;
+      }
+
+      if (!mapping) {
+        console.error(`[revenuecat] Unknown product ID: ${event.product_id}`);
+        break;
+      }
+
+      const isLifetime = mapping.type === 'lifetime';
+
+      const updateData: Record<string, unknown> = {
+        grow_subscription_tier: mapping.tier,
+        grow_subscription_type: mapping.type,
+        grow_subscription_start: event.purchased_at_ms
+          ? new Date(event.purchased_at_ms).toISOString()
+          : new Date().toISOString(),
+        grow_subscription_end: isLifetime
+          ? null
+          : event.expiration_at_ms
+            ? new Date(event.expiration_at_ms).toISOString()
+            : null,
+        grow_stripe_subscription_id: null, // Not a Stripe subscription
+        revenuecat_customer_id: userId,
+      };
+
+      // Set trial end if in trial period
+      if (event.period_type === 'TRIAL' && event.expiration_at_ms) {
+        updateData.grow_trial_ends_at = new Date(event.expiration_at_ms).toISOString();
+      }
+
+      const { error: updateError } = await supabase
+        .from('profiles')
+        .update(updateData)
+        .eq('id', userId);
+
+      if (updateError) {
+        console.error(`[revenuecat] Failed to update profile for ${userId}:`, updateError);
+      } else {
+        console.log(`[revenuecat] Updated user ${userId}: tier=${mapping.tier}, type=${mapping.type}`);
+      }
+      break;
+    }
+
+    case 'CANCELLATION': {
+      console.log(`[revenuecat] User ${userId} cancelled (access continues until period end)`);
+      break;
+    }
+
+    case 'EXPIRATION': {
+      const { error: expireError } = await supabase
+        .from('profiles')
+        .update({
+          grow_subscription_tier: 'seed',
+          grow_subscription_end: new Date().toISOString(),
+        })
+        .eq('id', userId);
+
+      if (expireError) {
+        console.error(`[revenuecat] Failed to expire subscription for ${userId}:`, expireError);
+      } else {
+        console.log(`[revenuecat] Subscription expired for ${userId}, downgraded to seed`);
+      }
+      break;
+    }
+
+    case 'BILLING_ISSUE_DETECTED': {
+      console.log(`[revenuecat] Billing issue for ${userId}, product ${event.product_id}`);
+      break;
+    }
+
+    default: {
+      console.log(`[revenuecat] Unhandled event type: ${event.type}`);
+    }
+  }
+
+  // Record audit trail in grow_subscription_events
+  const newTier = mapping?.tier ?? (event.type === 'EXPIRATION' ? 'seed' : undefined);
+  await recordGrowEvent(supabase, userId, event, newTier as GrowSubscriptionTier | undefined);
+}
+
+// =============================================================================
+// AUDIT TRAIL FUNCTIONS
+// =============================================================================
+
 /**
- * Record event in grow_subscription_events for audit trail
+ * Record event in grow_subscription_events
  */
-async function recordEvent(
+async function recordGrowEvent(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   supabase: any,
   userId: string,
@@ -253,6 +358,29 @@ async function recordEvent(
       event_data: event,
     });
   } catch (err) {
-    console.error('[revenuecat] Failed to record event:', err);
+    console.error('[revenuecat] Failed to record Grow event:', err);
+  }
+}
+
+/**
+ * Record event in godaisy_subscription_events
+ */
+async function recordGoDaisyPlusEvent(
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  supabase: any,
+  userId: string,
+  event: RCWebhookEvent['event'],
+  tier: GoDaisyTier
+) {
+  try {
+    await supabase.from('godaisy_subscription_events').insert({
+      user_id: userId,
+      event_type: `revenuecat.${event.type.toLowerCase()}`,
+      revenuecat_event_id: event.id,
+      tier,
+      event_data: event,
+    });
+  } catch (err) {
+    console.error('[revenuecat] Failed to record Go Daisy+ event:', err);
   }
 }

@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState, useCallback } from 'react';
+import { useRouter } from 'next/router';
 import Head from 'next/head';
 import CoastalLocationDialog from '@/components/CoastalLocationDialog';
 import Script from 'next/script';
@@ -11,6 +12,8 @@ import { Globe, ChevronDown, Coffee, Beer, Flower2, Loader2, PartyPopper, AlertC
 import { useLanguage } from '@/context/LanguageContext';
 import { getSupportedLanguages } from '@/lib/user/language';
 import { useGoDaisyPushNotifications } from '@/hooks/useGoDaisyPushNotifications';
+import { useGoDaisySubscription } from '@/hooks/useGoDaisySubscription';
+import { Sparkles, Crown, ExternalLink } from 'lucide-react';
 import { GODAISY_TIP_PRODUCTS } from '@/lib/godaisy/tipProducts';
 import type { TipPackage } from '@/lib/grow/revenueCat';
 
@@ -39,8 +42,16 @@ const LANGUAGE_FLAGS: Record<string, string> = {
 };
 
 export default function AccountPage() {
+  const router = useRouter();
   const { preferences, setPreferences } = useUserPreferences();
   const { language, setLanguage } = useLanguage();
+  const { isPaid: isGoDaisyPlus, subscription: goDaisySub, canUse: goDaisyCanUse } = useGoDaisySubscription();
+  const [portalLoading, setPortalLoading] = useState(false);
+  const [promoExpanded, setPromoExpanded] = useState(false);
+  const [promoCode, setPromoCode] = useState('');
+  const [promoRedeeming, setPromoRedeeming] = useState(false);
+  const [promoError, setPromoError] = useState('');
+  const [promoSuccess, setPromoSuccess] = useState<{ durationDays: number; grantedUntil: string } | null>(null);
   const supportedLanguages = getSupportedLanguages();
   const currentLang = supportedLanguages.find(lang => lang.code === language) || supportedLanguages[0];
 
@@ -246,6 +257,41 @@ export default function AccountPage() {
     setLangDropdownOpen(false);
   };
 
+  const redeemPromoCode = async () => {
+    const trimmed = promoCode.trim();
+    if (!trimmed) return;
+    try {
+      setPromoRedeeming(true);
+      setPromoError('');
+      setPromoSuccess(null);
+
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) return;
+
+      const res = await fetch('/api/godaisy/promo/redeem', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({ code: trimmed }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        setPromoError(data.error || 'Failed to redeem code');
+        return;
+      }
+
+      setPromoSuccess({ durationDays: data.durationDays, grantedUntil: data.grantedUntil });
+      setPromoCode('');
+    } catch {
+      setPromoError('Something went wrong. Please try again.');
+    } finally {
+      setPromoRedeeming(false);
+    }
+  };
+
   // ---------------------------------------------------------------------------
   // NOTIFICATION PREFERENCES
   // ---------------------------------------------------------------------------
@@ -391,6 +437,134 @@ export default function AccountPage() {
             </section>
           )}
 
+          {/* Subscription success banner */}
+          {router.query.subscription === 'success' && router.query.app === 'godaisy' && (
+            <div className="bg-cyan-50 border border-cyan-200 rounded-xl p-4 mb-4 text-center">
+              <p className="text-cyan-800 font-medium">
+                Welcome to Go Daisy+! Your subscription is now active.
+              </p>
+            </div>
+          )}
+
+          {/* Your Plan */}
+          <section className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 mb-4">
+            <h2 className="text-lg font-semibold text-gray-900 mb-2">Your Plan</h2>
+            {isGoDaisyPlus ? (
+              <div>
+                <div className="flex items-center gap-2 mb-2">
+                  <div className="w-8 h-8 bg-cyan-100 rounded-full flex items-center justify-center">
+                    <Crown className="h-4 w-4 text-cyan-600" />
+                  </div>
+                  <div>
+                    <span className="font-semibold text-gray-900">Go Daisy+</span>
+                    {goDaisySub?.subscriptionType && (
+                      <span className="ml-2 text-xs bg-cyan-100 text-cyan-700 px-2 py-0.5 rounded-full capitalize">
+                        {goDaisySub.subscriptionType}
+                      </span>
+                    )}
+                  </div>
+                </div>
+                {goDaisySub?.subscriptionEnd && (
+                  <p className="text-sm text-gray-500 mb-3">
+                    {goDaisySub.subscriptionType === 'promo'
+                      ? `Expires ${new Date(goDaisySub.subscriptionEnd).toLocaleDateString()}`
+                      : `Renews ${new Date(goDaisySub.subscriptionEnd).toLocaleDateString()}`}
+                  </p>
+                )}
+                {goDaisySub?.subscriptionType !== 'promo' && (
+                  <button
+                    className="inline-flex items-center gap-1 px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 text-sm disabled:opacity-50"
+                    disabled={portalLoading}
+                    onClick={async () => {
+                      try {
+                        setPortalLoading(true);
+                        const { data: { session } } = await supabase.auth.getSession();
+                        if (!session?.access_token) return;
+
+                        const res = await fetch('/api/godaisy/create-portal-session', {
+                          method: 'POST',
+                          headers: { Authorization: `Bearer ${session.access_token}` },
+                        });
+                        const data = await res.json();
+                        if (data.url) window.location.href = data.url;
+                      } catch (err) {
+                        console.error('Portal error:', err);
+                      } finally {
+                        setPortalLoading(false);
+                      }
+                    }}
+                  >
+                    {portalLoading ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <ExternalLink className="h-4 w-4" />
+                    )}
+                    Manage Subscription
+                  </button>
+                )}
+              </div>
+            ) : (
+              <div>
+                <p className="text-sm text-gray-600 mb-3">
+                  You&apos;re on the free plan. Upgrade for unlimited activities, 14-day forecasts, and more.
+                </p>
+                <Link
+                  href="/godaisy-plus"
+                  className="inline-flex items-center gap-1 px-4 py-2 bg-cyan-600 text-white rounded-lg text-sm font-medium hover:bg-cyan-700 transition-colors"
+                >
+                  <Sparkles className="h-4 w-4" />
+                  Upgrade to Go Daisy+
+                </Link>
+              </div>
+            )}
+          </section>
+
+          {/* Promo Code */}
+          {isSignedIn && !isGoDaisyPlus && (
+            <section className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 mb-4">
+              <button
+                className="w-full flex items-center justify-between text-left"
+                onClick={() => setPromoExpanded(!promoExpanded)}
+              >
+                <span className="text-sm font-medium text-gray-700">Have a promo code?</span>
+                <ChevronDown className={`h-4 w-4 text-gray-400 transition-transform ${promoExpanded ? 'rotate-180' : ''}`} />
+              </button>
+
+              {promoExpanded && (
+                <div className="mt-3">
+                  {promoSuccess ? (
+                    <div className="bg-green-50 border border-green-200 rounded-lg p-3 text-sm text-green-800">
+                      Go Daisy+ activated for {promoSuccess.durationDays} days!
+                      Expires {new Date(promoSuccess.grantedUntil).toLocaleDateString()}.
+                    </div>
+                  ) : (
+                    <>
+                      <form onSubmit={(e) => { e.preventDefault(); redeemPromoCode(); }} className="flex gap-2">
+                        <input
+                          type="text"
+                          placeholder="Enter code"
+                          className="flex-1 px-3 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 font-mono uppercase text-sm focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500"
+                          value={promoCode}
+                          onChange={(e) => setPromoCode(e.target.value.toUpperCase())}
+                        />
+                        <button
+                          type="submit"
+                          disabled={!promoCode.trim() || promoRedeeming}
+                          className="px-4 py-2 bg-cyan-600 text-white rounded-lg text-sm font-medium hover:bg-cyan-700 disabled:opacity-50"
+                        >
+                          {promoRedeeming ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Redeem'}
+                        </button>
+                      </form>
+                      {promoError && (
+                        <p className="text-sm text-red-600 mt-2">{promoError}</p>
+                      )}
+                    </>
+                  )}
+                </div>
+              )}
+            </section>
+          )}
+
           {/* Language */}
           <section className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 mb-4">
             <h2 className="text-lg font-semibold text-gray-900 mb-1">
@@ -465,25 +639,39 @@ export default function AccountPage() {
                 </button>
               </div>
 
-              <div className="border border-gray-200 rounded-lg p-3">
-                <div className="font-medium text-gray-900 mb-2">Coastal spot</div>
-                {coastalSpot ? (
-                  <div className="bg-cyan-50 text-cyan-800 px-3 py-2 rounded-lg text-sm mb-2">
-                    🌊 {coastalSpot.name}
-                  </div>
-                ) : (
-                  <p className="text-sm text-gray-500 mb-2">No coastal location set</p>
-                )}
-                <button
-                  className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
-                  onClick={() => mapsReady ? setOpenMarine(true) : alert('Loading map…')}
-                >
-                  {coastalSpot ? 'Change' : 'Set location'}
-                </button>
-                {!isMarineUser && (
-                  <p className="text-xs text-gray-500 mt-2">Tip: add sea activities for tide/swell suggestions.</p>
-                )}
-              </div>
+              {goDaisyCanUse('coastalLocation') ? (
+                <div className="border border-gray-200 rounded-lg p-3">
+                  <div className="font-medium text-gray-900 mb-2">Coastal spot</div>
+                  {coastalSpot ? (
+                    <div className="bg-cyan-50 text-cyan-800 px-3 py-2 rounded-lg text-sm mb-2">
+                      🌊 {coastalSpot.name}
+                    </div>
+                  ) : (
+                    <p className="text-sm text-gray-500 mb-2">No coastal location set</p>
+                  )}
+                  <button
+                    className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
+                    onClick={() => mapsReady ? setOpenMarine(true) : alert('Loading map…')}
+                  >
+                    {coastalSpot ? 'Change' : 'Set location'}
+                  </button>
+                  {!isMarineUser && (
+                    <p className="text-xs text-gray-500 mt-2">Tip: add sea activities for tide/swell suggestions.</p>
+                  )}
+                </div>
+              ) : (
+                <div className="border border-gray-200 rounded-lg p-3 bg-gray-50">
+                  <div className="font-medium text-gray-900 mb-2">Coastal spot</div>
+                  <p className="text-sm text-gray-500 mb-2">Add a coastal location with Go Daisy+</p>
+                  <Link
+                    href="/godaisy-plus"
+                    className="inline-flex items-center gap-1 px-3 py-1.5 text-sm bg-cyan-600 text-white rounded-lg hover:bg-cyan-700"
+                  >
+                    <Sparkles className="h-3.5 w-3.5" />
+                    Upgrade
+                  </Link>
+                </div>
+              )}
             </div>
           </section>
 
@@ -572,13 +760,6 @@ export default function AccountPage() {
                   {pushSubscribed && !notifPrefsLoading && (
                     <div className="space-y-2">
                       <NotifToggle
-                        label="Weather alerts"
-                        desc="Wind, rain, UV warnings"
-                        checked={notifPrefs.weatherAlerts}
-                        onChange={(v) => saveNotifPref('weatherAlerts', v)}
-                        disabled={notifSaving}
-                      />
-                      <NotifToggle
                         label="Extreme weather"
                         desc="Storms, heat waves, heavy frost"
                         checked={notifPrefs.extremeWeather}
@@ -586,26 +767,37 @@ export default function AccountPage() {
                         disabled={notifSaving}
                       />
                       <NotifToggle
+                        label="Weather alerts"
+                        desc="Wind, rain, UV warnings"
+                        checked={goDaisyCanUse('pushNotifications') ? notifPrefs.weatherAlerts : false}
+                        onChange={(v) => saveNotifPref('weatherAlerts', v)}
+                        disabled={notifSaving || !goDaisyCanUse('pushNotifications')}
+                        plusRequired={!goDaisyCanUse('pushNotifications')}
+                      />
+                      <NotifToggle
                         label="Activity tips"
                         desc="Great conditions for your activities"
-                        checked={notifPrefs.activityRecommendations}
+                        checked={goDaisyCanUse('pushNotifications') ? notifPrefs.activityRecommendations : false}
                         onChange={(v) => saveNotifPref('activityRecommendations', v)}
-                        disabled={notifSaving}
+                        disabled={notifSaving || !goDaisyCanUse('pushNotifications')}
+                        plusRequired={!goDaisyCanUse('pushNotifications')}
                       />
                       <NotifToggle
                         label="Astronomy alerts"
                         desc="ISS passes, meteor showers, eclipses"
-                        checked={notifPrefs.astronomyAlerts}
+                        checked={goDaisyCanUse('pushNotifications') ? notifPrefs.astronomyAlerts : false}
                         onChange={(v) => saveNotifPref('astronomyAlerts', v)}
-                        disabled={notifSaving}
+                        disabled={notifSaving || !goDaisyCanUse('pushNotifications')}
+                        plusRequired={!goDaisyCanUse('pushNotifications')}
                       />
                       {isMarineUser && (
                         <NotifToggle
                           label="Tide alerts"
                           desc="Significant tide events at your coast"
-                          checked={notifPrefs.tideAlerts}
+                          checked={goDaisyCanUse('pushNotifications') ? notifPrefs.tideAlerts : false}
                           onChange={(v) => saveNotifPref('tideAlerts', v)}
-                          disabled={notifSaving}
+                          disabled={notifSaving || !goDaisyCanUse('pushNotifications')}
+                          plusRequired={!goDaisyCanUse('pushNotifications')}
                         />
                       )}
 
@@ -811,12 +1003,14 @@ function NotifToggle({
   checked,
   onChange,
   disabled,
+  plusRequired,
 }: {
   label: string;
   desc: string;
   checked: boolean;
   onChange: (v: boolean) => void;
   disabled?: boolean;
+  plusRequired?: boolean;
 }) {
   return (
     <button
@@ -828,7 +1022,12 @@ function NotifToggle({
       } ${checked ? 'bg-blue-50' : ''}`}
     >
       <div>
-        <div className="text-sm font-medium text-gray-900">{label}</div>
+        <div className="flex items-center gap-1.5">
+          <span className="text-sm font-medium text-gray-900">{label}</span>
+          {plusRequired && (
+            <span className="text-[10px] font-medium bg-cyan-100 text-cyan-700 px-1.5 py-0.5 rounded-full">Plus</span>
+          )}
+        </div>
         <div className="text-xs text-gray-500">{desc}</div>
       </div>
       <div

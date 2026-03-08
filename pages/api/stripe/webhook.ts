@@ -2,7 +2,7 @@
  * Stripe Webhook Handler
  *
  * Handles Stripe webhook events for subscription lifecycle management.
- * Supports both Findr and Grow Daisy apps (identified by metadata.app field).
+ * Supports Findr, Grow Daisy, and Go Daisy+ apps (identified by metadata.app field).
  *
  * Events handled:
  * - customer.subscription.created
@@ -19,6 +19,7 @@ import Stripe from 'stripe';
 import { stripe } from '@/lib/stripe/server';
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import { GrowSubscriptionTier } from '@/lib/grow/subscription';
+import { GoDaisyTier } from '@/lib/godaisy/subscription';
 
 type SupabaseServerClient = SupabaseClient<unknown>;
 
@@ -364,6 +365,95 @@ function isGrowDaisyEvent(metadata: Stripe.Metadata | null): boolean {
   return metadata?.app === 'grow_daisy';
 }
 
+// =============================================================================
+// GO DAISY+ SPECIFIC HANDLERS
+// =============================================================================
+
+// Go Daisy+ profile update payload
+type GoDaisyProfileUpdatePayload = {
+  godaisy_subscription_tier: GoDaisyTier;
+  godaisy_subscription_type?: 'monthly' | 'annual';
+  godaisy_subscription_start?: string;
+  godaisy_subscription_end?: string | null;
+  godaisy_stripe_subscription_id?: string | null;
+  godaisy_stripe_customer_id?: string;
+};
+
+/**
+ * Check if event is for Go Daisy+ app.
+ */
+function isGoDaisyPlusEvent(metadata: Stripe.Metadata | null): boolean {
+  return metadata?.app === 'godaisy_plus';
+}
+
+/**
+ * Update Go Daisy+ profile based on subscription status.
+ */
+async function updateGoDaisyProfileFromSubscription(
+  supabase: SupabaseServerClient,
+  userId: string,
+  subscription: Stripe.Subscription
+) {
+  const isActive = subscription.status === 'active' || subscription.status === 'trialing';
+  const billingType = subscription.metadata?.billing_type as 'monthly' | 'annual' | undefined;
+  const legacyFields = subscription as Stripe.Subscription & SubscriptionLegacyFields;
+
+  const updateData: GoDaisyProfileUpdatePayload = {
+    godaisy_subscription_tier: isActive ? 'plus' : 'free',
+    godaisy_subscription_type: billingType,
+    godaisy_stripe_subscription_id: subscription.id,
+    godaisy_subscription_start: new Date(subscription.created * 1000).toISOString(),
+  };
+
+  // Set customer ID if available
+  if (subscription.customer) {
+    updateData.godaisy_stripe_customer_id = typeof subscription.customer === 'string'
+      ? subscription.customer
+      : subscription.customer.id;
+  }
+
+  // Subscription end date
+  if (subscription.cancel_at) {
+    updateData.godaisy_subscription_end = new Date(subscription.cancel_at * 1000).toISOString();
+  } else if (legacyFields.current_period_end) {
+    updateData.godaisy_subscription_end = new Date(legacyFields.current_period_end * 1000).toISOString();
+  }
+
+  const { error } = await supabase
+    .from('profiles')
+    // @ts-expect-error - Supabase type inference issue with profile updates
+    .update(updateData)
+    .eq('id', userId);
+
+  if (error) {
+    console.error('[godaisy+] Error updating profile:', error);
+    throw error;
+  }
+
+  console.log(`[godaisy+] Updated subscription for user ${userId}: tier=${isActive ? 'plus' : 'free'}, status=${subscription.status}`);
+}
+
+/**
+ * Record Go Daisy+ subscription event in audit log.
+ */
+async function recordGoDaisyEvent(
+  supabase: SupabaseServerClient,
+  userId: string,
+  eventType: string,
+  stripeEventId: string,
+  tier: GoDaisyTier,
+  eventData: Stripe.Checkout.Session | Stripe.Subscription
+) {
+  // @ts-expect-error - Supabase type inference issue with godaisy_subscription_events
+  await supabase.from('godaisy_subscription_events').insert({
+    user_id: userId,
+    event_type: eventType,
+    stripe_event_id: stripeEventId,
+    tier,
+    event_data: eventData as unknown,
+  });
+}
+
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
@@ -432,8 +522,20 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             .eq('id', userId);
         }
 
-        // Handle Grow Daisy lifetime purchase (one-time payment)
-        if (isGrowDaisyEvent(session.metadata) && session.mode === 'payment') {
+        // Route to correct handler based on app
+        if (isGoDaisyPlusEvent(session.metadata)) {
+          // Go Daisy+ - subscription checkout (tier updated by subscription.created event)
+          await recordGoDaisyEvent(supabase, userId, event.type, event.id, 'plus', session);
+          // Store customer ID for Go Daisy+
+          if (session.customer) {
+            await supabase
+              .from('profiles')
+              // @ts-expect-error - Supabase type inference issue with profile updates
+              .update({ godaisy_stripe_customer_id: session.customer as string })
+              .eq('id', userId);
+          }
+          console.log(`[godaisy+] Processed checkout for user ${userId}`);
+        } else if (isGrowDaisyEvent(session.metadata) && session.mode === 'payment') {
           await updateGrowProfileFromLifetime(supabase, userId, session);
           const tier = (session.metadata?.tier as GrowSubscriptionTier) || 'sprout';
           await recordGrowEvent(supabase, userId, event.type, event.id, tier, session);
@@ -461,7 +563,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         }
 
         // Route to correct handler based on app
-        if (isGrowDaisyEvent(subscription.metadata)) {
+        if (isGoDaisyPlusEvent(subscription.metadata)) {
+          await updateGoDaisyProfileFromSubscription(supabase, userId, subscription);
+          const tier: GoDaisyTier = (subscription.status === 'active' || subscription.status === 'trialing') ? 'plus' : 'free';
+          await recordGoDaisyEvent(supabase, userId, event.type, event.id, tier, subscription);
+        } else if (isGrowDaisyEvent(subscription.metadata)) {
           await updateGrowProfileFromSubscription(supabase, userId, subscription);
           const tier = (subscription.metadata?.tier as GrowSubscriptionTier) || 'sprout';
           await recordGrowEvent(supabase, userId, event.type, event.id, tier, subscription);
@@ -483,7 +589,20 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         }
 
         // Route to correct handler based on app
-        if (isGrowDaisyEvent(subscription.metadata)) {
+        if (isGoDaisyPlusEvent(subscription.metadata)) {
+          // Go Daisy+ - downgrade to free
+          await supabase
+            .from('profiles')
+            // @ts-expect-error - Supabase type inference issue with profile updates
+            .update({
+              godaisy_subscription_tier: 'free',
+              godaisy_subscription_end: new Date().toISOString(),
+            })
+            .eq('id', userId);
+
+          await recordGoDaisyEvent(supabase, userId, event.type, event.id, 'free', subscription);
+          console.log(`[godaisy+] Subscription cancelled for user ${userId}, downgraded to free`);
+        } else if (isGrowDaisyEvent(subscription.metadata)) {
           // Downgrade to seed tier
           await supabase
             .from('profiles')

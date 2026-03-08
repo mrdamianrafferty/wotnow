@@ -30,6 +30,8 @@ import {
 } from "../types/weather";
 import { useUserPreferences } from "../context/UserPreferencesContext";
 import type { MoonCardProps } from "../components/weather-cards/MoonCard";
+import { useGoDaisySubscription } from '../hooks/useGoDaisySubscription';
+import { GoDaisyLockedOverlay } from '../components/GoDaisyLockedOverlay';
 
 // === DYNAMIC IMPORTS: Header & Dialogs (client-only) ===
 const AppHeader = dynamic(() => import('../components/AppHeader'), { ssr: false });
@@ -275,6 +277,7 @@ export default function WeatherPage() {
 
   // NEW: wire in user preferences for locations
   const { preferences, setPreferences } = useUserPreferences();
+  const { canUse } = useGoDaisySubscription();
   const homeLocation = preferences.locations.find(l => l.type === 'home') || preferences.locations[0] || null;
   const coastalLocation = preferences.locations.find(l => l.type === 'coastal') || null;
 
@@ -489,11 +492,11 @@ export default function WeatherPage() {
         <div className="relative z-20">
           <AppHeader
           homeLocation={homeLocation || undefined}
-          coastalLocation={coastalLocation || undefined}
+          coastalLocation={canUse('coastalLocation') ? (coastalLocation || undefined) : undefined}
           onOpenHomeDialog={() => setOpenHomeDialog(true)}
-          onOpenCoastDialog={() => setOpenCoastDialog(true)}
+          onOpenCoastDialog={canUse('coastalLocation') ? () => setOpenCoastDialog(true) : undefined}
           activeLocationType={activeLocationType}
-          onToggleLocationType={(next) => setActiveLocationType(next)}
+          onToggleLocationType={canUse('coastalLocation') ? (next) => setActiveLocationType(next) : undefined}
         />
       </div>
       {/* Location dialogs */}
@@ -557,7 +560,7 @@ export default function WeatherPage() {
             locationName={safeLocationName}
             isLoading={!Array.isArray(data.hourly) || data.hourly.length === 0}
             activeLocationType={activeLocationType}
-            onToggleLocationType={coastalLocation ? () => setActiveLocationType(prev => prev === 'home' ? 'coastal' : 'home') : undefined}
+            onToggleLocationType={canUse('coastalLocation') && coastalLocation ? () => setActiveLocationType(prev => prev === 'home' ? 'coastal' : 'home') : undefined}
           />
           {apiError && (
             <div className="alert alert-error mt-3 text-sm">
@@ -667,7 +670,15 @@ export default function WeatherPage() {
               <SectionHeader icon="🌡️" title="Atmospheric Conditions" />
               <Row>
                 <Safe fallback={<Card title="Pressure"><div className="flex items-center py-2"><span className="loading loading-ring loading-sm text-secondary" aria-hidden="true"></span><span className="ml-2 opacity-70">Updating</span></div></Card>}>
-                  <div data-testid="card-pressure"><SimplePressureCardDial weather={data} lat={activeLat} title="Pressure" minHpa={960} maxHpa={1040} showTicks={true} showReferenceHand={true} referenceWindowHours={6} className="" /></div>
+                  <div data-testid="card-pressure">
+                    {canUse('environmentalCards') ? (
+                      <SimplePressureCardDial weather={data} lat={activeLat} title="Pressure" minHpa={960} maxHpa={1040} showTicks={true} showReferenceHand={true} referenceWindowHours={6} className="" />
+                    ) : (
+                      <GoDaisyLockedOverlay feature="environmental" compact>
+                        <SimplePressureCardDial weather={data} lat={activeLat} title="Pressure" minHpa={960} maxHpa={1040} showTicks={true} showReferenceHand={true} referenceWindowHours={6} className="" />
+                      </GoDaisyLockedOverlay>
+                    )}
+                  </div>
                 </Safe>
                 <Safe fallback={<Card title="Feels Like"><div className="flex items-center py-2"><span className="loading loading-ring loading-sm text-secondary" aria-hidden="true"></span><span className="ml-2 opacity-70">Updating</span></div></Card>}>
                   <div data-testid="card-feelslike">
@@ -717,20 +728,32 @@ export default function WeatherPage() {
               <Row>
                 <div data-testid="card-uv"><ExternalUVCard weather={{ uvi: data.uvi, sunriseISO: data.sunriseISO, sunsetISO: data.sunsetISO }} today={{ uvi: data.uvi }} /></div>
                 <div data-testid="card-aqi"><ExternalAirQualityCard weather={{ airQuality: airQualityForCard }} aqiAssess={aqiAssessment} /></div>
-                <div data-testid="card-pollen"><ExternalPollenCard
-                  pollenAssess={{ description: getPollenDescription(data.pollen), advice: getPollenAdvice(data.pollen) }}
-                  pollenIdx={pollenIdx}
-                  pollenToday={{
-                    tree_pollen: data.pollen?.tree !== undefined && data.pollen?.tree !== null ? String(data.pollen.tree) : undefined,
-                    grass_pollen: data.pollen?.grass !== undefined && data.pollen?.grass !== null ? String(data.pollen.grass) : undefined,
-                    weed_pollen: data.pollen?.weed !== undefined && data.pollen?.weed !== null ? String(data.pollen.weed) : undefined,
-                    olive_pollen: data.pollen?.olive !== undefined && data.pollen?.olive !== null ? String(data.pollen.olive) : undefined,
-                    alder_pollen: data.pollen?.alder_pollen !== undefined && data.pollen?.alder_pollen !== null ? String(data.pollen.alder_pollen) : undefined,
-                    birch_pollen: data.pollen?.birch_pollen !== undefined && data.pollen?.birch_pollen !== null ? String(data.pollen.birch_pollen) : undefined,
-                    ragweed_pollen: data.pollen?.ragweed_pollen !== undefined && data.pollen?.ragweed_pollen !== null ? String(data.pollen.ragweed_pollen) : undefined,
-                    mugwort_pollen: data.pollen?.mugwort_pollen !== undefined && data.pollen?.mugwort_pollen !== null ? String(data.pollen.mugwort_pollen) : undefined,
-                  }}
-                /></div>
+                <div data-testid="card-pollen">
+                  {canUse('environmentalCards') ? (
+                    <ExternalPollenCard
+                      pollenAssess={{ description: getPollenDescription(data.pollen), advice: getPollenAdvice(data.pollen) }}
+                      pollenIdx={pollenIdx}
+                      pollenToday={{
+                        tree_pollen: data.pollen?.tree !== undefined && data.pollen?.tree !== null ? String(data.pollen.tree) : undefined,
+                        grass_pollen: data.pollen?.grass !== undefined && data.pollen?.grass !== null ? String(data.pollen.grass) : undefined,
+                        weed_pollen: data.pollen?.weed !== undefined && data.pollen?.weed !== null ? String(data.pollen.weed) : undefined,
+                        olive_pollen: data.pollen?.olive !== undefined && data.pollen?.olive !== null ? String(data.pollen.olive) : undefined,
+                        alder_pollen: data.pollen?.alder_pollen !== undefined && data.pollen?.alder_pollen !== null ? String(data.pollen.alder_pollen) : undefined,
+                        birch_pollen: data.pollen?.birch_pollen !== undefined && data.pollen?.birch_pollen !== null ? String(data.pollen.birch_pollen) : undefined,
+                        ragweed_pollen: data.pollen?.ragweed_pollen !== undefined && data.pollen?.ragweed_pollen !== null ? String(data.pollen.ragweed_pollen) : undefined,
+                        mugwort_pollen: data.pollen?.mugwort_pollen !== undefined && data.pollen?.mugwort_pollen !== null ? String(data.pollen.mugwort_pollen) : undefined,
+                      }}
+                    />
+                  ) : (
+                    <GoDaisyLockedOverlay feature="environmental" compact>
+                      <ExternalPollenCard
+                        pollenAssess={{ description: 'Pollen data', advice: '' }}
+                        pollenIdx={0}
+                        pollenToday={{}}
+                      />
+                    </GoDaisyLockedOverlay>
+                  )}
+                </div>
               </Row>
               <Row>
                 <div data-testid="card-moon">
@@ -826,7 +849,15 @@ export default function WeatherPage() {
               <SectionHeader icon="🌡️" title="Atmospheric & Environment" />
               <Row>
                 <Safe fallback={<Card title="Pressure"><div className="flex items-center py-2"><span className="loading loading-ring loading-sm text-secondary" aria-hidden="true"></span><span className="ml-2 opacity-70">Updating</span></div></Card>}>
-                  <div data-testid="card-pressure"><SimplePressureCardDial weather={data} lat={activeLat} title="Pressure" minHpa={960} maxHpa={1040} showTicks={true} showReferenceHand={true} referenceWindowHours={6} className="" /></div>
+                  <div data-testid="card-pressure">
+                    {canUse('environmentalCards') ? (
+                      <SimplePressureCardDial weather={data} lat={activeLat} title="Pressure" minHpa={960} maxHpa={1040} showTicks={true} showReferenceHand={true} referenceWindowHours={6} className="" />
+                    ) : (
+                      <GoDaisyLockedOverlay feature="environmental" compact>
+                        <SimplePressureCardDial weather={data} lat={activeLat} title="Pressure" minHpa={960} maxHpa={1040} showTicks={true} showReferenceHand={true} referenceWindowHours={6} className="" />
+                      </GoDaisyLockedOverlay>
+                    )}
+                  </div>
                 </Safe>
                 <Safe fallback={<Card title="Wind"><div className="flex items-center py-2"><span className="loading loading-ring loading-sm text-secondary" aria-hidden="true"></span><span className="ml-2 opacity-70">Updating</span></div></Card>}>
                   <div data-testid="card-wind"><ExternalWindCard isMarine={false} weather={{ hourly: data.hourly, windSpeedMS: data.hourly?.[0]?.windKts ? data.hourly[0].windKts / 1.94384 : undefined, windDirection: data.hourly?.[0]?.windDirection }} points={mapHourlyToWindPoints(data.hourly)} /></div>
@@ -837,20 +868,32 @@ export default function WeatherPage() {
               </Row>
               <Row>
                 <div data-testid="card-aqi"><ExternalAirQualityCard weather={{ airQuality: airQualityForCard }} aqiAssess={aqiAssessment} /></div>
-                <div data-testid="card-pollen"><ExternalPollenCard
-                  pollenAssess={{ description: getPollenDescription(data.pollen), advice: getPollenAdvice(data.pollen) }}
-                  pollenIdx={pollenIdx}
-                  pollenToday={{
-                    tree_pollen: data.pollen?.tree !== undefined && data.pollen?.tree !== null ? String(data.pollen.tree) : undefined,
-                    grass_pollen: data.pollen?.grass !== undefined && data.pollen?.grass !== null ? String(data.pollen.grass) : undefined,
-                    weed_pollen: data.pollen?.weed !== undefined && data.pollen?.weed !== null ? String(data.pollen.weed) : undefined,
-                    olive_pollen: data.pollen?.olive !== undefined && data.pollen?.olive !== null ? String(data.pollen.olive) : undefined,
-                    alder_pollen: data.pollen?.alder_pollen !== undefined && data.pollen?.alder_pollen !== null ? String(data.pollen.alder_pollen) : undefined,
-                    birch_pollen: data.pollen?.birch_pollen !== undefined && data.pollen?.birch_pollen !== null ? String(data.pollen.birch_pollen) : undefined,
-                    ragweed_pollen: data.pollen?.ragweed_pollen !== undefined && data.pollen?.ragweed_pollen !== null ? String(data.pollen.ragweed_pollen) : undefined,
-                    mugwort_pollen: data.pollen?.mugwort_pollen !== undefined && data.pollen?.mugwort_pollen !== null ? String(data.pollen.mugwort_pollen) : undefined,
-                  }}
-                /></div>
+                <div data-testid="card-pollen">
+                  {canUse('environmentalCards') ? (
+                    <ExternalPollenCard
+                      pollenAssess={{ description: getPollenDescription(data.pollen), advice: getPollenAdvice(data.pollen) }}
+                      pollenIdx={pollenIdx}
+                      pollenToday={{
+                        tree_pollen: data.pollen?.tree !== undefined && data.pollen?.tree !== null ? String(data.pollen.tree) : undefined,
+                        grass_pollen: data.pollen?.grass !== undefined && data.pollen?.grass !== null ? String(data.pollen.grass) : undefined,
+                        weed_pollen: data.pollen?.weed !== undefined && data.pollen?.weed !== null ? String(data.pollen.weed) : undefined,
+                        olive_pollen: data.pollen?.olive !== undefined && data.pollen?.olive !== null ? String(data.pollen.olive) : undefined,
+                        alder_pollen: data.pollen?.alder_pollen !== undefined && data.pollen?.alder_pollen !== null ? String(data.pollen.alder_pollen) : undefined,
+                        birch_pollen: data.pollen?.birch_pollen !== undefined && data.pollen?.birch_pollen !== null ? String(data.pollen.birch_pollen) : undefined,
+                        ragweed_pollen: data.pollen?.ragweed_pollen !== undefined && data.pollen?.ragweed_pollen !== null ? String(data.pollen.ragweed_pollen) : undefined,
+                        mugwort_pollen: data.pollen?.mugwort_pollen !== undefined && data.pollen?.mugwort_pollen !== null ? String(data.pollen.mugwort_pollen) : undefined,
+                      }}
+                    />
+                  ) : (
+                    <GoDaisyLockedOverlay feature="environmental" compact>
+                      <ExternalPollenCard
+                        pollenAssess={{ description: 'Pollen data', advice: '' }}
+                        pollenIdx={0}
+                        pollenToday={{}}
+                      />
+                    </GoDaisyLockedOverlay>
+                  )}
+                </div>
                 <Safe fallback={<Card title="Feels Like"><div className="flex items-center py-2"><span className="loading loading-ring loading-sm text-secondary" aria-hidden="true"></span><span className="ml-2 opacity-70">Updating</span></div></Card>}>
                   <div data-testid="card-feels"><FeelsLike tempC={data.header.tempC ?? 0} humidityPct={data.humidityPct ?? 0} wind={typeof data.hourly?.[0]?.windKts === 'number' ? data.hourly[0].windKts / 1.94384 : 0} /></div>
                 </Safe>
