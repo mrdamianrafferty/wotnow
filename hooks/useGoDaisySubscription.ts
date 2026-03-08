@@ -9,8 +9,8 @@
  * @module hooks/useGoDaisySubscription
  */
 
-import { useState, useEffect, useCallback, useMemo } from 'react';
-import { createClient } from '@/lib/supabase/client';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
+import { supabase } from '@/lib/supabase/client';
 import {
   getCachedGoDaisySubscription,
   setCachedGoDaisySubscription,
@@ -86,7 +86,38 @@ export function useGoDaisySubscription(userId?: string): UseGoDaisySubscriptionS
   const [subscription, setSubscription] = useState<GoDaisySubscriptionStatus | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
-  const supabase = createClient();
+  const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
+
+  // ---------------------------------------------------------------------------
+  // HELPERS
+  // ---------------------------------------------------------------------------
+
+  /**
+   * Map a profile row (from fetch or realtime payload) to subscription status.
+   * Centralises the mapping that was previously duplicated 3×.
+   */
+  const toSubscriptionStatus = useCallback(
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (targetUserId: string, row: Record<string, any>): GoDaisySubscriptionStatus => ({
+      userId: targetUserId,
+      tier: (row.godaisy_subscription_tier as GoDaisyTier) || 'free',
+      subscriptionType: (row.godaisy_subscription_type as GoDaisySubscriptionType | null) ?? null,
+      stripeSubscriptionId: row.godaisy_stripe_subscription_id || null,
+      subscriptionStart: row.godaisy_subscription_start || null,
+      subscriptionEnd: row.godaisy_subscription_end || null,
+    }),
+    []
+  );
+
+  // ---------------------------------------------------------------------------
+  // RESOLVE USER ID (called once, shared between fetch & realtime setup)
+  // ---------------------------------------------------------------------------
+
+  const resolveUserId = useCallback(async (): Promise<string | null> => {
+    if (userId) return userId;
+    const { data: { user } } = await supabase.auth.getUser();
+    return user?.id ?? null;
+  }, [userId]);
 
   // ---------------------------------------------------------------------------
   // FETCH SUBSCRIPTION
@@ -96,30 +127,18 @@ export function useGoDaisySubscription(userId?: string): UseGoDaisySubscriptionS
     try {
       setError(null);
 
-      // Get current user if userId not provided
-      let targetUserId = userId;
+      const targetUserId = await resolveUserId();
       if (!targetUserId) {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user) {
-          // Not logged in — default to free tier (no error)
-          setSubscription(null);
-          setIsLoading(false);
-          return;
-        }
-        targetUserId = user.id;
+        // Not logged in — default to free tier (no error)
+        setSubscription(null);
+        setIsLoading(false);
+        return;
       }
 
       // Try cache first for instant UI feedback
       const cached = await getCachedGoDaisySubscription(targetUserId);
       if (cached) {
-        setSubscription({
-          userId: cached.userId,
-          tier: cached.tier,
-          subscriptionType: cached.subscriptionType,
-          stripeSubscriptionId: cached.stripeSubscriptionId,
-          subscriptionStart: cached.subscriptionStart,
-          subscriptionEnd: cached.subscriptionEnd,
-        });
+        setSubscription(toSubscriptionStatus(targetUserId, cached));
         setIsLoading(false);
       }
 
@@ -148,15 +167,7 @@ export function useGoDaisySubscription(userId?: string): UseGoDaisySubscriptionS
         throw new Error(`Failed to fetch subscription: ${fetchError.message}`);
       }
 
-      const subscriptionData: GoDaisySubscriptionStatus = {
-        userId: targetUserId,
-        tier: (data?.godaisy_subscription_tier as GoDaisyTier) || 'free',
-        subscriptionType: data?.godaisy_subscription_type as GoDaisySubscriptionType | null,
-        stripeSubscriptionId: data?.godaisy_stripe_subscription_id || null,
-        subscriptionStart: data?.godaisy_subscription_start || null,
-        subscriptionEnd: data?.godaisy_subscription_end || null,
-      };
-
+      const subscriptionData = toSubscriptionStatus(targetUserId, data ?? {});
       setSubscription(subscriptionData);
       await setCachedGoDaisySubscription(subscriptionData);
     } catch (err) {
@@ -166,7 +177,7 @@ export function useGoDaisySubscription(userId?: string): UseGoDaisySubscriptionS
     } finally {
       setIsLoading(false);
     }
-  }, [userId, supabase]);
+  }, [resolveUserId, toSubscriptionStatus]);
 
   // ---------------------------------------------------------------------------
   // REAL-TIME SUBSCRIPTION
@@ -179,13 +190,9 @@ export function useGoDaisySubscription(userId?: string): UseGoDaisySubscriptionS
       setIsLoading(true);
       await fetchSubscription();
 
-      // Get user ID for realtime filter
-      let targetUserId = userId;
-      if (!targetUserId) {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user) return;
-        targetUserId = user.id;
-      }
+      // Resolve user ID once (no duplicate getUser call)
+      const targetUserId = await resolveUserId();
+      if (!targetUserId) return;
 
       // Subscribe to profile changes (ONLY for this user)
       const channel = supabase
@@ -201,32 +208,28 @@ export function useGoDaisySubscription(userId?: string): UseGoDaisySubscriptionS
           async (payload) => {
             if (!isMounted || payload.new.id !== targetUserId) return;
 
-            const newData: GoDaisySubscriptionStatus = {
-              userId: targetUserId,
-              tier: (payload.new.godaisy_subscription_tier as GoDaisyTier) || 'free',
-              subscriptionType: payload.new.godaisy_subscription_type as GoDaisySubscriptionType | null,
-              stripeSubscriptionId: payload.new.godaisy_stripe_subscription_id || null,
-              subscriptionStart: payload.new.godaisy_subscription_start || null,
-              subscriptionEnd: payload.new.godaisy_subscription_end || null,
-            };
-
+            const newData = toSubscriptionStatus(targetUserId, payload.new);
             setSubscription(newData);
             await setCachedGoDaisySubscription(newData);
           }
         )
         .subscribe();
 
-      return () => {
-        channel.unsubscribe();
-      };
+      // Store channel ref for cleanup
+      channelRef.current = channel;
     };
 
     setup();
 
     return () => {
       isMounted = false;
+      // Properly unsubscribe the realtime channel on unmount
+      if (channelRef.current) {
+        channelRef.current.unsubscribe();
+        channelRef.current = null;
+      }
     };
-  }, [userId, fetchSubscription, supabase]);
+  }, [userId, fetchSubscription, resolveUserId, toSubscriptionStatus]);
 
   // ---------------------------------------------------------------------------
   // COMPUTED VALUES

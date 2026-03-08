@@ -158,10 +158,24 @@ async function handlePut(
 
   const { status, notes, rating, completed_at } = req.body;
 
+  // Validate status if provided
+  const VALID_STATUSES = ['planned', 'completed', 'skipped', 'cancelled'] as const;
+  if (status !== undefined && !VALID_STATUSES.includes(status)) {
+    return res.status(400).json({ error: `Invalid status. Must be one of: ${VALID_STATUSES.join(', ')}` });
+  }
+
+  // Validate rating if provided (1-5 integer)
+  if (rating !== undefined) {
+    const ratingNum = Number(rating);
+    if (!Number.isInteger(ratingNum) || ratingNum < 1 || ratingNum > 5) {
+      return res.status(400).json({ error: 'Invalid rating. Must be an integer between 1 and 5.' });
+    }
+  }
+
   const updates: Record<string, unknown> = { updated_at: new Date().toISOString() };
   if (status !== undefined) updates.status = status;
   if (notes !== undefined) updates.notes = notes;
-  if (rating !== undefined) updates.rating = rating;
+  if (rating !== undefined) updates.rating = Number(rating);
   if (completed_at !== undefined) updates.completed_at = completed_at;
 
   const { data, error } = await supabase

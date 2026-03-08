@@ -8,7 +8,7 @@
  */
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { createClient } from '@/lib/supabase/client';
+import { supabase } from '@/lib/supabase/client';
 import {
   CalendarPlus,
   Check,
@@ -47,7 +47,6 @@ export function PlannedActivitiesJournal({ className = '' }: PlannedActivitiesJo
   const [activities, setActivities] = useState<PlannedActivity[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const supabase = createClient();
 
   const fetchActivities = useCallback(async () => {
     try {
@@ -78,7 +77,7 @@ export function PlannedActivitiesJournal({ className = '' }: PlannedActivitiesJo
     } finally {
       setLoading(false);
     }
-  }, [supabase]);
+  }, []);
 
   useEffect(() => {
     fetchActivities();

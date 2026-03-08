@@ -31,8 +31,7 @@ import {
   X,
 } from 'lucide-react';
 import { useGoDaisySubscription } from '@/hooks/useGoDaisySubscription';
-import { getStripe } from '@/lib/stripe/client';
-import { createClient } from '@/lib/supabase/client';
+import { supabase } from '@/lib/supabase/client';
 import {
   GODAISY_PRICING,
   formatPrice,
@@ -50,8 +49,6 @@ export default function GoDaisyPlusPage() {
   const [error, setError] = useState('');
   const [promoCode, setPromoCode] = useState('');
   const [promoOpen, setPromoOpen] = useState(false);
-  const supabase = createClient();
-
   // iOS IAP state
   const isIOS = Capacitor.getPlatform() === 'ios';
   const [restoring, setRestoring] = useState(false);
@@ -67,7 +64,7 @@ export default function GoDaisyPlusPage() {
   /**
    * Handle iOS In-App Purchase via RevenueCat
    */
-  const handleIOSPurchase = async () => {
+  const handleIOSPurchase = useCallback(async () => {
     try {
       setLoading(true);
       setError('');
@@ -111,7 +108,7 @@ export default function GoDaisyPlusPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [billingCycle, router, refetch]);
 
   /**
    * Restore previous purchases (Apple requirement)
@@ -168,10 +165,11 @@ export default function GoDaisyPlusPage() {
         throw new Error(data.error || 'Failed to create checkout session');
       }
 
-      const stripeClient = await getStripe();
-      if (stripeClient && data.sessionId) {
-        // @ts-expect-error - redirectToCheckout exists
-        await stripeClient.redirectToCheckout({ sessionId: data.sessionId });
+      // Redirect to Stripe Checkout via session URL (preferred over deprecated redirectToCheckout)
+      if (data.url) {
+        window.location.href = data.url;
+      } else {
+        throw new Error('No checkout URL returned');
       }
     } catch (err) {
       console.error('[godaisy+] Checkout error:', err);
@@ -179,8 +177,7 @@ export default function GoDaisyPlusPage() {
     } finally {
       setLoading(false);
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [billingCycle, promoCode, isIOS, router, supabase]);
+  }, [billingCycle, promoCode, isIOS, router, handleIOSPurchase]);
 
   // Monthly price, annual price, savings
   const monthlyPrice = formatPrice(GODAISY_PRICING.monthly.amount);

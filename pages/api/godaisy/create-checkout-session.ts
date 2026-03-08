@@ -25,6 +25,7 @@ interface CheckoutRequest {
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') {
+    res.setHeader('Allow', 'POST');
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
@@ -68,16 +69,21 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       },
     });
 
-    // Get or create Stripe customer
+    // Get profile and check for existing subscription
     const { data: profile, error: profileError } = await supabase
       .from('profiles')
-      .select('godaisy_stripe_customer_id, stripe_customer_id')
+      .select('godaisy_stripe_customer_id, stripe_customer_id, godaisy_subscription_tier')
       .eq('id', userId)
       .single();
 
     if (profileError) {
       console.error('[godaisy+] Error fetching profile:', profileError);
       return res.status(500).json({ error: 'Failed to fetch user profile' });
+    }
+
+    // Guard: prevent duplicate subscription checkout
+    if (profile?.godaisy_subscription_tier === 'plus') {
+      return res.status(409).json({ error: 'You already have an active Go Daisy+ subscription.' });
     }
 
     // Prefer Go Daisy-specific customer ID, fall back to shared one
