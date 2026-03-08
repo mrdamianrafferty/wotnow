@@ -10,6 +10,7 @@ const eslintConfig = [
   // Ignore build and vendor directories and non-critical debug/scripts
   { ignores: [
     '**/.next/**',
+    '**/.claude/**',
     '**/node_modules/**',
     '**/.vercel/**',
     '**/dist/**',
