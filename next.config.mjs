@@ -279,7 +279,7 @@ const pwaConfig = withPWA({
   // Clean up outdated Workbox caches automatically
   cleanupOutdatedCaches: true,
   // Force cache refresh by changing cacheId
-  cacheId: '20260303-iap-fix',
+  cacheId: '20260308-premium-eof-fix',
   runtimeCaching: [
     // FINDR-SPECIFIC CACHING: Prioritize for offline fishing use
     // Cache Findr pages with CacheFirst for reliable offline access

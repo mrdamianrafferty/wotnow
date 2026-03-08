@@ -66,6 +66,7 @@ export default function GrowPremiumPage() {
   const isIOS = Capacitor.getPlatform() === 'ios';
   const [packages, setPackages] = useState<GrowDaisyPackage[]>([]);
   const [offeringsLoading, setOfferingsLoading] = useState(isIOS);
+  const [offeringsError, setOfferingsError] = useState('');
   const [activating, setActivating] = useState(false);
   const [restoring, setRestoring] = useState(false);
 
@@ -91,9 +92,16 @@ export default function GrowPremiumPage() {
             identifier: p.identifier,
             productId: p.productIdentifier,
           })));
+          if (result.length === 0) {
+            console.warn('[Premium] No packages returned from RevenueCat — check App Store Connect products and RevenueCat offerings');
+            setOfferingsError('Subscriptions are being set up. Please try again shortly.');
+          }
         }
       } catch (err) {
         console.error('[Premium] Failed to load offerings:', err);
+        if (!cancelled) {
+          setOfferingsError('Unable to load subscription options. Please check your connection and try again.');
+        }
       } finally {
         if (!cancelled) setOfferingsLoading(false);
       }
@@ -130,7 +138,11 @@ export default function GrowPremiumPage() {
 
       const pkg = findPackage(tier);
       if (!pkg) {
-        setError('This plan is not available. Please try a different billing cycle.');
+        setError(
+          packages.length === 0
+            ? 'Subscriptions are not yet available. We are finalising setup — please try again shortly.'
+            : 'This plan is not available for the selected billing cycle. Please try a different option.'
+        );
         return;
       }
 
@@ -310,21 +322,31 @@ export default function GrowPremiumPage() {
           {/* Billing Toggle */}
           <div className="flex justify-center mb-8">
             <div className="bg-white rounded-full p-1 shadow-lg inline-flex">
-              {(['monthly', 'annual', 'lifetime'] as BillingCycle[]).map((cycle) => (
-                <button
-                  key={cycle}
-                  onClick={() => setBillingCycle(cycle)}
-                  className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
-                    billingCycle === cycle
-                      ? 'bg-emerald-600 text-white'
-                      : 'text-gray-600 hover:text-emerald-600'
-                  }`}
-                >
-                  {cycle === 'monthly' && 'Monthly'}
-                  {cycle === 'annual' && 'Annual'}
-                  {cycle === 'lifetime' && 'Lifetime'}
-                </button>
-              ))}
+              {(['monthly', 'annual', 'lifetime'] as BillingCycle[]).map((cycle) => {
+                // On iOS, hide billing cycles that have no packages at all
+                if (isIOS && packages.length > 0) {
+                  const hasPackagesForCycle = packages.some(p =>
+                    p.productIdentifier.endsWith(`_${cycle}`)
+                  );
+                  if (!hasPackagesForCycle) return null;
+                }
+
+                return (
+                  <button
+                    key={cycle}
+                    onClick={() => setBillingCycle(cycle)}
+                    className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
+                      billingCycle === cycle
+                        ? 'bg-emerald-600 text-white'
+                        : 'text-gray-600 hover:text-emerald-600'
+                    }`}
+                  >
+                    {cycle === 'monthly' && 'Monthly'}
+                    {cycle === 'annual' && 'Annual'}
+                    {cycle === 'lifetime' && 'Lifetime'}
+                  </button>
+                );
+              })}
             </div>
           </div>
 
@@ -339,6 +361,7 @@ export default function GrowPremiumPage() {
               savings={getSavings('sprout')}
               loading={loadingTier === 'sprout'}
               onSubscribe={() => handleSubscribe('sprout')}
+              iapUnavailable={isIOS && !offeringsLoading && !findPackage('sprout')}
               features={[
                 { icon: Leaf, text: '75 plants' },
                 { icon: Camera, text: '20 AI IDs/month' },
@@ -359,6 +382,7 @@ export default function GrowPremiumPage() {
               savings={getSavings('bloom')}
               loading={loadingTier === 'bloom'}
               onSubscribe={() => handleSubscribe('bloom')}
+              iapUnavailable={isIOS && !offeringsLoading && !findPackage('bloom')}
               recommended
               features={[
                 { icon: Leaf, text: 'Unlimited plants', highlight: true },
@@ -372,7 +396,7 @@ export default function GrowPremiumPage() {
               ]}
             />
 
-            {/* Harvest */}
+            {/* Harvest — not yet for sale */}
             <PricingCard
               tier="harvest"
               currentTier={currentTier}
@@ -382,6 +406,7 @@ export default function GrowPremiumPage() {
               loading={loadingTier === 'harvest'}
               onSubscribe={() => handleSubscribe('harvest')}
               comingSoon
+              iapUnavailable={isIOS && !offeringsLoading && !findPackage('harvest')}
               features={[
                 { icon: Check, text: 'Everything in Bloom' },
                 { icon: MessageSquare, text: 'AI Expert (2/mo)' },
@@ -450,6 +475,16 @@ export default function GrowPremiumPage() {
             </div>
           )}
 
+          {/* Offerings Error (iOS — no products available) */}
+          {isIOS && offeringsError && (
+            <div className="max-w-md mx-auto mb-8">
+              <div className="bg-amber-50 border border-amber-200 text-amber-700 px-4 py-3 rounded-lg text-center">
+                <AlertTriangle className="h-5 w-5 mx-auto mb-2" />
+                {offeringsError}
+              </div>
+            </div>
+          )}
+
           {/* Error Message */}
           {error && (
             <div className="max-w-md mx-auto mb-8">
@@ -497,6 +532,7 @@ interface PricingCardProps {
   onSubscribe: () => void;
   recommended?: boolean;
   comingSoon?: boolean;
+  iapUnavailable?: boolean;
   features: Array<{
     icon: React.ComponentType<{ className?: string }>;
     text: string;
@@ -514,6 +550,7 @@ function PricingCard({
   onSubscribe,
   recommended,
   comingSoon,
+  iapUnavailable,
   features,
 }: PricingCardProps) {
   const router = useRouter();
@@ -599,11 +636,11 @@ function PricingCard({
         ) : (
           <button
             onClick={onSubscribe}
-            disabled={loading || isCurrentTier || comingSoon}
+            disabled={loading || isCurrentTier || comingSoon || iapUnavailable}
             className={`w-full py-3 rounded-lg font-medium transition-colors ${
               isCurrentTier
                 ? 'bg-gray-100 text-gray-500 cursor-not-allowed'
-                : comingSoon
+                : comingSoon || iapUnavailable
                 ? 'bg-amber-50 text-amber-700 cursor-not-allowed'
                 : recommended
                 ? 'bg-emerald-600 hover:bg-emerald-700 text-white'
@@ -618,6 +655,8 @@ function PricingCard({
             ) : isCurrentTier ? (
               'Current Plan'
             ) : comingSoon ? (
+              'Coming Soon'
+            ) : iapUnavailable ? (
               'Coming Soon'
             ) : (
               `Get ${getTierDisplayName(tier)}`

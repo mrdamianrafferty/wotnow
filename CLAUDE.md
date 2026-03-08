@@ -410,6 +410,14 @@ This comprehensive guide covers:
 
 ### 🟢 Current & Active
 
+**Go Daisy+ Subscription:**
+- `GODAISY_PLUS_IMPLEMENTATION_PLAN.md` - ⏳ **PLANNED** - Complete implementation plan for Go Daisy+ free/paid gating (Mar 8, 2026)
+  - Phase 1: Foundation (DB migration, subscription.ts, hook, Stripe/RevenueCat)
+  - Phase 2: Feature gating (homepage, weather, activities, onboarding, coastal)
+  - Phase 3: Monetisation (checkout page, account management, push gating, social, journal)
+  - Phase 4: Growth (promo code system, deep link, code batches)
+  - ~19 dev-days across 4–5 weeks
+
 **Launch Roadmap:**
 - `LAUNCH_ROADMAP.md` - **ACTIVE** - Go Daisy & Grow Daisy launch readiness roadmap (Feb 26, 2026)
   - Phase 1: Unify design system tokens (DaisyUI + shadcn bridge)
