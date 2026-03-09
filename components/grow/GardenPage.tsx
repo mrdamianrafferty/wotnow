@@ -74,6 +74,8 @@ import type { PlantIdentificationResult } from '../../lib/grow/plantIdentificati
 import { TranslatedText } from '../translation/TranslatedFishCard';
 import { useUnifiedLocation } from '../../context/UnifiedLocationContext';
 import { AILimitPrompt } from './premium/UpgradePrompt';
+import { BedLimitGate } from './premium/BedLimitGate';
+import { useGrowSubscription } from '../../hooks/useGrowSubscription';
 import { FeatureErrorBoundary } from '../FeatureErrorBoundary';
 import { BedCard } from './BedCard';
 import { RotationOverview } from './RotationOverview';
@@ -315,6 +317,7 @@ export function GardenPage() {
   const [beds, setBeds] = useState<SerializedBed[]>([]);
   const [isLoadingBeds, setIsLoadingBeds] = useState(false);
   const [isCreateBedOpen, setIsCreateBedOpen] = useState(false);
+  const [isBedLimitGateOpen, setIsBedLimitGateOpen] = useState(false);
   const [newlyAddedBedIds, setNewlyAddedBedIds] = useState<Set<string>>(new Set());
   const [isReorderMode, setIsReorderMode] = useState(false);
   const reorderTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -353,6 +356,9 @@ export function GardenPage() {
   
   // Get user's location for regional context in pest identification
   const { location: userLocation } = useUnifiedLocation();
+
+  // Subscription tier — used for bed limit gating
+  const { tier, limits } = useGrowSubscription();
   
   // Climate zone - default to atlantic_mild for Ireland/UK users
   const userClimateZone = 'atlantic_mild';
@@ -658,6 +664,23 @@ export function GardenPage() {
     if ((plant as Record<string, unknown>).bedId) {
       loadBeds();
     }
+  };
+
+  // Pre-gate: check bed limit before opening CreateBedSheet
+  const handleAddBedClick = () => {
+    const maxBeds = limits.maxBeds;
+    if (tier === 'seed' && maxBeds !== -1 && beds.length >= maxBeds) {
+      setIsBedLimitGateOpen(true);
+      return;
+    }
+    setIsCreateBedOpen(true);
+  };
+
+  // "Start Planting" from BedLimitGate: switch to plants tab + open dialog
+  const handleAddPlantsInstead = () => {
+    setIsBedLimitGateOpen(false);
+    setActiveTab('plants');
+    setTimeout(() => setIsAddPlantDialogOpen(true), 150);
   };
 
   const handleBedCreated = (bed: SerializedBed) => {
@@ -1374,7 +1397,7 @@ export function GardenPage() {
                     <Button
                       size="sm"
                       className="bg-green-600 hover:bg-green-700"
-                      onClick={() => setIsCreateBedOpen(true)}
+                      onClick={handleAddBedClick}
                     >
                       <Plus className="h-4 w-4 mr-1" />
                       Add Bed / Container
@@ -1394,7 +1417,7 @@ export function GardenPage() {
                       Create beds or containers to group your plants by location, type, or growing zone.
                     </p>
                     <Button
-                      onClick={() => setIsCreateBedOpen(true)}
+                      onClick={handleAddBedClick}
                       className="bg-green-600 hover:bg-green-700"
                     >
                       <Plus className="h-4 w-4 mr-2" />
@@ -1477,7 +1500,7 @@ export function GardenPage() {
                     ))}
                     {/* Add Bed card */}
                     <button
-                      onClick={() => setIsCreateBedOpen(true)}
+                      onClick={handleAddBedClick}
                       className="flex flex-col items-center justify-center gap-2 p-6 rounded-lg border-2 border-dashed border-muted-foreground/25 hover:border-green-500 hover:bg-green-50 transition-all text-muted-foreground hover:text-green-600 min-h-[100px]"
                     >
                       <Plus className="h-6 w-6" />
@@ -2798,6 +2821,11 @@ export function GardenPage() {
           setPermacultureFlowActive(true);
           setGuildModalOpen(true);
         }}
+      />
+      <BedLimitGate
+        open={isBedLimitGateOpen}
+        onOpenChange={setIsBedLimitGateOpen}
+        onAddPlantsInstead={handleAddPlantsInstead}
       />
 
       {/* Post-guild guidance overlay */}

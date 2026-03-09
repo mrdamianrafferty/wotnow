@@ -114,9 +114,11 @@ export function CreateBedSheet({ open, onOpenChange, onBedCreated, existingBedCo
         </DialogHeader>
 
         {showUpgradePrompt ? (
-          <div className="text-center py-4 space-y-3">
+          <div className="text-center py-6 space-y-3">
+            <Sprout className="h-8 w-8 text-emerald-500 mx-auto" />
             <p className="text-sm text-muted-foreground">
-              You&apos;ve reached your bed limit. Upgrade to create more beds.
+              You&apos;ve reached your free bed limit.
+              Upgrade for unlimited beds, or add plants without beds in the Plants tab.
             </p>
             <Button
               onClick={() => { window.location.href = '/grow/premium'; }}
