@@ -677,6 +677,8 @@ export class ApiClient {
       sunExposure: string | null;
       moisture: string | null;
       interests: string[];
+      skillLevel: string | null;
+      contentDepth: string | null;
       updatedAt: string | null;
     } | null;
   }> {
