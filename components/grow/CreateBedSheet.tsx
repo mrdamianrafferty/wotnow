@@ -16,6 +16,8 @@ const TYPE_ICONS: Record<BedType, string> = {
   greenhouse: '🏠',
   polytunnel: '🌀',
   other: '📦',
+  veg_patch: '🥬',
+  permaculture_space: '🌳',
 };
 
 /** Friendly default names when creating a new bed of each type */
@@ -26,6 +28,8 @@ const DEFAULT_BED_NAMES: Record<BedType, string> = {
   greenhouse: 'Greenhouse',
   polytunnel: 'Polytunnel',
   other: 'Growing Space',
+  veg_patch: 'Veg Patch',
+  permaculture_space: 'Permaculture Space',
 };
 
 interface CreateBedSheetProps {
@@ -33,9 +37,10 @@ interface CreateBedSheetProps {
   onOpenChange: (open: boolean) => void;
   onBedCreated: (bed: SerializedBed) => void;
   existingBedCount: number;
+  onPermacultureSpaceSelected?: () => void;
 }
 
-export function CreateBedSheet({ open, onOpenChange, onBedCreated, existingBedCount }: CreateBedSheetProps) {
+export function CreateBedSheet({ open, onOpenChange, onBedCreated, existingBedCount, onPermacultureSpaceSelected }: CreateBedSheetProps) {
   const [step, setStep] = useState<'type' | 'name'>('type');
   const [selectedType, setSelectedType] = useState<BedType | null>(null);
   const [name, setName] = useState('');
@@ -51,6 +56,14 @@ export function CreateBedSheet({ open, onOpenChange, onBedCreated, existingBedCo
   };
 
   const handleTypeSelect = (type: BedType) => {
+    if (type === 'permaculture_space' && onPermacultureSpaceSelected) {
+      // Close the sheet and launch the guild flow instead
+      onOpenChange(false);
+      resetState();
+      onPermacultureSpaceSelected();
+      return;
+    }
+
     setSelectedType(type);
     // Auto-populate name with a friendly default + number
     const friendlyName = DEFAULT_BED_NAMES[type];

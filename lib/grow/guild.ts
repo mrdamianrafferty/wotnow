@@ -43,6 +43,7 @@ export interface PermacultureRole {
   name: string;
   description: string;
   icon: string;
+  placement?: string;
   tips?: string[];
 }
 
@@ -81,11 +82,19 @@ export interface GuildCompanion {
 // =============================================================================
 
 const ROLE_CATALOG: Record<string, PermacultureRole> = {
+  focal_plant: {
+    code: 'focal_plant',
+    name: 'Focal Species',
+    description: 'The centrepiece of your guild — all companions support this plant.',
+    icon: '🌟',
+    placement: 'Plant in the centre of your bed or space. Everything else is arranged around it.',
+  },
   nitrogen_fixer: {
     code: 'nitrogen_fixer',
     name: 'Nitrogen Fixer',
     description: 'Improves soil fertility by pulling nitrogen from the air and storing it in the soil.',
     icon: '🟢',
+    placement: 'Plant within 1–2m of the focal plant\'s base, in the root zone.',
     tips: ['Prune lightly each season to encourage vigorous regrowth.'],
   },
   dynamic_accumulator: {
@@ -93,72 +102,84 @@ const ROLE_CATALOG: Record<string, PermacultureRole> = {
     name: 'Dynamic Accumulator',
     description: 'Deep rooted plants that mine minerals and make them available to neighboring species.',
     icon: '⚗️',
+    placement: 'Place at the drip line of the focal plant where roots extend.',
   },
   groundcover: {
     code: 'groundcover',
     name: 'Living Groundcover',
     description: 'Spreads across the soil surface to retain moisture and suppress weeds.',
     icon: '🪴',
+    placement: 'Scatter or plant densely underneath the canopy.',
   },
   pollinator: {
     code: 'pollinator',
     name: 'Pollinator Magnet',
     description: 'Attracts bees and beneficial insects that boost yields and ecosystem health.',
     icon: '🐝',
+    placement: 'Plant around the outer edges to attract bees inward.',
   },
   pest_repellent: {
     code: 'pest_repellent',
     name: 'Pest Repellent',
     description: 'Scents or compounds deter common pests from focusing on your focal crop.',
     icon: '🛡️',
+    placement: 'Interplant close to the focal plant, within arm\'s reach.',
   },
   pest_deterrent: {
     code: 'pest_deterrent',
     name: 'Pest Deterrent',
     description: 'Confuses or repels pests through scent, appearance, or chemical compounds.',
     icon: '🚫',
+    placement: 'Ring around or intersperse amongst vulnerable plants.',
   },
   support_species: {
     code: 'support_species',
     name: 'Structural Support',
     description: 'Provides structural benefits such as shade, wind protection, or trellising.',
     icon: '🌳',
+    placement: 'Plant on the windward side or where shade is needed.',
   },
   beneficial_insect_attractor: {
     code: 'beneficial_insect_attractor',
     name: 'Beneficial Insect Magnet',
     description: 'Feeds the predators that keep pest populations in check.',
     icon: '🦟',
+    placement: 'Place at the margins where insects can forage freely.',
   },
   biomass: {
     code: 'biomass',
     name: 'Biomass Builder',
     description: 'Fast growing plants ideal for chop-and-drop mulch cycles.',
     icon: '🍃',
+    placement: 'Plant nearby for easy chop-and-drop mulching.',
   },
   vine_layer: {
     code: 'vine_layer',
     name: 'Vine Layer',
     description: 'Climbing species that take advantage of vertical space.',
     icon: '🪢',
+    placement: 'Plant at the base of a support structure or the focal tree trunk.',
   },
   ground_worker: {
     code: 'ground_worker',
     name: 'Ground Worker',
     description: 'Root specialists that aerate soil and cycle nutrients.',
     icon: '🪱',
+    placement: 'Scatter throughout the bed to aerate soil everywhere.',
   },
   hedgerow: {
     code: 'hedgerow',
     name: 'Hedgerow',
     description: 'Edge species that provide windbreaks, wildlife corridors, and boundary definition.',
     icon: '🌿',
+    placement: 'Plant along the boundary of your space as a protective border.',
   },
   shade_tree: {
     code: 'shade_tree',
     name: 'Shade Provider',
     description: 'Canopy layer that creates beneficial microclimates for understory plants.',
     icon: '🌲',
+    placement: 'Position to the south or west to create afternoon shade.',
   },
 };
 
@@ -344,7 +365,27 @@ async function fetchCompanionsForBlueprint(
   const plantMap = new Map((plants || []).map(p => [p.slug, p]));
   const focalPlant = plantMap.get(blueprint.focal_slug);
 
-  return members.map(m => {
+  const focalRoleInfo = ROLE_CATALOG.focal_plant;
+
+  // Prepend the focal plant itself as the first companion
+  const focalCompanion: GuildCompanion = {
+    guildId: blueprint.id,
+    guildName: blueprint.name,
+    guildDescription: blueprint.description || undefined,
+    focalName: focalPlant?.name || blueprint.focal_slug.replace(/-/g, ' '),
+    focalSlug: blueprint.focal_slug,
+    focalCategory: focalPlant?.category || undefined,
+    climateZoneCode: blueprint.climate_zone_code,
+    companionName: focalPlant?.name || blueprint.focal_slug.replace(/-/g, ' '),
+    companionSlug: blueprint.focal_slug,
+    companionCategory: focalPlant?.category || undefined,
+    role: 'focal_plant',
+    roleDisplay: focalRoleInfo.name,
+    roleDescription: focalRoleInfo.description,
+    rankInRole: 0,
+  };
+
+  const companions = members.map(m => {
     const plant = plantMap.get(m.plant_slug);
     const roleInfo = ROLE_CATALOG[m.role];
 
@@ -366,6 +407,8 @@ async function fetchCompanionsForBlueprint(
       rankInRole: m.rank_in_role || undefined,
     };
   });
+
+  return [focalCompanion, ...companions];
 }
 
 /**

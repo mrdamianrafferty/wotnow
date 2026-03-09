@@ -4,7 +4,7 @@ import { serializeBed, buildPlantSummary, buildLastActivity, nextBedColor, type 
 import { getSupabaseServerClient } from '../../../../lib/supabase/serverClient';
 import { getTierLimits, isOverLimit, type GrowSubscriptionTier } from '../../../../lib/grow/subscription';
 
-const ALLOWED_TYPES = new Set(['raised_bed', 'container', 'in_ground', 'greenhouse', 'polytunnel', 'other']);
+const ALLOWED_TYPES = new Set(['raised_bed', 'container', 'in_ground', 'greenhouse', 'polytunnel', 'other', 'veg_patch', 'permaculture_space']);
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'GET' && req.method !== 'POST') {

@@ -16,7 +16,7 @@ import { Input } from '../ui/input';
 import { Badge } from '../ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
 import { ScrollArea } from '../ui/scroll-area';
-import { Separator } from '../ui/separator';
+// Separator removed — no longer needed after focal plant joined role groups
 import { Alert, AlertDescription } from '../ui/alert';
 import { Checkbox } from '../ui/checkbox';
 import { 
@@ -40,21 +40,72 @@ import {
   type GuildCompanion,
   type PermacultureRole
 } from '../../lib/grow/guild';
+import type { SerializedBed } from '../../lib/grow/server/beds';
+
+/** Format raw climate zone string for display: "usda_5b" → "USDA 5b" */
+function formatClimateZone(zone: string): string {
+  if (!zone) return 'Unknown';
+  return zone
+    .replace(/^usda[_-]/i, 'USDA ')
+    .replace(/_/g, ' ');
+}
+
+/** Collapsible intro explaining companion planting for beginners */
+function GuildIntroCard() {
+  const [expanded, setExpanded] = useState(false);
+
+  return (
+    <button
+      type="button"
+      onClick={() => setExpanded(!expanded)}
+      className="w-full text-left rounded-lg border border-green-200 bg-green-50 p-3 transition-colors hover:bg-green-100"
+    >
+      <div className="flex items-center justify-between">
+        <span className="text-sm font-medium text-green-800 flex items-center gap-2">
+          <Leaf className="h-4 w-4" />
+          How does companion planting work?
+        </span>
+        {expanded ? (
+          <ChevronUp className="h-4 w-4 text-green-600" />
+        ) : (
+          <ChevronDown className="h-4 w-4 text-green-600" />
+        )}
+      </div>
+      {expanded && (
+        <p className="mt-2 text-sm text-green-700 leading-relaxed">
+          Some plants grow better together — they share nutrients, attract helpful insects,
+          or repel pests for their neighbours. Pick a main plant below to see its best companions,
+          then choose which ones to add to your garden.
+        </p>
+      )}
+    </button>
+  );
+}
+
+export interface GuildSelectionMeta {
+  guildName: string;
+  bedId?: string;
+}
 
 interface GuildModalProps {
   open: boolean;
   onClose: () => void;
   climateZone: string;
-  onGuildSelected?: (companions: GuildCompanion[]) => void;
+  isPermacultureMode?: boolean;
+  beds?: SerializedBed[];
+  onGuildSelected?: (companions: GuildCompanion[], meta?: GuildSelectionMeta) => void;
 }
 
-export function GuildModalEnhanced({ 
-  open, 
-  onClose, 
+export function GuildModalEnhanced({
+  open,
+  onClose,
   climateZone,
-  onGuildSelected 
+  isPermacultureMode,
+  beds = [],
+  onGuildSelected
 }: GuildModalProps) {
-  const [step, setStep] = useState<'browse' | 'details'>('browse');
+  const [step, setStep] = useState<'browse' | 'details' | 'assign-bed'>('browse');
+  const [selectedBedId, setSelectedBedId] = useState<string | null>(null);
   const [blueprints, setBlueprints] = useState<GuildBlueprint[]>([]);
   const [filteredBlueprints, setFilteredBlueprints] = useState<GuildBlueprint[]>([]);
   const [allCompanions, setAllCompanions] = useState<GuildCompanion[]>([]);
@@ -133,12 +184,17 @@ export function GuildModalEnhanced({
       if (companions.length > 0) {
         setAllCompanions(companions);
         
-        // Auto-select top 2 per role (smart defaults)
+        // Auto-select focal plant + top 2 per role (smart defaults)
         const autoSelected = new Set<string>();
         const byRole = groupAndDeduplicateByRole(companions);
-        
-        Object.values(byRole).forEach(comps => {
-          comps.slice(0, 2).forEach(c => autoSelected.add(c.companionSlug));
+
+        Object.entries(byRole).forEach(([role, comps]) => {
+          if (role === 'focal_plant') {
+            // Always select focal plant
+            comps.forEach(c => autoSelected.add(c.companionSlug));
+          } else {
+            comps.slice(0, 2).forEach(c => autoSelected.add(c.companionSlug));
+          }
         });
         
         setSelectedSlugs(autoSelected);
@@ -164,15 +220,34 @@ export function GuildModalEnhanced({
   }
 
   function handleConfirm() {
-    if (selectedSlugs.size > 0 && onGuildSelected) {
-      // Deduplicate by role first (same logic as UI display)
+    if (selectedSlugs.size === 0) return;
+
+    // In permaculture mode, skip bed selection (bed is auto-created)
+    if (isPermacultureMode) {
+      finalizeSelection();
+      return;
+    }
+
+    // In standard mode, show bed selection step if beds available
+    if (beds.length > 0) {
+      setStep('assign-bed');
+      return;
+    }
+
+    // No beds available — just add plants without a bed
+    finalizeSelection();
+  }
+
+  function finalizeSelection(bedId?: string) {
+    if (onGuildSelected) {
       const deduped = groupAndDeduplicateByRole(allCompanions);
-      
-      // Flatten all roles and filter by selected slugs
       const allDedupedCompanions = Object.values(deduped).flat();
-      const selected = allDedupedCompanions.filter(c => selectedSlugs.has(c.companionSlug));
-      
-      onGuildSelected(selected);
+      const selected = allDedupedCompanions.filter(
+        c => c.role === 'focal_plant' || selectedSlugs.has(c.companionSlug)
+      );
+
+      const guildName = allCompanions[0]?.guildName || 'Guild';
+      onGuildSelected(selected, { guildName, bedId });
     }
     onClose();
   }
@@ -221,18 +296,21 @@ export function GuildModalEnhanced({
             <DialogHeader>
               <DialogTitle className="flex items-center gap-2">
                 <Trees className="h-5 w-5 text-green-600" />
-                Make Me a Guild
+                Companion Planting
               </DialogTitle>
               <DialogDescription>
-                Choose a focal species to build a permaculture companion planting guild
+                Find plants that help each other grow
               </DialogDescription>
             </DialogHeader>
+
+            {/* How guilds work intro */}
+            <GuildIntroCard />
 
             {/* Search */}
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
-                placeholder="Search fruit trees..."
+                placeholder="Search plants..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="pl-9"
@@ -243,7 +321,7 @@ export function GuildModalEnhanced({
             <Alert>
               <Info className="h-4 w-4" />
               <AlertDescription>
-                Showing guilds for <strong>{climateZone}</strong> climate zone
+                Showing guilds for <strong>{formatClimateZone(climateZone)}</strong> climate zone
               </AlertDescription>
             </Alert>
 
@@ -337,13 +415,89 @@ export function GuildModalEnhanced({
                 <Button variant="outline" onClick={handleBack}>
                   Back
                 </Button>
-                <Button 
-                  onClick={handleConfirm} 
+                <Button
+                  onClick={handleConfirm}
                   className="bg-green-600 hover:bg-green-700"
                   disabled={actualSelectedCount === 0}
                 >
                   <CheckCircle2 className="h-4 w-4 mr-2" />
-                  Add {actualSelectedCount} Plants
+                  {isPermacultureMode
+                    ? `Create Space & Add ${actualSelectedCount} Plants`
+                    : beds.length > 0
+                      ? `Next: Choose a Bed`
+                      : `Add ${actualSelectedCount} Plants`
+                  }
+                </Button>
+              </div>
+            </div>
+          </>
+        )}
+
+        {/* Step 3: Assign to Bed */}
+        {step === 'assign-bed' && (
+          <>
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <Sprout className="h-5 w-5 text-green-600" />
+                Where should these plants go?
+              </DialogTitle>
+              <DialogDescription>
+                Choose a bed or add them to your garden without a bed
+              </DialogDescription>
+            </DialogHeader>
+
+            <ScrollArea className="h-[400px] pr-4">
+              <div className="space-y-2">
+                {beds.map((bed) => (
+                  <Card
+                    key={bed.id}
+                    className={`cursor-pointer transition-all ${
+                      selectedBedId === bed.id
+                        ? 'bg-green-50 border-green-400 ring-1 ring-green-400'
+                        : 'hover:border-green-200'
+                    }`}
+                    onClick={() => setSelectedBedId(bed.id)}
+                  >
+                    <CardContent className="p-3 flex items-center justify-between">
+                      <div>
+                        <p className="font-medium text-sm">{bed.name}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {bed.plantCount} plant{bed.plantCount !== 1 ? 's' : ''}
+                          {bed.plantSummary ? ` · ${bed.plantSummary}` : ''}
+                        </p>
+                      </div>
+                      {selectedBedId === bed.id && (
+                        <CheckCircle2 className="h-5 w-5 text-green-600" />
+                      )}
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            </ScrollArea>
+
+            <div className="flex items-center justify-between pt-4">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  setSelectedBedId(null);
+                  finalizeSelection();
+                }}
+                className="text-muted-foreground"
+              >
+                Skip — add without a bed
+              </Button>
+              <div className="flex gap-2">
+                <Button variant="outline" onClick={() => setStep('details')}>
+                  Back
+                </Button>
+                <Button
+                  onClick={() => finalizeSelection(selectedBedId || undefined)}
+                  className="bg-green-600 hover:bg-green-700"
+                  disabled={!selectedBedId}
+                >
+                  <CheckCircle2 className="h-4 w-4 mr-2" />
+                  Add to {beds.find(b => b.id === selectedBedId)?.name || 'Bed'}
                 </Button>
               </div>
             </div>
@@ -425,6 +579,7 @@ function GuildDetailsWithSelection({
   const deduplicatedByRole = groupAndDeduplicateByRole(companions);
 
   const roleOrder = [
+    'focal_plant',
     'nitrogen_fixer',
     'dynamic_accumulator',
     'groundcover',
@@ -435,6 +590,7 @@ function GuildDetailsWithSelection({
     'support_species',
     'biomass',
     'vine_layer',
+    'ground_worker',
     'hedgerow',
     'shade_tree'
   ];
@@ -449,43 +605,26 @@ function GuildDetailsWithSelection({
   return (
     <ScrollArea className="h-[500px] pr-4">
       <div className="space-y-6">
-        {/* Focal Species */}
-        <div>
-          <div className="flex items-center gap-2 mb-2">
-            <Trees className="h-5 w-5 text-green-600" />
-            <h3 className="font-semibold">Focal Species</h3>
-          </div>
-          <Card>
-            <CardContent className="pt-6">
-              <p className="font-medium">{companions[0]?.focalName}</p>
-              <Badge variant="secondary" className="mt-2">
-                {companions[0]?.climateZoneCode}
-              </Badge>
-            </CardContent>
-          </Card>
-        </div>
-
-        <Separator />
-
-        {/* Companion Plants by Role */}
+        {/* All Plants by Role (focal first, then companions) */}
         <div>
           <div className="flex items-center gap-2 mb-3">
             <Leaf className="h-5 w-5 text-green-600" />
             <h3 className="font-semibold">
-              Companion Plants ({orderedRoles.reduce((sum, r) => sum + r.companions.length, 0)} unique species)
+              Guild Plants ({orderedRoles.reduce((sum, r) => sum + r.companions.length, 0)} species)
             </h3>
           </div>
 
           <div className="space-y-4">
             {orderedRoles.map((roleGroup) => {
               const roleInfo: PermacultureRole | undefined = getPermacultureRole(roleGroup.roleCode);
+              const isFocal = roleGroup.roleCode === 'focal_plant';
               const isExpanded = expandedRoles.has(roleGroup.roleCode);
               const topN = 2; // Show 2 by default
-              const hasMore = roleGroup.companions.length > topN;
-              const displayedCompanions = isExpanded 
-                ? roleGroup.companions 
-                : roleGroup.companions.slice(0, topN);
-              
+              const hasMore = !isFocal && roleGroup.companions.length > topN;
+              const displayedCompanions = isFocal
+                ? roleGroup.companions
+                : (isExpanded ? roleGroup.companions : roleGroup.companions.slice(0, topN));
+
               const allSelected = roleGroup.companions.every(c => selectedSlugs.has(c.companionSlug));
 
               return (
@@ -494,42 +633,60 @@ function GuildDetailsWithSelection({
                     <div className="flex items-center gap-2">
                       <span className="text-xl">{roleInfo?.icon || '🌿'}</span>
                       <h4 className="font-medium">{roleInfo?.name || roleGroup.roleCode}</h4>
-                      <Badge variant="secondary" className="text-xs">
-                        {roleGroup.companions.length}
-                      </Badge>
+                      {!isFocal && (
+                        <Badge variant="secondary" className="text-xs">
+                          {roleGroup.companions.length}
+                        </Badge>
+                      )}
+                      {isFocal && (
+                        <Badge className="text-xs bg-green-600">Your Main Plant</Badge>
+                      )}
                     </div>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => allSelected 
-                        ? onDeselectAll(roleGroup.companions)
-                        : onSelectAll(roleGroup.companions)
-                      }
-                      className="text-xs h-7"
-                    >
-                      {allSelected ? 'Deselect all' : 'Select all'}
-                    </Button>
+                    {!isFocal && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => allSelected
+                          ? onDeselectAll(roleGroup.companions)
+                          : onSelectAll(roleGroup.companions)
+                        }
+                        className="text-xs h-7"
+                      >
+                        {allSelected ? 'Deselect all' : 'Select all'}
+                      </Button>
+                    )}
                   </div>
-                  <p className="text-xs text-muted-foreground mb-2">{roleInfo?.description || ''}</p>
+                  <p className="text-xs text-muted-foreground mb-1">{roleInfo?.description || ''}</p>
+                  {roleInfo?.placement && (
+                    <p className="text-xs text-green-700 bg-green-50 rounded px-2 py-1 mb-2 flex items-center gap-1">
+                      📍 {roleInfo.placement}
+                    </p>
+                  )}
                   
                   <div className="space-y-2 ml-6">
                     {displayedCompanions.map((companion) => {
-                      const isSelected = selectedSlugs.has(companion.companionSlug);
+                      const isFocalCompanion = companion.role === 'focal_plant';
+                      const isSelected = isFocalCompanion || selectedSlugs.has(companion.companionSlug);
                       const isPriority = (companion.rankInRole || 999) <= 2; // Top 2 get priority star
-                      
+
                       return (
-                        <Card 
-                          key={companion.companionSlug} 
-                          className={`cursor-pointer transition-all ${
-                            isSelected ? 'bg-green-50 border-green-300' : 'bg-muted/50 hover:border-green-200'
+                        <Card
+                          key={companion.companionSlug}
+                          className={`transition-all ${
+                            isFocalCompanion
+                              ? 'bg-green-100 border-green-400'
+                              : isSelected
+                                ? 'bg-green-50 border-green-300 cursor-pointer'
+                                : 'bg-muted/50 hover:border-green-200 cursor-pointer'
                           }`}
-                          onClick={() => onToggle(companion.companionSlug)}
+                          onClick={() => !isFocalCompanion && onToggle(companion.companionSlug)}
                         >
                           <CardContent className="p-3">
                             <div className="flex items-start gap-3">
-                              <Checkbox 
+                              <Checkbox
                                 checked={isSelected}
-                                onCheckedChange={() => onToggle(companion.companionSlug)}
+                                disabled={isFocalCompanion}
+                                onCheckedChange={() => !isFocalCompanion && onToggle(companion.companionSlug)}
                                 className="mt-0.5"
                               />
                               <div className="flex-1">

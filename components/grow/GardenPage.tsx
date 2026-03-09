@@ -33,6 +33,7 @@ import {
 import Link from 'next/link';
 import dynamic from 'next/dynamic';
 import type { GuildCompanion } from '../../lib/grow/guild';
+import type { GuildSelectionMeta } from './GuildModalEnhanced';
 import { api, type GardenPhoto } from '../../lib/grow/api';
 import { useScreenTracking } from '../../lib/performance';
 import type { PlantSpecies } from '../../lib/grow/species';
@@ -55,6 +56,11 @@ const EditPlantDialog = dynamic(() => import('./EditPlantDialog').then(mod => ({
 });
 
 const CreateBedSheet = dynamic(() => import('./CreateBedSheet').then(mod => ({ default: mod.CreateBedSheet })), {
+  ssr: false,
+  loading: () => null
+});
+
+const PostGuildGuidanceCard = dynamic(() => import('./PostGuildGuidanceCard').then(mod => ({ default: mod.PostGuildGuidanceCard })), {
   ssr: false,
   loading: () => null
 });
@@ -264,6 +270,8 @@ export function GardenPage() {
   const [showAILimitPrompt, setShowAILimitPrompt] = useState(false);
   const [aiLimitType, setAiLimitType] = useState<'plant_id' | 'pest_diagnosis'>('plant_id');
   const [guildModalOpen, setGuildModalOpen] = useState(false);
+  const [permacultureFlowActive, setPermacultureFlowActive] = useState(false);
+  const [postGuildInfo, setPostGuildInfo] = useState<{ bedName: string; plantCount: number; guildName: string } | null>(null);
   const [isLoadingPlants, setIsLoadingPlants] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [isAddPlantDialogOpen, setIsAddPlantDialogOpen] = useState(false);
@@ -1028,10 +1036,11 @@ export function GardenPage() {
     }
   };
 
-  const handleGuildSelected = async (companions: GuildCompanion[]) => {
-    console.log('🌱 [GardenPage] handleGuildSelected called with', companions.length, 'companions');
-    console.log('🌱 [GardenPage] Current plants state:', plants.map(p => ({ id: p.id, name: p.name })));
-    
+  const handleGuildSelected = async (companions: GuildCompanion[], meta?: GuildSelectionMeta) => {
+    console.log('🌱 [GardenPage] handleGuildSelected called with', companions.length, 'companions, meta:', meta);
+    const isPermaculture = permacultureFlowActive;
+    setPermacultureFlowActive(false); // Reset flag
+
     // Check auth
     const token = localStorage.getItem('access_token');
     if (!token) {
@@ -1041,73 +1050,138 @@ export function GardenPage() {
       redirectToLogin();
       return;
     }
-    
+
     // Convert companions to Plant format
     const newPlants: Plant[] = companions.map((c, index) => ({
-      id: `temp-${Date.now()}-${index}`, // Temporary ID, backend will generate real one
+      id: `temp-${Date.now()}-${index}`,
       name: c.companionName,
       type: c.companionCategory || 'Companion',
       planted: new Date(),
-      location: 'Guild Planting',
+      location: isPermaculture ? 'Permaculture Space' : 'Guild Planting',
       health: 'good' as const,
       notes: c.notes || `Added from ${c.guildName || 'guild'}. Role: ${c.role}`
     }));
-    
-    console.log('🌱 [GardenPage] Converted', newPlants.length, 'companions to Plant format');
-    
+
     // Deduplicate: Check if plant with same name already exists
     const existingNames = new Set(plants.map(p => p.name.toLowerCase()));
-    console.log('🌱 [GardenPage] Existing plant names:', Array.from(existingNames));
-    
     const uniqueNewPlants = newPlants.filter(
       p => !existingNames.has(p.name.toLowerCase())
     );
     const duplicateCount = newPlants.length - uniqueNewPlants.length;
-    
-    console.log('🌱 [GardenPage] Unique new plants:', uniqueNewPlants.length);
-    console.log('🌱 [GardenPage] Duplicate count:', duplicateCount);
-    
+
     if (uniqueNewPlants.length === 0) {
       toast.info('All selected plants are already in your garden!', {
         description: 'No new plants were added.',
       });
       return;
     }
-    
-    // Save to backend
+
     try {
       setIsSaving(true);
-      console.log('💾 [GardenPage] Calling api.bulkAddPlants with', uniqueNewPlants.length, 'plants...');
+
+      // Step 1: Save plants to backend
       const response = await api.bulkAddPlants(uniqueNewPlants);
-      console.log('💾 [GardenPage] Backend response:', response);
-      
-      // Update local state with backend IDs
+      let savedPlants: Plant[] = [];
+
       if (Array.isArray(response?.plants)) {
-        const savedPlants = (response.plants as Array<RawPlant & { createdAt?: string | Date | null }>)
+        savedPlants = (response.plants as Array<RawPlant & { createdAt?: string | Date | null }>)
           .map((plant) => normalizePlant({
             ...plant,
             planted: plant.planted ?? plant.createdAt ?? new Date().toISOString(),
           }));
-        
-        console.log('💾 [GardenPage] Saved plants from backend:', savedPlants.map((p: Plant) => ({ id: p.id, name: p.name })));
-        
-        setPlants(prevPlants => {
-          const updated = [...prevPlants, ...savedPlants];
-          console.log('🌱 [GardenPage] Updated plants state. Total now:', updated.length);
-          return updated;
-        });
-        
-        console.log(`✅ [GardenPage] Successfully saved ${savedPlants.length} plants to backend`);
+
+        setPlants(prevPlants => [...prevPlants, ...savedPlants]);
       } else {
-        console.warn('⚠️ [GardenPage] Backend response missing plants array');
-        // Fallback: add to local state even if backend fails
         setPlants(prevPlants => [...prevPlants, ...uniqueNewPlants]);
+        savedPlants = uniqueNewPlants;
+      }
+
+      // Step 2: If permaculture mode, auto-create a bed and assign plants
+      if (isPermaculture && meta?.guildName) {
+        try {
+          const bedName = `${meta.guildName} ${beds.length + 1}`;
+          const bedResponse = await api.createBed({ name: bedName, type: 'permaculture_space' });
+          const newBed = bedResponse?.bed as SerializedBed;
+
+          if (newBed) {
+            // Add bed to local state
+            handleBedCreated(newBed);
+
+            // Assign saved plants to the new bed
+            const plantIds = savedPlants.map(p => p.id).filter(id => !id.startsWith('temp-'));
+            if (plantIds.length > 0) {
+              const assignments = plantIds.map(plantId => ({ plantId, quantity: 1 }));
+              await api.assignPlantsToBed(newBed.id, assignments);
+            }
+
+            // Show post-guild guidance
+            setPostGuildInfo({
+              bedName: newBed.name,
+              plantCount: savedPlants.length,
+              guildName: meta.guildName,
+            });
+
+            // Switch to beds tab and show the new bed
+            setActiveTab('beds');
+            toast.success(`${newBed.name} created with ${savedPlants.length} plants! 🌳`, {
+              description: 'Your permaculture space is ready.',
+            });
+            return; // Skip the default toast below
+          }
+        } catch (bedError) {
+          console.error('❌ [GardenPage] Failed to create permaculture bed:', bedError);
+          toast.warning('Plants added, but bed creation failed', {
+            description: 'You can manually create a bed and assign these plants later.',
+          });
+        }
+      }
+
+      // Step 3: If a bed was selected (standard flow), assign plants to it
+      if (!isPermaculture && meta?.bedId) {
+        try {
+          const plantIds = savedPlants.map(p => p.id).filter(id => !id.startsWith('temp-'));
+          if (plantIds.length > 0) {
+            const assignments = plantIds.map(plantId => ({ plantId, quantity: 1 }));
+            await api.assignPlantsToBed(meta.bedId, assignments);
+          }
+
+          const bed = beds.find(b => b.id === meta.bedId);
+          setPostGuildInfo({
+            bedName: bed?.name || 'Bed',
+            plantCount: savedPlants.length,
+            guildName: meta.guildName,
+          });
+
+          setActiveTab('beds');
+          toast.success(`Added ${savedPlants.length} plants to ${bed?.name || 'bed'}! 🌱`, {
+            description: 'Plants have been assigned to your bed.',
+          });
+          return;
+        } catch (assignError) {
+          console.error('❌ [GardenPage] Failed to assign plants to bed:', assignError);
+          toast.warning('Plants added to garden, but bed assignment failed', {
+            description: 'You can manually assign them to a bed later.',
+          });
+        }
+      }
+
+      // Default: switch to plants tab
+      setActiveTab('plants');
+
+      // Show success toast
+      if (duplicateCount > 0) {
+        toast.success(`Added ${uniqueNewPlants.length} new plants! 🌱`, {
+          description: `Skipped ${duplicateCount} duplicate${duplicateCount > 1 ? 's' : ''} already in your garden.`,
+        });
+      } else {
+        toast.success(`Added ${uniqueNewPlants.length} plants to your garden! 🌱`, {
+          description: uniqueNewPlants.slice(0, 3).map(p => p.name).join(', ') + (uniqueNewPlants.length > 3 ? ` and ${uniqueNewPlants.length - 3} more` : ''),
+        });
       }
     } catch (error: unknown) {
       console.error('❌ [GardenPage] Failed to save plants to backend:', error);
       const err = error as { message?: string };
-      console.error('❌ [GardenPage] Error message:', err.message);
-      
+
       if (err?.message === 'Not authenticated') {
         toast.error('Please sign in to add plants to your garden.', {
           description: 'Redirecting you to the sign-in page.',
@@ -1123,20 +1197,6 @@ export function GardenPage() {
       });
     } finally {
       setIsSaving(false);
-    }
-    
-    // Switch to plants tab to show the new additions
-    setActiveTab('plants');
-    
-    // Show success toast
-    if (duplicateCount > 0) {
-      toast.success(`Added ${uniqueNewPlants.length} new plants! 🌱`, {
-        description: `Skipped ${duplicateCount} duplicate${duplicateCount > 1 ? 's' : ''} already in your garden.`,
-      });
-    } else {
-      toast.success(`Added ${uniqueNewPlants.length} plants to your garden! 🌱`, {
-        description: uniqueNewPlants.slice(0, 3).map(p => p.name).join(', ') + (uniqueNewPlants.length > 3 ? ` and ${uniqueNewPlants.length - 3} more` : ''),
-      });
     }
   };
 
@@ -1277,7 +1337,7 @@ export function GardenPage() {
                 ) : (
                   <Trees className="h-4 w-4" />
                 )}
-                Make a Guild
+                Companion Planting
               </Button>
               <Button
                 className="flex items-center gap-2 bg-green-600 hover:bg-green-700"
@@ -2694,8 +2754,13 @@ export function GardenPage() {
       {/* Guild Modal */}
       <GuildModalEnhanced
         open={guildModalOpen}
-        onClose={() => setGuildModalOpen(false)}
+        onClose={() => {
+          setGuildModalOpen(false);
+          setPermacultureFlowActive(false);
+        }}
         climateZone={userClimateZone}
+        isPermacultureMode={permacultureFlowActive}
+        beds={beds}
         onGuildSelected={handleGuildSelected}
       />
       <AddPlantDialog
@@ -2723,7 +2788,21 @@ export function GardenPage() {
         onOpenChange={setIsCreateBedOpen}
         onBedCreated={handleBedCreated}
         existingBedCount={beds.length}
+        onPermacultureSpaceSelected={() => {
+          setPermacultureFlowActive(true);
+          setGuildModalOpen(true);
+        }}
       />
+
+      {/* Post-guild guidance overlay */}
+      {postGuildInfo && (
+        <PostGuildGuidanceCard
+          bedName={postGuildInfo.bedName}
+          plantCount={postGuildInfo.plantCount}
+          guildName={postGuildInfo.guildName}
+          onDismiss={() => setPostGuildInfo(null)}
+        />
+      )}
     </div>
     </>
   );

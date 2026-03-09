@@ -1,4 +1,4 @@
-export type BedType = 'raised_bed' | 'container' | 'in_ground' | 'greenhouse' | 'polytunnel' | 'other';
+export type BedType = 'raised_bed' | 'container' | 'in_ground' | 'greenhouse' | 'polytunnel' | 'other' | 'veg_patch' | 'permaculture_space';
 export type BedColor = 'terracotta' | 'sage' | 'cornflower' | 'sunflower' | 'slate' | 'plum';
 export type SunExposure = 'full_sun' | 'partial_shade' | 'full_shade';
 
@@ -173,6 +173,8 @@ export const BED_TYPES: Record<BedType, string> = {
   greenhouse: 'Greenhouse',
   polytunnel: 'Polytunnel',
   other: 'Other',
+  veg_patch: 'Veg Patch',
+  permaculture_space: 'Permaculture Space',
 };
 
 export function nextBedColor(existingCount: number): BedColor {
