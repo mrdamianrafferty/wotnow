@@ -82,3 +82,9 @@ android/*.keystore
 
 # Apple APNs auth keys
 *.p8
+
+# Claude Code worktrees
+.claude/worktrees/
+
+# Temporary preview files
+glossary-preview.html
