@@ -185,17 +185,15 @@ export function GuildModalEnhanced({
       if (companions.length > 0) {
         setAllCompanions(companions);
         
-        // Auto-select focal plant + top 2 per role (smart defaults)
+        // Only auto-select the focal plant — let user choose companions
         const autoSelected = new Set<string>();
         const byRole = groupAndDeduplicateByRole(companions);
 
         Object.entries(byRole).forEach(([role, comps]) => {
           if (role === 'focal_plant') {
-            // Always select focal plant
             comps.forEach(c => autoSelected.add(c.companionSlug));
-          } else {
-            comps.slice(0, 2).forEach(c => autoSelected.add(c.companionSlug));
           }
+          // Non-focal companions start deselected so the user actively chooses
         });
         
         setSelectedSlugs(autoSelected);
