@@ -18,6 +18,16 @@ const TYPE_ICONS: Record<BedType, string> = {
   other: '📦',
 };
 
+/** Friendly default names when creating a new bed of each type */
+const DEFAULT_BED_NAMES: Record<BedType, string> = {
+  raised_bed: 'Raised Bed',
+  container: 'Container',
+  in_ground: 'Garden Bed',
+  greenhouse: 'Greenhouse',
+  polytunnel: 'Polytunnel',
+  other: 'Growing Space',
+};
+
 interface CreateBedSheetProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -42,9 +52,9 @@ export function CreateBedSheet({ open, onOpenChange, onBedCreated, existingBedCo
 
   const handleTypeSelect = (type: BedType) => {
     setSelectedType(type);
-    // Auto-populate name with type + number
-    const label = BED_TYPES[type];
-    setName(`${label} ${existingBedCount + 1}`);
+    // Auto-populate name with a friendly default + number
+    const friendlyName = DEFAULT_BED_NAMES[type];
+    setName(`${friendlyName} ${existingBedCount + 1}`);
     setStep('name');
   };
 
@@ -86,7 +96,7 @@ export function CreateBedSheet({ open, onOpenChange, onBedCreated, existingBedCo
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Sprout className="h-5 w-5 text-green-600" />
-            {step === 'type' ? 'What kind of bed?' : 'Name your bed'}
+            {step === 'type' ? 'What kind of bed or container?' : 'Name your bed or container'}
           </DialogTitle>
         </DialogHeader>
 
@@ -152,7 +162,7 @@ export function CreateBedSheet({ open, onOpenChange, onBedCreated, existingBedCo
                     Creating…
                   </>
                 ) : (
-                  'Create Bed'
+                  'Create'
                 )}
               </Button>
             </div>

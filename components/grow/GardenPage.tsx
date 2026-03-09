@@ -1316,7 +1316,7 @@ export function GardenPage() {
                       onClick={() => setIsCreateBedOpen(true)}
                     >
                       <Plus className="h-4 w-4 mr-1" />
-                      Add Bed
+                      Add Bed / Container
                     </Button>
                   </div>
                 </div>
@@ -1330,14 +1330,14 @@ export function GardenPage() {
                     <Fence className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
                     <h3 className="text-lg font-medium mb-2">Organize your garden</h3>
                     <p className="text-muted-foreground mb-4">
-                      Create beds to group your plants by location, type, or growing zone.
+                      Create beds or containers to group your plants by location, type, or growing zone.
                     </p>
                     <Button
                       onClick={() => setIsCreateBedOpen(true)}
                       className="bg-green-600 hover:bg-green-700"
                     >
                       <Plus className="h-4 w-4 mr-2" />
-                      Create your first bed
+                      Create your first bed or container
                     </Button>
                   </Card>
                 ) : isReorderMode ? (
@@ -1416,7 +1416,7 @@ export function GardenPage() {
                       className="flex flex-col items-center justify-center gap-2 p-6 rounded-lg border-2 border-dashed border-muted-foreground/25 hover:border-green-500 hover:bg-green-50 transition-all text-muted-foreground hover:text-green-600 min-h-[100px]"
                     >
                       <Plus className="h-6 w-6" />
-                      <span className="text-sm font-medium">Add Bed</span>
+                      <span className="text-sm font-medium">Add Bed / Container</span>
                     </button>
                   </div>
                 )}
