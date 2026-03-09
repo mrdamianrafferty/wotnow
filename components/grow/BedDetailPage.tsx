@@ -45,6 +45,9 @@ import { getPostHarvestAdvice } from '../../lib/grow/postHarvestAdvice';
 import type { RotationGroup } from '../../lib/grow/bedIntelligenceTypes';
 import { CareGuideCard } from './CareGuideCard';
 import { PlantSpeciesInfo } from './PlantSpeciesInfo';
+import { RotationOptInCard } from './RotationOptInCard';
+import { RotationPlanCard } from './RotationPlanCard';
+import type { DedicatedGroup } from '../../lib/grow/server/beds';
 
 // ============================================================================
 // Helpers
@@ -597,6 +600,29 @@ export function BedDetailPage() {
             </div>
           ))}
         </div>
+      )}
+
+      {/* Rotation opt-in or plan card */}
+      {bed && plantings.length > 0 && (
+        <>
+          <RotationOptInCard
+            bed={bed}
+            firstPlantRotationGroup={
+              (() => {
+                const firstSlug = plantings[0]?.speciesSlug;
+                if (!firstSlug) return null;
+                const sp = speciesMap.get(plantings[0]?.plantName?.toLowerCase());
+                const rg = sp?.rotationGroup;
+                if (rg && ['brassica', 'legume', 'root_allium', 'solanaceae', 'cucurbit'].includes(rg)) {
+                  return rg as DedicatedGroup;
+                }
+                return null;
+              })()
+            }
+            onBedUpdated={setBed}
+          />
+          <RotationPlanCard bed={bed} onBedUpdated={setBed} />
+        </>
       )}
 
       {/* "This Week" section (Tier 2a) */}

@@ -2,6 +2,9 @@ export type BedType = 'raised_bed' | 'container' | 'in_ground' | 'greenhouse' | 
 export type BedColor = 'terracotta' | 'sage' | 'cornflower' | 'sunflower' | 'slate' | 'plum';
 export type SunExposure = 'full_sun' | 'partial_shade' | 'full_shade';
 
+export type RotationMode = 'rotating' | 'mixed';
+export type DedicatedGroup = 'brassica' | 'legume' | 'root_allium' | 'solanaceae' | 'cucurbit';
+
 export type BedRow = {
   id: string;
   user_id: string;
@@ -13,6 +16,8 @@ export type BedRow = {
   soil_type: string | null;
   size_label: string | null;
   notes: string | null;
+  rotation_mode: RotationMode | null;
+  dedicated_group: DedicatedGroup | null;
   created_at: string;
   updated_at: string;
 };
@@ -29,6 +34,8 @@ export type SerializedBed = {
   soilType?: string | null;
   sizeLabel?: string | null;
   notes?: string | null;
+  rotationMode?: RotationMode | null;
+  dedicatedGroup?: DedicatedGroup | null;
   createdAt: string;
   updatedAt: string;
   plantCount: number;
@@ -49,6 +56,8 @@ export function serializeBed(row: BedRow, plantCount: number = 0, plantSummary: 
     soilType: row.soil_type,
     sizeLabel: row.size_label,
     notes: row.notes,
+    rotationMode: row.rotation_mode,
+    dedicatedGroup: row.dedicated_group,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
     plantCount,

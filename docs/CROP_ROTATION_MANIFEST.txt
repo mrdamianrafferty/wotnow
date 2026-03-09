@@ -1,0 +1,493 @@
+================================================================================
+                   CROP ROTATION DOCUMENTATION MANIFEST
+                        For Grow Daisy Veg Patch
+================================================================================
+
+DELIVERY DATE: March 9, 2026
+PREPARED FOR: Grow Daisy Development Team
+GEOGRAPHIC FOCUS: Atlantic/Mediterranean climate (Spain, UK, France, etc.)
+TARGET AUDIENCE: Home gardeners (2-4 bed gardens)
+STATUS: Ready for Phase 1 Implementation
+
+================================================================================
+                          PACKAGE CONTENTS
+================================================================================
+
+FILE 1: CROP_ROTATION_INDEX.md
+────────────────────────────────────────────────────────────────────────────
+Purpose: Navigation hub and overview
+Size: 316 lines, 11 KB
+Read time: 10-15 minutes
+Audience: Everyone
+
+Contents:
+├─ Quick guide to all 5 documents
+├─ How to use documents by role
+├─ Key facts (TL;DR)
+├─ File locations and version numbers
+└─ Next steps for each role (developer, PM, educator, support)
+
+Start here if: You're new to this package
+
+────────────────────────────────────────────────────────────────────────────
+
+FILE 2: CROP_ROTATION_SUMMARY.md
+────────────────────────────────────────────────────────────────────────────
+Purpose: Executive overview and roadmap
+Size: 383 lines, 14 KB
+Read time: 10-15 minutes
+Audience: PM, developers, stakeholders
+
+Contents:
+├─ Overview of all 4 detailed documents
+├─ Core principles (horticultural + technical)
+├─ Implementation roadmap (Phase 1-4 with timelines)
+├─ Data flow architecture (current → new state)
+├─ Key data definitions (enums, types)
+├─ Success criteria by phase
+├─ Common Q&A
+├─ Next steps for developers
+└─ Atlantic climate special considerations
+
+Start here if: You're a manager or need the big picture
+
+────────────────────────────────────────────────────────────────────────────
+
+FILE 3: CROP_ROTATION_EXPERT_GUIDE.md
+────────────────────────────────────────────────────────────────────────────
+Purpose: Comprehensive horticultural expertise and context
+Size: 742 lines, 32 KB
+Read time: 40-50 minutes (or reference as needed)
+Audience: Horticulturists, educators, developers needing context
+
+Contents:
+1. PLANT FAMILIES (Section 1)
+   ├─ 8 major plant families with botanical names
+   ├─ Character traits (nitrogen needs, pest vulnerability, root depth)
+   ├─ Common & botanical names for all vegetables
+   └─ Why families matter for rotation
+
+2. ROTATION LOGIC (Section 2)
+   ├─ The 3 essential "never follow" rules with full rationale
+   ├─ Why legumes precede brassicas (nitrogen fixation mechanism explained)
+   ├─ Synergistic "friendly follows" combinations
+   └─ Examples with timelines and soil biology
+
+3. ATLANTIC CLIMATE (Section 3)
+   ├─ High rainfall impact (nutrient leaching, fungal disease)
+   ├─ Blight pressure in Solanaceae (5-year gap justified)
+   ├─ Clubroot risk in Brassicaceae (acid clay consideration)
+   ├─ Heavy clay soil implications
+   ├─ Extended winter growing season (Feb-May → Jun-Aug → Sep-Feb pattern)
+   └─ Region-specific seasonal recommendations
+
+4. PRACTICAL SIMPLIFICATION (Section 4)
+   ├─ 2-bed rotation (seasonal variety strategy)
+   ├─ 3-bed rotation (RECOMMENDED for home gardens)
+   ├─ 4-bed rotation (ideal, strictest)
+   └─ Minimum viable rotation for each size
+
+5. MIXED BEDS & NON-ROTATION (Section 5)
+   ├─ Value of mixed planting despite no rotation
+   ├─ Tracking benefits for future improvement
+   ├─ Warnings for risky combinations
+   └─ Zone rotation within single beds
+
+6. COVER CROPS (Section 6)
+   ├─ Why cover crops matter in high-rainfall zones
+   ├─ Best crops for Atlantic Spain with details
+   │  ├─ Hairy vetch (winter, nitrogen-fixing)
+   │  ├─ Buckwheat (summer, phosphorus mobilizing)
+   │  ├─ Crimson clover (winter, edible, pretty)
+   │  └─ Field beans (winter, large plants)
+   ├─ Integration with rotation system
+   └─ Regional recommendations
+
+7. DATABASE SCHEMA (Section 7)
+   ├─ What data to track per bed/season
+   ├─ Minimum viable schema for rotation
+   ├─ API logic for rotation recommendations
+   └─ UI flow for user interaction
+
+8. EDUCATIONAL MESSAGING (Section 8)
+   ├─ Tier 1: Absolute beginners (simplest explanation)
+   ├─ Tier 2: Intermediate users (cause & effect)
+   ├─ Tier 3: Advanced gardeners (biological detail)
+   ├─ Warning messages (high/medium/low priority)
+   └─ How to escalate education as user expertise grows
+
+9. IMPLEMENTATION PRIORITIES (Section 9)
+   ├─ Phase 1, 2, 3, 4 task breakdown
+   └─ Deployment order
+
+10. QUICK LOOKUP TABLES (Section 10)
+    ├─ "What follows what" matrix
+    ├─ Atlantic seasonal planting guide
+    ├─ Disease persistence in soil
+    └─ Atlantic climate tweaks vs standard rules
+
+11. FAQ APPENDIX
+    ├─ 15 common questions with expert answers
+    └─ Special cases (containers, 1-bed gardens, etc.)
+
+Start here if: You need horticultural expertise and education framework
+
+────────────────────────────────────────────────────────────────────────────
+
+FILE 4: CROP_ROTATION_IMPLEMENTATION_PLAN.md
+────────────────────────────────────────────────────────────────────────────
+Purpose: Technical blueprint for implementation
+Size: 850 lines, 28 KB
+Read time: 45-60 minutes (or reference as needed)
+Audience: Developers (backend, frontend, full-stack)
+
+Contents:
+1. PHASE 1: DATA MODEL EXTENSIONS (Section 1)
+   ├─ Extend grow_user_plants with plant_family
+   ├─ Extend grow_bed_plantings with rotation metadata
+   ├─ Create grow_plant_species reference table
+   ├─ New fields: plant_family, pest_disease_log, is_cover_crop, etc.
+   ├─ Create grow_rotation_plans table (for Phase 2)
+   ├─ SQL migrations with all details
+   └─ Indexes for query optimization
+
+2. PHASE 1: BACKEND ENDPOINTS (Section 2)
+   ├─ Complete pseudocode for /api/grow/beds/[bedId]/rotation-suggestions
+   │  ├─ Rotation rules engine (Solanaceae, Brassica, Legume rules)
+   │  ├─ Forbidden family determination logic
+   │  ├─ Family scoring algorithm
+   │  └─ Cover crop selection algorithm
+   ├─ Complete pseudocode for /api/grow/beds/[bedId]/planting-history
+   ├─ Request/response types
+   ├─ Error handling
+   └─ All helper functions detailed
+
+3. PHASE 1: FRONTEND COMPONENTS (Section 3)
+   ├─ BedRotationHistory.tsx (React component)
+   │  ├─ Visual timeline of plantings by bed
+   │  ├─ Family color coding
+   │  ├─ Disease/pest history display
+   │  └─ React Query integration
+   ├─ RotationSuggestion.tsx (React component)
+   │  ├─ Smart recommendations with scoring
+   │  ├─ Warning escalation (green/yellow/red)
+   │  ├─ Cover crop suggestions
+   │  └─ Click handlers for user selection
+
+4. DATABASE SEED (Section 4)
+   ├─ SQL migration to populate grow_plant_species
+   ├─ 30+ vegetables with families & crop categories
+   ├─ All cover crop species
+   └─ Ready to copy-paste into migration file
+
+5. TESTING (Section 5)
+   ├─ Unit tests for rules engine
+   ├─ API tests for both endpoints
+   ├─ Integration tests (full flow)
+   └─ Test cases and expected outputs
+
+6. PHASE 2+: FUTURE WORK (Sections 6-7)
+   ├─ Rotation plan table schema
+   ├─ Multi-year visualization UI
+   ├─ Disease tracking integration
+   ├─ Regional configuration
+
+7. DEVELOPER NOTES (Section 11)
+   ├─ Schema design rationale
+   ├─ Denormalization strategy
+   ├─ RLS policy implications
+   ├─ Performance considerations
+   └─ Known assumptions
+
+8. DEPLOYMENT & ROLLBACK (Sections 8-10)
+   ├─ Deployment checklist
+   ├─ Rollback plan if issues
+   └─ Monitoring recommendations
+
+Start here if: You're building the feature
+
+────────────────────────────────────────────────────────────────────────────
+
+FILE 5: CROP_ROTATION_QUICK_REFERENCE.md
+────────────────────────────────────────────────────────────────────────────
+Purpose: One-page lookup for quick facts and decision-making
+Size: 260 lines, 9 KB
+Read time: 10-15 minutes (or use as reference)
+Audience: Everyone - ideal for in-app tooltips and quick lookup
+
+Contents:
+├─ The 3 essential rules (table format)
+├─ Plant families quick ID (formatted by feeder type)
+├─ 3-year rotation patterns (2/3/4 beds - copy-paste ready)
+├─ "Never follows" cheat sheet (table)
+├─ "Best follows" synergies (table)
+├─ Atlantic climate tweaks (rule adjustments)
+├─ Cover crops by season (table with timing/benefits)
+├─ Disease persistence in soil (table with Atlantic severity)
+├─ How to explain rotation (scripts for 3 difficulty levels)
+├─ Rotation scheme selection (decision flow)
+├─ Common mistakes & app warnings
+├─ Algorithm pseudocode (plain English implementation)
+├─ Testing checklist (all features to verify)
+└─ Decision trees (scheme selection based on bed count/user preference)
+
+Start here if: You need quick facts or are writing UI copy
+
+────────────────────────────────────────────────────────────────────────────
+
+THIS FILE: CROP_ROTATION_MANIFEST.txt
+────────────────────────────────────────────────────────────────────────────
+Purpose: Package manifest and usage guide
+Size: This document
+Audience: Stakeholders and navigation reference
+
+================================================================================
+                           HOW TO USE THIS PACKAGE
+================================================================================
+
+SCENARIO 1: "I'm a developer and need to implement this feature"
+Step 1: Read CROP_ROTATION_SUMMARY.md (overview, 10 min)
+Step 2: Read CROP_ROTATION_IMPLEMENTATION_PLAN.md (full, 45 min)
+Step 3: Use CROP_ROTATION_QUICK_REFERENCE.md as reference (during coding)
+Step 4: Start with Phase 1: Database schema and migrations
+
+SCENARIO 2: "I'm a product manager and need to understand scope"
+Step 1: Read CROP_ROTATION_SUMMARY.md (10 min)
+Step 2: Skim CROP_ROTATION_EXPERT_GUIDE.md sections 4, 8 (15 min)
+Step 3: Read CROP_ROTATION_IMPLEMENTATION_PLAN.md sections 1-3 (20 min)
+Result: Understand feature scope, timeline, and user impact
+
+SCENARIO 3: "I'm an educator and need to teach crop rotation"
+Step 1: Read CROP_ROTATION_EXPERT_GUIDE.md fully (40 min)
+Step 2: Use CROP_ROTATION_QUICK_REFERENCE.md section 9 (teaching scripts)
+Step 3: Reference CROP_ROTATION_SUMMARY.md for app context
+Result: Full understanding of rotation science and how to explain
+
+SCENARIO 4: "I'm customer support and need to help users"
+Step 1: Read CROP_ROTATION_QUICK_REFERENCE.md (10 min)
+Step 2: Memorize: The 3 essential rules + decision trees
+Step 3: Reference CROP_ROTATION_EXPERT_GUIDE.md FAQ for detailed questions
+Result: Can guide users to right rotation scheme and explain benefits
+
+SCENARIO 5: "I need one quick fact about crop rotation"
+→ Use CROP_ROTATION_QUICK_REFERENCE.md (specific tables and lookup sections)
+
+================================================================================
+                        TOTAL PACKAGE STATISTICS
+================================================================================
+
+Number of Documents: 5 markdown files + 1 manifest
+Total Lines of Code/Documentation: 2,551 lines
+Total File Size: ~95 KB
+Estimated Reading Time:
+├─ Quick overview: 10 min (SUMMARY + INDEX)
+├─ Complete technical: 60-80 min (SUMMARY + IMPLEMENTATION)
+├─ Complete horticultural: 50-60 min (SUMMARY + EXPERT GUIDE)
+└─ Full package: 150+ min (all documents, cover-to-cover)
+
+Tables & Charts: 20+ lookup tables, decision trees, algorithms
+Code Examples: 15+ complete or pseudo-code implementations
+Plant Species Covered: 30+ vegetables with family classification
+Rotation Patterns: 3 main schemes (2-bed, 3-bed, 4-bed)
+Phases Documented: 4 implementation phases with timelines
+Test Cases: 20+ defined test scenarios
+
+================================================================================
+                          KEY CONTENT SUMMARY
+================================================================================
+
+PLANT FAMILIES COVERED:
+├─ Brassicaceae (Cabbage family)
+├─ Solanaceae (Nightshade family)
+├─ Fabaceae (Legume/Pea family)
+├─ Alliaceae (Onion family)
+├─ Apiaceae (Carrot/Parsnip family)
+├─ Cucurbitaceae (Squash family)
+├─ Amaranthaceae (Beet family)
+├─ Asteraceae (Lettuce family)
+└─ Polygonaceae (Cover crop family)
+
+ROTATION SCHEMES DOCUMENTED:
+├─ 3-year rotation (RECOMMENDED)
+├─ 4-year rotation (strictest)
+├─ 2-bed simple rotation
+├─ Zone rotation (sub-bed rotation)
+└─ Mixed bed (non-rotation) tracking
+
+COVER CROPS RECOMMENDED:
+├─ Hairy vetch (winter nitrogen-fixer)
+├─ Crimson clover (winter nitrogen-fixer, edible)
+├─ Field beans (winter nitrogen-fixer, large plants)
+├─ Buckwheat (summer phosphorus mobilizer)
+├─ Borage (summer pollinator attractor)
+└─ Rye (winter biomass builder)
+
+ATLANTIC CLIMATE ADAPTATIONS:
+├─ 5-year Solanaceae gap (vs 4-year standard)
+├─ Winter cover crops essential (high rainfall)
+├─ Blight pressure emphasized (high humidity)
+├─ Clubroot risk in acid clay
+├─ Year-round growing season (Feb-May→Jun-Aug→Sep-Feb pattern)
+└─ Region-specific recommendations for Spain/UK/Brittany
+
+================================================================================
+                      TECHNICAL SPECIFICATIONS
+================================================================================
+
+DATABASE CHANGES (Phase 1):
+├─ New table: grow_plant_species (read-only reference)
+├─ New table: grow_rotation_plans (user preferences)
+├─ Extended fields in grow_bed_plantings:
+│  ├─ plant_family (denormalized)
+│  ├─ pest_disease_log (JSONB)
+│  ├─ is_cover_crop (boolean)
+│  ├─ cover_crop_terminated_at (date)
+│  └─ estimated_nitrogen_fixed_kg (numeric)
+└─ No breaking changes to existing schema
+
+API ENDPOINTS (Phase 1):
+├─ GET /api/grow/beds/[bedId]/rotation-suggestions (new)
+└─ GET /api/grow/beds/[bedId]/planting-history (new)
+
+FRONTEND COMPONENTS (Phase 1):
+├─ BedRotationHistory.tsx (new)
+└─ RotationSuggestion.tsx (new)
+
+RULES ENGINE:
+├─ Solanaceae avoidance: 5 years (Atlantic), 4 years (other)
+├─ Brassicaceae avoidance: 3 years (standard), 8+ if clubroot present
+├─ Legume nitrogen benefit: 100-150 kg/ha/year
+├─ Cover crop selection: Seasonal + gap-aware
+└─ All implemented as in-memory logic (not database rules)
+
+================================================================================
+                        IMPLEMENTATION PHASES
+================================================================================
+
+PHASE 1 (MVP - 2-3 weeks): Core rotation suggestions
+├─ Database schema extensions
+├─ Plant family tracking
+├─ Rotation suggestion API
+├─ Warning system (Solanaceae, Brassica)
+├─ Cover crop recommendations
+└─ Planting history visualization
+
+PHASE 2 (3-4 weeks): Rotation planning
+├─ Multi-year rotation visualization
+├─ Scheme selection UI (3-year, 4-year, 2-bed)
+├─ Auto-suggestion of varieties
+└─ Rotation plan persistence
+
+PHASE 3 (3-4 weeks): Disease tracking & learning
+├─ Harvest logging with disease/pest tracking
+├─ History-based recommendation adjustment
+├─ Bed-specific risk warnings
+└─ Long-term garden pattern analysis
+
+PHASE 4 (4-6 weeks): Regional optimization
+├─ Regional detection (Atlantic vs Mediterranean)
+├─ Climate-specific rule adjustments
+├─ Region-specific cover crop suggestions
+├─ Weather integration
+└─ Nitrogen benefit quantification
+
+================================================================================
+                          SUCCESS CRITERIA
+================================================================================
+
+PHASE 1 MVP ACCEPTANCE:
+✓ Plant families tracked for all plantings
+✓ Solanaceae warnings appear when risky
+✓ Brassica warnings appear when risky
+✓ Legume → Heavy feeder suggestions work
+✓ Cover crop suggestions offered appropriately
+✓ Planting history visible and organized
+✓ Novice gardeners (no agriculture background) understand suggestions
+✓ No database errors or RLS violations
+✓ Tests pass (unit + API + integration)
+✓ Deployment without rollback needed
+
+PHASE 2 SUCCESS:
+✓ Users can plan 3-year rotation
+✓ Visual timeline shows planned families by bed/year
+✓ Plan persists across sessions
+✓ Variety suggestions filtered by planned family
+
+PHASE 3 SUCCESS:
+✓ Disease logging at harvest works
+✓ Clubroot history extends Brassica gap to 8 years
+✓ Late blight history extends Solanaceae gap to 6 years
+✓ Disease history visible in UI
+
+PHASE 4 SUCCESS:
+✓ Atlantic climate users get 5-year gap by default
+✓ Region-specific cover crops suggested
+✓ Weather alerts integrated ("high blight pressure year")
+✓ Nitrogen benefit calculated and shown
+
+================================================================================
+                      DOCUMENT MAINTENANCE
+================================================================================
+
+Version Control:
+├─ All documents versioned as v1.0 (initial release)
+├─ Update date tracked in each file
+├─ Changelog section in each doc for future edits
+└─ Archive old versions if replaced
+
+When to Update:
+├─ After Phase 1 implementation: Add lessons learned
+├─ After user feedback: Update messaging section
+├─ If rules change: Update QUICK_REFERENCE immediately
+├─ If schema changes: Update IMPLEMENTATION_PLAN and SUMMARY
+
+Review Schedule:
+├─ Post-Phase 1 (2 weeks after launch): Review user feedback impact
+├─ Post-Phase 3 (after disease tracking): Review rule effectiveness
+├─ Annual review: Verify Atlantic climate assumptions still valid
+└─ Before Phase 4: Review regional rule accuracy
+
+================================================================================
+                          CONTACT & QUESTIONS
+================================================================================
+
+For Questions About:
+├─ Horticultural content: Reference CROP_ROTATION_EXPERT_GUIDE.md
+├─ Technical implementation: Reference CROP_ROTATION_IMPLEMENTATION_PLAN.md
+├─ Quick facts: Reference CROP_ROTATION_QUICK_REFERENCE.md
+├─ Big picture: Reference CROP_ROTATION_SUMMARY.md
+└─ Navigation: Reference CROP_ROTATION_INDEX.md
+
+All documents are comprehensive. If a question isn't answered, the answer
+is likely in the appendix or FAQ section of the relevant document.
+
+================================================================================
+                      FINAL NOTES
+================================================================================
+
+This documentation package represents expert horticulture knowledge paired
+with practical software implementation guidance. The focus is on:
+
+1. EDUCATIONAL: Users should understand WHY rotation matters (pest cycles,
+   nitrogen fixation, soil health) not just WHAT to plant
+
+2. PRACTICAL: Recommendations account for real constraints (2-4 beds,
+   Atlantic climate, beginner gardeners, limited time)
+
+3. ITERATIVE: Phase 1 delivers core value immediately; Phases 2-4 add
+   sophistication as users gain expertise
+
+4. REGIONAL: Atlantic climate is special case with unique considerations
+   (blight pressure, extended season, heavy clay)
+
+The feature is ready for Phase 1 implementation. Begin with database
+schema and API endpoints; UI can follow naturally.
+
+================================================================================
+
+Document Package Created: March 9, 2026
+For: Grow Daisy Development Team
+Project: Veg Patch - Crop Rotation Support
+Status: READY FOR PHASE 1 IMPLEMENTATION
+
+================================================================================

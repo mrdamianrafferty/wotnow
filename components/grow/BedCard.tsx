@@ -2,7 +2,8 @@ import React from 'react';
 import Link from 'next/link';
 import { Card, CardContent } from '../ui/card';
 import { Sun, CloudSun, Cloud, Sprout } from 'lucide-react';
-import { BED_COLOR_HEX, BED_TYPES, type BedColor, type BedType, type SunExposure } from '../../lib/grow/server/beds';
+import { BED_COLOR_HEX, BED_TYPES, type BedColor, type BedType, type SunExposure, type DedicatedGroup, type RotationMode } from '../../lib/grow/server/beds';
+import { ROTATION_GROUP_LABELS } from '../../lib/grow/bedIntelligenceTypes';
 import { getSeasonalTint } from '../../lib/grow/seasonalColors';
 
 export type BedStatus = 'empty' | 'healthy' | 'approaching_harvest' | 'ready_to_harvest';
@@ -18,6 +19,8 @@ interface BedCardProps {
   lastActivity?: string | null;
   isNew?: boolean;
   bedStatus?: BedStatus;
+  rotationMode?: RotationMode | null;
+  dedicatedGroup?: DedicatedGroup | null;
 }
 
 const STATUS_RING_CLASS: Record<BedStatus, string> = {
@@ -33,7 +36,15 @@ const SUN_ICONS: Record<SunExposure, React.ReactNode> = {
   full_shade: <Cloud className="h-3.5 w-3.5 text-slate-400" />,
 };
 
-export function BedCard({ id, name, type, color, plantCount, plantSummary, sunExposure, lastActivity, isNew, bedStatus }: BedCardProps) {
+const GROUP_EMOJI: Record<DedicatedGroup, string> = {
+  brassica: '🥬',
+  legume: '🫛',
+  root_allium: '🥕',
+  solanaceae: '🍅',
+  cucurbit: '🎃',
+};
+
+export function BedCard({ id, name, type, color, plantCount, plantSummary, sunExposure, lastActivity, isNew, bedStatus, rotationMode, dedicatedGroup }: BedCardProps) {
   const hexColor = BED_COLOR_HEX[color] || BED_COLOR_HEX.terracotta;
   const seasonal = getSeasonalTint();
   const statusRing = bedStatus ? STATUS_RING_CLASS[bedStatus] : '';
@@ -54,6 +65,11 @@ export function BedCard({ id, name, type, color, plantCount, plantSummary, sunEx
           <p className="text-xs text-muted-foreground mt-0.5">
             {BED_TYPES[type] || type}
           </p>
+          {rotationMode === 'rotating' && dedicatedGroup && (
+            <p className="text-[10px] mt-0.5 text-green-700 font-medium">
+              {GROUP_EMOJI[dedicatedGroup]} {ROTATION_GROUP_LABELS[dedicatedGroup]} {new Date().getFullYear()}
+            </p>
+          )}
           <p className="text-xs mt-2 flex items-center gap-1 truncate" style={{ color: plantCount > 0 ? hexColor : undefined }}>
             {plantCount === 0 ? (
               <span className="text-muted-foreground">Empty</span>

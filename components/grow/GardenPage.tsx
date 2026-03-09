@@ -76,6 +76,7 @@ import { useUnifiedLocation } from '../../context/UnifiedLocationContext';
 import { AILimitPrompt } from './premium/UpgradePrompt';
 import { FeatureErrorBoundary } from '../FeatureErrorBoundary';
 import { BedCard } from './BedCard';
+import { RotationOverview } from './RotationOverview';
 
 type ThreatRiskBand = 'none' | 'low' | 'moderate' | 'high' | 'severe';
 
@@ -1454,6 +1455,8 @@ export function GardenPage() {
                     })}
                   </div>
                 ) : (
+                  <>
+                  <RotationOverview beds={beds} />
                   <div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-4">
                     {beds.map(bed => (
                       <BedCard
@@ -1468,6 +1471,8 @@ export function GardenPage() {
                         lastActivity={bed.lastActivity}
                         isNew={newlyAddedBedIds.has(bed.id)}
                         bedStatus={bed.bedStatus}
+                        rotationMode={bed.rotationMode}
+                        dedicatedGroup={bed.dedicatedGroup}
                       />
                     ))}
                     {/* Add Bed card */}
@@ -1479,6 +1484,7 @@ export function GardenPage() {
                       <span className="text-sm font-medium">Add Bed / Container</span>
                     </button>
                   </div>
+                  </>
                 )}
               </div>
 

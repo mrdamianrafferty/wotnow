@@ -30,7 +30,8 @@ import {
   Loader2,
   Star,
   ChevronDown,
-  ChevronUp
+  ChevronUp,
+  Lock
 } from 'lucide-react';
 import { 
   getAvailableGuildBlueprints, 
@@ -683,22 +684,32 @@ function GuildDetailsWithSelection({
                         >
                           <CardContent className="p-3">
                             <div className="flex items-start gap-3">
-                              <Checkbox
-                                checked={isSelected}
-                                disabled={isFocalCompanion}
-                                onCheckedChange={() => !isFocalCompanion && onToggle(companion.companionSlug)}
-                                className="mt-0.5"
-                              />
+                              {isFocalCompanion ? (
+                                <div className="mt-0.5 flex items-center justify-center size-4 shrink-0 rounded-[4px] bg-green-600 text-white" title="Your plant — always included">
+                                  <Lock className="size-2.5" />
+                                </div>
+                              ) : (
+                                <Checkbox
+                                  checked={isSelected}
+                                  onCheckedChange={() => onToggle(companion.companionSlug)}
+                                  className="mt-0.5"
+                                />
+                              )}
                               <div className="flex-1">
                                 <div className="flex items-start justify-between gap-2">
                                   <div className="flex-1">
                                     <div className="flex items-center gap-2">
                                       <p className="font-medium text-sm">{companion.companionName}</p>
-                                      {isPriority && (
+                                      {isFocalCompanion && (
+                                        <Badge className="text-[10px] bg-green-600 text-white px-1.5 py-0">
+                                          Your plant
+                                        </Badge>
+                                      )}
+                                      {isPriority && !isFocalCompanion && (
                                         <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
                                       )}
                                     </div>
-                                    {companion.companionCategory && (
+                                    {companion.companionCategory && !isFocalCompanion && (
                                       <Badge variant="outline" className="text-xs mt-1">
                                         {companion.companionCategory}
                                       </Badge>

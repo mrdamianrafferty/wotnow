@@ -2,8 +2,10 @@ import type { NextApiRequest, NextApiResponse } from 'next';
 import { getAuthenticatedClient } from '../../../../lib/grow/server/auth';
 import { serializeBed, serializeBedPlanting, buildPlantSummary, type BedRow } from '../../../../lib/grow/server/beds';
 
-const ALLOWED_TYPES = new Set(['raised_bed', 'container', 'in_ground', 'greenhouse', 'polytunnel', 'other']);
+const ALLOWED_TYPES = new Set(['raised_bed', 'container', 'in_ground', 'greenhouse', 'polytunnel', 'other', 'veg_patch', 'permaculture_space']);
 const ALLOWED_SUN = new Set(['full_sun', 'partial_shade', 'full_shade']);
+const ALLOWED_ROTATION_MODES = new Set(['rotating', 'mixed']);
+const ALLOWED_DEDICATED_GROUPS = new Set(['brassica', 'legume', 'root_allium', 'solanaceae', 'cucurbit']);
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   const { bedId } = req.query;
@@ -93,7 +95,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   // PUT: Update bed
-  const { name, type, color, notes, sunExposure, soilType, sizeLabel, sortOrder } = req.body ?? {};
+  const { name, type, color, notes, sunExposure, soilType, sizeLabel, sortOrder, rotationMode, dedicatedGroup } = req.body ?? {};
 
   const updates: Record<string, unknown> = {};
 
@@ -126,6 +128,16 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
   if (typeof sortOrder === 'number' && Number.isFinite(sortOrder)) {
     updates.sort_order = Math.max(0, Math.floor(sortOrder));
+  }
+  if (typeof rotationMode === 'string' && ALLOWED_ROTATION_MODES.has(rotationMode)) {
+    updates.rotation_mode = rotationMode;
+  } else if (rotationMode === null) {
+    updates.rotation_mode = null;
+  }
+  if (typeof dedicatedGroup === 'string' && ALLOWED_DEDICATED_GROUPS.has(dedicatedGroup)) {
+    updates.dedicated_group = dedicatedGroup;
+  } else if (dedicatedGroup === null) {
+    updates.dedicated_group = null;
   }
 
   if (Object.keys(updates).length === 0) {

@@ -12,6 +12,7 @@ import {
   SelectValue,
 } from '../ui/select';
 import { Loader2, Pencil } from 'lucide-react';
+import { Switch } from '../ui/switch';
 import { toast } from 'sonner';
 import { api } from '../../lib/grow/api';
 import {
@@ -22,7 +23,9 @@ import {
   type BedType,
   type SunExposure,
   type SerializedBed,
+  type DedicatedGroup,
 } from '../../lib/grow/server/beds';
+import { ROTATION_GROUP_FRIENDLY, type RotationGroup } from '../../lib/grow/bedIntelligenceTypes';
 
 interface EditBedDialogProps {
   open: boolean;
@@ -61,6 +64,8 @@ export function EditBedDialog({ open, onOpenChange, bed, onBedUpdated }: EditBed
   const [soilType, setSoilType] = useState<string>(INHERIT);
   const [sunExposure, setSunExposure] = useState<string>(INHERIT);
   const [sizeLabel, setSizeLabel] = useState('');
+  const [rotationEnabled, setRotationEnabled] = useState(false);
+  const [dedicatedGroup, setDedicatedGroup] = useState<string>('');
   const [isSaving, setIsSaving] = useState(false);
   const [gardenDefaults, setGardenDefaults] = useState<GardenDefaults>({ soilType: null, sunExposure: null });
 
@@ -90,6 +95,8 @@ export function EditBedDialog({ open, onOpenChange, bed, onBedUpdated }: EditBed
       // If bed has its own value, use it; otherwise inherit
       setSoilType(bed.soilType || INHERIT);
       setSunExposure(bed.sunExposure || INHERIT);
+      setRotationEnabled(bed.rotationMode === 'rotating');
+      setDedicatedGroup(bed.dedicatedGroup || '');
     }
   }, [bed, open]);
 
@@ -107,6 +114,8 @@ export function EditBedDialog({ open, onOpenChange, bed, onBedUpdated }: EditBed
         sizeLabel: sizeLabel.trim() || null,
         soilType: soilType === INHERIT ? null : soilType,
         sunExposure: sunExposure === INHERIT ? null : sunExposure,
+        rotationMode: rotationEnabled ? 'rotating' : 'mixed',
+        dedicatedGroup: rotationEnabled && dedicatedGroup ? dedicatedGroup : null,
       });
       const updated = response?.bed as SerializedBed;
       if (updated) {
@@ -234,6 +243,50 @@ export function EditBedDialog({ open, onOpenChange, bed, onBedUpdated }: EditBed
               </p>
             )}
           </div>
+
+          {/* Crop Rotation — only for veg_patch beds */}
+          {type === 'veg_patch' && (
+            <div className="space-y-2 p-3 rounded-lg bg-green-50/50 border border-green-100">
+              <div className="flex items-center justify-between">
+                <Label className="text-green-800">Crop Rotation</Label>
+                <Switch
+                  checked={rotationEnabled}
+                  onCheckedChange={setRotationEnabled}
+                />
+              </div>
+              {rotationEnabled && (
+                <div className="space-y-1.5">
+                  <p className="text-[10px] text-green-700">This year&apos;s crop family:</p>
+                  <Select value={dedicatedGroup || '__none__'} onValueChange={(v) => setDedicatedGroup(v === '__none__' ? '' : v)}>
+                    <SelectTrigger className="h-8 text-xs">
+                      <SelectValue placeholder="Choose a family" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="__none__">Not set</SelectItem>
+                      {(['brassica', 'legume', 'root_allium', 'solanaceae', 'cucurbit'] as DedicatedGroup[]).map(group => {
+                        const info = ROTATION_GROUP_FRIENDLY[group as RotationGroup];
+                        return (
+                          <SelectItem key={group} value={group}>
+                            {info?.label || group}
+                          </SelectItem>
+                        );
+                      })}
+                    </SelectContent>
+                  </Select>
+                  {dedicatedGroup && ROTATION_GROUP_FRIENDLY[dedicatedGroup as RotationGroup]?.examples && (
+                    <p className="text-[10px] text-green-600">
+                      e.g. {ROTATION_GROUP_FRIENDLY[dedicatedGroup as RotationGroup].examples}
+                    </p>
+                  )}
+                </div>
+              )}
+              {!rotationEnabled && (
+                <p className="text-[10px] text-muted-foreground">
+                  Enable to dedicate this bed to one crop family each year
+                </p>
+              )}
+            </div>
+          )}
 
           <div className="space-y-2">
             <Label htmlFor="edit-bed-size">Size</Label>
