@@ -18,7 +18,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui
 import { ScrollArea } from '../ui/scroll-area';
 // Separator removed — no longer needed after focal plant joined role groups
 import { Alert, AlertDescription } from '../ui/alert';
-import { Checkbox } from '../ui/checkbox';
 import { 
   Search, 
   Trees, 
@@ -676,22 +675,26 @@ function GuildDetailsWithSelection({
                               ? 'bg-green-100 border-green-400'
                               : isSelected
                                 ? 'bg-green-50 border-green-300 cursor-pointer'
-                                : 'bg-muted/50 hover:border-green-200 cursor-pointer'
+                                : 'bg-white hover:border-green-200 cursor-pointer border-gray-200'
                           }`}
                           onClick={() => !isFocalCompanion && onToggle(companion.companionSlug)}
                         >
                           <CardContent className="p-3">
                             <div className="flex items-start gap-3">
                               {isFocalCompanion ? (
-                                <div className="mt-0.5 flex items-center justify-center size-4 shrink-0 rounded-[4px] bg-green-600 text-white" title="Your plant — always included">
-                                  <Lock className="size-2.5" />
+                                <div className="mt-0.5 flex items-center justify-center size-5 shrink-0 rounded-[4px] bg-green-600 text-white" title="Your plant — always included">
+                                  <Lock className="size-3" />
                                 </div>
                               ) : (
-                                <Checkbox
-                                  checked={isSelected}
-                                  onCheckedChange={() => onToggle(companion.companionSlug)}
-                                  className="mt-0.5"
-                                />
+                                <div
+                                  className={`mt-0.5 flex items-center justify-center size-5 shrink-0 rounded-[4px] border transition-colors ${
+                                    isSelected
+                                      ? 'bg-green-600 border-green-600 text-white'
+                                      : 'bg-white border-gray-300'
+                                  }`}
+                                >
+                                  {isSelected && <Sprout className="size-3" />}
+                                </div>
                               )}
                               <div className="flex-1">
                                 <div className="flex items-start justify-between gap-2">
