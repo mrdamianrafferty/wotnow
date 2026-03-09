@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import Image from 'next/image';
-import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Badge } from '../ui/badge';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '../ui/accordion';
 import { cn } from '../ui/utils';
 import { BookOpen, Search } from 'lucide-react';
 
@@ -10,25 +10,17 @@ import { BookOpen, Search } from 'lucide-react';
 /* ------------------------------------------------------------------ */
 const GLOSSARY_IMAGES: Record<string, string> = {
   'bare-root':    '/grow/glossary/shovel.png',
-  blanching:      '/grow/glossary/gloves.png',
-  chitting:       '/grow/glossary/bucket.png',
-  cloche:         '/grow/glossary/boots.png',
   compost:        '/grow/glossary/compost.png',
   cordon:         '/grow/glossary/scissors.png',
   'cutting-back': '/grow/glossary/scissors.png',
   deadheading:    '/grow/glossary/scissors.png',
-  dibber:         '/grow/glossary/dibber.png',
-  drill:          '/grow/glossary/rake.png',
   'earthing-up':  '/grow/glossary/shovel.png',
   'feed-feeding': '/grow/glossary/fertilise.png',
-  fleece:         '/grow/glossary/boots.png',
   'green-manure': '/grow/glossary/leaf.png',
   'hardening-off':'/grow/glossary/inspect.png',
   lifting:        '/grow/glossary/garden-fork.png',
   'mulch-mulching':'/grow/glossary/mulch.png',
-  'pinching-out': '/grow/glossary/little-fork.png',
   'potting-on':   '/grow/glossary/bucket.png',
-  'pricking-out': '/grow/glossary/dibber.png',
   'succession-sowing':'/grow/glossary/harvest-basket.png',
   tilth:          '/grow/glossary/soil-test-kit.png',
   'top-dressing': '/grow/glossary/fertilise.png',
@@ -305,122 +297,124 @@ export function GardeningGlossary() {
   }, [filtered]);
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <BookOpen className="h-5 w-5 text-green-600" />
-          A\u2013Z Gardening Glossary
-        </CardTitle>
-        <p className="text-sm text-muted-foreground mt-1">
-          Plain-English definitions of common gardening terms
-        </p>
-      </CardHeader>
+    <Accordion type="single" collapsible>
+      <AccordionItem value="glossary" className="border rounded-lg">
+        <AccordionTrigger className="px-4 py-3 hover:no-underline">
+          <div className="flex items-center gap-2">
+            <BookOpen className="h-5 w-5 text-green-600" />
+            <span className="font-semibold">A\u2013Z Gardening Glossary</span>
+            <Badge variant="secondary" className="font-normal ml-1">{GLOSSARY.length} terms</Badge>
+          </div>
+        </AccordionTrigger>
+        <AccordionContent className="px-4 pb-4">
+          <p className="text-sm text-muted-foreground mb-4">
+            Plain-English definitions of common gardening terms
+          </p>
 
-      <CardContent className="space-y-4">
-        {/* Search */}
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <input
-            type="text"
-            placeholder="Search glossary\u2026"
-            value={filter}
-            onChange={(e) => {
-              setFilter(e.target.value);
-              if (e.target.value.trim()) setActiveLetter(null);
-            }}
-            className="w-full rounded-lg border border-border bg-background py-2 pl-10 pr-4 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2"
-          />
-        </div>
+          {/* Search */}
+          <div className="relative mb-3">
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <input
+              type="text"
+              placeholder="Search glossary\u2026"
+              value={filter}
+              onChange={(e) => {
+                setFilter(e.target.value);
+                if (e.target.value.trim()) setActiveLetter(null);
+              }}
+              className="w-full rounded-lg border border-border bg-background py-2 pl-10 pr-4 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2"
+            />
+          </div>
 
-        {/* Letter bar */}
-        <div className="flex flex-wrap gap-1">
-          <button
-            type="button"
-            onClick={() => { setActiveLetter(null); setFilter(''); }}
-            className={cn(
-              'px-2 py-0.5 rounded text-xs font-medium transition-colors',
-              !activeLetter
-                ? 'bg-green-600 text-white'
-                : 'bg-muted text-muted-foreground hover:bg-muted/80'
-            )}
-          >
-            All
-          </button>
-          {letters.map((l) => (
+          {/* Letter bar */}
+          <div className="flex flex-wrap gap-1 mb-4">
             <button
-              key={l}
               type="button"
-              onClick={() => { setActiveLetter(l === activeLetter ? null : l); setFilter(''); }}
+              onClick={() => { setActiveLetter(null); setFilter(''); }}
               className={cn(
                 'px-2 py-0.5 rounded text-xs font-medium transition-colors',
-                activeLetter === l
+                !activeLetter
                   ? 'bg-green-600 text-white'
                   : 'bg-muted text-muted-foreground hover:bg-muted/80'
               )}
             >
-              {l}
+              All
             </button>
-          ))}
-        </div>
-
-        {/* Results count */}
-        {(filter || activeLetter) && (
-          <p className="text-xs text-muted-foreground">
-            Showing {filtered.length} of {GLOSSARY.length} terms
-          </p>
-        )}
-
-        {/* Glossary entries by letter */}
-        {grouped.length === 0 ? (
-          <p className="py-6 text-center text-sm text-muted-foreground">
-            No terms match your search. Try a different keyword.
-          </p>
-        ) : (
-          <div className="space-y-6">
-            {grouped.map(([letter, entries]) => (
-              <div key={letter}>
-                <div className="sticky top-0 z-10 bg-background/95 backdrop-blur-sm pb-1 mb-2 border-b border-border/40">
-                  <span className="text-lg font-bold text-green-700">{letter}</span>
-                </div>
-                <div className="space-y-2">
-                  {entries.map((entry) => {
-                    const img = GLOSSARY_IMAGES[entry.slug];
-                    return (
-                      <div
-                        key={entry.slug}
-                        className="flex gap-3 rounded-lg border border-border/60 p-3 hover:bg-muted/30 transition-colors"
-                      >
-                        {img && (
-                          <div className="hidden sm:flex shrink-0 items-start pt-0.5">
-                            <Image
-                              src={img}
-                              alt=""
-                              width={36}
-                              height={36}
-                              className="opacity-70"
-                            />
-                          </div>
-                        )}
-                        <div className="min-w-0">
-                          <h4 className="text-sm font-semibold leading-tight">{entry.term}</h4>
-                          <p className="text-sm text-muted-foreground mt-0.5 leading-relaxed">
-                            {entry.definition}
-                          </p>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
+            {letters.map((l) => (
+              <button
+                key={l}
+                type="button"
+                onClick={() => { setActiveLetter(l === activeLetter ? null : l); setFilter(''); }}
+                className={cn(
+                  'px-2 py-0.5 rounded text-xs font-medium transition-colors',
+                  activeLetter === l
+                    ? 'bg-green-600 text-white'
+                    : 'bg-muted text-muted-foreground hover:bg-muted/80'
+                )}
+              >
+                {l}
+              </button>
             ))}
           </div>
-        )}
 
-        <div className="pt-2 flex items-center gap-2 text-xs text-muted-foreground">
-          <Badge variant="secondary" className="font-normal">{GLOSSARY.length} terms</Badge>
-          <span>Written for new gardeners</span>
-        </div>
-      </CardContent>
-    </Card>
+          {/* Results count */}
+          {(filter || activeLetter) && (
+            <p className="text-xs text-muted-foreground mb-3">
+              Showing {filtered.length} of {GLOSSARY.length} terms
+            </p>
+          )}
+
+          {/* Glossary entries by letter */}
+          {grouped.length === 0 ? (
+            <p className="py-6 text-center text-sm text-muted-foreground">
+              No terms match your search. Try a different keyword.
+            </p>
+          ) : (
+            <div className="space-y-6">
+              {grouped.map(([letter, entries]) => (
+                <div key={letter}>
+                  <div className="sticky top-0 z-10 bg-background/95 backdrop-blur-sm pb-1 mb-2 border-b border-border/40">
+                    <span className="text-lg font-bold text-green-700">{letter}</span>
+                  </div>
+                  <div className="space-y-2">
+                    {entries.map((entry) => {
+                      const img = GLOSSARY_IMAGES[entry.slug];
+                      return (
+                        <div
+                          key={entry.slug}
+                          className="flex gap-3 rounded-lg border border-border/60 p-3 hover:bg-muted/30 transition-colors"
+                        >
+                          {img && (
+                            <div className="hidden sm:flex shrink-0 items-start pt-0.5">
+                              <Image
+                                src={img}
+                                alt=""
+                                width={36}
+                                height={36}
+                                className="opacity-70"
+                              />
+                            </div>
+                          )}
+                          <div className="min-w-0">
+                            <h4 className="text-sm font-semibold leading-tight">{entry.term}</h4>
+                            <p className="text-sm text-muted-foreground mt-0.5 leading-relaxed">
+                              {entry.definition}
+                            </p>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          <div className="pt-3 text-xs text-muted-foreground">
+            Written for new gardeners
+          </div>
+        </AccordionContent>
+      </AccordionItem>
+    </Accordion>
   );
 }
