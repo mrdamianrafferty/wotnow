@@ -30,6 +30,7 @@ import { SoilIdentificationGuide } from './SoilIdentificationGuide';
 import { ClimateZoneInfo } from './ClimateZoneInfo';
 import { SubscriptionCard } from './SubscriptionCard';
 import { PricingOverview } from './PricingOverview';
+import { GardeningGlossary } from './GardeningGlossary';
 import { type ClimateZoneCode } from '../../lib/grow/climate';
 
 export function InfoPage() {
@@ -1508,6 +1509,9 @@ export function InfoPage() {
           </Accordion>
         </CardContent>
       </Card>
+
+      {/* Gardening Glossary */}
+      <GardeningGlossary />
 
       {/* About */}
       <Card>
