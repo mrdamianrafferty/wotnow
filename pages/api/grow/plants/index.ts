@@ -129,7 +129,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const plants = (data as PlantRow[]).map(serializePlant);
     const { data: profile, error: profileError } = await supabase
       .from('profiles')
-      .select('grow_onboarding_completed, grow_onboarding_completed_at, grow_subscription_tier')
+      .select('grow_onboarding_completed, grow_onboarding_completed_at, grow_onboarding_skipped, grow_subscription_tier')
       .eq('id', userId)
       .maybeSingle();
 
@@ -144,6 +144,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       plants,
       onboardingCompleted: Boolean(profile?.grow_onboarding_completed),
       onboardingCompletedAt: profile?.grow_onboarding_completed_at ?? null,
+      onboardingSkipped: Boolean(profile?.grow_onboarding_skipped),
       // Include limit info for UI
       plantCount: plants.length,
       plantLimit: limits.maxPlants,

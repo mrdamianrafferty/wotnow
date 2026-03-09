@@ -189,15 +189,17 @@ export function GrowExperience() {
 
           const plantCount = Array.isArray(response?.plants) ? response.plants.length : 0;
           const onboardingCompleteFromServer = Boolean(response?.onboardingCompleted);
-          const onboardingComplete = onboardingCompleteFromServer || (typeof window !== 'undefined'
-            && window.localStorage.getItem('grow:onboarding-complete') === 'true');
+          const onboardingSkippedFromServer = Boolean(response?.onboardingSkipped);
+          const onboardingDone = onboardingCompleteFromServer || onboardingSkippedFromServer;
+          const localFlag = typeof window !== 'undefined'
+            && window.localStorage.getItem('grow:onboarding-complete') === 'true';
 
-          if (onboardingCompleteFromServer && typeof window !== 'undefined') {
+          if (onboardingDone && typeof window !== 'undefined') {
             window.localStorage.setItem('grow:onboarding-complete', 'true');
           }
           setHasCheckedPlants(true);
 
-          if (plantCount === 0 && !onboardingComplete) {
+          if (plantCount === 0 && !onboardingDone && !localFlag) {
             router.replace(GROW_ONBOARDING_PATH);
           }
         } catch (error) {
@@ -205,16 +207,25 @@ export function GrowExperience() {
             return;
           }
 
-          setHasCheckedPlants(true);
-
           const message = error instanceof Error ? error.message : '';
           if (message === 'Not authenticated') {
             // Not authenticated - switch to guest mode instead of redirecting
+            setHasCheckedPlants(true);
             setIsGuestMode(true);
             return;
           }
 
           console.error('Failed to verify garden plants for onboarding:', error);
+
+          // On API failure, check localStorage fallback. If no local flag,
+          // redirect to onboarding to be safe rather than showing an empty homepage.
+          const localFallback = typeof window !== 'undefined'
+            && window.localStorage.getItem('grow:onboarding-complete') === 'true';
+          setHasCheckedPlants(true);
+
+          if (!localFallback) {
+            router.replace(GROW_ONBOARDING_PATH);
+          }
         }
       };
 

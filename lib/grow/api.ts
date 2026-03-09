@@ -13,6 +13,7 @@ const GROW_BEDS_API_BASE = '/api/grow/beds';
 const GROW_SPECIES_API_BASE = '/api/grow/species';
 const GROW_CULTIVARS_API_BASE = '/api/grow/cultivars';
 const GROW_ONBOARDING_COMPLETE_API = '/api/grow/onboarding/complete';
+const GROW_ONBOARDING_SUGGESTIONS_API = '/api/grow/onboarding/suggestions';
 
 // Local weather API endpoint - uses same data source as Go Daisy, always returns metric
 const GROW_WEATHER_API = '/api/grow/weather';
@@ -21,6 +22,21 @@ type GrowPlantsResponse = {
   plants: any[];
   onboardingCompleted?: boolean;
   onboardingCompletedAt?: string | null;
+  onboardingSkipped?: boolean;
+};
+
+export type OnboardingSuggestionItem = {
+  slug: string;
+  name: string;
+  category: string;
+  careLevel: string;
+  sunRequirements?: string;
+  description?: string;
+  imageKey?: string;
+};
+
+type OnboardingSuggestionsResponse = {
+  suggestions: OnboardingSuggestionItem[];
 };
 
 type CultivarSearchItem = {
@@ -631,6 +647,24 @@ export class ApiClient {
     return response.json();
   }
 
+  async getOnboardingSuggestions(
+    interests: string[],
+    climateZone?: string
+  ): Promise<OnboardingSuggestionsResponse> {
+    const response = await fetch(GROW_ONBOARDING_SUGGESTIONS_API, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ interests, climateZone }),
+    });
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({ error: 'Network error' }));
+      throw new Error(error.error || 'Failed to fetch plant suggestions');
+    }
+
+    return response.json();
+  }
+
   async getGrowPreferences(): Promise<{
     preferences: {
       location: string | null;
@@ -643,8 +677,6 @@ export class ApiClient {
       sunExposure: string | null;
       moisture: string | null;
       interests: string[];
-      skillLevel: string | null;
-      contentDepth: string | null;
       updatedAt: string | null;
     } | null;
   }> {
