@@ -52,17 +52,26 @@ export default async function handler(
   const profileUpdate: Record<string, unknown> = {
     grow_onboarding_completed: !isSkipped,
     grow_onboarding_completed_at: completedAt,
-    grow_onboarding_skipped: isSkipped,
   };
 
+  // Try setting skipped flag (column may not exist if migration hasn't run yet)
   const { error: profileError } = await supabase
     .from('profiles')
-    .update(profileUpdate)
+    .update({ ...profileUpdate, grow_onboarding_skipped: isSkipped })
     .eq('id', userId);
 
   if (profileError) {
-    console.error('[grow] Failed to mark onboarding complete for user', userId, profileError);
-    return res.status(500).json({ error: profileError.message || 'Failed to mark onboarding complete' });
+    // Retry without the skipped column in case migration hasn't been applied yet
+    console.warn('[grow] Profile update failed, retrying without grow_onboarding_skipped:', profileError.message);
+    const { error: retryError } = await supabase
+      .from('profiles')
+      .update(profileUpdate)
+      .eq('id', userId);
+
+    if (retryError) {
+      console.error('[grow] Failed to mark onboarding complete for user', userId, retryError);
+      return res.status(500).json({ error: retryError.message || 'Failed to mark onboarding complete' });
+    }
   }
 
   // Upsert user preferences to grow_user_preferences table (only for non-skipped completions)
