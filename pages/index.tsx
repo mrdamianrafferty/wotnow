@@ -37,9 +37,6 @@ import { getOptimizedImageSrc, isImageOptimized } from '../data/bgMapOptimized';
 const BottomNav = dynamic(() => import('../components/BottomNav'), { ssr: false });
 import { SkeletonHomePage } from '../components/SkeletonLoader';
 import SimplifiedShareModal from '../components/sharing/SimplifiedShareModal';
-import { useGoDaisySubscription } from '../hooks/useGoDaisySubscription';
-import { GoDaisyLockedOverlay } from '../components/GoDaisyLockedOverlay';
-import { GoDaisyUpgradePrompt } from '../components/GoDaisyUpgradePrompt';
 
 // Code splitting: Lazy load heavy modal/dialog components
 const Popup = dynamic(() => import('../components/Popup'), {
@@ -488,7 +485,6 @@ export default function Home() {
     }
   }, []);
   const { preferences, setPreferences } = useUserPreferences();
-  const { canUse, tier } = useGoDaisySubscription();
   // Memoize interests to prevent unnecessary recalculations downstream
   const interests = useMemo(() => preferences.interests ?? [], [preferences.interests]);
   
@@ -863,8 +859,8 @@ function buildForecastFromOneCall(weatherData: WeatherWithPollen): WeatherForeca
         />
       )}
 
-      {/* Coastal Location Modal — Plus only */}
-      {canUse('coastalLocation') && showCoastDialog && (
+      {/* Coastal Location Modal */}
+      {showCoastDialog && (
         <CoastalLocationDialog
   open={showCoastDialog}
   onClose={() => setShowCoastDialog(false)}
@@ -881,9 +877,9 @@ function buildForecastFromOneCall(weatherData: WeatherWithPollen): WeatherForeca
 
 <AppHeader
   homeLocation={homeLocation}
-  coastalLocation={canUse('coastalLocation') ? coastalLocation : undefined}
+  coastalLocation={coastalLocation}
   onOpenHomeDialog={() => setShowHomeDialog(true)}
-  onOpenCoastDialog={canUse('coastalLocation') ? () => setShowCoastDialog(true) : undefined}
+  onOpenCoastDialog={() => setShowCoastDialog(true)}
 />
 <main id="main-content" role="main">
 {marineError ? (
@@ -938,16 +934,10 @@ function buildForecastFromOneCall(weatherData: WeatherWithPollen): WeatherForeca
       };
     }
     const astronomyCard = idx === 0 && hasStargazing ? (
-      canUse('astronomyAlerts') ? (
-        <AstronomyCard
-          key="astronomy-card"
-          weatherData={astronomyWeatherData}
-        />
-      ) : (
-        <GoDaisyLockedOverlay key="astronomy-locked" feature="astronomy">
-          <AstronomyCard weatherData={astronomyWeatherData} />
-        </GoDaisyLockedOverlay>
-      )
+      <AstronomyCard
+        key="astronomy-card"
+        weatherData={astronomyWeatherData}
+      />
     ) : null;
 
     // Get the hero image URL for this card
@@ -1067,21 +1057,11 @@ function buildForecastFromOneCall(weatherData: WeatherWithPollen): WeatherForeca
           {/* Activity Lists */}
           <div className="activity-suggestions">
             {/* Perfect Activities */}
-            {alsoGoodPerfect.length > 0 && (() => {
-              // Separate indoor (always shown) from outdoor (limited for free)
-              const indoorPerfect = alsoGoodPerfect.filter(s => !isOutdoor(s.activityId));
-              const outdoorPerfect = alsoGoodPerfect.filter(s => isOutdoor(s.activityId));
-              const maxOutdoor = tier === 'free' ? 6 : outdoorPerfect.length;
-              const visibleOutdoor = outdoorPerfect.slice(0, maxOutdoor);
-              const hasHiddenOutdoor = outdoorPerfect.length > maxOutdoor;
-              const visiblePerfect = [...indoorPerfect, ...visibleOutdoor];
-              if (visiblePerfect.length === 0) return null;
-
-              return (
+            {alsoGoodPerfect.length > 0 && (
               <div className="activity-section">
                 <h4 className="also-good-title">{alsoPerfectToday}</h4>
                 <ul className="also-good-list">
-                  {visiblePerfect.map(suggestion => {
+                  {alsoGoodPerfect.map(suggestion => {
                     const activity = activityTypes.find(a => a.id === suggestion.activityId);
                     const isOutdoorActivity = isOutdoor(suggestion.activityId);
 
@@ -1116,12 +1096,8 @@ const popupPayload = buildPopupActivityPayload({
                     );
                   })}
                 </ul>
-                {hasHiddenOutdoor && (
-                  <GoDaisyUpgradePrompt feature="activities" variant="inline" className="mt-2" />
-                )}
               </div>
-              );
-            })()}
+            )}
 
             {/* Good Activities */}
             {(() => {
@@ -1132,20 +1108,11 @@ const popupPayload = buildPopupActivityPayload({
 
               if (goodActivities.length === 0) return null;
 
-              // Separate indoor (always shown) from outdoor (limited for free)
-              const indoorGood = goodActivities.filter(s => !isOutdoor(s.activityId));
-              const outdoorGood = goodActivities.filter(s => isOutdoor(s.activityId));
-              const maxOutdoor = tier === 'free' ? 6 : outdoorGood.length;
-              const visibleOutdoor = outdoorGood.slice(0, maxOutdoor);
-              const hasHiddenOutdoor = outdoorGood.length > maxOutdoor;
-              const visibleGood = [...indoorGood, ...visibleOutdoor];
-              if (visibleGood.length === 0) return null;
-
               return (
                 <div className="activity-section">
                   <h4 className="also-good-title">{goodOptionsToday}</h4>
                   <ul className="activity-list-good">
-                    {visibleGood.map(suggestion => {
+                    {goodActivities.map(suggestion => {
                       const activity = activityTypes.find(a => a.id === suggestion.activityId);
                       const isOutdoorActivity = isOutdoor(suggestion.activityId);
 
@@ -1180,9 +1147,6 @@ const popupPayload = buildPopupActivityPayload({
                       );
                     })}
                   </ul>
-                  {hasHiddenOutdoor && (
-                    <GoDaisyUpgradePrompt feature="activities" variant="inline" className="mt-2" />
-                  )}
                 </div>
               );
             })()}

@@ -22,7 +22,6 @@ import {
   Sprout,
 } from 'lucide-react';
 import InlineLocationSearch from './InlineLocationSearch';
-import PlantSuggestionsStep, { type SelectedPlant } from './PlantSuggestionsStep';
 
 interface OnboardingFlowProps {
   className?: string;
@@ -36,12 +35,13 @@ interface OnboardingResult {
   sunExposure: string;
   moisture: string;
   interests: string[];
+  skillLevel: string;
+  contentDepth: string;
   climateZone?: string;
   latitude?: number;
   longitude?: number;
   elevation?: number;
   activities: string[];
-  selectedPlants: SelectedPlant[];
 }
 
 interface LocationMeta {
@@ -82,10 +82,10 @@ const gardenFeatureOptions: GardenFeatureOption[] = [
 const soilTypeOptions: SimpleOption[] = [
   { id: 'clay', label: 'Clay', description: 'Heavy, holds water, slow to warm', emoji: '🧱' },
   { id: 'sandy', label: 'Sandy', description: 'Drains quickly, low fertility', emoji: '🏖️' },
-  { id: 'loam', label: 'Loam', description: 'Balanced, ideal for most crops', emoji: '\u2B50' },
+  { id: 'loam', label: 'Loam', description: 'Balanced, ideal for most crops', emoji: '🪨' },
   { id: 'silty', label: 'Silty', description: 'Smooth, retains moisture', emoji: '🌀' },
   { id: 'peaty', label: 'Peaty', description: 'Rich organic matter, acidic', emoji: '🍂' },
-  { id: 'chalky', label: 'Chalky', description: 'Alkaline, free draining', emoji: '\u2728' },
+  { id: 'chalky', label: 'Chalky', description: 'Alkaline, free draining', emoji: '🪨' },
 ];
 
 const sunExposureOptions: SimpleOption[] = [
@@ -109,6 +109,18 @@ const interestOptions: SimpleOption[] = [
   { id: 'herbs', label: 'Herbs', emoji: '🌿' },
   { id: 'wildlife', label: 'Wildlife & Pollinators', emoji: '🦋' },
   { id: 'indoor_plants', label: 'Indoor Plants', emoji: '🪴' },
+];
+
+const experienceOptions: SimpleOption[] = [
+  { id: 'beginner', label: 'Beginner', description: 'New to gardening or re-starting', emoji: '🌱' },
+  { id: 'intermediate', label: 'Intermediate', description: 'Comfortable with common tasks', emoji: '🌿' },
+  { id: 'advanced', label: 'Advanced', description: 'Seasoned grower or professional', emoji: '🌳' },
+];
+
+const contentDepthOptions: SimpleOption[] = [
+  { id: 'quick_tips', label: 'Quick Tips', description: 'Short prompts and reminders', emoji: '⚡' },
+  { id: 'detailed_guides', label: 'Detailed Guides', description: 'Step-by-step instructions', emoji: '📘' },
+  { id: 'expert_insights', label: 'Expert Insights', description: 'Advanced techniques & data', emoji: '🧠' },
 ];
 
 const featureActivityMap: Record<string, string[]> = {
@@ -141,6 +153,8 @@ const defaultFormState = {
   sunExposure: '',
   moisture: '',
   interests: [] as string[],
+  skillLevel: '',
+  contentDepth: '',
 };
 
 const isBrowser = typeof window !== 'undefined';
@@ -189,7 +203,6 @@ export function OnboardingFlow({ className, onComplete }: OnboardingFlowProps) {
   const [currentStep, setCurrentStep] = useState<Step>(0);
   const [formState, setFormState] = useState(defaultFormState);
   const [locationMeta, setLocationMeta] = useState<LocationMeta>({});
-  const [selectedPlants, setSelectedPlants] = useState<SelectedPlant[]>([]);
   const [stepError, setStepError] = useState<string | null>(null);
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
   const [isBusy, setIsBusy] = useState(false);
@@ -246,6 +259,8 @@ export function OnboardingFlow({ className, onComplete }: OnboardingFlowProps) {
         sunExposure: typeof parsed.sunExposure === 'string' ? parsed.sunExposure : previous.sunExposure,
         moisture: typeof parsed.moisture === 'string' ? parsed.moisture : previous.moisture,
         interests: Array.isArray(parsed.interests) ? parsed.interests : previous.interests,
+        skillLevel: typeof parsed.skillLevel === 'string' ? parsed.skillLevel : previous.skillLevel,
+        contentDepth: typeof parsed.contentDepth === 'string' ? parsed.contentDepth : previous.contentDepth,
       }));
 
       setLocationMeta({
@@ -273,7 +288,7 @@ export function OnboardingFlow({ className, onComplete }: OnboardingFlowProps) {
     'Garden Basics',
     'Growing Conditions',
     'Interests & Focus',
-    'Pick Your First Plants',
+    'Experience & Finish',
   ];
 
   const validateStep = (step: Step) => {
@@ -300,7 +315,12 @@ export function OnboardingFlow({ className, onComplete }: OnboardingFlowProps) {
         }
         return null;
       case 3:
-        // Plant suggestions step — no required selection
+        if (!formState.skillLevel) {
+          return 'Select your current gardening confidence level.';
+        }
+        if (!formState.contentDepth) {
+          return 'Pick the style of guidance you prefer.';
+        }
         return null;
       default:
         return null;
@@ -396,21 +416,24 @@ export function OnboardingFlow({ className, onComplete }: OnboardingFlowProps) {
       sunExposure: formState.sunExposure,
       moisture: formState.moisture,
       interests: formState.interests,
+      skillLevel: formState.skillLevel,
+      contentDepth: formState.contentDepth,
       climateZone: locationMeta.climateZone,
       latitude: locationMeta.latitude,
       longitude: locationMeta.longitude,
       elevation: locationMeta.elevation,
       activities,
-      selectedPlants,
     };
 
-    const payload: Record<string, unknown> = {
+    const payload = {
       location: result.location,
       garden_features: result.gardenFeatures,
       soil_type: result.soilType,
       sun_exposure: result.sunExposure,
       moisture: result.moisture,
       interests: result.interests,
+      skill_level: result.skillLevel,
+      content_depth: result.contentDepth,
       climate_zone: result.climateZone,
       latitude: result.latitude,
       longitude: result.longitude,
@@ -418,14 +441,9 @@ export function OnboardingFlow({ className, onComplete }: OnboardingFlowProps) {
       activities: result.activities,
     };
 
-    // Include selected plants so the server auto-adds them
-    if (selectedPlants.length > 0) {
-      payload.selectedPlants = selectedPlants;
-    }
-
     try {
       await api.updateUserInterests(payload);
-      await api.completeOnboarding(payload);
+      await api.completeOnboarding();
       markOnboardingComplete();
       mergeIntoLocalStorage(result);
       setStatusMessage('Profile saved. Preparing your personalised dashboard...');
@@ -489,7 +507,7 @@ export function OnboardingFlow({ className, onComplete }: OnboardingFlowProps) {
     }));
   };
 
-  const selectSingle = (key: 'soilType' | 'sunExposure' | 'moisture', value: string) => {
+  const selectSingle = (key: 'soilType' | 'sunExposure' | 'moisture' | 'skillLevel' | 'contentDepth', value: string) => {
     setFormState((previous) => ({
       ...previous,
       [key]: value,
@@ -534,7 +552,6 @@ export function OnboardingFlow({ className, onComplete }: OnboardingFlowProps) {
                       key={feature.id}
                       className={cn(
                         'flex cursor-pointer items-start gap-3 rounded-lg border p-4 transition-all duration-200 hover:scale-[1.02] hover:shadow-md',
-                        'focus-within:outline-none focus-within:ring-2 focus-within:ring-emerald-500 focus-within:ring-offset-2',
                         checked
                           ? 'border-emerald-300 bg-emerald-50 scale-[1.02] shadow-lg'
                           : 'border-border hover:border-primary'
@@ -583,7 +600,6 @@ export function OnboardingFlow({ className, onComplete }: OnboardingFlowProps) {
                       onClick={() => selectSingle('soilType', option.id)}
                       className={cn(
                         'rounded-lg border p-4 text-left transition-all duration-200 hover:scale-[1.02] hover:shadow-md',
-                        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2',
                         active
                           ? 'border-emerald-300 bg-emerald-50 scale-[1.02] shadow-lg'
                           : 'border-border hover:border-primary'
@@ -615,7 +631,6 @@ export function OnboardingFlow({ className, onComplete }: OnboardingFlowProps) {
                       onClick={() => selectSingle('sunExposure', option.id)}
                       className={cn(
                         'rounded-lg border p-4 text-left transition-all duration-200 hover:scale-[1.02] hover:shadow-md',
-                        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2',
                         active
                           ? 'border-emerald-300 bg-emerald-50 scale-[1.02] shadow-lg'
                           : 'border-border hover:border-primary'
@@ -647,7 +662,6 @@ export function OnboardingFlow({ className, onComplete }: OnboardingFlowProps) {
                       onClick={() => selectSingle('moisture', option.id)}
                       className={cn(
                         'rounded-lg border p-4 text-left transition-all duration-200 hover:scale-[1.02] hover:shadow-md',
-                        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2',
                         active
                           ? 'border-emerald-300 bg-emerald-50 scale-[1.02] shadow-lg'
                           : 'border-border hover:border-primary'
@@ -683,7 +697,6 @@ export function OnboardingFlow({ className, onComplete }: OnboardingFlowProps) {
                       onClick={() => toggleInterest(option.id)}
                       className={cn(
                         'rounded-lg border p-4 text-left transition-all duration-200 hover:scale-[1.02] hover:shadow-md',
-                        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2',
                         active
                           ? 'border-emerald-300 bg-emerald-50 scale-[1.02] shadow-lg'
                           : 'border-border hover:border-primary'
@@ -725,14 +738,52 @@ export function OnboardingFlow({ className, onComplete }: OnboardingFlowProps) {
       case 3:
         return (
           <div className="space-y-6">
-            <PlantSuggestionsStep
-              interests={formState.interests}
-              climateZone={locationMeta.climateZone}
-              selectedPlants={selectedPlants}
-              onSelectionChange={setSelectedPlants}
-            />
+            <div className="grid gap-3 sm:grid-cols-3">
+              {experienceOptions.map((option) => {
+                const active = formState.skillLevel === option.id;
+                return (
+                  <button
+                    key={option.id}
+                    type="button"
+                    onClick={() => selectSingle('skillLevel', option.id)}
+                    className={cn(
+                      'rounded-lg border p-4 text-left transition-all duration-200 hover:border-primary hover:scale-[1.02] hover:shadow-md',
+                      active ? 'border-primary bg-primary/5 scale-[1.02] shadow-md' : 'border-border'
+                    )}
+                  >
+                    <span className="flex items-center gap-2 font-medium">
+                      <span>{option.emoji}</span>
+                      {option.label}
+                    </span>
+                    <span className="block text-sm text-muted-foreground">{option.description}</span>
+                  </button>
+                );
+              })}
+            </div>
 
-            {/* Summary card */}
+            <div className="grid gap-3 sm:grid-cols-3">
+              {contentDepthOptions.map((option) => {
+                const active = formState.contentDepth === option.id;
+                return (
+                  <button
+                    key={option.id}
+                    type="button"
+                    onClick={() => selectSingle('contentDepth', option.id)}
+                    className={cn(
+                      'rounded-lg border p-4 text-left transition-all duration-200 hover:border-primary hover:scale-[1.02] hover:shadow-md',
+                      active ? 'border-primary bg-primary/5 scale-[1.02] shadow-md' : 'border-border'
+                    )}
+                  >
+                    <span className="flex items-center gap-2 font-medium">
+                      <span>{option.emoji}</span>
+                      {option.label}
+                    </span>
+                    <span className="block text-sm text-muted-foreground">{option.description}</span>
+                  </button>
+                );
+              })}
+            </div>
+
             <Card className="bg-white border border-l-4 border-l-green-500 border-green-200 motion-safe:animate-scale-in">
               <CardHeader className="pb-2">
                 <CardTitle className="flex items-center gap-2 text-base">
@@ -741,11 +792,9 @@ export function OnboardingFlow({ className, onComplete }: OnboardingFlowProps) {
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-2 text-sm">
-                <p><strong>Location:</strong> {formState.location || 'Not set'}{locationMeta.climateZone ? ` \u2022 Climate zone ${locationMeta.climateZone}` : ''}</p>
+                <p><strong>Location:</strong> {formState.location || 'Not set'}{locationMeta.climateZone ? ` • Climate zone ${locationMeta.climateZone}` : ''}</p>
                 <p><strong>Focus areas:</strong> {formState.interests.length ? formState.interests.join(', ') : 'None selected'}</p>
-                {selectedPlants.length > 0 && (
-                  <p><strong>Starting plants:</strong> {selectedPlants.map((p) => p.name).join(', ')}</p>
-                )}
+                <p><strong>Experience:</strong> {formState.skillLevel || 'Not set'} • <strong>Guidance:</strong> {formState.contentDepth || 'Not set'}</p>
               </CardContent>
             </Card>
           </div>
@@ -798,18 +847,18 @@ export function OnboardingFlow({ className, onComplete }: OnboardingFlowProps) {
             Help us learn about your garden so we can deliver the most relevant guidance.
           </p>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="hidden sm:flex items-center gap-3">
           <span className="text-sm text-muted-foreground">
             Step {currentStep + 1} of {totalSteps.length}
           </span>
-          <button
-            type="button"
+          <Button
+            variant="ghost"
+            size="sm"
             onClick={handleSkipOnboarding}
             disabled={isBusy || isSubmitting}
-            className="hidden sm:inline-flex text-sm text-muted-foreground underline hover:text-foreground disabled:opacity-50"
           >
             Skip onboarding
-          </button>
+          </Button>
         </div>
       </div>
 
@@ -850,14 +899,14 @@ export function OnboardingFlow({ className, onComplete }: OnboardingFlowProps) {
                 <ArrowLeft className="mr-2 h-4 w-4" />
                 Back
               </Button>
-              <button
-                type="button"
+              <Button
+                variant="ghost"
                 onClick={handleSkipOnboarding}
                 disabled={isBusy || isSubmitting}
-                className="sm:hidden text-sm text-muted-foreground underline hover:text-foreground disabled:opacity-50 py-2"
+                className="sm:hidden"
               >
                 Skip onboarding
-              </button>
+              </Button>
             </div>
 
             {currentStep < totalSteps.length - 1 ? (

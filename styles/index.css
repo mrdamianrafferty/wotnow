@@ -97,7 +97,6 @@
   100% { transform: translateY(60px); opacity: 0; }
 }
 
-
 /* Utility classes for motion-safe animations */
 /* Use: class="motion-safe:animate-sprout motion-reduce:opacity-100" */
 @media (prefers-reduced-motion: no-preference) {
@@ -112,7 +111,6 @@
   .motion-safe\:animate-windy-sway { animation: windySway 1.5s ease-in-out infinite; }
   .motion-safe\:animate-sun-breathe { animation: sunBreathe 6s ease-in-out infinite; }
   .motion-safe\:animate-harvest-glow { animation: harvestGlow 3s ease-in-out infinite; }
-
 }
 
 /* Homepage weather atmosphere */
