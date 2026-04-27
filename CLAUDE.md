@@ -1,124 +1,166 @@
+npm run build:strict     # Explicit strict build with linting
+npm start                # Start production server
+npm run typecheck        # TypeScript type checking without emit
+
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+**Updated: 2026-04-27**
 
 ## Project Overview
 
-This repository contains two related applications:
+This repo contains two main apps:
 
-**Go Daisy** - A generalist PWA providing weather-informed recommendations for a wide range of outdoor activities (hiking, cycling, stargazing, etc.). This is the main application with reusable components and patterns for activity recommendations.
+- **Go Daisy**: Generalist PWA for weather-informed outdoor activity recommendations (hiking, cycling, stargazing, etc.).
+- **Grow Daisy**: Gardening planner and smart garden assistant (web and mobile).
 
-**Findr** - A specialist offshoot app focused exclusively on sea fishing predictions. It takes Go Daisy's approach and applies it with deep domain expertise to fishing, using real marine environmental data from CMEMS (Copernicus Marine Environment Monitoring Service) and ICES (International Council for the Exploration of the Sea) rectangular zones.
+**Findr** (fishing app) is now in its own repo. Ignore any leftover `findr` files here.
 
-**Relationship:**
-- Go Daisy provides the foundation: location systems, weather integration, UI patterns, translation, user preferences
-- Findr reuses and extends these components with fishing-specific logic (species matching, marine data, catch logging)
-- Both apps share the same Supabase authentication system (separate routes, shared auth)
-- Features developed in Findr (e.g., auto-translation) may be backported to Go Daisy in the future
-- Both will be released as separate apps with distinct domains and branding
-- The pattern established here will be replicated for other specialist activities in a family of apps
+**App Family Pattern:**
+- Shared Supabase auth, location, weather, translation, and UI systems.
+- Each app has its own branding, domain, and specialist features.
+- All apps use Next.js, Tailwind CSS, DaisyUI, and React Query.
 
-**Domains:**
-- Go Daisy: `godaisy.io`
-- Findr: `fishfindr.eu`
-
-**Platform Strategy:**
-- Currently: Web-only PWAs (both apps)
-- Future: iOS and Android native apps once polished (work not yet started)
-
-**Tech Stack:**
-- Next.js 15.5 (React 18.3, TypeScript 5.8)
-- Supabase (PostgreSQL with RLS policies)
-- Tailwind CSS 4 + DaisyUI 5
-- TanStack React Query for data fetching
-- Framer Motion for animations
-- Node 20.x required
+---
 
 ## Development Commands
 
-### Core Development
 ```bash
-npm run dev              # Start development server
-npm run build            # Production build (includes lint:ci check)
-npm run build:strict     # Explicit strict build with linting
-npm start                # Start production server
-```
+npm run dev              # Start dev server
+npm run build            # Production build (includes lint)
 
-### Linting & Type Checking
-```bash
-npm run lint             # Run ESLint
-npm run lint:fix         # Auto-fix ESLint issues
-npm run lint:ci          # CI-safe linting (max-warnings=0)
-npm run typecheck        # TypeScript type checking without emit
-```
-
-### Testing
-```bash
-npm test                 # Run Jest tests
-npm run test:ci          # CI mode with coverage
-npm run test:wind        # Run wind recommendation tests
-```
-
-### Database & Migrations
-```bash
-supabase db push         # Apply migrations to Supabase
+npm run test             # Run Jest tests
+npm run deploy           # Deploy to Vercel
 npm run env:sync         # Sync .env.local to .env.cli for scripts
 ```
 
-### Deployment
-```bash
-npm run deploy           # Production deployment script
-npm run deploy:quick     # Quick deployment (./quick-deploy.sh)
-./vercel-build.sh        # Vercel build script
-```
-
-### Scripts & Utilities
-```bash
-npm run demo:wind        # Demo wind recommendations
-npm run demo:soil        # Demo soil conditions
-npm run validate:taxonomy # Validate taxonomy data
-npm run smoke            # Run smoke tests (bash scripts/smoke-unified.sh)
-
-# Findr-specific seeding
-npm run seed:findr:rectangles   # Seed ICES rectangles
-npm run seed:findr:conditions   # Seed conditions snapshots
-```
+---
 
 ## Architecture
 
-### Core Application Structure
+### Go Daisy
 
-**Next.js Pages Router:**
-- `pages/` - Route pages (Next.js conventions)
-- `pages/api/` - Backend API endpoints
-- `pages/index.tsx` - Go Daisy home page
-- `pages/weather.tsx` - Main weather dashboard (Go Daisy)
-- `pages/activities.tsx` - Activity recommendations (Go Daisy)
-- `pages/findr/` - Fishing prediction UI pages (Findr specialist app)
-- `pages/_app.tsx` - App wrapper with contexts
-- `pages/_document.tsx` - HTML document customization
+- **Routes:** `/`, `/weather`, `/activities`, `/grow` (Grow Daisy entry)
+- **Features:** Weather dashboards, astronomy, tides, wind, soil, general activity suggestions.
+- **Shared Components:** Location context, weather services, translation, user preferences, DaisyUI-based UI.
 
-**Key Directories:**
-- `components/` - React components (general + feature-specific)
-- `components/findr/` - Findr-specific components (cards, modals, navigation)
-- `hooks/` - Custom React hooks
-- `lib/` - Shared utilities, services, and business logic
-- `context/` - React context providers
-- `types/` - TypeScript type definitions
-- `data/` - Static data files and lookup tables
-- `supabase/migrations/` - Database schema migrations
+### Grow Daisy
 
-### Go Daisy Architecture (General Activity Recommendations)
+- **Routes:** `/grow`, `/grow/garden`, `/grow/plan`, `/grow/activities`, `/grow/species/[slug]`, `/grow/settings`, etc.
+- **Features:**  
+  - Plant database (50k+ species, 8 languages)
+  - Smart planting calendar (climate-aware)
+  - Weather-integrated gardening tasks (soil temp, frost, watering, pest/disease risk)
+  - Companion planting, guilds, harvest tracking, photo log
+  - Push notifications (mobile), camera/photo support, climate zone detection
+  - Monetization: Free tier + paid (Sprout, Bloom, Harvest, etc.) via Stripe/RevenueCat
+- **Mobile:**  
+  - Capacitor-based iOS/Android apps (`capacitor.config.growdaisy.ts`)
+  - Subdomain: `grow.godaisy.io` (can migrate to own domain)
+  - Shared Supabase auth (Apple/Google sign-in, deep links)
+  - App icons/splash screens generated via script
 
-**Core Concept:** Weather-informed activity recommendations for diverse outdoor activities. Components are designed to be reusable across different activity domains.
+### Shared Patterns
 
-**Shared Components:**
-- Location system (UnifiedLocationContext) - GPS, place search, coordinate management
-- Weather services - OpenWeather, Stormglass for marine data
-- Translation system - Multi-language support with DeepL API caching
-- User preferences - Settings persistence across activities
-- UI patterns - Cards, modals, navigation components built with DaisyUI
+- **Monorepo:** All apps share code, config, and infra.
+- **Supabase:** Auth, user data, gardening/fishing/weather DBs, RLS enforced.
+- **React Query:** Data fetching/caching.
+- **Tailwind + DaisyUI:** Unified design system.
+- **Translation:** DeepL API, multi-language, cached in DB.
+- **Testing:** Jest, Playwright E2E, see `E2E_TESTING_GUIDE.md`.
 
+---
+
+## Key Directories
+
+- `pages/` – Next.js routes
+- `components/` – React components (general + app-specific)
+- `hooks/` – Custom React hooks
+- `lib/` – Utilities, business logic
+- `context/` – React context providers
+- `types/` – TypeScript types
+- `data/` – Static data, lookup tables
+- `supabase/migrations/` – DB migrations
+
+---
+
+## Environment Variables
+
+See `.env.example` for required vars.  
+Sync with `npm run env:sync` for scripts.
+
+---
+
+## Deployment
+
+- **Platform:** Vercel
+- **Domains:**  
+  - Go Daisy: `godaisy.io`  
+  - Grow Daisy: `grow.godaisy.io` (or future own domain)
+- **Build:**  
+  - Lint runs pre-build
+  - `next build` via `vercel-build.sh`
+  - Use `./scripts/vercel-env-add.sh` for env vars (avoids linebreak issues)
+
+---
+
+## Best Practices
+
+- **Do not edit Tailwind/PostCSS config** (see `DO_NOT_TOUCH_CSS_CONFIG.md`)
+- Use DaisyUI classes for UI
+- Keep shared logic in general dirs, specialist logic in app-specific dirs
+- Use `<TranslatedText>` for all user-facing text
+- Use React Query for all data fetching
+- All new features should consider reusability for future apps
+
+---
+
+## Grow Daisy: Specialist Details
+
+- **Plant Data:**  
+  - Table: `plant_species` (50k+ rows, 8 languages, companion/rotation/frost data)
+  - API: `/api/grow/species/[slug]`, `/api/grow/species/batch`
+  - Images: `/public/grow/plants/` (multiple sizes)
+  - Perenual API enrichment (see `lib/grow/perenualApi.ts`)
+- **Smart Tasks:**  
+  - Weather-driven: soil temp, frost, watering, pest/disease risk
+  - Push notifications (Capacitor, LocalNotifications)
+  - Monetization: RevenueCat integration (iOS/Android)
+- **Mobile:**  
+  - Capacitor config: `capacitor.config.growdaisy.ts`
+  - iOS/Android project setup in `ios-growdaisy/`, `android-growdaisy/`
+  - App icons/splash: `scripts/generate-growdaisy-icons.ts`
+  - Auth: Apple/Google sign-in, deep links, shared Supabase config
+
+---
+
+## Common Tasks
+
+- **Add a plant:** Add to `plant_species`, image to `/public/grow/plants/`, update image map, run `validate:taxonomy`
+- **Add API endpoint:** Create in `pages/api/grow/`, use Supabase server client, add types, handle errors
+- **Debug weather/gardening logic:** See `PLANT_DATA_FEATURE_AUDIT.md`, `GROW_DAISY_MASTER_PLAN.md`
+- **Test:** Use Jest for unit/integration, Playwright for E2E
+
+---
+
+## Documentation
+
+- `GETTING_STARTED.md` – Start here
+- `GROW_DAISY_MOBILE_APP_PLAN.md` – Mobile app setup
+- `PLANT_DATA_FEATURE_AUDIT.md` – Plant data coverage
+- `GROW_DAISY_MASTER_PLAN.md` – Monetization/features
+- `DATABASE_SCHEMA_REFERENCE.md` – Table/column reference
+- `E2E_TESTING_GUIDE.md` – Playwright E2E tests
+
+---
+
+## Updating This File
+
+- Add "Updated: YYYY-MM-DD" at the top
+- Keep under 250 lines
+- Remove Findr details (now external)
+- Add/adjust Grow Daisy details as features evolve
+
+---
 **Activities Supported:**
 - Weather dashboards (current and forecast)
 - Astronomy highlights (ISS visibility, moon phases)
@@ -127,70 +169,24 @@ npm run seed:findr:conditions   # Seed conditions snapshots
 - Wind recommendations
 - General outdoor activity suggestions
 
-### Findr Architecture (Fishing Predictions)
 
-**Core Concept:** Specialist fishing predictions that extend Go Daisy's approach with deep domain expertise. Matches species environmental preferences against real-time marine data within ICES rectangular zones.
-
-**Data Flow:**
-1. User selects location → Mapped to ICES rectangle code (e.g., "31F1")
-2. Frontend fetches predictions via `/api/findr/predictions`
-3. API queries Supabase for species data and CMEMS marine conditions
-4. Species are ranked by confidence score (environmental matching + guild weighting)
-5. Results cached in `findr_prediction_sessions` table (3-hour TTL)
-
-**Key Components:**
-
-- **Rectangle System** (`lib/findr/rectangle.ts`):
-  - ICES rectangles are 30min latitude × 1° longitude zones
-  - Each rectangle has anchor coordinates for weather/marine data lookup
-  - Database table: `ices_rectangles` with geometry and metadata
-
-- **Environmental Matching** (`lib/findr/mapPrediction.ts`):
-  - Matches species preferences (temperature, salinity, depth, substrate) against CMEMS data
-  - Guild-specific weighting profiles (pelagic, reef_kelp, benthic, surf_estuary, cephalopod)
-  - Returns confidence scores (0-100) with rationale
-
-- **CMEMS Integration** (`lib/copernicus/`):
-  - Real marine data from Copernicus Marine Service
-  - Temperature, salinity, water clarity (kd490), ocean currents
-  - Mock client for development (`mockClient.ts`), real client for production (`realClient.ts`)
-  - Region routing for different data sources (MET Norway, CMEMS)
-
-**Species Data:**
-- Species table with environmental preferences (temperature ranges, depth, substrate)
-- Localized names (FR, ES, DE, IT, PT) and playful bios
-- Species images stored in `/public/PNGS/` with slug-based lookup
-- Guild classifications affect environmental weighting
-
-### Validation System
-
-The catch logging system creates a feedback loop for prediction accuracy:
-
-- **Impression Tracking**: Records when users view predictions (`findr_prediction_impressions`)
-- **Catch Logging**: Users log catches with bait/habitat details (`findr_catch_entries`)
-- **Automatic Linking**: Catches linked to recent impressions (24h window)
-- **Validation Metrics**: Tracks prediction accuracy, advice effectiveness, confidence calibration
-
-See `docs/FINDR_VALIDATION_SYSTEM.md` for complete details.
 
 ### Authentication & User Management
 
 **Shared Auth System:**
-- Both Go Daisy and Findr use the same Supabase authentication database
+- Both Go Daisy and Grow Daisy use the same Supabase authentication database
 - Users can authenticate once and access both apps (separate routes, shared auth)
-- Auth pages primarily in Findr: `pages/findr/auth.tsx`, `pages/findr/simple-auth.tsx`, `pages/findr/magic-link.tsx`
 - Supabase RLS (Row-Level Security) policies protect user data
 - Auth helpers: `lib/supabase/client.ts` (browser), `lib/supabase/server.ts` (API routes)
 
 **User Data:**
-- `user_favourites` - Species favorites (Findr-specific, but pattern reusable)
 - `user_location_preferences` - Location history and preferences (shared across apps)
 - All user tables include RLS policies tied to `auth.users`
 
 ### Context Providers
 
 **UnifiedLocationContext** (`context/UnifiedLocationContext.tsx`):
-- Manages location state across the app (coordinates, place names, ICES rectangles)
+- Manages location state across the app (coordinates, place names)
 - Syncs with Supabase user preferences (`user_location_preferences`)
 - Provides location detection and rectangle lookup
 
@@ -204,14 +200,6 @@ See `docs/FINDR_VALIDATION_SYSTEM.md` for complete details.
 
 ### API Endpoints
 
-**Findr Endpoints:**
-- `/api/findr/predictions` - Main predictions endpoint (cached, localized)
-- `/api/findr/conditions` - Environmental conditions for a rectangle
-- `/api/findr/rectangles` - ICES rectangle lookup by coordinates
-- `/api/findr/catch-log` - Catch logging and retrieval
-- `/api/findr/record-impression` - Track prediction views
-- `/api/findr/favourites` - User favorite species management
-
 **Other Endpoints:**
 - `/api/weather` - Weather data (OpenWeather)
 - `/api/marine` - Marine weather (Stormglass)
@@ -224,17 +212,7 @@ See `docs/FINDR_VALIDATION_SYSTEM.md` for complete details.
 **📚 ESSENTIAL REFERENCE:** See [DATABASE_SCHEMA_REFERENCE.md](./DATABASE_SCHEMA_REFERENCE.md) for comprehensive table schemas, column types, and type casting requirements.
 
 **Key Tables:**
-- `species` - Fish species with environmental preferences and localized names
-- `ices_rectangles` - ICES fishing zones with geometry
-- `copernicus_data` - Cached CMEMS marine data
-- `findr_prediction_sessions` - Cached prediction results (3h TTL)
-- `findr_prediction_impressions` - Prediction view tracking
-- `findr_catch_entries` - User catch logs with validation linkage
-- `user_favourites` - User favorite species with RLS policies
-- `user_location_preferences` - User location history and preferences
-- `moon_cache` - Cached moon phase data
-- `translation_cache` - DeepL translation cache
-
+needs to be completed
 All tables include Row-Level Security (RLS) policies for data protection.
 
 **When Working with RPC Functions:**
@@ -242,33 +220,10 @@ All tables include Row-Level Security (RLS) policies for data protection.
 - Common pitfalls: VARCHAR vs TEXT, ENUM types, INTEGER vs NUMERIC in CASE statements
 - All column names and types documented in [DATABASE_SCHEMA_REFERENCE.md](./DATABASE_SCHEMA_REFERENCE.md)
 
-**Common Column Name Pitfalls:**
-- ❌ **WRONG**: `ices_rectangles.name` → ✅ **CORRECT**: `ices_rectangles.region`
-- ❌ **WRONG**: `ices_rectangles.code` → ✅ **CORRECT**: `ices_rectangles.rectangle_code`
-- ❌ **WRONG**: `ices_rectangles.biogeographic_region` → ✅ **CORRECT**: `ices_rectangles.region`
-- ❌ **WRONG**: `findr_conditions_latest.temperature_c` → ✅ **CORRECT**: `findr_conditions_latest.sea_temp_c` or `water_temp_c`
-- ❌ **WRONG**: `findr_conditions_latest.salinity_ppt` → ✅ **CORRECT**: `findr_conditions_latest.salinity_psu`
-- **IMPORTANT**: When querying ices_rectangles, ALWAYS use `rectangle_code` (not `code`) and `region` (not `name` or `biogeographic_region`)
-
-**Species Table RLS:**
-- The `species` table has Row-Level Security policies that block direct reads by authenticated users
-- **ALWAYS** use service role client to fetch species data in API endpoints:
-  ```typescript
-  const speciesClient = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
-    auth: { autoRefreshToken: false, persistSession: false }
-  });
-  ```
-- See `/pages/api/findr/favourites/index.ts` and `/pages/api/findr/advice/tactical.ts` for examples
-
 ## Key Development Patterns
 
 ### Hooks Usage
 
-**Location & Predictions:**
-- `useFishingPredictions()` - Fetch and cache predictions for a rectangle
-- `useFindrRectangleOptions()` - Manage rectangle selection dropdown
-- `usePersistentFindrSettings()` - Persist Findr UI state (language, date, region)
-- `useFavourites()` - Manage user favorite species with optimistic updates
 
 **Data Fetching:**
 - Prefer React Query (`@tanstack/react-query`) for API calls
@@ -295,7 +250,6 @@ See `.env.example` for required variables. Key ones:
 - `SUPABASE_URL` / `SUPABASE_ANON_KEY` - Database connection
 - `NEXT_PUBLIC_GOOGLE_MAPS_API_KEY` - Location search
 - `STORMGLASS_SECRET_KEY` - Marine weather
-- `COPERNICUS_USERNAME` / `COPERNICUS_PASSWORD` - Real CMEMS data
 - `DEEPL_API_KEY` - Translations
 
 **Important:** Use `npm run env:sync` to sync `.env.local` credentials to `.env.cli` for TSX scripts.
@@ -337,15 +291,12 @@ Jest is configured with Next.js integration. Test files use `.test.ts` or `.test
 ## Important Notes
 
 ### App Family Strategy
-- **Go Daisy** will be released as a generalist weather-informed activity app
-- **Findr** will be released as a specialist fishing app
+- **Go Daisy** has been released as a generalist weather-informed activity app
+- **Grow** has been released as a specialist gardening app
 - Future specialist apps will follow the same pattern for other activities
 - When developing features, consider reusability across the app family
 - Shared components should live in general directories, not activity-specific ones
 - Activity-specific logic should be clearly separated (e.g., `pages/findr/`, `components/findr/`)
-
-### Phase 10 Status (Findr-specific)
-Real CMEMS data integration is complete on the backend (99.7% coverage, <24h data freshness). Frontend UI integration for displaying environmental factors is partially complete. See `PHASE_10_COMPLETE_SUMMARY.md` for details.
 
 ### CSS Configuration
 **DO NOT MODIFY** Tailwind or PostCSS configs without review. Existing setup uses Tailwind 4 with DaisyUI 5 and specific optimizations. See `DO_NOT_TOUCH_CSS_CONFIG.md`.
@@ -383,11 +334,11 @@ tsx scripts/clear-all-cache-for-date.js
 
 **Domains:**
 - Go Daisy: `godaisy.io` (generalist app)
-- Findr: `fishfindr.eu` (fishing specialist app, with `www.fishfindr.eu` redirect handling)
+- Grow Daisy: `grow.godaisy.io` (gardening specialist app, with `grow.godaisy.io` redirect handling)
 - Both apps deployed from the same codebase with route-based separation
 
 **Future Platforms:**
-- iOS and Android native apps planned after web apps are polished
+- Android native apps planned after ios apps are polished
 - Native app development has not yet started
 
 See `DEPLOYMENT.md` for detailed deployment procedures.
@@ -463,39 +414,9 @@ This comprehensive guide covers:
 - `COPERNICUS_DATA_INGESTION_GUIDE.md` - CMEMS data ingestion process
 - `DIAGNOSIS_QUICK_REF.md` - Quick troubleshooting guide
 
-**Fishing Advice System (Nov 2025):**
-- `FISHING_ADVICE_SYSTEM_COMPLETE.md` - ✅ **READY** Tactical and strategic advice implementation (Nov 20, 2025)
-- `FISHING_ADVICE_QUICK_REF.md` - Quick reference for API and UI integration
-- `APPROACH_SCORING_SYSTEM.md` - Complete approach scoring guide (habitats + techniques)
-- `APPROACH_SCORING_QUICK_START.md` - Quick start for approach scoring integration
-- `CONDITION_HELPERS_INTEGRATION_GUIDE.md` - Tide stage and time of day helpers
-- `HELPER_FUNCTIONS_COMPLETE.md` - Helper functions implementation summary
 
 ### 🟡 Reference (Still Relevant But Historical)
 
-**Phase 10 CMEMS Integration (2024):**
-- `PHASE_10_COMPLETE_SUMMARY.md` - Final summary of CMEMS integration
-- `BIOGEOCHEMICAL_INTEGRATION_COMPLETE.md` - Biogeochemical variables added
-- `CMEMS_INTEGRATION_STATUS.md` - Integration status overview
-- `CMEMS_FLOW_CLARITY_INTEGRATION.md` - Water flow and clarity integration
-- `COPERNICUS_SUCCESS.md` - Initial success metrics
-- `COPERNICUS_CORRECT_DATASET_IDS.md` - Dataset ID reference
-
-**Environmental Matching System:**
-- `ENVIRONMENTAL_MATCHING_SUMMARY.md` - How species matching works
-- `ENVIRONMENTAL_MATCHING_TWO_PHASE_SYSTEM.md` - Two-phase matching strategy
-- `BIO_BAND_CONFIDENCE_QUICK_REFERENCE.md` - Guild weighting profiles
-
-**Bite Score & Confidence:**
-- `BITE_SCORE_IMPLEMENTATION_COMPLETE.md` - Initial bite score implementation
-- `BITE_SCORE_CRITICAL_STATUS.md` - Bite score issues identified
-- `BITE_SCORE_TEST_RESULTS.md` - Test results for bite score
-- `BIO_BAND_CONFIDENCE_DEPLOYMENT_SUMMARY.md` - Bio band confidence deployment
-
-**User Features:**
-- `FAVOURITES_GUIDE.md` - User favorites system
-- `SHARING_FEATURE_IMPLEMENTED.md` - Sharing functionality
-- `INTERESTS_RECOMMENDATIONS_INTEGRATION.md` - User interests system
 
 ### �️ Archived Documentation
 
@@ -534,7 +455,7 @@ See `archive/README.md` for a complete list of archived files and what replaced 
 ## Common Tasks
 
 **Adding a new species:**
-1. Add entry to `species` table via migration
+1. Add entry to `plant_species` table via migration
 2. Add image to `/public/PNGS/` with slug filename
 3. Update `data/speciesImageMap.ts` with image metadata
 4. Add environmental preferences (temperature range, depth, substrate, guild)
@@ -545,11 +466,6 @@ See `archive/README.md` for a complete list of archived files and what replaced 
 2. Use `getSupabaseServerClient()` for database access
 3. Implement proper error handling and HTTP status codes
 4. Add TypeScript types for request/response bodies
-
-**Updating marine data:**
-1. CMEMS data refreshes automatically via cron job (`.github/workflows/findr-copernicus-ingest.yml`)
-2. Manual trigger: `tsx scripts/ingest-copernicus-data.ts`
-3. Data stored in `copernicus_data` table with spatial indexing
 
 **Debugging predictions:**
 1. Check browser console for API response details
