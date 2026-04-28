@@ -42,13 +42,24 @@ if (typeof window !== 'undefined') {
 
 // Official Supabase pattern for Next.js browser client
 // Source: https://supabase.com/docs/guides/auth/server-side/nextjs
-export function createClient() {
-  // Use localStorage for all platforms - WebView localStorage persists fine
-  // and avoids storage key mismatches between secure storage and localStorage
+//
+// Memoized: every caller (whether they import `supabase` or call `createClient()`)
+// gets the same browser client. Without this, each `createClient()` call instantiates
+// a new GoTrueClient and Supabase warns about "Multiple GoTrueClient instances detected".
+function makeBrowserClient() {
   return createBrowserClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
   )
+}
+
+let _browserClient: ReturnType<typeof makeBrowserClient> | undefined
+
+export function createClient() {
+  // SSR: never reuse — server has no shared session storage
+  if (typeof window === 'undefined') return makeBrowserClient()
+  if (!_browserClient) _browserClient = makeBrowserClient()
+  return _browserClient
 }
 
 // Export singleton instance for convenience
