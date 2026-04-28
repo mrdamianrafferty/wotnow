@@ -110,10 +110,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     longitude = parseFloat(lon as string);
     locationName = `${latitude.toFixed(2)}, ${longitude.toFixed(2)}`;
   }
-  // Otherwise check if the location string is actually coordinates (e.g. "43.4702, -5.2995")
+  // Otherwise check if the location string contains coordinates
   else if (location) {
     const locStr = (location as string).trim();
-    const coordMatch = locStr.match(/^(-?\d+(?:\.\d+)?)\s*,\s*(-?\d+(?:\.\d+)?)$/);
+    // Match bare "43.4702, -5.2995" or embedded "(43.4702, -5.2995)" e.g. "Current location (43.4702, -5.2995)"
+    const coordMatch =
+      locStr.match(/^(-?\d+(?:\.\d+)?)\s*,\s*(-?\d+(?:\.\d+)?)$/) ||
+      locStr.match(/\((-?\d+(?:\.\d+)?)\s*,\s*(-?\d+(?:\.\d+)?)\)/);
     if (coordMatch) {
       latitude = parseFloat(coordMatch[1]);
       longitude = parseFloat(coordMatch[2]);

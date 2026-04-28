@@ -14,7 +14,7 @@ import {
 } from './GrowSkeletons';
 import { auth, type AuthUser } from '../../lib/grow/auth';
 import { buildGrowLoginUrl, GROW_ONBOARDING_PATH, GROW_ROOT_PATH } from '../../lib/grow/routes';
-import { api } from '../../lib/grow/api';
+import { useUserPlants } from '../../hooks/useUserPlants';
 import { LogIn } from 'lucide-react';
 import { GrowBottomNav } from './GrowBottomNav';
 
@@ -157,84 +157,62 @@ export function GrowExperience() {
     setHasCheckedPlants(false);
   }, [userId]);
 
+  // Shared, cached user plants query (deduped across Homepage, GardenPage, GrowExperience)
+  const {
+    data: plantsResponse,
+    error: plantsError,
+    isFetched: plantsFetched,
+  } = useUserPlants({ enabled: isReady });
+
   useEffect(() => {
-      if (hasCheckedPlants || !isReady) {
+    if (hasCheckedPlants || !isReady) return;
+    if (typeof window === 'undefined') return;
+
+    const token = auth.getCurrentAccessToken();
+    if (!token) {
+      // No token — user is in guest mode, skip plant check
+      setHasCheckedPlants(true);
+      setIsGuestMode(true);
+      return;
+    }
+
+    // Wait for the shared query to resolve (success or error)
+    if (!plantsFetched) return;
+
+    if (plantsError) {
+      const message = plantsError instanceof Error ? plantsError.message : '';
+      if (message === 'Not authenticated') {
+        setHasCheckedPlants(true);
+        setIsGuestMode(true);
         return;
       }
+      console.error('Failed to verify garden plants for onboarding:', plantsError);
+      // On API failure, fall back to localStorage flag; if missing, send to onboarding to be safe.
+      const localFallback = window.localStorage.getItem('grow:onboarding-complete') === 'true';
+      setHasCheckedPlants(true);
+      if (!localFallback) {
+        router.replace(GROW_ONBOARDING_PATH);
+      }
+      return;
+    }
 
-      let isMounted = true;
+    if (!plantsResponse) return;
 
-      // Verify the user has at least one persisted plant; otherwise redirect to onboarding.
-      // Skip this check for guest users - they can browse without plants.
-      const verifyPlantInventory = async () => {
-        if (typeof window === 'undefined') {
-          return;
-        }
+    const plantCount = Array.isArray(plantsResponse.plants) ? plantsResponse.plants.length : 0;
+    const onboardingDone =
+      Boolean(plantsResponse.onboardingCompleted) ||
+      Boolean(plantsResponse.onboardingSkipped);
+    const localFlag = window.localStorage.getItem('grow:onboarding-complete') === 'true';
 
-        const token = auth.getCurrentAccessToken();
-        if (!token) {
-          // No token - user is in guest mode, skip plant check
-          if (isMounted) {
-            setHasCheckedPlants(true);
-            setIsGuestMode(true);
-          }
-          return;
-        }
+    if (onboardingDone) {
+      window.localStorage.setItem('grow:onboarding-complete', 'true');
+    }
+    setHasCheckedPlants(true);
 
-        try {
-          const response = await api.getUserPlants();
-          if (!isMounted) {
-            return;
-          }
-
-          const plantCount = Array.isArray(response?.plants) ? response.plants.length : 0;
-          const onboardingCompleteFromServer = Boolean(response?.onboardingCompleted);
-          const onboardingSkippedFromServer = Boolean(response?.onboardingSkipped);
-          const onboardingDone = onboardingCompleteFromServer || onboardingSkippedFromServer;
-          const localFlag = typeof window !== 'undefined'
-            && window.localStorage.getItem('grow:onboarding-complete') === 'true';
-
-          if (onboardingDone && typeof window !== 'undefined') {
-            window.localStorage.setItem('grow:onboarding-complete', 'true');
-          }
-          setHasCheckedPlants(true);
-
-          if (plantCount === 0 && !onboardingDone && !localFlag) {
-            router.replace(GROW_ONBOARDING_PATH);
-          }
-        } catch (error) {
-          if (!isMounted) {
-            return;
-          }
-
-          const message = error instanceof Error ? error.message : '';
-          if (message === 'Not authenticated') {
-            // Not authenticated - switch to guest mode instead of redirecting
-            setHasCheckedPlants(true);
-            setIsGuestMode(true);
-            return;
-          }
-
-          console.error('Failed to verify garden plants for onboarding:', error);
-
-          // On API failure, check localStorage fallback. If no local flag,
-          // redirect to onboarding to be safe rather than showing an empty homepage.
-          const localFallback = typeof window !== 'undefined'
-            && window.localStorage.getItem('grow:onboarding-complete') === 'true';
-          setHasCheckedPlants(true);
-
-          if (!localFallback) {
-            router.replace(GROW_ONBOARDING_PATH);
-          }
-        }
-      };
-
-      verifyPlantInventory();
-
-      return () => {
-        isMounted = false;
-      };
-    }, [hasCheckedPlants, isReady, router, userId]);
+    if (plantCount === 0 && !onboardingDone && !localFlag) {
+      router.replace(GROW_ONBOARDING_PATH);
+    }
+  }, [hasCheckedPlants, isReady, router, userId, plantsResponse, plantsError, plantsFetched]);
 
   useEffect(() => {
     window.localStorage.setItem(STORAGE_KEY, currentPage);

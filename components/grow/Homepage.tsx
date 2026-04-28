@@ -15,6 +15,7 @@ import {
 } from '../../lib/grow/homepageDelight';
 import { auth } from '../../lib/grow/auth';
 import { api } from '../../lib/grow/api';
+import { useUserPlants } from '../../hooks/useUserPlants';
 import { useLocalSignals } from '../../hooks/useLocalSignals';
 import { useWeatherTasks } from '../../hooks/useWeatherTasks';
 import { useGrowSubscription } from '../../hooks/useGrowSubscription';
@@ -89,7 +90,16 @@ export function Homepage() {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     any[]
   >([]);
-  const [userPlantSlugs, setUserPlantSlugs] = useState<Set<string>>(new Set());
+
+  // Shared, cached user plants query (deduped across Homepage, GardenPage, GrowExperience)
+  const { data: userPlantsData } = useUserPlants();
+  const userPlantSlugs = useMemo(() => {
+    const slugs = new Set<string>();
+    for (const p of userPlantsData?.plants ?? []) {
+      if (p.species_slug) slugs.add(p.species_slug);
+    }
+    return slugs;
+  }, [userPlantsData]);
 
   // Hooks
   const {
@@ -106,7 +116,7 @@ export function Homepage() {
     refetch: refetchWeather,
   } = useWeatherTasks();
 
-  // Load initial data
+  // Load initial data — runs auth-gated fetches in parallel for fast first paint
   useEffect(() => {
     let isMounted = true;
 
@@ -114,87 +124,59 @@ export function Homepage() {
       const authenticated = auth.isAuthenticated();
       if (isMounted) setIsAuthenticated(authenticated);
 
-      // Load location
-      let location = '';
-      const token = auth.getCurrentAccessToken();
-      if (token) {
+      // Read location-from-localStorage synchronously so the header has something immediately
+      let localStorageLocation = '';
+      try {
+        const interestsStr = localStorage.getItem('userInterests');
+        if (interestsStr) {
+          const interests = JSON.parse(interestsStr);
+          if (interests.location) localStorageLocation = interests.location;
+        }
+      } catch {
+        // Invalid JSON — ignore
+      }
+      if (isMounted && localStorageLocation) setUserLocation(localStorageLocation);
+
+      // Run remote fetches in parallel: location-from-supabase, beds, planting-calendar
+      const locationFromSupabase = (async (): Promise<string> => {
+        if (!auth.getCurrentAccessToken()) return '';
         try {
-          const { createClient } = await import('@supabase/supabase-js');
-          const { SUPABASE_URL, SUPABASE_ANON_KEY } = await import('../../lib/supabase/env');
-          const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-            global: { headers: { Authorization: `Bearer ${token}` } },
-          });
+          const { supabase } = await import('../../lib/supabase/client');
           const { data: { user } } = await supabase.auth.getUser();
-          if (!isMounted) return;
-          if (user) {
-            const { data: prefs } = await supabase
-              .from('user_location_preferences')
-              .select('home_place_name')
-              .eq('user_id', user.id)
-              .maybeSingle();
-            if (!isMounted) return;
-            if (prefs?.home_place_name) {
-              location = prefs.home_place_name;
-            }
-          }
+          if (!user) return '';
+          const { data: prefs } = await supabase
+            .from('user_location_preferences')
+            .select('home_place_name')
+            .eq('user_id', user.id)
+            .maybeSingle();
+          return prefs?.home_place_name ?? '';
         } catch {
-          if (!isMounted) return;
+          return '';
         }
-      }
+      })();
 
-      if (!location) {
-        try {
-          const interestsStr = localStorage.getItem('userInterests');
-          if (interestsStr) {
-            const interests = JSON.parse(interestsStr);
-            if (interests.location) location = interests.location;
-          }
-        } catch {
-          // Invalid JSON
-        }
-      }
+      const bedsRequest = authenticated
+        ? api.getBeds().catch(() => null)
+        : Promise.resolve(null);
 
-      if (isMounted) setUserLocation(location);
+      const calendarRequest = authenticated
+        ? api.getPlantingCalendar().catch(() => null)
+        : Promise.resolve(null);
 
-      // Load beds (auth only)
-      if (authenticated) {
-        try {
-          const bedsRes = await api.getBeds();
-          if (isMounted && bedsRes?.beds) {
-            setBeds(bedsRes.beds);
-          }
-        } catch {
-          if (!isMounted) return;
-        }
+      const [supabaseLocation, bedsRes, calRes] = await Promise.all([
+        locationFromSupabase,
+        bedsRequest,
+        calendarRequest,
+      ]);
 
-        // Load user plants for "What to Start" filtering
-        try {
-          const plantsRes = await api.getUserPlants();
-          if (isMounted && plantsRes?.plants) {
-            const slugs = new Set<string>();
-            for (const p of plantsRes.plants) {
-              if (p.species_slug) slugs.add(p.species_slug);
-            }
-            setUserPlantSlugs(slugs);
-          }
-        } catch {
-          if (!isMounted) return;
-        }
-      }
+      if (!isMounted) return;
 
-      // Load planting calendar
-      if (authenticated) {
-        try {
-          const calRes = await api.getPlantingCalendar();
-          if (isMounted && calRes?.windows) {
-            setCalendarWindows(calRes.windows);
-          }
-        } catch {
-          if (!isMounted) return;
-        }
-      }
+      // Supabase location wins over localStorage if present
+      if (supabaseLocation) setUserLocation(supabaseLocation);
+      if (bedsRes?.beds) setBeds(bedsRes.beds);
+      if (calRes?.windows) setCalendarWindows(calRes.windows);
 
-      if (isMounted) setIsLoading(false);
+      setIsLoading(false);
     });
 
     return () => { isMounted = false; };
