@@ -35,6 +35,7 @@ import dynamic from 'next/dynamic';
 import type { GuildCompanion } from '../../lib/grow/guild';
 import type { GuildSelectionMeta } from './GuildModalEnhanced';
 import { api, type GardenPhoto } from '../../lib/grow/api';
+import { useUserPlants, useInvalidateUserPlants } from '../../hooks/useUserPlants';
 import { useScreenTracking } from '../../lib/performance';
 import type { PlantSpecies } from '../../lib/grow/species';
 import { takePicture, CameraException } from '../../lib/capacitor/camera';
@@ -484,63 +485,59 @@ export function GardenPage() {
     window.location.replace(buildGrowLoginUrl(candidate));
   }, []);
 
-  const loadPlants = useCallback(async () => {
-    try {
-      setIsLoadingPlants(true);
-      console.log('🌱 [GardenPage] Loading plants from backend...');
-      
-      // Check if user is authenticated
-      const token = localStorage.getItem('access_token');
-      console.log('🌱 [GardenPage] Auth token present:', !!token);
+  // Shared, cached user plants query (deduped + cached across Homepage/GardenPage/GrowExperience).
+  // 15-min staleTime in the hook means returning to /grow/garden is instant if data is fresh.
+  const userPlantsQuery = useUserPlants();
+  const invalidateUserPlants = useInvalidateUserPlants();
 
-      if (!token) {
-        // Don't redirect - just show empty state, let user sign in from nav
-        console.log('🌱 [GardenPage] No auth token, showing empty state');
-        setPlants([]);
-        setIsLoadingPlants(false);
-        return;
-      }
-
-      const response = await api.getUserPlants();
-      console.log('🌱 [GardenPage] Backend response:', response);
-      
-      if (Array.isArray(response?.plants)) {
-        const plantsWithDates = (response.plants as RawPlant[])
-          .map(normalizePlant);
-        setPlants(plantsWithDates);
-        markFirstData();
-        console.log(`✅ [GardenPage] Loaded ${plantsWithDates.length} plants from backend`);
-        
-        // Log first few plants for debugging
-        if (plantsWithDates.length > 0) {
-          console.log('🌱 [GardenPage] First 3 plants:', plantsWithDates.slice(0, 3).map((p: Plant) => ({ id: p.id, name: p.name, type: p.type })));
-        }
-      } else {
-        console.log('⚠️ [GardenPage] No plants in response, setting empty array');
-        setPlants([]);
-      }
-    } catch (error: unknown) {
-      console.error('❌ [GardenPage] Failed to load plants:', error);
-      const err = error as { message?: string; stack?: string };
-      console.error('❌ [GardenPage] Error details:', err.message, err.stack);
-      
-      // Don't show starter plants - let user add their own
+  // Sync query data → local plants state (preserves the optimistic-update pattern below)
+  useEffect(() => {
+    if (!userPlantsQuery.isFetched) return;
+    const data = userPlantsQuery.data;
+    if (data && Array.isArray(data.plants)) {
+      const plantsWithDates = (data.plants as RawPlant[]).map(normalizePlant);
+      setPlants(plantsWithDates);
+      markFirstData();
+    } else {
       setPlants([]);
-      if (err?.message === 'Not authenticated') {
-        toast.error('Please sign in to view your garden', {
-          description: 'Use the Sign In button at the top.',
-        });
-        // Don't redirect - let user sign in from nav
-      } else {
-        toast.error('Could not load plants', {
-          description: 'Unable to connect to server. Your garden is empty.',
-        });
-      }
-    } finally {
+    }
+  }, [userPlantsQuery.data, userPlantsQuery.isFetched, markFirstData]);
+
+  // Drive loader + perf markers from query state
+  useEffect(() => {
+    // No-token short-circuit — useUserPlants is disabled, so we'd otherwise spin forever
+    const hasToken = typeof window !== 'undefined' && !!localStorage.getItem('access_token');
+    if (!hasToken) {
+      setIsLoadingPlants(false);
+      markInteractive();
+      return;
+    }
+    if (userPlantsQuery.isFetched || userPlantsQuery.isError) {
       setIsLoadingPlants(false);
       markInteractive();
     }
-  }, [markFirstData, markInteractive]);
+  }, [userPlantsQuery.isFetched, userPlantsQuery.isError, markInteractive]);
+
+  // Surface fetch errors as toasts (preserves prior UX)
+  useEffect(() => {
+    if (!userPlantsQuery.error) return;
+    const err = userPlantsQuery.error as { message?: string };
+    if (err?.message === 'Not authenticated') {
+      toast.error('Please sign in to view your garden', {
+        description: 'Use the Sign In button at the top.',
+      });
+    } else {
+      toast.error('Could not load plants', {
+        description: 'Unable to connect to server. Your garden is empty.',
+      });
+    }
+  }, [userPlantsQuery.error]);
+
+  // Existing call sites (post-mutation refresh) keep working: invalidate + refetch the shared query.
+  const loadPlants = useCallback(async () => {
+    await invalidateUserPlants();
+    await userPlantsQuery.refetch();
+  }, [invalidateUserPlants, userPlantsQuery]);
 
   const loadBeds = useCallback(async () => {
     const token = localStorage.getItem('access_token');
@@ -558,17 +555,17 @@ export function GardenPage() {
     }
   }, []);
 
-  // Load plants and beds from backend on mount
+  // Plants are loaded by useUserPlants (cached + deduped). Just load beds on mount.
   useEffect(() => {
     let isMounted = true;
     startTransition(() => {
       void (async () => {
-        await Promise.all([loadPlants(), loadBeds()]);
+        await loadBeds();
         if (!isMounted) return;
       })();
     });
     return () => { isMounted = false; };
-  }, [loadPlants, loadBeds]);
+  }, [loadBeds]);
 
   useEffect(() => {
     let isMounted = true;
@@ -1536,10 +1533,10 @@ export function GardenPage() {
                         const imageSrc = getPlantImage(imageKey, 'xl') ?? getPlantImage(imageKey, 'lg') ?? getPlantImage(imageKey, 'medium');
 
                         const healthBadgeClass = {
-                          excellent: 'bg-green-100 text-green-700 border-green-300',
-                          good: 'bg-blue-100 text-blue-700 border-blue-300',
-                          fair: 'bg-yellow-100 text-yellow-700 border-yellow-300',
-                          poor: 'bg-red-100 text-red-700 border-red-300',
+                          excellent: 'bg-emerald-50 text-emerald-700 border-emerald-200',
+                          good: 'bg-[var(--gd-soil-moist)] text-[var(--gd-leaf)] border-[var(--gd-cream-border)]',
+                          fair: 'bg-amber-50 text-amber-700 border-amber-200',
+                          poor: 'bg-red-50 text-red-700 border-red-200',
                         }[group.worstHealth] || '';
 
                         const primaryInstance = group.instances
@@ -1547,78 +1544,72 @@ export function GardenPage() {
                           .sort((a, b) => b.planted.getTime() - a.planted.getTime())[0];
 
                         return (
-                          <Card
-                            key={group.key}
-                            className="border hover:shadow-lg transition-all duration-200"
-                          >
-                            <CardHeader>
-                              <div className="flex justify-between items-start">
-                                <div className="pr-2 flex-1">
-                                  <Link href={speciesUrl} className="hover:underline">
-                                    <CardTitle className="text-lg cursor-pointer hover:text-green-600 transition-colors">
-                                      {group.name}
-                                    </CardTitle>
-                                  </Link>
-                                  <p className="text-sm text-muted-foreground">{group.type}</p>
-                                  <div className="flex items-center gap-2 mt-1">
-                                    <Badge variant="outline" className={`text-xs ${healthBadgeClass}`}>
-                                      {group.mixedHealth ? 'mixed' : group.worstHealth}
-                                    </Badge>
-                                    <span className="text-xs text-muted-foreground">×{group.totalQuantity}</span>
+                          <Link key={group.key} href={speciesUrl} className="block group">
+                            <Card className="border-0 overflow-hidden hover:shadow-lg transition-all duration-200 bg-[var(--gd-cream)] rounded-xl h-full">
+                              {/* Image banner */}
+                              <div className="relative h-40 w-full bg-[var(--gd-cream-deep)] overflow-hidden">
+                                {imageSrc ? (
+                                  <Image
+                                    src={imageSrc}
+                                    alt={group.name}
+                                    fill
+                                    className="object-contain p-4 group-hover:scale-105 transition-transform duration-300"
+                                    sizes="(max-width: 768px) 50vw, 33vw"
+                                  />
+                                ) : (
+                                  <div className="flex items-center justify-center h-full">
+                                    <Sprout className="h-12 w-12 text-[var(--gd-moss)] opacity-30" />
                                   </div>
-                                </div>
-                                {imageSrc && (
-                                  <Link href={speciesUrl} className="block shrink-0">
-                                    <div className="relative h-20 w-20 overflow-hidden rounded-md border bg-white cursor-pointer hover:ring-2 hover:ring-green-500 transition-all">
-                                      <Image
-                                        src={imageSrc}
-                                        alt={group.name}
-                                        fill
-                                        className="object-contain p-1"
-                                        sizes="80px"
-                                      />
-                                    </div>
-                                  </Link>
                                 )}
-                              </div>
-                            </CardHeader>
-                            <CardContent className="space-y-2">
-                              {group.varieties.length > 0 && (
-                                <div className="flex flex-wrap gap-1">
-                                  {group.varieties.slice(0, 4).map((v) => (
-                                    <span key={v} className="text-xs px-2 py-0.5 bg-muted rounded-full truncate max-w-[120px]">
-                                      {v}
-                                    </span>
-                                  ))}
-                                  {group.varieties.length > 4 && (
-                                    <span className="text-xs px-2 py-0.5 bg-muted rounded-full">+{group.varieties.length - 4}</span>
-                                  )}
+                                <div className="absolute top-2 right-2">
+                                  <Badge variant="outline" className={`text-xs backdrop-blur-sm bg-white/80 ${healthBadgeClass}`}>
+                                    {group.mixedHealth ? 'mixed' : group.worstHealth}
+                                  </Badge>
                                 </div>
-                              )}
-                              <div className="flex gap-2 pt-2">
-                                <Button asChild variant="outline" size="sm" className="flex-1">
-                                  <Link href={speciesUrl}>
-                                    <Info className="h-3 w-3 mr-1" />
-                                    View Details
-                                  </Link>
-                                </Button>
-                                <Button
-                                  variant="default"
-                                  size="sm"
-                                  className="flex-1 bg-green-600 hover:bg-green-700"
-                                  onClick={() => {
-                                    if (primaryInstance) {
-                                      setEditingPlant(primaryInstance);
-                                      setIsEditPlantDialogOpen(true);
-                                    }
-                                  }}
-                                >
-                                  <Fence className="h-3 w-3 mr-1" />
-                                  Add to Bed
-                                </Button>
+                                <div className="absolute top-2 left-2 bg-black/25 rounded-full px-2 py-0.5">
+                                  <span className="text-xs text-white font-medium">×{group.totalQuantity}</span>
+                                </div>
                               </div>
-                            </CardContent>
-                          </Card>
+
+                              {/* Card body */}
+                              <div className="p-3 flex flex-col gap-1">
+                                <h4 className="font-semibold text-[var(--gd-peat)] leading-tight text-base" style={{ fontFamily: 'var(--gd-font-display)' }}>
+                                  {group.name}
+                                </h4>
+                                <p className="text-xs text-[var(--gd-stone-warm)] capitalize">{group.type}</p>
+                                {group.varieties.length > 0 && (
+                                  <div className="flex flex-wrap gap-1 mt-1">
+                                    {group.varieties.slice(0, 3).map((v) => (
+                                      <span key={v} className="text-xs px-2 py-0.5 bg-[var(--gd-cream-deep)] text-[var(--gd-stone-body)] rounded-full truncate max-w-[100px]">
+                                        {v}
+                                      </span>
+                                    ))}
+                                    {group.varieties.length > 3 && (
+                                      <span className="text-xs px-2 py-0.5 bg-[var(--gd-cream-deep)] text-[var(--gd-stone-body)] rounded-full">+{group.varieties.length - 3}</span>
+                                    )}
+                                  </div>
+                                )}
+                                <div className="mt-2 pt-2 border-t border-[var(--gd-cream-border)]">
+                                  <Button
+                                    variant="default"
+                                    size="sm"
+                                    className="w-full bg-[var(--gd-leaf)] hover:bg-[var(--gd-leaf-dark)] text-[var(--gd-cream)] text-xs"
+                                    onClick={(e) => {
+                                      e.preventDefault();
+                                      e.stopPropagation();
+                                      if (primaryInstance) {
+                                        setEditingPlant(primaryInstance);
+                                        setIsEditPlantDialogOpen(true);
+                                      }
+                                    }}
+                                  >
+                                    <Fence className="h-3 w-3 mr-1" />
+                                    Add to Bed
+                                  </Button>
+                                </div>
+                              </div>
+                            </Card>
+                          </Link>
                         );
                       })}
                     </div>
@@ -1771,81 +1762,73 @@ export function GardenPage() {
                     const imageSrc = getPlantImage(imageKey, 'xl') ?? getPlantImage(imageKey, 'lg') ?? getPlantImage(imageKey, 'medium');
                     
                     return (
-                      <Card 
-                        key={species.slug}
-                        className="border hover:shadow-lg transition-all duration-200 hover:scale-[1.02]"
-                      >
-                        <CardHeader>
-                          <div className="flex justify-between items-start">
-                            <div className="pr-2 flex-1">
-                              <Link href={speciesUrl} className="hover:underline">
-                                <CardTitle className="text-lg cursor-pointer hover:text-green-600 transition-colors">
-                                  {species.name}
-                                </CardTitle>
-                              </Link>
-                              {species.scientificName && (
-                                <p className="text-sm text-muted-foreground italic">{species.scientificName}</p>
-                              )}
-                              {species.category && (
-                                <Badge variant="secondary" className="mt-1 text-xs">
+                      <Link key={species.slug} href={speciesUrl} className="block group">
+                        <Card className="border-0 overflow-hidden hover:shadow-lg transition-all duration-200 bg-[var(--gd-cream)] rounded-xl h-full">
+                          {/* Image banner */}
+                          <div className="relative h-40 w-full bg-[var(--gd-cream-deep)] overflow-hidden">
+                            {imageSrc ? (
+                              <Image
+                                src={imageSrc}
+                                alt={species.name}
+                                fill
+                                className="object-contain p-4 group-hover:scale-105 transition-transform duration-300"
+                                sizes="(max-width: 768px) 50vw, 33vw"
+                              />
+                            ) : (
+                              <div className="flex items-center justify-center h-full">
+                                <Sprout className="h-12 w-12 text-[var(--gd-moss)] opacity-30" />
+                              </div>
+                            )}
+                            {species.category && (
+                              <div className="absolute top-2 right-2">
+                                <Badge variant="outline" className="text-xs backdrop-blur-sm bg-white/80 text-[var(--gd-stone-body)] border-[var(--gd-cream-border)]">
                                   {species.category}
                                 </Badge>
-                              )}
-                            </div>
-                            {imageSrc && (
-                              <Link href={speciesUrl} className="block shrink-0">
-                                <div className="relative h-20 w-20 overflow-hidden rounded-md border bg-white cursor-pointer hover:ring-2 hover:ring-green-500 transition-all">
-                                  <Image
-                                    src={imageSrc}
-                                    alt={species.name}
-                                    fill
-                                    className="object-contain p-1"
-                                    sizes="80px"
-                                  />
-                                </div>
-                              </Link>
+                              </div>
                             )}
                           </div>
-                        </CardHeader>
-                        <CardContent className="space-y-2">
-                          {species.sunRequirements && (
-                            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                              <span>☀️</span>
-                              <span>{species.sunRequirements}</span>
+
+                          {/* Card body */}
+                          <div className="p-3 flex flex-col gap-1">
+                            <h4 className="font-semibold text-[var(--gd-peat)] leading-tight text-base" style={{ fontFamily: 'var(--gd-font-display)' }}>
+                              {species.name}
+                            </h4>
+                            {species.scientificName && (
+                              <p className="text-xs text-[var(--gd-stone-warm)] italic">{species.scientificName}</p>
+                            )}
+                            {(species.sunRequirements || species.soilType) && (
+                              <div className="flex flex-wrap gap-x-3 gap-y-0.5 mt-1">
+                                {species.sunRequirements && (
+                                  <span className="text-xs text-[var(--gd-stone-warm)]">☀️ {species.sunRequirements}</span>
+                                )}
+                                {species.soilType && (
+                                  <span className="text-xs text-[var(--gd-stone-warm)]">🌱 {species.soilType}</span>
+                                )}
+                              </div>
+                            )}
+                            <div className="mt-2 pt-2 border-t border-[var(--gd-cream-border)]">
+                              <Button
+                                variant="default"
+                                size="sm"
+                                className="w-full bg-[var(--gd-leaf)] hover:bg-[var(--gd-leaf-dark)] text-[var(--gd-cream)] text-xs"
+                                onClick={(e) => {
+                                  e.preventDefault();
+                                  e.stopPropagation();
+                                  setAddPlantPrefill({
+                                    name: species.name,
+                                    scientificName: species.scientificName ?? undefined,
+                                    type: species.category ?? undefined,
+                                  });
+                                  setIsAddPlantDialogOpen(true);
+                                }}
+                              >
+                                <Plus className="h-3 w-3 mr-1" />
+                                Add to Garden
+                              </Button>
                             </div>
-                          )}
-                          {species.soilType && (
-                            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                              <span>🌱</span>
-                              <span>{species.soilType}</span>
-                            </div>
-                          )}
-                          <div className="flex gap-2 pt-2">
-                            <Button asChild variant="outline" size="sm" className="flex-1">
-                              <Link href={speciesUrl}>
-                                <Info className="h-3 w-3 mr-1" />
-                                View Details
-                              </Link>
-                            </Button>
-                            <Button
-                              variant="default"
-                              size="sm"
-                              className="flex-1 bg-green-600 hover:bg-green-700"
-                              onClick={() => {
-                                setAddPlantPrefill({
-                                  name: species.name,
-                                  scientificName: species.scientificName ?? undefined,
-                                  type: species.category ?? undefined,
-                                });
-                                setIsAddPlantDialogOpen(true);
-                              }}
-                            >
-                              <Plus className="h-3 w-3 mr-1" />
-                              Add to Garden
-                            </Button>
                           </div>
-                        </CardContent>
-                      </Card>
+                        </Card>
+                      </Link>
                     );
                   })}
                 </div>
