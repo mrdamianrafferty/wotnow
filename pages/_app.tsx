@@ -1,4 +1,4 @@
-import { Roboto } from 'next/font/google'
+import { Roboto, Playfair_Display, DM_Sans } from 'next/font/google'
 
 import '../styles/index.css'
 import '../styles/Card.css'
@@ -56,6 +56,21 @@ const roboto = Roboto({
   subsets: ['latin'],
   display: 'swap',
   variable: '--font-roboto',
+})
+
+// Grow Daisy editorial font pair
+const playfair = Playfair_Display({
+  weight: ['400', '600', '700'],
+  subsets: ['latin'],
+  display: 'swap',
+  variable: '--font-playfair',
+})
+
+const dmSans = DM_Sans({
+  weight: ['400', '500'],
+  subsets: ['latin'],
+  display: 'swap',
+  variable: '--font-dmsans',
 })
 
 type ThemeName = 'light' | 'wotnow' | string;
@@ -180,7 +195,7 @@ export default function App({ Component, pageProps }: AppProps<PagePropsWithThem
                 <WebsiteJsonLd />
 
                 {/* Apply DaisyUI theme globally. If you later store theme in context, bind it here. */}
-                <div data-theme={theme} className={`${roboto.variable} min-h-screen bg-base-100 text-base-content`} style={{ fontFamily: 'var(--font-roboto), system-ui, -apple-system, Segoe UI, sans-serif' }}>
+                <div data-theme={theme} className={`${roboto.variable} ${playfair.variable} ${dmSans.variable} min-h-screen bg-base-100 text-base-content`} style={{ fontFamily: 'var(--font-roboto), system-ui, -apple-system, Segoe UI, sans-serif' }}>
                   {/* Initialize offline storage and sync service */}
                   <OfflineInit />
                   {/* Initialize performance tracking for iOS profiling */}

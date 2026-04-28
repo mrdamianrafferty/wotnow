@@ -194,7 +194,7 @@ export function GrowLayout({
   };
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
+    <div className="gd-app min-h-screen bg-background flex flex-col">
       {/* Skip to content link */}
       <a
         href="#main-content"
