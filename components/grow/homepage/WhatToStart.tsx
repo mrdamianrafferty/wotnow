@@ -23,7 +23,7 @@ interface WhatToStartProps {
 }
 
 const TASK_BADGES: Record<string, { label: string; emoji: string; className: string }> = {
-  sow_indoors: { label: 'Sow indoors', emoji: '\u{1F331}', className: 'bg-violet-100 text-violet-700' },
+  sow_indoors: { label: 'Sow indoors', emoji: '\u{1F331}', className: 'bg-amber-100 text-amber-800' },
   direct_sow: { label: 'Direct sow', emoji: '\u{1F33F}', className: 'bg-green-100 text-green-700' },
   transplant: { label: 'Transplant', emoji: '\u{1FAB4}', className: 'bg-blue-100 text-blue-700' },
   plant_out: { label: 'Plant out', emoji: '\u{1F33B}', className: 'bg-emerald-100 text-emerald-700' },

@@ -980,7 +980,7 @@ function VisibilityPressureCard({ data, unitSystem, t }: { data: CurrentWeather;
         </div>
         <div className="flex items-center justify-between rounded-lg bg-muted/30 p-3">
           <div className="flex items-center gap-2">
-            <Activity className="h-4 w-4 text-purple-500" />
+            <Activity className="h-4 w-4 text-[var(--gd-moss)]" />
             <p className="font-medium">{t('Dew Point')}</p>
           </div>
           <p>{formatTemperature(data.dewPoint, unitSystem, false)}</p>

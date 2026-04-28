@@ -995,11 +995,11 @@ const cultivarIdForStorage = useMemo(() => {
 
           {/* Attracts wildlife */}
           {hasAttracts && (
-            <div className="flex items-start gap-2 p-3 rounded-lg bg-purple-50 border border-purple-100">
-              <Heart className="h-4 w-4 text-purple-600 mt-0.5 shrink-0" />
+            <div className="flex items-start gap-2 p-3 rounded-lg bg-[var(--gd-soil-moist)] border border-[var(--gd-cream-border)]">
+              <Heart className="h-4 w-4 text-[var(--gd-moss)] mt-0.5 shrink-0" />
               <div>
-                <div className="text-xs font-medium text-purple-900">Attracts Wildlife</div>
-                <div className="text-sm text-purple-800">
+                <div className="text-xs font-medium text-[var(--gd-peat)]">Attracts Wildlife</div>
+                <div className="text-sm text-[var(--gd-stone-body)]">
                   {selectedSpecies.attracts.slice(0, 3).join(', ')}
                 </div>
               </div>

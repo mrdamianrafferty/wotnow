@@ -17,7 +17,7 @@ function ColorBadges({ colors }: { colors: string[] }) {
     yellow: 'bg-yellow-100 text-yellow-800',
     green: 'bg-green-100 text-green-800',
     blue: 'bg-blue-100 text-blue-800',
-    purple: 'bg-purple-100 text-purple-800',
+    purple: 'bg-fuchsia-100 text-fuchsia-900',
     white: 'bg-gray-100 text-gray-800',
     cream: 'bg-amber-50 text-amber-800',
     brown: 'bg-amber-100 text-amber-800',
@@ -48,7 +48,7 @@ interface CharacteristicItemProps {
 function CharacteristicItem({ icon, label, value, subValue }: CharacteristicItemProps) {
   return (
     <div className="flex items-start gap-2 p-2">
-      <div className="flex-shrink-0 w-7 h-7 rounded-lg bg-purple-50 flex items-center justify-center">
+      <div className="flex-shrink-0 w-7 h-7 rounded-lg bg-[var(--gd-cream-deep)] flex items-center justify-center">
         {icon}
       </div>
       <div className="flex-1 min-w-0">
@@ -167,7 +167,7 @@ export function VisualCharacteristicsCard({ species }: VisualCharacteristicsCard
     <Card>
       <CardHeader className="pb-2">
         <CardTitle className="text-base flex items-center gap-2">
-          <Palette className="h-5 w-5 text-purple-500" />
+          <Palette className="h-5 w-5 text-[var(--gd-moss)]" />
           Visual Characteristics
         </CardTitle>
       </CardHeader>

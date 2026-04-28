@@ -1024,7 +1024,7 @@ export function HomepageLegacy() {
                 </div>
               </div>
               <div className="flex items-center gap-2">
-                <Thermometer className="h-4 w-4 text-purple-600" />
+                <Thermometer className="h-4 w-4 text-[var(--gd-stone-warm)]" />
                 <div className="text-sm">
                   <p className="font-medium">
                     {t('Last Frost')}: {weatherContext.lastFrostDate}

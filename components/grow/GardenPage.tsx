@@ -1867,7 +1867,7 @@ export function GardenPage() {
                 </Card>
                 <Card>
                   <CardContent className="p-4 text-center">
-                    <p className="text-2xl font-semibold text-purple-600">{plants.length}</p>
+                    <p className="text-2xl font-semibold text-[var(--gd-leaf)]">{plants.length}</p>
                     <p className="text-sm text-muted-foreground">In Your Garden</p>
                   </CardContent>
                 </Card>
@@ -2029,7 +2029,7 @@ export function GardenPage() {
 
               {/* Identification Result */}
               {identifyResult && identifyResult.success && (
-                <Card className={`${identifyResult.mode === 'plant' ? 'bg-blue-50 border-blue-200' : 'bg-purple-50 border-purple-200'}`}>
+                <Card className={`${identifyResult.mode === 'plant' ? 'bg-blue-50 border-blue-200' : 'bg-orange-50 border-orange-200'}`}>
                   <CardContent className="p-4 space-y-3">
                     <div className="flex items-start justify-between">
                       <div>
@@ -2068,7 +2068,7 @@ export function GardenPage() {
                               </Badge>
                             )}
                             {identifyResult.threatContagious && (
-                              <Badge variant="outline" className="text-xs border-purple-300 text-purple-700">
+                              <Badge variant="outline" className="text-xs border-orange-300 text-orange-700">
                                 ⚠️ Spreads
                               </Badge>
                             )}

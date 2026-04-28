@@ -16,6 +16,103 @@
 /* Tailwind v4 loaded. DaisyUI v5 is provided via the CSS plugin above. */
 /* Tailwind v4 + DaisyUI v5 loaded above. Custom site CSS continues below. */
 
+/* ============================================================
+   GROW DAISY · DAISY DESIGN SYSTEM TOKENS
+   Direction: Cool Shadow (sage-slate + shadow-cream)
+   Chosen April 2026 · see grow-daisy-design-review.html
+   ============================================================
+   All tokens are prefixed --gd- so they are fully scoped to
+   Grow Daisy and cannot clash with DaisyUI's own CSS vars.
+   Usage: var(--gd-leaf-deep), var(--gd-cream), etc.
+   ============================================================ */
+:root {
+  /* --- Neutrals (Cool Shadow) -------------------------------- */
+  --gd-bg:            #f4f4ee;  /* page canvas */
+  --gd-cream:         #ebebde;  /* editorial panels, hero cards */
+  --gd-cream-deep:    #e3e4d2;  /* pressed editorial state */
+  --gd-cream-border:  #cdcfb8;  /* visible-but-gentle borders */
+  --gd-stone-warm:    #6b7568;  /* labels, captions */
+  --gd-stone-body:    #3a463e;  /* body text */
+  --gd-peat:          #1a221d;  /* headings, strong */
+
+  /* --- Accent (Cool Shadow) ---------------------------------- */
+  --gd-leaf:          #3e5a4a;  /* primary — sage-slate */
+  --gd-leaf-dark:     #2c4438;  /* pressed / hover */
+  --gd-moss:          #64725a;  /* positive support, fair confidence */
+  --gd-terracotta:    #a8533a;  /* heritage accent — pots, harvest */
+  --gd-amber:         #b8860b;  /* caution — marginal conditions */
+  --gd-soil:          #6b4423;  /* secondary earth */
+
+  /* --- Semantic: soil moisture ------------------------------ */
+  --gd-soil-dry:        #ede4cf;
+  --gd-soil-moist:      #d8e0cd;
+  --gd-soil-saturated:  #cdd5dc;
+
+  /* --- Semantic: growth stage ------------------------------- */
+  --gd-growth-dormant:  #dcdccf;
+  --gd-growth-active:   #cad8c5;
+  --gd-growth-peak:     #aec5a8;
+
+  /* --- Confidence bands ------------------------------------- */
+  --gd-conf-high:      #3e5a4a;
+  --gd-conf-fair:      #64725a;
+  --gd-conf-marginal:  #b8860b;
+  --gd-conf-poor:      #a8533a;
+
+  /* --- Garden zone tints (4–8% opacity over white) ---------- */
+  --gd-zone-raised-bed:  rgba(168, 83, 58,  0.08);
+  --gd-zone-herb:        rgba(62,  90, 74,  0.10);
+  --gd-zone-greenhouse:  rgba(184,134, 11,  0.07);
+  --gd-zone-orchard:     rgba(107, 68, 35,  0.07);
+  --gd-zone-container:   rgba(107,117,104,  0.12);
+  --gd-zone-ornamental:  rgba(100,114, 90,  0.10);
+
+  /* --- Typography helpers ----------------------------------- */
+  --gd-font-serif: Georgia, "Times New Roman", serif;
+  --gd-font-sans:  -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+
+  /* --- DaisyUI primary override (v3/v4 OKLch variables) ---- */
+  /* Overrides DaisyUI's default violet primary to Grow Daisy  */
+  /* leaf green. Fixes btn-primary, badge-primary, oklch(var(  */
+  /* --p)) references throughout the app.                      */
+  --p:  0.37 0.054 150;   /* oklch for #3e5a4a sage-slate leaf */
+  --pc: 0.96 0.012 100;   /* oklch for #f4f4ee cream on primary */
+}
+
+
+/* ============================================================
+   GROW DAISY · TAILWIND v4 THEME BRIDGE
+   Maps Tailwind v4 color utilities (bg-primary, text-muted-
+   foreground, border-border, text-foreground, etc.) and all
+   shadcn/ui component classes to the Grow Daisy --gd-* palette.
+
+   This single block resolves the ~668 shadcn utility references
+   across components/grow/ without touching any component file.
+
+   @theme inline: values stay as CSS var references so they
+   respond correctly to DaisyUI data-theme overrides.
+   ============================================================ */
+@theme inline {
+  --color-primary:                var(--gd-leaf);         /* #3e5a4a sage-slate */
+  --color-primary-foreground:     var(--gd-cream);        /* #ebebde */
+  --color-secondary:              var(--gd-cream-deep);   /* #e3e4d2 */
+  --color-secondary-foreground:   var(--gd-stone-body);   /* #3a463e */
+  --color-muted:                  var(--gd-cream);        /* #ebebde */
+  --color-muted-foreground:       var(--gd-stone-warm);   /* #6b7568 */
+  --color-accent:                 var(--gd-moss);         /* #64725a */
+  --color-accent-foreground:      var(--gd-peat);         /* #1a221d */
+  --color-destructive:            var(--gd-terracotta);   /* #a8533a */
+  --color-destructive-foreground: #f4f4ee;
+  --color-background:             var(--gd-bg);           /* #f4f4ee page canvas */
+  --color-foreground:             var(--gd-peat);         /* #1a221d headings */
+  --color-card:                   var(--gd-cream);        /* #ebebde */
+  --color-card-foreground:        var(--gd-peat);
+  --color-popover:                var(--gd-cream);
+  --color-popover-foreground:     var(--gd-peat);
+  --color-border:                 var(--gd-cream-border); /* #cdcfb8 */
+  --color-input:                  var(--gd-cream-border);
+  --color-ring:                   var(--gd-leaf);
+}
 
 /* ------ REDUCED MOTION SUPPORT ------ */
 /* Disable all custom animations when user prefers reduced motion */

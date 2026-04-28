@@ -5,7 +5,7 @@ import { ArrowLeft } from 'lucide-react';
 import { GrowLayout } from '@/components/grow/GrowLayout';
 
 export default function GrowTermsOfService() {
-  const lastUpdated = 'February 2026';
+  const lastUpdated = 'April 2026';
 
   return (
     <GrowLayout>
@@ -96,8 +96,20 @@ export default function GrowTermsOfService() {
               </ul>
               <p className="mt-4 mb-2"><strong>Free trial:</strong></p>
               <p>
-                If a free trial is offered, the unused portion of the trial period will be forfeited
-                when you purchase a subscription.
+                Where a free trial is available, you will be informed of the trial duration and the
+                price that applies when the trial ends. The unused portion of the free trial is
+                forfeited when you purchase a paid subscription during the trial period.
+              </p>
+              <p className="mt-4 mb-2"><strong>Data processing (billing):</strong></p>
+              <p>
+                When you purchase a subscription via Stripe, we process your billing information
+                (name, email address, payment method details) to fulfil and manage your subscription.
+                This processing is necessary for the performance of our contract with you
+                (Article&nbsp;6(1)(b) GDPR). See our{' '}
+                <Link href="/grow/privacy" className="text-emerald-600 underline">
+                  Privacy Policy
+                </Link>{' '}
+                for full details.
               </p>
             </section>
 
@@ -129,7 +141,33 @@ export default function GrowTermsOfService() {
             </section>
 
             <section className="mb-8">
-              <h2 className="text-xl font-semibold mb-4">7. Account Deletion</h2>
+              <h2 className="text-xl font-semibold mb-4">7. EU Right of Withdrawal</h2>
+              <p className="mb-2">
+                If you are a consumer in the European Union or United Kingdom, you have the right to
+                withdraw from a purchase within <strong>14 calendar days</strong> of the transaction
+                without giving any reason (the &quot;cooling-off period&quot;).
+              </p>
+              <p className="mb-2">
+                <strong>Waiver for immediately-commenced digital services:</strong> When you purchase
+                a subscription or lifetime plan and the service starts immediately (for example, your
+                premium features are activated straight away), you expressly request that performance
+                begins before the cooling-off period expires. By confirming your purchase you
+                acknowledge that your right of withdrawal is thereby lost once the service has fully
+                commenced, in accordance with Article&nbsp;16(m) of the EU Consumer Rights Directive.
+              </p>
+              <p>
+                If the service has not yet started you may still withdraw within 14 days by contacting
+                us at{' '}
+                <a href="mailto:hello@godaisy.io" className="text-emerald-600 underline">
+                  hello@godaisy.io
+                </a>{' '}
+                with the subject line &quot;Right of Withdrawal&quot;. We will process your request
+                and confirm by email.
+              </p>
+            </section>
+
+            <section className="mb-8">
+              <h2 className="text-xl font-semibold mb-4">8. Account Deletion</h2>
               <p>
                 You can permanently delete your account and all associated data at any time from the
                 Settings page. Deletion is irreversible. If you have an active subscription, deleting
@@ -139,7 +177,7 @@ export default function GrowTermsOfService() {
             </section>
 
             <section className="mb-8">
-              <h2 className="text-xl font-semibold mb-4">8. Weather and Recommendation Accuracy</h2>
+              <h2 className="text-xl font-semibold mb-4">9. Weather and Recommendation Accuracy</h2>
               <p>
                 Gardening recommendations, weather forecasts, frost alerts, and soil temperature
                 estimates are provided on a best-effort basis using third-party data sources. We do
@@ -149,7 +187,7 @@ export default function GrowTermsOfService() {
             </section>
 
             <section className="mb-8">
-              <h2 className="text-xl font-semibold mb-4">9. Intellectual Property</h2>
+              <h2 className="text-xl font-semibold mb-4">10. Intellectual Property</h2>
               <p>
                 The Grow Daisy app, its design, code, and content are owned by Daisy Apps. You retain
                 ownership of any content you create (photos, notes, garden data). By using the service,
@@ -159,7 +197,7 @@ export default function GrowTermsOfService() {
             </section>
 
             <section className="mb-8">
-              <h2 className="text-xl font-semibold mb-4">10. Limitation of Liability</h2>
+              <h2 className="text-xl font-semibold mb-4">11. Limitation of Liability</h2>
               <p>
                 To the maximum extent permitted by law, Daisy Apps shall not be liable for any
                 indirect, incidental, or consequential damages arising from your use of the App.
@@ -168,7 +206,7 @@ export default function GrowTermsOfService() {
             </section>
 
             <section className="mb-8">
-              <h2 className="text-xl font-semibold mb-4">11. Governing Law</h2>
+              <h2 className="text-xl font-semibold mb-4">12. Governing Law</h2>
               <p>
                 These terms are governed by the laws of Spain. Any disputes shall be submitted to the
                 courts of Spain, without prejudice to any mandatory consumer protection laws that may
@@ -177,7 +215,7 @@ export default function GrowTermsOfService() {
             </section>
 
             <section className="mb-8">
-              <h2 className="text-xl font-semibold mb-4">12. Changes to These Terms</h2>
+              <h2 className="text-xl font-semibold mb-4">13. Changes to These Terms</h2>
               <p>
                 We may update these terms from time to time. Material changes will be communicated
                 via the app or email. Continued use of the App after changes constitutes acceptance
@@ -186,7 +224,7 @@ export default function GrowTermsOfService() {
             </section>
 
             <section className="mb-8">
-              <h2 className="text-xl font-semibold mb-4">13. Contact</h2>
+              <h2 className="text-xl font-semibold mb-4">14. Contact</h2>
               <p>
                 For questions about these terms, please contact us at{' '}
                 <a href="mailto:hello@godaisy.io" className="text-emerald-600 underline">

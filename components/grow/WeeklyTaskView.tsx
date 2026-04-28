@@ -481,7 +481,7 @@ export function WeeklyTaskView({ userId: propUserId }: WeeklyTaskViewProps) {
     }
 
     if (code.includes('prune') || code.includes('trim')) {
-      return 'bg-white border border-l-4 border-l-purple-500 border-purple-200 text-purple-700';
+      return 'bg-white border border-l-4 border-l-[var(--gd-moss)] border-[var(--gd-cream-border)] text-[var(--gd-moss)]';
     }
 
     if (code.includes('water')) {
@@ -808,7 +808,7 @@ export function WeeklyTaskView({ userId: propUserId }: WeeklyTaskViewProps) {
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex-1">
                     <div className="mb-2 flex items-start gap-2">
-                      <div className="rounded-lg p-2 bg-white border border-violet-200 text-violet-700">
+                      <div className="rounded-lg p-2 bg-white border border-[var(--gd-cream-border)] text-[var(--gd-moss)]">
                         <Sprout className="h-4 w-4" />
                       </div>
                       <div className="flex-1">
@@ -816,7 +816,7 @@ export function WeeklyTaskView({ userId: propUserId }: WeeklyTaskViewProps) {
                           <h3 className="font-medium">
                             {task.title || 'Added Task'}
                           </h3>
-                          <Badge className="text-xs bg-violet-100 text-violet-800 border-violet-200">
+                          <Badge className="text-xs bg-amber-100 text-amber-800 border-amber-200">
                             Added by you
                           </Badge>
                         </div>
@@ -828,7 +828,7 @@ export function WeeklyTaskView({ userId: propUserId }: WeeklyTaskViewProps) {
                       </div>
                     </div>
                     {task.description && (
-                      <div className="ml-12 mb-3 border-l-2 border-l-violet-500 bg-white border border-violet-200 p-2 text-sm rounded-r-lg">
+                      <div className="ml-12 mb-3 border-l-2 border-l-[var(--gd-moss)] bg-white border border-[var(--gd-cream-border)] p-2 text-sm rounded-r-lg">
                         {task.description}
                       </div>
                     )}

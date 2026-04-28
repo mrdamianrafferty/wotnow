@@ -184,7 +184,7 @@ export function BackendStatus() {
 
           <div className="flex items-center justify-between p-2 rounded-lg bg-muted/50">
             <div className="flex items-center gap-2">
-              <Activity className={isConnected ? 'h-4 w-4 text-purple-600' : 'h-4 w-4 text-gray-400'} />
+              <Activity className={isConnected ? 'h-4 w-4 text-[var(--gd-leaf)]' : 'h-4 w-4 text-gray-400'} />
               <span className="text-sm font-medium">Sync</span>
             </div>
             {status.lastSync ? (

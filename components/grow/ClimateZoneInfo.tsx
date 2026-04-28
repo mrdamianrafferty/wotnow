@@ -98,8 +98,8 @@ export function ClimateZoneInfo({ climateZone, variant = 'compact' }: ClimateZon
               <div className="text-xs text-cyan-700 font-medium mb-1">Rainfall</div>
               <div className="text-sm">{zoneInfo.characteristics.rainfall}</div>
             </div>
-            <div className="p-3 rounded-lg bg-purple-50 border border-purple-200">
-              <div className="text-xs text-purple-700 font-medium mb-1">Growing Season</div>
+            <div className="p-3 rounded-lg bg-[var(--gd-soil-moist)] border border-[var(--gd-cream-border)]">
+              <div className="text-xs text-[var(--gd-leaf)] font-medium mb-1">Growing Season</div>
               <div className="text-sm">{zoneInfo.characteristics.growingSeason}</div>
             </div>
           </div>

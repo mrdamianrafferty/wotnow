@@ -571,9 +571,9 @@ export function IntegrationsCard({ className = '' }: IntegrationCardProps) {
         aria-label={isExpanded ? 'Collapse connected devices' : 'Expand connected devices'}
       >
         <div className="flex items-center gap-3">
-          <div className={`w-10 h-10 rounded-full flex items-center justify-center ${canAccessIntegrations ? 'bg-purple-100' : 'bg-gray-100'}`}>
+          <div className={`w-10 h-10 rounded-full flex items-center justify-center ${canAccessIntegrations ? 'bg-amber-100' : 'bg-gray-100'}`}>
             {canAccessIntegrations ? (
-              <CloudSun className="h-5 w-5 text-purple-600" />
+              <CloudSun className="h-5 w-5 text-[var(--gd-amber)]" />
             ) : (
               <Lock className="h-5 w-5 text-gray-400" />
             )}

@@ -151,10 +151,10 @@ export const ALERT_THEMES: Record<string, AlertTheme> = {
     accentColor: 'text-rose-900',
   },
   powdery_mildew_risk: {
-    borderColor: 'border-l-violet-500',
-    bgColor: 'bg-violet-50',
-    iconColor: 'text-violet-600',
-    accentColor: 'text-violet-900',
+    borderColor: 'border-l-stone-400',
+    bgColor: 'bg-stone-50',
+    iconColor: 'text-stone-600',
+    accentColor: 'text-stone-900',
   },
   botrytis_risk: {
     borderColor: 'border-l-slate-500',
@@ -255,10 +255,10 @@ export const ALERT_THEMES: Record<string, AlertTheme> = {
     accentColor: 'text-rose-900',
   },
   powdery_mildew: {
-    borderColor: 'border-l-violet-500',
-    bgColor: 'bg-violet-50',
-    iconColor: 'text-violet-600',
-    accentColor: 'text-violet-900',
+    borderColor: 'border-l-stone-400',
+    bgColor: 'bg-stone-50',
+    iconColor: 'text-stone-600',
+    accentColor: 'text-stone-900',
   },
   botrytis: {
     borderColor: 'border-l-slate-500',

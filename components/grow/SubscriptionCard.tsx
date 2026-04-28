@@ -55,9 +55,9 @@ const TIER_CONFIG: Record<GrowSubscriptionTier, {
   },
   orchard: {
     icon: Crown,
-    color: 'text-purple-600',
-    bgColor: 'bg-purple-100',
-    borderColor: 'border-purple-300',
+    color: 'text-[var(--gd-terracotta)]',
+    bgColor: 'bg-orange-50',
+    borderColor: 'border-orange-200',
   },
 };
 

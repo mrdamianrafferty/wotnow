@@ -78,7 +78,7 @@ export function InfoPage() {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Radio className="h-5 w-5 text-purple-600" />
+            <Radio className="h-5 w-5 text-[var(--gd-moss)]" />
             Supported Devices
           </CardTitle>
           <p className="text-sm text-muted-foreground">
@@ -190,9 +190,9 @@ export function InfoPage() {
                       </p>
                     </div>
 
-                    <div className="p-3 border rounded-lg bg-purple-50/50">
+                    <div className="p-3 border rounded-lg bg-[var(--gd-cream)]">
                       <div className="flex items-center gap-2 mb-2">
-                        <Leaf className="h-4 w-4 text-purple-600" />
+                        <Leaf className="h-4 w-4 text-[var(--gd-leaf)]" />
                         <h4 className="font-medium text-sm">Your Garden Profile</h4>
                       </div>
                       <p className="text-xs text-muted-foreground">
@@ -213,7 +213,7 @@ export function InfoPage() {
             <AccordionItem value="ai-identification">
               <AccordionTrigger className="text-left">
                 <div className="flex items-center gap-2">
-                  <Camera className="h-4 w-4 text-purple-600" />
+                  <Camera className="h-4 w-4 text-[var(--gd-moss)]" />
                   <span>AI Plant & Threat Identification</span>
                 </div>
               </AccordionTrigger>
@@ -346,7 +346,7 @@ export function InfoPage() {
             <AccordionItem value="elevation">
               <AccordionTrigger className="text-left">
                 <div className="flex items-center gap-2">
-                  <Mountain className="h-4 w-4 text-purple-600" />
+                  <Mountain className="h-4 w-4 text-[var(--gd-moss)]" />
                   <span>Elevation & Its Effects</span>
                 </div>
               </AccordionTrigger>
@@ -388,7 +388,7 @@ export function InfoPage() {
                     </div>
                   </div>
 
-                  <div className="p-3 bg-purple-50 border border-purple-200 rounded-lg">
+                  <div className="p-3 bg-[var(--gd-cream)] border border-[var(--gd-cream-border)] rounded-lg">
                     <h4 className="font-medium text-sm mb-2">Automatic Mountain Zone</h4>
                     <p className="text-xs text-muted-foreground">
                       Gardens above <strong>800m elevation</strong> are automatically classified as &quot;Mountain Cool&quot; climate zone, regardless of latitude. This ensures you get advice suited for alpine growing conditions.
@@ -537,7 +537,7 @@ export function InfoPage() {
                   {/* pH Section */}
                   <div className="p-3 border rounded-lg">
                     <h4 className="font-medium text-sm mb-2 flex items-center gap-2">
-                      <TestTube className="h-4 w-4 text-purple-600" />
+                      <TestTube className="h-4 w-4 text-[var(--gd-moss)]" />
                       Soil pH Testing
                     </h4>
                     <p className="text-xs text-muted-foreground mb-3">
@@ -550,7 +550,7 @@ export function InfoPage() {
                       <span className="px-2 py-1 bg-yellow-100 text-yellow-700 rounded">6.0</span>
                       <span className="px-2 py-1 bg-green-100 text-green-700 rounded font-medium">6.5-7.0</span>
                       <span className="px-2 py-1 bg-blue-100 text-blue-700 rounded">7.5</span>
-                      <span className="px-2 py-1 bg-purple-100 text-purple-700 rounded">Alkaline</span>
+                      <span className="px-2 py-1 bg-[var(--gd-soil-dry)] text-[var(--gd-soil)] rounded">Alkaline</span>
                     </div>
 
                     <div className="space-y-2 text-xs text-muted-foreground">
@@ -760,8 +760,8 @@ export function InfoPage() {
             </div>
           </div>
 
-          <div className="flex items-start gap-3 p-3 bg-white border border-l-4 border-l-purple-500 border-purple-200 rounded-lg">
-            <Moon className="h-5 w-5 text-purple-600 mt-0.5" />
+          <div className="flex items-start gap-3 p-3 bg-white border border-l-4 border-l-[var(--gd-stone-warm)] border-[var(--gd-cream-border)] rounded-lg">
+            <Moon className="h-5 w-5 text-[var(--gd-stone-warm)] mt-0.5" />
             <div>
               <h4 className="font-medium mb-1">Moon Phase Gardening</h4>
               <p className="text-sm text-muted-foreground">

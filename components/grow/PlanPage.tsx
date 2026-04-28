@@ -524,11 +524,11 @@ export function PlanPage() {
         badge: 'bg-white text-blue-800 border-blue-200'
       },
       secondary: {
-        line: 'bg-purple-500',
-        border: 'border-purple-500',
-        text: 'text-purple-700',
-        bg: 'bg-white border-l-4 border-l-purple-500',
-        badge: 'bg-white text-purple-800 border-purple-200'
+        line: 'bg-[var(--gd-moss)]',
+        border: 'border-[var(--gd-moss)]',
+        text: 'text-[var(--gd-moss)]',
+        bg: 'bg-white border-l-4 border-l-[var(--gd-moss)]',
+        badge: 'bg-white text-[var(--gd-leaf-dark)] border-[var(--gd-cream-border)]'
       },
       success: {
         line: 'bg-green-500',
@@ -806,7 +806,7 @@ export function PlanPage() {
                   variant={filterType === 'maintenance' ? 'default' : 'outline'}
                   size="sm"
                   onClick={() => setFilterType('maintenance')}
-                  className={filterType === 'maintenance' ? 'bg-purple-600 hover:bg-purple-700 text-white' : ''}
+                  className={filterType === 'maintenance' ? 'bg-[var(--gd-leaf)] hover:bg-[var(--gd-leaf-dark)] text-white' : ''}
                 >
                   <Scissors className="h-3 w-3 mr-1" />
                   Maintenance
@@ -1084,7 +1084,7 @@ export function PlanPage() {
                   <Badge variant="outline" className="bg-white text-blue-800 border-blue-300">
                     <Sprout className="h-3 w-3 mr-1" /> Planting
                   </Badge>
-                  <Badge variant="outline" className="bg-white text-purple-800 border-purple-300">
+                  <Badge variant="outline" className="bg-white text-[var(--gd-leaf-dark)] border-[var(--gd-cream-border)]">
                     <Scissors className="h-3 w-3 mr-1" /> Maintenance
                   </Badge>
                   <Badge variant="outline" className="bg-white text-green-800 border-green-300">

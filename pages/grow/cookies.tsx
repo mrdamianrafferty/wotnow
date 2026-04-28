@@ -5,7 +5,7 @@ import { ArrowLeft } from 'lucide-react';
 import { GrowLayout } from '@/components/grow/GrowLayout';
 
 export default function GrowCookiePolicy() {
-  const lastUpdated = 'February 2026';
+  const lastUpdated = 'April 2026';
 
   return (
     <GrowLayout>
@@ -56,7 +56,68 @@ export default function GrowCookiePolicy() {
             </section>
 
             <section className="mb-8">
-              <h2 className="text-xl font-semibold mb-4">3. What We Don&apos;t Do</h2>
+              <h2 className="text-xl font-semibold mb-4">3. Cookies We Use</h2>
+              <p className="mb-4">
+                The table below lists the cookies Grow Daisy sets or relies on, together with
+                their purpose and how long they remain on your device.
+              </p>
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm border-collapse">
+                  <thead>
+                    <tr className="bg-gray-50">
+                      <th className="text-left p-3 border border-gray-200 font-semibold">Cookie / Key</th>
+                      <th className="text-left p-3 border border-gray-200 font-semibold">Type</th>
+                      <th className="text-left p-3 border border-gray-200 font-semibold">Purpose</th>
+                      <th className="text-left p-3 border border-gray-200 font-semibold">Duration</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td className="p-3 border border-gray-200 font-mono text-xs">sb-*-auth-token</td>
+                      <td className="p-3 border border-gray-200">Essential</td>
+                      <td className="p-3 border border-gray-200">Keeps you logged in (Supabase authentication session)</td>
+                      <td className="p-3 border border-gray-200">Session / 7 days</td>
+                    </tr>
+                    <tr className="bg-gray-50">
+                      <td className="p-3 border border-gray-200 font-mono text-xs">grow_preferences</td>
+                      <td className="p-3 border border-gray-200">Functional</td>
+                      <td className="p-3 border border-gray-200">Stores your garden location, units, and display preferences</td>
+                      <td className="p-3 border border-gray-200">1 year</td>
+                    </tr>
+                    <tr>
+                      <td className="p-3 border border-gray-200 font-mono text-xs">grow_language</td>
+                      <td className="p-3 border border-gray-200">Functional</td>
+                      <td className="p-3 border border-gray-200">Remembers your chosen language</td>
+                      <td className="p-3 border border-gray-200">1 year</td>
+                    </tr>
+                    <tr className="bg-gray-50">
+                      <td className="p-3 border border-gray-200 font-mono text-xs">__stripe_mid / __stripe_sid</td>
+                      <td className="p-3 border border-gray-200">Essential (payments)</td>
+                      <td className="p-3 border border-gray-200">Fraud prevention and payment session management (Stripe)</td>
+                      <td className="p-3 border border-gray-200">1 year / session</td>
+                    </tr>
+                    <tr>
+                      <td className="p-3 border border-gray-200 font-mono text-xs">_vercel_insights</td>
+                      <td className="p-3 border border-gray-200">Analytics (optional)</td>
+                      <td className="p-3 border border-gray-200">Anonymous page-view analytics to improve the app. Only set with your consent.</td>
+                      <td className="p-3 border border-gray-200">1 year</td>
+                    </tr>
+                    <tr className="bg-gray-50">
+                      <td className="p-3 border border-gray-200 font-mono text-xs">_GRECAPTCHA</td>
+                      <td className="p-3 border border-gray-200">Essential (security)</td>
+                      <td className="p-3 border border-gray-200">Google reCAPTCHA — prevents automated abuse of the service</td>
+                      <td className="p-3 border border-gray-200">Session</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+              <p className="mt-3 text-sm text-gray-500">
+                We keep this list up to date. If we add new cookies we will update this policy and, where required, ask for your consent again.
+              </p>
+            </section>
+
+            <section className="mb-8">
+              <h2 className="text-xl font-semibold mb-4">4. What We Don&apos;t Do</h2>
               <ul className="list-disc pl-6 space-y-1">
                 <li>We don&apos;t use advertising cookies or trackers</li>
                 <li>We don&apos;t share cookie data with advertisers</li>
@@ -66,20 +127,33 @@ export default function GrowCookiePolicy() {
             </section>
 
             <section className="mb-8">
-              <h2 className="text-xl font-semibold mb-4">4. Managing Your Cookies</h2>
-              <p>You can control cookies through:</p>
-              <ul className="list-disc pl-6 mt-2 space-y-1">
-                <li>The consent banner when you first use Grow Daisy</li>
-                <li>Your browser settings (most browsers let you block or delete cookies)</li>
-                <li>Your device settings (for mobile apps)</li>
+              <h2 className="text-xl font-semibold mb-4">5. Managing and Withdrawing Consent</h2>
+              <p className="mb-3">
+                You can change your cookie preferences at any time. You gave (or declined) consent for
+                optional analytics cookies when you first opened Grow Daisy. To change that choice:
+              </p>
+              <ul className="list-disc pl-6 space-y-2">
+                <li>
+                  <strong>In the app:</strong> Go to Settings &rarr; Privacy &rarr; Cookie Preferences.
+                  You can withdraw analytics consent or re-grant it here at any time.
+                </li>
+                <li>
+                  <strong>Via your browser:</strong> Most browsers let you view, block, or delete cookies
+                  through their privacy settings. Blocking cookies may affect how the app works.
+                </li>
+                <li>
+                  <strong>On mobile:</strong> Use your device&apos;s app privacy settings (iOS: Settings &rarr;
+                  Privacy &amp; Security; Android: Settings &rarr; Apps &rarr; Grow Daisy &rarr; Permissions).
+                </li>
               </ul>
-              <p className="mt-2 text-gray-500 text-sm">
-                Note: Blocking essential cookies will prevent Grow Daisy from working properly.
+              <p className="mt-3 text-sm text-gray-500">
+                Withdrawing consent does not affect the lawfulness of processing based on consent before withdrawal.
+                Essential and payment cookies cannot be disabled without preventing core functionality.
               </p>
             </section>
 
             <section className="mb-8">
-              <h2 className="text-xl font-semibold mb-4">5. Third-Party Cookies</h2>
+              <h2 className="text-xl font-semibold mb-4">6. Third-Party Cookies</h2>
               <p>Some features use third-party services that may set their own cookies:</p>
               <ul className="list-disc pl-6 mt-2 space-y-1">
                 <li><strong>Google Maps</strong> — Location search and map display</li>
@@ -94,7 +168,7 @@ export default function GrowCookiePolicy() {
             </section>
 
             <section className="mb-8">
-              <h2 className="text-xl font-semibold mb-4">6. Updates to This Policy</h2>
+              <h2 className="text-xl font-semibold mb-4">7. Updates to This Policy</h2>
               <p>
                 We may update this cookie policy as we add new features. Check back periodically for
                 changes.
@@ -102,7 +176,7 @@ export default function GrowCookiePolicy() {
             </section>
 
             <section className="mb-8">
-              <h2 className="text-xl font-semibold mb-4">7. More Information</h2>
+              <h2 className="text-xl font-semibold mb-4">8. More Information</h2>
               <p>
                 For full details on how we handle your data, see our{' '}
                 <Link href="/grow/privacy" className="text-emerald-600 underline">

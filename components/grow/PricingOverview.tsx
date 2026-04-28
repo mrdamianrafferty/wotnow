@@ -114,7 +114,7 @@ function FeatureIcon({ feature }: { feature: string }) {
   if (lowerFeature.includes('soil') || lowerFeature.includes('temperature')) return <Thermometer className="h-3.5 w-3.5 text-orange-500" />;
   if (lowerFeature.includes('frost') || lowerFeature.includes('alert')) return <AlertTriangle className="h-3.5 w-3.5 text-blue-500" />;
   if (lowerFeature.includes('threat') || lowerFeature.includes('pest')) return <Bug className="h-3.5 w-3.5 text-red-500" />;
-  if (lowerFeature.includes('hardware') || lowerFeature.includes('integration')) return <Radio className="h-3.5 w-3.5 text-purple-500" />;
+  if (lowerFeature.includes('hardware') || lowerFeature.includes('integration')) return <Radio className="h-3.5 w-3.5 text-[var(--gd-moss)]" />;
   if (lowerFeature.includes('ai') || lowerFeature.includes('id')) return <Camera className="h-3.5 w-3.5 text-indigo-500" />;
   if (lowerFeature.includes('team') || lowerFeature.includes('sharing')) return <Users className="h-3.5 w-3.5 text-cyan-500" />;
 
