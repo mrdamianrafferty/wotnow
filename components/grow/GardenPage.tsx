@@ -1531,6 +1531,9 @@ export function GardenPage() {
                         const speciesUrl = `/grow/species/${encodeURIComponent(resolvedSlug)}`;
                         const imageKey = cached?.imageKey || resolvedSlug;
                         const imageSrc = getPlantImage(imageKey, 'xl') ?? getPlantImage(imageKey, 'lg') ?? getPlantImage(imageKey, 'medium');
+                        const sunRequirements = cached?.sunRequirements ?? null;
+                        const soilType = cached?.soilType ?? null;
+                        const watering = cached?.watering ?? null;
 
                         const healthBadgeClass = {
                           excellent: 'bg-emerald-50 text-emerald-700 border-emerald-200',
@@ -1544,68 +1547,99 @@ export function GardenPage() {
                           .sort((a, b) => b.planted.getTime() - a.planted.getTime())[0];
 
                         return (
-                          <Link key={group.key} href={speciesUrl} className="block group">
-                            <Card className="border-0 overflow-hidden hover:shadow-lg transition-all duration-200 bg-[var(--gd-cream)] rounded-xl h-full">
-                              {/* Image banner */}
-                              <div className="relative h-40 w-full bg-[var(--gd-cream-deep)] overflow-hidden">
-                                {imageSrc ? (
-                                  <Image
-                                    src={imageSrc}
-                                    alt={group.name}
-                                    fill
-                                    className="object-contain p-4 group-hover:scale-105 transition-transform duration-300"
-                                    sizes="(max-width: 768px) 50vw, 33vw"
-                                  />
-                                ) : (
-                                  <div className="flex items-center justify-center h-full">
-                                    <Sprout className="h-12 w-12 text-[var(--gd-moss)] opacity-30" />
-                                  </div>
-                                )}
-                                <div className="absolute top-2 right-2">
-                                  <Badge variant="outline" className={`text-xs backdrop-blur-sm bg-white/80 ${healthBadgeClass}`}>
-                                    {group.mixedHealth ? 'mixed' : group.worstHealth}
-                                  </Badge>
+                          <Link key={group.key} href={speciesUrl} className="block group no-underline">
+                            <Card className="border hover:shadow-md transition-all duration-200 bg-[var(--gd-cream)] rounded-xl overflow-hidden">
+                              <div className="flex">
+                                {/* Left: image */}
+                                <div className="relative w-24 shrink-0 self-stretch bg-[var(--gd-cream-deep)]">
+                                  {imageSrc ? (
+                                    <Image
+                                      src={imageSrc}
+                                      alt={group.name}
+                                      fill
+                                      className="object-contain p-2 group-hover:scale-105 transition-transform duration-300"
+                                      sizes="96px"
+                                    />
+                                  ) : (
+                                    <div className="flex items-center justify-center h-full min-h-[96px]">
+                                      <Sprout className="h-8 w-8 text-[var(--gd-moss)] opacity-30" />
+                                    </div>
+                                  )}
                                 </div>
-                                <div className="absolute top-2 left-2 bg-black/25 rounded-full px-2 py-0.5">
-                                  <span className="text-xs text-white font-medium">×{group.totalQuantity}</span>
-                                </div>
-                              </div>
 
-                              {/* Card body */}
-                              <div className="p-3 flex flex-col gap-1">
-                                <h4 className="font-semibold text-[var(--gd-peat)] leading-tight text-base" style={{ fontFamily: 'var(--gd-font-display)' }}>
-                                  {group.name}
-                                </h4>
-                                <p className="text-xs text-[var(--gd-stone-warm)] capitalize">{group.type}</p>
-                                {group.varieties.length > 0 && (
-                                  <div className="flex flex-wrap gap-1 mt-1">
-                                    {group.varieties.slice(0, 3).map((v) => (
-                                      <span key={v} className="text-xs px-2 py-0.5 bg-[var(--gd-cream-deep)] text-[var(--gd-stone-body)] rounded-full truncate max-w-[100px]">
-                                        {v}
-                                      </span>
-                                    ))}
-                                    {group.varieties.length > 3 && (
-                                      <span className="text-xs px-2 py-0.5 bg-[var(--gd-cream-deep)] text-[var(--gd-stone-body)] rounded-full">+{group.varieties.length - 3}</span>
-                                    )}
+                                {/* Right: content */}
+                                <div className="flex-1 p-3 flex flex-col gap-1 min-w-0">
+                                  {/* Health + quantity row */}
+                                  <div className="flex items-center gap-2">
+                                    <Badge variant="outline" className={`text-xs ${healthBadgeClass}`}>
+                                      {group.mixedHealth ? 'mixed' : group.worstHealth}
+                                    </Badge>
+                                    <span className="text-xs text-[var(--gd-stone-warm)]">×{group.totalQuantity}</span>
                                   </div>
-                                )}
-                                <div className="mt-2 pt-2 border-t border-[var(--gd-cream-border)]">
-                                  <Button
-                                    variant="default"
-                                    size="sm"
-                                    className="w-full bg-[var(--gd-leaf)] hover:bg-[var(--gd-leaf-dark)] text-[var(--gd-cream)] text-xs"
-                                    onClick={(e) => {
-                                      e.preventDefault();
-                                      e.stopPropagation();
-                                      if (primaryInstance) {
-                                        setEditingPlant(primaryInstance);
-                                        setIsEditPlantDialogOpen(true);
-                                      }
-                                    }}
-                                  >
-                                    <Fence className="h-3 w-3 mr-1" />
-                                    Add to Bed
-                                  </Button>
+
+                                  {/* Name */}
+                                  <h4 className="font-semibold text-[var(--gd-peat)] leading-tight text-sm mt-0.5" style={{ fontFamily: 'var(--gd-font-display)' }}>
+                                    {group.name}
+                                  </h4>
+
+                                  {/* Type */}
+                                  <p className="text-xs text-[var(--gd-stone-warm)] capitalize">{group.type}</p>
+
+                                  {/* Planted date */}
+                                  {primaryInstance?.planted && (
+                                    <p className="text-xs text-[var(--gd-stone-warm)]">
+                                      Planted {primaryInstance.planted.toLocaleDateString('en-GB', { month: 'short', year: 'numeric' })}
+                                    </p>
+                                  )}
+
+                                  {/* Species preferences from cache */}
+                                  {(sunRequirements || soilType || watering) && (
+                                    <div className="flex flex-col gap-0.5 mt-0.5">
+                                      {sunRequirements && (
+                                        <span className="text-xs text-[var(--gd-stone-warm)]">☀️ {sunRequirements}</span>
+                                      )}
+                                      {soilType && (
+                                        <span className="text-xs text-[var(--gd-stone-warm)]">🌱 {soilType}</span>
+                                      )}
+                                      {watering && (
+                                        <span className="text-xs text-[var(--gd-stone-warm)]">💧 {watering}</span>
+                                      )}
+                                    </div>
+                                  )}
+
+                                  {/* Varieties */}
+                                  {group.varieties.length > 0 && (
+                                    <div className="flex flex-wrap gap-1 mt-0.5">
+                                      {group.varieties.slice(0, 2).map((v) => (
+                                        <span key={v} className="text-xs px-1.5 py-0.5 bg-[var(--gd-cream-deep)] text-[var(--gd-stone-body)] rounded-full truncate max-w-[90px]">
+                                          {v}
+                                        </span>
+                                      ))}
+                                      {group.varieties.length > 2 && (
+                                        <span className="text-xs px-1.5 py-0.5 bg-[var(--gd-cream-deep)] text-[var(--gd-stone-body)] rounded-full">+{group.varieties.length - 2}</span>
+                                      )}
+                                    </div>
+                                  )}
+
+                                  {/* Add to Bed */}
+                                  <div className="mt-auto pt-2">
+                                    <Button
+                                      variant="default"
+                                      size="sm"
+                                      className="w-full bg-[var(--gd-leaf)] hover:bg-[var(--gd-leaf-dark)] text-[var(--gd-cream)] text-xs h-7"
+                                      onClick={(e) => {
+                                        e.preventDefault();
+                                        e.stopPropagation();
+                                        if (primaryInstance) {
+                                          setEditingPlant(primaryInstance);
+                                          setIsEditPlantDialogOpen(true);
+                                        }
+                                      }}
+                                    >
+                                      <Fence className="h-3 w-3 mr-1" />
+                                      Add to Bed
+                                    </Button>
+                                  </div>
                                 </div>
                               </div>
                             </Card>
@@ -1762,69 +1796,80 @@ export function GardenPage() {
                     const imageSrc = getPlantImage(imageKey, 'xl') ?? getPlantImage(imageKey, 'lg') ?? getPlantImage(imageKey, 'medium');
                     
                     return (
-                      <Link key={species.slug} href={speciesUrl} className="block group">
-                        <Card className="border-0 overflow-hidden hover:shadow-lg transition-all duration-200 bg-[var(--gd-cream)] rounded-xl h-full">
-                          {/* Image banner */}
-                          <div className="relative h-40 w-full bg-[var(--gd-cream-deep)] overflow-hidden">
-                            {imageSrc ? (
-                              <Image
-                                src={imageSrc}
-                                alt={species.name}
-                                fill
-                                className="object-contain p-4 group-hover:scale-105 transition-transform duration-300"
-                                sizes="(max-width: 768px) 50vw, 33vw"
-                              />
-                            ) : (
-                              <div className="flex items-center justify-center h-full">
-                                <Sprout className="h-12 w-12 text-[var(--gd-moss)] opacity-30" />
-                              </div>
-                            )}
-                            {species.category && (
-                              <div className="absolute top-2 right-2">
-                                <Badge variant="outline" className="text-xs backdrop-blur-sm bg-white/80 text-[var(--gd-stone-body)] border-[var(--gd-cream-border)]">
-                                  {species.category}
-                                </Badge>
-                              </div>
-                            )}
-                          </div>
+                      <Link key={species.slug} href={speciesUrl} className="block group no-underline">
+                        <Card className="border hover:shadow-md transition-all duration-200 bg-[var(--gd-cream)] rounded-xl overflow-hidden">
+                          <div className="flex">
+                            {/* Left: image */}
+                            <div className="relative w-24 shrink-0 self-stretch bg-[var(--gd-cream-deep)]">
+                              {imageSrc ? (
+                                <Image
+                                  src={imageSrc}
+                                  alt={species.name}
+                                  fill
+                                  className="object-contain p-2 group-hover:scale-105 transition-transform duration-300"
+                                  sizes="96px"
+                                />
+                              ) : (
+                                <div className="flex items-center justify-center h-full min-h-[96px]">
+                                  <Sprout className="h-8 w-8 text-[var(--gd-moss)] opacity-30" />
+                                </div>
+                              )}
+                            </div>
 
-                          {/* Card body */}
-                          <div className="p-3 flex flex-col gap-1">
-                            <h4 className="font-semibold text-[var(--gd-peat)] leading-tight text-base" style={{ fontFamily: 'var(--gd-font-display)' }}>
-                              {species.name}
-                            </h4>
-                            {species.scientificName && (
-                              <p className="text-xs text-[var(--gd-stone-warm)] italic">{species.scientificName}</p>
-                            )}
-                            {(species.sunRequirements || species.soilType) && (
-                              <div className="flex flex-wrap gap-x-3 gap-y-0.5 mt-1">
-                                {species.sunRequirements && (
-                                  <span className="text-xs text-[var(--gd-stone-warm)]">☀️ {species.sunRequirements}</span>
-                                )}
-                                {species.soilType && (
-                                  <span className="text-xs text-[var(--gd-stone-warm)]">🌱 {species.soilType}</span>
-                                )}
+                            {/* Right: content */}
+                            <div className="flex-1 p-3 flex flex-col gap-1 min-w-0">
+                              {/* Category badge */}
+                              {species.category && (
+                                <div>
+                                  <Badge variant="outline" className="text-xs text-[var(--gd-stone-body)] border-[var(--gd-cream-border)] bg-[var(--gd-cream-deep)]">
+                                    {species.category}
+                                  </Badge>
+                                </div>
+                              )}
+
+                              {/* Name */}
+                              <h4 className="font-semibold text-[var(--gd-peat)] leading-tight text-sm mt-0.5" style={{ fontFamily: 'var(--gd-font-display)' }}>
+                                {species.name}
+                              </h4>
+
+                              {/* Scientific name */}
+                              {species.scientificName && (
+                                <p className="text-xs text-[var(--gd-stone-warm)] italic">{species.scientificName}</p>
+                              )}
+
+                              {/* Sun + soil */}
+                              {(species.sunRequirements || species.soilType) && (
+                                <div className="flex flex-col gap-0.5 mt-0.5">
+                                  {species.sunRequirements && (
+                                    <span className="text-xs text-[var(--gd-stone-warm)]">☀️ {species.sunRequirements}</span>
+                                  )}
+                                  {species.soilType && (
+                                    <span className="text-xs text-[var(--gd-stone-warm)]">🌱 {species.soilType}</span>
+                                  )}
+                                </div>
+                              )}
+
+                              {/* Add to Garden */}
+                              <div className="mt-auto pt-2">
+                                <Button
+                                  variant="default"
+                                  size="sm"
+                                  className="w-full bg-[var(--gd-leaf)] hover:bg-[var(--gd-leaf-dark)] text-[var(--gd-cream)] text-xs h-7"
+                                  onClick={(e) => {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                    setAddPlantPrefill({
+                                      name: species.name,
+                                      scientificName: species.scientificName ?? undefined,
+                                      type: species.category ?? undefined,
+                                    });
+                                    setIsAddPlantDialogOpen(true);
+                                  }}
+                                >
+                                  <Plus className="h-3 w-3 mr-1" />
+                                  Add to Garden
+                                </Button>
                               </div>
-                            )}
-                            <div className="mt-2 pt-2 border-t border-[var(--gd-cream-border)]">
-                              <Button
-                                variant="default"
-                                size="sm"
-                                className="w-full bg-[var(--gd-leaf)] hover:bg-[var(--gd-leaf-dark)] text-[var(--gd-cream)] text-xs"
-                                onClick={(e) => {
-                                  e.preventDefault();
-                                  e.stopPropagation();
-                                  setAddPlantPrefill({
-                                    name: species.name,
-                                    scientificName: species.scientificName ?? undefined,
-                                    type: species.category ?? undefined,
-                                  });
-                                  setIsAddPlantDialogOpen(true);
-                                }}
-                              >
-                                <Plus className="h-3 w-3 mr-1" />
-                                Add to Garden
-                              </Button>
                             </div>
                           </div>
                         </Card>
