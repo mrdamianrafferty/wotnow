@@ -188,6 +188,17 @@ export default function App({ Component, pageProps }: AppProps<PagePropsWithThem
                 <link rel="icon" type="image/svg+xml" href={isFindr ? "/findr-favicon-v2/favicon.svg" : isGrow ? "/growdaisy-favicon/favicon.svg" : "/godaisy-favicon/favicon.svg"} />
                 <link rel="icon" type="image/png" sizes="96x96" href={isFindr ? "/findr-favicon-v2/favicon-96x96.png" : isGrow ? "/growdaisy-favicon/favicon-96x96.png" : "/godaisy-favicon/favicon-96x96.png"} />
                 <link rel="icon" type="image/x-icon" href={isFindr ? "/findr-favicon-v2/favicon.ico" : isGrow ? "/growdaisy-favicon/favicon.ico" : "/godaisy-favicon/favicon.ico"} />
+
+                {/* Smart App Banner — shows "Open in App Store" on iOS Safari when app not installed.
+                    TODO(Damian): Replace GROW_DAISY_APP_STORE_ID with the numeric App Store ID from
+                    App Store Connect (looks like 1234567890). Find it at:
+                    App Store Connect → My Apps → Grow Daisy → App Information → Apple ID. */}
+                {isGrow && (
+                  <meta
+                    name="apple-itunes-app"
+                    content={`app-id=GROW_DAISY_APP_STORE_ID, app-argument=${typeof window !== 'undefined' ? window.location.href : 'https://grow.godaisy.io/grow'}`}
+                  />
+                )}
                 </Head>
 
                 {/* JSON-LD Structured Data for SEO */}
