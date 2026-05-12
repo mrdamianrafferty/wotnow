@@ -1619,11 +1619,10 @@ export const getStaticProps: GetStaticProps<SpeciesPageProps, { slug: string }> 
       return { notFound: true };
     }
 
-    // If canonical slug differs from URL slug, redirect to canonical
+    // redirect not allowed from getStaticProps during prerendering — 404 here,
+    // client-side router.replace handles runtime canonical redirect.
     if (data.slug !== slug) {
-      return {
-        redirect: { destination: `/grow/species/${data.slug}`, permanent: true },
-      };
+      return { notFound: true };
     }
 
     const species = serializePlantSpecies(data);
