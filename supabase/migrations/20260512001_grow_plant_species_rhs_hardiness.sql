@@ -7,11 +7,16 @@ ALTER TABLE plant_species
   ADD COLUMN IF NOT EXISTS rhs_hardiness_min VARCHAR(4),
   ADD COLUMN IF NOT EXISTS rhs_hardiness_max VARCHAR(4);
 
-ALTER TABLE plant_species
-  ADD CONSTRAINT IF NOT EXISTS plant_species_rhs_min_valid
-    CHECK (rhs_hardiness_min IN ('H1a','H1b','H1c','H2','H3','H4','H5','H6','H7') OR rhs_hardiness_min IS NULL),
-  ADD CONSTRAINT IF NOT EXISTS plant_species_rhs_max_valid
-    CHECK (rhs_hardiness_max IN ('H1a','H1b','H1c','H2','H3','H4','H5','H6','H7') OR rhs_hardiness_max IS NULL);
+DO $$BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'plant_species_rhs_min_valid') THEN
+    ALTER TABLE plant_species ADD CONSTRAINT plant_species_rhs_min_valid
+      CHECK (rhs_hardiness_min IN ('H1a','H1b','H1c','H2','H3','H4','H5','H6','H7') OR rhs_hardiness_min IS NULL);
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'plant_species_rhs_max_valid') THEN
+    ALTER TABLE plant_species ADD CONSTRAINT plant_species_rhs_max_valid
+      CHECK (rhs_hardiness_max IN ('H1a','H1b','H1c','H2','H3','H4','H5','H6','H7') OR rhs_hardiness_max IS NULL);
+  END IF;
+END $$;
 
 CREATE INDEX IF NOT EXISTS idx_plant_species_rhs_hardiness
   ON plant_species (rhs_hardiness_min, rhs_hardiness_max);
