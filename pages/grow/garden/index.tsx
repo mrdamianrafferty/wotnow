@@ -18,14 +18,14 @@ export default function GrowGardenPage() {
         <meta property="og:title" content="My Garden - Grow Daisy" />
         <meta property="og:description" content="Manage your garden plants and get personalized care recommendations." />
         <meta property="og:type" content="website" />
-        <meta property="og:url" content="https://godaisy.io/grow/garden" />
+        <meta property="og:url" content="https://grow.godaisy.io/grow/garden" />
 
         {/* Twitter Card */}
         <meta name="twitter:card" content="summary" />
         <meta name="twitter:title" content="My Garden - Grow Daisy" />
         <meta name="twitter:description" content="Manage your garden plants and get personalized care recommendations." />
 
-        <link rel="canonical" href="https://godaisy.io/grow/garden" />
+        <link rel="canonical" href="https://grow.godaisy.io/grow/garden" />
       </Head>
       <main className="container mx-auto px-4 py-8">
         <GardenPage />

@@ -17,16 +17,16 @@ export default function GrowPage() {
         <meta property="og:title" content="Grow Daisy - Smart Garden Planning" />
         <meta property="og:description" content="Plan your garden with weather-based task recommendations and personalized planting calendars." />
         <meta property="og:type" content="website" />
-        <meta property="og:url" content="https://godaisy.io/grow" />
-        <meta property="og:image" content="https://godaisy.io/og-grow.png" />
+        <meta property="og:url" content="https://grow.godaisy.io/grow" />
+        <meta property="og:image" content="https://grow.godaisy.io/og-grow.png" />
 
         {/* Twitter Card */}
         <meta name="twitter:card" content="summary_large_image" />
         <meta name="twitter:title" content="Grow Daisy - Smart Garden Planning" />
         <meta name="twitter:description" content="Plan your garden with weather-based task recommendations and personalized planting calendars." />
-        <meta name="twitter:image" content="https://godaisy.io/og-grow.png" />
+        <meta name="twitter:image" content="https://grow.godaisy.io/og-grow.png" />
 
-        <link rel="canonical" href="https://godaisy.io/grow" />
+        <link rel="canonical" href="https://grow.godaisy.io/grow" />
       </Head>
       <GrowExperience />
     </>
