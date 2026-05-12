@@ -9,7 +9,7 @@
 
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { createClient } from '@supabase/supabase-js';
-import { buildHreflangLinks, GROW_LANGUAGES, GROW_TRANSLATED_PATH_CODES } from '../../lib/grow/i18n';
+import { buildHreflangLinks, GROW_TRANSLATED_PATH_CODES } from '../../lib/grow/i18n';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
