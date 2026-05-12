@@ -99,9 +99,12 @@ export const getServerSideProps: GetServerSideProps<LocalisedSpeciesProps> = asy
 
   const species = serializePlantSpecies(data as unknown as PlantSpeciesRow);
 
-  // Translate key text fields in parallel
+  // Prefer DB translations (plant_species.name_fr etc.) before calling DeepL.
+  // Many plants already have curated translations in the table.
+  const dbName = species.translations[lang as keyof typeof species.translations] ?? null;
+
   const [translatedName, translatedDescription, translatedAdvice] = await Promise.all([
-    translateText(species.name, lang),
+    dbName ? Promise.resolve(dbName) : translateText(species.name, lang),
     translateText(species.description, lang),
     translateText(species.advice, lang),
   ]);

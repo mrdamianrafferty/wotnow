@@ -196,7 +196,7 @@ export default function App({ Component, pageProps }: AppProps<PagePropsWithThem
                 {isGrow && (
                   <meta
                     name="apple-itunes-app"
-                    content={`app-id=GROW_DAISY_APP_STORE_ID, app-argument=${typeof window !== 'undefined' ? window.location.href : 'https://grow.godaisy.io/grow'}`}
+                    content={`app-id=6756812661, app-argument=${typeof window !== 'undefined' ? window.location.href : 'https://grow.godaisy.io/grow'}`}
                   />
                 )}
                 </Head>
