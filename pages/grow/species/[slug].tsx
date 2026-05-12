@@ -30,6 +30,7 @@ import { getPlantImage, PLANT_IMAGE_MAP } from "@/lib/grow/plantImages";
 import type { PlantSpecies } from "@/lib/grow/species";
 import { api } from "@/lib/grow/api";
 import { JobsTimeline } from "@/components/grow/JobsTimeline";
+import { ArticleJsonLd, BreadcrumbJsonLd, FAQJsonLd, HowToJsonLd, PlantJsonLd } from "@/components/JsonLd";
 
 type PlantingWindow = {
   plantSlug: string;
@@ -812,13 +813,57 @@ export default function GrowSpeciesPage() {
         {species?.slug ? (
           <link
             rel="canonical"
-            href={`https://godaisy.io/grow/species/${species.slug}`}
+            href={`https://grow.godaisy.io/grow/species/${species.slug}`}
           />
         ) : null}
         <meta property="og:title" content={title} />
         <meta property="og:description" content={description} />
         <meta property="og:type" content="website" />
+        {heroFullSrc && <meta property="og:image" content={heroFullSrc.startsWith('/') ? `https://grow.godaisy.io${heroFullSrc}` : heroFullSrc} />}
       </Head>
+
+      {/* JSON-LD structured data — renders gracefully when content columns are null */}
+      {species && (
+        <>
+          <BreadcrumbJsonLd
+            items={[
+              { name: 'Grow Daisy', url: 'https://grow.godaisy.io/grow' },
+              { name: 'Plants', url: 'https://grow.godaisy.io/grow/garden' },
+              { name: species.name, url: `https://grow.godaisy.io/grow/species/${species.slug}` },
+            ]}
+          />
+          <ArticleJsonLd
+            title={title}
+            description={description}
+            image={heroFullSrc ? (heroFullSrc.startsWith('/') ? `https://grow.godaisy.io${heroFullSrc}` : heroFullSrc) : undefined}
+            datePublished={species.datePublished ?? '2024-01-01'}
+            dateModified={species.dateModified ?? species.datePublished ?? '2024-01-01'}
+            author="Grow Daisy"
+            url={`https://grow.godaisy.io/grow/species/${species.slug}`}
+          />
+          <PlantJsonLd
+            name={species.name}
+            scientificName={species.scientificName}
+            description={species.description}
+            image={heroFullSrc ? (heroFullSrc.startsWith('/') ? `https://grow.godaisy.io${heroFullSrc}` : heroFullSrc) : undefined}
+            url={`https://grow.godaisy.io/grow/species/${species.slug}`}
+            rhsHardinessMin={species.rhsHardinessMin}
+            rhsHardinessMax={species.rhsHardinessMax}
+            sunRequirements={species.sunRequirements}
+            soilType={species.soilType}
+          />
+          {species.howtoSteps && species.howtoSteps.length > 0 && (
+            <HowToJsonLd
+              name={`How to grow ${species.name} in the UK`}
+              steps={species.howtoSteps}
+              description={description}
+            />
+          )}
+          {species.faqs && species.faqs.length > 0 && (
+            <FAQJsonLd items={species.faqs} />
+          )}
+        </>
+      )}
 
       {/* Mobile sticky header - shows species name when hero scrolls out */}
       <div

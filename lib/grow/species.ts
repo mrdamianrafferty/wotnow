@@ -10,6 +10,19 @@ export const PLANT_SPECIES_LANGUAGE_FIELDS = {
 
 export type PlantSpeciesLanguageCode = typeof PLANT_SPECIES_LANGUAGE_FIELDS[keyof typeof PLANT_SPECIES_LANGUAGE_FIELDS];
 
+// JSON-LD content types — populated by Cowork via grow-gardening-expert skill
+export interface HowToStep {
+  step?: number;
+  name: string;
+  text: string;
+  image?: string;
+}
+
+export interface FaqItem {
+  question: string;
+  answer: string;
+}
+
 // Perenual-specific types
 export interface WateringBenchmark {
   value: string;
@@ -168,6 +181,12 @@ export type PlantSpeciesRow = {
   // RHS hardiness (UK scale H1a–H7). NULL until Cowork CSV import.
   rhs_hardiness_min: string | null;
   rhs_hardiness_max: string | null;
+
+  // JSON-LD content fields. NULL until Cowork drafts via grow-gardening-expert skill.
+  howto_steps: HowToStep[] | null;
+  faqs: FaqItem[] | null;
+  date_published: string | null;  // ISO date
+  date_modified: string | null;   // ISO date
 } & {
   [K in keyof typeof PLANT_SPECIES_LANGUAGE_FIELDS]: string | null;
 };
@@ -300,6 +319,12 @@ export interface PlantSpecies {
   // RHS hardiness (UK scale H1a–H7). NULL until Cowork CSV import.
   rhsHardinessMin: string | null;
   rhsHardinessMax: string | null;
+
+  // JSON-LD content fields. NULL until Cowork drafts via grow-gardening-expert skill.
+  howtoSteps: HowToStep[] | null;
+  faqs: FaqItem[] | null;
+  datePublished: string | null;
+  dateModified: string | null;
 }
 
 export interface PlantSpeciesSearchResponse {
@@ -439,5 +464,9 @@ export function serializePlantSpecies(row: PlantSpeciesRow): PlantSpecies {
     croppingTimelineNote: row.cropping_timeline_note ?? null,
     rhsHardinessMin: row.rhs_hardiness_min ?? null,
     rhsHardinessMax: row.rhs_hardiness_max ?? null,
+    howtoSteps: row.howto_steps ?? null,
+    faqs: row.faqs ?? null,
+    datePublished: row.date_published ?? null,
+    dateModified: row.date_modified ?? null,
   };
 }
