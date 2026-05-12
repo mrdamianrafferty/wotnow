@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useMemo, useState } from "react";
 import Head from "next/head";
 import Image from "next/image";
 import { useRouter } from "next/router";
+import type { GetStaticPaths, GetStaticProps } from "next";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -30,6 +31,19 @@ import { getPlantImage, PLANT_IMAGE_MAP } from "@/lib/grow/plantImages";
 import type { PlantSpecies } from "@/lib/grow/species";
 import { api } from "@/lib/grow/api";
 import { JobsTimeline } from "@/components/grow/JobsTimeline";
+
+type WikiSummaryData = {
+  extract: string;
+  pageUrl: string;
+  attribution: string;
+  language: string;
+  thumbnailUrl?: string;
+};
+
+type SpeciesPageProps = {
+  initialSpecies: PlantSpecies | null;
+  initialWikiSummary: WikiSummaryData | null;
+};
 
 type PlantingWindow = {
   plantSlug: string;
@@ -320,7 +334,7 @@ function nextActionableWindows(
   return [...all].sort((a, b) => score(a) - score(b)).slice(0, 6);
 }
 
-export default function GrowSpeciesPage() {
+export default function GrowSpeciesPage({ initialSpecies, initialWikiSummary }: SpeciesPageProps) {
   const router = useRouter();
   const slugParam = router.query.slug;
   const slug = typeof slugParam === "string" ? slugParam : "";
@@ -350,16 +364,11 @@ export default function GrowSpeciesPage() {
   const [showLocationDialog, setShowLocationDialog] = useState(false);
   const [locationVersion, setLocationVersion] = useState(0); // Trigger refetch when location changes
 
-  const [species, setSpecies] = useState<PlantSpecies | null>(null);
-  const [isLoadingSpecies, setIsLoadingSpecies] = useState(false);
+  // Seed from SSR props (getStaticProps); fall back to client fetch if null
+  const [species, setSpecies] = useState<PlantSpecies | null>(initialSpecies ?? null);
+  const [isLoadingSpecies, setIsLoadingSpecies] = useState(initialSpecies == null);
 
-  // Wikipedia fallback for species without descriptions
-  const [wikiSummary, setWikiSummary] = useState<{
-    extract: string;
-    pageUrl: string;
-    attribution: string;
-    language: string;
-  } | null>(null);
+  const [wikiSummary, setWikiSummary] = useState<WikiSummaryData | null>(initialWikiSummary ?? null);
   const [isLoadingWiki, setIsLoadingWiki] = useState(false);
 
   const [windows, setWindows] = useState<PlantingWindow[] | null>(null);
@@ -474,6 +483,8 @@ export default function GrowSpeciesPage() {
   // - As an MVP, we call existing APIs without requiring extra query params.
 
   useEffect(() => {
+    // SSR already provided species — skip client fetch on initial load
+    if (initialSpecies) return;
     if (!slug) return;
     let cancelled = false;
 
@@ -505,10 +516,12 @@ export default function GrowSpeciesPage() {
     return () => {
       cancelled = true;
     };
-  }, [slug, router]);
+  }, [slug, router, initialSpecies]);
 
   // Fetch Wikipedia summary if species has no description but has scientific name
   useEffect(() => {
+    // SSR already provided wiki summary — skip client fetch
+    if (initialWikiSummary) return;
     // Only fetch if we have species data, no description, and a scientific name
     if (
       !species ||
@@ -543,7 +556,7 @@ export default function GrowSpeciesPage() {
     return () => {
       cancelled = true;
     };
-  }, [species, wikiSummary, isLoadingWiki]);
+  }, [species, wikiSummary, isLoadingWiki, initialWikiSummary]);
 
   useEffect(() => {
     if (!accessToken) return;
@@ -745,10 +758,16 @@ export default function GrowSpeciesPage() {
     });
   }, [tasks, slug, species]);
 
-  const title = species?.name ? `${species.name} — Grow` : "Species — Grow";
-  const description = species?.scientificName
-    ? `${species.name} (${species.scientificName}). Care, timing, and what to do now.`
-    : `${species?.name ?? "Plant"} care, timing, and what to do now.`;
+  const title = species?.name
+    ? species.scientificName
+      ? `${species.name} (${species.scientificName}) — UK growing guide`
+      : `${species.name} — UK growing guide`
+    : "Plant — UK growing guide";
+  const description = species?.name
+    ? species.scientificName
+      ? `How to grow ${species.name} (${species.scientificName}) in the UK. Sowing dates, planting calendar, care tips, and what to do now.`
+      : `How to grow ${species.name} in the UK. Sowing dates, planting calendar, care tips, and what to do now.`
+    : "UK plant growing guide with planting calendar and care tips.";
 
   const usda = formatUsdaRange(
     species?.usdaZoneMin ?? null,
@@ -812,12 +831,131 @@ export default function GrowSpeciesPage() {
         {species?.slug ? (
           <link
             rel="canonical"
-            href={`https://godaisy.io/grow/species/${species.slug}`}
+            href={`https://grow.godaisy.io/grow/species/${species.slug}`}
           />
         ) : null}
         <meta property="og:title" content={title} />
         <meta property="og:description" content={description} />
-        <meta property="og:type" content="website" />
+        <meta property="og:type" content="article" />
+        {species?.slug ? (
+          <meta property="og:url" content={`https://grow.godaisy.io/grow/species/${species.slug}`} />
+        ) : null}
+        <meta property="og:site_name" content="Grow Daisy" />
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content={title} />
+        <meta name="twitter:description" content={description} />
+
+        {/* Article JSON-LD */}
+        {species ? (
+          <script
+            type="application/ld+json"
+            dangerouslySetInnerHTML={{
+              __html: JSON.stringify({
+                "@context": "https://schema.org",
+                "@type": "Article",
+                headline: title,
+                description: description,
+                datePublished: "2024-01-01",
+                dateModified: new Date().toISOString().split("T")[0],
+                author: { "@type": "Organization", name: "Grow Daisy editorial", url: "https://grow.godaisy.io" },
+                publisher: { "@type": "Organization", name: "Grow Daisy", logo: { "@type": "ImageObject", url: "https://grow.godaisy.io/logo.png" } },
+                mainEntityOfPage: { "@type": "WebPage", "@id": `https://grow.godaisy.io/grow/species/${species.slug}` },
+              }),
+            }}
+          />
+        ) : null}
+
+        {/* Bioschemas Plant JSON-LD */}
+        {species?.scientificName ? (
+          <script
+            type="application/ld+json"
+            dangerouslySetInnerHTML={{
+              __html: JSON.stringify({
+                "@context": "https://schema.org",
+                "@type": "Taxon",
+                name: species.name,
+                scientificName: species.scientificName,
+                description: species.description ?? (wikiSummary?.extract ?? undefined),
+                url: `https://grow.godaisy.io/grow/species/${species.slug}`,
+                isPartOf: { "@type": "WebSite", name: "Grow Daisy", url: "https://grow.godaisy.io" },
+              }),
+            }}
+          />
+        ) : null}
+
+        {/* BreadcrumbList JSON-LD */}
+        {species ? (
+          <script
+            type="application/ld+json"
+            dangerouslySetInnerHTML={{
+              __html: JSON.stringify({
+                "@context": "https://schema.org",
+                "@type": "BreadcrumbList",
+                itemListElement: [
+                  { "@type": "ListItem", position: 1, name: "Grow Daisy", item: "https://grow.godaisy.io/grow" },
+                  { "@type": "ListItem", position: 2, name: species.category ?? "Plants", item: "https://grow.godaisy.io/grow/garden" },
+                  { "@type": "ListItem", position: 3, name: species.name, item: `https://grow.godaisy.io/grow/species/${species.slug}` },
+                ],
+              }),
+            }}
+          />
+        ) : null}
+
+        {/* HowTo JSON-LD */}
+        {species ? (
+          <script
+            type="application/ld+json"
+            dangerouslySetInnerHTML={{
+              __html: JSON.stringify({
+                "@context": "https://schema.org",
+                "@type": "HowTo",
+                name: `How to grow ${species.name} in the UK`,
+                description: `Step-by-step guide to growing ${species.name}${species.scientificName ? ` (${species.scientificName})` : ""} in the UK.`,
+                step: [
+                  { "@type": "HowToStep", name: "Sow seeds", text: `Sow ${species.name} seeds indoors or directly where advised for your UK region.` },
+                  { "@type": "HowToStep", name: "Plant out", text: `Transplant ${species.name} seedlings once the risk of frost has passed.` },
+                  { "@type": "HowToStep", name: "Water and feed", text: `Water ${species.name} regularly${species.watering ? ` (${species.watering.toLowerCase()})` : ""}. Feed as needed throughout the growing season.` },
+                  { "@type": "HowToStep", name: "Harvest", text: `Harvest ${species.name} at the right time for best flavour and yield.` },
+                ],
+              }),
+            }}
+          />
+        ) : null}
+
+        {/* FAQPage JSON-LD */}
+        {species ? (
+          <script
+            type="application/ld+json"
+            dangerouslySetInnerHTML={{
+              __html: JSON.stringify({
+                "@context": "https://schema.org",
+                "@type": "FAQPage",
+                mainEntity: [
+                  {
+                    "@type": "Question",
+                    name: `When should I sow ${species.name} in the UK?`,
+                    acceptedAnswer: { "@type": "Answer", text: `Sowing times for ${species.name} in the UK vary by region. Check your personalised planting calendar on Grow Daisy for dates based on your postcode.` },
+                  },
+                  {
+                    "@type": "Question",
+                    name: `Does ${species.name} need full sun?`,
+                    acceptedAnswer: { "@type": "Answer", text: species.sunRequirements ? `${species.name} prefers ${species.sunRequirements.toLowerCase()}.` : `Check the growing conditions for ${species.name} on your Grow Daisy plant page.` },
+                  },
+                  {
+                    "@type": "Question",
+                    name: `What soil does ${species.name} need?`,
+                    acceptedAnswer: { "@type": "Answer", text: species.soilType ? `${species.name} grows best in ${species.soilType.toLowerCase()} soil.` : `${species.name} growing requirements are shown on your Grow Daisy plant page.` },
+                  },
+                  {
+                    "@type": "Question",
+                    name: `Is ${species.name} hardy in the UK?`,
+                    acceptedAnswer: { "@type": "Answer", text: (species.usdaZoneMin != null) ? `${species.name} is rated USDA zone ${species.usdaZoneMin}${species.usdaZoneMax ? `–${species.usdaZoneMax}` : ""}, which is suitable for most UK gardens.` : `Check the hardiness details for ${species.name} on your Grow Daisy plant page.` },
+                  },
+                ],
+              }),
+            }}
+          />
+        ) : null}
       </Head>
 
       {/* Mobile sticky header - shows species name when hero scrolls out */}
@@ -845,12 +983,31 @@ export default function GrowSpeciesPage() {
               </>
             ) : (
               <>
-                <h1 className="text-3xl font-semibold tracking-tight truncate">
-                  {species?.name ?? "Species"}
+                <h1 className="text-3xl font-semibold tracking-tight">
+                  {species
+                    ? species.scientificName
+                      ? `${species.name} (${species.scientificName}) — UK growing guide`
+                      : `${species.name} — UK growing guide`
+                    : "Plant — UK growing guide"}
                 </h1>
-                {species?.scientificName ? (
-                  <p className="text-muted-foreground italic">
-                    {species.scientificName}
+                {/* Quick-answer paragraph: visible to crawlers and AI answer engines */}
+                {species ? (
+                  <p className="mt-2 text-sm text-muted-foreground max-w-2xl">
+                    {[
+                      species.sunRequirements ? `Prefers ${species.sunRequirements.toLowerCase()}.` : null,
+                      species.soilType ? `Grows best in ${species.soilType.toLowerCase()} soil.` : null,
+                      species.watering ? `Watering: ${species.watering.toLowerCase()}.` : null,
+                      (species.usdaZoneMin != null)
+                        ? `Hardy to USDA zone ${species.usdaZoneMin}${species.usdaZoneMax ? `–${species.usdaZoneMax}` : ""} — suitable for most UK gardens.`
+                        : null,
+                      species.description
+                        ? species.description.split(". ").slice(0, 2).join(". ") + "."
+                        : wikiSummary?.extract
+                          ? wikiSummary.extract.split(". ").slice(0, 2).join(". ") + "."
+                          : null,
+                    ]
+                      .filter(Boolean)
+                      .join(" ")}
                   </p>
                 ) : null}
               </>
@@ -1390,3 +1547,122 @@ export default function GrowSpeciesPage() {
     </GrowLayout>
   );
 }
+
+// ─── Top-200 UK-relevant species for pre-build ───────────────────────────────
+// These are pre-rendered at build time. All other slugs are rendered on-demand
+// (fallback: 'blocking') and cached for 24 hours via ISR.
+const TOP_UK_SPECIES_SLUGS = [
+  // Vegetables
+  "tomato", "potato", "carrot", "courgette", "lettuce", "runner-bean",
+  "french-bean", "broad-bean", "pea", "onion", "garlic", "leek", "beetroot",
+  "parsnip", "radish", "spinach", "kale", "cabbage", "brussels-sprout",
+  "broccoli", "cauliflower", "sweetcorn", "pumpkin", "squash", "cucumber",
+  "pepper", "chilli", "aubergine", "rhubarb", "asparagus", "celery", "swede",
+  "turnip", "chard", "rocket", "watercress", "fennel", "pak-choi", "kohlrabi",
+  "salsify",
+  // Herbs
+  "basil", "parsley", "coriander", "mint", "rosemary", "thyme", "sage",
+  "chives", "dill", "tarragon", "oregano", "marjoram", "bay", "lavender",
+  "lemon-balm",
+  // Fruit
+  "strawberry", "raspberry", "blackcurrant", "redcurrant", "gooseberry",
+  "blueberry", "apple", "pear", "plum", "cherry", "fig", "grape", "kiwi",
+  // Flowers
+  "rose", "dahlia", "sunflower", "sweet-pea", "cosmos", "marigold",
+  "nasturtium", "foxglove", "hydrangea", "clematis", "wisteria", "jasmine",
+  "peony", "hellebore", "snowdrop", "daffodil", "tulip", "allium", "dianthus",
+  // Trees & shrubs
+  "oak", "birch", "hawthorn", "holly", "beech", "hazel", "rowan", "willow",
+];
+
+export const getStaticPaths: GetStaticPaths = async () => {
+  return {
+    paths: TOP_UK_SPECIES_SLUGS.map((slug) => ({ params: { slug } })),
+    // On-demand ISR for the long tail — renders on first request, caches for 24h
+    fallback: "blocking",
+  };
+};
+
+export const getStaticProps: GetStaticProps<SpeciesPageProps, { slug: string }> = async ({
+  params,
+}) => {
+  const slug = params?.slug ?? "";
+  if (!slug) return { notFound: true };
+
+  try {
+    const { getSupabaseServerClient } = await import("@/lib/supabase/serverClient");
+    const { serializePlantSpecies } = await import("@/lib/grow/species");
+
+    const supabase = getSupabaseServerClient();
+
+    // Exact slug match first
+    let { data } = await supabase
+      .from("plant_species")
+      .select("*")
+      .eq("slug", slug)
+      .limit(1)
+      .maybeSingle();
+
+    // Fallback: try slug with hyphens-as-spaces (common name lookup)
+    if (!data) {
+      const nameFallback = slug.replace(/-/g, " ");
+      const result = await supabase
+        .from("plant_species")
+        .select("*")
+        .ilike("name", nameFallback)
+        .limit(1)
+        .maybeSingle();
+      data = result.data;
+    }
+
+    if (!data) {
+      return { notFound: true };
+    }
+
+    // redirect not allowed from getStaticProps during prerendering — 404 here,
+    // client-side router.replace handles runtime canonical redirect.
+    if (data.slug !== slug) {
+      return { notFound: true };
+    }
+
+    const species = serializePlantSpecies(data);
+
+    // Fetch Wikipedia summary server-side if species has no description
+    let wikiSummary: WikiSummaryData | null = null;
+    if (!species.description && species.scientificName) {
+      try {
+        const { getWikipediaSummaryByScientificName } = await import(
+          "@/lib/grow/wikipediaLicense"
+        );
+        const wiki = await getWikipediaSummaryByScientificName(species.scientificName, true);
+        if (wiki?.extract) {
+          wikiSummary = {
+            extract: wiki.extract,
+            pageUrl: wiki.pageUrl ?? "",
+            attribution: wiki.attribution ?? "Wikipedia",
+            language: wiki.language ?? "en",
+            thumbnailUrl: wiki.thumbnailUrl ?? undefined,
+          };
+        }
+      } catch {
+        // Wikipedia fetch is best-effort — fail silently
+      }
+    }
+
+    return {
+      props: {
+        initialSpecies: JSON.parse(JSON.stringify(species)) as PlantSpecies,
+        initialWikiSummary: wikiSummary,
+      },
+      // Revalidate every 24 hours — species data changes infrequently
+      revalidate: 86400,
+    };
+  } catch (err) {
+    console.error("[getStaticProps] species page error:", err);
+    // Return empty props rather than crashing — client-side fetch is the fallback
+    return {
+      props: { initialSpecies: null, initialWikiSummary: null },
+      revalidate: 3600,
+    };
+  }
+};

@@ -13,13 +13,14 @@ import { UserPreferencesProvider } from '../context/UserPreferencesContext'
 import { LanguageProvider } from '../context/LanguageContext'
 import { AuthProvider } from '../context/AuthContext'
 import { useEffect, useState } from 'react'
+import { useRouter } from 'next/router'
 import { UnifiedLocationProvider } from '../context/UnifiedLocationContext'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { OfflineIndicator } from '../components/OfflineIndicator'
 import dynamic from 'next/dynamic'
 import { ErrorBoundary } from '../components/ErrorBoundary';
 import { PullToRefresh } from '../components/PullToRefresh';
-import { OrganizationJsonLd, WebsiteJsonLd } from '../components/JsonLd';
+import { OrganizationJsonLd, WebsiteJsonLd, type AppId } from '../components/JsonLd';
 
 // Lazy-load RevenueCat auth sync (iOS only, Grow only)
 const RevenueCatAuthSync = dynamic(
@@ -81,6 +82,16 @@ type PagePropsWithTheme = {
 };
 
 export default function App({ Component, pageProps }: AppProps<PagePropsWithTheme>) {
+  const router = useRouter();
+
+  // Derive app identity from pathname — works on SSR (pathname is always available in Pages Router)
+  // This fixes JSON-LD declaring "Go Daisy" on the Grow subdomain during SSR.
+  const appJsonLd: AppId = router.pathname.startsWith('/findr')
+    ? 'findr'
+    : router.pathname.startsWith('/grow')
+    ? 'grow'
+    : 'godaisy';
+
   // Create a client instance for React Query
   const [queryClient] = useState(() => new QueryClient({
     defaultOptions: {
@@ -191,8 +202,8 @@ export default function App({ Component, pageProps }: AppProps<PagePropsWithThem
                 </Head>
 
                 {/* JSON-LD Structured Data for SEO */}
-                <OrganizationJsonLd />
-                <WebsiteJsonLd />
+                <OrganizationJsonLd app={appJsonLd} />
+                <WebsiteJsonLd app={appJsonLd} />
 
                 {/* Apply DaisyUI theme globally. If you later store theme in context, bind it here. */}
                 <div data-theme={theme} className={`${roboto.variable} ${playfair.variable} ${dmSans.variable} min-h-screen bg-base-100 text-base-content`} style={{ fontFamily: 'var(--font-roboto), system-ui, -apple-system, Segoe UI, sans-serif' }}>
