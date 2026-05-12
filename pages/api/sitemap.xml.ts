@@ -9,15 +9,22 @@
 
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { createClient } from '@supabase/supabase-js';
+import { buildHreflangLinks, GROW_LANGUAGES, GROW_TRANSLATED_PATH_CODES } from '../../lib/grow/i18n';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+interface HreflangAlternate {
+  hreflang: string;
+  href: string;
+}
 
 interface SitemapUrl {
   loc: string;
   lastmod?: string;
   changefreq?: 'always' | 'hourly' | 'daily' | 'weekly' | 'monthly' | 'yearly' | 'never';
   priority?: number;
+  alternates?: HreflangAlternate[];
 }
 
 /**
@@ -100,36 +107,83 @@ async function getFindrUrls(baseUrl: string): Promise<SitemapUrl[]> {
 /**
  * Generate Grow Daisy sitemap URLs
  */
-function getGrowDaisyUrls(baseUrl: string): SitemapUrl[] {
+async function getGrowDaisyUrls(baseUrl: string): Promise<SitemapUrl[]> {
   const today = new Date().toISOString().split('T')[0];
 
-  return [
-    { loc: baseUrl, lastmod: today, changefreq: 'daily', priority: 1.0 },
-    { loc: `${baseUrl}/grow`, lastmod: today, changefreq: 'daily', priority: 1.0 },
-    { loc: `${baseUrl}/grow/tasks`, lastmod: today, changefreq: 'daily', priority: 0.8 },
-    { loc: `${baseUrl}/grow/calendar`, lastmod: today, changefreq: 'weekly', priority: 0.7 },
-    { loc: `${baseUrl}/grow/settings`, lastmod: today, changefreq: 'monthly', priority: 0.3 },
+  // Helper to attach hreflang alternates to a Grow page URL
+  const withAlternates = (path: string, url: SitemapUrl): SitemapUrl => ({
+    ...url,
+    alternates: buildHreflangLinks(path),
+  });
+
+  const staticUrls: SitemapUrl[] = [
+    withAlternates('/grow', { loc: `${baseUrl}/grow`, lastmod: today, changefreq: 'daily', priority: 1.0 }),
+    withAlternates('/grow/tasks', { loc: `${baseUrl}/grow/tasks`, lastmod: today, changefreq: 'daily', priority: 0.8 }),
+    withAlternates('/grow/plan', { loc: `${baseUrl}/grow/plan`, lastmod: today, changefreq: 'weekly', priority: 0.7 }),
+    withAlternates('/grow/garden', { loc: `${baseUrl}/grow/garden`, lastmod: today, changefreq: 'weekly', priority: 0.7 }),
+    withAlternates('/grow/settings', { loc: `${baseUrl}/grow/settings`, lastmod: today, changefreq: 'monthly', priority: 0.3 }),
     { loc: `${baseUrl}/login`, lastmod: today, changefreq: 'monthly', priority: 0.2 },
   ];
+
+  // Add language-specific static pages (no English prefix needed — handled by alternates above)
+  for (const lang of GROW_TRANSLATED_PATH_CODES) {
+    staticUrls.push(
+      { loc: `${baseUrl}/grow/${lang}`, lastmod: today, changefreq: 'daily', priority: 0.8 },
+    );
+  }
+
+  // Add species pages from the database
+  let speciesUrls: SitemapUrl[] = [];
+  try {
+    if (supabaseUrl && supabaseKey) {
+      const client = createClient(supabaseUrl, supabaseKey);
+      const { data } = await client
+        .from('plant_species')
+        .select('slug, date_modified')
+        .order('slug', { ascending: true })
+        .limit(5000);
+
+      if (data) {
+        speciesUrls = data.map((row: { slug: string; date_modified: string | null }) => {
+          const enPath = `/grow/species/${row.slug}`;
+          return withAlternates(enPath, {
+            loc: `${baseUrl}${enPath}`,
+            lastmod: row.date_modified ?? today,
+            changefreq: 'weekly',
+            priority: 0.8,
+          });
+        });
+      }
+    }
+  } catch {
+    // Species pages are optional in the sitemap — don't fail the whole request
+  }
+
+  return [...staticUrls, ...speciesUrls];
 }
 
 /**
- * Generate XML sitemap from URLs
+ * Generate XML sitemap from URLs, including hreflang alternates when present.
  */
 function generateXml(urls: SitemapUrl[]): string {
   const urlEntries = urls
-    .map(
-      (url) => `  <url>
+    .map((url) => {
+      const alternatesXml = url.alternates
+        ? url.alternates.map((a) => `    <xhtml:link rel="alternate" hreflang="${a.hreflang}" href="${a.href}"/>`).join('\n')
+        : '';
+      return `  <url>
     <loc>${url.loc}</loc>
     ${url.lastmod ? `<lastmod>${url.lastmod}</lastmod>` : ''}
     ${url.changefreq ? `<changefreq>${url.changefreq}</changefreq>` : ''}
     ${url.priority !== undefined ? `<priority>${url.priority}</priority>` : ''}
-  </url>`
-    )
+${alternatesXml}
+  </url>`;
+    })
     .join('\n');
 
   return `<?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+        xmlns:xhtml="http://www.w3.org/1999/xhtml">
 ${urlEntries}
 </urlset>`;
 }
@@ -152,7 +206,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         urls = await getFindrUrls(baseUrl);
         break;
       case 'grow':
-        urls = getGrowDaisyUrls(baseUrl);
+        urls = await getGrowDaisyUrls(baseUrl);
         break;
       default:
         urls = getGoDaisyUrls(baseUrl);

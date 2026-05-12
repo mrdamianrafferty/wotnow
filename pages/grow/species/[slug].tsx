@@ -31,6 +31,7 @@ import type { PlantSpecies } from "@/lib/grow/species";
 import { api } from "@/lib/grow/api";
 import { JobsTimeline } from "@/components/grow/JobsTimeline";
 import { ArticleJsonLd, BreadcrumbJsonLd, FAQJsonLd, HowToJsonLd, PlantJsonLd } from "@/components/JsonLd";
+import { HreflangLinks } from "@/components/HreflangLinks";
 
 type PlantingWindow = {
   plantSlug: string;
@@ -821,6 +822,7 @@ export default function GrowSpeciesPage() {
         <meta property="og:type" content="website" />
         {heroFullSrc && <meta property="og:image" content={heroFullSrc.startsWith('/') ? `https://grow.godaisy.io${heroFullSrc}` : heroFullSrc} />}
       </Head>
+      {species?.slug && <HreflangLinks enPath={`/grow/species/${species.slug}`} />}
 
       {/* JSON-LD structured data — renders gracefully when content columns are null */}
       {species && (
