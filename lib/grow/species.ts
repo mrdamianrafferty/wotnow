@@ -164,6 +164,10 @@ export type PlantSpeciesRow = {
   years_to_first_crop: number | null;
   years_to_full_production: number | null;
   cropping_timeline_note: string | null;
+
+  // RHS hardiness (UK scale H1a–H7). NULL until Cowork CSV import.
+  rhs_hardiness_min: string | null;
+  rhs_hardiness_max: string | null;
 } & {
   [K in keyof typeof PLANT_SPECIES_LANGUAGE_FIELDS]: string | null;
 };
@@ -292,6 +296,10 @@ export interface PlantSpecies {
   yearsToFirstCrop: number | null;
   yearsToFullProduction: number | null;
   croppingTimelineNote: string | null;
+
+  // RHS hardiness (UK scale H1a–H7). NULL until Cowork CSV import.
+  rhsHardinessMin: string | null;
+  rhsHardinessMax: string | null;
 }
 
 export interface PlantSpeciesSearchResponse {
@@ -429,5 +437,7 @@ export function serializePlantSpecies(row: PlantSpeciesRow): PlantSpecies {
     yearsToFirstCrop: row.years_to_first_crop ?? null,
     yearsToFullProduction: row.years_to_full_production ?? null,
     croppingTimelineNote: row.cropping_timeline_note ?? null,
+    rhsHardinessMin: row.rhs_hardiness_min ?? null,
+    rhsHardinessMax: row.rhs_hardiness_max ?? null,
   };
 }
