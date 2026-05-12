@@ -178,33 +178,42 @@ const nextConfig = {
     NEXT_PUBLIC_FREE_PROVIDERS_ENABLED: process.env.NEXT_PUBLIC_FREE_PROVIDERS_ENABLED ?? process.env.FREE_PROVIDERS_ENABLED ?? '1',
     NEXT_PUBLIC_FREE_PROVIDER_ORDER: process.env.NEXT_PUBLIC_FREE_PROVIDER_ORDER ?? process.env.FREE_PROVIDER_ORDER ?? 'auto',
   },
+  async rewrites() {
+    return [
+      // Serve /sitemap.xml from /api/sitemap.xml (standard path for bots + robots.txt)
+      {
+        source: '/sitemap.xml',
+        destination: '/api/sitemap.xml',
+      },
+    ];
+  },
   async redirects() {
     return [
-      // grow.godaisy.io root → /grow
+      // grow.godaisy.io root → /grow (308 permanent — transfers PageRank)
       {
         source: '/',
         has: [{ type: 'host', value: 'grow.godaisy.io' }],
         destination: '/grow',
-        permanent: false,
+        permanent: true,
       },
       {
         source: '/',
         has: [{ type: 'host', value: 'www.grow.godaisy.io' }],
         destination: '/grow',
-        permanent: false,
+        permanent: true,
       },
-      // fishfindr.eu root → /findr
+      // fishfindr.eu root → /findr (308 permanent — transfers PageRank)
       {
         source: '/',
         has: [{ type: 'host', value: 'fishfindr.eu' }],
         destination: '/findr',
-        permanent: false,
+        permanent: true,
       },
       {
         source: '/',
         has: [{ type: 'host', value: 'www.fishfindr.eu' }],
         destination: '/findr',
-        permanent: false,
+        permanent: true,
       },
     ];
   },

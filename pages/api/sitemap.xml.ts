@@ -98,19 +98,49 @@ async function getFindrUrls(baseUrl: string): Promise<SitemapUrl[]> {
 }
 
 /**
- * Generate Grow Daisy sitemap URLs
+ * Generate Grow Daisy sitemap URLs (includes dynamic species pages)
  */
-function getGrowDaisyUrls(baseUrl: string): SitemapUrl[] {
+async function getGrowDaisyUrls(baseUrl: string): Promise<SitemapUrl[]> {
   const today = new Date().toISOString().split('T')[0];
 
-  return [
-    { loc: baseUrl, lastmod: today, changefreq: 'daily', priority: 1.0 },
+  const staticUrls: SitemapUrl[] = [
     { loc: `${baseUrl}/grow`, lastmod: today, changefreq: 'daily', priority: 1.0 },
-    { loc: `${baseUrl}/grow/tasks`, lastmod: today, changefreq: 'daily', priority: 0.8 },
-    { loc: `${baseUrl}/grow/calendar`, lastmod: today, changefreq: 'weekly', priority: 0.7 },
+    { loc: `${baseUrl}/grow/garden`, lastmod: today, changefreq: 'daily', priority: 0.9 },
+    { loc: `${baseUrl}/grow/plan`, lastmod: today, changefreq: 'daily', priority: 0.9 },
+    { loc: `${baseUrl}/grow/activities`, lastmod: today, changefreq: 'daily', priority: 0.8 },
     { loc: `${baseUrl}/grow/settings`, lastmod: today, changefreq: 'monthly', priority: 0.3 },
+    { loc: `${baseUrl}/grow/privacy`, lastmod: today, changefreq: 'yearly', priority: 0.2 },
+    { loc: `${baseUrl}/grow/terms`, lastmod: today, changefreq: 'yearly', priority: 0.2 },
     { loc: `${baseUrl}/login`, lastmod: today, changefreq: 'monthly', priority: 0.2 },
   ];
+
+  // Fetch plant species for dynamic pages
+  if (supabaseUrl && supabaseKey) {
+    try {
+      const supabase = createClient(supabaseUrl, supabaseKey, {
+        auth: { autoRefreshToken: false, persistSession: false },
+      });
+
+      const { data: species } = await supabase
+        .from('plant_species')
+        .select('slug, updated_at')
+        .order('slug');
+
+      if (species) {
+        const speciesUrls: SitemapUrl[] = species.map((s) => ({
+          loc: `${baseUrl}/grow/species/${s.slug}`,
+          lastmod: s.updated_at ? new Date(s.updated_at).toISOString().split('T')[0] : today,
+          changefreq: 'weekly' as const,
+          priority: 0.7,
+        }));
+        return [...staticUrls, ...speciesUrls];
+      }
+    } catch (error) {
+      console.error('[Sitemap] Failed to fetch plant species:', error);
+    }
+  }
+
+  return staticUrls;
 }
 
 /**
@@ -135,8 +165,8 @@ ${urlEntries}
 }
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  if (req.method !== 'GET') {
-    res.setHeader('Allow', ['GET']);
+  if (req.method !== 'GET' && req.method !== 'HEAD') {
+    res.setHeader('Allow', ['GET', 'HEAD']);
     return res.status(405).end('Method Not Allowed');
   }
 
@@ -152,7 +182,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         urls = await getFindrUrls(baseUrl);
         break;
       case 'grow':
-        urls = getGrowDaisyUrls(baseUrl);
+        urls = await getGrowDaisyUrls(baseUrl);
         break;
       default:
         urls = getGoDaisyUrls(baseUrl);
@@ -163,6 +193,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     // Cache for 1 hour, allow stale for 1 day
     res.setHeader('Cache-Control', 'public, max-age=3600, stale-while-revalidate=86400');
     res.setHeader('Content-Type', 'application/xml');
+    res.setHeader('Content-Length', Buffer.byteLength(xml, 'utf8').toString());
+
+    if (req.method === 'HEAD') {
+      return res.status(200).end();
+    }
+
     res.status(200).send(xml);
   } catch (error) {
     console.error('[Sitemap] Error generating sitemap:', error);
