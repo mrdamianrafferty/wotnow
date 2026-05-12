@@ -812,7 +812,7 @@ export default function GrowSpeciesPage() {
         {species?.slug ? (
           <link
             rel="canonical"
-            href={`https://godaisy.io/grow/species/${species.slug}`}
+            href={`https://grow.godaisy.io/grow/species/${species.slug}`}
           />
         ) : null}
         <meta property="og:title" content={title} />
