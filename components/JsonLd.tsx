@@ -16,43 +16,40 @@
 
 import Head from 'next/head';
 
-// Determine current app and base URL
-function getAppConfig() {
-  if (typeof window === 'undefined') {
-    return {
-      name: 'Go Daisy',
-      url: 'https://godaisy.io',
-      logo: 'https://godaisy.io/logo.png',
-      description: 'Weather-informed activity recommendations for outdoor enthusiasts.',
-    };
-  }
+type AppContext = 'godaisy' | 'findr' | 'grow';
 
-  const hostname = window.location.hostname;
-
-  if (hostname.includes('fishfindr') || hostname.includes('findr')) {
-    return {
-      name: 'Findr',
-      url: 'https://fishfindr.eu',
-      logo: 'https://fishfindr.eu/findr-logo.png',
-      description: 'AI-powered fishing predictions based on real marine environmental data.',
-    };
-  }
-
-  if (hostname.includes('grow')) {
-    return {
-      name: 'Grow Daisy',
-      url: 'https://grow.godaisy.io',
-      logo: 'https://grow.godaisy.io/logo.png',
-      description: 'Smart gardening assistant with weather-aware plant care recommendations.',
-    };
-  }
-
-  return {
+const APP_CONFIGS: Record<AppContext, { name: string; url: string; logo: string; description: string }> = {
+  godaisy: {
     name: 'Go Daisy',
     url: 'https://godaisy.io',
     logo: 'https://godaisy.io/logo.png',
     description: 'Weather-informed activity recommendations for outdoor enthusiasts.',
-  };
+  },
+  findr: {
+    name: 'Findr',
+    url: 'https://fishfindr.eu',
+    logo: 'https://fishfindr.eu/findr-logo.png',
+    description: 'AI-powered fishing predictions based on real marine environmental data.',
+  },
+  grow: {
+    name: 'Grow Daisy',
+    url: 'https://grow.godaisy.io',
+    logo: 'https://grow.godaisy.io/logo.png',
+    description: 'Smart garden planner for UK and Irish gardeners — RHS hardiness, postcode-aware frost dates, weather-driven allotment and veg-patch task scheduling.',
+  },
+};
+
+function getAppConfig(app?: AppContext) {
+  if (app) return APP_CONFIGS[app];
+
+  if (typeof window !== 'undefined') {
+    const hostname = window.location.hostname;
+    if (hostname.includes('fishfindr') || hostname.includes('findr')) return APP_CONFIGS.findr;
+    if (hostname.includes('grow')) return APP_CONFIGS.grow;
+    return APP_CONFIGS.godaisy;
+  }
+
+  return APP_CONFIGS.godaisy;
 }
 
 interface JsonLdProps {
@@ -77,8 +74,8 @@ function JsonLdScript({ data }: JsonLdProps) {
  * Organization structured data
  * Helps search engines understand the organization behind the website
  */
-export function OrganizationJsonLd() {
-  const config = getAppConfig();
+export function OrganizationJsonLd({ app }: { app?: AppContext } = {}) {
+  const config = getAppConfig(app);
 
   const data = {
     '@context': 'https://schema.org',
@@ -104,8 +101,8 @@ export function OrganizationJsonLd() {
  * Website structured data with search action
  * Enables sitelinks search box in Google search results
  */
-export function WebsiteJsonLd() {
-  const config = getAppConfig();
+export function WebsiteJsonLd({ app }: { app?: AppContext } = {}) {
+  const config = getAppConfig(app);
 
   const data = {
     '@context': 'https://schema.org',

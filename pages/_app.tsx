@@ -13,6 +13,7 @@ import { UserPreferencesProvider } from '../context/UserPreferencesContext'
 import { LanguageProvider } from '../context/LanguageContext'
 import { AuthProvider } from '../context/AuthContext'
 import { useEffect, useState } from 'react'
+import { useRouter } from 'next/router'
 import { UnifiedLocationProvider } from '../context/UnifiedLocationContext'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { OfflineIndicator } from '../components/OfflineIndicator'
@@ -81,6 +82,8 @@ type PagePropsWithTheme = {
 };
 
 export default function App({ Component, pageProps }: AppProps<PagePropsWithTheme>) {
+  const router = useRouter();
+
   // Create a client instance for React Query
   const [queryClient] = useState(() => new QueryClient({
     defaultOptions: {
@@ -94,7 +97,11 @@ export default function App({ Component, pageProps }: AppProps<PagePropsWithThem
   // Domain-based favicon and manifest selection
   // Detect app context immediately (client-side only, but before first render completes)
   const [appContext, setAppContext] = useState<'findr' | 'grow' | 'godaisy'>(() => {
-    if (typeof window === 'undefined') return 'godaisy';
+    if (typeof window === 'undefined') {
+      if (router.pathname.startsWith('/findr')) return 'findr';
+      if (router.pathname.startsWith('/grow')) return 'grow';
+      return 'godaisy';
+    }
     const hostname = window.location.hostname;
     const pathname = window.location.pathname;
     if (hostname.includes('fishfindr.eu') || pathname.startsWith('/findr')) return 'findr';
@@ -202,8 +209,8 @@ export default function App({ Component, pageProps }: AppProps<PagePropsWithThem
                 </Head>
 
                 {/* JSON-LD Structured Data for SEO */}
-                <OrganizationJsonLd />
-                <WebsiteJsonLd />
+                <OrganizationJsonLd app={appContext} />
+                <WebsiteJsonLd app={appContext} />
 
                 {/* Apply DaisyUI theme globally. If you later store theme in context, bind it here. */}
                 <div data-theme={theme} className={`${roboto.variable} ${playfair.variable} ${dmSans.variable} min-h-screen bg-base-100 text-base-content`} style={{ fontFamily: 'var(--font-roboto), system-ui, -apple-system, Segoe UI, sans-serif' }}>

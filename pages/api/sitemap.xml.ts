@@ -155,8 +155,8 @@ async function getGrowDaisyUrls(baseUrl: string): Promise<SitemapUrl[]> {
         });
       }
     }
-  } catch {
-    // Species pages are optional in the sitemap — don't fail the whole request
+  } catch (e) {
+    console.error('[Sitemap] Species query failed (check SUPABASE_SERVICE_ROLE_KEY in preview env):', e);
   }
 
   return [...staticUrls, ...speciesUrls];
@@ -189,8 +189,8 @@ ${urlEntries}
 }
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  if (req.method !== 'GET') {
-    res.setHeader('Allow', ['GET']);
+  if (req.method !== 'GET' && req.method !== 'HEAD') {
+    res.setHeader('Allow', ['GET', 'HEAD']);
     return res.status(405).end('Method Not Allowed');
   }
 
