@@ -277,7 +277,6 @@ INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('squash-yellow', 
 -- kale-lacinato → cavolo-nero (UK gardeners know it as cavolo nero — the popular name)
 UPDATE plant_species SET slug = 'cavolo-nero' WHERE slug = 'kale-lacinato';
 INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('kale-lacinato', 'cavolo-nero');
-INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('kale-lacinato', 'lacinato-kale');  -- keep both aliases
 
 -- --- tree-* simple renames (the big batch) -------------------------
 -- Most are mechanical strip. Where a noun-first word order makes more sense
