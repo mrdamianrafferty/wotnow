@@ -58,6 +58,22 @@ export const getServerSideProps: GetServerSideProps<LocalisedSpeciesProps> = asy
 
   const supabase = getSupabaseServerClient();
 
+  // Alias redirect: if the slug is an old/renamed slug, 301 to the canonical URL.
+  const { data: aliasRow } = await supabase
+    .from('plant_species_aliases')
+    .select('new_slug')
+    .eq('old_slug', slug as string)
+    .single();
+
+  if (aliasRow?.new_slug) {
+    return {
+      redirect: {
+        destination: `/grow/${lang}/species/${aliasRow.new_slug}`,
+        permanent: true,
+      },
+    };
+  }
+
   const { data, error } = await supabase
     .from('plant_species')
     .select(

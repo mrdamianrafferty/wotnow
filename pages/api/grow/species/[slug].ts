@@ -306,6 +306,29 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(500).json({ error: 'Failed to load plant species' });
   }
 
+  // Alias lookup: if still not found, check plant_species_aliases for a canonical redirect.
+  // The client-side species page already handles canonical mismatches with router.replace,
+  // so returning the canonical row is enough — no HTTP redirect needed here.
+  if (!data) {
+    const { data: alias } = await supabase
+      .from('plant_species_aliases')
+      .select('new_slug')
+      .eq('old_slug', normalizedSlug)
+      .single();
+
+    if (alias?.new_slug) {
+      const { data: canonical, error: canonicalError } = await supabase
+        .from('plant_species')
+        .select(BASE_SELECT)
+        .eq('slug', alias.new_slug)
+        .single();
+
+      if (!canonicalError && canonical) {
+        data = canonical;
+      }
+    }
+  }
+
   if (!data) {
     // Fallback: Check custom_species_suggestions for user-contributed species
     // The slug could be:
