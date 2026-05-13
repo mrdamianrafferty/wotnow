@@ -628,25 +628,10 @@ INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('tree-yew-english
 -- Note: plant_companions has ON UPDATE CASCADE so renames in §1 don't need manual
 -- companion updates. For merges (DELETE), manual update is required before DELETE.
 
--- (1) kale-curly → kale
+-- (1) kale-curly → kale (RENAME — no 'kale' canonical in DB; CASCADE handles FK tables)
 -- (kale-lacinato handled above as a normal rename to cavolo-nero)
-UPDATE cultivars              SET species_slug  = 'kale'  WHERE species_slug  = 'kale-curly';
-UPDATE guild_blueprint        SET focal_slug    = 'kale'  WHERE focal_slug    = 'kale-curly';
-UPDATE guild_blueprint_member SET plant_slug    = 'kale'  WHERE plant_slug    = 'kale-curly';
-UPDATE plant_companions       SET plant_slug    = 'kale'  WHERE plant_slug    = 'kale-curly';
-UPDATE plant_companions       SET companion_slug= 'kale'  WHERE companion_slug= 'kale-curly';
-UPDATE plant_function         SET plant_slug    = 'kale'  WHERE plant_slug    = 'kale-curly';
-UPDATE grow_user_plants SET species_slug = 'kale' WHERE species_slug = 'kale-curly'
-  AND NOT EXISTS (SELECT 1 FROM grow_user_plants g2 WHERE g2.user_id = grow_user_plants.user_id AND g2.species_slug = 'kale');
-DELETE FROM grow_user_plants WHERE species_slug = 'kale-curly';
-UPDATE grow_planting_calendar SET plant_slug    = 'kale'  WHERE plant_slug    = 'kale-curly';
-UPDATE grow_nursery_inventory SET plant_slug    = 'kale'  WHERE plant_slug    = 'kale-curly';
-UPDATE grow_seed_listings     SET plant_slug    = 'kale'  WHERE plant_slug    = 'kale-curly';
-UPDATE grow_user_tasks        SET plant_slug    = 'kale'  WHERE plant_slug    = 'kale-curly';
-UPDATE perenual_sync_logs     SET our_slug      = 'kale'  WHERE our_slug      = 'kale-curly';
-UPDATE user_task_completions  SET plant_slug    = 'kale'  WHERE plant_slug    = 'kale-curly';
+UPDATE plant_species SET slug = 'kale' WHERE slug = 'kale-curly';
 INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('kale-curly', 'kale');
-DELETE FROM plant_species WHERE slug = 'kale-curly';
 
 -- (2) pepper-hot → chilli
 UPDATE cultivars              SET species_slug  = 'chilli' WHERE species_slug  = 'pepper-hot';
@@ -686,62 +671,18 @@ UPDATE user_task_completions  SET plant_slug    = 'sweet-pepper' WHERE plant_slu
 INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('pepper-sweet', 'sweet-pepper');
 DELETE FROM plant_species WHERE slug = 'pepper-sweet';
 
--- (4) herb-basil-sweet → basil
-UPDATE cultivars              SET species_slug  = 'basil' WHERE species_slug  = 'herb-basil-sweet';
-UPDATE guild_blueprint        SET focal_slug    = 'basil' WHERE focal_slug    = 'herb-basil-sweet';
-UPDATE guild_blueprint_member SET plant_slug    = 'basil' WHERE plant_slug    = 'herb-basil-sweet';
-UPDATE plant_companions       SET plant_slug    = 'basil' WHERE plant_slug    = 'herb-basil-sweet';
-UPDATE plant_companions       SET companion_slug= 'basil' WHERE companion_slug= 'herb-basil-sweet';
-UPDATE plant_function         SET plant_slug    = 'basil' WHERE plant_slug    = 'herb-basil-sweet';
-UPDATE grow_user_plants SET species_slug = 'basil' WHERE species_slug = 'herb-basil-sweet'
-  AND NOT EXISTS (SELECT 1 FROM grow_user_plants g2 WHERE g2.user_id = grow_user_plants.user_id AND g2.species_slug = 'basil');
-DELETE FROM grow_user_plants WHERE species_slug = 'herb-basil-sweet';
-UPDATE grow_planting_calendar SET plant_slug    = 'basil' WHERE plant_slug    = 'herb-basil-sweet';
-UPDATE grow_nursery_inventory SET plant_slug    = 'basil' WHERE plant_slug    = 'herb-basil-sweet';
-UPDATE grow_seed_listings     SET plant_slug    = 'basil' WHERE plant_slug    = 'herb-basil-sweet';
-UPDATE grow_user_tasks        SET plant_slug    = 'basil' WHERE plant_slug    = 'herb-basil-sweet';
-UPDATE perenual_sync_logs     SET our_slug      = 'basil' WHERE our_slug      = 'herb-basil-sweet';
-UPDATE user_task_completions  SET plant_slug    = 'basil' WHERE plant_slug    = 'herb-basil-sweet';
+-- (4) herb-basil-sweet → basil (RENAME — no 'basil' canonical in DB; CASCADE handles FK tables)
+UPDATE plant_species SET slug = 'basil' WHERE slug = 'herb-basil-sweet';
 INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('herb-basil-sweet', 'basil');
-DELETE FROM plant_species WHERE slug = 'herb-basil-sweet';
 
--- (5) herb-mint-spearmint → mint (UK 'mint' commonly = spearmint, Mentha spicata)
-UPDATE cultivars              SET species_slug  = 'mint' WHERE species_slug  = 'herb-mint-spearmint';
-UPDATE guild_blueprint        SET focal_slug    = 'mint' WHERE focal_slug    = 'herb-mint-spearmint';
-UPDATE guild_blueprint_member SET plant_slug    = 'mint' WHERE plant_slug    = 'herb-mint-spearmint';
-UPDATE plant_companions       SET plant_slug    = 'mint' WHERE plant_slug    = 'herb-mint-spearmint';
-UPDATE plant_companions       SET companion_slug= 'mint' WHERE companion_slug= 'herb-mint-spearmint';
-UPDATE plant_function         SET plant_slug    = 'mint' WHERE plant_slug    = 'herb-mint-spearmint';
-UPDATE grow_user_plants SET species_slug = 'mint' WHERE species_slug = 'herb-mint-spearmint'
-  AND NOT EXISTS (SELECT 1 FROM grow_user_plants g2 WHERE g2.user_id = grow_user_plants.user_id AND g2.species_slug = 'mint');
-DELETE FROM grow_user_plants WHERE species_slug = 'herb-mint-spearmint';
-UPDATE grow_planting_calendar SET plant_slug    = 'mint' WHERE plant_slug    = 'herb-mint-spearmint';
-UPDATE grow_nursery_inventory SET plant_slug    = 'mint' WHERE plant_slug    = 'herb-mint-spearmint';
-UPDATE grow_seed_listings     SET plant_slug    = 'mint' WHERE plant_slug    = 'herb-mint-spearmint';
-UPDATE grow_user_tasks        SET plant_slug    = 'mint' WHERE plant_slug    = 'herb-mint-spearmint';
-UPDATE perenual_sync_logs     SET our_slug      = 'mint' WHERE our_slug      = 'herb-mint-spearmint';
-UPDATE user_task_completions  SET plant_slug    = 'mint' WHERE plant_slug    = 'herb-mint-spearmint';
+-- (5) herb-mint-spearmint → mint (RENAME — no 'mint' canonical in DB; CASCADE handles FK tables)
+-- UK 'mint' commonly = spearmint, Mentha spicata
+UPDATE plant_species SET slug = 'mint' WHERE slug = 'herb-mint-spearmint';
 INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('herb-mint-spearmint', 'mint');
-DELETE FROM plant_species WHERE slug = 'herb-mint-spearmint';
 
--- (6) herb-rosemary → rosemary
-UPDATE cultivars              SET species_slug  = 'rosemary' WHERE species_slug  = 'herb-rosemary';
-UPDATE guild_blueprint        SET focal_slug    = 'rosemary' WHERE focal_slug    = 'herb-rosemary';
-UPDATE guild_blueprint_member SET plant_slug    = 'rosemary' WHERE plant_slug    = 'herb-rosemary';
-UPDATE plant_companions       SET plant_slug    = 'rosemary' WHERE plant_slug    = 'herb-rosemary';
-UPDATE plant_companions       SET companion_slug= 'rosemary' WHERE companion_slug= 'herb-rosemary';
-UPDATE plant_function         SET plant_slug    = 'rosemary' WHERE plant_slug    = 'herb-rosemary';
-UPDATE grow_user_plants SET species_slug = 'rosemary' WHERE species_slug = 'herb-rosemary'
-  AND NOT EXISTS (SELECT 1 FROM grow_user_plants g2 WHERE g2.user_id = grow_user_plants.user_id AND g2.species_slug = 'rosemary');
-DELETE FROM grow_user_plants WHERE species_slug = 'herb-rosemary';
-UPDATE grow_planting_calendar SET plant_slug    = 'rosemary' WHERE plant_slug    = 'herb-rosemary';
-UPDATE grow_nursery_inventory SET plant_slug    = 'rosemary' WHERE plant_slug    = 'herb-rosemary';
-UPDATE grow_seed_listings     SET plant_slug    = 'rosemary' WHERE plant_slug    = 'herb-rosemary';
-UPDATE grow_user_tasks        SET plant_slug    = 'rosemary' WHERE plant_slug    = 'herb-rosemary';
-UPDATE perenual_sync_logs     SET our_slug      = 'rosemary' WHERE our_slug      = 'herb-rosemary';
-UPDATE user_task_completions  SET plant_slug    = 'rosemary' WHERE plant_slug    = 'herb-rosemary';
+-- (6) herb-rosemary → rosemary (RENAME — no 'rosemary' canonical in DB; CASCADE handles FK tables)
+UPDATE plant_species SET slug = 'rosemary' WHERE slug = 'herb-rosemary';
 INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('herb-rosemary', 'rosemary');
-DELETE FROM plant_species WHERE slug = 'herb-rosemary';
 
 -- (7) herb-oregano → oregano (RENAME — no existing 'oregano' canonical; Damian confirmed 2026-05-13)
 -- Generic Origanum vulgare. The 'greek-oregano' subspecies row (renamed in §1) sits alongside.
@@ -957,11 +898,12 @@ UPDATE grow_seed_listings     SET plant_slug    = 'tree-hackberry-common' WHERE 
 UPDATE grow_user_tasks        SET plant_slug    = 'tree-hackberry-common' WHERE plant_slug    = 'fruit-hackberry';
 UPDATE perenual_sync_logs     SET our_slug      = 'tree-hackberry-common' WHERE our_slug      = 'fruit-hackberry';
 UPDATE user_task_completions  SET plant_slug    = 'tree-hackberry-common' WHERE plant_slug    = 'fruit-hackberry';
-INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('fruit-hackberry', 'hackberry');
 DELETE FROM plant_species WHERE slug = 'fruit-hackberry';
 -- Step B: rename tree-hackberry-common → hackberry as a normal rename (CASCADE handles FKs)
 UPDATE plant_species SET slug = 'hackberry' WHERE slug = 'tree-hackberry-common';
 INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('tree-hackberry-common', 'hackberry');
+-- fruit-hackberry alias inserted after 'hackberry' canonical now exists
+INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('fruit-hackberry', 'hackberry');
 
 -- (19) THREE-way merge: tree-juneberry + tree-serviceberry-treeform → fruit-serviceberry → serviceberry
 -- No canonical 'serviceberry' yet — pick fruit-serviceberry as the survivor, merge others.
@@ -981,7 +923,6 @@ UPDATE grow_seed_listings     SET plant_slug    = 'fruit-serviceberry' WHERE pla
 UPDATE grow_user_tasks        SET plant_slug    = 'fruit-serviceberry' WHERE plant_slug    = 'tree-juneberry';
 UPDATE perenual_sync_logs     SET our_slug      = 'fruit-serviceberry' WHERE our_slug      = 'tree-juneberry';
 UPDATE user_task_completions  SET plant_slug    = 'fruit-serviceberry' WHERE plant_slug    = 'tree-juneberry';
-INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('tree-juneberry', 'serviceberry');
 DELETE FROM plant_species WHERE slug = 'tree-juneberry';
 -- Step B: merge tree-serviceberry-treeform into fruit-serviceberry
 UPDATE cultivars              SET species_slug  = 'fruit-serviceberry' WHERE species_slug  = 'tree-serviceberry-treeform';
@@ -999,11 +940,13 @@ UPDATE grow_seed_listings     SET plant_slug    = 'fruit-serviceberry' WHERE pla
 UPDATE grow_user_tasks        SET plant_slug    = 'fruit-serviceberry' WHERE plant_slug    = 'tree-serviceberry-treeform';
 UPDATE perenual_sync_logs     SET our_slug      = 'fruit-serviceberry' WHERE our_slug      = 'tree-serviceberry-treeform';
 UPDATE user_task_completions  SET plant_slug    = 'fruit-serviceberry' WHERE plant_slug    = 'tree-serviceberry-treeform';
-INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('tree-serviceberry-treeform', 'serviceberry');
 DELETE FROM plant_species WHERE slug = 'tree-serviceberry-treeform';
 -- Step C: rename fruit-serviceberry → serviceberry as normal rename (CASCADE handles FKs)
 UPDATE plant_species SET slug = 'serviceberry' WHERE slug = 'fruit-serviceberry';
 INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('fruit-serviceberry', 'serviceberry');
+-- remaining aliases inserted after 'serviceberry' canonical now exists
+INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('tree-juneberry', 'serviceberry');
+INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('tree-serviceberry-treeform', 'serviceberry');
 
 -- (20) THREE-way merge: fruit-mountain-ash + tree-rowan-mountain-ash → rowan
 -- No canonical 'rowan' yet — pick tree-rowan-mountain-ash as the survivor (richer name),
@@ -1024,11 +967,12 @@ UPDATE grow_seed_listings     SET plant_slug    = 'tree-rowan-mountain-ash' WHER
 UPDATE grow_user_tasks        SET plant_slug    = 'tree-rowan-mountain-ash' WHERE plant_slug    = 'fruit-mountain-ash';
 UPDATE perenual_sync_logs     SET our_slug      = 'tree-rowan-mountain-ash' WHERE our_slug      = 'fruit-mountain-ash';
 UPDATE user_task_completions  SET plant_slug    = 'tree-rowan-mountain-ash' WHERE plant_slug    = 'fruit-mountain-ash';
-INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('fruit-mountain-ash', 'rowan');
 DELETE FROM plant_species WHERE slug = 'fruit-mountain-ash';
 -- Step B: rename tree-rowan-mountain-ash → rowan as a normal rename (CASCADE handles FKs)
 UPDATE plant_species SET slug = 'rowan' WHERE slug = 'tree-rowan-mountain-ash';
 INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('tree-rowan-mountain-ash', 'rowan');
+-- fruit-mountain-ash alias inserted after 'rowan' canonical now exists
+INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('fruit-mountain-ash', 'rowan');
 
 -- (21) TWO-way merge: fruit-honeyberry-treeform + tree-honeyberry-treeform → honeyberry
 -- No canonical 'honeyberry' yet — pick fruit form as survivor.
@@ -1048,11 +992,12 @@ UPDATE grow_seed_listings     SET plant_slug    = 'fruit-honeyberry-treeform' WH
 UPDATE grow_user_tasks        SET plant_slug    = 'fruit-honeyberry-treeform' WHERE plant_slug    = 'tree-honeyberry-treeform';
 UPDATE perenual_sync_logs     SET our_slug      = 'fruit-honeyberry-treeform' WHERE our_slug      = 'tree-honeyberry-treeform';
 UPDATE user_task_completions  SET plant_slug    = 'fruit-honeyberry-treeform' WHERE plant_slug    = 'tree-honeyberry-treeform';
-INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('tree-honeyberry-treeform', 'honeyberry');
 DELETE FROM plant_species WHERE slug = 'tree-honeyberry-treeform';
 -- Step B: rename fruit-honeyberry-treeform → honeyberry as a normal rename (CASCADE handles FKs)
 UPDATE plant_species SET slug = 'honeyberry' WHERE slug = 'fruit-honeyberry-treeform';
 INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('fruit-honeyberry-treeform', 'honeyberry');
+-- tree-honeyberry-treeform alias inserted after 'honeyberry' canonical now exists
+INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('tree-honeyberry-treeform', 'honeyberry');
 
 -- (22) tree-hazel-treeform → hazelnut (MERGE — 'hazelnut' canonical already exists)
 UPDATE cultivars              SET species_slug  = 'hazelnut' WHERE species_slug  = 'tree-hazel-treeform';
@@ -1092,11 +1037,12 @@ UPDATE grow_seed_listings     SET plant_slug    = 'tree-albizia-julibrissin' WHE
 UPDATE grow_user_tasks        SET plant_slug    = 'tree-albizia-julibrissin' WHERE plant_slug    = 'tree-silk-tree';
 UPDATE perenual_sync_logs     SET our_slug      = 'tree-albizia-julibrissin' WHERE our_slug      = 'tree-silk-tree';
 UPDATE user_task_completions  SET plant_slug    = 'tree-albizia-julibrissin' WHERE plant_slug    = 'tree-silk-tree';
-INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('tree-silk-tree', 'silk-tree');
 DELETE FROM plant_species WHERE slug = 'tree-silk-tree';
 -- Step B: rename tree-albizia-julibrissin → silk-tree as a normal rename (CASCADE handles FKs)
 UPDATE plant_species SET slug = 'silk-tree' WHERE slug = 'tree-albizia-julibrissin';
 INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('tree-albizia-julibrissin', 'silk-tree');
+-- tree-silk-tree alias inserted after 'silk-tree' canonical now exists
+INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('tree-silk-tree', 'silk-tree');
 
 -- (24) fruit-elder → elder (defensive: rename if no canonical exists, merge if it does;
 -- Damian decision 2026-05-13).
@@ -1153,12 +1099,12 @@ INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('tree-aldershade-
 --    a separate `whitecurrant` alias is not added because whitecurrant is its own canonical.
 
 -- Step 1: rename fruit-currant → redcurrant (preserves FK refs).
-INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('fruit-currant', 'redcurrant');
 UPDATE plant_species
 SET slug = 'redcurrant',
     name = 'Redcurrant',
     scientific_name = 'Ribes rubrum'
 WHERE slug = 'fruit-currant';
+INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('fruit-currant', 'redcurrant');
 
 -- Step 2: clone the new redcurrant row into a whitecurrant row.
 -- Whitecurrant is the same species, so all biology/calendar/RHS data carries over.
