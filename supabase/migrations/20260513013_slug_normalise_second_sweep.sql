@@ -46,102 +46,102 @@ BEGIN;
 -- =====================================================================
 
 -- --- fruit-* simple renames -----------------------------------------
-INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('fruit-apricot', 'apricot');
 UPDATE plant_species SET slug = 'apricot' WHERE slug = 'fruit-apricot';
+INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('fruit-apricot', 'apricot');
 
-INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('fruit-aronia', 'aronia');
 UPDATE plant_species SET slug = 'aronia' WHERE slug = 'fruit-aronia';
+INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('fruit-aronia', 'aronia');
 
-INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('fruit-black-walnut', 'black-walnut');
 UPDATE plant_species SET slug = 'black-walnut' WHERE slug = 'fruit-black-walnut';
+INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('fruit-black-walnut', 'black-walnut');
 
-INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('fruit-cherimoya', 'cherimoya');
 UPDATE plant_species SET slug = 'cherimoya' WHERE slug = 'fruit-cherimoya';
+INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('fruit-cherimoya', 'cherimoya');
 
 -- fruit-cherry-sour → sour-cherry (word order fix: noun first)
-INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('fruit-cherry-sour', 'sour-cherry');
 UPDATE plant_species SET slug = 'sour-cherry' WHERE slug = 'fruit-cherry-sour';
+INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('fruit-cherry-sour', 'sour-cherry');
 
-INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('fruit-chinese-haw', 'chinese-haw');
 UPDATE plant_species SET slug = 'chinese-haw' WHERE slug = 'fruit-chinese-haw';
+INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('fruit-chinese-haw', 'chinese-haw');
 
-INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('fruit-cornelian-cherry', 'cornelian-cherry');
 UPDATE plant_species SET slug = 'cornelian-cherry' WHERE slug = 'fruit-cornelian-cherry';
+INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('fruit-cornelian-cherry', 'cornelian-cherry');
 
-INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('fruit-damson', 'damson');
 UPDATE plant_species SET slug = 'damson' WHERE slug = 'fruit-damson';
+INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('fruit-damson', 'damson');
 
 -- fruit-elder-black-lace → black-lace-elder (cultivar of Sambucus nigra)
-INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('fruit-elder-black-lace', 'black-lace-elder');
 UPDATE plant_species SET slug = 'black-lace-elder' WHERE slug = 'fruit-elder-black-lace';
+INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('fruit-elder-black-lace', 'black-lace-elder');
 
-INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('fruit-gage', 'gage');
 UPDATE plant_species SET slug = 'gage' WHERE slug = 'fruit-gage';
+INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('fruit-gage', 'gage');
 
-INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('fruit-gooseberry', 'gooseberry');
 UPDATE plant_species SET slug = 'gooseberry' WHERE slug = 'fruit-gooseberry';
+INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('fruit-gooseberry', 'gooseberry');
 
 -- fruit-guava-strawberry → strawberry-guava (word order fix)
-INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('fruit-guava-strawberry', 'strawberry-guava');
 UPDATE plant_species SET slug = 'strawberry-guava' WHERE slug = 'fruit-guava-strawberry';
+INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('fruit-guava-strawberry', 'strawberry-guava');
 
 -- fruit-honeyberry-treeform → see §2 (merge with tree-honeyberry-treeform → honeyberry)
 
-INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('fruit-hybrid-shipova', 'shipova');
 UPDATE plant_species SET slug = 'shipova' WHERE slug = 'fruit-hybrid-shipova';
+INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('fruit-hybrid-shipova', 'shipova');
 
-INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('fruit-lemon', 'lemon');
 UPDATE plant_species SET slug = 'lemon' WHERE slug = 'fruit-lemon';
+INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('fruit-lemon', 'lemon');
 
-INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('fruit-loquat', 'loquat');
 UPDATE plant_species SET slug = 'loquat' WHERE slug = 'fruit-loquat';
+INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('fruit-loquat', 'loquat');
 
-INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('fruit-mayhaw', 'mayhaw');
 UPDATE plant_species SET slug = 'mayhaw' WHERE slug = 'fruit-mayhaw';
+INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('fruit-mayhaw', 'mayhaw');
 
-INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('fruit-medlar', 'medlar');
 UPDATE plant_species SET slug = 'medlar' WHERE slug = 'fruit-medlar';
+INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('fruit-medlar', 'medlar');
 
-INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('fruit-mirabelle', 'mirabelle');
 UPDATE plant_species SET slug = 'mirabelle' WHERE slug = 'fruit-mirabelle';
+INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('fruit-mirabelle', 'mirabelle');
 
 -- fruit-mulberry-black → black-mulberry (Morus nigra)
-INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('fruit-mulberry-black', 'black-mulberry');
 UPDATE plant_species SET slug = 'black-mulberry' WHERE slug = 'fruit-mulberry-black';
+INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('fruit-mulberry-black', 'black-mulberry');
 
 -- fruit-mulberry-white → white-mulberry (Morus alba)
-INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('fruit-mulberry-white', 'white-mulberry');
 UPDATE plant_species SET slug = 'white-mulberry' WHERE slug = 'fruit-mulberry-white';
+INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('fruit-mulberry-white', 'white-mulberry');
 
-INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('fruit-nectarine', 'nectarine');
 UPDATE plant_species SET slug = 'nectarine' WHERE slug = 'fruit-nectarine';
+INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('fruit-nectarine', 'nectarine');
 
-INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('fruit-olive', 'olive');
 UPDATE plant_species SET slug = 'olive' WHERE slug = 'fruit-olive';
+INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('fruit-olive', 'olive');
 
-INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('fruit-pawpaw', 'pawpaw');
 UPDATE plant_species SET slug = 'pawpaw' WHERE slug = 'fruit-pawpaw';
+INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('fruit-pawpaw', 'pawpaw');
 
-INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('fruit-peach', 'peach');
 UPDATE plant_species SET slug = 'peach' WHERE slug = 'fruit-peach';
+INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('fruit-peach', 'peach');
 
-INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('fruit-persimmon', 'persimmon');
 UPDATE plant_species SET slug = 'persimmon' WHERE slug = 'fruit-persimmon';
+INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('fruit-persimmon', 'persimmon');
 
-INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('fruit-pomegranate', 'pomegranate');
 UPDATE plant_species SET slug = 'pomegranate' WHERE slug = 'fruit-pomegranate';
+INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('fruit-pomegranate', 'pomegranate');
 
-INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('fruit-quandong', 'quandong');
 UPDATE plant_species SET slug = 'quandong' WHERE slug = 'fruit-quandong';
+INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('fruit-quandong', 'quandong');
 
-INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('fruit-quince', 'quince');
 UPDATE plant_species SET slug = 'quince' WHERE slug = 'fruit-quince';
+INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('fruit-quince', 'quince');
 
-INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('fruit-saskatoon', 'saskatoon');
 UPDATE plant_species SET slug = 'saskatoon' WHERE slug = 'fruit-saskatoon';
+INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('fruit-saskatoon', 'saskatoon');
 
-INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('fruit-sea-buckthorn', 'sea-buckthorn');
 UPDATE plant_species SET slug = 'sea-buckthorn' WHERE slug = 'fruit-sea-buckthorn';
+INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('fruit-sea-buckthorn', 'sea-buckthorn');
 
 -- fruit-serviceberry → see §2 (merge with tree-juneberry + tree-serviceberry-treeform → serviceberry)
 -- fruit-sweet-chestnut → see §2 (merge with sweet-chestnut existing canonical)
@@ -150,119 +150,119 @@ UPDATE plant_species SET slug = 'sea-buckthorn' WHERE slug = 'fruit-sea-buckthor
 -- fruit-mountain-ash → see §2 (merge with tree-rowan-mountain-ash → rowan)
 
 -- --- herb-* simple renames -----------------------------------------
-INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('herb-angelica', 'angelica');
 UPDATE plant_species SET slug = 'angelica' WHERE slug = 'herb-angelica';
+INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('herb-angelica', 'angelica');
 
 -- herb-bay-laurel → bay (the UK-standard cooking herb name; bay-laurel is the formal name)
-INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('herb-bay-laurel', 'bay');
 UPDATE plant_species SET slug = 'bay' WHERE slug = 'herb-bay-laurel';
+INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('herb-bay-laurel', 'bay');
 
-INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('herb-calendula', 'calendula');
 UPDATE plant_species SET slug = 'calendula' WHERE slug = 'herb-calendula';
+INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('herb-calendula', 'calendula');
 
-INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('herb-catnip', 'catnip');
 UPDATE plant_species SET slug = 'catnip' WHERE slug = 'herb-catnip';
+INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('herb-catnip', 'catnip');
 
 -- herb-chamomile-german → german-chamomile (Matricaria recutita — the annual one for tea)
-INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('herb-chamomile-german', 'german-chamomile');
 UPDATE plant_species SET slug = 'german-chamomile' WHERE slug = 'herb-chamomile-german';
+INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('herb-chamomile-german', 'german-chamomile');
 
 -- herb-chamomile-roman → roman-chamomile (Chamaemelum nobile — the perennial creeping one)
-INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('herb-chamomile-roman', 'roman-chamomile');
 UPDATE plant_species SET slug = 'roman-chamomile' WHERE slug = 'herb-chamomile-roman';
+INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('herb-chamomile-roman', 'roman-chamomile');
 
 -- herb-fennel-leaf → fennel-herb (parallels fennel-bulb already in DB; "leaf" reads oddly)
-INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('herb-fennel-leaf', 'fennel-herb');
 UPDATE plant_species SET slug = 'fennel-herb' WHERE slug = 'herb-fennel-leaf';
+INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('herb-fennel-leaf', 'fennel-herb');
 
-INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('herb-gotu-kola', 'gotu-kola');
 UPDATE plant_species SET slug = 'gotu-kola' WHERE slug = 'herb-gotu-kola';
+INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('herb-gotu-kola', 'gotu-kola');
 
-INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('herb-holy-basil', 'holy-basil');
 UPDATE plant_species SET slug = 'holy-basil' WHERE slug = 'herb-holy-basil';
+INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('herb-holy-basil', 'holy-basil');
 
-INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('herb-lemon-verbena', 'lemon-verbena');
 UPDATE plant_species SET slug = 'lemon-verbena' WHERE slug = 'herb-lemon-verbena';
+INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('herb-lemon-verbena', 'lemon-verbena');
 
-INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('herb-lovage', 'lovage');
 UPDATE plant_species SET slug = 'lovage' WHERE slug = 'herb-lovage';
+INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('herb-lovage', 'lovage');
 
 -- herb-marjoram-sweet → sweet-marjoram (Origanum majorana — UK gardener calls it sweet marjoram)
-INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('herb-marjoram-sweet', 'sweet-marjoram');
 UPDATE plant_species SET slug = 'sweet-marjoram' WHERE slug = 'herb-marjoram-sweet';
+INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('herb-marjoram-sweet', 'sweet-marjoram');
 
-INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('herb-marshmallow', 'marshmallow');
 UPDATE plant_species SET slug = 'marshmallow' WHERE slug = 'herb-marshmallow';
+INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('herb-marshmallow', 'marshmallow');
 
-INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('herb-milk-thistle', 'milk-thistle');
 UPDATE plant_species SET slug = 'milk-thistle' WHERE slug = 'herb-milk-thistle';
+INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('herb-milk-thistle', 'milk-thistle');
 
 -- herb-mint-peppermint → peppermint (Mentha × piperita — the strong distinct mint)
-INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('herb-mint-peppermint', 'peppermint');
 UPDATE plant_species SET slug = 'peppermint' WHERE slug = 'herb-mint-peppermint';
+INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('herb-mint-peppermint', 'peppermint');
 
 -- herb-oregano-greek → greek-oregano (Origanum vulgare subsp. hirtum — the strongest oregano)
-INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('herb-oregano-greek', 'greek-oregano');
 UPDATE plant_species SET slug = 'greek-oregano' WHERE slug = 'herb-oregano-greek';
+INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('herb-oregano-greek', 'greek-oregano');
 
 -- herb-sage-pineapple → pineapple-sage (Salvia elegans — distinct ornamental sage)
-INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('herb-sage-pineapple', 'pineapple-sage');
 UPDATE plant_species SET slug = 'pineapple-sage' WHERE slug = 'herb-sage-pineapple';
+INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('herb-sage-pineapple', 'pineapple-sage');
 
 -- herb-sage-purple → purple-sage (Salvia officinalis 'Purpurascens' — cultivar of common sage)
-INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('herb-sage-purple', 'purple-sage');
 UPDATE plant_species SET slug = 'purple-sage' WHERE slug = 'herb-sage-purple';
+INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('herb-sage-purple', 'purple-sage');
 
 -- herb-savoury-summer → summer-savory (UK spells "savory" with one 'u' in cookery context)
-INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('herb-savoury-summer', 'summer-savory');
 UPDATE plant_species SET slug = 'summer-savory' WHERE slug = 'herb-savoury-summer';
+INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('herb-savoury-summer', 'summer-savory');
 
-INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('herb-savoury-winter', 'winter-savory');
 UPDATE plant_species SET slug = 'winter-savory' WHERE slug = 'herb-savoury-winter';
+INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('herb-savoury-winter', 'winter-savory');
 
-INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('herb-skullcap', 'skullcap');
 UPDATE plant_species SET slug = 'skullcap' WHERE slug = 'herb-skullcap';
+INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('herb-skullcap', 'skullcap');
 
 -- herb-sorrel-common → sorrel (just "sorrel" is what UK gardeners call common sorrel)
-INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('herb-sorrel-common', 'sorrel');
 UPDATE plant_species SET slug = 'sorrel' WHERE slug = 'herb-sorrel-common';
+INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('herb-sorrel-common', 'sorrel');
 
-INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('herb-st-johns-wort', 'st-johns-wort');
 UPDATE plant_species SET slug = 'st-johns-wort' WHERE slug = 'herb-st-johns-wort';
+INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('herb-st-johns-wort', 'st-johns-wort');
 
-INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('herb-stevia', 'stevia');
 UPDATE plant_species SET slug = 'stevia' WHERE slug = 'herb-stevia';
+INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('herb-stevia', 'stevia');
 
-INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('herb-sweet-woodruff', 'sweet-woodruff');
 UPDATE plant_species SET slug = 'sweet-woodruff' WHERE slug = 'herb-sweet-woodruff';
+INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('herb-sweet-woodruff', 'sweet-woodruff');
 
 -- herb-tarragon-french → french-tarragon (Artemisia dracunculus var. sativa — the culinary one)
-INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('herb-tarragon-french', 'french-tarragon');
 UPDATE plant_species SET slug = 'french-tarragon' WHERE slug = 'herb-tarragon-french';
+INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('herb-tarragon-french', 'french-tarragon');
 
 -- herb-thyme-lemon → lemon-thyme (Thymus citriodorus — distinct cultivar/hybrid)
-INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('herb-thyme-lemon', 'lemon-thyme');
 UPDATE plant_species SET slug = 'lemon-thyme' WHERE slug = 'herb-thyme-lemon';
+INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('herb-thyme-lemon', 'lemon-thyme');
 
 -- herb-basil-thai → thai-basil (Ocimum basilicum var. thyrsiflora — distinct cultivar)
-INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('herb-basil-thai', 'thai-basil');
 UPDATE plant_species SET slug = 'thai-basil' WHERE slug = 'herb-basil-thai';
+INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('herb-basil-thai', 'thai-basil');
 
 -- --- squash-* simple renames ---------------------------------------
-INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('squash-pattypan', 'pattypan-squash');
 UPDATE plant_species SET slug = 'pattypan-squash' WHERE slug = 'squash-pattypan';
+INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('squash-pattypan', 'pattypan-squash');
 
-INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('squash-spaghetti', 'spaghetti-squash');
 UPDATE plant_species SET slug = 'spaghetti-squash' WHERE slug = 'squash-spaghetti';
+INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('squash-spaghetti', 'spaghetti-squash');
 
-INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('squash-yellow', 'yellow-squash');
 UPDATE plant_species SET slug = 'yellow-squash' WHERE slug = 'squash-yellow';
+INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('squash-yellow', 'yellow-squash');
 
 -- --- kale-* simple rename (kale-curly handled as MERGE in §2) ------
 -- kale-lacinato → cavolo-nero (UK gardeners know it as cavolo nero — the popular name)
 INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('kale-lacinato', 'cavolo-nero');
-INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('kale-lacinato', 'lacinato-kale');  -- keep both aliases
 UPDATE plant_species SET slug = 'cavolo-nero' WHERE slug = 'kale-lacinato';
+INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('kale-lacinato', 'lacinato-kale');  -- keep both aliases
 
 -- --- tree-* simple renames (the big batch) -------------------------
 -- Most are mechanical strip. Where a noun-first word order makes more sense
@@ -270,313 +270,313 @@ UPDATE plant_species SET slug = 'cavolo-nero' WHERE slug = 'kale-lacinato';
 -- (e.g. "Harry Lauder's walking stick") are flagged as comments.
 
 -- Acacias / wattles
-INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('tree-acacia-baileyana', 'cootamundra-wattle');
 UPDATE plant_species SET slug = 'cootamundra-wattle' WHERE slug = 'tree-acacia-baileyana';
+INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('tree-acacia-baileyana', 'cootamundra-wattle');
 
-INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('tree-acacia-dealbata', 'silver-wattle');
 UPDATE plant_species SET slug = 'silver-wattle' WHERE slug = 'tree-acacia-dealbata';
+INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('tree-acacia-dealbata', 'silver-wattle');
 
-INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('tree-acacia-longifolia', 'sydney-golden-wattle');
 UPDATE plant_species SET slug = 'sydney-golden-wattle' WHERE slug = 'tree-acacia-longifolia';
+INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('tree-acacia-longifolia', 'sydney-golden-wattle');
 
 -- tree-albizia-julibrissin → see §2 (merge with tree-silk-tree → silk-tree, Damian decision 2026-05-13)
 
 -- Alders
-INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('tree-alder-black', 'black-alder');
 UPDATE plant_species SET slug = 'black-alder' WHERE slug = 'tree-alder-black';
+INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('tree-alder-black', 'black-alder');
 
-INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('tree-alder-green', 'green-alder');
 UPDATE plant_species SET slug = 'green-alder' WHERE slug = 'tree-alder-green';
+INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('tree-alder-green', 'green-alder');
 
-INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('tree-alder-grey', 'grey-alder');
 UPDATE plant_species SET slug = 'grey-alder' WHERE slug = 'tree-alder-grey';
+INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('tree-alder-grey', 'grey-alder');
 
-INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('tree-alder-red', 'red-alder');
 UPDATE plant_species SET slug = 'red-alder' WHERE slug = 'tree-alder-red';
+INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('tree-alder-red', 'red-alder');
 
 -- Maples
-INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('tree-amber-maple', 'amber-maple');
 UPDATE plant_species SET slug = 'amber-maple' WHERE slug = 'tree-amber-maple';
+INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('tree-amber-maple', 'amber-maple');
 
-INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('tree-field-maple', 'field-maple');
 UPDATE plant_species SET slug = 'field-maple' WHERE slug = 'tree-field-maple';
+INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('tree-field-maple', 'field-maple');
 
-INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('tree-japanese-maple', 'japanese-maple');
 UPDATE plant_species SET slug = 'japanese-maple' WHERE slug = 'tree-japanese-maple';
+INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('tree-japanese-maple', 'japanese-maple');
 
-INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('tree-norway-maple', 'norway-maple');
 UPDATE plant_species SET slug = 'norway-maple' WHERE slug = 'tree-norway-maple';
+INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('tree-norway-maple', 'norway-maple');
 
-INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('tree-paperbark-maple', 'paperbark-maple');
 UPDATE plant_species SET slug = 'paperbark-maple' WHERE slug = 'tree-paperbark-maple';
+INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('tree-paperbark-maple', 'paperbark-maple');
 
-INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('tree-red-maple', 'red-maple');
 UPDATE plant_species SET slug = 'red-maple' WHERE slug = 'tree-red-maple';
+INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('tree-red-maple', 'red-maple');
 
-INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('tree-silver-maple', 'silver-maple');
 UPDATE plant_species SET slug = 'silver-maple' WHERE slug = 'tree-silver-maple';
+INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('tree-silver-maple', 'silver-maple');
 
 -- Arborvitae / cedars / cypresses
-INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('tree-arborvitae-thuja', 'arborvitae');
 UPDATE plant_species SET slug = 'arborvitae' WHERE slug = 'tree-arborvitae-thuja';
+INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('tree-arborvitae-thuja', 'arborvitae');
 
-INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('tree-cedar-atlas', 'atlas-cedar');
 UPDATE plant_species SET slug = 'atlas-cedar' WHERE slug = 'tree-cedar-atlas';
+INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('tree-cedar-atlas', 'atlas-cedar');
 
-INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('tree-cedar-lebanon', 'cedar-of-lebanon');
 UPDATE plant_species SET slug = 'cedar-of-lebanon' WHERE slug = 'tree-cedar-lebanon';
+INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('tree-cedar-lebanon', 'cedar-of-lebanon');
 
-INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('tree-lawson-cypress', 'lawson-cypress');
 UPDATE plant_species SET slug = 'lawson-cypress' WHERE slug = 'tree-lawson-cypress';
+INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('tree-lawson-cypress', 'lawson-cypress');
 
-INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('tree-western-redcedar', 'western-redcedar');
 UPDATE plant_species SET slug = 'western-redcedar' WHERE slug = 'tree-western-redcedar';
+INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('tree-western-redcedar', 'western-redcedar');
 
 -- Ash / aspen / beech (single-word stripped)
-INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('tree-ash-european', 'european-ash');
 UPDATE plant_species SET slug = 'european-ash' WHERE slug = 'tree-ash-european';
+INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('tree-ash-european', 'european-ash');
 
-INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('tree-aspen', 'aspen');
 UPDATE plant_species SET slug = 'aspen' WHERE slug = 'tree-aspen';
+INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('tree-aspen', 'aspen');
 
-INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('tree-beech', 'beech');
 UPDATE plant_species SET slug = 'beech' WHERE slug = 'tree-beech';
+INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('tree-beech', 'beech');
 
-INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('tree-copper-beech', 'copper-beech');
 UPDATE plant_species SET slug = 'copper-beech' WHERE slug = 'tree-copper-beech';
+INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('tree-copper-beech', 'copper-beech');
 
 -- Black-prefix (some need word-order fixing)
-INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('tree-black-acacia', 'black-acacia');
 UPDATE plant_species SET slug = 'black-acacia' WHERE slug = 'tree-black-acacia';
+INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('tree-black-acacia', 'black-acacia');
 
-INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('tree-black-locust', 'black-locust');
 UPDATE plant_species SET slug = 'black-locust' WHERE slug = 'tree-black-locust';
+INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('tree-black-locust', 'black-locust');
 
-INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('tree-black-spruce', 'black-spruce');
 UPDATE plant_species SET slug = 'black-spruce' WHERE slug = 'tree-black-spruce';
+INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('tree-black-spruce', 'black-spruce');
 
-INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('tree-black-willow', 'black-willow');
 UPDATE plant_species SET slug = 'black-willow' WHERE slug = 'tree-black-willow';
+INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('tree-black-willow', 'black-willow');
 
-INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('tree-blue-spruce', 'blue-spruce');
 UPDATE plant_species SET slug = 'blue-spruce' WHERE slug = 'tree-blue-spruce';
+INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('tree-blue-spruce', 'blue-spruce');
 
 -- Caragana / catalpa / chinaberry / etc.
-INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('tree-caragana-arborescens', 'siberian-pea-tree');
 UPDATE plant_species SET slug = 'siberian-pea-tree' WHERE slug = 'tree-caragana-arborescens';
+INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('tree-caragana-arborescens', 'siberian-pea-tree');
 
 -- Birches
-INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('tree-downy-birch', 'downy-birch');
 UPDATE plant_species SET slug = 'downy-birch' WHERE slug = 'tree-downy-birch';
+INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('tree-downy-birch', 'downy-birch');
 
-INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('tree-silver-birch', 'silver-birch');
 UPDATE plant_species SET slug = 'silver-birch' WHERE slug = 'tree-silver-birch';
+INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('tree-silver-birch', 'silver-birch');
 
 -- Crabapple / hornbeam / hawthorns / hazels
-INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('tree-crabapple-ornamental', 'ornamental-crabapple');
 UPDATE plant_species SET slug = 'ornamental-crabapple' WHERE slug = 'tree-crabapple-ornamental';
+INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('tree-crabapple-ornamental', 'ornamental-crabapple');
 
-INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('tree-hawthorn-crimson', 'crimson-hawthorn');
 UPDATE plant_species SET slug = 'crimson-hawthorn' WHERE slug = 'tree-hawthorn-crimson';
+INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('tree-hawthorn-crimson', 'crimson-hawthorn');
 
-INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('tree-hawthorn-midland', 'midland-hawthorn');
 UPDATE plant_species SET slug = 'midland-hawthorn' WHERE slug = 'tree-hawthorn-midland';
+INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('tree-hawthorn-midland', 'midland-hawthorn');
 
 -- tree-hazel-harry-lauder → harry-lauders-walking-stick (the corkscrew hazel cultivar)
-INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('tree-hazel-harry-lauder', 'harry-lauders-walking-stick');
 UPDATE plant_species SET slug = 'harry-lauders-walking-stick' WHERE slug = 'tree-hazel-harry-lauder';
+INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('tree-hazel-harry-lauder', 'harry-lauders-walking-stick');
 
 -- tree-hazel-treeform → see §2 (merge with hazelnut row if it exists)
 
-INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('tree-hornbeam', 'hornbeam');
 UPDATE plant_species SET slug = 'hornbeam' WHERE slug = 'tree-hornbeam';
+INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('tree-hornbeam', 'hornbeam');
 
 -- Corsican / douglas / etc. pines & firs
-INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('tree-corsican-pine', 'corsican-pine');
 UPDATE plant_species SET slug = 'corsican-pine' WHERE slug = 'tree-corsican-pine';
+INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('tree-corsican-pine', 'corsican-pine');
 
-INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('tree-douglas-fir', 'douglas-fir');
 UPDATE plant_species SET slug = 'douglas-fir' WHERE slug = 'tree-douglas-fir';
+INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('tree-douglas-fir', 'douglas-fir');
 
-INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('tree-european-fir', 'european-fir');
 UPDATE plant_species SET slug = 'european-fir' WHERE slug = 'tree-european-fir';
+INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('tree-european-fir', 'european-fir');
 
-INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('tree-larch-european', 'european-larch');
 UPDATE plant_species SET slug = 'european-larch' WHERE slug = 'tree-larch-european';
+INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('tree-larch-european', 'european-larch');
 
-INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('tree-lodgepole-pine', 'lodgepole-pine');
 UPDATE plant_species SET slug = 'lodgepole-pine' WHERE slug = 'tree-lodgepole-pine';
+INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('tree-lodgepole-pine', 'lodgepole-pine');
 
-INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('tree-monterey-pine', 'monterey-pine');
 UPDATE plant_species SET slug = 'monterey-pine' WHERE slug = 'tree-monterey-pine';
+INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('tree-monterey-pine', 'monterey-pine');
 
-INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('tree-norway-spruce', 'norway-spruce');
 UPDATE plant_species SET slug = 'norway-spruce' WHERE slug = 'tree-norway-spruce';
+INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('tree-norway-spruce', 'norway-spruce');
 
-INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('tree-ponderosa-pine', 'ponderosa-pine');
 UPDATE plant_species SET slug = 'ponderosa-pine' WHERE slug = 'tree-ponderosa-pine';
+INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('tree-ponderosa-pine', 'ponderosa-pine');
 
-INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('tree-scots-pine', 'scots-pine');
 UPDATE plant_species SET slug = 'scots-pine' WHERE slug = 'tree-scots-pine';
+INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('tree-scots-pine', 'scots-pine');
 
 -- Eleagnus
-INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('tree-eleagnus-ebbingei', 'eleagnus-ebbingei');
 UPDATE plant_species SET slug = 'eleagnus-ebbingei' WHERE slug = 'tree-eleagnus-ebbingei';
+INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('tree-eleagnus-ebbingei', 'eleagnus-ebbingei');
 
-INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('tree-eleagnus-silverberry', 'silverberry');
 UPDATE plant_species SET slug = 'silverberry' WHERE slug = 'tree-eleagnus-silverberry';
+INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('tree-eleagnus-silverberry', 'silverberry');
 
 -- Elms
-INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('tree-elm-siberian', 'siberian-elm');
 UPDATE plant_species SET slug = 'siberian-elm' WHERE slug = 'tree-elm-siberian';
+INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('tree-elm-siberian', 'siberian-elm');
 
-INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('tree-elm-wych', 'wych-elm');
 UPDATE plant_species SET slug = 'wych-elm' WHERE slug = 'tree-elm-wych';
+INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('tree-elm-wych', 'wych-elm');
 
 -- Eucalyptus
-INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('tree-eucalyptus-gunnii', 'cider-gum');
 UPDATE plant_species SET slug = 'cider-gum' WHERE slug = 'tree-eucalyptus-gunnii';
+INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('tree-eucalyptus-gunnii', 'cider-gum');
 
-INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('tree-eucalyptus-niphophila', 'snow-gum');
 UPDATE plant_species SET slug = 'snow-gum' WHERE slug = 'tree-eucalyptus-niphophila';
+INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('tree-eucalyptus-niphophila', 'snow-gum');
 
 -- Golden chain / golden rain (different species, both retained)
-INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('tree-golden-chain', 'golden-chain');
 UPDATE plant_species SET slug = 'golden-chain' WHERE slug = 'tree-golden-chain';
+INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('tree-golden-chain', 'golden-chain');
 
-INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('tree-golden-rain', 'golden-rain');
 UPDATE plant_species SET slug = 'golden-rain' WHERE slug = 'tree-golden-rain';
+INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('tree-golden-rain', 'golden-rain');
 
 -- tree-hackberry-common → see §2 (merge with fruit-hackberry → hackberry)
 
 -- Japanese zelkova / juneberry / juniper
-INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('tree-japanese-zelkova', 'japanese-zelkova');
 UPDATE plant_species SET slug = 'japanese-zelkova' WHERE slug = 'tree-japanese-zelkova';
+INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('tree-japanese-zelkova', 'japanese-zelkova');
 
 -- tree-juneberry → see §2 (merge with fruit-serviceberry → serviceberry)
 
 -- tree-juniper-common → juniper
-INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('tree-juniper-common', 'juniper');
 UPDATE plant_species SET slug = 'juniper' WHERE slug = 'tree-juniper-common';
+INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('tree-juniper-common', 'juniper');
 
 -- Katsura / lime / london plane
-INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('tree-katsura', 'katsura');
 UPDATE plant_species SET slug = 'katsura' WHERE slug = 'tree-katsura';
+INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('tree-katsura', 'katsura');
 
-INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('tree-lime-small-leaved', 'small-leaved-lime');
 UPDATE plant_species SET slug = 'small-leaved-lime' WHERE slug = 'tree-lime-small-leaved';
+INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('tree-lime-small-leaved', 'small-leaved-lime');
 
-INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('tree-london-plane', 'london-plane');
 UPDATE plant_species SET slug = 'london-plane' WHERE slug = 'tree-london-plane';
+INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('tree-london-plane', 'london-plane');
 
 -- Lilac (treeform)
-INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('tree-lilac-treeform', 'tree-lilac');
 UPDATE plant_species SET slug = 'tree-lilac' WHERE slug = 'tree-lilac-treeform';
+INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('tree-lilac-treeform', 'tree-lilac');
 
 -- Magnolias
-INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('tree-magnolia-grandiflora', 'southern-magnolia');
 UPDATE plant_species SET slug = 'southern-magnolia' WHERE slug = 'tree-magnolia-grandiflora';
+INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('tree-magnolia-grandiflora', 'southern-magnolia');
 
-INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('tree-magnolia-soulangea', 'saucer-magnolia');
 UPDATE plant_species SET slug = 'saucer-magnolia' WHERE slug = 'tree-magnolia-soulangea';
+INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('tree-magnolia-soulangea', 'saucer-magnolia');
 
-INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('tree-magnolia-stellata', 'star-magnolia');
 UPDATE plant_species SET slug = 'star-magnolia' WHERE slug = 'tree-magnolia-stellata';
+INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('tree-magnolia-stellata', 'star-magnolia');
 
 -- Mesquite / mimosa
-INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('tree-mesquite', 'mesquite');
 UPDATE plant_species SET slug = 'mesquite' WHERE slug = 'tree-mesquite';
+INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('tree-mesquite', 'mesquite');
 
-INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('tree-mimosa', 'mimosa');
 UPDATE plant_species SET slug = 'mimosa' WHERE slug = 'tree-mimosa';
+INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('tree-mimosa', 'mimosa');
 
 -- Mountain ash dwarf → dwarf-rowan
-INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('tree-mountain-ash-dwarf', 'dwarf-rowan');
 UPDATE plant_species SET slug = 'dwarf-rowan' WHERE slug = 'tree-mountain-ash-dwarf';
+INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('tree-mountain-ash-dwarf', 'dwarf-rowan');
 
 -- tree-rowan-mountain-ash → see §2 (merge with fruit-mountain-ash → rowan)
 
 -- Oaks
-INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('tree-oak-burr', 'burr-oak');
 UPDATE plant_species SET slug = 'burr-oak' WHERE slug = 'tree-oak-burr';
+INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('tree-oak-burr', 'burr-oak');
 
-INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('tree-oak-english', 'english-oak');
 UPDATE plant_species SET slug = 'english-oak' WHERE slug = 'tree-oak-english';
+INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('tree-oak-english', 'english-oak');
 
-INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('tree-oak-red', 'red-oak');
 UPDATE plant_species SET slug = 'red-oak' WHERE slug = 'tree-oak-red';
+INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('tree-oak-red', 'red-oak');
 
 -- Pagoda tree
-INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('tree-pagoda-tree', 'pagoda-tree');
 UPDATE plant_species SET slug = 'pagoda-tree' WHERE slug = 'tree-pagoda-tree';
+INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('tree-pagoda-tree', 'pagoda-tree');
 
 -- Poplars
-INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('tree-poplar-lombardy', 'lombardy-poplar');
 UPDATE plant_species SET slug = 'lombardy-poplar' WHERE slug = 'tree-poplar-lombardy';
+INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('tree-poplar-lombardy', 'lombardy-poplar');
 
-INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('tree-poplar-white', 'white-poplar');
 UPDATE plant_species SET slug = 'white-poplar' WHERE slug = 'tree-poplar-white';
+INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('tree-poplar-white', 'white-poplar');
 
 -- Redbud / redwoods / sequoia
-INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('tree-redbud-eastern', 'eastern-redbud');
 UPDATE plant_species SET slug = 'eastern-redbud' WHERE slug = 'tree-redbud-eastern';
+INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('tree-redbud-eastern', 'eastern-redbud');
 
-INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('tree-redwood-giant', 'giant-redwood');
 UPDATE plant_species SET slug = 'giant-redwood' WHERE slug = 'tree-redwood-giant';
+INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('tree-redwood-giant', 'giant-redwood');
 
-INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('tree-sequoia-dawn', 'dawn-redwood');
 UPDATE plant_species SET slug = 'dawn-redwood' WHERE slug = 'tree-sequoia-dawn';
+INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('tree-sequoia-dawn', 'dawn-redwood');
 
 -- Service tree / serviceberry-treeform → see §2
 
-INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('tree-service-tree', 'service-tree');
 UPDATE plant_species SET slug = 'service-tree' WHERE slug = 'tree-service-tree';
+INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('tree-service-tree', 'service-tree');
 
 -- She-oak
-INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('tree-she-oak', 'she-oak');
 UPDATE plant_species SET slug = 'she-oak' WHERE slug = 'tree-she-oak';
+INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('tree-she-oak', 'she-oak');
 
 -- tree-silk-tree → see §2 (consolidated with tree-albizia-julibrissin → silk-tree)
 
 -- Silver linden / smoke tree / snowy mespilus / sweetgum
-INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('tree-silver-linden', 'silver-linden');
 UPDATE plant_species SET slug = 'silver-linden' WHERE slug = 'tree-silver-linden';
+INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('tree-silver-linden', 'silver-linden');
 
-INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('tree-smoke-tree', 'smoke-tree');
 UPDATE plant_species SET slug = 'smoke-tree' WHERE slug = 'tree-smoke-tree';
+INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('tree-smoke-tree', 'smoke-tree');
 
-INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('tree-snowy-mespilus', 'snowy-mespilus');
 UPDATE plant_species SET slug = 'snowy-mespilus' WHERE slug = 'tree-snowy-mespilus';
+INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('tree-snowy-mespilus', 'snowy-mespilus');
 
-INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('tree-sweetgum', 'sweetgum');
 UPDATE plant_species SET slug = 'sweetgum' WHERE slug = 'tree-sweetgum';
+INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('tree-sweetgum', 'sweetgum');
 
 -- Sycamores
-INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('tree-sycamore', 'sycamore');
 UPDATE plant_species SET slug = 'sycamore' WHERE slug = 'tree-sycamore';
+INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('tree-sycamore', 'sycamore');
 
-INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('tree-sycamore-japanese', 'japanese-sycamore');
 UPDATE plant_species SET slug = 'japanese-sycamore' WHERE slug = 'tree-sycamore-japanese';
+INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('tree-sycamore-japanese', 'japanese-sycamore');
 
 -- Tamarisk
-INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('tree-tamarisk', 'tamarisk');
 UPDATE plant_species SET slug = 'tamarisk' WHERE slug = 'tree-tamarisk';
+INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('tree-tamarisk', 'tamarisk');
 
 -- Texas mountain laurel
-INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('tree-texas-mountain-laurel', 'texas-mountain-laurel');
 UPDATE plant_species SET slug = 'texas-mountain-laurel' WHERE slug = 'tree-texas-mountain-laurel';
+INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('tree-texas-mountain-laurel', 'texas-mountain-laurel');
 
 -- Tulip poplar
-INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('tree-tulip-poplar', 'tulip-poplar');
 UPDATE plant_species SET slug = 'tulip-poplar' WHERE slug = 'tree-tulip-poplar';
+INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('tree-tulip-poplar', 'tulip-poplar');
 
 -- Weeping willow
-INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('tree-weeping-willow', 'weeping-willow');
 UPDATE plant_species SET slug = 'weeping-willow' WHERE slug = 'tree-weeping-willow';
+INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('tree-weeping-willow', 'weeping-willow');
 
 -- Yew (English)
-INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('tree-yew-english', 'english-yew');
 UPDATE plant_species SET slug = 'english-yew' WHERE slug = 'tree-yew-english';
+INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('tree-yew-english', 'english-yew');
 
 -- Albizia julibrissin / silk tree — collision with tree-silk-tree, see §3
 
@@ -716,8 +716,8 @@ DELETE FROM plant_species WHERE slug = 'herb-rosemary';
 
 -- (7) herb-oregano → oregano (RENAME — no existing 'oregano' canonical; Damian confirmed 2026-05-13)
 -- Generic Origanum vulgare. The 'greek-oregano' subspecies row (renamed in §1) sits alongside.
-INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('herb-oregano', 'oregano');
 UPDATE plant_species SET slug = 'oregano' WHERE slug = 'herb-oregano';
+INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('herb-oregano', 'oregano');
 
 -- (8) herb-lemon-balm → lemon-balm (existing canonical, per check)
 UPDATE cultivars              SET species_slug  = 'lemon-balm' WHERE species_slug  = 'herb-lemon-balm';
@@ -931,8 +931,8 @@ UPDATE user_task_completions  SET plant_slug    = 'tree-hackberry-common' WHERE 
 INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('fruit-hackberry', 'hackberry');
 DELETE FROM plant_species WHERE slug = 'fruit-hackberry';
 -- Step B: rename tree-hackberry-common → hackberry as a normal rename (CASCADE handles FKs)
-INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('tree-hackberry-common', 'hackberry');
 UPDATE plant_species SET slug = 'hackberry' WHERE slug = 'tree-hackberry-common';
+INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('tree-hackberry-common', 'hackberry');
 
 -- (19) THREE-way merge: tree-juneberry + tree-serviceberry-treeform → fruit-serviceberry → serviceberry
 -- No canonical 'serviceberry' yet — pick fruit-serviceberry as the survivor, merge others.
@@ -973,8 +973,8 @@ UPDATE user_task_completions  SET plant_slug    = 'fruit-serviceberry' WHERE pla
 INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('tree-serviceberry-treeform', 'serviceberry');
 DELETE FROM plant_species WHERE slug = 'tree-serviceberry-treeform';
 -- Step C: rename fruit-serviceberry → serviceberry as normal rename (CASCADE handles FKs)
-INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('fruit-serviceberry', 'serviceberry');
 UPDATE plant_species SET slug = 'serviceberry' WHERE slug = 'fruit-serviceberry';
+INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('fruit-serviceberry', 'serviceberry');
 
 -- (20) THREE-way merge: fruit-mountain-ash + tree-rowan-mountain-ash → rowan
 -- No canonical 'rowan' yet — pick tree-rowan-mountain-ash as the survivor (richer name),
@@ -998,8 +998,8 @@ UPDATE user_task_completions  SET plant_slug    = 'tree-rowan-mountain-ash' WHER
 INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('fruit-mountain-ash', 'rowan');
 DELETE FROM plant_species WHERE slug = 'fruit-mountain-ash';
 -- Step B: rename tree-rowan-mountain-ash → rowan as a normal rename (CASCADE handles FKs)
-INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('tree-rowan-mountain-ash', 'rowan');
 UPDATE plant_species SET slug = 'rowan' WHERE slug = 'tree-rowan-mountain-ash';
+INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('tree-rowan-mountain-ash', 'rowan');
 
 -- (21) TWO-way merge: fruit-honeyberry-treeform + tree-honeyberry-treeform → honeyberry
 -- No canonical 'honeyberry' yet — pick fruit form as survivor.
@@ -1022,14 +1022,14 @@ UPDATE user_task_completions  SET plant_slug    = 'fruit-honeyberry-treeform' WH
 INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('tree-honeyberry-treeform', 'honeyberry');
 DELETE FROM plant_species WHERE slug = 'tree-honeyberry-treeform';
 -- Step B: rename fruit-honeyberry-treeform → honeyberry as a normal rename (CASCADE handles FKs)
-INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('fruit-honeyberry-treeform', 'honeyberry');
 UPDATE plant_species SET slug = 'honeyberry' WHERE slug = 'fruit-honeyberry-treeform';
+INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('fruit-honeyberry-treeform', 'honeyberry');
 
 -- (22) tree-hazel-treeform → hazelnut (the productive nut form)
 -- Treated as RENAME — if 'hazelnut' already exists, this will error on the slug UNIQUE
 -- constraint; in that case switch to the full merge pattern above.
-INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('tree-hazel-treeform', 'hazelnut');
 UPDATE plant_species SET slug = 'hazelnut' WHERE slug = 'tree-hazel-treeform';
+INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('tree-hazel-treeform', 'hazelnut');
 
 -- (23) tree-albizia-julibrissin + tree-silk-tree → silk-tree (Damian decision 2026-05-13).
 -- Pick tree-albizia-julibrissin as survivor — Latin-binomial slug suggests it carries
@@ -1053,8 +1053,8 @@ UPDATE user_task_completions  SET plant_slug    = 'tree-albizia-julibrissin' WHE
 INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('tree-silk-tree', 'silk-tree');
 DELETE FROM plant_species WHERE slug = 'tree-silk-tree';
 -- Step B: rename tree-albizia-julibrissin → silk-tree as a normal rename (CASCADE handles FKs)
-INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('tree-albizia-julibrissin', 'silk-tree');
 UPDATE plant_species SET slug = 'silk-tree' WHERE slug = 'tree-albizia-julibrissin';
+INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('tree-albizia-julibrissin', 'silk-tree');
 
 -- (24) fruit-elder → elder (defensive: rename if no canonical exists, merge if it does;
 -- Damian decision 2026-05-13).
@@ -1090,8 +1090,8 @@ ON CONFLICT (old_slug) DO NOTHING;
 -- (25) tree-aldershade-american → american-alder (Damian decision 2026-05-13 — typo of 'alder-shade').
 -- Likely Alnus rugosa (speckled alder) or Alnus serrulata; either way "american-alder"
 -- is the right common-name canonical; specific species detail stays in the row's scientific_name.
-INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('tree-aldershade-american', 'american-alder');
 UPDATE plant_species SET slug = 'american-alder' WHERE slug = 'tree-aldershade-american';
+INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('tree-aldershade-american', 'american-alder');
 
 -- =====================================================================
 -- §3 EDGE-CASE RESOLUTION LOG (all resolved 2026-05-13 by Damian)
