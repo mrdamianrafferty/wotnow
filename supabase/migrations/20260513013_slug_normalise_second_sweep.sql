@@ -223,9 +223,24 @@ INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('herb-savoury-win
 UPDATE plant_species SET slug = 'skullcap' WHERE slug = 'herb-skullcap';
 INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('herb-skullcap', 'skullcap');
 
--- herb-sorrel-common → sorrel (just "sorrel" is what UK gardeners call common sorrel)
-UPDATE plant_species SET slug = 'sorrel' WHERE slug = 'herb-sorrel-common';
+-- herb-sorrel-common → sorrel (MERGE — 'sorrel' canonical already exists)
+UPDATE cultivars              SET species_slug  = 'sorrel' WHERE species_slug  = 'herb-sorrel-common';
+UPDATE guild_blueprint        SET focal_slug    = 'sorrel' WHERE focal_slug    = 'herb-sorrel-common';
+UPDATE guild_blueprint_member SET plant_slug    = 'sorrel' WHERE plant_slug    = 'herb-sorrel-common';
+UPDATE plant_companions       SET plant_slug    = 'sorrel' WHERE plant_slug    = 'herb-sorrel-common';
+UPDATE plant_companions       SET companion_slug= 'sorrel' WHERE companion_slug= 'herb-sorrel-common';
+UPDATE plant_function         SET plant_slug    = 'sorrel' WHERE plant_slug    = 'herb-sorrel-common';
+UPDATE grow_user_plants SET species_slug = 'sorrel' WHERE species_slug = 'herb-sorrel-common'
+  AND NOT EXISTS (SELECT 1 FROM grow_user_plants g2 WHERE g2.user_id = grow_user_plants.user_id AND g2.species_slug = 'sorrel');
+DELETE FROM grow_user_plants WHERE species_slug = 'herb-sorrel-common';
+UPDATE grow_planting_calendar SET plant_slug    = 'sorrel' WHERE plant_slug    = 'herb-sorrel-common';
+UPDATE grow_nursery_inventory SET plant_slug    = 'sorrel' WHERE plant_slug    = 'herb-sorrel-common';
+UPDATE grow_seed_listings     SET plant_slug    = 'sorrel' WHERE plant_slug    = 'herb-sorrel-common';
+UPDATE grow_user_tasks        SET plant_slug    = 'sorrel' WHERE plant_slug    = 'herb-sorrel-common';
+UPDATE perenual_sync_logs     SET our_slug      = 'sorrel' WHERE our_slug      = 'herb-sorrel-common';
+UPDATE user_task_completions  SET plant_slug    = 'sorrel' WHERE plant_slug    = 'herb-sorrel-common';
 INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('herb-sorrel-common', 'sorrel');
+DELETE FROM plant_species WHERE slug = 'herb-sorrel-common';
 
 UPDATE plant_species SET slug = 'st-johns-wort' WHERE slug = 'herb-st-johns-wort';
 INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('herb-st-johns-wort', 'st-johns-wort');
@@ -455,9 +470,24 @@ INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('tree-japanese-ze
 
 -- tree-juneberry → see §2 (merge with fruit-serviceberry → serviceberry)
 
--- tree-juniper-common → juniper
-UPDATE plant_species SET slug = 'juniper' WHERE slug = 'tree-juniper-common';
+-- tree-juniper-common → juniper (MERGE — 'juniper' canonical already exists)
+UPDATE cultivars              SET species_slug  = 'juniper' WHERE species_slug  = 'tree-juniper-common';
+UPDATE guild_blueprint        SET focal_slug    = 'juniper' WHERE focal_slug    = 'tree-juniper-common';
+UPDATE guild_blueprint_member SET plant_slug    = 'juniper' WHERE plant_slug    = 'tree-juniper-common';
+UPDATE plant_companions       SET plant_slug    = 'juniper' WHERE plant_slug    = 'tree-juniper-common';
+UPDATE plant_companions       SET companion_slug= 'juniper' WHERE companion_slug= 'tree-juniper-common';
+UPDATE plant_function         SET plant_slug    = 'juniper' WHERE plant_slug    = 'tree-juniper-common';
+UPDATE grow_user_plants SET species_slug = 'juniper' WHERE species_slug = 'tree-juniper-common'
+  AND NOT EXISTS (SELECT 1 FROM grow_user_plants g2 WHERE g2.user_id = grow_user_plants.user_id AND g2.species_slug = 'juniper');
+DELETE FROM grow_user_plants WHERE species_slug = 'tree-juniper-common';
+UPDATE grow_planting_calendar SET plant_slug    = 'juniper' WHERE plant_slug    = 'tree-juniper-common';
+UPDATE grow_nursery_inventory SET plant_slug    = 'juniper' WHERE plant_slug    = 'tree-juniper-common';
+UPDATE grow_seed_listings     SET plant_slug    = 'juniper' WHERE plant_slug    = 'tree-juniper-common';
+UPDATE grow_user_tasks        SET plant_slug    = 'juniper' WHERE plant_slug    = 'tree-juniper-common';
+UPDATE perenual_sync_logs     SET our_slug      = 'juniper' WHERE our_slug      = 'tree-juniper-common';
+UPDATE user_task_completions  SET plant_slug    = 'juniper' WHERE plant_slug    = 'tree-juniper-common';
 INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('tree-juniper-common', 'juniper');
+DELETE FROM plant_species WHERE slug = 'tree-juniper-common';
 
 -- Katsura / lime / london plane
 UPDATE plant_species SET slug = 'katsura' WHERE slug = 'tree-katsura';
@@ -1025,11 +1055,24 @@ DELETE FROM plant_species WHERE slug = 'tree-honeyberry-treeform';
 UPDATE plant_species SET slug = 'honeyberry' WHERE slug = 'fruit-honeyberry-treeform';
 INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('fruit-honeyberry-treeform', 'honeyberry');
 
--- (22) tree-hazel-treeform → hazelnut (the productive nut form)
--- Treated as RENAME — if 'hazelnut' already exists, this will error on the slug UNIQUE
--- constraint; in that case switch to the full merge pattern above.
-UPDATE plant_species SET slug = 'hazelnut' WHERE slug = 'tree-hazel-treeform';
+-- (22) tree-hazel-treeform → hazelnut (MERGE — 'hazelnut' canonical already exists)
+UPDATE cultivars              SET species_slug  = 'hazelnut' WHERE species_slug  = 'tree-hazel-treeform';
+UPDATE guild_blueprint        SET focal_slug    = 'hazelnut' WHERE focal_slug    = 'tree-hazel-treeform';
+UPDATE guild_blueprint_member SET plant_slug    = 'hazelnut' WHERE plant_slug    = 'tree-hazel-treeform';
+UPDATE plant_companions       SET plant_slug    = 'hazelnut' WHERE plant_slug    = 'tree-hazel-treeform';
+UPDATE plant_companions       SET companion_slug= 'hazelnut' WHERE companion_slug= 'tree-hazel-treeform';
+UPDATE plant_function         SET plant_slug    = 'hazelnut' WHERE plant_slug    = 'tree-hazel-treeform';
+UPDATE grow_user_plants SET species_slug = 'hazelnut' WHERE species_slug = 'tree-hazel-treeform'
+  AND NOT EXISTS (SELECT 1 FROM grow_user_plants g2 WHERE g2.user_id = grow_user_plants.user_id AND g2.species_slug = 'hazelnut');
+DELETE FROM grow_user_plants WHERE species_slug = 'tree-hazel-treeform';
+UPDATE grow_planting_calendar SET plant_slug    = 'hazelnut' WHERE plant_slug    = 'tree-hazel-treeform';
+UPDATE grow_nursery_inventory SET plant_slug    = 'hazelnut' WHERE plant_slug    = 'tree-hazel-treeform';
+UPDATE grow_seed_listings     SET plant_slug    = 'hazelnut' WHERE plant_slug    = 'tree-hazel-treeform';
+UPDATE grow_user_tasks        SET plant_slug    = 'hazelnut' WHERE plant_slug    = 'tree-hazel-treeform';
+UPDATE perenual_sync_logs     SET our_slug      = 'hazelnut' WHERE our_slug      = 'tree-hazel-treeform';
+UPDATE user_task_completions  SET plant_slug    = 'hazelnut' WHERE plant_slug    = 'tree-hazel-treeform';
 INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('tree-hazel-treeform', 'hazelnut');
+DELETE FROM plant_species WHERE slug = 'tree-hazel-treeform';
 
 -- (23) tree-albizia-julibrissin + tree-silk-tree → silk-tree (Damian decision 2026-05-13).
 -- Pick tree-albizia-julibrissin as survivor — Latin-binomial slug suggests it carries
