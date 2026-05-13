@@ -275,8 +275,8 @@ INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('squash-yellow', 
 
 -- --- kale-* simple rename (kale-curly handled as MERGE in §2) ------
 -- kale-lacinato → cavolo-nero (UK gardeners know it as cavolo nero — the popular name)
-INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('kale-lacinato', 'cavolo-nero');
 UPDATE plant_species SET slug = 'cavolo-nero' WHERE slug = 'kale-lacinato';
+INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('kale-lacinato', 'cavolo-nero');
 INSERT INTO plant_species_aliases (old_slug, new_slug) VALUES ('kale-lacinato', 'lacinato-kale');  -- keep both aliases
 
 -- --- tree-* simple renames (the big batch) -------------------------
