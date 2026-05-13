@@ -135,15 +135,21 @@ async function getGrowDaisyUrls(baseUrl: string): Promise<SitemapUrl[]> {
   // Add species pages from the database
   let speciesUrls: SitemapUrl[] = [];
   try {
-    if (supabaseUrl && supabaseKey) {
-      const client = createClient(supabaseUrl, supabaseKey);
-      const { data } = await client
+    if (!supabaseUrl || !supabaseKey) {
+      console.warn('[Sitemap] Missing SUPABASE_SERVICE_ROLE_KEY or NEXT_PUBLIC_SUPABASE_URL — species omitted');
+    } else {
+      const client = createClient(supabaseUrl, supabaseKey, {
+        auth: { autoRefreshToken: false, persistSession: false },
+      });
+      const { data, error } = await client
         .from('plant_species')
         .select('slug, date_modified')
         .order('slug', { ascending: true })
         .limit(5000);
 
-      if (data) {
+      if (error) {
+        console.error('[Sitemap] Supabase species query error:', error);
+      } else if (data) {
         speciesUrls = data.map((row: { slug: string; date_modified: string | null }) => {
           const enPath = `/grow/species/${row.slug}`;
           return withAlternates(enPath, {
@@ -156,7 +162,7 @@ async function getGrowDaisyUrls(baseUrl: string): Promise<SitemapUrl[]> {
       }
     }
   } catch (e) {
-    console.error('[Sitemap] Species query failed (check SUPABASE_SERVICE_ROLE_KEY in preview env):', e);
+    console.error('[Sitemap] Species query threw:', e);
   }
 
   return [...staticUrls, ...speciesUrls];
