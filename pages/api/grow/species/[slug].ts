@@ -96,6 +96,13 @@ const BASE_SELECT = [
   'years_to_first_crop',
   'years_to_full_production',
   'cropping_timeline_note',
+  // SEO/GEO content columns
+  'rhs_hardiness_min',
+  'rhs_hardiness_max',
+  'howto_steps',
+  'faqs',
+  'date_published',
+  'date_modified',
   ...Object.keys(PLANT_SPECIES_LANGUAGE_FIELDS),
 ].join(',');
 
