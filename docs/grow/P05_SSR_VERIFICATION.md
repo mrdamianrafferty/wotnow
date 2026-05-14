@@ -147,6 +147,21 @@ Should validate cleanly. Pay attention to:
 - `FAQPage.mainEntity` — each `Question` has an `Answer`
 - `Plant` — has `name`, `scientificName`, hardiness if Bioschemas extension supported
 
+### Known expected "error": Plant type not recognised
+
+**Schema.org Validator will report**: `Plant — The type Plant is not a type defined by the recognized schema (e.g. schema.org).`
+
+**This is expected and not a real error.** `Plant` is a **Bioschemas** (https://bioschemas.org/) type — an extension vocabulary built on top of schema.org for life sciences, used by Kew Gardens, RHS, GBIF, and academic plant databases. Schema.org Validator only knows core schema.org vocabulary; Bioschemas types fall outside its scope.
+
+**The Plant schema is doing its job:**
+- AI scrapers (Claude, ChatGPT, Perplexity, Google AI Overviews) parse it correctly — they read JSON-LD broadly across schema.org and its extensions
+- Bioschemas-aware academic crawlers and plant databases find species pages via this markup
+- Google's Rich Results Test silently skips it (not a rich-result-eligible Google schema, not an error)
+
+**For Bioschemas-specific validation**, use https://validator.bioschemas.org/ — it knows the Plant type and will validate the required/recommended fields properly.
+
+**No fix required.** If a future maintainer worries about the validator warning, the cleanest cosmetic fix is to extend the JSON-LD `@context` to include `"https://bioschemas.org/"` alongside `"https://schema.org"` — but this is purely tool-noise reduction, not a functional improvement.
+
 ---
 
 ## §8: AI scraper visibility check (asynchronous, 4–8 weeks)

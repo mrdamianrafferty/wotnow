@@ -60,32 +60,59 @@ If any errors surface, flag to Code before moving to Step 2.
 
 **Authoritative reference**: https://www.indexnow.org/faq#setup-and-installation — official setup FAQ from the IndexNow consortium. Covers key-hosting edge cases, alternative endpoints (Bing's direct endpoint, Yandex's), and what to do for multi-host sites.
 
-### 2a. Generate a key and host it as a file
+### 2a. Key + payload — already set up in the repo
 
-The key is any alphanumeric string 8–128 characters. Generate one:
+Cowork has done this part. You should find:
+
+- **Key file**: `public/a7c9e4b2f1d8a3e6c5b9d2f4a8e1c7b5.txt`
+- **Key content**: `a7c9e4b2f1d8a3e6c5b9d2f4a8e1c7b5` (32-character hex)
+- **Will be served at**: `https://grow.godaisy.io/a7c9e4b2f1d8a3e6c5b9d2f4a8e1c7b5.txt` once committed and Vercel deployed
+- **Payload file**: `data/grow-content/indexnow-payload.json` (120 species URLs, key, keyLocation — ready to submit)
+- **Submission script**: `scripts/submit-indexnow.sh` (verifies key file is live, validates payload, submits, parses response)
+
+Before submitting, the key file needs to land in production:
 
 ```bash
-openssl rand -hex 16
+git add public/a7c9e4b2f1d8a3e6c5b9d2f4a8e1c7b5.txt data/grow-content/indexnow-payload.json scripts/submit-indexnow.sh docs/grow/SEARCH_ENGINE_SUBMISSION.md
+git commit -m "feat: add IndexNow key + 120-URL payload for search engine submission"
+git push
 ```
 
-Example output: `7a8b9c0d1e2f3a4b5c6d7e8f9a0b1c2d`
+Wait ~1 minute for Vercel to deploy, then verify the key file is live:
 
-**Host the key as a file** at the root of the site so IndexNow can verify ownership. Two options:
+```bash
+curl -s https://grow.godaisy.io/a7c9e4b2f1d8a3e6c5b9d2f4a8e1c7b5.txt
+```
 
-- **Option A (preferred)**: Add `public/<your-key>.txt` to the Next.js repo with the key as the file content. Single character of content per line is fine. Commit and let Vercel deploy.
-- **Option B (quicker)**: Vercel rewrites — add a rewrite rule from `/<your-key>.txt` to a static endpoint serving the key string.
+Expected output: `a7c9e4b2f1d8a3e6c5b9d2f4a8e1c7b5` (the key on a single line).
 
-Verify the key is accessible: `curl -s https://grow.godaisy.io/<your-key>.txt` should return the key string.
+### 2b. Run the submission script
 
-### 2b. Push all 120 species URLs in a single API call
+The simplest path — script handles everything (key verification, payload validation, submission, response parsing):
 
-Save the payload as `/tmp/indexnow-payload.json` (replace `<YOUR-KEY>` with your actual key):
+```bash
+./scripts/submit-indexnow.sh
+```
+
+If you'd rather see the underlying mechanics, the equivalent manual command is below.
+
+---
+
+**Manual submission** (equivalent to the script):
+
+```bash
+curl -X POST -H "Content-Type: application/json; charset=utf-8" \
+  --data @data/grow-content/indexnow-payload.json \
+  https://api.indexnow.org/indexnow
+```
+
+The payload file (`data/grow-content/indexnow-payload.json`) is already pre-populated with the key, keyLocation, and all 120 species URLs. Below is the structure reproduced for reference:
 
 ```json
 {
   "host": "grow.godaisy.io",
-  "key": "<YOUR-KEY>",
-  "keyLocation": "https://grow.godaisy.io/<YOUR-KEY>.txt",
+  "key": "a7c9e4b2f1d8a3e6c5b9d2f4a8e1c7b5",
+  "keyLocation": "https://grow.godaisy.io/a7c9e4b2f1d8a3e6c5b9d2f4a8e1c7b5.txt",
   "urlList": [
     "https://grow.godaisy.io/grow/species/alchemilla-mollis",
     "https://grow.godaisy.io/grow/species/apple",
