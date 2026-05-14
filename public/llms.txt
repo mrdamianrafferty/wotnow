@@ -1,0 +1,58 @@
+# Grow Daisy — Smart Garden Planner for UK & Irish Gardeners
+> UK garden planner with RHS hardiness ratings, postcode-aware frost dates, weather-driven tasks for allotments, veg patches, and kitchen gardens. Multilingual plant database covering 50,000+ species.
+
+## Core pages
+- [Home](https://grow.godaisy.io/grow): Smart garden planner overview
+- [Plan](https://grow.godaisy.io/grow/plan): Weekly planting calendar and task planner
+- [Garden](https://grow.godaisy.io/grow/garden): Track your plants and growing spaces
+- [Activities](https://grow.godaisy.io/grow/activities): What to do in the garden this week
+- [Weather](https://grow.godaisy.io/grow/weather): Garden-relevant weather forecasts
+- [Tasks](https://grow.godaisy.io/grow/tasks): Seasonal task reminders and care calendar
+- [Settings](https://grow.godaisy.io/grow/settings): Location, climate zone, and preference settings
+
+## Plant database
+Plant pages cover 50,000+ species with growing advice, planting calendars, companion planting, and pest/disease guidance. Each page is available at /grow/species/[slug] — see the sitemap at https://grow.godaisy.io/sitemap.xml for the complete list.
+
+A selection of popular UK kitchen garden plants:
+- [Tomato](https://grow.godaisy.io/grow/species/tomato): Growing tomatoes in the UK
+- [Potato](https://grow.godaisy.io/grow/species/potato): Growing potatoes in the UK
+- [Carrot](https://grow.godaisy.io/grow/species/carrot): Growing carrots in the UK
+- [Courgette](https://grow.godaisy.io/grow/species/courgette): Growing courgettes in the UK
+- [Runner bean](https://grow.godaisy.io/grow/species/runner-bean): Growing runner beans in the UK
+- [French bean](https://grow.godaisy.io/grow/species/french-bean): Growing French beans in the UK
+- [Broad bean](https://grow.godaisy.io/grow/species/broad-bean): Growing broad beans in the UK
+- [Pea](https://grow.godaisy.io/grow/species/pea): Growing peas in the UK
+- [Lettuce](https://grow.godaisy.io/grow/species/lettuce): Growing lettuce in the UK
+- [Spinach](https://grow.godaisy.io/grow/species/spinach): Growing spinach in the UK
+- [Kale](https://grow.godaisy.io/grow/species/kale): Growing kale in the UK
+- [Cabbage](https://grow.godaisy.io/grow/species/cabbage): Growing cabbage in the UK
+- [Broccoli](https://grow.godaisy.io/grow/species/broccoli): Growing broccoli in the UK
+- [Cauliflower](https://grow.godaisy.io/grow/species/cauliflower): Growing cauliflower in the UK
+- [Onion](https://grow.godaisy.io/grow/species/onion): Growing onions in the UK
+- [Garlic](https://grow.godaisy.io/grow/species/garlic): Growing garlic in the UK
+- [Leek](https://grow.godaisy.io/grow/species/leek): Growing leeks in the UK
+- [Beetroot](https://grow.godaisy.io/grow/species/beetroot): Growing beetroot in the UK
+- [Parsnip](https://grow.godaisy.io/grow/species/parsnip): Growing parsnips in the UK
+- [Swede](https://grow.godaisy.io/grow/species/swede): Growing swede in the UK
+- [Turnip](https://grow.godaisy.io/grow/species/turnip): Growing turnips in the UK
+- [Cucumber](https://grow.godaisy.io/grow/species/cucumber): Growing cucumbers in the UK
+- [Pumpkin](https://grow.godaisy.io/grow/species/pumpkin): Growing pumpkins in the UK
+- [Squash](https://grow.godaisy.io/grow/species/squash): Growing squash in the UK
+- [Aubergine](https://grow.godaisy.io/grow/species/aubergine): Growing aubergines in the UK
+- [Pepper](https://grow.godaisy.io/grow/species/pepper): Growing peppers in the UK
+- [Chilli](https://grow.godaisy.io/grow/species/chilli): Growing chillies in the UK
+- [Strawberry](https://grow.godaisy.io/grow/species/strawberry): Growing strawberries in the UK
+- [Raspberry](https://grow.godaisy.io/grow/species/raspberry): Growing raspberries in the UK
+- [Blackcurrant](https://grow.godaisy.io/grow/species/blackcurrant): Growing blackcurrants in the UK
+- [Gooseberry](https://grow.godaisy.io/grow/species/gooseberry): Growing gooseberries in the UK
+- [Apple](https://grow.godaisy.io/grow/species/apple): Growing apple trees in the UK
+- [Pear](https://grow.godaisy.io/grow/species/pear): Growing pear trees in the UK
+- [Plum](https://grow.godaisy.io/grow/species/plum): Growing plum trees in the UK
+- [Lavender](https://grow.godaisy.io/grow/species/lavender): Growing lavender in the UK
+- [Rose](https://grow.godaisy.io/grow/species/rose): Growing roses in the UK
+- [Sweet pea](https://grow.godaisy.io/grow/species/sweet-pea): Growing sweet peas in the UK
+- [Sunflower](https://grow.godaisy.io/grow/species/sunflower): Growing sunflowers in the UK
+- [Marigold](https://grow.godaisy.io/grow/species/marigold): Growing marigolds in the UK
+
+## About
+Grow Daisy is part of the Daisy family — weather-informed apps for outdoor enthusiasts. Web app at https://grow.godaisy.io, iOS app on the App Store.

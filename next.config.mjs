@@ -185,26 +185,26 @@ const nextConfig = {
         source: '/',
         has: [{ type: 'host', value: 'grow.godaisy.io' }],
         destination: '/grow',
-        permanent: false,
+        permanent: true,
       },
       {
         source: '/',
         has: [{ type: 'host', value: 'www.grow.godaisy.io' }],
         destination: '/grow',
-        permanent: false,
+        permanent: true,
       },
       // fishfindr.eu root → /findr
       {
         source: '/',
         has: [{ type: 'host', value: 'fishfindr.eu' }],
         destination: '/findr',
-        permanent: false,
+        permanent: true,
       },
       {
         source: '/',
         has: [{ type: 'host', value: 'www.fishfindr.eu' }],
         destination: '/findr',
-        permanent: false,
+        permanent: true,
       },
     ];
   },

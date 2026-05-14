@@ -407,6 +407,7 @@ const [cultivarSearchQuery, setCultivarSearchQuery] = useState('');
 
     setListVariant('category');
     setIsFetching(true);
+    setRhsFilter(null);
     const currentRequestId = ++requestIdRef.current;
 
     api.searchPlantSpecies({ category: selectedCategory, limit: 40 })
@@ -479,9 +480,30 @@ const [cultivarSearchQuery, setCultivarSearchQuery] = useState('');
     };
   }, [cultivarSearchQuery, open, step, isCustomPlant, selectedSpecies, hasCultivarSearch]);
 
+  // RHS filter facet — only shown when at least one result has RHS data populated
+  const [rhsFilter, setRhsFilter] = useState<string | null>(null);
+  const rhsZonesPresent = useMemo(() => {
+    if (listVariant !== 'category') return [];
+    const zones = new Set<string>();
+    for (const p of categoryResults) {
+      if (p.rhsHardinessMin) zones.add(p.rhsHardinessMin);
+      if (p.rhsHardinessMax && p.rhsHardinessMax !== p.rhsHardinessMin) zones.add(p.rhsHardinessMax);
+    }
+    return ['H1a','H1b','H1c','H2','H3','H4','H5','H6','H7'].filter((z) => zones.has(z));
+  }, [categoryResults, listVariant]);
+
   const plantList = useMemo(() => {
-    return listVariant === 'category' ? categoryResults : searchResults;
-  }, [categoryResults, searchResults, listVariant]);
+    const base = listVariant === 'category' ? categoryResults : searchResults;
+    if (!rhsFilter || listVariant !== 'category') return base;
+    const RHS_ORDER = ['H1a','H1b','H1c','H2','H3','H4','H5','H6','H7'];
+    const filterIdx = RHS_ORDER.indexOf(rhsFilter);
+    return base.filter((p) => {
+      if (!p.rhsHardinessMin) return false;
+      const minIdx = RHS_ORDER.indexOf(p.rhsHardinessMin);
+      const maxIdx = RHS_ORDER.indexOf(p.rhsHardinessMax ?? p.rhsHardinessMin);
+      return filterIdx >= minIdx && filterIdx <= maxIdx;
+    });
+  }, [categoryResults, searchResults, listVariant, rhsFilter]);
 
   const handleSelectSpecies = (species: PlantSpecies) => {
     setSelectedSpecies(species);
@@ -1109,6 +1131,39 @@ const cultivarIdForStorage = useMemo(() => {
                     </button>
                   ))}
                 </div>
+
+                {/* RHS hardiness filter — hidden until Cowork populates RHS data */}
+                {rhsZonesPresent.length > 0 && (
+                  <div className="space-y-1">
+                    <p className="text-xs text-muted-foreground font-medium">Filter by RHS hardiness</p>
+                    <div className="flex flex-wrap gap-1.5">
+                      {rhsZonesPresent.map((zone) => (
+                        <button
+                          key={zone}
+                          type="button"
+                          onClick={() => setRhsFilter((cur) => (cur === zone ? null : zone))}
+                          className={`px-2.5 py-1 rounded-full border text-xs transition-colors ${
+                            rhsFilter === zone
+                              ? 'border-emerald-600 bg-emerald-50 text-emerald-700 font-medium'
+                              : 'border-border hover:border-emerald-300'
+                          }`}
+                          aria-pressed={rhsFilter === zone}
+                        >
+                          {zone}
+                        </button>
+                      ))}
+                      {rhsFilter && (
+                        <button
+                          type="button"
+                          onClick={() => setRhsFilter(null)}
+                          className="px-2.5 py-1 rounded-full border text-xs text-muted-foreground hover:border-gray-400 transition-colors"
+                        >
+                          Clear
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                )}
 
                 {selectedCategory && (
                   <div className="rounded-lg border bg-muted/40 p-3 flex items-start gap-2 text-sm text-muted-foreground">

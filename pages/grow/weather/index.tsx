@@ -18,14 +18,14 @@ export default function GrowWeatherPage() {
         <meta property="og:title" content="Garden Weather Conditions - Grow Daisy" />
         <meta property="og:description" content="Track weather conditions and optimal gardening windows for your location." />
         <meta property="og:type" content="website" />
-        <meta property="og:url" content="https://godaisy.io/grow/weather" />
+        <meta property="og:url" content="https://grow.godaisy.io/grow/weather" />
 
         {/* Twitter Card */}
         <meta name="twitter:card" content="summary" />
         <meta name="twitter:title" content="Garden Weather Conditions - Grow Daisy" />
         <meta name="twitter:description" content="Track weather conditions and optimal gardening windows for your location." />
 
-        <link rel="canonical" href="https://godaisy.io/grow/weather" />
+        <link rel="canonical" href="https://grow.godaisy.io/grow/weather" />
       </Head>
       <main className="container mx-auto px-4 py-8">
         <WeatherPage />
