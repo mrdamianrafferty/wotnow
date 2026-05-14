@@ -145,7 +145,7 @@ describe('BED_TYPES', () => {
     expect(BED_TYPES.other).toBe('Other');
   });
 
-  it('has exactly 6 types', () => {
-    expect(Object.keys(BED_TYPES)).toHaveLength(6);
+  it('has exactly 8 types', () => {
+    expect(Object.keys(BED_TYPES)).toHaveLength(8);
   });
 });
