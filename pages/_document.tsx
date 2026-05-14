@@ -18,6 +18,12 @@ export default class MyDocument extends Document {
   {/* Preconnect to Supabase for faster auth and data fetching */}
   <link rel="preconnect" href="https://swmviqpxetwziqxhzldh.supabase.co" crossOrigin="anonymous" />
 
+  {/* Google Search Console verification — grow.godaisy.io property */}
+  {/* Harmless on other domains served by this codebase (godaisy.io, findr); */}
+  {/* Search Console only checks the specific property it's verifying. */}
+  {/* Add additional <meta name="google-site-verification" .../> tags here when verifying other properties. */}
+  <meta name="google-site-verification" content="ADOaxDfzCoVFJKP8GUU5tVAAXwmhDhTa1kSAqsNm3NE" />
+
   {/* Favicons and apple-touch-icon are set dynamically per-app in _app.tsx */}
   {/* (Go Daisy, Grow Daisy, Findr each have their own favicon set) */}
 
