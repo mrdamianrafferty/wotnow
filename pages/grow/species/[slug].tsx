@@ -1,7 +1,9 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
+import type { GetServerSideProps } from "next";
 import Head from "next/head";
 import Image from "next/image";
 import { useRouter } from "next/router";
+import { getSupabaseServerClient } from "@/lib/supabase/serverClient";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -27,7 +29,7 @@ import { useScrolledPast } from "@/hooks/useScrolledPast";
 import { truncateLocationName } from "@/lib/utils/truncateLocationName";
 
 import { getPlantImage, PLANT_IMAGE_MAP } from "@/lib/grow/plantImages";
-import type { PlantSpecies, FaqItem } from "@/lib/grow/species";
+import { serializePlantSpecies, type PlantSpecies, type PlantSpeciesRow, type FaqItem } from "@/lib/grow/species";
 import { api } from "@/lib/grow/api";
 import { JobsTimeline } from "@/components/grow/JobsTimeline";
 import { ArticleJsonLd, BreadcrumbJsonLd, FAQJsonLd, HowToJsonLd, PlantJsonLd } from "@/components/JsonLd";
@@ -344,7 +346,73 @@ function SpeciesFaqItem({ faq }: { faq: FaqItem }) {
   );
 }
 
-export default function GrowSpeciesPage() {
+const SSR_SELECT = [
+  'slug', 'name', 'scientific_name', 'description', 'advice',
+  'category', 'sun_requirements', 'soil_type', 'plant_size',
+  'usda_zone_min', 'usda_zone_max', 'image_key', 'name_en_aliases', 'search_terms',
+  'perenual_id', 'perenual_family', 'perenual_other_names', 'growth_rate', 'maintenance',
+  'watering', 'watering_general_benchmark', 'watering_period', 'drought_tolerant',
+  'salt_tolerant', 'thorny', 'invasive', 'tropical', 'indoor', 'care_level',
+  'dimension', 'dimensions', 'average_height_cm', 'maximum_height_cm',
+  'average_spread_cm', 'maximum_spread_cm', 'sunlight', 'soil',
+  'hardiness_min', 'hardiness_max', 'hardiness_location',
+  'flowers', 'flowering_season', 'flower_color', 'cones', 'fruits',
+  'edible_fruit', 'edible_fruit_taste_profile', 'fruit_nutritional_value',
+  'fruit_color', 'harvest_season', 'harvest_method', 'leaf', 'leaf_color',
+  'edible_leaf', 'edible_leaf_taste_profile', 'leaf_nutritional_value',
+  'cuisine', 'cuisine_list', 'medicinal', 'medicinal_use', 'medicinal_method',
+  'poisonous_to_humans', 'poisonous_to_pets', 'poison_effects_to_humans',
+  'poison_effects_to_pets', 'poison_to_humans_cure', 'poison_to_pets_cure',
+  'attracts', 'pest_susceptibility', 'pest_susceptibility_api',
+  'pest_resilience_score', 'pest_resilience_note', 'propagation', 'seeds',
+  'perenual_default_image', 'perenual_other_images', 'care_guides', 'perenual_last_synced_at',
+  'companions_with', 'companions_avoid', 'rotation_group',
+  'days_to_maturity_min', 'days_to_maturity_max', 'maturity_basis', 'maturity_notes',
+  'years_to_first_crop', 'years_to_full_production', 'cropping_timeline_note',
+  'rhs_hardiness_min', 'rhs_hardiness_max',
+  'howto_steps', 'faqs', 'date_published', 'date_modified',
+  'name_fr', 'name_es', 'name_it', 'name_de', 'name_pt', 'name_nl', 'name_pl',
+].join(', ');
+
+type GrowSpeciesProps = {
+  initialSpecies: PlantSpecies | null;
+};
+
+export const getServerSideProps: GetServerSideProps<GrowSpeciesProps> = async (ctx) => {
+  const slug = ctx.params?.slug;
+  if (typeof slug !== 'string') return { notFound: true };
+
+  const supabase = getSupabaseServerClient();
+
+  // Alias redirect: permanent 308 to canonical slug before serving any content
+  const { data: aliasRow } = await supabase
+    .from('plant_species_aliases')
+    .select('new_slug')
+    .eq('old_slug', slug)
+    .single();
+
+  if (aliasRow?.new_slug) {
+    return {
+      redirect: { destination: `/grow/species/${aliasRow.new_slug}`, permanent: true },
+    };
+  }
+
+  const { data, error } = await supabase
+    .from('plant_species')
+    .select(SSR_SELECT)
+    .eq('slug', slug)
+    .single();
+
+  if (error || !data) {
+    // Not in plant_species — may be a custom/community species. CSR will handle it.
+    return { props: { initialSpecies: null } };
+  }
+
+  const species = serializePlantSpecies(data as unknown as PlantSpeciesRow);
+  return { props: { initialSpecies: species } };
+};
+
+export default function GrowSpeciesPage({ initialSpecies }: GrowSpeciesProps) {
   const router = useRouter();
   const slugParam = router.query.slug;
   const slug = typeof slugParam === "string" ? slugParam : "";
@@ -374,8 +442,9 @@ export default function GrowSpeciesPage() {
   const [showLocationDialog, setShowLocationDialog] = useState(false);
   const [locationVersion, setLocationVersion] = useState(0); // Trigger refetch when location changes
 
-  const [species, setSpecies] = useState<PlantSpecies | null>(null);
-  const [isLoadingSpecies, setIsLoadingSpecies] = useState(false);
+  const hasSsrData = Boolean(initialSpecies);
+  const [species, setSpecies] = useState<PlantSpecies | null>(initialSpecies ?? null);
+  const [isLoadingSpecies, setIsLoadingSpecies] = useState(!initialSpecies);
 
   // Wikipedia fallback for species without descriptions
   const [wikiSummary, setWikiSummary] = useState<{
@@ -498,7 +567,7 @@ export default function GrowSpeciesPage() {
   // - As an MVP, we call existing APIs without requiring extra query params.
 
   useEffect(() => {
-    if (!slug) return;
+    if (!slug || hasSsrData) return;
     let cancelled = false;
 
     setIsLoadingSpecies(true);
@@ -529,7 +598,7 @@ export default function GrowSpeciesPage() {
     return () => {
       cancelled = true;
     };
-  }, [slug, router]);
+  }, [slug, hasSsrData, router]);
 
   // Fetch Wikipedia summary if species has no description but has scientific name
   useEffect(() => {
