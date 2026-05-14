@@ -65,7 +65,8 @@ export async function middleware(req: NextRequest) {
                     url.pathname.match(/^\/sw\.js/);
   const isSEOFile = url.pathname === '/robots.txt' ||
                     url.pathname === '/sitemap.xml' ||
-                    url.pathname === '/sitemap-0.xml';
+                    url.pathname === '/sitemap-0.xml' ||
+                    url.pathname === '/llms.txt';
   const isStaticAsset = url.pathname.startsWith('/webp/') ||
                         url.pathname.startsWith('/images/') ||
                         url.pathname.startsWith('/weather-icons/') ||

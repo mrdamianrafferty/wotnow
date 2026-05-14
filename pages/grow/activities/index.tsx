@@ -12,7 +12,7 @@ export default function GrowActivitiesPage() {
           name="description"
           content="Track and manage your garden activities, tasks, and accomplishments."
         />
-        <link rel="canonical" href="https://godaisy.io/grow/activities" />
+        <link rel="canonical" href="https://grow.godaisy.io/grow/activities" />
       </Head>
       <main className="container mx-auto px-4 py-8">
         <ActivitiesPage userInterests={null} />

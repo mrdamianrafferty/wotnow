@@ -13,6 +13,7 @@ import { UserPreferencesProvider } from '../context/UserPreferencesContext'
 import { LanguageProvider } from '../context/LanguageContext'
 import { AuthProvider } from '../context/AuthContext'
 import { useEffect, useState } from 'react'
+import { useRouter } from 'next/router'
 import { UnifiedLocationProvider } from '../context/UnifiedLocationContext'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { OfflineIndicator } from '../components/OfflineIndicator'
@@ -81,6 +82,8 @@ type PagePropsWithTheme = {
 };
 
 export default function App({ Component, pageProps }: AppProps<PagePropsWithTheme>) {
+  const router = useRouter();
+
   // Create a client instance for React Query
   const [queryClient] = useState(() => new QueryClient({
     defaultOptions: {
@@ -94,7 +97,11 @@ export default function App({ Component, pageProps }: AppProps<PagePropsWithThem
   // Domain-based favicon and manifest selection
   // Detect app context immediately (client-side only, but before first render completes)
   const [appContext, setAppContext] = useState<'findr' | 'grow' | 'godaisy'>(() => {
-    if (typeof window === 'undefined') return 'godaisy';
+    if (typeof window === 'undefined') {
+      if (router.pathname.startsWith('/findr')) return 'findr';
+      if (router.pathname.startsWith('/grow')) return 'grow';
+      return 'godaisy';
+    }
     const hostname = window.location.hostname;
     const pathname = window.location.pathname;
     if (hostname.includes('fishfindr.eu') || pathname.startsWith('/findr')) return 'findr';
@@ -188,11 +195,19 @@ export default function App({ Component, pageProps }: AppProps<PagePropsWithThem
                 <link rel="icon" type="image/svg+xml" href={isFindr ? "/findr-favicon-v2/favicon.svg" : isGrow ? "/growdaisy-favicon/favicon.svg" : "/godaisy-favicon/favicon.svg"} />
                 <link rel="icon" type="image/png" sizes="96x96" href={isFindr ? "/findr-favicon-v2/favicon-96x96.png" : isGrow ? "/growdaisy-favicon/favicon-96x96.png" : "/godaisy-favicon/favicon-96x96.png"} />
                 <link rel="icon" type="image/x-icon" href={isFindr ? "/findr-favicon-v2/favicon.ico" : isGrow ? "/growdaisy-favicon/favicon.ico" : "/godaisy-favicon/favicon.ico"} />
+
+                {/* Smart App Banner — shows "Open in App Store" on iOS Safari when app not installed. */}
+                {isGrow && (
+                  <meta
+                    name="apple-itunes-app"
+                    content={`app-id=6756812661, app-argument=${typeof window !== 'undefined' ? window.location.href : 'https://grow.godaisy.io/grow'}`}
+                  />
+                )}
                 </Head>
 
                 {/* JSON-LD Structured Data for SEO */}
-                <OrganizationJsonLd />
-                <WebsiteJsonLd />
+                <OrganizationJsonLd app={appContext} />
+                <WebsiteJsonLd app={appContext} />
 
                 {/* Apply DaisyUI theme globally. If you later store theme in context, bind it here. */}
                 <div data-theme={theme} className={`${roboto.variable} ${playfair.variable} ${dmSans.variable} min-h-screen bg-base-100 text-base-content`} style={{ fontFamily: 'var(--font-roboto), system-ui, -apple-system, Segoe UI, sans-serif' }}>

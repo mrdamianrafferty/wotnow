@@ -96,6 +96,13 @@ const BASE_SELECT = [
   'years_to_first_crop',
   'years_to_full_production',
   'cropping_timeline_note',
+  // SEO/GEO content columns
+  'rhs_hardiness_min',
+  'rhs_hardiness_max',
+  'howto_steps',
+  'faqs',
+  'date_published',
+  'date_modified',
   ...Object.keys(PLANT_SPECIES_LANGUAGE_FIELDS),
 ].join(',');
 
@@ -304,6 +311,29 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   if (error && error.code !== 'PGRST116') {
     console.error('Failed to query plant_species by slug:', error);
     return res.status(500).json({ error: 'Failed to load plant species' });
+  }
+
+  // Alias lookup: if still not found, check plant_species_aliases for a canonical redirect.
+  // The client-side species page already handles canonical mismatches with router.replace,
+  // so returning the canonical row is enough — no HTTP redirect needed here.
+  if (!data) {
+    const { data: alias } = await supabase
+      .from('plant_species_aliases')
+      .select('new_slug')
+      .eq('old_slug', normalizedSlug)
+      .single();
+
+    if (alias?.new_slug) {
+      const { data: canonical, error: canonicalError } = await supabase
+        .from('plant_species')
+        .select(BASE_SELECT)
+        .eq('slug', alias.new_slug)
+        .single();
+
+      if (!canonicalError && canonical) {
+        data = canonical;
+      }
+    }
   }
 
   if (!data) {

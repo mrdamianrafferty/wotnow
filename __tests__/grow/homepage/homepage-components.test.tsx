@@ -281,7 +281,7 @@ describe('GardenPulse', () => {
     render(<GardenPulse weatherData={data} isPremium={false} seasonal={SEASONAL} t={identity} />);
     expect(screen.getByText('Garden Pulse')).toBeInTheDocument();
     expect(screen.getByText(/14°C/)).toBeInTheDocument();
-    expect(screen.getByText(/2\.5mm rain/)).toBeInTheDocument();
+    expect(screen.getByText(/Mild and damp today/)).toBeInTheDocument();
   });
 
   it('shows soil insight for premium users with warm soil', () => {
@@ -302,7 +302,7 @@ describe('GardenPulse', () => {
     });
 
     render(<GardenPulse weatherData={data} isPremium={true} seasonal={SEASONAL} t={identity} />);
-    expect(screen.getByText(/Soil is workable at 10°C/)).toBeInTheDocument();
+    expect(screen.getByText(/Soil at 10°C/)).toBeInTheDocument();
   });
 
   it('shows upsell for non-premium users with soil data', () => {
@@ -311,7 +311,7 @@ describe('GardenPulse', () => {
     });
 
     render(<GardenPulse weatherData={data} isPremium={false} seasonal={SEASONAL} t={identity} />);
-    expect(screen.getByText(/Soil insights available with Bloom/)).toBeInTheDocument();
+    expect(screen.getByText(/Soil temperature insights available with Bloom/)).toBeInTheDocument();
   });
 
   it('renders nothing when forecast is empty', () => {

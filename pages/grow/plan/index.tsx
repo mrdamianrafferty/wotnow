@@ -18,14 +18,14 @@ export default function GrowPlanPage() {
         <meta property="og:title" content="Garden Planning Calendar - Grow Daisy" />
         <meta property="og:description" content="View your personalized planting calendar and seasonal garden timeline." />
         <meta property="og:type" content="website" />
-        <meta property="og:url" content="https://godaisy.io/grow/plan" />
+        <meta property="og:url" content="https://grow.godaisy.io/grow/plan" />
 
         {/* Twitter Card */}
         <meta name="twitter:card" content="summary" />
         <meta name="twitter:title" content="Garden Planning Calendar - Grow Daisy" />
         <meta name="twitter:description" content="View your personalized planting calendar and seasonal garden timeline." />
 
-        <link rel="canonical" href="https://godaisy.io/grow/plan" />
+        <link rel="canonical" href="https://grow.godaisy.io/grow/plan" />
       </Head>
       <main className="container mx-auto px-4 py-8">
         <PlanPage />

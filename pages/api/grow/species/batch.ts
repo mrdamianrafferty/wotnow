@@ -156,6 +156,12 @@ function serializeCustomSpecies(row: CustomSpeciesRow): PlantSpecies {
     yearsToFirstCrop: null,
     yearsToFullProduction: null,
     croppingTimelineNote: null,
+    rhsHardinessMin: null,
+    rhsHardinessMax: null,
+    howtoSteps: null,
+    faqs: null,
+    datePublished: null,
+    dateModified: null,
   };
 }
 

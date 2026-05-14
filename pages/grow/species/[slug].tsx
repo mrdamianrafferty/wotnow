@@ -27,9 +27,11 @@ import { useScrolledPast } from "@/hooks/useScrolledPast";
 import { truncateLocationName } from "@/lib/utils/truncateLocationName";
 
 import { getPlantImage, PLANT_IMAGE_MAP } from "@/lib/grow/plantImages";
-import type { PlantSpecies } from "@/lib/grow/species";
+import type { PlantSpecies, FaqItem } from "@/lib/grow/species";
 import { api } from "@/lib/grow/api";
 import { JobsTimeline } from "@/components/grow/JobsTimeline";
+import { ArticleJsonLd, BreadcrumbJsonLd, FAQJsonLd, HowToJsonLd, PlantJsonLd } from "@/components/JsonLd";
+import { HreflangLinks } from "@/components/HreflangLinks";
 
 type PlantingWindow = {
   plantSlug: string;
@@ -318,6 +320,28 @@ function nextActionableWindows(
   };
 
   return [...all].sort((a, b) => score(a) - score(b)).slice(0, 6);
+}
+
+function SpeciesFaqItem({ faq }: { faq: FaqItem }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <div className="py-3">
+      <button
+        type="button"
+        className="flex w-full items-start justify-between gap-2 text-left"
+        onClick={() => setOpen((v) => !v)}
+        aria-expanded={open}
+      >
+        <span className="text-sm font-medium text-foreground">{faq.question}</span>
+        <ChevronDown
+          className={`h-4 w-4 flex-shrink-0 text-muted-foreground transition-transform ${open ? "rotate-180" : ""}`}
+        />
+      </button>
+      {open && (
+        <p className="mt-2 text-sm text-muted-foreground">{faq.answer}</p>
+      )}
+    </div>
+  );
 }
 
 export default function GrowSpeciesPage() {
@@ -812,13 +836,58 @@ export default function GrowSpeciesPage() {
         {species?.slug ? (
           <link
             rel="canonical"
-            href={`https://godaisy.io/grow/species/${species.slug}`}
+            href={`https://grow.godaisy.io/grow/species/${species.slug}`}
           />
         ) : null}
         <meta property="og:title" content={title} />
         <meta property="og:description" content={description} />
         <meta property="og:type" content="website" />
+        {heroFullSrc && <meta property="og:image" content={heroFullSrc.startsWith('/') ? `https://grow.godaisy.io${heroFullSrc}` : heroFullSrc} />}
       </Head>
+      {species?.slug && <HreflangLinks enPath={`/grow/species/${species.slug}`} />}
+
+      {/* JSON-LD structured data — renders gracefully when content columns are null */}
+      {species && (
+        <>
+          <BreadcrumbJsonLd
+            items={[
+              { name: 'Grow Daisy', url: 'https://grow.godaisy.io/grow' },
+              { name: 'Plants', url: 'https://grow.godaisy.io/grow/garden' },
+              { name: species.name, url: `https://grow.godaisy.io/grow/species/${species.slug}` },
+            ]}
+          />
+          <ArticleJsonLd
+            title={title}
+            description={description}
+            image={heroFullSrc ? (heroFullSrc.startsWith('/') ? `https://grow.godaisy.io${heroFullSrc}` : heroFullSrc) : undefined}
+            datePublished={species.datePublished ?? '2024-01-01'}
+            dateModified={species.dateModified ?? species.datePublished ?? '2024-01-01'}
+            author="Grow Daisy"
+            url={`https://grow.godaisy.io/grow/species/${species.slug}`}
+          />
+          <PlantJsonLd
+            name={species.name}
+            scientificName={species.scientificName}
+            description={species.description}
+            image={heroFullSrc ? (heroFullSrc.startsWith('/') ? `https://grow.godaisy.io${heroFullSrc}` : heroFullSrc) : undefined}
+            url={`https://grow.godaisy.io/grow/species/${species.slug}`}
+            rhsHardinessMin={species.rhsHardinessMin}
+            rhsHardinessMax={species.rhsHardinessMax}
+            sunRequirements={species.sunRequirements}
+            soilType={species.soilType}
+          />
+          {species.howtoSteps && species.howtoSteps.length > 0 && (
+            <HowToJsonLd
+              name={`How to grow ${species.name} in the UK`}
+              steps={species.howtoSteps}
+              description={description}
+            />
+          )}
+          {species.faqs && species.faqs.length > 0 && (
+            <FAQJsonLd items={species.faqs} />
+          )}
+        </>
+      )}
 
       {/* Mobile sticky header - shows species name when hero scrolls out */}
       <div
@@ -1065,6 +1134,46 @@ export default function GrowSpeciesPage() {
             )}
           </CardContent>
         </Card>
+
+        {/* HowTo Steps — numbered growing guide from Cowork content */}
+        {species?.howtoSteps && species.howtoSteps.length > 0 && (
+          <Card>
+            <CardHeader>
+              <CardTitle>How to grow {species.name?.toLowerCase()}</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ol className="space-y-4">
+                {species.howtoSteps.map((step, i) => (
+                  <li key={i} className="flex gap-3">
+                    <span className="flex-shrink-0 flex items-center justify-center w-7 h-7 rounded-full bg-emerald-100 text-emerald-800 text-sm font-semibold">
+                      {step.step ?? i + 1}
+                    </span>
+                    <div>
+                      <p className="text-sm font-medium text-foreground">{step.name}</p>
+                      <p className="text-sm text-muted-foreground mt-0.5">{step.text}</p>
+                    </div>
+                  </li>
+                ))}
+              </ol>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* FAQ Section — common questions from Cowork content */}
+        {species?.faqs && species.faqs.length > 0 && (
+          <Card>
+            <CardHeader>
+              <CardTitle>Common questions</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="divide-y">
+                {species.faqs.map((faq, i) => (
+                  <SpeciesFaqItem key={i} faq={faq} />
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Safety Card - toxicity warnings (only shows if moderate+ toxicity) */}
         {species && <SafetyCard species={species} />}
