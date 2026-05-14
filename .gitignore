@@ -88,3 +88,5 @@ android/*.keystore
 
 # Temporary preview files
 glossary-preview.html
+.claude/
+supabase/.temp/
