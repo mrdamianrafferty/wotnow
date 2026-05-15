@@ -20,6 +20,7 @@
  */
 
 import { getSuggestionsByDay } from '../../utils/getSuggestionsByDay';
+import type { Suggestion, WeatherData } from '../../utils/getSuggestionsByDay';
 import { activityTypes } from '../../data/activityTypes';
 import type { SeoLocation } from '../../data/seoLocations';
 
@@ -92,8 +93,9 @@ export async function getActivityScoreForLocation(
   });
 
   // 4. Pull out the score for this activity on each day
-  const weeklyOutlook: DailyScore[] = dailySuggestions.map((day: any, i: number) => {
-    const suggestion = day.suggestions?.find?.((s: any) => s.activityId === activityId);
+  const weeklyOutlook: DailyScore[] = dailySuggestions.map(
+    (day: { date: number; suggestions: Suggestion[] }, i: number) => {
+    const suggestion = day.suggestions?.find?.((s: Suggestion) => s.activityId === activityId);
     const score = suggestion?.score ?? 0;
     return {
       date: new Date(day.date * 1000).toISOString().slice(0, 10),
@@ -160,7 +162,7 @@ function labelForOffset(offset: number): string {
  */
 async function fetchWeatherForLocation(
   location: SeoLocation
-): Promise<Array<{ date: number; weather: any }>> {
+): Promise<Array<{ date: number; weather: WeatherData }>> {
   const baseUrl =
     process.env.NEXT_PUBLIC_BASE_URL_GODAISY || 'https://godaisy.io';
 
@@ -182,8 +184,11 @@ async function fetchWeatherForLocation(
     // Map the OWM response into the shape getSuggestionsByDay wants.
     // The exact key names below will depend on what your getFullWeather()
     // returns. Verify by logging `data` once and adjust the mapping.
+    type OWMDaily = { dt?: number; temp?: { day?: number }; rain?: number; wind_speed?: number; clouds?: number; humidity?: number };
+    type OWMHourly = { dt?: number; temp?: number; rain?: { '1h'?: number }; wind_speed?: number; clouds?: number; humidity?: number };
+
     if (Array.isArray(data?.daily)) {
-      return data.daily.slice(0, 7).map((d: any) => ({
+      return data.daily.slice(0, 7).map((d: OWMDaily) => ({
         date: d.dt ?? Math.floor(Date.now() / 1000),
         weather: {
           temperature: d.temp?.day,
@@ -197,7 +202,7 @@ async function fetchWeatherForLocation(
 
     // Fallback: try hourly[0..6] as daily proxies
     if (Array.isArray(data?.hourly)) {
-      return data.hourly.slice(0, 7).map((h: any) => ({
+      return data.hourly.slice(0, 7).map((h: OWMHourly) => ({
         date: h.dt ?? Math.floor(Date.now() / 1000),
         weather: {
           temperature: h.temp,

@@ -24,7 +24,6 @@
 
 import React from 'react';
 import Link from 'next/link';
-import Image from 'next/image';
 import Head from 'next/head';
 import AppHeader from './AppHeader';
 import dynamic from 'next/dynamic';

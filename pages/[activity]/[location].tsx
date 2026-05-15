@@ -26,9 +26,7 @@ import type { GetStaticPaths, GetStaticProps } from 'next';
 import SEO from '../../components/SEO';
 import AppHeader from '../../components/AppHeader';
 import {
-  SEO_LOCATIONS,
   getLocationBySlug,
-  getAllSeoPagePaths,
   getLocationsForActivity,
   type SeoLocation,
 } from '../../data/seoLocations';
