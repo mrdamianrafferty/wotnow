@@ -1022,16 +1022,33 @@ export default function ActivitiesPage() {
   if (!hasMounted || isHydrating) {
     return (
       <>
+        {/* SEO tags must render in the loading state too, so Googlebot sees
+            them even when it snapshots before user data has loaded. */}
+        <SEO
+          title="Your activities — weather-scored for the next 7 days"
+          description="See which of your chosen activities — hiking, surfing, cycling, padel, stargazing, gardening and 100+ more — are best for each day this week. Free, ad-free, UK and Europe."
+          url="https://godaisy.io/activities"
+        />
         <AppHeader
           homeLocation={homeLocation as LocationLite | undefined}
           coastalLocation={coastalLocation as LocationLite | undefined}
           onOpenHomeDialog={() => { /* optional: open home dialog from activities if you have one */ }}
           onOpenCoastDialog={() => { /* optional: open coast dialog from activities if you have one */ }}
         />
-        <section className="flex items-center justify-center py-16">
-          <div className="flex items-center">
-            <span className="loading loading-dots loading-lg text-secondary" aria-hidden="true"></span>
-            <span className="ml-3 text-base-content/80">{loadingActivities}</span>
+        <section className="px-4 py-12">
+          <div className="max-w-4xl mx-auto text-center">
+            <h1 className="text-3xl md:text-4xl font-bold mb-3">
+              Your activities, weather-scored
+            </h1>
+            <p className="text-base-content/70 mb-8">
+              The next seven days of conditions for the activities you care
+              about — hiking, surfing, cycling, padel, stargazing, gardening
+              and 100+ more.
+            </p>
+            <div className="flex items-center justify-center">
+              <span className="loading loading-dots loading-lg text-secondary" aria-hidden="true"></span>
+              <span className="ml-3 text-base-content/80">{loadingActivities}</span>
+            </div>
           </div>
         </section>
         <BottomNav />

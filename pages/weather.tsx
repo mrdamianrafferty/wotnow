@@ -481,14 +481,19 @@ export default function WeatherPage() {
   return (
     <>
       <SEO
-        title="Weather Dashboard"
-        description="Detailed weather forecasts with marine conditions, tides, air quality, and astronomy data. Plan your outdoor activities with confidence."
+        title="Hourly weather, marine, tides, astronomy and air quality"
+        description="Full weather dashboard for outdoor activities — hourly forecasts, wave height and swell, tide times, sunrise/sunset, moon phase, ISS passes, UV, pollen and air quality. Free, ad-free, UK and Europe."
         url="https://godaisy.io/weather"
       />
       <div
         className="relative min-h-screen"
         data-testid="page-new-weather"
       >
+        {/* Screen-reader-accessible H1 so the page has a proper heading for
+            search engines without disrupting the visual dashboard layout. */}
+        <h1 className="sr-only">
+          Go Daisy — hourly weather, marine, tides and astronomy dashboard
+        </h1>
         <div className="relative z-20">
           <AppHeader
           homeLocation={homeLocation || undefined}
