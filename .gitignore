@@ -88,3 +88,6 @@ android/*.keystore
 
 # Temporary preview files
 glossary-preview.html
+
+# Backup files
+*.bak-grow
