@@ -303,6 +303,8 @@ export default function GoDaisyLogin() {
     <>
       <Head>
         <title>Sign In - {appName}</title>
+        {/* Login is a private app surface; keep it out of search results. */}
+        <meta name="robots" content="noindex,nofollow" />
       </Head>
       <div
         className={`min-h-screen flex items-center justify-center p-4 safe-area-bottom ${

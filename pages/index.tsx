@@ -23,6 +23,7 @@ import Link from 'next/link';
 import type { MarineHour } from '../types/weatherTypes';
 import { useUIText } from '../hooks/useUIText';
 import SEO from '../components/SEO';
+import LandingPage from '../components/LandingPage';
 type LocationLite = { name: string; lat: number; lon: number; type?: 'home'|'coastal' };
 
 import type { GetServerSideProps, GetServerSidePropsContext } from 'next';
@@ -58,7 +59,7 @@ const AstronomyCard = dynamic(() => import('../components/AstronomyCard'), {
 });
 
 export const getServerSideProps: GetServerSideProps = async (ctx: GetServerSidePropsContext) => {
-  const { query } = ctx;
+  const { query, req, res } = ctx;
   const code = typeof query.code === 'string' ? query.code : undefined;
   const type = typeof query.type === 'string' ? query.type : undefined;
 
@@ -76,7 +77,32 @@ export const getServerSideProps: GetServerSideProps = async (ctx: GetServerSideP
     };
   }
 
-  return { props: {} };
+  // ----- Landing page decision -----
+  // Show the public marketing landing page when ALL of these are true:
+  //   1. the visitor is NOT inside the Capacitor (native iOS/Android) shell
+  //   2. the visitor is NOT logged in (no Supabase session cookie)
+  //
+  // If Capacitor's user-agent uses a different identifier in production,
+  // add it to the regex below.
+  const userAgent = (req.headers['user-agent'] || '').toString();
+  const isCapacitor = /Capacitor|wotnow-app|godaisy-app/i.test(userAgent);
+
+  // Supabase auth session cookies are named `sb-<project-ref>-auth-token`.
+  // Presence check is good enough for the SSR landing-vs-app decision;
+  // actual auth validation still happens client-side in the app code.
+  const cookieHeader = (req.headers.cookie || '').toString();
+  const hasSupabaseSession = /sb-[^=]+-auth-token=/i.test(cookieHeader);
+
+  const showLanding = !isCapacitor && !hasSupabaseSession;
+
+  // Cache headers: landing is the same for everyone (cacheable); app is per-user.
+  if (showLanding) {
+    res.setHeader('Cache-Control', 'public, s-maxage=3600, stale-while-revalidate=86400');
+  } else {
+    res.setHeader('Cache-Control', 'private, no-cache, no-store, max-age=0, must-revalidate');
+  }
+
+  return { props: { showLanding } };
 };
 
 // Simple JSON fetch with retry/backoff for flaky endpoints
@@ -465,7 +491,7 @@ const _getTargetHourForDay = (dayUnixTimestamp: number): string => {
   return `${dayDate.toISOString().slice(0, 10)}T${hour.toString().padStart(2, '0')}`;
 };
 
-export default function Home() {
+function HomeApp() {
   // Fish species modal state (for hero/favourites)
   const [popupActivity, setPopupActivity] = useState<ReturnType<typeof buildPopupActivityPayload> | null>(null);
   const [shareActivity, setShareActivity] = useState<{ id: string; name: string; emoji: string } | null>(null);
@@ -1289,4 +1315,20 @@ function getWeatherDay(day: WeatherForecastDay) {
     clouds: day.clouds,
     // Add more OpenWeather fields as needed
   };
+}
+
+/**
+ * Top-level page entry point.
+ *
+ * Picks between the public marketing landing page and the logged-in app
+ * dashboard based on the `showLanding` flag set in getServerSideProps.
+ *
+ * - showLanding = true:  unauthenticated web visitors (and Googlebot)
+ *                        get the marketing landing page
+ * - showLanding = false: Capacitor app users and logged-in users get
+ *                        the existing app dashboard (HomeApp)
+ */
+export default function HomePage({ showLanding }: { showLanding: boolean }) {
+  if (showLanding) return <LandingPage />;
+  return <HomeApp />;
 }
