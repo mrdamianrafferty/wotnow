@@ -27,6 +27,13 @@
   overflow: hidden;       /* Key for overlay/card radius */
   position: relative;
   transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+/* White text ONLY for image-backed activity cards.
+   Do NOT add color: #fff to the plain .card selector — it overrides DaisyUI's
+   text colour for every semantic card (ConditionCard, info panels, etc.) which
+   all have light backgrounds, making their content invisible. */
+.activity-card-enhanced {
   color: #fff !important;
 }
 
