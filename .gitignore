@@ -90,3 +90,6 @@ android/*.keystore
 glossary-preview.html
 .claude/
 supabase/.temp/
+
+# Backup files
+*.bak-grow

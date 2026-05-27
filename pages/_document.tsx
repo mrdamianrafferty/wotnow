@@ -5,6 +5,10 @@ export default class MyDocument extends Document {
     return (
       <Html lang="en">
         <Head>
+  {/* Site verification */}
+  <meta name="google-site-verification" content="fcfe641a3f11aa29" />
+  <meta name="msvalidate.01" content="7EC292D292011752BACC24475D691844" />
+
   {/* Critical resource hints - preconnect establishes early connections to reduce API latency */}
   <link rel="preconnect" href="https://api.openweathermap.org" crossOrigin="anonymous" />
   <link rel="preconnect" href="https://maps.googleapis.com" />

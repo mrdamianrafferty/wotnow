@@ -51,13 +51,48 @@ function getAppType(host: string): 'findr' | 'godaisy' | 'grow' {
 function getGoDaisyUrls(baseUrl: string): SitemapUrl[] {
   const today = new Date().toISOString().split('T')[0];
 
-  return [
+  // Static, hand-crafted pages
+  const staticUrls: SitemapUrl[] = [
+    // Homepage serves the public marketing landing page to non-authed visitors
+    // and the app to logged-in users. Highest priority.
     { loc: baseUrl, lastmod: today, changefreq: 'daily', priority: 1.0 },
-    { loc: `${baseUrl}/weather`, lastmod: today, changefreq: 'hourly', priority: 0.9 },
+
+    // Full FAQ — rich SEO surface for "does Go Daisy cover X?" queries
+    { loc: `${baseUrl}/faq`, lastmod: today, changefreq: 'weekly', priority: 0.9 },
+
+    // App pages — keep in the sitemap but ensure each has proper SEO meta
+    { loc: `${baseUrl}/weather`, lastmod: today, changefreq: 'hourly', priority: 0.8 },
     { loc: `${baseUrl}/activities`, lastmod: today, changefreq: 'daily', priority: 0.8 },
-    { loc: `${baseUrl}/settings`, lastmod: today, changefreq: 'monthly', priority: 0.3 },
-    { loc: `${baseUrl}/login`, lastmod: today, changefreq: 'monthly', priority: 0.2 },
+
+    // Android tester recruitment landing page
+    { loc: `${baseUrl}/android-testers`, lastmod: today, changefreq: 'weekly', priority: 0.6 },
+
+    // NOTE: /settings and /login deliberately omitted (have noindex meta)
   ];
+
+  // Programmatic SEO pages — one per (activity, location) combo from the
+  // curated SEO dataset. See data/seoLocations.ts.
+  // We import lazily to avoid pulling activity data into the sitemap build
+  // for the other apps (Findr, Grow Daisy) which share this sitemap endpoint.
+  let programmaticUrls: SitemapUrl[] = [];
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const { getAllSeoPagePaths } = require('../../data/seoLocations');
+    const slugifyActivity = (id: string) => id.replace(/_/g, '-');
+    programmaticUrls = getAllSeoPagePaths().map(
+      ({ activity, location }: { activity: string; location: string }) => ({
+        loc: `${baseUrl}/${slugifyActivity(activity)}/${location}`,
+        lastmod: today,
+        changefreq: 'daily' as const,
+        priority: 0.7,
+      })
+    );
+  } catch (err) {
+    // Programmatic SEO data not present — fine, just skip these URLs.
+    console.warn('Programmatic SEO paths unavailable for sitemap:', err);
+  }
+
+  return [...staticUrls, ...programmaticUrls];
 }
 
 /**

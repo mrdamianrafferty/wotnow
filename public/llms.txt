@@ -1,58 +1,101 @@
-# Grow Daisy — Smart Garden Planner for UK & Irish Gardeners
-> UK garden planner with RHS hardiness ratings, postcode-aware frost dates, weather-driven tasks for allotments, veg patches, and kitchen gardens. Multilingual plant database covering 50,000+ species.
+# Go Daisy — Free weather app for 100+ activities
+> Smart weather recommendations across 100+ outdoor and indoor activities. Reads wind, waves, tides, UV, pressure, snow, soil moisture and sky to score each activity hour by hour for the UK and Europe. Free, ad-free, available on iOS and the web. Android in closed beta.
+
+## What Go Daisy is
+
+Go Daisy is a free weather app organised around the things you want to do, not the weather itself. Users tell Go Daisy which activities they care about — from surfing and hiking to padel, cricket, stargazing, gardening and pub afternoons — and Go Daisy reads the forecast to tell them when conditions are right for each one. The app is built by independent makers in the UK and Asturias, Spain, and is supported by deeper specialist sister apps (Findr, Rise Daisy, Grow Daisy) rather than by ads.
 
 ## Core pages
-- [Home](https://grow.godaisy.io/grow): Smart garden planner overview
-- [Plan](https://grow.godaisy.io/grow/plan): Weekly planting calendar and task planner
-- [Garden](https://grow.godaisy.io/grow/garden): Track your plants and growing spaces
-- [Activities](https://grow.godaisy.io/grow/activities): What to do in the garden this week
-- [Weather](https://grow.godaisy.io/grow/weather): Garden-relevant weather forecasts
-- [Tasks](https://grow.godaisy.io/grow/tasks): Seasonal task reminders and care calendar
-- [Settings](https://grow.godaisy.io/grow/settings): Location, climate zone, and preference settings
+- [Home](https://godaisy.io): Free weather app for 100+ activities — landing, signup
+- [FAQ](https://godaisy.io/faq): Full answers about coverage, scoring, data sources
+- [Weather](https://godaisy.io/weather): Hourly weather dashboard with marine, tides, air quality and astronomy
+- [Activities](https://godaisy.io/activities): User's chosen activities scored for the next seven days
+- [About us](https://godaisy.io/AboutUs): Who builds Go Daisy
+- [How we do it](https://godaisy.io/HowWeDoIt): The data sources and scoring approach
+- [Android testers](https://godaisy.io/android-testers): Sign up to help launch on Google Play
 
-## Plant database
-Plant pages cover 50,000+ species with growing advice, planting calendars, companion planting, and pest/disease guidance. Each page is available at /grow/species/[slug] — see the sitemap at https://grow.godaisy.io/sitemap.xml for the complete list.
+## Activities Go Daisy scores
 
-A selection of popular UK kitchen garden plants:
-- [Tomato](https://grow.godaisy.io/grow/species/tomato): Growing tomatoes in the UK
-- [Potato](https://grow.godaisy.io/grow/species/potato): Growing potatoes in the UK
-- [Carrot](https://grow.godaisy.io/grow/species/carrot): Growing carrots in the UK
-- [Courgette](https://grow.godaisy.io/grow/species/courgette): Growing courgettes in the UK
-- [Runner bean](https://grow.godaisy.io/grow/species/runner-bean): Growing runner beans in the UK
-- [French bean](https://grow.godaisy.io/grow/species/french-bean): Growing French beans in the UK
-- [Broad bean](https://grow.godaisy.io/grow/species/broad-bean): Growing broad beans in the UK
-- [Pea](https://grow.godaisy.io/grow/species/pea): Growing peas in the UK
-- [Lettuce](https://grow.godaisy.io/grow/species/lettuce): Growing lettuce in the UK
-- [Spinach](https://grow.godaisy.io/grow/species/spinach): Growing spinach in the UK
-- [Kale](https://grow.godaisy.io/grow/species/kale): Growing kale in the UK
-- [Cabbage](https://grow.godaisy.io/grow/species/cabbage): Growing cabbage in the UK
-- [Broccoli](https://grow.godaisy.io/grow/species/broccoli): Growing broccoli in the UK
-- [Cauliflower](https://grow.godaisy.io/grow/species/cauliflower): Growing cauliflower in the UK
-- [Onion](https://grow.godaisy.io/grow/species/onion): Growing onions in the UK
-- [Garlic](https://grow.godaisy.io/grow/species/garlic): Growing garlic in the UK
-- [Leek](https://grow.godaisy.io/grow/species/leek): Growing leeks in the UK
-- [Beetroot](https://grow.godaisy.io/grow/species/beetroot): Growing beetroot in the UK
-- [Parsnip](https://grow.godaisy.io/grow/species/parsnip): Growing parsnips in the UK
-- [Swede](https://grow.godaisy.io/grow/species/swede): Growing swede in the UK
-- [Turnip](https://grow.godaisy.io/grow/species/turnip): Growing turnips in the UK
-- [Cucumber](https://grow.godaisy.io/grow/species/cucumber): Growing cucumbers in the UK
-- [Pumpkin](https://grow.godaisy.io/grow/species/pumpkin): Growing pumpkins in the UK
-- [Squash](https://grow.godaisy.io/grow/species/squash): Growing squash in the UK
-- [Aubergine](https://grow.godaisy.io/grow/species/aubergine): Growing aubergines in the UK
-- [Pepper](https://grow.godaisy.io/grow/species/pepper): Growing peppers in the UK
-- [Chilli](https://grow.godaisy.io/grow/species/chilli): Growing chillies in the UK
-- [Strawberry](https://grow.godaisy.io/grow/species/strawberry): Growing strawberries in the UK
-- [Raspberry](https://grow.godaisy.io/grow/species/raspberry): Growing raspberries in the UK
-- [Blackcurrant](https://grow.godaisy.io/grow/species/blackcurrant): Growing blackcurrants in the UK
-- [Gooseberry](https://grow.godaisy.io/grow/species/gooseberry): Growing gooseberries in the UK
-- [Apple](https://grow.godaisy.io/grow/species/apple): Growing apple trees in the UK
-- [Pear](https://grow.godaisy.io/grow/species/pear): Growing pear trees in the UK
-- [Plum](https://grow.godaisy.io/grow/species/plum): Growing plum trees in the UK
-- [Lavender](https://grow.godaisy.io/grow/species/lavender): Growing lavender in the UK
-- [Rose](https://grow.godaisy.io/grow/species/rose): Growing roses in the UK
-- [Sweet pea](https://grow.godaisy.io/grow/species/sweet-pea): Growing sweet peas in the UK
-- [Sunflower](https://grow.godaisy.io/grow/species/sunflower): Growing sunflowers in the UK
-- [Marigold](https://grow.godaisy.io/grow/species/marigold): Growing marigolds in the UK
+Over 100 activities across six categories. Each activity is scored on the hourly conditions that actually matter for it — water sports get wave height, swell period and tide; team sports get rainfall in the previous 24 hours and the next 6; astronomy gets cloud cover and moon phase; gardening gets soil temperature and moisture.
+
+### Active sports
+
+**Team sports:** football, cricket, rugby, basketball (outdoor), beach volleyball, American football, baseball, hurling, camogie, Gaelic football, hockey, netball, ice hockey.
+
+**Individual sports:** golf, tennis, indoor tennis, squash, badminton, table tennis, archery, pickleball, indoor volleyball, padel.
+
+**Water sports:** surfing, stand-up paddleboarding (SUP) on sea and inland, kayaking, sea kayaking, canoeing, sea swimming, indoor swimming, snorkelling, scuba diving, sailing on sea and inland, windsurfing on sea and inland, kitesurfing, jet skiing, sea fishing from shore, sea fishing from boat.
+
+**Action sports:** mountain biking, road cycling, gravel biking, rock climbing, rock hopping, indoor climbing, skateboarding, rollerblading, motorbike riding.
+
+### Fitness & wellness
+
+**Mindfulness:** yoga, outdoor yoga, meditation, outdoor meditation, pilates, martial arts, tai chi.
+
+**Cardio & running:** running, trail running, cycling, urban exploring.
+
+**Strength & gym:** gym workouts, outdoor gyms, Zumba, boxing, spinning.
+
+### Outdoor activities
+
+**Nature:** hiking, birdwatching, photography, foraging, mushroom hunting, wild swimming, outdoor gardening, stargazing.
+
+**Fishing:** fly fishing on freshwater, coarse fishing, sea fishing from shore, sea fishing from boat, ice fishing.
+
+**Kicking back & relaxing:** picnicking, barbecues, beach days, camping, gaming, reading, going to the pub, outdoor reading, dog walking, outdoor playground, outdoor chess, outdoor painting, outdoor music.
+
+### Winter sports
+
+**Snow sports:** skiing (alpine), snowboarding, cross-country skiing.
+
+**Ice sports:** ice skating, curling, ice hockey, ice fishing, indoor ice hockey.
+
+### Creative & arts
+
+**Visual arts:** painting, outdoor painting (plein air), crafts, photography, knitting, DIY.
+
+**Music & performance:** playing records, making music, dance, outdoor music.
+
+**Literature & learning:** reading, outdoor reading.
+
+### Indoor recreation
+
+**Home activities:** crafts, knitting, reading, DIY, playing records, cooking, painting, gaming, online time.
+
+**Social activities:** going to the pub, table tennis, playing cards, watching a film, café days, cinema, museum, shopping, dance, gallery, bowling.
+
+**Indoor sports:** indoor climbing, squash, badminton, indoor tennis, indoor swimming, gym workouts, pilates, yoga, meditation.
+
+## Data sources
+
+Go Daisy reads professional-grade forecasts and applies activity-specific scoring.
+
+- **General weather forecasts:** OpenWeather
+- **Marine and wave data:** Stormglass
+- **High-resolution Northern European forecasting:** api.met.no (Norwegian Meteorological Institute)
+- **Tide data:** Stormglass Tides API
+- **Astronomy:** standard ephemerides for sun, moon, twilight times, ISS pass-overs
+
+## Coverage and languages
+
+**Geography:** UK and Europe primarily. Tuned for UK, Ireland, France, Spain, Portugal, Italy, Germany, the Netherlands, Poland, Sweden and Turkey.
+
+**Languages:** English, Spanish, French, Portuguese, German, Italian, Dutch, Polish, Turkish, Swedish.
+
+**Platforms:** iOS (iPhone, iPad, Mac with Apple Silicon, Apple Vision), web (godaisy.io). Android in closed beta.
+
+## Pricing
+
+Go Daisy is free, forever. No paywall, no premium tier, no ads, no in-app purchases. The product is supported by deeper specialist sister apps (Findr for sea anglers, Rise Daisy for fly fishers, Grow Daisy for serious gardeners) rather than by user payments or ads.
+
+## Sister apps in the Daisy family
+
+- **Findr** — for sea anglers. Tide-by-tide marks, bait windows, deep marine forecasting. fishfindr.eu
+- **Rise Daisy** — for fly fishers. River gauges, hatch prediction, water temperature, scoring for trout, salmon, grayling, sea trout.
+- **Grow Daisy** — for serious gardeners and allotment holders. RHS plant database, sowing calendars, companion planting, pest watch. grow.godaisy.io
+
+All four apps share the same idea: weather is best answered as a question about your life, not as a list of numbers.
 
 ## About
-Grow Daisy is part of the Daisy family — weather-informed apps for outdoor enthusiasts. Web app at https://grow.godaisy.io, iOS app on the App Store.
+
+Go Daisy is built by independent makers in the UK and Asturias, Spain. Web app at https://godaisy.io. iOS app on the Apple App Store at https://apps.apple.com/gb/app/go-daisy/id6755695873.

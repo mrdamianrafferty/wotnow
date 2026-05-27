@@ -66,7 +66,10 @@ export async function middleware(req: NextRequest) {
   const isSEOFile = url.pathname === '/robots.txt' ||
                     url.pathname === '/sitemap.xml' ||
                     url.pathname === '/sitemap-0.xml' ||
-                    url.pathname === '/llms.txt';
+                    url.pathname === '/llms.txt' ||
+                    url.pathname === '/BingSiteAuth.xml' ||
+                    url.pathname.match(/^\/google[a-z0-9]+\.html$/) !== null ||
+                    url.pathname.match(/^\/[a-f0-9]{32}\.txt$/) !== null;
   const isStaticAsset = url.pathname.startsWith('/webp/') ||
                         url.pathname.startsWith('/images/') ||
                         url.pathname.startsWith('/weather-icons/') ||
