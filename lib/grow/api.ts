@@ -799,6 +799,8 @@ export class ApiClient {
   async searchPlantSpecies(params: {
     query?: string;
     category?: string;
+    /** RHS hardiness group: 'tender' | 'half-hardy' | 'hardy' | 'very-hardy' */
+    rhsGroup?: string;
     limit?: number;
     offset?: number;
   }): Promise<PlantSpeciesSearchResponse> {
@@ -810,6 +812,10 @@ export class ApiClient {
 
     if (params.category && params.category.trim().length > 0) {
       searchParams.set('category', params.category.trim());
+    }
+
+    if (params.rhsGroup && params.rhsGroup.trim().length > 0) {
+      searchParams.set('rhsGroup', params.rhsGroup.trim());
     }
 
     if (typeof params.limit === 'number' && Number.isFinite(params.limit)) {

@@ -97,6 +97,9 @@ const BASE_SELECT = [
   'years_to_first_crop',
   'years_to_full_production',
   'cropping_timeline_note',
+  // RHS hardiness
+  'rhs_hardiness_min',
+  'rhs_hardiness_max',
   ...Object.keys(PLANT_SPECIES_LANGUAGE_FIELDS),
 ].join(',');
 
@@ -143,8 +146,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   const searchTermRaw = typeof req.query.q === 'string' ? req.query.q : '';
   const categoryRaw = typeof req.query.category === 'string' ? req.query.category : '';
+  const rhsGroupRaw = typeof req.query.rhsGroup === 'string' ? req.query.rhsGroup : '';
   const limit = normaliseLimit(req.query.limit);
   const offset = normaliseOffset(req.query.offset);
+
+  // RHS hardiness group filter — four gardening-friendly bands.
+  // rhs_hardiness_min stores the worst-case (most tender) hardiness for the species.
+  // RHS ratings sort correctly as VARCHAR: H1a < H1b < H1c < H2 < H3 … < H7.
+  const VALID_RHS_GROUPS = ['tender', 'half-hardy', 'hardy', 'very-hardy'];
+  const rhsGroup = VALID_RHS_GROUPS.includes(rhsGroupRaw.trim()) ? rhsGroupRaw.trim() : '';
 
   let query = supabase
     .from('plant_species')
@@ -154,6 +164,22 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   if (categoryRaw.trim()) {
     query = query.eq('category', categoryRaw.trim());
+  }
+
+  if (rhsGroup) {
+    // tender:     H1a–H2 (frost-tender; under glass in UK)
+    // half-hardy: H3 (unheated glasshouse or very sheltered UK garden)
+    // hardy:      H4–H5 (average to cold UK winter, outdoors reliably)
+    // very-hardy: H6–H7 (very cold winters; UK native-tough plants)
+    if (rhsGroup === 'tender') {
+      query = query.in('rhs_hardiness_min', ['H1a', 'H1b', 'H1c', 'H2']);
+    } else if (rhsGroup === 'half-hardy') {
+      query = query.eq('rhs_hardiness_min', 'H3');
+    } else if (rhsGroup === 'hardy') {
+      query = query.in('rhs_hardiness_min', ['H4', 'H5']);
+    } else if (rhsGroup === 'very-hardy') {
+      query = query.in('rhs_hardiness_min', ['H6', 'H7']);
+    }
   }
 
   const searchTerm = sanitiseSearchTerm(searchTermRaw);
