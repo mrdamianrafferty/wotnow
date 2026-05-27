@@ -179,6 +179,15 @@ function formatUsdaRange(
   return `USDA ≤ ${max}`;
 }
 
+function formatRhsRange(
+  min: string | null,
+  max: string | null,
+): string | null {
+  if (!min) return null;
+  if (max && max !== min) return `${min}–${max}`;
+  return min;
+}
+
 function monthNumberToLabel(month: number | null | undefined): string {
   if (typeof month !== "number" || Number.isNaN(month)) return "";
   const idx = Math.max(0, Math.min(11, Math.floor(month) - 1));
@@ -779,6 +788,11 @@ export default function GrowSpeciesPage() {
     species?.usdaZoneMax ?? null,
   );
 
+  const rhs = formatRhsRange(
+    species?.rhsHardinessMin ?? null,
+    species?.rhsHardinessMax ?? null,
+  );
+
   const nowMonthIndex0 = useMemo(() => getCurrentMonthIndex(), []);
   const actionable = useMemo(
     () => (windows ? nextActionableWindows(windows, nowMonthIndex0) : []),
@@ -946,7 +960,13 @@ export default function GrowSpeciesPage() {
               {species?.plantSize ? (
                 <Badge variant="outline">📏 {species.plantSize}</Badge>
               ) : null}
-              {usda ? <Badge variant="outline">{usda}</Badge> : null}
+              {rhs ? (
+                <Badge variant="outline" title={usda ? `Also ${usda}` : undefined}>
+                  🌡️ RHS {rhs}
+                </Badge>
+              ) : usda ? (
+                <Badge variant="outline">{usda}</Badge>
+              ) : null}
               {/* Safety alerts for thorny/invasive/toxic */}
               {species && <SafetyAlerts species={species} />}
             </div>

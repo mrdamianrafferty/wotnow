@@ -329,6 +329,7 @@ export function GardenPage() {
   const [allSpeciesTotal, setAllSpeciesTotal] = useState(0);
   const [allSpeciesCategory, setAllSpeciesCategory] = useState<string>('all');
   const [allSpeciesCategories, setAllSpeciesCategories] = useState<string[]>([]);
+  const [rhsFilter, setRhsFilter] = useState<string>('all'); // 'all' | 'tender' | 'half-hardy' | 'hardy' | 'very-hardy'
 
   // Filter and sort state
   const [searchQuery, setSearchQuery] = useState('');
@@ -370,12 +371,15 @@ export function GardenPage() {
   }, [plants]);
 
   // Load all species for "All Plants" view
-  const loadAllSpecies = useCallback(async (category?: string) => {
+  const loadAllSpecies = useCallback(async (category?: string, rhsHardinessFilter?: string) => {
     try {
       setIsLoadingAllSpecies(true);
-      const params: { category?: string; limit?: number; query?: string } = { limit: 50 };
+      const params: { category?: string; rhsGroup?: string; limit?: number; query?: string } = { limit: 50 };
       if (category && category !== 'all') {
         params.category = category;
+      }
+      if (rhsHardinessFilter && rhsHardinessFilter !== 'all') {
+        params.rhsGroup = rhsHardinessFilter;
       }
       if (searchQuery.trim()) {
         params.query = searchQuery.trim();
@@ -407,9 +411,9 @@ export function GardenPage() {
   // Load all species when switching to 'all' view or when filters change
   useEffect(() => {
     if (viewMode === 'all') {
-      void loadAllSpecies(allSpeciesCategory);
+      void loadAllSpecies(allSpeciesCategory, rhsFilter);
     }
-  }, [viewMode, allSpeciesCategory, loadAllSpecies]);
+  }, [viewMode, allSpeciesCategory, rhsFilter, loadAllSpecies]);
 
   // Load categories on mount
   useEffect(() => {
@@ -1712,7 +1716,7 @@ export function GardenPage() {
                       onChange={(e) => setSearchQuery(e.target.value)}
                       onKeyDown={(e) => {
                         if (e.key === 'Enter') {
-                          void loadAllSpecies(allSpeciesCategory);
+                          void loadAllSpecies(allSpeciesCategory, rhsFilter);
                         }
                       }}
                       className="pl-9"
@@ -1721,7 +1725,7 @@ export function GardenPage() {
                       <button
                         onClick={() => {
                           setSearchQuery('');
-                          void loadAllSpecies(allSpeciesCategory);
+                          void loadAllSpecies(allSpeciesCategory, rhsFilter);
                         }}
                         className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
                         aria-label="Clear search"
@@ -1731,7 +1735,7 @@ export function GardenPage() {
                     )}
                   </div>
                   <Button
-                    onClick={() => void loadAllSpecies(allSpeciesCategory)}
+                    onClick={() => void loadAllSpecies(allSpeciesCategory, rhsFilter)}
                     variant="outline"
                     disabled={isLoadingAllSpecies}
                   >
@@ -1769,9 +1773,39 @@ export function GardenPage() {
                   </div>
                 )}
 
+                {/* RHS Hardiness Filter Pills */}
+                <div className="flex flex-wrap gap-2 items-center">
+                  <span className="text-xs text-muted-foreground font-medium">Hardiness:</span>
+                  {([
+                    { value: 'all',        label: 'All' },
+                    { value: 'tender',     label: '🌡️ Under glass' },
+                    { value: 'half-hardy', label: '🏠 Half-hardy' },
+                    { value: 'hardy',      label: '🌿 Hardy' },
+                    { value: 'very-hardy', label: '❄️ Very hardy' },
+                  ] as const).map(({ value, label }) => (
+                    <button
+                      key={value}
+                      onClick={() => setRhsFilter(value)}
+                      className={`px-3 py-1 text-sm rounded-full transition-all duration-200 ${
+                        rhsFilter === value
+                          ? 'bg-emerald-700 text-white'
+                          : 'bg-muted hover:bg-muted/80 text-muted-foreground'
+                      }`}
+                    >
+                      {label}
+                    </button>
+                  ))}
+                </div>
+
                 <p className="text-sm text-muted-foreground">
                   Showing {allSpecies.length} of {allSpeciesTotal} species
                   {allSpeciesCategory !== 'all' && <span> in {allSpeciesCategory}</span>}
+                  {rhsFilter !== 'all' && (
+                    <span> · {rhsFilter === 'tender' ? 'Under glass (H1a–H2)'
+                            : rhsFilter === 'half-hardy' ? 'Half-hardy (H3)'
+                            : rhsFilter === 'hardy' ? 'Hardy (H4–H5)'
+                            : 'Very hardy (H6–H7)'}</span>
+                  )}
                 </p>
               </div>
 
