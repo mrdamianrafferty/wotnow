@@ -99,12 +99,15 @@ export const getServerSideProps: GetServerSideProps = async (ctx: GetServerSideP
 
   const showLanding = !isCapacitor && !hasSupabaseSession;
 
-  // Cache headers: landing is the same for everyone (cacheable); app is per-user.
-  if (showLanding) {
-    res.setHeader('Cache-Control', 'public, s-maxage=3600, stale-while-revalidate=86400');
-  } else {
-    res.setHeader('Cache-Control', 'private, no-cache, no-store, max-age=0, must-revalidate');
-  }
+  // The homepage varies by auth state (marketing landing for anonymous visitors,
+  // the app for signed-in / native users), but Vercel's CDN keys `/` by path
+  // only — NOT by cookie or user-agent. A `public, s-maxage` response would be
+  // shared across auth states, so an anonymous visitor warms the cache with the
+  // landing page and logged-in users then get served that cached landing instead
+  // of the app. Keep `/` per-request so the SSR decision above is authoritative.
+  // (If anonymous-traffic CDN caching becomes important, move this decision into
+  // middleware and rewrite authed/native requests to a separate, uncached path.)
+  res.setHeader('Cache-Control', 'private, no-cache, no-store, max-age=0, must-revalidate');
 
   return { props: { showLanding } };
 };
