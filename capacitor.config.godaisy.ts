@@ -5,6 +5,12 @@ const config: CapacitorConfig = {
   appName: 'Go Daisy',
   webDir: '.capacitor-assets-godaisy',
 
+  // Tag the native WebView UA so the remotely-loaded site can tell it's the
+  // installed app (matched by /Capacitor|wotnow-app|godaisy-app/i in
+  // pages/index.tsx). Without this the native app is treated as a plain
+  // browser and can be shown the marketing landing page.
+  appendUserAgent: 'godaisy-app',
+
   server: {
     // PRODUCTION: Load content from Vercel
     url: 'https://godaisy.io',

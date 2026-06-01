@@ -36,8 +36,11 @@ import { mapAuthError } from './utils';
 
 const logger = createLogger('AppleSignIn');
 
-// Timeout for the entire native auth flow
-const AUTH_TIMEOUT_MS = 10000;
+// Timeout for the non-interactive Supabase token exchange only.
+// The interactive Apple consent sheet is NOT wall-clock limited — the user
+// controls how long that takes (reading the sheet, Face ID, hide-my-email
+// choice), and Apple's own Cancel button drives the CANCELLED path.
+const AUTH_TIMEOUT_MS = 15000;
 
 export const APPLE_NATIVE_ERRORS = {
   CANCELLED: 'APPLE_NATIVE_CANCELLED',
@@ -132,16 +135,16 @@ async function signInWithAppleNative(supabase: SupabaseClient): Promise<void> {
     // Sign in with Apple using official plugin
     // NOTE: redirectURI is required by type but not used for native iOS
     // Using custom URL scheme to ensure no web redirects happen
-    const result = await withTimeout(
-      SignInWithApple.authorize({
-        clientId: DEFAULT_APPLE_BUNDLE_ID,
-        redirectURI: DEFAULT_APPLE_REDIRECT_URI,
-        scopes: 'email name',
-        nonce: hashedNonce, // SHA-256 hashed nonce (required by Apple)
-      }),
-      AUTH_TIMEOUT_MS,
-      APPLE_NATIVE_ERRORS.TIMEOUT
-    );
+    //
+    // No wall-clock timeout here: this presents the interactive Apple consent
+    // sheet and only resolves once the user finishes (or cancels) it. A short
+    // timeout around this races the human and falsely reports "took too long".
+    const result = await SignInWithApple.authorize({
+      clientId: DEFAULT_APPLE_BUNDLE_ID,
+      redirectURI: DEFAULT_APPLE_REDIRECT_URI,
+      scopes: 'email name',
+      nonce: hashedNonce, // SHA-256 hashed nonce (required by Apple)
+    });
 
     logger.info('Apple Sign In successful', {
       hasIdentityToken: !!result.response?.identityToken,
@@ -156,12 +159,18 @@ async function signInWithAppleNative(supabase: SupabaseClient): Promise<void> {
 
     logger.info('Exchanging Apple ID token for Supabase session');
 
-    // Exchange Apple identity token for Supabase session
-    const { error } = await supabase.auth.signInWithIdToken({
-      provider: 'apple',
-      token: result.response.identityToken,
-      nonce: rawNonce, // ⭐ Pass THE RAW (unhashed) nonce to Supabase
-    });
+    // Exchange Apple identity token for Supabase session.
+    // This is a non-interactive network call, so it IS wall-clock limited to
+    // catch a genuinely hung/offline exchange.
+    const { error } = await withTimeout(
+      supabase.auth.signInWithIdToken({
+        provider: 'apple',
+        token: result.response.identityToken,
+        nonce: rawNonce, // ⭐ Pass THE RAW (unhashed) nonce to Supabase
+      }),
+      AUTH_TIMEOUT_MS,
+      APPLE_NATIVE_ERRORS.TIMEOUT
+    );
 
     if (error) {
       logger.error('Supabase signInWithIdToken failed', {

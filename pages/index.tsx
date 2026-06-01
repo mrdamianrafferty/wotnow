@@ -88,19 +88,26 @@ export const getServerSideProps: GetServerSideProps = async (ctx: GetServerSideP
   const isCapacitor = /Capacitor|wotnow-app|godaisy-app/i.test(userAgent);
 
   // Supabase auth session cookies are named `sb-<project-ref>-auth-token`.
-  // Presence check is good enough for the SSR landing-vs-app decision;
-  // actual auth validation still happens client-side in the app code.
+  // Large sessions (e.g. OAuth, which carry provider/id tokens) get chunked by
+  // @supabase/ssr into `sb-<ref>-auth-token.0`, `.1`, … with no unsuffixed base
+  // cookie, so the suffix must be optional or OAuth logins are missed and the
+  // user is wrongly shown the marketing landing page. Presence check is good
+  // enough for the SSR landing-vs-app decision; actual auth validation still
+  // happens client-side in the app code.
   const cookieHeader = (req.headers.cookie || '').toString();
-  const hasSupabaseSession = /sb-[^=]+-auth-token=/i.test(cookieHeader);
+  const hasSupabaseSession = /sb-[^=]+-auth-token(\.\d+)?=/i.test(cookieHeader);
 
   const showLanding = !isCapacitor && !hasSupabaseSession;
 
-  // Cache headers: landing is the same for everyone (cacheable); app is per-user.
-  if (showLanding) {
-    res.setHeader('Cache-Control', 'public, s-maxage=3600, stale-while-revalidate=86400');
-  } else {
-    res.setHeader('Cache-Control', 'private, no-cache, no-store, max-age=0, must-revalidate');
-  }
+  // The homepage varies by auth state (marketing landing for anonymous visitors,
+  // the app for signed-in / native users), but Vercel's CDN keys `/` by path
+  // only — NOT by cookie or user-agent. A `public, s-maxage` response would be
+  // shared across auth states, so an anonymous visitor warms the cache with the
+  // landing page and logged-in users then get served that cached landing instead
+  // of the app. Keep `/` per-request so the SSR decision above is authoritative.
+  // (If anonymous-traffic CDN caching becomes important, move this decision into
+  // middleware and rewrite authed/native requests to a separate, uncached path.)
+  res.setHeader('Cache-Control', 'private, no-cache, no-store, max-age=0, must-revalidate');
 
   return { props: { showLanding } };
 };
