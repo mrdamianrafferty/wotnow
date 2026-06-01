@@ -88,10 +88,14 @@ export const getServerSideProps: GetServerSideProps = async (ctx: GetServerSideP
   const isCapacitor = /Capacitor|wotnow-app|godaisy-app/i.test(userAgent);
 
   // Supabase auth session cookies are named `sb-<project-ref>-auth-token`.
-  // Presence check is good enough for the SSR landing-vs-app decision;
-  // actual auth validation still happens client-side in the app code.
+  // Large sessions (e.g. OAuth, which carry provider/id tokens) get chunked by
+  // @supabase/ssr into `sb-<ref>-auth-token.0`, `.1`, … with no unsuffixed base
+  // cookie, so the suffix must be optional or OAuth logins are missed and the
+  // user is wrongly shown the marketing landing page. Presence check is good
+  // enough for the SSR landing-vs-app decision; actual auth validation still
+  // happens client-side in the app code.
   const cookieHeader = (req.headers.cookie || '').toString();
-  const hasSupabaseSession = /sb-[^=]+-auth-token=/i.test(cookieHeader);
+  const hasSupabaseSession = /sb-[^=]+-auth-token(\.\d+)?=/i.test(cookieHeader);
 
   const showLanding = !isCapacitor && !hasSupabaseSession;
 
