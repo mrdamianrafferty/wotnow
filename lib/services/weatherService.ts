@@ -27,6 +27,7 @@ type Source = Json | null | undefined;
 const round3dp = round3dpUtil; // Use shared utility
 const coordKey3dp = (lat: number, lon: number) => createCacheKey(lat, lon, COORDINATE_PRECISION.STANDARD);
 const round4dp = (n: number) => Math.round(n * 1e4) / 1e4;
+const round2dp = (n: number) => Math.round(n * 1e2) / 1e2;
 
 type Spot = { id: string; name: string; lat: number; lon: number };
 
@@ -1649,6 +1650,71 @@ async function getFullWeather({ lat, lon, apiKey, options = {} }: { lat: number|
   }
 }
 
+const ONECALL_CACHE_TTL_MS = 30 * 60 * 1000; // 30 minutes
+
+/**
+ * Durable, Supabase-backed cache around getFullWeather (OpenWeather One Call 3.0).
+ *
+ * The in-memory cache used elsewhere (e.g. owWeatherCache in unified-weather) does not
+ * survive Vercel serverless cold starts, so under real traffic almost every request was
+ * a cache miss -> a fresh One Call 3.0 call, blowing the 1000/day quota. This collapses
+ * duplicate requests for the same ~1km area + hour into a single upstream call.
+ *
+ * Coordinates are bucketed to 2dp (~1.1km), matching unified-weather's OpenWeather
+ * precision. Cache access is best-effort: any cache error (including a missing
+ * openweather_cache table) is non-fatal and we fall through to the live API, so this is
+ * safe to deploy before the migration lands.
+ */
+async function getCachedFullWeather({ lat, lon, apiKey, options = {} }: { lat: number|string, lon: number|string, apiKey: string, options?: WeatherOptions }): Promise<FullWeather> {
+  const latBucket = round2dp(Number(lat));
+  const lonBucket = round2dp(Number(lon));
+  const units = options?.units || 'metric';
+  const exclude = options?.exclude || '';
+  const now = new Date();
+  const forecastHour = new Date(now.getFullYear(), now.getMonth(), now.getDate(), now.getHours()).toISOString();
+  const cacheKey = `ow3:${latBucket}:${lonBucket}:${forecastHour}:${units}:${exclude}`;
+
+  if (!options?.bypassCache) {
+    try {
+      const supabase = getSupabaseServerClient();
+      const { data: cached } = await supabase
+        .from('openweather_cache')
+        .select('forecast_data')
+        .eq('cache_key', cacheKey)
+        .gte('expires_at', new Date().toISOString())
+        .maybeSingle();
+      if (cached?.forecast_data) {
+        return cached.forecast_data as FullWeather;
+      }
+    } catch (err) {
+      console.warn('[OpenWeatherCache] Cache read failed, falling back to API:', (err as Error)?.message);
+    }
+  }
+
+  const fresh = await getFullWeather({ lat: latBucket, lon: lonBucket, apiKey, options });
+
+  if (fresh && !options?.bypassCache) {
+    try {
+      const supabase = getSupabaseServerClient();
+      await supabase
+        .from('openweather_cache')
+        .upsert(
+          {
+            cache_key: cacheKey,
+            forecast_data: fresh,
+            cached_at: new Date().toISOString(),
+            expires_at: new Date(Date.now() + ONECALL_CACHE_TTL_MS).toISOString(),
+          },
+          { onConflict: 'cache_key' }
+        );
+    } catch (err) {
+      console.warn('[OpenWeatherCache] Cache write failed:', (err as Error)?.message);
+    }
+  }
+
+  return fresh;
+}
+
 // OpenWeather One Call 3.0
 async function fetchOpenWeatherOneCall(lat: number, lon: number, apiKey: string, options?: WeatherOptions) {
   const params = new URLSearchParams({
@@ -1797,12 +1863,48 @@ export async function fetchOpenMeteoWeather(lat: number, lon: number, startDate:
 }
 
 /**
+ * Fetch a multi-day DAILY forecast from Open-Meteo (free, no API key).
+ *
+ * Returns raw Open-Meteo JSON containing `daily` aggregates plus
+ * `hourly.relative_humidity_2m` — Open-Meteo exposes no daily humidity aggregate, so
+ * callers derive a daily mean from the hourly series. Wind is requested in km/h to match
+ * the WeatherForecast contract used by the gardening signal engine.
+ *
+ * Uses `forecast_days` (1–16) rather than start/end dates, so the 5-day window limit that
+ * applies to fetchOpenMeteoWeather does NOT apply here.
+ */
+export async function fetchOpenMeteoDailyForecastRaw(lat: number | string, lon: number | string, days = 7): Promise<unknown> {
+  const url = new URL('https://api.open-meteo.com/v1/forecast');
+  url.searchParams.set('latitude', String(lat));
+  url.searchParams.set('longitude', String(lon));
+  url.searchParams.set('timezone', 'auto');
+  url.searchParams.set('wind_speed_unit', 'kmh');
+  url.searchParams.set('forecast_days', String(Math.min(Math.max(Math.round(days), 1), 16)));
+  url.searchParams.set('daily', [
+    'temperature_2m_max',
+    'temperature_2m_min',
+    'precipitation_sum',
+    'precipitation_probability_max',
+    'windspeed_10m_max',
+    'windgusts_10m_max',
+    'uv_index_max',
+    'weathercode',
+  ].join(','));
+  url.searchParams.set('hourly', 'relative_humidity_2m');
+  const note = JSON.stringify({ days });
+  const response = await monitoredFetch('open-meteo', 'daily-forecast', url.toString(), undefined, note);
+  const data = await response.json();
+  if (!response.ok) throw { status: response.status, data };
+  return data;
+}
+
+/**
  * Fetch air quality and pollen data from Open-Meteo
  * @param lat Latitude
  * @param lon Longitude
  * @param startDate Start date (YYYY-MM-DD)
  * @param endDate End date (YYYY-MM-DD)
- * 
+ *
  * ⚠️ CRITICAL: Open-Meteo has a 5-day forecast limit ⚠️
  * The time between startDate and endDate must not exceed 5 days or the API will return errors.
  * This limit is enforced in the unified-weather.ts API endpoint file, but be careful when
@@ -2212,6 +2314,7 @@ export {
   transformDailyForecast,
   transformCity,
   getFullWeather,
+  getCachedFullWeather,
   fetchOpenWeatherOneCall,
   fetchOpenWeatherForecast25,
   fetchOpenWeatherTimemachine,

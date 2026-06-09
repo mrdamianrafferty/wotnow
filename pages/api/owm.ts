@@ -1,5 +1,5 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { getFullWeather } from '../../lib/services/weatherService';
+import { getCachedFullWeather } from '../../lib/services/weatherService';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   // Use the unified weather service directly
@@ -25,8 +25,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   try {
-    // getFullWeather comes from the unified weatherServices module (OpenWeather + Open-Meteo + Stormglass)
-    const weatherData = await getFullWeather({
+    // Durable Supabase-cached wrapper around getFullWeather: collapses duplicate
+    // One Call 3.0 calls for the same ~1km area + hour (the in-memory cache does not
+    // survive serverless cold starts).
+    const weatherData = await getCachedFullWeather({
       lat: latNum,
       lon: lonNum,
       apiKey,

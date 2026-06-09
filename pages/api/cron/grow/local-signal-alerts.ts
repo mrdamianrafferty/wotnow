@@ -17,6 +17,7 @@ import {
   getUrgentSignals,
 } from '@/lib/grow/localSignals';
 import type { WeatherForecast } from '@/lib/grow/weatherTaskEngine';
+import { getDailyForecast } from '@/lib/grow/dailyForecast';
 import { sendPushNotification, createLocalSignalPayload } from '@/lib/grow/notifications';
 import { verifyCronAuth } from '@/lib/cron-auth';
 
@@ -260,112 +261,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 // =============================================================================
 
 async function fetchWeatherForLocation(lat: number, lon: number): Promise<WeatherForecast[] | null> {
-  if (!OPENWEATHER_API_KEY) {
-    console.warn('[LocalSignalAlerts] No OpenWeather API key configured');
-    return null;
-  }
-
-  try {
-    // Use OpenWeather One Call API
-    const url = `https://api.openweathermap.org/data/3.0/onecall?lat=${lat}&lon=${lon}&units=metric&exclude=minutely&appid=${OPENWEATHER_API_KEY}`;
-    const response = await fetch(url);
-
-    if (!response.ok) {
-      // Fallback to 2.5 API
-      const fallbackUrl = `https://api.openweathermap.org/data/2.5/forecast?lat=${lat}&lon=${lon}&units=metric&appid=${OPENWEATHER_API_KEY}`;
-      const fallbackResponse = await fetch(fallbackUrl);
-
-      if (!fallbackResponse.ok) {
-        console.error('[LocalSignalAlerts] Weather API error:', await fallbackResponse.text());
-        return null;
-      }
-
-      const fallbackData = await fallbackResponse.json();
-      return parseFallbackForecast(fallbackData);
-    }
-
-    const data = await response.json();
-    return parseOneCallForecast(data);
-  } catch (error) {
-    console.error('[LocalSignalAlerts] Error fetching weather:', error);
-    return null;
-  }
-}
-
-function parseOneCallForecast(data: Record<string, unknown>): WeatherForecast[] {
-  const daily = data.daily as Array<Record<string, unknown>>;
-
-  return (daily || []).slice(0, 7).map((d) => {
-    const temp = d.temp as Record<string, number>;
-    const weather = (d.weather as Array<{ main: string; description?: string }>)?.[0];
-
-    return {
-      date: new Date((d.dt as number) * 1000).toISOString().split('T')[0],
-      tempMin: temp.min,
-      tempMax: temp.max,
-      humidity: d.humidity as number,
-      precipitation: ((d.rain as number) || 0) + ((d.snow as number) || 0),
-      precipProbability: ((d.pop as number) || 0) * 100, // 0-1 to percentage
-      windSpeed: ((d.wind_speed as number) || 0) * 3.6, // m/s to km/h
-      windGust: ((d.wind_gust as number) || (d.wind_speed as number) || 0) * 3.6,
-      uvIndex: d.uvi as number || 0,
-      description: weather?.description || weather?.main || 'Unknown',
-    };
-  });
-}
-
-function parseFallbackForecast(data: Record<string, unknown>): WeatherForecast[] {
-  const list = data.list as Array<Record<string, unknown>>;
-
-  // Aggregate into daily forecasts
-  const dailyMap = new Map<string, {
-    temps: number[];
-    humidity: number[];
-    rain: number;
-    windSpeeds: number[];
-    windGusts: number[];
-    condition: string;
-    dt: number;
-  }>();
-
-  for (const item of list || []) {
-    const main = item.main as Record<string, number>;
-    const wind = item.wind as Record<string, number>;
-    const rain = (item.rain as Record<string, number>)?.['3h'] || 0;
-    const date = new Date((item.dt as number) * 1000).toDateString();
-
-    if (!dailyMap.has(date)) {
-      dailyMap.set(date, {
-        temps: [],
-        humidity: [],
-        rain: 0,
-        windSpeeds: [],
-        windGusts: [],
-        condition: ((item.weather as Array<{ main: string }>)?.[0]?.main) || 'Unknown',
-        dt: item.dt as number,
-      });
-    }
-
-    const day = dailyMap.get(date)!;
-    day.temps.push(main.temp);
-    day.humidity.push(main.humidity);
-    day.rain += rain;
-    day.windSpeeds.push((wind?.speed || 0) * 3.6);
-    day.windGusts.push((wind?.gust || wind?.speed || 0) * 3.6);
-  }
-
-  return Array.from(dailyMap.values()).slice(0, 7).map((d) => ({
-    date: new Date(d.dt * 1000).toISOString().split('T')[0],
-    tempMin: Math.min(...d.temps),
-    tempMax: Math.max(...d.temps),
-    humidity: Math.round(d.humidity.reduce((a, b) => a + b, 0) / d.humidity.length),
-    precipitation: d.rain,
-    precipProbability: 0, // Not available in 2.5 API
-    windSpeed: Math.max(...d.windSpeeds),
-    windGust: Math.max(...d.windGusts),
-    uvIndex: 0,
-    description: d.condition,
-  }));
+  // Free-first: Open-Meteo is primary, OpenWeather One Call 3.0 is only a backstop.
+  // This keeps the cron off the One Call 3.0 quota for its bulk per-grid-cell fetches.
+  const forecast = await getDailyForecast({ lat, lon, apiKey: OPENWEATHER_API_KEY });
+  return forecast.length ? forecast : null;
 }
 
 // =============================================================================

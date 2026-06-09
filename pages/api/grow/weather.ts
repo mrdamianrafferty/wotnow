@@ -1,5 +1,5 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { getFullWeather, fetchOpenMeteoWeather } from '../../../lib/services/weatherService';
+import { getCachedFullWeather, fetchOpenMeteoWeather } from '../../../lib/services/weatherService';
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
@@ -140,8 +140,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   try {
-    // Use the same weather service as Go Daisy - always returns metric
-    const weatherData = await getFullWeather({
+    // Use the same weather service as Go Daisy - always returns metric.
+    // Durable Supabase cache collapses duplicate One Call 3.0 calls for the same area.
+    const weatherData = await getCachedFullWeather({
       lat: latitude,
       lon: longitude,
       apiKey: OPENWEATHER_API_KEY,

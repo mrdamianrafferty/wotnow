@@ -1,5 +1,5 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { getFullWeather, fetchOpenMeteoAirPollen } from '../../lib/services/weatherService';
+import { getFullWeather, getCachedFullWeather, fetchOpenMeteoAirPollen } from '../../lib/services/weatherService';
 
 type HourlySeries = Array<number | null | undefined> | undefined;
 
@@ -48,7 +48,9 @@ type WeatherWithPollenDeps = {
 const FIVE_DAYS_MS = 5 * 24 * 60 * 60 * 1000;
 
 const defaultDeps: WeatherWithPollenDeps = {
-  getFullWeather,
+  // Route through the durable Supabase cache so repeated requests for the same area
+  // don't each fire a fresh One Call 3.0 call. Same signature as getFullWeather.
+  getFullWeather: getCachedFullWeather,
   fetchAirPollen: async (lat, lon, start, end) => {
     const response = await fetchOpenMeteoAirPollen(lat, lon, start, end);
     return response as OpenMeteoAirPollenResponse;

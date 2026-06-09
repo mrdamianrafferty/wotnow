@@ -1,5 +1,5 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { getFullWeather } from '../../../../lib/services/weatherService';
+import { getDailyForecast } from '@/lib/grow/dailyForecast';
 import {
   generateLocalSignals,
   type LocalSignal,
@@ -7,9 +7,6 @@ import {
   type SignalPreferences,
   type SignalType,
 } from '../../../../lib/grow/localSignals';
-import type { WeatherForecast } from '../../../../lib/grow/weatherTaskEngine';
-
-/* eslint-disable @typescript-eslint/no-explicit-any */
 
 const OPENWEATHER_API_KEY =
   process.env.OPENWEATHER_API_KEY || process.env.NEXT_PUBLIC_OPENWEATHER_KEY;
@@ -41,21 +38,6 @@ async function geocodeLocation(location: string): Promise<GeoLocation | null> {
     console.error('Geocoding error:', error);
   }
   return null;
-}
-
-function transformToWeatherForecast(daily: any[]): WeatherForecast[] {
-  return daily.map((d: any) => ({
-    date: new Date(d.dt * 1000).toISOString().split('T')[0],
-    tempMin: d.temp?.min ?? 0,
-    tempMax: d.temp?.max ?? 0,
-    humidity: d.humidity ?? 50,
-    precipitation: d.rain ?? 0,
-    precipProbability: d.pop ?? 0,
-    windSpeed: (d.wind_speed ?? 0) * 3.6, // Convert m/s to km/h
-    windGust: (d.wind_gust ?? d.wind_speed ?? 0) * 3.6,
-    uvIndex: d.uvi ?? 0,
-    description: d.weather?.[0]?.description ?? 'unknown',
-  }));
 }
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
@@ -92,20 +74,16 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   try {
-    // Fetch weather data
-    const weatherData = (await getFullWeather({
+    // Fetch daily forecast: Open-Meteo (free) primary, OpenWeather One Call 3.0 backstop.
+    const forecast = await getDailyForecast({
       lat: latitude,
       lon: longitude,
       apiKey: OPENWEATHER_API_KEY,
-      options: { units: 'metric' },
-    })) as any;
+    });
 
-    if (!weatherData || !weatherData.daily) {
+    if (!forecast.length) {
       return res.status(500).json({ error: 'Failed to fetch weather data' });
     }
-
-    // Transform to WeatherForecast format
-    const forecast = transformToWeatherForecast(weatherData.daily);
 
     // Parse preferences
     const preferences: SignalPreferences = {
@@ -124,9 +102,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         name: locationName,
       },
       generatedAt: new Date().toISOString(),
-      dataFreshness: weatherData.current?.dt
-        ? new Date(weatherData.current.dt * 1000).toISOString()
-        : new Date().toISOString(),
+      dataFreshness: new Date().toISOString(),
     };
 
     // Cache for 30 minutes (signals are weather-based, update frequently)
