@@ -22,10 +22,11 @@ import { generateSmartTasks } from '@/lib/grow/smartTasks';
 import type { SmartTaskContext, PlantInfo } from '@/lib/grow/smartTasks';
 import type { ClimateZoneCode } from '@/lib/grow/climate';
 import { getUnifiedWeatherData } from '@/lib/grow/weatherDataSource';
+import { fetchOpenMeteoDailyForecastRaw } from '@/lib/services/weatherService';
+import { mapOpenMeteoDaily } from '@/lib/grow/dailyForecast';
 
 const SUPABASE_URL = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
 const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
-const OPENWEATHER_API_KEY = process.env.OPENWEATHER_API_KEY || process.env.NEXT_PUBLIC_OPENWEATHER_KEY;
 
 if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
   throw new Error('Missing Supabase configuration');
@@ -39,113 +40,22 @@ const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
 });
 
 /**
- * Fetch with timeout wrapper
- */
-async function fetchWithTimeout(url: string, timeoutMs: number = 10000): Promise<Response> {
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
-
-  try {
-    const response = await fetch(url, { signal: controller.signal });
-    clearTimeout(timeoutId);
-    return response;
-  } catch (err) {
-    clearTimeout(timeoutId);
-    if (err instanceof Error && err.name === 'AbortError') {
-      throw new Error(`Request timed out after ${timeoutMs}ms`);
-    }
-    throw err;
-  }
-}
-
-/**
- * Fetch weather forecast from OpenWeather
+ * Fetch weather forecast from Open-Meteo (free tier, no API key required)
+ * Falls back gracefully if service unavailable
  */
 async function fetchWeatherForecast(lat: number, lon: number): Promise<WeatherForecast[]> {
-  if (!OPENWEATHER_API_KEY) {
-    console.error('[WeatherTasks] OpenWeather API key not configured');
-    throw new Error('Weather service not configured');
-  }
-
   // Validate coordinates
   if (lat < -90 || lat > 90 || lon < -180 || lon > 180) {
     throw new Error('Invalid coordinates');
   }
 
-  const url = `https://api.openweathermap.org/data/2.5/forecast?lat=${lat}&lon=${lon}&units=metric&appid=${OPENWEATHER_API_KEY}`;
-
   try {
-    const response = await fetchWithTimeout(url, 15000);
-
-    if (!response.ok) {
-      const errorText = await response.text().catch(() => '');
-      console.error(`[WeatherTasks] OpenWeather error: ${response.status} - ${errorText}`);
-      throw new Error(`Weather service error (${response.status})`);
-    }
-
-    const data = await response.json();
-
-    if (!data.list || !Array.isArray(data.list)) {
-      throw new Error('Invalid weather data received');
-    }
-
-  // Group by day and extract daily forecasts
-  const dailyMap = new Map<string, {
-    temps: number[];
-    humidity: number[];
-    precipitation: number;
-    precipProb: number[];
-    windSpeed: number[];
-    windGust: number[];
-    description: string;
-  }>();
-
-  for (const item of data.list) {
-    const date = item.dt_txt.split(' ')[0];
-
-    if (!dailyMap.has(date)) {
-      dailyMap.set(date, {
-        temps: [],
-        humidity: [],
-        precipitation: 0,
-        precipProb: [],
-        windSpeed: [],
-        windGust: [],
-        description: item.weather[0]?.description || '',
-      });
-    }
-
-    const day = dailyMap.get(date)!;
-    day.temps.push(item.main.temp);
-    day.humidity.push(item.main.humidity);
-    day.precipitation += (item.rain?.['3h'] || 0) + (item.snow?.['3h'] || 0);
-    day.precipProb.push(item.pop * 100);
-    day.windSpeed.push(item.wind.speed * 3.6); // m/s to km/h
-    day.windGust.push((item.wind.gust || item.wind.speed) * 3.6);
-  }
-
-  // Convert to forecast array
-  const forecasts: WeatherForecast[] = [];
-
-  for (const [date, day] of dailyMap.entries()) {
-    forecasts.push({
-      date,
-      tempMin: Math.min(...day.temps),
-      tempMax: Math.max(...day.temps),
-      humidity: day.humidity.reduce((a, b) => a + b, 0) / day.humidity.length,
-      precipitation: day.precipitation,
-      precipProbability: Math.max(...day.precipProb),
-      windSpeed: day.windSpeed.reduce((a, b) => a + b, 0) / day.windSpeed.length,
-      windGust: Math.max(...day.windGust),
-      uvIndex: 5, // OpenWeather free tier doesn't include UV
-      description: day.description,
-    });
-  }
-
-    return forecasts.slice(0, 7); // Return 7 days
+    const data = await fetchOpenMeteoDailyForecastRaw(lat, lon, 7);
+    return mapOpenMeteoDaily(data);
   } catch (err) {
     console.error('[WeatherTasks] fetchWeatherForecast error:', err);
-    throw err;
+    // Return empty array rather than throwing - allows graceful fallback
+    return [];
   }
 }
 
@@ -176,7 +86,7 @@ async function fetchSoilConditions(lat: number, lon: number): Promise<SoilCondit
   const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&hourly=soil_temperature_0cm,soil_temperature_6cm,soil_temperature_18cm,soil_temperature_54cm,soil_moisture_0_to_1cm,soil_moisture_1_to_3cm,soil_moisture_3_to_9cm,soil_moisture_9_to_27cm&forecast_days=1`;
 
   try {
-    const response = await fetchWithTimeout(url, 10000);
+    const response = await fetch(url);
 
     if (!response.ok) {
       console.error(`[WeatherTasks] Open-Meteo error: ${response.status}`);

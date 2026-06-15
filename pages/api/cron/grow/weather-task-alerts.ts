@@ -22,6 +22,8 @@ import { sendPushNotification, NotificationType } from '@/lib/grow/notifications
 import { sendGrowApnsPushNotification } from '@/lib/grow/apnsClient';
 import { sendFcmPushNotification } from '@/lib/notifications/fcmClient';
 import { verifyCronAuth } from '@/lib/cron-auth';
+import { fetchOpenMeteoDailyForecastRaw } from '@/lib/services/weatherService';
+import { mapOpenMeteoDaily } from '@/lib/grow/dailyForecast';
 
 /**
  * Map alert types to notification types
@@ -40,7 +42,6 @@ function mapAlertToNotificationType(alertType: string, severity: string): Notifi
 
 const SUPABASE_URL = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
 const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
-const OPENWEATHER_API_KEY = process.env.OPENWEATHER_API_KEY || process.env.NEXT_PUBLIC_OPENWEATHER_KEY;
 if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
   throw new Error('Missing Supabase configuration');
 }
@@ -53,69 +54,12 @@ const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
 });
 
 /**
- * Fetch weather forecast from OpenWeather
+ * Fetch weather forecast from Open-Meteo (free tier, no API key required)
  */
 async function fetchWeatherForecast(lat: number, lon: number): Promise<WeatherForecast[]> {
-  if (!OPENWEATHER_API_KEY) return [];
-
   try {
-    const url = `https://api.openweathermap.org/data/2.5/forecast?lat=${lat}&lon=${lon}&units=metric&appid=${OPENWEATHER_API_KEY}`;
-    const response = await fetch(url);
-
-    if (!response.ok) return [];
-
-    const data = await response.json();
-    const dailyMap = new Map<string, {
-      temps: number[];
-      humidity: number[];
-      precipitation: number;
-      precipProb: number[];
-      windSpeed: number[];
-      windGust: number[];
-      description: string;
-    }>();
-
-    for (const item of data.list) {
-      const date = item.dt_txt.split(' ')[0];
-
-      if (!dailyMap.has(date)) {
-        dailyMap.set(date, {
-          temps: [],
-          humidity: [],
-          precipitation: 0,
-          precipProb: [],
-          windSpeed: [],
-          windGust: [],
-          description: item.weather[0]?.description || '',
-        });
-      }
-
-      const day = dailyMap.get(date)!;
-      day.temps.push(item.main.temp);
-      day.humidity.push(item.main.humidity);
-      day.precipitation += (item.rain?.['3h'] || 0) + (item.snow?.['3h'] || 0);
-      day.precipProb.push(item.pop * 100);
-      day.windSpeed.push(item.wind.speed * 3.6);
-      day.windGust.push((item.wind.gust || item.wind.speed) * 3.6);
-    }
-
-    const forecasts: WeatherForecast[] = [];
-    for (const [date, day] of dailyMap.entries()) {
-      forecasts.push({
-        date,
-        tempMin: Math.min(...day.temps),
-        tempMax: Math.max(...day.temps),
-        humidity: day.humidity.reduce((a, b) => a + b, 0) / day.humidity.length,
-        precipitation: day.precipitation,
-        precipProbability: Math.max(...day.precipProb),
-        windSpeed: day.windSpeed.reduce((a, b) => a + b, 0) / day.windSpeed.length,
-        windGust: Math.max(...day.windGust),
-        uvIndex: 5,
-        description: day.description,
-      });
-    }
-
-    return forecasts.slice(0, 5);
+    const data = await fetchOpenMeteoDailyForecastRaw(lat, lon, 5);
+    return mapOpenMeteoDaily(data);
   } catch (error) {
     console.error('[WeatherCron] Forecast error:', error);
     return [];
