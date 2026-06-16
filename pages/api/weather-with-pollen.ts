@@ -1,5 +1,11 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { getFullWeather, getCachedFullWeather, fetchOpenMeteoAirPollen } from '../../lib/services/weatherService';
+import {
+  fetchOpenMeteoAirPollen,
+  getFullWeather,
+  getCachedFullWeather,
+  fetchOpenMeteoDailyForecastRaw
+} from '../../lib/services/weatherService';
+import { mapOpenMeteoDaily } from '../../lib/grow/dailyForecast';
 
 type HourlySeries = Array<number | null | undefined> | undefined;
 
@@ -47,10 +53,63 @@ type WeatherWithPollenDeps = {
 
 const FIVE_DAYS_MS = 5 * 24 * 60 * 60 * 1000;
 
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
+/**
+ * Wrapper that tries Open-Meteo forecast first (free), falls back to OpenWeather One Call 3.0
+ */
+async function getWeatherWithFreeFirstFallback(
+  lat: number | string,
+  lon: number | string,
+  apiKey: string | undefined,
+  units: 'metric' | 'imperial' | 'standard' = 'metric'
+): Promise<Record<string, any>> {
+  // Try Open-Meteo first (free, unlimited)
+  try {
+    const omData = await fetchOpenMeteoDailyForecastRaw(Number(lat), Number(lon), 7);
+    const forecasts = mapOpenMeteoDaily(omData);
+
+    // Convert to loose OpenWeather One Call 3.0 format for compatibility
+    if (forecasts.length > 0) {
+      return {
+        daily: forecasts.map((f) => ({
+          dt: new Date(f.date).getTime() / 1000, // Unix timestamp
+          temp: {
+            day: (f.tempMin + f.tempMax) / 2,
+            min: f.tempMin,
+            max: f.tempMax,
+          },
+          weather: [{
+            main: f.description.split(':')[0],
+            description: f.description,
+            icon: '01d', // Placeholder
+          }],
+          rain: f.precipitation > 0 ? f.precipitation : undefined,
+          wind_speed: f.windSpeed,
+          wind_deg: 0, // Open-Meteo doesn't provide wind direction in daily
+          clouds: 0, // Open-Meteo doesn't provide cloud cover in daily
+          humidity: f.humidity,
+          uvi: f.uvIndex,
+        })),
+      };
+    }
+  } catch (err) {
+    console.warn('[WeatherWithPollen] Open-Meteo forecast failed, falling back to OpenWeather:', err);
+  }
+
+  // Fallback to cached OpenWeather One Call 3.0 if Open-Meteo fails
+  if (apiKey) {
+    return getCachedFullWeather({ lat: Number(lat), lon: Number(lon), apiKey, options: { units } });
+  }
+
+  throw new Error('No weather provider available');
+}
+
 const defaultDeps: WeatherWithPollenDeps = {
-  // Route through the durable Supabase cache so repeated requests for the same area
-  // don't each fire a fresh One Call 3.0 call. Same signature as getFullWeather.
-  getFullWeather: getCachedFullWeather,
+  // Free-first: try Open-Meteo forecast, fall back to cached OpenWeather One Call 3.0
+  getFullWeather: async (args) => {
+    return getWeatherWithFreeFirstFallback(args.lat, args.lon, args.apiKey, args.options?.units);
+  },
   fetchAirPollen: async (lat, lon, start, end) => {
     const response = await fetchOpenMeteoAirPollen(lat, lon, start, end);
     return response as OpenMeteoAirPollenResponse;
