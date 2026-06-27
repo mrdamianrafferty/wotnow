@@ -13,6 +13,8 @@ import { getOpenWeatherKey } from '../../../lib/utils/openWeatherKey';
 
 const ALLOWED = new Set(['weather', 'forecast']);
 const CACHE_TTL_MS = 10 * 60 * 1000; // 10 min
+// CDN cache (shared across serverless instances/users, unlike the in-memory Map).
+const CDN_CACHE = 'public, s-maxage=600, stale-while-revalidate=1800';
 const cache = new Map<string, { data: unknown; expires: number }>();
 
 const round2dp = (n: number) => Math.round(n * 1e2) / 1e2;
@@ -40,6 +42,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const cached = cache.get(cacheKey);
   if (cached && cached.expires > Date.now()) {
     res.setHeader('x-cache', 'HIT');
+    res.setHeader('Cache-Control', CDN_CACHE);
     return res.status(200).json(cached.data);
   }
 
@@ -53,6 +56,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
     cache.set(cacheKey, { data, expires: Date.now() + CACHE_TTL_MS });
     res.setHeader('x-cache', 'MISS');
+    res.setHeader('Cache-Control', CDN_CACHE);
     return res.status(200).json(data);
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
