@@ -5,6 +5,7 @@ import dayjs from "dayjs";
 
 // Keep client requests aligned with server/cache precision (~110 m)
 const round3dp = (n: number) => Math.round(n * 1e3) / 1e3;
+const round2dp = (n: number) => Math.round(n * 1e2) / 1e2;
 
 /**
  * Fetches OpenWeather and Stormglass marine data using Next.js API routes.
@@ -18,9 +19,11 @@ export function useForecastData(mainLat?: number, mainLon?: number, coastalLat?:
   useEffect(() => {
     setLoading(true);
 
-    // OpenWeather
+    // OpenWeather (round to ~1km so jittery GPS reuses the same server cache key)
     if (mainLat && mainLon) {
-      fetch(`/api/owm?lat=${mainLat}&lon=${mainLon}&units=metric`)
+      const owLat = round2dp(mainLat);
+      const owLon = round2dp(mainLon);
+      fetch(`/api/owm?lat=${owLat}&lon=${owLon}&units=metric`)
         .then(r => r.json())
         .then(d => setSlots(d.list as OWMForecastSlot[]))
         .catch(() => setSlots([]));

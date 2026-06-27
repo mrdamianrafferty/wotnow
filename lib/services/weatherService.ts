@@ -27,7 +27,6 @@ type Source = Json | null | undefined;
 const round3dp = round3dpUtil; // Use shared utility
 const coordKey3dp = (lat: number, lon: number) => createCacheKey(lat, lon, COORDINATE_PRECISION.STANDARD);
 const round4dp = (n: number) => Math.round(n * 1e4) / 1e4;
-const round2dp = (n: number) => Math.round(n * 1e2) / 1e2;
 
 type Spot = { id: string; name: string; lat: number; lon: number };
 
@@ -1650,7 +1649,63 @@ async function getFullWeather({ lat, lon, apiKey, options = {} }: { lat: number|
   }
 }
 
-const ONECALL_CACHE_TTL_MS = 30 * 60 * 1000; // 30 minutes
+// Cache window for One Call 3.0 results. Both the TTL and the cache-key time
+// bucket use this, so the longer TTL actually takes effect (an hourly key would
+// otherwise cap effective caching at 1h regardless of TTL).
+const CACHE_BUCKET_HOURS = 3;
+const ONECALL_CACHE_TTL_MS = CACHE_BUCKET_HOURS * 60 * 60 * 1000; // 3 hours
+
+// Circuit breaker: once OpenWeather One Call 3.0 returns 429 (daily cap blown),
+// stop hammering it for this long and serve the most recent cached value instead.
+const OW_RATE_LIMIT_BREAKER_MS = 5 * 60 * 1000; // 5 minutes
+let owRateLimitedUntil = 0;
+
+/**
+ * One Call 3.0 only, shaped like getFullWeather's onecall3 branch but with NO
+ * 2.5 fallback and NO hourly->2.5 supplement. Throws { status } on failure
+ * (including 429) so the caller can decide to serve stale instead of spending a
+ * second upstream call.
+ */
+async function fetchFullWeatherOneCallOnly({ lat, lon, apiKey, options = {} }: { lat: number|string, lon: number|string, apiKey: string, options?: WeatherOptions }): Promise<FullWeather> {
+  const data = await fetchOpenWeatherOneCall(Number(lat), Number(lon), apiKey, options);
+  return {
+    cod: '200',
+    message: 0,
+    cnt: data.daily?.length || 8,
+    list: transformDailyForecast(data),
+    city: transformCity(data, lat, lon),
+    alerts: data.alerts || [],
+    current: data.current || {},
+    hourly: data.hourly || [],
+    minutely: data.minutely || [],
+    daily: data.daily || [],
+    source: 'onecall3',
+  } as FullWeather;
+}
+
+/**
+ * Most recent cached entry for a coordinate bucket, IGNORING expiry. Used to
+ * serve stale-but-usable data while One Call 3.0 is rate-limited rather than
+ * firing more upstream calls.
+ */
+async function readStaleOneCallCache(latBucket: number, lonBucket: number, units: string, exclude: string): Promise<FullWeather | undefined> {
+  try {
+    const supabase = getSupabaseServerClient();
+    // cache_key shape: ow3:<lat>:<lon>:<isoHourBucket>:<units>:<exclude>
+    const pattern = `ow3:${latBucket}:${lonBucket}:%:${units}:${exclude}`;
+    const { data } = await supabase
+      .from('openweather_cache')
+      .select('forecast_data')
+      .like('cache_key', pattern)
+      .order('cached_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    return (data?.forecast_data as FullWeather) || undefined;
+  } catch (err) {
+    console.warn('[OpenWeatherCache] Stale read failed:', (err as Error)?.message);
+    return undefined;
+  }
+}
 
 /**
  * Durable, Supabase-backed cache around getFullWeather (OpenWeather One Call 3.0).
@@ -1666,14 +1721,19 @@ const ONECALL_CACHE_TTL_MS = 30 * 60 * 1000; // 30 minutes
  * safe to deploy before the migration lands.
  */
 async function getCachedFullWeather({ lat, lon, apiKey, options = {} }: { lat: number|string, lon: number|string, apiKey: string, options?: WeatherOptions }): Promise<FullWeather> {
-  const latBucket = round2dp(Number(lat));
-  const lonBucket = round2dp(Number(lon));
+  // Bucket coordinates to ~11km (1dp). At 7-day-forecast granularity this is
+  // plenty precise and collapses far more requests into a shared cache entry.
+  const latBucket = round1dp(Number(lat));
+  const lonBucket = round1dp(Number(lon));
   const units = options?.units || 'metric';
   const exclude = options?.exclude || '';
   const now = new Date();
-  const forecastHour = new Date(now.getFullYear(), now.getMonth(), now.getDate(), now.getHours()).toISOString();
+  // Bucket time into CACHE_BUCKET_HOURS blocks so the TTL is actually effective.
+  const bucketHour = Math.floor(now.getHours() / CACHE_BUCKET_HOURS) * CACHE_BUCKET_HOURS;
+  const forecastHour = new Date(now.getFullYear(), now.getMonth(), now.getDate(), bucketHour).toISOString();
   const cacheKey = `ow3:${latBucket}:${lonBucket}:${forecastHour}:${units}:${exclude}`;
 
+  // 1. Fresh cache hit
   if (!options?.bypassCache) {
     try {
       const supabase = getSupabaseServerClient();
@@ -1691,7 +1751,30 @@ async function getCachedFullWeather({ lat, lon, apiKey, options = {} }: { lat: n
     }
   }
 
-  const fresh = await getFullWeather({ lat: latBucket, lon: lonBucket, apiKey, options });
+  // 2. Circuit breaker: if One Call 3.0 is currently rate-limited, serve the
+  //    most recent stale entry instead of hitting OpenWeather again.
+  if (!options?.bypassCache && Date.now() < owRateLimitedUntil) {
+    const stale = await readStaleOneCallCache(latBucket, lonBucket, units, exclude);
+    if (stale) return stale;
+  }
+
+  // 3. Live fetch (One Call 3.0 only — no inline 2.5 fallback, so a 429 costs
+  //    nothing extra and we can fall back to stale cache instead).
+  let fresh: FullWeather;
+  try {
+    fresh = await fetchFullWeatherOneCallOnly({ lat: latBucket, lon: lonBucket, apiKey, options });
+  } catch (err) {
+    const status = (err && typeof err === 'object' && 'status' in err) ? Number((err as { status?: unknown }).status) : undefined;
+    if (status === 429) {
+      owRateLimitedUntil = Date.now() + OW_RATE_LIMIT_BREAKER_MS;
+    }
+    // Prefer stale-but-real cached data over a degraded/extra upstream call.
+    const stale = await readStaleOneCallCache(latBucket, lonBucket, units, exclude);
+    if (stale) return stale;
+    // No stale data available: fall back to the legacy path (2.5 forecast) so we
+    // still return something usable. Rare — only the very first miss per bucket.
+    fresh = await getFullWeather({ lat: latBucket, lon: lonBucket, apiKey, options });
+  }
 
   if (fresh && !options?.bypassCache) {
     try {

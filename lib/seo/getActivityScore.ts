@@ -23,6 +23,7 @@ import { getSuggestionsByDay } from '../../utils/getSuggestionsByDay';
 import type { Suggestion, WeatherData } from '../../utils/getSuggestionsByDay';
 import { activityTypes } from '../../data/activityTypes';
 import type { SeoLocation } from '../../data/seoLocations';
+import { getCachedFullWeather } from '../services/weatherService';
 
 // ============================================================================
 // Public types
@@ -151,44 +152,34 @@ function labelForOffset(offset: number): string {
  * Fetch weather for a location and return it in the shape getSuggestionsByDay
  * expects: `Array<{ date: number; weather: WeatherData }>`.
  *
- * TODO (low effort, high value): replace this body with a direct import of
- * `getFullWeather` from `../../lib/services/weatherService.ts`. That keeps
- * scoring on these SEO pages perfectly in sync with what `/api/owm.ts`
- * returns to the app.
- *
- * For now, this is a defensive stub that calls the existing /api/owm endpoint
- * over HTTP. The internal HTTP call works fine on Vercel (the request stays
- * inside the same edge region) but adds latency you don't strictly need.
+ * Calls `getCachedFullWeather` directly (same Supabase-backed One Call 3.0 cache
+ * the app uses via /api/owm) — no HTTP round-trip to godaisy.io. Using the same
+ * options as the app (units: metric, exclude: '') means SEO regenerations share
+ * cache entries with live app traffic instead of doubling OpenWeather load.
  */
 async function fetchWeatherForLocation(
   location: SeoLocation
 ): Promise<Array<{ date: number; weather: WeatherData }>> {
-  const baseUrl =
-    process.env.NEXT_PUBLIC_BASE_URL_GODAISY || 'https://godaisy.io';
+  const apiKey = process.env.NEXT_PUBLIC_OPENWEATHER_KEY;
+  if (!apiKey) {
+    console.error(`Weather fetch skipped for ${location.slug}: missing OpenWeather API key`);
+    return [];
+  }
 
   try {
-    const res = await fetch(
-      `${baseUrl}/api/owm?lat=${location.lat}&lon=${location.lon}&units=metric`,
-      { headers: { 'User-Agent': 'GoDaisy-SEO-Build/1.0' } }
-    );
-    if (!res.ok) {
-      console.error(
-        `Weather fetch failed for ${location.slug}:`,
-        res.status,
-        await res.text()
-      );
-      return [];
-    }
-    const data = await res.json();
+    const data = await getCachedFullWeather({
+      lat: location.lat,
+      lon: location.lon,
+      apiKey,
+      options: { units: 'metric', exclude: '' },
+    });
 
-    // Map the OWM response into the shape getSuggestionsByDay wants.
-    // The exact key names below will depend on what your getFullWeather()
-    // returns. Verify by logging `data` once and adjust the mapping.
+    // Map the OWM One Call response into the shape getSuggestionsByDay wants.
     type OWMDaily = { dt?: number; temp?: { day?: number }; rain?: number; wind_speed?: number; clouds?: number; humidity?: number };
     type OWMHourly = { dt?: number; temp?: number; rain?: { '1h'?: number }; wind_speed?: number; clouds?: number; humidity?: number };
 
     if (Array.isArray(data?.daily)) {
-      return data.daily.slice(0, 7).map((d: OWMDaily) => ({
+      return (data.daily as OWMDaily[]).slice(0, 7).map((d: OWMDaily) => ({
         date: d.dt ?? Math.floor(Date.now() / 1000),
         weather: {
           temperature: d.temp?.day,
@@ -202,7 +193,7 @@ async function fetchWeatherForLocation(
 
     // Fallback: try hourly[0..6] as daily proxies
     if (Array.isArray(data?.hourly)) {
-      return data.hourly.slice(0, 7).map((h: OWMHourly) => ({
+      return (data.hourly as OWMHourly[]).slice(0, 7).map((h: OWMHourly) => ({
         date: h.dt ?? Math.floor(Date.now() / 1000),
         weather: {
           temperature: h.temp,
