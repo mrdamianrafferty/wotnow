@@ -1,8 +1,9 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { createClient } from '@supabase/supabase-js';
 import { SUPABASE_URL, SUPABASE_ANON_KEY } from '../../../lib/supabase/env';
+import { getOpenWeatherKey } from '../../../lib/utils/openWeatherKey';
 
-const OPENWEATHER_API_KEY = process.env.OPENWEATHER_API_KEY || process.env.NEXT_PUBLIC_OPENWEATHER_KEY;
+const OPENWEATHER_API_KEY = getOpenWeatherKey();
 
 interface GardenTask {
   id: string;

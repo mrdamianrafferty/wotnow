@@ -1,9 +1,10 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { getCachedFullWeather, fetchOpenMeteoWeather } from '../../../lib/services/weatherService';
+import { getOpenWeatherKey } from '../../../lib/utils/openWeatherKey';
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-const OPENWEATHER_API_KEY = process.env.OPENWEATHER_API_KEY || process.env.NEXT_PUBLIC_OPENWEATHER_KEY;
+const OPENWEATHER_API_KEY = getOpenWeatherKey();
 
 // Soil data interface
 interface SoilData {

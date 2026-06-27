@@ -20,10 +20,11 @@ import type { WeatherForecast } from '@/lib/grow/weatherTaskEngine';
 import { getDailyForecast } from '@/lib/grow/dailyForecast';
 import { sendPushNotification, createLocalSignalPayload } from '@/lib/grow/notifications';
 import { verifyCronAuth } from '@/lib/cron-auth';
+import { getOpenWeatherKey } from '@/lib/utils/openWeatherKey';
 
 const SUPABASE_URL = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
 const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
-const OPENWEATHER_API_KEY = process.env.OPENWEATHER_API_KEY || process.env.NEXT_PUBLIC_OPENWEATHER_KEY;
+const OPENWEATHER_API_KEY = getOpenWeatherKey();
 if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
   throw new Error('Missing Supabase configuration');
 }

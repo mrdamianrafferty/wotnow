@@ -7,9 +7,9 @@ import {
   type SignalPreferences,
   type SignalType,
 } from '../../../../lib/grow/localSignals';
+import { getOpenWeatherKey } from '../../../../lib/utils/openWeatherKey';
 
-const OPENWEATHER_API_KEY =
-  process.env.OPENWEATHER_API_KEY || process.env.NEXT_PUBLIC_OPENWEATHER_KEY;
+const OPENWEATHER_API_KEY = getOpenWeatherKey();
 
 interface GeoLocation {
   lat: number;
