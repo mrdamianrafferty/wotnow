@@ -1,5 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { getCachedFullWeather } from '../../lib/services/weatherService';
+import { getOpenWeatherKey } from '../../lib/utils/openWeatherKey';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   // Use the unified weather service directly
@@ -12,7 +13,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       : 'metric';
   const exclude = (req.query.exclude as string) || '';
 
-  const apiKey = process.env.NEXT_PUBLIC_OPENWEATHER_KEY;
+  const apiKey = getOpenWeatherKey();
 
   if (!lat || !lon || !apiKey) {
     return res.status(400).json({ error: 'Missing parameters or API key' });

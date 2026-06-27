@@ -70,7 +70,7 @@ class WotNowAstronomyAPI {
 
   constructor() {
     this.stormglassKey = process.env.STORMGLASS_SECRET_KEY || '';
-    this.openweatherKey = process.env.NEXT_PUBLIC_OPENWEATHER_KEY || '';
+    this.openweatherKey = process.env.OPENWEATHER_KEY || process.env.NEXT_PUBLIC_OPENWEATHER_KEY || '';
   }
 
   // Canonical moon phase mapping from phase angle (deg) with small tolerance

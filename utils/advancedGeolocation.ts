@@ -470,13 +470,9 @@ class AdvancedGeolocationService {
    * Reverse geocode coordinates to location name
    */
   private async reverseGeocode(lat: number, lon: number): Promise<{ city?: string; region?: string; country?: string; name: string }> {
-    const apiKey = process.env.NEXT_PUBLIC_OPENWEATHER_KEY;
-    if (!apiKey) {
-      throw new Error('No API key for reverse geocoding');
-    }
-
+    // OpenWeather reverse geocoding via server proxy (key stays off the client).
     const response = await fetch(
-      `https://api.openweathermap.org/geo/1.0/reverse?lat=${lat}&lon=${lon}&limit=1&appid=${apiKey}`,
+      `/api/geocode?lat=${lat}&lon=${lon}`,
       {
         headers: { 'Accept': 'application/json' },
         signal: AbortSignal.timeout(5000)

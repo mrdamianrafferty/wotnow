@@ -90,16 +90,10 @@ const ModernLocationSearch: React.FC<{
       };
 
       try {
-        const apiKey = process.env.NEXT_PUBLIC_OPENWEATHER_KEY;
-        if (!apiKey) {
-          // Fallback immediately if no key configured
-          await fetchNominatim();
-          return;
-        }
-
-        // Use OpenWeather Geocoding API for location search
+        // OpenWeather geocoding via server proxy (key stays off the client).
+        // Falls back to Nominatim if the proxy/upstream fails.
         const response = await fetch(
-          `https://api.openweathermap.org/geo/1.0/direct?q=${encodeURIComponent(searchQuery)}&limit=5&appid=${apiKey}`,
+          `/api/geocode?q=${encodeURIComponent(searchQuery)}&limit=5`,
           {
             signal: controller.signal,
             headers: { 'Accept': 'application/json' }
@@ -107,7 +101,7 @@ const ModernLocationSearch: React.FC<{
         );
 
         if (!response.ok) {
-          // Try fallback when OW fails (e.g., 401 or 429)
+          // Try fallback when the proxy fails (e.g., 429 or upstream error)
           await fetchNominatim();
           return;
         }

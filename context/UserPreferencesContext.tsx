@@ -637,13 +637,8 @@ export const UserPreferencesProvider: React.FC<{ children: ReactNode }> = ({ chi
     const home = preferences.locations.find(l => l.type === 'home');
     if (!home?.lat || !home.lon) return;
 
-    const apiKey = process.env.NEXT_PUBLIC_OPENWEATHER_KEY;
-    if (!apiKey) {
-      console.warn('OpenWeather API key is missing');
-      return;
-    }
-
-    const url = `https://api.openweathermap.org/data/2.5/forecast?lat=${home.lat}&lon=${home.lon}&appid=${apiKey}&units=metric`;
+    // Forecast via server proxy (key stays off the client); same 2.5 shape.
+    const url = `/api/ow25/forecast?lat=${home.lat}&lon=${home.lon}&units=metric`;
 
     try {
       const res = await fetch(url);
