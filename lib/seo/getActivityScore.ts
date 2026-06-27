@@ -24,6 +24,7 @@ import type { Suggestion, WeatherData } from '../../utils/getSuggestionsByDay';
 import { activityTypes } from '../../data/activityTypes';
 import type { SeoLocation } from '../../data/seoLocations';
 import { getCachedFullWeather } from '../services/weatherService';
+import { getOpenWeatherKey } from '../utils/openWeatherKey';
 
 // ============================================================================
 // Public types
@@ -160,7 +161,7 @@ function labelForOffset(offset: number): string {
 async function fetchWeatherForLocation(
   location: SeoLocation
 ): Promise<Array<{ date: number; weather: WeatherData }>> {
-  const apiKey = process.env.NEXT_PUBLIC_OPENWEATHER_KEY;
+  const apiKey = getOpenWeatherKey();
   if (!apiKey) {
     console.error(`Weather fetch skipped for ${location.slug}: missing OpenWeather API key`);
     return [];

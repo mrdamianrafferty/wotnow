@@ -116,7 +116,7 @@ const defaultDeps: WeatherWithPollenDeps = {
   },
   now: () => new Date(),
   logger: console,
-  getApiKey: () => process.env.NEXT_PUBLIC_OPENWEATHER_KEY,
+  getApiKey: () => process.env.OPENWEATHER_KEY || process.env.NEXT_PUBLIC_OPENWEATHER_KEY,
 };
 
 function getScalarQueryParam(value: string | string[] | undefined): string | undefined {
