@@ -20,6 +20,69 @@ interface VenueSearchProps {
   onVenuesSelected: (venues: Venue[]) => void;
 }
 
+// -----------------------------------------------------------------------------
+// Cost-safe sessionStorage cache for Places Text Search.
+// Added 2026-07-02 after a €400 (Mar) + €363 (Jun) Places API — Text Search bill.
+// Text Search is billed per call ($32/1000). Backspace-and-retype, or two users
+// typing the same phrase, previously re-billed. This cache eliminates that.
+// -----------------------------------------------------------------------------
+const CACHE_KEY_PREFIX = 'venue-search:v1:';
+const CACHE_TTL_MS = 30 * 60 * 1000; // 30 min per session — long enough for a browse session, short enough that "recently updated" places refresh
+const CACHE_MAX_ENTRIES = 100;       // hard cap so sessionStorage doesn't bloat
+
+function cacheKeyFor(query: string, activityName: string, lat: number, lng: number): string {
+  // Round coords to ~1km so that trivial GPS jitter doesn't bust the cache.
+  const roundedLat = Math.round(lat * 100) / 100;
+  const roundedLng = Math.round(lng * 100) / 100;
+  return `${CACHE_KEY_PREFIX}${activityName}|${roundedLat},${roundedLng}|${query.trim().toLowerCase()}`;
+}
+
+function readCache(key: string): Venue[] | null {
+  try {
+    if (typeof window === 'undefined') return null;
+    const raw = window.sessionStorage.getItem(key);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as { ts: number; results: Venue[] };
+    if (Date.now() - parsed.ts > CACHE_TTL_MS) {
+      window.sessionStorage.removeItem(key);
+      return null;
+    }
+    return parsed.results;
+  } catch {
+    return null;
+  }
+}
+
+function writeCache(key: string, results: Venue[]): void {
+  try {
+    if (typeof window === 'undefined') return;
+    // Only cache non-empty results — ZERO_RESULTS is often a transient input, and
+    // caching empty results would prevent the user seeing a real hit if they
+    // finish typing.
+    if (results.length === 0) return;
+    // Best-effort eviction: if we're at cap, drop 10 oldest venue-search entries.
+    const allKeys: string[] = [];
+    for (let i = 0; i < window.sessionStorage.length; i++) {
+      const k = window.sessionStorage.key(i);
+      if (k && k.startsWith(CACHE_KEY_PREFIX)) allKeys.push(k);
+    }
+    if (allKeys.length >= CACHE_MAX_ENTRIES) {
+      // Sort by write timestamp ascending; drop the oldest 10.
+      const withTs = allKeys.map(k => {
+        try {
+          const p = JSON.parse(window.sessionStorage.getItem(k) || '{}');
+          return { k, ts: typeof p.ts === 'number' ? p.ts : 0 };
+        } catch { return { k, ts: 0 }; }
+      }).sort((a, b) => a.ts - b.ts);
+      for (const e of withTs.slice(0, 10)) window.sessionStorage.removeItem(e.k);
+    }
+    window.sessionStorage.setItem(key, JSON.stringify({ ts: Date.now(), results }));
+  } catch {
+    // sessionStorage can throw (quota, private mode). Silently fall through — we
+    // still return the fetched results to the user; we just won't cache them.
+  }
+}
+
 export const VenueSearch: React.FC<VenueSearchProps> = ({
   activityName,
   maxSelections,
@@ -48,13 +111,22 @@ export const VenueSearch: React.FC<VenueSearchProps> = ({
       return;
     }
 
-    setIsSearching(true);
-
     // Get user's home location or fallback to London
     const homeLocation = preferences.locations.find(l => l.type === 'home') || preferences.locations[0];
-    const searchLocation = homeLocation 
-      ? new google.maps.LatLng(homeLocation.lat, homeLocation.lon)
-      : new google.maps.LatLng(51.5074, -0.1278); // London fallback
+    const lat = homeLocation ? homeLocation.lat : 51.5074;
+    const lng = homeLocation ? homeLocation.lon : -0.1278; // London fallback
+    const searchLocation = new google.maps.LatLng(lat, lng);
+
+    // ---- Cache check first (avoids billing on backspace-and-retype) ----
+    const cacheKey = cacheKeyFor(query, activityName, lat, lng);
+    const cached = readCache(cacheKey);
+    if (cached) {
+      setSearchResults(cached);
+      setIsSearching(false);
+      return;
+    }
+
+    setIsSearching(true);
 
     const request: google.maps.places.TextSearchRequest = {
       query: `${query} ${activityName}`,
@@ -64,7 +136,7 @@ export const VenueSearch: React.FC<VenueSearchProps> = ({
 
     placesService.textSearch(request, (results, status) => {
       setIsSearching(false);
-      
+
       if (status === google.maps.places.PlacesServiceStatus.OK && results) {
         const venues: Venue[] = results.slice(0, 10).map(place => ({
           placeId: place.place_id || '',
@@ -79,6 +151,7 @@ export const VenueSearch: React.FC<VenueSearchProps> = ({
           photoUrl: place.photos?.[0]?.getUrl({ maxWidth: 200 })
         }));
         setSearchResults(venues);
+        writeCache(cacheKey, venues);
       } else {
         setSearchResults([]);
       }
@@ -86,10 +159,13 @@ export const VenueSearch: React.FC<VenueSearchProps> = ({
   }, [placesService, preferences.locations, activityName]);
 
   useEffect(() => {
-    if (searchQuery.length > 2) {
+    // Require >=3 chars AND a longer 500ms debounce so a user typing "salmon
+    // river" doesn't fire 5 Text Search calls on the way. Each keystroke
+    // charged $0.032 before this change.
+    if (searchQuery.trim().length >= 3) {
       const timer = setTimeout(() => {
         searchPlaces(searchQuery);
-      }, 300);
+      }, 500);
       return () => clearTimeout(timer);
     } else {
       setSearchResults([]);
