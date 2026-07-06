@@ -279,7 +279,10 @@ const pwaConfig = withPWA({
   // Clean up outdated Workbox caches automatically
   cleanupOutdatedCaches: true,
   // Force cache refresh by changing cacheId
-  cacheId: '20260308-premium-eof-fix',
+  // Bumped 2026-07-06: GA4 tag added to _app.tsx, but grow-pages-cache (StaleWhileRevalidate,
+  // 7-day TTL) was serving returning visitors their pre-GA-fix cached HTML instead of the new
+  // deploy. Bumping cacheId invalidates all existing SW caches so every client re-fetches fresh.
+  cacheId: '20260706-ga4-tag-fix',
   runtimeCaching: [
     // FINDR-SPECIFIC CACHING: Prioritize for offline fishing use
     // Cache Findr pages with CacheFirst for reliable offline access
