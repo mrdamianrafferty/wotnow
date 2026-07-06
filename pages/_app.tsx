@@ -9,6 +9,7 @@ import '../styles/windwave.css'
 
 import type { AppProps } from 'next/app'
 import Head from 'next/head'
+import Script from 'next/script'
 import { UserPreferencesProvider } from '../context/UserPreferencesContext'
 import { LanguageProvider } from '../context/LanguageContext'
 import { AuthProvider } from '../context/AuthContext'
@@ -81,6 +82,14 @@ type PagePropsWithTheme = {
   [key: string]: unknown;
 };
 
+// GA4 measurement IDs, one property per domain. Findr is deliberately excluded —
+// the live Findr app now lives in its own repo (fishfindr.eu) and carries its own
+// tag there, so firing GA from the legacy /findr routes here would double-count.
+const GA_MEASUREMENT_IDS: Record<'godaisy' | 'grow', string> = {
+  godaisy: 'G-0YDQB1067L',
+  grow: 'G-S895QHFGQH',
+};
+
 export default function App({ Component, pageProps }: AppProps<PagePropsWithTheme>) {
   const router = useRouter();
 
@@ -126,6 +135,9 @@ export default function App({ Component, pageProps }: AppProps<PagePropsWithThem
 
   const isFindr = appContext === 'findr';
   const isGrow = appContext === 'grow';
+
+  // GA4 tag: only fires for godaisy.io / grow.godaisy.io (see GA_MEASUREMENT_IDS above).
+  const gaId = isFindr ? undefined : GA_MEASUREMENT_IDS[appContext as 'godaisy' | 'grow'];
 
   // Detect iOS native for RevenueCat auth sync
   const [isIOSNative, setIsIOSNative] = useState(false);
@@ -248,6 +260,19 @@ export default function App({ Component, pageProps }: AppProps<PagePropsWithThem
                   </PullToRefresh>
                   <Analytics />
                   <SpeedInsights />
+                  {process.env.NODE_ENV === 'production' && gaId && (
+                    <>
+                      <Script strategy="afterInteractive" src={`https://www.googletagmanager.com/gtag/js?id=${gaId}`} />
+                      <Script id="ga-init" strategy="afterInteractive">
+                        {`
+                          window.dataLayer = window.dataLayer || [];
+                          function gtag(){dataLayer.push(arguments);}
+                          gtag('js', new Date());
+                          gtag('config', '${gaId}');
+                        `}
+                      </Script>
+                    </>
+                  )}
                 </div>
               </UserPreferencesProvider>
             </UnifiedLocationProvider>
