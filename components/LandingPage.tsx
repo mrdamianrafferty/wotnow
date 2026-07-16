@@ -29,7 +29,7 @@ import AppHeader from './AppHeader';
 import dynamic from 'next/dynamic';
 import SEO from './SEO';
 
-const Footer = dynamic(() => import('./footer'), { ssr: false });
+const Footer = dynamic(() => import('./footer'), { ssr: true });
 
 // App Store URL — update if you change territories
 const APP_STORE_URL =
