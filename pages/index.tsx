@@ -17,7 +17,7 @@ import { knotsToMps } from '../utils/weatherUtils';
 import { selectHeroActivity } from '../utils/heroSelector';
 // Dynamic import header/footer - they're not critical for initial paint
 const AppHeader = dynamic(() => import('../components/AppHeader'), { ssr: true });
-const Footer = dynamic(() => import('../components/footer'), { ssr: false });
+const Footer = dynamic(() => import('../components/footer'), { ssr: true });
 import { getBeaufortNumber } from '../utils/beaufort';
 import Link from 'next/link';
 import type { MarineHour } from '../types/weatherTypes';
