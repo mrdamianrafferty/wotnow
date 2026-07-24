@@ -1,6 +1,20 @@
 // components/footer.tsx
 import Link from 'next/link';
 import Image from 'next/image';
+import { trackEvent } from '../lib/analytics/events';
+
+// Go Daisy is the umbrella app in the Daisy family, so its footer links out
+// to every sibling app (unlike the specialist apps, which only link to the
+// one or two siblings relevant to their audience).
+const DAISY_FAMILY_LINKS = [
+  { label: 'Rise Daisy', toApp: 'rise_daisy', url: 'https://www.risedaisy.com/?utm_source=go_daisy&utm_medium=cross_promo&utm_content=footer' },
+  { label: 'findr', toApp: 'findr', url: 'https://fishfindr.eu/?utm_source=go_daisy&utm_medium=cross_promo&utm_content=footer' },
+  { label: 'Fly Cast Coach', toApp: 'fly_cast_coach', url: 'https://flycastcoach.com/?utm_source=go_daisy&utm_medium=cross_promo&utm_content=footer' },
+] as const;
+
+function handleCrossPromoClick(toApp: string) {
+  trackEvent('cross_promo_click', { from_app: 'go_daisy', to_app: toApp, placement: 'footer' });
+}
 
 export default function Footer() {
   const year = new Date().getFullYear();
@@ -11,6 +25,24 @@ export default function Footer() {
         <aside className="space-y-2">
           <Image src="/little-daisy.png" alt="Go Daisy" width={40} height={40} style={{ width: 40, height: 40 }} />
           <Image src="/go-daisy-logo.png" alt="Go Daisy logo" width={112} height={28} style={{ width: 112, height: 28 }} />
+          <p className="text-xs text-gray-500">
+            Part of the Daisy family:{' '}
+            {DAISY_FAMILY_LINKS.map(({ label, toApp, url }, i) => (
+              <span key={toApp}>
+                {i > 0 && ', '}
+                <a
+                  href={url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={() => handleCrossPromoClick(toApp)}
+                  className="hover:underline font-medium"
+                  style={{ color: '#0369a1' }}
+                >
+                  {label}
+                </a>
+              </span>
+            ))}
+          </p>
         </aside>
 
         <div className="grid grid-cols-2 gap-6">

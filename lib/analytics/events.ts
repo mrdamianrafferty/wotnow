@@ -75,6 +75,9 @@ export type AnalyticsEvent =
   | 'tab_changed'
   | 'external_link_clicked'
 
+  // Cross-promo events (Daisy app family footer links)
+  | 'cross_promo_click'
+
   // Auth events
   | 'sign_in'
   | 'sign_out'
