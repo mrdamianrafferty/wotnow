@@ -55,6 +55,7 @@ import SimplifiedShareModal from '../components/sharing/SimplifiedShareModal';
 import { useGoDaisySubscription } from '../hooks/useGoDaisySubscription';
 import { GoDaisyUpgradePrompt } from '../components/GoDaisyUpgradePrompt';
 import NearbyFisheryCard from '../components/cross-promo/NearbyFisheryCard';
+import NearbySpeciesCard from '../components/cross-promo/NearbySpeciesCard';
 
 
 
@@ -565,6 +566,11 @@ function ActivityCard({ activityId, score, evaluation: _evaluation, reasoning: _
       {/* Cross-promo: nearest Rise Daisy fishery (fly fishing only) */}
       {activityId === 'fly_fishing_freshwater' && (
         <NearbyFisheryCard homeLocation={homeLocation} />
+      )}
+
+      {/* Cross-promo: species to target near you (Findr, sea fishing only) */}
+      {(activityId === 'sea_fishing_shore' || activityId === 'sea_fishing_boat') && (
+        <NearbySpeciesCard coastalLocation={coastalLocation} homeLocation={homeLocation} />
       )}
 
       {/* Share Modal */}
