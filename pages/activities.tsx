@@ -54,6 +54,7 @@ import { useUIText } from '../hooks/useUIText';
 import SimplifiedShareModal from '../components/sharing/SimplifiedShareModal';
 import { useGoDaisySubscription } from '../hooks/useGoDaisySubscription';
 import { GoDaisyUpgradePrompt } from '../components/GoDaisyUpgradePrompt';
+import NearbyFisheryCard from '../components/cross-promo/NearbyFisheryCard';
 
 
 
@@ -560,6 +561,11 @@ function ActivityCard({ activityId, score, evaluation: _evaluation, reasoning: _
       <div className="activity-card__score">
         {scoreLabel}: {score}%
       </div>
+
+      {/* Cross-promo: nearest Rise Daisy fishery (fly fishing only) */}
+      {activityId === 'fly_fishing_freshwater' && (
+        <NearbyFisheryCard homeLocation={homeLocation} />
+      )}
 
       {/* Share Modal */}
       <SimplifiedShareModal
