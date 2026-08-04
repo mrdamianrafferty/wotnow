@@ -153,6 +153,7 @@ async function getGrowDaisyUrls(baseUrl: string): Promise<SitemapUrl[]> {
 
   const staticUrls: SitemapUrl[] = [
     withAlternates('/grow', { loc: `${baseUrl}/grow`, lastmod: today, changefreq: 'daily', priority: 1.0 }),
+    withAlternates('/grow/species', { loc: `${baseUrl}/grow/species`, lastmod: today, changefreq: 'weekly', priority: 0.8 }),
     withAlternates('/grow/tasks', { loc: `${baseUrl}/grow/tasks`, lastmod: today, changefreq: 'daily', priority: 0.8 }),
     withAlternates('/grow/plan', { loc: `${baseUrl}/grow/plan`, lastmod: today, changefreq: 'weekly', priority: 0.7 }),
     withAlternates('/grow/garden', { loc: `${baseUrl}/grow/garden`, lastmod: today, changefreq: 'weekly', priority: 0.7 }),

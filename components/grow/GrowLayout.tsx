@@ -12,16 +12,17 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '../ui/dropdown-menu';
-import { 
-  Home, 
-  Calendar, 
-  Sprout, 
-  CloudSun, 
-  Info, 
-  LogOut, 
+import {
+  Home,
+  Calendar,
+  Sprout,
+  CloudSun,
+  Info,
+  LogOut,
   ArrowLeft,
   ChevronRight,
   Settings,
+  Leaf,
 } from 'lucide-react';
 import { auth, type AuthUser } from '../../lib/grow/auth';
 import { buildGrowLoginUrl, GROW_ROOT_PATH } from '../../lib/grow/routes';
@@ -88,6 +89,7 @@ const NAV_LINKS: NavLink[] = [
   { href: '/grow', label: 'Home', Icon: Home },
   { href: '/grow/plan', label: 'Plan', Icon: Calendar },
   { href: '/grow/garden', label: 'Garden', Icon: Sprout },
+  { href: '/grow/species', label: 'Plants', Icon: Leaf },
   { href: '/grow/weather', label: 'Weather', Icon: CloudSun },
   { href: '/grow/info', label: 'Info', Icon: Info },
 ];
@@ -341,11 +343,25 @@ export function GrowLayout({
       </header>
 
       {/* Main Content */}
-      <main 
-        id="main-content" 
+      <main
+        id="main-content"
         className={`flex-1 ${hideBottomNav ? '' : 'pb-nav-safe'} ${className}`}
       >
         {children}
+
+        <footer className="border-t border-border mt-12 py-6 px-4">
+          <nav
+            className="container mx-auto flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-sm text-muted-foreground"
+            aria-label="Footer"
+          >
+            <Link href="/grow" className="hover:text-foreground hover:underline">Home</Link>
+            <Link href="/grow/species" className="hover:text-foreground hover:underline">Browse all plants</Link>
+            <Link href="/grow/plan" className="hover:text-foreground hover:underline">Plan</Link>
+            <Link href="/grow/garden" className="hover:text-foreground hover:underline">Garden</Link>
+            <Link href="/grow/weather" className="hover:text-foreground hover:underline">Weather</Link>
+            <Link href="/grow/info" className="hover:text-foreground hover:underline">Info</Link>
+          </nav>
+        </footer>
       </main>
 
       {/* Mobile Bottom Navigation */}

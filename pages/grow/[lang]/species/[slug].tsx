@@ -26,8 +26,9 @@ import {
 } from '@/components/JsonLd';
 import { isValidGrowLang, type GrowPathCode } from '@/lib/grow/i18n';
 import { getSupabaseServerClient } from '@/lib/supabase/serverClient';
-import { serializePlantSpecies, type PlantSpeciesRow } from '@/lib/grow/species';
+import { serializePlantSpecies, PLANT_SPECIES_LANGUAGE_FIELDS, type PlantSpeciesRow } from '@/lib/grow/species';
 import type { PlantSpecies } from '@/lib/grow/species';
+import { RelatedSpeciesCard, type RelatedSpeciesEntry } from '@/components/grow/RelatedSpeciesCard';
 
 // We import autoTranslate dynamically so Next.js doesn't bundle it on the client.
 // It throws if called client-side, so we keep it behind a server-side guard.
@@ -47,7 +48,12 @@ type LocalisedSpeciesProps = {
   translatedName: string;
   translatedDescription: string | null;
   translatedAdvice: string | null;
+  relatedSpecies: RelatedSpeciesEntry[];
 };
+
+const LANG_TO_NAME_COLUMN: Partial<Record<GrowPathCode, string>> = Object.fromEntries(
+  Object.entries(PLANT_SPECIES_LANGUAGE_FIELDS).map(([column, lang]) => [lang, column])
+);
 
 export const getServerSideProps: GetServerSideProps<LocalisedSpeciesProps> = async (ctx) => {
   const { lang, slug } = ctx.params as { lang: string; slug: string };
@@ -125,6 +131,26 @@ export const getServerSideProps: GetServerSideProps<LocalisedSpeciesProps> = asy
     translateText(species.advice, lang),
   ]);
 
+  let relatedSpecies: RelatedSpeciesEntry[] = [];
+  if (species.category) {
+    const nameColumn = LANG_TO_NAME_COLUMN[lang as GrowPathCode];
+    const relatedSelect = ['slug', 'name', 'scientific_name', 'image_key', ...(nameColumn ? [nameColumn] : [])].join(', ');
+    const { data: relatedRows } = await supabase
+      .from('plant_species')
+      .select(relatedSelect)
+      .eq('category', species.category)
+      .neq('slug', species.slug)
+      .order('name', { ascending: true })
+      .limit(8);
+
+    relatedSpecies = ((relatedRows ?? []) as unknown as Record<string, unknown>[]).map((row) => ({
+      slug: row.slug as string,
+      name: (nameColumn ? (row[nameColumn] as string | null) : null) ?? (row.name as string),
+      scientificName: (row.scientific_name as string | null) ?? null,
+      imageKey: (row.image_key as string | null) ?? null,
+    }));
+  }
+
   return {
     props: {
       species,
@@ -132,6 +158,7 @@ export const getServerSideProps: GetServerSideProps<LocalisedSpeciesProps> = asy
       translatedName: translatedName ?? species.name,
       translatedDescription: translatedDescription,
       translatedAdvice: translatedAdvice,
+      relatedSpecies,
     },
   };
 };
@@ -141,6 +168,7 @@ export default function LocalisedSpeciesPage({
   lang,
   translatedName,
   translatedDescription,
+  relatedSpecies,
 }: LocalisedSpeciesProps) {
   const router = useRouter();
   const enPath = `/grow/species/${species.slug}`;
@@ -171,7 +199,7 @@ export default function LocalisedSpeciesPage({
       <BreadcrumbJsonLd
         items={[
           { name: 'Grow Daisy', url: 'https://grow.godaisy.io/grow' },
-          { name: 'Plants', url: 'https://grow.godaisy.io/grow/garden' },
+          { name: 'Plants', url: 'https://grow.godaisy.io/grow/species' },
           { name: translatedName, url: langUrl },
         ]}
       />
@@ -224,6 +252,12 @@ export default function LocalisedSpeciesPage({
           View full growing guide →
         </a>
       </div>
+
+      {relatedSpecies.length > 0 && (
+        <div className="max-w-4xl mx-auto px-4 pb-12">
+          <RelatedSpeciesCard species={relatedSpecies} basePath={`/grow/${lang}/species`} />
+        </div>
+      )}
     </GrowLayout>
   );
 }

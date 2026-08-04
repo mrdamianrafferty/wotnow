@@ -9,6 +9,7 @@ import {
   Sprout,
   CloudSun,
   Info,
+  Leaf,
 } from 'lucide-react';
 
 interface NavLink {
@@ -21,6 +22,7 @@ const LINKS: NavLink[] = [
   { href: '/grow', label: 'Home', Icon: Home },
   { href: '/grow/plan', label: 'Plan', Icon: Calendar },
   { href: '/grow/garden', label: 'Garden', Icon: Sprout },
+  { href: '/grow/species', label: 'Plants', Icon: Leaf },
   { href: '/grow/weather', label: 'Weather', Icon: CloudSun },
   { href: '/grow/info', label: 'Info', Icon: Info },
 ];

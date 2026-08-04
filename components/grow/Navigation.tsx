@@ -11,7 +11,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '../ui/dropdown-menu';
-import { Home, Calendar, Sprout, CloudSun, Info, LogOut, Settings } from 'lucide-react';
+import { Home, Calendar, Sprout, CloudSun, Info, LogOut, Settings, Leaf } from 'lucide-react';
 import { type AuthUser } from '../../lib/grow/auth';
 import { buildGrowLoginUrl, GROW_ROOT_PATH } from '../../lib/grow/routes';
 import { useTranslationMap } from '../../lib/translation/useTranslationMap';
@@ -50,7 +50,7 @@ const pageButton = (
 
 export function Navigation({ currentPage, onPageChange, currentUser, onSignOut }: NavigationProps) {
   const translationInputs = React.useMemo(
-    () => ['My Home', 'Plan', 'Garden', 'Conditions', 'Info', 'Settings', 'Sign out', 'Sign in', 'Skip to main content', 'User account'],
+    () => ['My Home', 'Plan', 'Garden', 'Plants', 'Conditions', 'Info', 'Settings', 'Sign out', 'Sign in', 'Skip to main content', 'User account'],
     [],
   );
   const { t } = useTranslationMap(translationInputs);
@@ -77,6 +77,12 @@ export function Navigation({ currentPage, onPageChange, currentUser, onSignOut }
               {pageButton('home', currentPage, onPageChange, <Home className="h-4 w-4" aria-hidden="true" />, t('My Home'))}
               {pageButton('plan', currentPage, onPageChange, <Calendar className="h-4 w-4" aria-hidden="true" />, t('Plan'))}
               {pageButton('garden', currentPage, onPageChange, <Sprout className="h-4 w-4" aria-hidden="true" />, t('Garden'))}
+              <Button variant="ghost" size="sm" className="flex items-center space-x-1" aria-label={t('Plants')} asChild>
+                <Link href="/grow/species">
+                  <Leaf className="h-4 w-4" aria-hidden="true" />
+                  <span className="hidden sm:inline">{t('Plants')}</span>
+                </Link>
+              </Button>
               {pageButton('conditions', currentPage, onPageChange, <CloudSun className="h-4 w-4" aria-hidden="true" />, t('Conditions'))}
               {pageButton('info', currentPage, onPageChange, <Info className="h-4 w-4" aria-hidden="true" />, t('Info'))}
             </div>

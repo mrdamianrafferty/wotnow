@@ -29,6 +29,7 @@ import { useScrolledPast } from "@/hooks/useScrolledPast";
 import { truncateLocationName } from "@/lib/utils/truncateLocationName";
 
 import { getPlantImage, PLANT_IMAGE_MAP } from "@/lib/grow/plantImages";
+import { RelatedSpeciesCard, type RelatedSpeciesEntry } from "@/components/grow/RelatedSpeciesCard";
 import { serializePlantSpecies, type PlantSpecies, type PlantSpeciesRow, type FaqItem } from "@/lib/grow/species";
 import { api } from "@/lib/grow/api";
 import { JobsTimeline } from "@/components/grow/JobsTimeline";
@@ -385,6 +386,7 @@ const SSR_SELECT = [
 
 type GrowSpeciesProps = {
   initialSpecies: PlantSpecies | null;
+  relatedSpecies: RelatedSpeciesEntry[];
 };
 
 export const getServerSideProps: GetServerSideProps<GrowSpeciesProps> = async (ctx) => {
@@ -414,14 +416,33 @@ export const getServerSideProps: GetServerSideProps<GrowSpeciesProps> = async (c
 
   if (error || !data) {
     // Not in plant_species — may be a custom/community species. CSR will handle it.
-    return { props: { initialSpecies: null } };
+    return { props: { initialSpecies: null, relatedSpecies: [] } };
   }
 
   const species = serializePlantSpecies(data as unknown as PlantSpeciesRow);
-  return { props: { initialSpecies: species } };
+
+  let relatedSpecies: RelatedSpeciesEntry[] = [];
+  if (species.category) {
+    const { data: relatedRows } = await supabase
+      .from('plant_species')
+      .select('slug, name, scientific_name, image_key')
+      .eq('category', species.category)
+      .neq('slug', species.slug)
+      .order('name', { ascending: true })
+      .limit(8);
+
+    relatedSpecies = (relatedRows ?? []).map((row) => ({
+      slug: row.slug,
+      name: row.name,
+      scientificName: row.scientific_name ?? null,
+      imageKey: row.image_key ?? null,
+    }));
+  }
+
+  return { props: { initialSpecies: species, relatedSpecies } };
 };
 
-export default function GrowSpeciesPage({ initialSpecies }: GrowSpeciesProps) {
+export default function GrowSpeciesPage({ initialSpecies, relatedSpecies }: GrowSpeciesProps) {
   const router = useRouter();
   const slugParam = router.query.slug;
   const slug = typeof slugParam === "string" ? slugParam : "";
@@ -901,7 +922,7 @@ export default function GrowSpeciesPage({ initialSpecies }: GrowSpeciesProps) {
   const breadcrumbs = useMemo(
     () => [
       { label: "Grow", href: "/grow" },
-      { label: "Garden", href: "/grow/garden" },
+      { label: "Plants", href: "/grow/species" },
       { label: species?.name ?? "Species" },
     ],
     [species?.name],
@@ -935,7 +956,7 @@ export default function GrowSpeciesPage({ initialSpecies }: GrowSpeciesProps) {
           <BreadcrumbJsonLd
             items={[
               { name: 'Grow Daisy', url: 'https://grow.godaisy.io/grow' },
-              { name: 'Plants', url: 'https://grow.godaisy.io/grow/garden' },
+              { name: 'Plants', url: 'https://grow.godaisy.io/grow/species' },
               { name: species.name, url: `https://grow.godaisy.io/grow/species/${species.slug}` },
             ]}
           />
@@ -1577,6 +1598,9 @@ export default function GrowSpeciesPage({ initialSpecies }: GrowSpeciesProps) {
 
         {/* Localized Names Card - multi-language names (collapsible) */}
         {species && <LocalizedNamesCard species={species} />}
+
+        {/* Related plants - internal links to other species in the same category */}
+        <RelatedSpeciesCard species={relatedSpecies} basePath="/grow/species" />
       </div>
 
       {/* Location dialog */}
