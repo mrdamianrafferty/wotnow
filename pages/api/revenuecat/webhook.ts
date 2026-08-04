@@ -84,17 +84,32 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(500).json({ error: 'Webhook secret not configured' });
   }
 
-  try {
-    // Verify authorization header
-    const authHeader = req.headers.authorization;
-    if (!authHeader || authHeader !== `Bearer ${WEBHOOK_SECRET}`) {
-      console.error('[revenuecat] Invalid authorization header');
-      return res.status(401).json({ error: 'Unauthorized' });
-    }
+  // Verify authorization header. RevenueCat sends whatever raw string is
+  // configured in its dashboard's "Authorization header value" field — it does
+  // not auto-prepend "Bearer ". This currently matches (confirmed live 2026-08-04),
+  // but accept the secret with or without the prefix and trim whitespace so a
+  // future secret rotation can't silently 401 every delivery the way it did on
+  // Rise Daisy's webhook from 2026-05-23 to 2026-08-04. See that incident before
+  // assuming a bare string comparison here is safe.
+  const authHeader = (req.headers.authorization ?? '').trim();
+  const token = authHeader.replace(/^Bearer\s+/i, '').trim();
+  if (!WEBHOOK_SECRET || token !== WEBHOOK_SECRET.trim()) {
+    console.error('[revenuecat] Invalid authorization header');
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
 
-    // Parse the raw body
+  // Parse the raw body. A malformed payload will never parse differently on
+  // retry, so this failure mode alone is safe to ack with 200.
+  let payload: RCWebhookEvent;
+  try {
     const buf = await buffer(req);
-    const payload: RCWebhookEvent = JSON.parse(buf.toString());
+    payload = JSON.parse(buf.toString());
+  } catch (parseError) {
+    console.error('[revenuecat] Failed to parse webhook body:', parseError);
+    return res.status(200).json({ received: true, error: 'Malformed payload' });
+  }
+
+  try {
     const event = payload.event;
 
     console.log(`[revenuecat] Received event: ${event.type} for user ${event.app_user_id}, product ${event.product_id}`);
@@ -146,9 +161,18 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     return res.status(200).json({ received: true });
   } catch (error) {
+    // This used to unconditionally return 200 here "to prevent RevenueCat from
+    // retrying permanently" — but the entitlement-write failures that reach this
+    // catch (see handleGoDaisyPlusEvent/handleGrowDaisyEvent below, which now
+    // throw instead of only logging) are exactly the transient-DB-failure case
+    // that SHOULD be retried. Unknown/unmapped product IDs do NOT throw (they
+    // log and fall through to the audit-trail write, see `if (!mapping)` below),
+    // so returning 500 here does not reintroduce an infinite-retry loop for
+    // that case — it only triggers a retry for a genuine write failure, the
+    // same class of bug that silently broke Rise Daisy's entitlement sync from
+    // 2026-05-23 to 2026-08-04 with a false-positive 200.
     console.error('[revenuecat] Webhook handler error:', error);
-    // Return 200 even on errors to prevent RevenueCat from retrying permanently
-    return res.status(200).json({ received: true, error: 'Processing error' });
+    return res.status(500).json({ error: 'Processing error' });
   }
 }
 
@@ -192,9 +216,11 @@ async function handleGoDaisyPlusEvent(
 
       if (updateError) {
         console.error(`[revenuecat][godaisy+] Failed to update profile for ${userId}:`, updateError);
-      } else {
-        console.log(`[revenuecat][godaisy+] Updated user ${userId}: tier=plus, type=${mapping.type}`);
+        // Throw so the outer handler returns 500 and RevenueCat retries —
+        // this is the actual entitlement write, not just an audit log.
+        throw updateError;
       }
+      console.log(`[revenuecat][godaisy+] Updated user ${userId}: tier=plus, type=${mapping.type}`);
       break;
     }
 
@@ -214,9 +240,9 @@ async function handleGoDaisyPlusEvent(
 
       if (expireError) {
         console.error(`[revenuecat][godaisy+] Failed to expire subscription for ${userId}:`, expireError);
-      } else {
-        console.log(`[revenuecat][godaisy+] Subscription expired for ${userId}, downgraded to free`);
+        throw expireError;
       }
+      console.log(`[revenuecat][godaisy+] Subscription expired for ${userId}, downgraded to free`);
       break;
     }
 
@@ -292,9 +318,11 @@ async function handleGrowDaisyEvent(
 
       if (updateError) {
         console.error(`[revenuecat] Failed to update profile for ${userId}:`, updateError);
-      } else {
-        console.log(`[revenuecat] Updated user ${userId}: tier=${mapping.tier}, type=${mapping.type}`);
+        // Throw so the outer handler returns 500 and RevenueCat retries —
+        // this is the actual entitlement write, not just an audit log.
+        throw updateError;
       }
+      console.log(`[revenuecat] Updated user ${userId}: tier=${mapping.tier}, type=${mapping.type}`);
       break;
     }
 
@@ -314,9 +342,9 @@ async function handleGrowDaisyEvent(
 
       if (expireError) {
         console.error(`[revenuecat] Failed to expire subscription for ${userId}:`, expireError);
-      } else {
-        console.log(`[revenuecat] Subscription expired for ${userId}, downgraded to seed`);
+        throw expireError;
       }
+      console.log(`[revenuecat] Subscription expired for ${userId}, downgraded to seed`);
       break;
     }
 
