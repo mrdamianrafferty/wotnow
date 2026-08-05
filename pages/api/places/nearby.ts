@@ -98,8 +98,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(200).json({ results: cached.data, cached: true });
   }
 
-  // Get Google API key
-  const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
+  // Server-side call — prefer the referrer-unrestricted server key so this
+  // still works once NEXT_PUBLIC_GOOGLE_MAPS_API_KEY is HTTP-referrer-restricted.
+  const apiKey = process.env.GOOGLE_MAPS_API_KEY || process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
   if (!apiKey) {
     console.error('[Places API] Google Maps API key not configured');
     return res.status(500).json({ error: 'Places search not configured' });

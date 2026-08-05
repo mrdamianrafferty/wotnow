@@ -732,7 +732,9 @@ async function fetchNearestTackleShop(lat: number, lon: number): Promise<NearbyT
 }
 
 async function fetchNearestTackleShopFromGoogle(lat: number, lon: number): Promise<NearbyTackleShop | null> {
-  const GOOGLE_MAPS_API_KEY = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
+  // Server-side call — prefer the referrer-unrestricted server key so this
+  // still works once NEXT_PUBLIC_GOOGLE_MAPS_API_KEY is HTTP-referrer-restricted.
+  const GOOGLE_MAPS_API_KEY = process.env.GOOGLE_MAPS_API_KEY || process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
   if (!GOOGLE_MAPS_API_KEY) {
     console.log('[Cron] Google Maps API key not configured');
     return null;
