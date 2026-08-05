@@ -40,7 +40,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           name_en,
           eating_quality,
           conservation_status,
-          typical_gear
+          gear_by_technique
         )
       `)
       .eq('rectangle_code', rectangleCode.toUpperCase())
@@ -58,7 +58,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       
       const { data: allSpecies, error: speciesError } = await supabase
         .from('species')
-        .select('id, species_code, scientific_name, name_en, eating_quality, conservation_status, typical_gear')
+        .select('id, species_code, scientific_name, name_en, eating_quality, conservation_status, gear_by_technique')
         .order('eating_quality', { ascending: false })
         .limit(limit);
 

@@ -49,7 +49,6 @@ interface _SpeciesRow {
   name_de: string | null;
   name_it: string | null;
   name_pt: string | null;
-  typical_gear: string[];
   eating_quality: number;
   min_depth: number;
   max_depth: number;
@@ -110,7 +109,6 @@ interface SpeciesRecord {
   name_de: string | null;
   name_it: string | null;
   name_pt: string | null;
-  typical_gear: string[];
   eating_quality: number;
   min_depth: number;
   max_depth: number;
@@ -175,7 +173,6 @@ const SPECIES_SELECT_COLUMNS = `
   name_de,
   name_it,
   name_pt,
-  typical_gear,
   eating_quality,
   min_depth,
   max_depth,
@@ -370,7 +367,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             name_de,
             name_it,
             name_pt,
-            typical_gear,
             eating_quality,
             min_depth,
             max_depth,
