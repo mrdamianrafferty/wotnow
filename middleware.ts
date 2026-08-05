@@ -99,7 +99,8 @@ export async function middleware(req: NextRequest) {
   }
 
   // Redirect fishfindr.eu root to /findr (but NOT for API routes, static assets, or _next)
-  // Do NOT redirect godaisy.io - it's already serving /findr as a subdomain path
+  // Note: fishfindr.eu is a Vercel domain on the standalone `findr` project, not
+  // this one — this rule is effectively dead in production, kept for local dev.
   if ((hostname === 'fishfindr.eu' || hostname === 'www.fishfindr.eu') && !hostname.includes('godaisy.io')) {
     const isFindrPath = url.pathname.startsWith('/findr');
 
@@ -108,6 +109,24 @@ export async function middleware(req: NextRequest) {
       findrUrl.pathname = '/findr';
       response = NextResponse.redirect(findrUrl);
     }
+  }
+
+  // godaisy.io/findr/* is a fully superseded parallel copy of the findr app —
+  // the real one lives at fishfindr.eu now. Permanently redirect it there,
+  // preserving path + query, so the section stops being served (and
+  // stops burning Google Places API calls) from here at all.
+  // Active auth-callback links (magic-link emails with code/token_hash) are
+  // excluded so an in-flight sign-in still completes on this domain via the
+  // legacy-callback handling below, rather than being bounced mid-flow.
+  if (
+    (hostname === 'godaisy.io' || hostname === 'www.godaisy.io') &&
+    url.pathname.startsWith('/findr') &&
+    !shouldSkipRedirect &&
+    !hasCode &&
+    !hasTokenHash
+  ) {
+    const target = new URL(url.pathname + url.search, 'https://fishfindr.eu');
+    response = NextResponse.redirect(target, 308);
   }
   
   // Unified auth callback routing
