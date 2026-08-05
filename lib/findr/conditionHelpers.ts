@@ -274,7 +274,6 @@ export function convertTidePhase(
 // Email-related condition helpers (for daily digest and weekly forecast)
 // ============================================================================
 
-import type { NearbyTackleShop } from './emailTemplates';
 
 /** Type for environmental conditions from database */
 export interface EnvironmentalConditions {
@@ -488,106 +487,6 @@ export function generateEmailConditionsSummary(
   }
 
   return parts.join(' ');
-}
-
-/** Google Places API response types */
-interface GooglePlaceResult {
-  place_id: string;
-  name: string;
-  vicinity?: string;
-  formatted_address?: string;
-  geometry: { location: { lat: number; lng: number } };
-  rating?: number;
-  user_ratings_total?: number;
-}
-
-interface GooglePlacesResponse {
-  results: GooglePlaceResult[];
-  status: string;
-}
-
-/**
- * Calculate distance between two coordinates in km (Haversine formula)
- */
-export function calculateDistanceKm(lat1: number, lon1: number, lat2: number, lon2: number): number {
-  const R = 6371;
-  const dLat = ((lat2 - lat1) * Math.PI) / 180;
-  const dLon = ((lon2 - lon1) * Math.PI) / 180;
-  const a =
-    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-    Math.cos((lat1 * Math.PI) / 180) * Math.cos((lat2 * Math.PI) / 180) *
-    Math.sin(dLon / 2) * Math.sin(dLon / 2);
-  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-}
-
-/**
- * Format distance for display
- */
-export function formatDistanceDisplay(km: number): string {
-  if (km < 1) return `${Math.round(km * 1000)}m`;
-  return `${km.toFixed(1)}km`;
-}
-
-/**
- * Fetch nearby tackle shops using Google Places API
- */
-export async function fetchNearbyTackleShops(
-  lat: number,
-  lon: number,
-  limit: number = 3
-): Promise<NearbyTackleShop[]> {
-  const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
-  if (!apiKey) {
-    console.warn('[ConditionHelpers] Google Maps API key not configured');
-    return [];
-  }
-
-  try {
-    const allResults: NearbyTackleShop[] = [];
-    const seenPlaceIds = new Set<string>();
-    const searchQueries = ['tackle shop', 'fishing bait'];
-
-    for (const query of searchQueries) {
-      const url = new URL('https://maps.googleapis.com/maps/api/place/nearbysearch/json');
-      url.searchParams.set('location', `${lat},${lon}`);
-      url.searchParams.set('radius', '25000');
-      url.searchParams.set('keyword', query);
-      url.searchParams.set('key', apiKey);
-
-      const response = await fetch(url.toString());
-      if (!response.ok) continue;
-
-      const data: GooglePlacesResponse = await response.json();
-      if (data.status !== 'OK' && data.status !== 'ZERO_RESULTS') continue;
-
-      for (const place of (data.results || [])) {
-        if (seenPlaceIds.has(place.place_id)) continue;
-        seenPlaceIds.add(place.place_id);
-
-        const distance = calculateDistanceKm(lat, lon, place.geometry.location.lat, place.geometry.location.lng);
-
-        allResults.push({
-          name: place.name,
-          address: place.vicinity || place.formatted_address || '',
-          distance: formatDistanceDisplay(distance),
-          rating: place.rating,
-          totalRatings: place.user_ratings_total,
-          mapsUrl: `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(place.name)}&query_place_id=${place.place_id}`,
-        });
-      }
-    }
-
-    allResults.sort((a, b) => {
-      const distA = parseFloat(a.distance.replace(/[^\d.]/g, '') || '999');
-      const distB = parseFloat(b.distance.replace(/[^\d.]/g, '') || '999');
-      return distA - distB;
-    });
-
-    return allResults.slice(0, limit);
-  } catch (error) {
-    console.error('[ConditionHelpers] Error fetching tackle shops:', error);
-    return [];
-  }
 }
 
 /**

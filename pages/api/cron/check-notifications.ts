@@ -679,10 +679,59 @@ async function fetchTideTimes(rectangleCode: string): Promise<{ highTideIso: str
   }
 }
 
+// Spatial bucketing for tackle_shop_cache (0.5 degrees ~= 55km) — matches
+// lib/findNearbyTackleShops.ts's client-side cache resolution.
+function roundToTackleShopBucket(value: number): number {
+  return Math.round(value * 2) / 2;
+}
+
 /**
- * Fetch nearest tackle shop using Google Places API
+ * Fetch nearest tackle shop, using the shared 30-day DB cache
+ * (tackle_shop_cache) before ever calling Google Places.
+ *
+ * This cron previously called the Places API fresh for every qualifying
+ * user, every hourly run, with no caching at all — tackle shops don't move
+ * and users don't relocate hour to hour, so that was pure waste. See
+ * supabase/migrations/20260805000000_create_tackle_shop_cache.sql.
  */
 async function fetchNearestTackleShop(lat: number, lon: number): Promise<NearbyTackleShop | null> {
+  const latBucket = roundToTackleShopBucket(lat);
+  const lonBucket = roundToTackleShopBucket(lon);
+
+  const { data: cached } = await supabase
+    .from('tackle_shop_cache')
+    .select('shop, expires_at')
+    .eq('lat_bucket', latBucket)
+    .eq('lon_bucket', lonBucket)
+    .maybeSingle();
+
+  if (cached && new Date(cached.expires_at).getTime() > Date.now()) {
+    return (cached.shop as NearbyTackleShop | null) ?? null;
+  }
+
+  const shop = await fetchNearestTackleShopFromGoogle(lat, lon);
+
+  try {
+    await supabase
+      .from('tackle_shop_cache')
+      .upsert(
+        {
+          lat_bucket: latBucket,
+          lon_bucket: lonBucket,
+          shop,
+          cached_at: new Date().toISOString(),
+          expires_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+        },
+        { onConflict: 'lat_bucket,lon_bucket' }
+      );
+  } catch (error) {
+    console.error('[Cron] Error writing tackle shop cache:', error);
+  }
+
+  return shop;
+}
+
+async function fetchNearestTackleShopFromGoogle(lat: number, lon: number): Promise<NearbyTackleShop | null> {
   const GOOGLE_MAPS_API_KEY = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
   if (!GOOGLE_MAPS_API_KEY) {
     console.log('[Cron] Google Maps API key not configured');
