@@ -7,6 +7,7 @@
  */
 
 import type { NextApiRequest, NextApiResponse } from 'next';
+import { isBotRequest } from '@/lib/http/is-bot';
 
 interface PlaceResult {
   name: string;
@@ -96,6 +97,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const cached = cache.get(cacheKey);
   if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
     return res.status(200).json({ results: cached.data, cached: true });
+  }
+
+  // Bots get an empty (uncached) result rather than triggering a live billed
+  // search — this route is normally reached only via bait-shops.tsx's
+  // client-side fetch, which already skips calling it for bots, but this is
+  // a second layer in case something else hits the route directly.
+  if (isBotRequest(req.headers['user-agent'])) {
+    return res.status(200).json({ results: [] });
   }
 
   // Server-side call — prefer the referrer-unrestricted server key so this

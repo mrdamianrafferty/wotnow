@@ -15,6 +15,8 @@ import FindrFooter from '../../components/FindrFooter';
 import FindrBottomNav from '../../components/findr/FindrBottomNav';
 import { TranslatedText } from '../../components/translation/TranslatedFishCard';
 import { MapPin, ExternalLink, Phone, Navigation, ChevronLeft, Search, Store } from 'lucide-react';
+import { isBotRequest } from '../../lib/http/is-bot';
+import type { GetServerSideProps } from 'next';
 
 interface PlaceResult {
   name: string;
@@ -30,19 +32,30 @@ interface PlaceResult {
   placeId: string;
 }
 
-export default function BaitShopsPage() {
+interface BaitShopsPageProps {
+  // A crawler indexing this page (reachable via a `?rect=` link, which
+  // supplies a location without needing geolocation permission) shouldn't
+  // trigger a live billed Places search — see lib/http/is-bot.ts.
+  isBot: boolean;
+}
+
+export const getServerSideProps: GetServerSideProps<BaitShopsPageProps> = async (ctx) => {
+  return { props: { isBot: isBotRequest(ctx.req.headers['user-agent']) } };
+};
+
+export default function BaitShopsPage({ isBot }: BaitShopsPageProps) {
   const router = useRouter();
   const { rect, bait } = router.query;
 
   const [shops, setShops] = useState<PlaceResult[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(!isBot);
   const [error, setError] = useState<string | null>(null);
   const [searchLocation, setSearchLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [locationName, setLocationName] = useState<string>('');
 
   // Get location from rectangle code or user's current location
   useEffect(() => {
-    if (!router.isReady) return;
+    if (!router.isReady || isBot) return;
 
     const getLocation = async () => {
       // Try to get location from rectangle code via API
@@ -85,7 +98,7 @@ export default function BaitShopsPage() {
     };
 
     getLocation();
-  }, [router.isReady, rect]);
+  }, [router.isReady, rect, isBot]);
 
   // Search for tackle shops near the location
   const searchTackleShops = useCallback(async (lat: number, lng: number) => {
