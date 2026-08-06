@@ -6,9 +6,11 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/router';
+import Head from 'next/head';
 import { useSubscription } from '@/hooks/useSubscription';
 import { createClient } from '@/lib/supabase/client';
 import type { User } from '@supabase/supabase-js';
+import type { FindrUserSettings } from '@/pages/api/findr/user-settings';
 
 export default function AccountPage() {
   const router = useRouter();
@@ -17,6 +19,10 @@ export default function AccountPage() {
   const [cancelLoading, setCancelLoading] = useState(false);
   const [showCancelModal, setShowCancelModal] = useState(false);
   const [user, setUser] = useState<User | null>(null);
+  const [displayName, setDisplayName] = useState('');
+  const [profileLoading, setProfileLoading] = useState(true);
+  const [profileSaving, setProfileSaving] = useState(false);
+  const [profileMessage, setProfileMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const supabase = useMemo(() => createClient(), []);
 
   const sessionId = router.query.session_id;
@@ -24,11 +30,31 @@ export default function AccountPage() {
   useEffect(() => {
     let isMounted = true;
 
-    // Get user info
-    supabase.auth.getUser().then(({ data }) => {
-      if (!isMounted) return;
-      setUser(data.user);
-    });
+    const loadUserData = async () => {
+      // Get user info
+      const { data: { user: authUser } } = await supabase.auth.getUser();
+      if (!isMounted || !authUser) return;
+      
+      setUser(authUser);
+
+      // Fetch user settings to get display name
+      try {
+        const response = await fetch('/api/findr/user-settings', {
+          credentials: 'include',
+        });
+        const data = await response.json();
+        
+        if (data.success && data.settings) {
+          setDisplayName(data.settings.displayName || '');
+        }
+      } catch (error) {
+        console.error('Failed to load user settings:', error);
+      } finally {
+        setProfileLoading(false);
+      }
+    };
+
+    loadUserData();
 
     // Check for successful checkout
     if (sessionId) {
@@ -110,11 +136,48 @@ export default function AccountPage() {
     }
   };
 
-  if (isLoading) {
+  const handleSaveProfile = async () => {
+    if (!user) return;
+
+    try {
+      setProfileSaving(true);
+      setProfileMessage(null);
+
+      const response = await fetch('/api/findr/user-settings', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ displayName }),
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        setProfileMessage({ type: 'success', text: 'Profile updated successfully!' });
+        // Clear success message after 3 seconds
+        setTimeout(() => setProfileMessage(null), 3000);
+      } else {
+        setProfileMessage({ type: 'error', text: data.error || 'Failed to update profile' });
+      }
+    } catch (error) {
+      console.error('Failed to save profile:', error);
+      setProfileMessage({ type: 'error', text: 'Failed to update profile' });
+    } finally {
+      setProfileSaving(false);
+    }
+  };
+
+  if (isLoading || profileLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="loading loading-spinner loading-lg"></div>
-      </div>
+      <>
+        <Head>
+          <title>Account - Findr</title>
+          <meta name="description" content="Manage your Findr account and subscription" />
+        </Head>
+        <div className="min-h-screen flex items-center justify-center">
+          <div className="loading loading-spinner loading-lg"></div>
+        </div>
+      </>
     );
   }
 
@@ -133,15 +196,82 @@ export default function AccountPage() {
   };
 
   return (
-    <div className="min-h-screen bg-base-200 p-4 py-12">
-      <div className="max-w-2xl mx-auto space-y-6">
-        {/* Header */}
-        <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold mb-2">Account</h1>
-          <p className="text-base-content/70">{user.email}</p>
-        </div>
+    <>
+      <Head>
+        <title>Account - Findr</title>
+        <meta name="description" content="Manage your Findr account and subscription" />
+      </Head>
+      <div className="min-h-screen bg-base-200 p-4 py-12">
+        <div className="max-w-2xl mx-auto space-y-6">
+          {/* Header */}
+          <div className="text-center mb-8">
+            <h1 className="text-3xl font-bold mb-2">Account</h1>
+            <p className="text-base-content/70">{user.email}</p>
+          </div>
 
-        {/* Subscription Status Card */}
+          {/* Profile Section */}
+          <div className="card bg-base-100 shadow-xl">
+            <div className="card-body">
+              <h2 className="card-title">Profile</h2>
+              
+              {profileMessage && (
+                <div className={`alert ${profileMessage.type === 'success' ? 'alert-success' : 'alert-error'} mb-4`}>
+                  <span>{profileMessage.text}</span>
+                </div>
+              )}
+
+              <div className="space-y-4">
+                <div className="form-control">
+                  <label className="label">
+                    <span className="label-text">Display Name</span>
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="e.g. Captain Hook"
+                    className="input input-bordered w-full"
+                    value={displayName}
+                    onChange={(e) => setDisplayName(e.target.value)}
+                  />
+                  <label className="label">
+                    <span className="label-text-alt">How we address you in Findr</span>
+                  </label>
+                </div>
+
+                <div className="form-control">
+                  <label className="label">
+                    <span className="label-text">Email</span>
+                  </label>
+                  <input
+                    type="email"
+                    className="input input-bordered w-full"
+                    value={user.email || ''}
+                    disabled
+                    readOnly
+                  />
+                  <label className="label">
+                    <span className="label-text-alt">Your account email (cannot be changed here)</span>
+                  </label>
+                </div>
+
+                <button
+                  onClick={handleSaveProfile}
+                  disabled={profileSaving}
+                  className="btn btn-primary"
+                >
+                  {profileSaving ? (
+                    <>
+                      <span className="loading loading-spinner"></span>
+                      Saving...
+                    </>
+                  ) : (
+                    'Save Profile'
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* Subscription Status Card */}
         <div className="card bg-base-100 shadow-xl">
           <div className="card-body">
             <h2 className="card-title">Subscription Status</h2>
@@ -351,5 +481,6 @@ export default function AccountPage() {
         </div>
       )}
     </div>
+    </>
   );
 }
