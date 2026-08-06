@@ -6,7 +6,7 @@
  */
 
 import { createClient } from '@supabase/supabase-js';
-import { sendApnsPushNotification } from '../findr/apnsClient';
+import { sendApnsPushNotification } from './apnsClient';
 import { sendGrowApnsPushNotification } from '../grow/apnsClient';
 import { sendGoDaisyApnsPushNotification } from '../godaisy/apnsClient';
 import { sendFcmPushNotification } from './fcmClient';
