@@ -12,11 +12,11 @@
  *   3. Run the scoring engine for the chosen activity
  *   4. Return a clean, page-ready payload
  *
- * Currently the implementation uses a thin direct fetch of OpenWeather +
- * Stormglass. Once you have time, swap the body of `fetchWeatherForLocation`
- * to import and call `getFullWeather` from `lib/services/weatherService.ts`
- * directly — that's the same function `/api/owm.ts` uses, and it'll keep
- * scoring on the SEO pages and inside the app perfectly in sync.
+ * Free-first: Open-Meteo (via fetchOpenMeteoAsOneCallShape) is the PRIMARY
+ * source, adapted into the same shape OpenWeather One Call 3.0 returns.
+ * OpenWeather (getCachedFullWeather) is only used as a fallback when
+ * Open-Meteo fails — SEO regeneration is a lot of locations, so keeping it
+ * off OpenWeather's quota by default matters more here than for live traffic.
  */
 
 import { getSuggestionsByDay } from '../../utils/getSuggestionsByDay';
@@ -25,6 +25,7 @@ import { activityTypes } from '../../data/activityTypes';
 import type { SeoLocation } from '../../data/seoLocations';
 import { getCachedFullWeather } from '../services/weatherService';
 import { getOpenWeatherKey } from '../utils/openWeatherKey';
+import { fetchOpenMeteoAsOneCallShape } from '../weather/openMeteoOneCallAdapter';
 
 // ============================================================================
 // Public types
@@ -153,37 +154,23 @@ function labelForOffset(offset: number): string {
  * Fetch weather for a location and return it in the shape getSuggestionsByDay
  * expects: `Array<{ date: number; weather: WeatherData }>`.
  *
- * Calls `getCachedFullWeather` directly (same Supabase-backed One Call 3.0 cache
- * the app uses via /api/owm) — no HTTP round-trip to godaisy.io. Using the same
- * options as the app (units: metric, exclude: '') means SEO regenerations share
- * cache entries with live app traffic instead of doubling OpenWeather load.
+ * Free-first: tries Open-Meteo (adapted into OpenWeather One Call 3.0 shape)
+ * before falling back to `getCachedFullWeather` (same Supabase-backed cache
+ * the live app uses) only if Open-Meteo fails.
  */
 async function fetchWeatherForLocation(
   location: SeoLocation
 ): Promise<Array<{ date: number; weather: WeatherData }>> {
-  const apiKey = getOpenWeatherKey();
-  if (!apiKey) {
-    console.error(`Weather fetch skipped for ${location.slug}: missing OpenWeather API key`);
-    return [];
-  }
+  // Map an OpenWeather-One-Call-shaped payload into the shape getSuggestionsByDay wants.
+  type OWMDaily = { dt?: number; temp?: { day?: number; min?: number; max?: number }; rain?: number; wind_speed?: number; clouds?: number; humidity?: number };
+  type OWMHourly = { dt?: number; temp?: number; rain?: { '1h'?: number }; wind_speed?: number; clouds?: number; humidity?: number };
 
-  try {
-    const data = await getCachedFullWeather({
-      lat: location.lat,
-      lon: location.lon,
-      apiKey,
-      options: { units: 'metric', exclude: '' },
-    });
-
-    // Map the OWM One Call response into the shape getSuggestionsByDay wants.
-    type OWMDaily = { dt?: number; temp?: { day?: number }; rain?: number; wind_speed?: number; clouds?: number; humidity?: number };
-    type OWMHourly = { dt?: number; temp?: number; rain?: { '1h'?: number }; wind_speed?: number; clouds?: number; humidity?: number };
-
+  function mapOneCallShape(data: { daily?: unknown; hourly?: unknown } | null | undefined): Array<{ date: number; weather: WeatherData }> {
     if (Array.isArray(data?.daily)) {
       return (data.daily as OWMDaily[]).slice(0, 7).map((d: OWMDaily) => ({
         date: d.dt ?? Math.floor(Date.now() / 1000),
         weather: {
-          temperature: d.temp?.day,
+          temperature: d.temp?.day ?? d.temp?.max,
           precipitation: d.rain ?? 0,
           windspeed: (d.wind_speed ?? 0) * 3.6, // m/s → km/h
           clouds: d.clouds,
@@ -207,6 +194,32 @@ async function fetchWeatherForLocation(
     }
 
     return [];
+  }
+
+  // PRIMARY: Open-Meteo (free, unlimited)
+  try {
+    const data = await fetchOpenMeteoAsOneCallShape(location.lat, location.lon);
+    const mapped = mapOneCallShape(data);
+    if (mapped.length) return mapped;
+  } catch (err) {
+    console.warn(`[getActivityScore] Open-Meteo failed for ${location.slug}, falling back to OpenWeather:`, err);
+  }
+
+  // BACKSTOP: OpenWeather One Call 3.0 (Supabase-cached)
+  const apiKey = getOpenWeatherKey();
+  if (!apiKey) {
+    console.error(`Weather fetch skipped for ${location.slug}: missing OpenWeather API key`);
+    return [];
+  }
+
+  try {
+    const data = await getCachedFullWeather({
+      lat: location.lat,
+      lon: location.lon,
+      apiKey,
+      options: { units: 'metric', exclude: '' },
+    });
+    return mapOneCallShape(data);
   } catch (err) {
     console.error(`Weather fetch error for ${location.slug}:`, err);
     return [];

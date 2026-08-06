@@ -107,16 +107,6 @@ function roundForProvider(lat: number, lon: number, provider: string): { lat: nu
   };
 }
 // Add proper interfaces for optional API payloads used in caches
-interface OpenWeatherAirQuality {
-  coord?: { lon?: number; lat?: number };
-  list?: Array<{
-    dt?: number;
-    main?: { aqi?: number };
-    components?: {
-      co?: number; no?: number; no2?: number; o3?: number; so2?: number; pm2_5?: number; pm10?: number; nh3?: number;
-    };
-  }>;
-}
 interface OpenMeteoPollenHourly {
   hourly?: {
     time?: string[];
@@ -237,7 +227,6 @@ interface MetNoForecastResponse {
     timeseries?: MetNoTimeseriesEntry[];
   };
 }
-const owAirQualityCache = new Map<string, CacheEntry<OpenWeatherAirQuality>>();
 const omPollenCache = new Map<string, CacheEntry<OpenMeteoPollenHourly>>();
 const omSoilCache = new Map<string, CacheEntry<OpenMeteoSoilHourly>>();
 const omWeatherCache = new Map<string, CacheEntry<OpenMeteoGeneralHourly>>();
@@ -277,7 +266,6 @@ const TIDE_TTL_MS = 24 * 60 * 60 * 1000; // 24 hours (tides are astronomically p
 const MARINE_TTL_MS = 10 * 60 * 1000;   // 10 minutes
 const RECT_TTL_MS = 24 * 60 * 60 * 1000; // 24 hours per rectangle/day
 const WEATHER_TTL_MS = 5 * 60 * 1000;   // 5 minutes for main weather data
-const AIR_QUALITY_TTL_MS = 15 * 60 * 1000; // 15 minutes for air quality
 const POLLEN_TTL_MS = 60 * 60 * 1000;   // 1 hour for pollen data
 const SOIL_TTL_MS = 30 * 60 * 1000;     // 30 minutes for soil data
 
@@ -989,7 +977,7 @@ type UnifiedWeather = {
   seaTemp?: number | null
   hasMarineData?: boolean // ← new flag
 
-  // optional air quality summary (OpenWeather format)
+  // optional air quality summary (Open-Meteo us_aqi + components)
   airQuality?: {
     aqi?: number | null
     // Individual pollutants as direct properties
@@ -1084,7 +1072,6 @@ interface WeatherServiceModule {
   fetchStormglassMarine: (lat: number, lon: number, startISO: string, endISO: string, params: string | undefined, key: string) => Promise<StormglassMarineResponse>;
   fetchStormglassBio: (lat: number, lon: number, startISO: string, endISO: string, params: string | undefined, key: string) => Promise<StormglassBioResponse>;
   fetchMetNoMarineSeries: (lat: number, lon: number, startISO: string, endISO: string, options?: { maxHours?: number }) => Promise<MetNoMarineSeriesResult | null>;
-  getAirPollution: (args: { lat: number; lon: number; apiKey: string }) => Promise<unknown>;
   fetchOpenMeteoAirPollen: (lat: number, lon: number, start: string, end: string) => Promise<unknown>;
   fetchOpenMeteoWeather: (lat: number, lon: number, start: string, end: string) => Promise<unknown>;
 }
@@ -1432,7 +1419,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   let fetchStormglassMarine: WeatherServiceModule['fetchStormglassMarine'];
   let fetchStormglassBio: WeatherServiceModule['fetchStormglassBio'];
   let fetchMetNoMarineSeries: WeatherServiceModule['fetchMetNoMarineSeries'];
-  let getAirPollution: WeatherServiceModule['getAirPollution'];
   let fetchOpenMeteoAirPollen: WeatherServiceModule['fetchOpenMeteoAirPollen'];
   let fetchOpenMeteoWeather: WeatherServiceModule['fetchOpenMeteoWeather'];
   try {
@@ -1443,7 +1429,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     fetchStormglassMarine = svcModule.fetchStormglassMarine;
     fetchStormglassBio = svcModule.fetchStormglassBio;
     fetchMetNoMarineSeries = svcModule.fetchMetNoMarineSeries;
-    getAirPollution = svcModule.getAirPollution;
     fetchOpenMeteoAirPollen = svcModule.fetchOpenMeteoAirPollen;
     fetchOpenMeteoWeather = svcModule.fetchOpenMeteoWeather;
   } catch (e: unknown) {
@@ -1970,38 +1955,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       delete (normalizedData as UnifiedWeather).marine;
     }
 
-    // Optional: Air Quality (OpenWeather) with cache
-    try {
-      const aqCacheKey = getCacheKey(latNum, lonNum, 'openweather', 'air');
-      let aq: OpenWeatherAirQuality | null = null;
-      const aqCached = owAirQualityCache.get(aqCacheKey);
-      
-      if (aqCached && Date.now() - aqCached.ts < AIR_QUALITY_TTL_MS) {
-        aq = aqCached.data as OpenWeatherAirQuality;
-      } else if (apiKey) {
-        const { lat: aqLat, lon: aqLon } = roundForProvider(latNum, lonNum, 'openweather');
-        const safeApiKey = apiKey;
-        const raw = await getAirPollution({ lat: aqLat, lon: aqLon, apiKey: safeApiKey });
-        aq = (raw || {}) as OpenWeatherAirQuality;
-        if (aq) owAirQualityCache.set(aqCacheKey, { ts: Date.now(), data: aq });
-      } else {
-        console.warn('Skipping air quality fetch: missing OpenWeather API key');
-      }
-      
-      const list = aq?.list;
-      if (Array.isArray(list) && list.length) {
-        const first = list[0];
-        normalizedData.airQuality = {
-          aqi: first?.main?.aqi ?? null,
-          components: first?.components ?? undefined,
-        };
-      }
-    } catch (e) {
-      // Optional, ignore errors
-      console.warn('Air quality fetch failed:', e);
-    }
-
-    // Optional: Pollen (Open-Meteo) aggregated to daily maxima
+    // Optional: Pollen (Open-Meteo) aggregated to daily maxima. Air quality is
+    // also derived below from this same Open-Meteo call (see aqiHourly), since
+    // it already returns pm2_5/pm10/no2/o3/so2/co/us_aqi/european_aqi — no
+    // separate OpenWeather Air Pollution call needed.
     try {
       // Determine date window from available daily entries, else next 7 days
       const dates = Array.isArray(normalizedData.daily) && normalizedData.daily.length
@@ -2089,6 +2046,32 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             sulphur_dioxide: so2.length ? so2 : undefined,
             carbon_monoxide: co.length ? co : undefined,
           };
+
+          // Current-snapshot airQuality for AirQualityCard, derived from the
+          // hourly entry closest to now. us_aqi is the US EPA 0-500 scale,
+          // which matches AirQualityCard's thresholds (OpenWeather's old
+          // 1-5 scale never actually matched that card's 0-500 breakpoints).
+          const nowMs = Date.now();
+          let nearestIdx = 0;
+          let bestDiff = Infinity;
+          for (let i = 0; i < times.length; i++) {
+            const diff = Math.abs(Date.parse(times[i]) - nowMs);
+            if (Number.isFinite(diff) && diff < bestDiff) { bestDiff = diff; nearestIdx = i; }
+          }
+          const aqiAtNow = usAQI[nearestIdx];
+          if (typeof aqiAtNow === 'number' && Number.isFinite(aqiAtNow)) {
+            normalizedData.airQuality = {
+              aqi: aqiAtNow,
+              components: {
+                pm2_5: pm25[nearestIdx] ?? null,
+                pm10: pm10[nearestIdx] ?? null,
+                no2: no2[nearestIdx] ?? null,
+                o3: o3[nearestIdx] ?? null,
+                so2: so2[nearestIdx] ?? null,
+                co: co[nearestIdx] ?? null,
+              },
+            };
+          }
         }
 
         const byDate: Record<string, { 
