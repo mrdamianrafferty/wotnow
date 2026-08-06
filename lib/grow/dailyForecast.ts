@@ -20,7 +20,7 @@ import type { WeatherForecast } from '@/lib/grow/weatherTaskEngine';
 
 // WMO weather interpretation codes -> human description.
 // https://open-meteo.com/en/docs (WMO Weather interpretation codes)
-const WMO_DESCRIPTIONS: Record<number, string> = {
+export const WMO_DESCRIPTIONS: Record<number, string> = {
   0: 'Clear sky',
   1: 'Mainly clear',
   2: 'Partly cloudy',

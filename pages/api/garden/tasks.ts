@@ -2,8 +2,14 @@ import type { NextApiRequest, NextApiResponse } from 'next';
 import { createClient } from '@supabase/supabase-js';
 import { SUPABASE_URL, SUPABASE_ANON_KEY } from '../../../lib/supabase/env';
 import { getOpenWeatherKey } from '../../../lib/utils/openWeatherKey';
+import { geocodeForward } from '../../../lib/utils/serverGeocode';
 
 const OPENWEATHER_API_KEY = getOpenWeatherKey();
+
+// In-memory cache to avoid hammering OpenWeather on every request for the
+// same location (this endpoint had no caching at all previously).
+const WEATHER_CACHE_TTL_MS = 10 * 60 * 1000; // 10 minutes
+const weatherCache = new Map<string, { data: Awaited<ReturnType<typeof getWeatherData>>; expires: number }>();
 
 interface GardenTask {
   id: string;
@@ -44,39 +50,14 @@ interface PlantData {
   last_watered_at: string | null;
 }
 
-// Geocode location to get coordinates
+// Geocode location to get coordinates (Nominatim primary, OpenWeather fallback)
 async function geocodeLocation(location: string): Promise<{ lat: number; lon: number; displayName: string } | null> {
-  if (!OPENWEATHER_API_KEY) {
-    console.warn('No OpenWeather API key configured');
-    return null;
-  }
-
-  try {
-    const geocodeUrl = `https://api.openweathermap.org/geo/1.0/direct?q=${encodeURIComponent(location)}&limit=1&appid=${OPENWEATHER_API_KEY}`;
-    const geocodeResponse = await fetch(geocodeUrl);
-
-    if (!geocodeResponse.ok) {
-      return null;
-    }
-
-    const geocodeData = await geocodeResponse.json();
-    if (geocodeData && geocodeData.length > 0) {
-      const result = geocodeData[0];
-      return {
-        lat: result.lat,
-        lon: result.lon,
-        displayName: `${result.name}${result.state ? ', ' + result.state : ''}${result.country ? ', ' + result.country : ''}`
-      };
-    }
-  } catch (error) {
-    console.error('Geocoding error:', error);
-  }
-
-  return null;
+  const [result] = await geocodeForward(location, 1);
+  return result ? { lat: result.lat, lon: result.lon, displayName: result.displayName } : null;
 }
 
 // Fetch weather data from OpenWeather
-async function getWeatherData(location: string): Promise<{ weather: WeatherData; coords: { lat: number; lon: number }; displayName: string } | null> {
+async function fetchWeatherData(location: string): Promise<{ weather: WeatherData; coords: { lat: number; lon: number }; displayName: string } | null> {
   if (!OPENWEATHER_API_KEY) {
     console.warn('No OpenWeather API key configured - using estimated weather');
     return null;
@@ -118,6 +99,22 @@ async function getWeatherData(location: string): Promise<{ weather: WeatherData;
     console.error('Weather fetch error:', error);
     return null;
   }
+}
+
+// Cached wrapper around fetchWeatherData — collapses repeated requests for
+// the same location within the TTL into a single OpenWeather call.
+async function getWeatherData(location: string): Promise<{ weather: WeatherData; coords: { lat: number; lon: number }; displayName: string } | null> {
+  const cacheKey = location.trim().toLowerCase();
+  const cached = weatherCache.get(cacheKey);
+  if (cached && cached.expires > Date.now()) {
+    return cached.data;
+  }
+
+  const data = await fetchWeatherData(location);
+  if (data) {
+    weatherCache.set(cacheKey, { data, expires: Date.now() + WEATHER_CACHE_TTL_MS });
+  }
+  return data;
 }
 
 // Get user's plants if authenticated

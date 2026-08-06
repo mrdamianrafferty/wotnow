@@ -7,6 +7,7 @@ import {
   type SignalPreferences,
   type SignalType,
 } from '../../../../lib/grow/localSignals';
+import { geocodeForward } from '../../../../lib/utils/serverGeocode';
 import { getOpenWeatherKey } from '../../../../lib/utils/openWeatherKey';
 
 const OPENWEATHER_API_KEY = getOpenWeatherKey();
@@ -18,26 +19,10 @@ interface GeoLocation {
   country: string;
 }
 
+// Geocode a location string to coordinates (Nominatim primary, OpenWeather fallback)
 async function geocodeLocation(location: string): Promise<GeoLocation | null> {
-  if (!OPENWEATHER_API_KEY) return null;
-
-  try {
-    const geocodeUrl = `https://api.openweathermap.org/geo/1.0/direct?q=${encodeURIComponent(location)}&limit=1&appid=${OPENWEATHER_API_KEY}`;
-    const response = await fetch(geocodeUrl);
-    const data = await response.json();
-
-    if (data && data.length > 0) {
-      return {
-        lat: data[0].lat,
-        lon: data[0].lon,
-        name: data[0].name,
-        country: data[0].country,
-      };
-    }
-  } catch (error) {
-    console.error('Geocoding error:', error);
-  }
-  return null;
+  const [result] = await geocodeForward(location, 1);
+  return result ? { lat: result.lat, lon: result.lon, name: result.name, country: result.country || '' } : null;
 }
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
