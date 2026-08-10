@@ -324,10 +324,6 @@ async function fetchAndSampleProviders(
     diagnostics.kd490 = { sampledCells: 0, attempted: 0, successes: 0, errors: [] };
     tasks.push(fetchKd490Data(cells, opts.vars, opts.deadline, diagnostics.kd490));
   }
-  if (opts.providers.includes("CMEMS")) {
-    diagnostics.cmems = { sampledCells: 0, attempted: 0, successes: 0, errors: [] };
-    tasks.push(fetchCmemsMetrics(cells, opts.vars, opts.deadline, diagnostics.cmems));
-  }
   const providerResults = await Promise.all(tasks);
   const allSamples = providerResults.flat();
 
@@ -696,273 +692,25 @@ async function fetchKd490ForCell(cell: GridCell, diagnostics?: ProviderDiagnosti
   }
 }
 
-// CMEMS ------------------------------------------------------------------
+// CMEMS -------------------------------------------------------------------
 //
-// Region-aware routing ported from src/lib/copernicus/regionRouterV2.ts
-// (built from actual CMEMS support guidance, Oct 2025 — previously unused
-// by any code path). Each CMEMS region has its own verified dataset/variable
-// mapping; regions without a specific nutrients bundle (NWS, ARC) and
-// anything outside the 4 mapped seas fall back to the coarse global BGC
-// model. Region classification uses the same lat/lon geographic-bounds
-// fallback already tested in scripts/ingestion/ingest-copernicus-data.ts's
-// getCmemsRegion().
-
-// nrt.cmems-du.eu IS NO LONGER COPERNICUS.
+// REMOVED 2026-08-10. This provider fetched Copernicus data over the THREDDS
+// NCSS interface at nrt.cmems-du.eu. That domain has lapsed and is now served
+// by a domain-interception service, answering 200 with an HTML page -- so
+// every request "succeeded", the CSV parser turned markup into rows, and each
+// cell reported "No numeric variables in response": 0 successes out of 2,465
+// attempts. Worse, each request carried Authorization: Basic <user:pass>, so
+// Copernicus credentials were being sent to whoever now owns that domain.
 //
-// Checked 2026-08-10: the domain has lapsed and is now served by a
-// domain-interception service —
+// It is not being repaired, because it is redundant. godaisy-core already
+// ingests Copernicus properly via the Copernicus Marine Toolbox
+// (findr-copernicus-ingest, cron 0 3,15) on the current ARCO infrastructure,
+// and that is the job supplying the copernicus-* rows in
+// grid_conditions_latest. Copernicus retired the THREDDS NCSS interface;
+// there is no URL that would bring this path back.
 //
-//     HTTP 200 · content-type: text/html · server: cloudflare
-//     <title>Domain Intercepted by 301Domains</title>
-//
-// It answers 200 with an HTML page, so resp.ok was true, parseCsv turned the
-// markup into "rows", and every cell reported "No numeric variables in
-// response" — 0 successes out of 2,465 attempts, looking like a parsing quirk
-// rather than a decommissioned service.
-//
-// The serious part is not the missing data. Every request carried
-// Authorization: Basic <base64 user:pass>, so Copernicus credentials were being
-// sent to whoever controls that domain, on every cell, on every run. Those
-// credentials must be treated as compromised and rotated.
-//
-// There is therefore no default endpoint any more. CMEMS stays inert until
-// CMEMS_NCSS_BASE is explicitly set to a verified Copernicus host, so no
-// credential can leave for an unverified one. Copernicus retired the THREDDS
-// NCSS interface; current access is the Copernicus Marine Toolbox, which
-// findr's own ingest-europe workflow already uses (pip install
-// copernicusmarine) — that, not a URL swap, is the real port.
-const CMEMS_NCSS_BASE = env.CMEMS_NCSS_BASE ?? "";
-const CMEMS_USERNAME = env.CMEMS_USERNAME;
-const CMEMS_PASSWORD = env.CMEMS_PASSWORD;
-const CMEMS_LOOKBACK_HOURS = Number(env.CMEMS_LOOKBACK_HOURS ?? "24");
-const CMEMS_CONCURRENCY = Number(env.CMEMS_CONCURRENCY ?? "2");
-const CMEMS_VERT_COORD = env.CMEMS_VERT_COORD ?? "0"; // surface
-
-type CmemsRegionCode = "BAL" | "MED" | "BLK" | "IBI" | "NWS" | "ARC" | "GLO";
-
-type CmemsDatasetSpec = {
-  path: string; // dataset id / relative THREDDS ncss path segment
-  variables: string[]; // CMEMS variable codes present in this dataset
-};
-
-// path values are dataset IDs; the CMEMS NCSS THREDDS catalog resolves
-// `${CMEMS_NCSS_BASE}/${path}/${path}.nc` for the standard ANFC layout used
-// by every dataset below (matches the working v70 CMEMS_NCSS_BASE_URL shape).
-function ncssUrlFor(datasetId: string): string {
-  return `${CMEMS_NCSS_BASE}/${datasetId}/${datasetId}.nc`;
-}
-
-const NUTRIENT_BUNDLES: Record<Exclude<CmemsRegionCode, "GLO">, CmemsDatasetSpec[]> = {
-  IBI: [{ path: "cmems_mod_ibi_bgc_anfc_0.027deg-3D_P1D-m", variables: ["no3", "po4", "o2", "chl", "phyc"] }],
-  MED: [
-    { path: "cmems_mod_med_bgc-bio_anfc_4.2km_P1D-m", variables: ["o2"] },
-    { path: "cmems_mod_med_bgc-nut_anfc_4.2km_P1D-m", variables: ["no3", "po4"] },
-  ],
-  BAL: [{ path: "cmems_mod_bal_bgc_anfc_P1D-m", variables: ["no3", "po4", "o2", "chl", "phyc"] }],
-  BLK: [{ path: "cmems_mod_blk_bgc_anfc_2.5km_P1D-m", variables: ["no3", "po4", "o2"] }],
-  NWS: [], // no verified regional BGC product — falls through to GLO below
-  ARC: [], // no verified regional BGC product — falls through to GLO below
-};
-
-const GLOBAL_NUTRIENT_BUNDLE: CmemsDatasetSpec = {
-  path: "cmems_mod_glo_bgc-bio_anfc_0.25deg_P1D-m",
-  variables: ["no3", "po4", "o2"],
-};
-const GLOBAL_PFT_BUNDLE: CmemsDatasetSpec = {
-  path: "cmems_mod_glo_bgc-pft_anfc_0.25deg_P1D-m",
-  variables: ["phyc"],
-};
-
-function getNutrientDatasets(region: CmemsRegionCode): CmemsDatasetSpec[] {
-  if (region === "GLO") return [GLOBAL_NUTRIENT_BUNDLE, GLOBAL_PFT_BUNDLE];
-  const bundle = NUTRIENT_BUNDLES[region];
-  if (!bundle || bundle.length === 0) return [GLOBAL_NUTRIENT_BUNDLE, GLOBAL_PFT_BUNDLE];
-  // Regional bundles that don't already carry phyc (BLK, MED's split) get the
-  // global PFT dataset appended so phytoplankton still resolves everywhere.
-  const hasPhyc = bundle.some((b) => b.variables.includes("phyc"));
-  return hasPhyc ? bundle : [...bundle, GLOBAL_PFT_BUNDLE];
-}
-
-// Salinity comes from each region's physics/temperature dataset, not the BGC
-// one — the prior implementation's bug was requesting 'so' from the BGC
-// dataset, which doesn't carry it.
-const SALINITY_DATASETS: Record<CmemsRegionCode, CmemsDatasetSpec> = {
-  IBI: { path: "cmems_mod_ibi_phy_anfc_0.027deg-3D_P1D-m", variables: ["so"] },
-  BAL: { path: "cmems_mod_bal_phy_anfc_P1D-m", variables: ["so"] },
-  BLK: { path: "cmems_mod_blk_phy_anfc_2.5km_P1D-m", variables: ["so"] },
-  MED: { path: "cmems_mod_med_phy-sal_anfc_4.2km_P1D-m", variables: ["so"] },
-  NWS: { path: "cmems_mod_glo_phy-so_anfc_0.083deg_P1D-m", variables: ["so"] },
-  ARC: { path: "cmems_mod_glo_phy-so_anfc_0.083deg_P1D-m", variables: ["so"] },
-  GLO: { path: "cmems_mod_glo_phy-so_anfc_0.083deg_P1D-m", variables: ["so"] },
-};
-
-// Same geographic classification as ingest-copernicus-data.ts's
-// getCmemsRegion() geographic-bounds fallback — this function has no region
-// name string to work with (only lat/lon), so it goes straight to bounds.
-function classifyCmemsRegion(lat: number, lon: number): CmemsRegionCode {
-  if (lat > 66) return "ARC";
-  if (lat >= 30 && lat <= 46 && lon >= -6 && lon <= 36) return "MED";
-  if (lat >= 41 && lat <= 47 && lon >= 27.5 && lon <= 42) return "BLK";
-  if (lat >= 53 && lat <= 66 && lon >= 10 && lon <= 30) return "BAL";
-  if (lat >= 48 && lat <= 63 && lon >= -12 && lon <= 13) return "NWS";
-  if (lat >= 36 && lat <= 54 && lon >= -20 && lon <= -5) return "IBI";
-  return "GLO";
-}
-
-const CMEMS_VARIABLE_MAP: Record<string, keyof ConditionRow> = {
-  o2: "oxygen_mg_l",
-  chl: "chlorophyll_mg_m3",
-  no3: "nitrate_umol_l",
-  po4: "phosphate_umol_l",
-  phyc: "phytoplankton_index",
-  so: "salinity_psu",
-};
-
-async function fetchCmemsMetrics(
-  cells: GridCell[],
-  vars: string[],
-  deadline: number,
-  diagnostics?: ProviderDiagnostics,
-): Promise<ProviderSample[]> {
-  if (!CMEMS_NCSS_BASE) {
-    // Deliberately before the credential check: never send Basic auth to an
-    // endpoint nobody has verified. See the CMEMS_NCSS_BASE comment.
-    recordProviderError(
-      diagnostics,
-      "CMEMS disabled: no verified endpoint configured. The former default " +
-      "(nrt.cmems-du.eu) lapsed and is now a domain-interception service that " +
-      "was receiving our credentials. Set CMEMS_NCSS_BASE to a verified host, " +
-      "or port to the Copernicus Marine Toolbox.",
-    );
-    return [];
-  }
-
-  if (!CMEMS_USERNAME || !CMEMS_PASSWORD) {
-    recordProviderError(diagnostics, "CMEMS credentials not configured");
-    return [];
-  }
-
-  const requestedFields = new Set(
-    vars.filter((v): v is keyof ConditionRow =>
-      (["oxygen_mg_l", "chlorophyll_mg_m3", "nitrate_umol_l", "phosphate_umol_l", "phytoplankton_index", "salinity_psu"] as const)
-        .includes(v as any)
-    )
-  );
-  if (requestedFields.size === 0) return [];
-
-  const authHeader = "Basic " + btoa(`${CMEMS_USERNAME}:${CMEMS_PASSWORD}`);
-  const results: ProviderSample[] = [];
-  const time = new Date();
-  const lookback = new Date(time.getTime() - CMEMS_LOOKBACK_HOURS * 60 * 60 * 1000);
-
-  if (diagnostics) diagnostics.sampledCells = cells.length;
-
-  await mapWithConcurrency(cells, CMEMS_CONCURRENCY, deadline, async (cell) => {
-    const sample = await fetchCmemsForCell({ cell, time, lookback, authHeader, requestedFields, diagnostics });
-    if (sample) results.push(sample);
-  });
-
-  return results;
-}
-
-async function fetchCmemsForCell(params: {
-  cell: GridCell;
-  time: Date;
-  lookback: Date;
-  authHeader: string;
-  requestedFields: Set<keyof ConditionRow>;
-  diagnostics?: ProviderDiagnostics;
-}): Promise<ProviderSample | null> {
-  const { cell, time, lookback, authHeader, requestedFields, diagnostics } = params;
-  const region = classifyCmemsRegion(cell.lat, cell.lon);
-
-  // Build the list of (dataset, variables-to-request-from-it, output-fields)
-  // for this cell, covering only the fields actually requested.
-  const plan: Array<{ datasetId: string; cmemsVars: string[] }> = [];
-
-  const wantsSalinity = requestedFields.has("salinity_psu");
-  if (wantsSalinity) {
-    const spec = SALINITY_DATASETS[region];
-    plan.push({ datasetId: spec.path, cmemsVars: ["so"] });
-  }
-
-  const wantsAnyNutrient = ["oxygen_mg_l", "nitrate_umol_l", "phosphate_umol_l", "phytoplankton_index", "chlorophyll_mg_m3"]
-    .some((f) => requestedFields.has(f as keyof ConditionRow));
-  if (wantsAnyNutrient) {
-    for (const spec of getNutrientDatasets(region)) {
-      const cmemsVars = spec.variables.filter((v) => requestedFields.has(CMEMS_VARIABLE_MAP[v]));
-      if (cmemsVars.length > 0) plan.push({ datasetId: spec.path, cmemsVars });
-    }
-  }
-
-  if (plan.length === 0) return null;
-
-  const valueMap: Partial<ConditionRow> = {};
-  let collected_at: string | null = null;
-  const sourcesUsed: string[] = [];
-
-  for (const step of plan) {
-    if (diagnostics) diagnostics.attempted++;
-    const url = new URL(ncssUrlFor(step.datasetId));
-    for (const variable of step.cmemsVars) url.searchParams.append("var", variable);
-    url.searchParams.set("accept", "csv");
-    url.searchParams.set("latitude", cell.lat.toFixed(3));
-    url.searchParams.set("longitude", wrapLongitude(cell.lon).toFixed(3));
-    url.searchParams.set("vertCoord", CMEMS_VERT_COORD);
-    url.searchParams.set("time", time.toISOString());
-    url.searchParams.set("time_start", lookback.toISOString());
-    url.searchParams.set("time_end", time.toISOString());
-    url.searchParams.set("point", "true");
-    url.searchParams.set("addLatLon", "true");
-    url.searchParams.set("orderByClosest", "time");
-    url.searchParams.set("limit", "1");
-
-    try {
-      const resp = await fetchWithTimeout(url.toString(), { headers: { Authorization: authHeader } });
-      if (!resp.ok) {
-        recordProviderError(diagnostics, `HTTP ${resp.status} ${resp.statusText} for ${step.datasetId} cell ${cell.cell_id}`);
-        continue;
-      }
-      const text = await resp.text();
-      const parsed = parseCsv(text);
-      if (!parsed || parsed.values.length === 0) {
-        recordProviderError(diagnostics, `No rows returned for ${step.datasetId} cell ${cell.cell_id}`);
-        continue;
-      }
-      const row = parsed.values[0];
-      const rowTime = row.time ?? parsed.metadata?.time ?? null;
-      if (rowTime && (!collected_at || collected_at < rowTime)) collected_at = rowTime;
-
-      let gotAny = false;
-      for (const variable of step.cmemsVars) {
-        const field = CMEMS_VARIABLE_MAP[variable];
-        const raw = row[variable];
-        if (raw == null) continue;
-        const numeric = Number(raw);
-        if (Number.isNaN(numeric)) continue;
-        (valueMap as any)[field] = numeric;
-        gotAny = true;
-      }
-      if (gotAny) {
-        sourcesUsed.push(`cmems.${step.datasetId}`);
-        if (diagnostics) diagnostics.successes++;
-      } else {
-        recordProviderError(diagnostics, `No numeric variables in response for ${step.datasetId} cell ${cell.cell_id}`);
-      }
-    } catch (error) {
-      recordProviderError(diagnostics, `Fetch error for ${step.datasetId} cell ${cell.cell_id}: ${error instanceof Error ? error.message : String(error)}`);
-    }
-  }
-
-  if (Object.keys(valueMap).length === 0) return null;
-
-  return {
-    cell_id: cell.cell_id,
-    collected_at: collected_at ?? new Date().toISOString(),
-    source: sourcesUsed.join("+") || "cmems",
-    values: valueMap,
-  };
-}
+// This function keeps the three providers it can still do usefully: NOAA SST,
+// chlorophyll and Kd490.
 
 // Helpers --------------------------------------------------------------------
 
@@ -1017,33 +765,6 @@ function clamp(value: number, min: number, max: number): number {
   return Math.min(max, Math.max(min, value));
 }
 
-type ParsedCsv = { metadata?: Record<string, string>; values: Array<Record<string, string>> };
-
-function parseCsv(text: string): ParsedCsv | null {
-  const lines = text.split(/\r?\n/).filter((line) => line.trim().length > 0);
-  if (lines.length < 2) return null;
-  const metadata: Record<string, string> = {};
-  let headerLineIndex = 0;
-  for (let i = 0; i < lines.length; i++) {
-    if (lines[i].startsWith("#")) {
-      const [key, ...rest] = lines[i].substring(1).split(":");
-      if (key && rest.length > 0) metadata[key.trim()] = rest.join(":").trim();
-    } else {
-      headerLineIndex = i;
-      break;
-    }
-  }
-  const headers = lines[headerLineIndex].split(",").map((item) => item.trim());
-  const values: Record<string, string>[] = [];
-  for (let i = headerLineIndex + 1; i < lines.length; i++) {
-    const columns = lines[i].split(",");
-    if (columns.length !== headers.length) continue;
-    const record: Record<string, string> = {};
-    for (let j = 0; j < headers.length; j++) record[headers[j]] = columns[j]?.trim();
-    values.push(record);
-  }
-  return { metadata, values };
-}
 
 type GridCell = { cell_id: string; lat: number; lon: number };
 type RawGridRow = {
@@ -1118,7 +839,6 @@ type IngestDiagnostics = {
   noaa?: ProviderDiagnostics;
   chlorophyll?: ProviderDiagnostics;
   kd490?: ProviderDiagnostics;
-  cmems?: ProviderDiagnostics;
 };
 
 function recordProviderError(diag: ProviderDiagnostics | undefined, message: string): void {
