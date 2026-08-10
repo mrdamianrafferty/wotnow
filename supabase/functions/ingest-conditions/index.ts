@@ -82,8 +82,35 @@ serve(async (req) => {
   //
   // Moving to verify_jwt: false without this check would make the function
   // publicly invokable by anyone, so the two changes belong together.
+  // Two callers, two credentials, and both must keep working.
+  //
+  //   pg_cron  -> _invoke_ingest sends X-Ingest-Secret and no Authorization.
+  //               This is the path that was returning 401: the function was
+  //               deployed with verify_jwt: true, so the gateway rejected it
+  //               before any code ran, roughly nineteen times a day.
+  //
+  //   Actions  -> godaisy-core's ingest-noaa-data, ingest-chlorophyll-data and
+  //               ingest-kd490-data call supabase.functions.invoke() with a
+  //               service-role client, so supabase-js attaches
+  //               Authorization: Bearer <service key> and no X-Ingest-Secret.
+  //               That path satisfied verify_jwt and has been working all
+  //               along -- it is what wrote today's chlorophyll and Kd490 rows.
+  //
+  // Checking only the shared secret would have broken those three workflows at
+  // their next run. Accept either credential; reject anything with neither, so
+  // verify_jwt: false does not leave this open to the world.
   const expectedSecret = env.EDGE_INGEST_SECRET ?? "";
-  if (!expectedSecret || req.headers.get("x-ingest-secret") !== expectedSecret) {
+  const suppliedSecret = req.headers.get("x-ingest-secret") ?? "";
+  const authHeaderRaw = req.headers.get("authorization") ?? "";
+  const bearer = authHeaderRaw.toLowerCase().startsWith("bearer ")
+    ? authHeaderRaw.slice(7).trim()
+    : "";
+
+  const secretOk = expectedSecret !== "" && suppliedSecret === expectedSecret;
+  const bearerOk = bearer !== "" &&
+    (bearer === SERVICE_KEY || (env.SUPABASE_ANON_KEY && bearer === env.SUPABASE_ANON_KEY));
+
+  if (!secretOk && !bearerOk) {
     return jsonResponse({ error: "unauthorized" }, 401);
   }
 
