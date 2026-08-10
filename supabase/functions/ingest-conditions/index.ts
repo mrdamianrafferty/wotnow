@@ -67,6 +67,26 @@ serve(async (req) => {
   const startedAt = Date.now();
   const deadline = startedAt + INVOCATION_DEADLINE_MS;
 
+  // Auth: the X-Ingest-Secret shared secret, matching every other ingest
+  // function in this project (see functions/_shared/edge-helpers.ts, which
+  // records the reasoning: the service-role JWT was tried in the Phase 0 spike
+  // and rejected as fragile, because the function's view of
+  // SUPABASE_SERVICE_ROLE_KEY does not always equal the caller's).
+  //
+  // This function was deployed with verify_jwt: true and no internal auth,
+  // while _invoke_ingest sends X-Ingest-Secret and no Authorization header. So
+  // the gateway rejected every scheduled invocation before this code ran:
+  // UNAUTHORIZED_NO_AUTH_HEADER, roughly nineteen times a day since deployment.
+  // pg_cron recorded "succeeded" each time, because the HTTP call itself
+  // succeeded -- the 401 was in the response body, which nothing read.
+  //
+  // Moving to verify_jwt: false without this check would make the function
+  // publicly invokable by anyone, so the two changes belong together.
+  const expectedSecret = env.EDGE_INGEST_SECRET ?? "";
+  if (!expectedSecret || req.headers.get("x-ingest-secret") !== expectedSecret) {
+    return jsonResponse({ error: "unauthorized" }, 401);
+  }
+
   const rawPayload = await req.json().catch(() => null);
   const payload: IngestRequestPayload =
     rawPayload && typeof rawPayload === "object"
@@ -188,16 +208,67 @@ serve(async (req) => {
       return jsonResponse({ message: "No provider data returned", diagnostics });
     }
 
+    // Do not replace a fresher reading with an older one.
+    //
+    // grid_conditions_latest has several writers and no ordering between them.
+    // Without this, whichever job ran last won, so a cell holding this morning's
+    // Copernicus temperature could be overwritten by a satellite product weeks
+    // behind and stamped as an update -- wrong, plausible, and invisible. The
+    // same guard was added to findr's two writers on 2026-08-09 after exactly
+    // that was found in the SST path.
+    //
+    // A row is written when the cell has no reading, when ours observes something
+    // more recent, or when the existing reading came from a source we also used
+    // (a routine refresh of our own data). Skips are counted, not silent.
+    const rowsById = new Map(sampledRows.map((r) => [r.cell_id, r]));
+    const existingByCell = new Map<string, { collected_at: string | null; sources: string[] | null }>();
+    const idsToCheck = [...rowsById.keys()];
+    for (let i = 0; i < idsToCheck.length; i += 500) {
+      const { data: rows } = await supabase
+        .from("grid_conditions_latest")
+        .select("cell_id, collected_at, sources")
+        .in("cell_id", idsToCheck.slice(i, i + 500));
+      for (const r of rows ?? []) {
+        existingByCell.set(r.cell_id as string, {
+          collected_at: (r.collected_at as string | null) ?? null,
+          sources: (r.sources as string[] | null) ?? null,
+        });
+      }
+    }
+
+    let skippedStale = 0;
+    const writableRows = sampledRows.filter((row) => {
+      const existing = existingByCell.get(row.cell_id);
+      if (!existing || !existing.collected_at) return true;
+      const ours = new Set(row.sources ?? []);
+      if ((existing.sources ?? []).some((src) => ours.has(src))) return true;
+      if (!row.collected_at) return false;
+      if (new Date(existing.collected_at).getTime() < new Date(row.collected_at).getTime()) return true;
+      skippedStale++;
+      return false;
+    });
+
+    diagnostics.skippedStale = skippedStale;
+    diagnostics.written = writableRows.length;
+
+    if (writableRows.length === 0) {
+      return jsonResponse({
+        message: "Nothing to write — every cell already has a fresher reading",
+        diagnostics,
+        durationMs: Date.now() - startedAt,
+      });
+    }
+
     const { error: upsertError } = await supabase
       .from("grid_conditions_latest")
-      .upsert(sampledRows, { onConflict: "cell_id" });
+      .upsert(writableRows, { onConflict: "cell_id" });
 
     if (upsertError) {
       console.error("Upsert failed", upsertError);
       return jsonResponse({ error: "Failed to persist conditions", diagnostics, upsertError }, 500);
     }
 
-    return jsonResponse({ upserted: sampledRows.length, diagnostics, durationMs: Date.now() - startedAt });
+    return jsonResponse({ upserted: writableRows.length, diagnostics, durationMs: Date.now() - startedAt });
   } catch (error) {
     console.error("Unexpected error during ingest", error);
     return jsonResponse({ error: "Unexpected ingest error" }, 500);
@@ -935,6 +1006,8 @@ type IngestDiagnostics = {
   gridsWithData?: number;
   selectedNew?: number;
   selectedRefresh?: number;
+  skippedStale?: number;
+  written?: number;
   noaa?: ProviderDiagnostics;
   chlorophyll?: ProviderDiagnostics;
   kd490?: ProviderDiagnostics;
