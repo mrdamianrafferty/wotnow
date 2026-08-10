@@ -39,7 +39,13 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 console.log("ingest-conditions v71 starting");
 
-const env = typeof Deno !== "undefined" && Deno.env ? Deno.env.toObject() : (process as any)?.env ?? {};
+// The Node branch is only reached outside Deno (local tooling); reading it off
+// globalThis avoids both an `any` cast and a ReferenceError where `process` is
+// undefined. Type-level change only -- the emitted JS is unchanged.
+const env: Record<string, string | undefined> =
+  typeof Deno !== "undefined" && Deno.env
+    ? Deno.env.toObject()
+    : (globalThis as { process?: { env?: Record<string, string> } }).process?.env ?? {};
 const SUPABASE_URL = env.SUPABASE_URL;
 const SERVICE_KEY =
   env.SERVICE_ROLE_KEY ??
@@ -335,7 +341,7 @@ async function fetchAndSampleProviders(
 
     for (const [key, value] of Object.entries(sample.values) as Array<[keyof ConditionRow, ConditionRow[keyof ConditionRow]]>) {
       if (value !== undefined) {
-        (existing as any)[key] = value;
+        (existing as Record<string, unknown>)[key] = value;
       }
     }
 
