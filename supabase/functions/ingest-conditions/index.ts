@@ -124,7 +124,7 @@ serve(async (req) => {
     ? (payload.bbox as [number, number, number, number])
     : null;
 
-  const providers = Array.isArray(payload?.providers) ? payload.providers as string[] : ["NOAA", "CHLOROPHYLL", "KD490", "CMEMS"];
+  const providers = Array.isArray(payload?.providers) ? payload.providers as string[] : ["NOAA", "CHLOROPHYLL", "KD490"];
   const vars = Array.isArray(payload?.vars) ? payload.vars as string[] : [
     "surface_temperature_c",
     "salinity_psu",
@@ -707,7 +707,31 @@ async function fetchKd490ForCell(cell: GridCell, diagnostics?: ProviderDiagnosti
 // fallback already tested in scripts/ingestion/ingest-copernicus-data.ts's
 // getCmemsRegion().
 
-const CMEMS_NCSS_BASE = env.CMEMS_NCSS_BASE ?? "https://nrt.cmems-du.eu/thredds/ncss";
+// nrt.cmems-du.eu IS NO LONGER COPERNICUS.
+//
+// Checked 2026-08-10: the domain has lapsed and is now served by a
+// domain-interception service —
+//
+//     HTTP 200 · content-type: text/html · server: cloudflare
+//     <title>Domain Intercepted by 301Domains</title>
+//
+// It answers 200 with an HTML page, so resp.ok was true, parseCsv turned the
+// markup into "rows", and every cell reported "No numeric variables in
+// response" — 0 successes out of 2,465 attempts, looking like a parsing quirk
+// rather than a decommissioned service.
+//
+// The serious part is not the missing data. Every request carried
+// Authorization: Basic <base64 user:pass>, so Copernicus credentials were being
+// sent to whoever controls that domain, on every cell, on every run. Those
+// credentials must be treated as compromised and rotated.
+//
+// There is therefore no default endpoint any more. CMEMS stays inert until
+// CMEMS_NCSS_BASE is explicitly set to a verified Copernicus host, so no
+// credential can leave for an unverified one. Copernicus retired the THREDDS
+// NCSS interface; current access is the Copernicus Marine Toolbox, which
+// findr's own ingest-europe workflow already uses (pip install
+// copernicusmarine) — that, not a URL swap, is the real port.
+const CMEMS_NCSS_BASE = env.CMEMS_NCSS_BASE ?? "";
 const CMEMS_USERNAME = env.CMEMS_USERNAME;
 const CMEMS_PASSWORD = env.CMEMS_PASSWORD;
 const CMEMS_LOOKBACK_HOURS = Number(env.CMEMS_LOOKBACK_HOURS ?? "24");
@@ -800,6 +824,19 @@ async function fetchCmemsMetrics(
   deadline: number,
   diagnostics?: ProviderDiagnostics,
 ): Promise<ProviderSample[]> {
+  if (!CMEMS_NCSS_BASE) {
+    // Deliberately before the credential check: never send Basic auth to an
+    // endpoint nobody has verified. See the CMEMS_NCSS_BASE comment.
+    recordProviderError(
+      diagnostics,
+      "CMEMS disabled: no verified endpoint configured. The former default " +
+      "(nrt.cmems-du.eu) lapsed and is now a domain-interception service that " +
+      "was receiving our credentials. Set CMEMS_NCSS_BASE to a verified host, " +
+      "or port to the Copernicus Marine Toolbox.",
+    );
+    return [];
+  }
+
   if (!CMEMS_USERNAME || !CMEMS_PASSWORD) {
     recordProviderError(diagnostics, "CMEMS credentials not configured");
     return [];
