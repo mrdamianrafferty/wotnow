@@ -367,6 +367,28 @@ function jsonResponse(body: unknown, status = 200): Response {
   });
 }
 
+// A reading has to be from this decade to be worth storing.
+//
+// erdMH1chlamday and erdMH1kd490mday are MONTHLY composites that stopped
+// advancing in 2022. This function asks for [(last)], faithfully received a
+// 2022 value, and wrote it as a current observation -- eight times a day, for
+// as long as the chlorophyll and Kd490 workflows have been running. Nothing
+// failed; the number just silently described the sea four years ago.
+//
+// The dataset swap below fixes today's instance. This guard is what stops the
+// next one: any dataset that freezes, is retired, or is misconfigured now
+// produces no rows instead of confidently wrong ones. 90 days is far looser
+// than any of these products' real latency (SST runs days behind, VIIRS
+// chlorophyll a couple of weeks) and still catches a multi-year stall
+// immediately.
+const MAX_OBSERVATION_AGE_DAYS = 90;
+
+function isImplausiblyStale(timeValue: string): boolean {
+  const t = Date.parse(timeValue);
+  if (!Number.isFinite(t)) return false; // unparseable: let the caller decide
+  return (Date.now() - t) > MAX_OBSERVATION_AGE_DAYS * 24 * 60 * 60 * 1000;
+}
+
 // NOAA ERDDAP (SST) ----------------------------------------------------------
 
 const NOAA_ERDDAP_BASE_URL = env.NOAA_ERDDAP_BASE_URL ?? "https://coastwatch.noaa.gov/erddap";
@@ -473,6 +495,10 @@ async function fetchNoaaForCell(cell: GridCell, diagnostics?: ProviderDiagnostic
 
       const firstRow = rows[0] as unknown[];
       const timeValue = String(firstRow[0]);
+      if (isImplausiblyStale(timeValue)) {
+        recordProviderError(diagnostics, `SST observation ${timeValue} is older than ${MAX_OBSERVATION_AGE_DAYS} days — refusing to store it as current`);
+        continue;
+      }
       const temperature = Number(firstRow[firstRow.length - 1]);
       if (temperature == null || Number.isNaN(temperature)) {
         recordProviderError(diagnostics, `Invalid temperature for cell ${cell.cell_id} (offset ${offsetHours}h)`);
@@ -500,8 +526,11 @@ async function fetchNoaaForCell(cell: GridCell, diagnostics?: ProviderDiagnostic
 // CHLOROPHYLL ----------------------------------------------------------------
 
 const CHL_ERDDAP_BASE_URL = env.CHL_ERDDAP_BASE_URL ?? "https://coastwatch.pfeg.noaa.gov/erddap";
-const CHL_DEFAULT_DATASET_ID = "erdMH1chlamday";
-const CHL_DEFAULT_VARIABLE = "chlorophyll";
+// Was erdMH1chlamday/chlorophyll -- a monthly composite frozen at 2022. This is
+// the daily gap-filled VIIRS product findr's own ingestion already uses, whose
+// latest observation on 2026-08-10 was 2026-07-28.
+const CHL_DEFAULT_DATASET_ID = "nesdisVHNnoaaSNPPnoaa20chlaGapfilledDaily";
+const CHL_DEFAULT_VARIABLE = "chlor_a";
 const CHL_DATASET_ID = env.CHL_ERDDAP_DATASET_ID?.trim() || CHL_DEFAULT_DATASET_ID;
 const CHL_VARIABLE = env.CHL_ERDDAP_VARIABLE?.trim() || CHL_DEFAULT_VARIABLE;
 const CHL_CONCURRENCY = Number(env.CHL_ERDDAP_CONCURRENCY ?? "2");
@@ -542,7 +571,10 @@ async function fetchChlorophyllForCell(cell: GridCell, diagnostics?: ProviderDia
   const lonIndex = Number(lonCenter.toFixed(3));
   const latSlice = `[(${latIndex.toFixed(3)}):1:(${latIndex.toFixed(3)})]`;
   const lonSlice = `[(${lonIndex.toFixed(3)}):1:(${lonIndex.toFixed(3)})]`;
-  url.search = `?${CHL_VARIABLE}[(last)]${latSlice}${lonSlice}`;
+  // [(0.0):1:(0.0)] is the altitude axis. These datasets are
+  // [time][altitude][latitude][longitude]; omit it and ERDDAP shifts every
+  // later slice one axis to the left and 404s.
+  url.search = `?${CHL_VARIABLE}[(last)][(0.0):1:(0.0)]${latSlice}${lonSlice}`;
 
   try {
     const resp = await fetchWithTimeout(url.toString());
@@ -558,6 +590,10 @@ async function fetchChlorophyllForCell(cell: GridCell, diagnostics?: ProviderDia
     }
     const firstRow = rows[0] as unknown[];
     const timeValue = String(firstRow[0]);
+    if (isImplausiblyStale(timeValue)) {
+      recordProviderError(diagnostics, `Chlorophyll observation ${timeValue} is older than ${MAX_OBSERVATION_AGE_DAYS} days — refusing to store it as current`);
+      return null;
+    }
     const chl = Number(firstRow[firstRow.length - 1]);
     if (!Number.isFinite(chl) || chl < 0) {
       recordProviderError(diagnostics, `Invalid chlorophyll value for cell ${cell.cell_id}: ${chl}`);
@@ -579,8 +615,10 @@ async function fetchChlorophyllForCell(cell: GridCell, diagnostics?: ProviderDia
 // KD490 ----------------------------------------------------------------------
 
 const KD490_ERDDAP_BASE_URL = env.KD490_ERDDAP_BASE_URL ?? "https://coastwatch.pfeg.noaa.gov/erddap";
-const KD490_DEFAULT_DATASET_ID = "erdMH1kd490mday";
-const KD490_DEFAULT_VARIABLE = "k490";
+// Was erdMH1kd490mday/k490 -- likewise monthly and frozen; its newest stored
+// observation was 2022-05-16. Daily VIIRS equivalent, latest 2026-07-09.
+const KD490_DEFAULT_DATASET_ID = "nesdisVHNkd490Daily";
+const KD490_DEFAULT_VARIABLE = "kd_490";
 const KD490_DATASET_ID = env.KD490_ERDDAP_DATASET_ID?.trim() || KD490_DEFAULT_DATASET_ID;
 const KD490_VARIABLE = env.KD490_ERDDAP_VARIABLE?.trim() || KD490_DEFAULT_VARIABLE;
 const KD490_CONCURRENCY = Number(env.KD490_ERDDAP_CONCURRENCY ?? "2");
@@ -619,7 +657,8 @@ async function fetchKd490ForCell(cell: GridCell, diagnostics?: ProviderDiagnosti
   const lonIndex = Number(lonCenter.toFixed(3));
   const latSlice = `[(${latIndex.toFixed(3)}):1:(${latIndex.toFixed(3)})]`;
   const lonSlice = `[(${lonIndex.toFixed(3)}):1:(${lonIndex.toFixed(3)})]`;
-  url.search = `?${KD490_VARIABLE}[(last)]${latSlice}${lonSlice}`;
+  // See the chlorophyll fetcher: the altitude axis is required.
+  url.search = `?${KD490_VARIABLE}[(last)][(0.0):1:(0.0)]${latSlice}${lonSlice}`;
 
   try {
     const resp = await fetchWithTimeout(url.toString());
@@ -635,6 +674,10 @@ async function fetchKd490ForCell(cell: GridCell, diagnostics?: ProviderDiagnosti
     }
     const firstRow = rows[0] as unknown[];
     const timeValue = String(firstRow[0]);
+    if (isImplausiblyStale(timeValue)) {
+      recordProviderError(diagnostics, `Kd490 observation ${timeValue} is older than ${MAX_OBSERVATION_AGE_DAYS} days — refusing to store it as current`);
+      return null;
+    }
     const kd490 = Number(firstRow[firstRow.length - 1]);
     if (!Number.isFinite(kd490) || kd490 < 0) {
       recordProviderError(diagnostics, `Invalid Kd490 value for cell ${cell.cell_id}: ${kd490}`);
