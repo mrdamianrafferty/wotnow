@@ -474,3 +474,32 @@ See `archive/README.md` for a complete list of archived files and what replaced 
 4. Verify CMEMS data coverage in `copernicus_data` table
 5. Test scripts in `scripts/test-*.ts` for isolated component testing
 6. **NEW:** Check query timing with `LOG_QUERY_TIMING=true` environment variable
+
+---
+
+## supabase/functions/ingest-conditions — belongs to findr, not to this project
+
+This repository hosts one Supabase Edge Function, `ingest-conditions`. It writes
+`grid_conditions_latest`, which is **findr's** marine grid. Nothing in Go Daisy or Grow Daisy
+calls it or reads its output; every caller is in `Dovieandi-se-tovya-sagain/godaisy-core`. A move
+to that repo is open and sensible.
+
+**Before changing it, read `docs/2026-08-08-prediction-system.md` section 9 in the findr
+repository.** These facts have each already cost real time:
+
+- **Two callers, two credentials, and both must keep working.** pg_cron's `_invoke_ingest` sends
+  `X-Ingest-Secret` and no Authorization header; godaisy-core's Actions call
+  `supabase.functions.invoke()` with a service-role client, which sends `Authorization: Bearer`
+  and no secret. It is deployed `verify_jwt: false` with an in-function check accepting either.
+  Validating only one breaks three live workflows.
+- **A pre-push lint hook is why this function's source drifted nine months out of git.** The
+  deployed code contained `any` casts that fail `@typescript-eslint/no-explicit-any`, so it
+  could not be pushed. If a deploy will not push, check the hook before assuming the code is
+  wrong — and always deploy *and* push. Deploying alone is how the drift started.
+- **`{"skipped":"already_running"}` is success**, not failure — the concurrency lock working.
+- **Do not reinstate the CMEMS provider.** Its endpoint (`nrt.cmems-du.eu`) lapsed to a
+  domain-interception service that received Copernicus credentials on every request. It was
+  removed, and godaisy-core already ingests Copernicus properly via the Marine Toolbox.
+
+Deploy with `supabase functions deploy ingest-conditions --no-verify-jwt --project-ref
+swmviqpxetwziqxhzldh`.
