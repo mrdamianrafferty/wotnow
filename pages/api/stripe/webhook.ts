@@ -39,6 +39,28 @@ type SubscriptionLegacyFields = {
   discount?: Stripe.Discount | null;
 };
 
+/**
+ * Current period end, in seconds since the epoch, or null.
+ *
+ * Stripe moved `current_period_end` off the Subscription and onto each
+ * SubscriptionItem. The top-level field still arrives on older API versions —
+ * which is why `SubscriptionLegacyFields` exists — but the Grow Daisy account
+ * created on 2026-08-23 has no API version pinned on its webhook endpoint, so
+ * it follows the account default and may not send it at all.
+ *
+ * Reading only the legacy field fails SILENTLY when it is absent: the event
+ * still delivers 200, nothing errors, and `*_subscription_end` simply stops
+ * being written. Prefer the item, fall back to the legacy field.
+ */
+function currentPeriodEnd(subscription: Stripe.Subscription): number | null {
+  const item = subscription.items?.data?.[0] as
+    | { current_period_end?: number | null }
+    | undefined;
+  const legacy = (subscription as Stripe.Subscription & SubscriptionLegacyFields)
+    .current_period_end;
+  return item?.current_period_end ?? legacy ?? null;
+}
+
 // Grow Daisy specific types
 type GrowProfileUpdatePayload = {
   grow_subscription_tier: GrowSubscriptionTier;
@@ -91,10 +113,11 @@ async function updateGrowProfileFromSubscription(
   }
 
   // Subscription end date
+  const growPeriodEnd = currentPeriodEnd(subscription);
   if (subscription.cancel_at) {
     updateData.grow_subscription_end = new Date(subscription.cancel_at * 1000).toISOString();
-  } else if (legacyFields.current_period_end) {
-    updateData.grow_subscription_end = new Date(legacyFields.current_period_end * 1000).toISOString();
+  } else if (growPeriodEnd) {
+    updateData.grow_subscription_end = new Date(growPeriodEnd * 1000).toISOString();
   }
 
   const { error } = await supabase
@@ -321,7 +344,6 @@ async function updateGoDaisyProfileFromSubscription(
 ) {
   const isActive = subscription.status === 'active' || subscription.status === 'trialing';
   const billingType = subscription.metadata?.billing_type as 'monthly' | 'annual' | undefined;
-  const legacyFields = subscription as Stripe.Subscription & SubscriptionLegacyFields;
 
   const updateData: GoDaisyProfileUpdatePayload = {
     godaisy_subscription_tier: isActive ? 'plus' : 'free',
@@ -338,10 +360,11 @@ async function updateGoDaisyProfileFromSubscription(
   }
 
   // Subscription end date
+  const godaisyPeriodEnd = currentPeriodEnd(subscription);
   if (subscription.cancel_at) {
     updateData.godaisy_subscription_end = new Date(subscription.cancel_at * 1000).toISOString();
-  } else if (legacyFields.current_period_end) {
-    updateData.godaisy_subscription_end = new Date(legacyFields.current_period_end * 1000).toISOString();
+  } else if (godaisyPeriodEnd) {
+    updateData.godaisy_subscription_end = new Date(godaisyPeriodEnd * 1000).toISOString();
   }
 
   const { error } = await supabase
