@@ -2,13 +2,23 @@
  * Stripe Webhook Handler
  *
  * Handles Stripe webhook events for subscription lifecycle management.
- * Supports Findr, Grow Daisy, and Go Daisy+ apps (identified by metadata.app field).
+ * Serves Grow Daisy and Go Daisy+ ONLY, identified by metadata.app
+ * ('grow_daisy' / 'godaisy_plus').
+ *
+ * It used to also carry a findr fallback for events with no `app` marker.
+ * That was removed on 2026-08-23: findr has its own repo, endpoint and
+ * `findr_stripe_subscriptions` table and reads entitlement only from
+ * there. Because all the Daisy apps share ONE Stripe account and ONE
+ * Supabase `profiles` table, that fallback was catching Rise Daisy's
+ * events (which carry supabase_user_id but no `app`) and granting those
+ * subscribers premium here. See belongsToThisApp() for the full account.
  *
  * Events handled:
  * - customer.subscription.created
  * - customer.subscription.updated
  * - customer.subscription.deleted
  * - checkout.session.completed (including one-time lifetime purchases)
+ * - invoice.payment_failed (records only; does not downgrade)
  *
  * @route POST /api/stripe/webhook
  */
@@ -22,17 +32,6 @@ import { GrowSubscriptionTier } from '@/lib/grow/subscription';
 import { GoDaisyTier } from '@/lib/godaisy/subscription';
 
 type SupabaseServerClient = SupabaseClient<unknown>;
-
-type ProfileUpdatePayload = {
-  subscription_status: 'free' | 'premium';
-  payment_platform: 'web' | 'ios' | 'android';
-  stripe_subscription_id: string | null;
-  subscription_start_date?: string;
-  subscription_end_date?: string;
-  trial_ends_at?: string;
-  voucher_code?: string;
-  referral_source?: string;
-};
 
 type SubscriptionLegacyFields = {
   trial_end?: number | null;
@@ -61,114 +60,6 @@ export const config = {
     bodyParser: false,
   },
 };
-
-/**
- * Update user profile based on subscription status.
- */
-async function updateProfileFromSubscription(
-  supabase: SupabaseServerClient,
-  userId: string,
-  subscription: Stripe.Subscription
-) {
-  const status = subscription.status === 'active' || subscription.status === 'trialing' ? 'premium' : 'free';
-  const legacyFields = subscription as Stripe.Subscription & SubscriptionLegacyFields;
-
-  const updateData: ProfileUpdatePayload = {
-    subscription_status: status,
-    payment_platform: 'web',
-    stripe_subscription_id: subscription.id,
-  };
-
-  // Set subscription dates
-  if (status === 'premium') {
-    updateData.subscription_start_date = new Date(subscription.created * 1000).toISOString();
-
-    // Trial end date (legacy field)
-    if (legacyFields.trial_end) {
-      updateData.trial_ends_at = new Date(legacyFields.trial_end * 1000).toISOString();
-    }
-
-    // Subscription end date (if canceled)
-    if (subscription.cancel_at) {
-      updateData.subscription_end_date = new Date(subscription.cancel_at * 1000).toISOString();
-    } else if (legacyFields.current_period_end) {
-      updateData.subscription_end_date = new Date(legacyFields.current_period_end * 1000).toISOString();
-    }
-  }
-
-  // Apply voucher if present in metadata
-  if (subscription.metadata?.voucherCode && subscription.metadata?.voucherId) {
-    updateData.voucher_code = subscription.metadata.voucherCode;
-    updateData.referral_source = subscription.metadata.voucherCode;
-  }
-
-  const { error } = await supabase
-    .from('profiles')
-    // @ts-expect-error - Supabase type inference issue with profile updates
-    .update(updateData)
-    .eq('id', userId);
-
-  if (error) {
-    console.error('Error updating profile:', error);
-    throw error;
-  }
-
-  // Record voucher usage if applicable
-  if (subscription.metadata?.voucherCode && subscription.metadata?.voucherId) {
-    // Get subscription price for voucher tracking
-    const priceId = subscription.items.data[0]?.price.id;
-    if (priceId) {
-      const price = await stripe.prices.retrieve(priceId);
-      const originalPrice = (price.unit_amount || 0) / 100;
-
-      // Calculate discount from subscription discounts (use first discount if present)
-      const discountEntry = legacyFields.discount
-        ?? subscription.discounts?.find(
-          (entry): entry is Stripe.Discount => typeof entry !== 'string'
-        );
-      const discount = discountEntry ?? null;
-      let finalPrice = originalPrice;
-
-      // @ts-expect-error - Stripe Discount type doesn't expose coupon property in types
-      if (discount?.coupon) {
-        // @ts-expect-error - Stripe Discount type doesn't expose coupon property in types
-        const coupon = discount.coupon;
-        if (coupon.percent_off) {
-          finalPrice = originalPrice * (1 - coupon.percent_off / 100);
-        } else if (coupon.amount_off) {
-          finalPrice = originalPrice - (coupon.amount_off / 100);
-        }
-      }
-
-      // @ts-expect-error - RPC function not in generated types
-      await supabase.rpc('apply_voucher', {
-        voucher_id_input: subscription.metadata.voucherId,
-        user_id_input: userId,
-        original_price_input: originalPrice,
-        final_price_input: finalPrice,
-      });
-    }
-  }
-}
-
-/**
- * Record subscription event in audit log (Findr).
- */
-async function recordEvent(
-  supabase: SupabaseServerClient,
-  userId: string,
-  eventType: string,
-  stripeEventId: string,
-  eventData: Stripe.Checkout.Session | Stripe.Subscription
-) {
-  // @ts-expect-error - Supabase type inference issue with subscription_events
-  await supabase.from('subscription_events').insert({
-    user_id: userId,
-    event_type: eventType,
-    stripe_event_id: stripeEventId,
-    event_data: eventData,
-  });
-}
 
 // =============================================================================
 // GROW DAISY SPECIFIC HANDLERS
@@ -365,6 +256,34 @@ function isGrowDaisyEvent(metadata: Stripe.Metadata | null): boolean {
   return metadata?.app === 'grow_daisy';
 }
 
+/**
+ * Does this event actually belong to Go Daisy+ / Grow Daisy?
+ *
+ * All the Daisy apps (Rise Daisy, findr, Go Daisy, Grow Daisy) share ONE
+ * Stripe account, so this endpoint receives EVERY app's events for the
+ * types it subscribes to — not just its own. It also shares one Supabase
+ * `profiles` table with them.
+ *
+ * Before this guard existed, the routing fell through to an `else`
+ * branch commented "// Findr event" whenever `metadata.app` was absent.
+ * Rise Daisy's events carry `supabase_user_id` but no `app` field, so
+ * they landed there and were written as premium entitlements against the
+ * shared profiles row — i.e. Rise Daisy subscribers were silently granted
+ * Grow Daisy premium. Confirmed live on 2026-08-23: three Rise Daisy
+ * subscribers held `profiles.subscription_status = 'premium'` stamped
+ * with their Rise Daisy subscription ids, and `hooks/useSubscription.ts`
+ * reads exactly that field to gate this app.
+ *
+ * That "Findr event" fallback was legacy in any case: findr moved to its
+ * own repo, own endpoint and own `findr_stripe_subscriptions` table, and
+ * reads entitlement only from there — it never reads
+ * profiles.subscription_status. So there is no app left that wants the
+ * fallback, and anything not explicitly ours must be ignored.
+ */
+function belongsToThisApp(metadata: Stripe.Metadata | null | undefined): boolean {
+  return isGoDaisyPlusEvent(metadata ?? null) || isGrowDaisyEvent(metadata ?? null);
+}
+
 // =============================================================================
 // GO DAISY+ SPECIFIC HANDLERS
 // =============================================================================
@@ -502,6 +421,39 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       },
     });
 
+    // ── Ownership guard ────────────────────────────────────────────────
+    // Drop other apps' events BEFORE any handler can write to the shared
+    // profiles table. See belongsToThisApp() for the incident this
+    // prevents. Returns 200, deliberately: a non-2xx tells Stripe the
+    // delivery failed, so it retries and — after sustained failures —
+    // DISABLES the endpoint. Rejecting another app's event with 400 was
+    // producing exactly that risk (findr's events, whose metadata key is
+    // `userId` rather than `supabase_user_id`, were 400ing here). An
+    // event that isn't ours is successfully handled by ignoring it.
+    {
+      const obj = event.data.object as { metadata?: Stripe.Metadata | null; subscription?: unknown };
+      let routingMetadata: Stripe.Metadata | null | undefined = obj?.metadata;
+
+      // Invoice events carry the app marker on the SUBSCRIPTION, not the
+      // invoice, so resolve it before deciding ownership.
+      if (event.type.startsWith('invoice.') && typeof obj?.subscription === 'string') {
+        try {
+          const sub = await stripe.subscriptions.retrieve(obj.subscription);
+          routingMetadata = sub.metadata;
+        } catch (err) {
+          console.error('[webhook] Could not resolve subscription for invoice event:', err);
+        }
+      }
+
+      if (!belongsToThisApp(routingMetadata)) {
+        console.log(
+          `[webhook] Ignoring ${event.type} (${event.id}) — not a Go Daisy+/Grow Daisy event ` +
+          `(metadata.app=${routingMetadata?.app ?? 'none'}). Shared Stripe account cross-talk.`
+        );
+        return res.status(200).json({ received: true, ignored: 'not_this_app' });
+      }
+    }
+
     // Handle event types
     switch (event.type) {
       case 'checkout.session.completed': {
@@ -509,8 +461,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         const userId = session.metadata?.supabase_user_id;
 
         if (!userId) {
-          console.error('No user ID in checkout session metadata');
-          return res.status(400).json({ error: 'No user ID in metadata' });
+          // 200, not 400 — see the ownership guard above. A missing id
+          // means the event isn't actionable here, which is not a
+          // delivery failure; 400 made Stripe retry and risked the
+          // endpoint being auto-disabled.
+          console.error('No user ID in checkout session metadata', event.id);
+          return res.status(200).json({ received: true, ignored: 'no_user_id' });
         }
 
         // Update customer ID in profile
@@ -546,8 +502,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           await recordGrowEvent(supabase, userId, event.type, event.id, tier, session);
           console.log(`[grow] Processed subscription checkout for user ${userId}`);
         } else {
-          // Findr event
-          await recordEvent(supabase, userId, event.type, event.id, session);
+          // Unreachable: the ownership guard above already returned 200
+          // for anything that isn't Go Daisy+/Grow Daisy. Kept as a
+          // belt-and-braces no-op rather than the old "// Findr event"
+          // write — see belongsToThisApp().
+          console.warn(`[webhook] Unroutable checkout event reached switch: ${event.id}`);
         }
         break;
       }
@@ -558,8 +517,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         const userId = subscription.metadata?.supabase_user_id;
 
         if (!userId) {
-          console.error('No user ID in subscription metadata');
-          return res.status(400).json({ error: 'No user ID in metadata' });
+          // 200, not 400 — see the ownership guard above.
+          console.error('No user ID in subscription metadata', event.id);
+          return res.status(200).json({ received: true, ignored: 'no_user_id' });
         }
 
         // Route to correct handler based on app
@@ -572,9 +532,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           const tier = (subscription.metadata?.tier as GrowSubscriptionTier) || 'sprout';
           await recordGrowEvent(supabase, userId, event.type, event.id, tier, subscription);
         } else {
-          // Findr event
-          await updateProfileFromSubscription(supabase, userId, subscription);
-          await recordEvent(supabase, userId, event.type, event.id, subscription);
+          // Unreachable after the ownership guard. This is the exact
+          // branch that granted Rise Daisy subscribers Grow Daisy
+          // premium — it called updateProfileFromSubscription(), which
+          // sets profiles.subscription_status = 'premium'. Now a no-op.
+          console.warn(`[webhook] Unroutable subscription event reached switch: ${event.id}`);
         }
         break;
       }
@@ -584,8 +546,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         const userId = subscription.metadata?.supabase_user_id;
 
         if (!userId) {
-          console.error('No user ID in subscription metadata');
-          return res.status(400).json({ error: 'No user ID in metadata' });
+          // 200, not 400 — see the ownership guard above.
+          console.error('No user ID in subscription metadata', event.id);
+          return res.status(200).json({ received: true, ignored: 'no_user_id' });
         }
 
         // Route to correct handler based on app
@@ -617,17 +580,46 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           await recordGrowEvent(supabase, userId, event.type, event.id, tier, subscription);
           console.log(`[grow] Subscription cancelled for user ${userId}, downgraded to seed`);
         } else {
-          // Findr event - downgrade to free
-          await supabase
-            .from('profiles')
-            // @ts-expect-error - Supabase type inference issue with profile updates
-            .update({
-              subscription_status: 'free',
-              subscription_end_date: new Date().toISOString(),
-            })
-            .eq('id', userId);
+          // Unreachable after the ownership guard. Previously downgraded
+          // profiles.subscription_status on another app's cancellation.
+          console.warn(`[webhook] Unroutable subscription.deleted reached switch: ${event.id}`);
+        }
+        break;
+      }
 
-          await recordEvent(supabase, userId, event.type, event.id, subscription);
+      case 'invoice.payment_failed': {
+        // Previously unhandled: Grow Daisy / Go Daisy+ had no dunning
+        // signal at all, so a failed renewal was invisible until Stripe
+        // eventually gave up and fired subscription.deleted.
+        //
+        // Deliberately does NOT downgrade the tier. Stripe retries a
+        // failed invoice over several days and most recover; cutting a
+        // customer off on the first failure would be wrong. The final
+        // downgrade is already handled by customer.subscription.deleted
+        // if it never recovers. This records the failure so it is
+        // visible — wiring an actual "update your card" email is the
+        // obvious next step but there is no mail path in this repo yet.
+        const invoice = event.data.object as Stripe.Invoice & { subscription?: string };
+        const subId = typeof invoice.subscription === 'string' ? invoice.subscription : null;
+        if (!subId) {
+          console.warn(`[webhook] invoice.payment_failed with no subscription: ${event.id}`);
+          break;
+        }
+
+        const failedSub = await stripe.subscriptions.retrieve(subId);
+        const failedUserId = failedSub.metadata?.supabase_user_id;
+        if (!failedUserId) {
+          console.warn(`[webhook] invoice.payment_failed, no supabase_user_id: ${event.id}`);
+          break;
+        }
+
+        if (isGoDaisyPlusEvent(failedSub.metadata)) {
+          await recordGoDaisyEvent(supabase, failedUserId, event.type, event.id, 'plus', failedSub);
+          console.warn(`[godaisy+] Payment FAILED for user ${failedUserId} (sub ${subId}) — tier unchanged pending Stripe retries`);
+        } else if (isGrowDaisyEvent(failedSub.metadata)) {
+          const tier = (failedSub.metadata?.tier as GrowSubscriptionTier) || 'sprout';
+          await recordGrowEvent(supabase, failedUserId, event.type, event.id, tier, failedSub);
+          console.warn(`[grow] Payment FAILED for user ${failedUserId} (sub ${subId}) — tier unchanged pending Stripe retries`);
         }
         break;
       }
