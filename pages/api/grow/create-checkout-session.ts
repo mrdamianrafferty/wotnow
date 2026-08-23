@@ -60,7 +60,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     // Get price ID for this tier/billing combination
     const tierInfo = GROW_TIERS[tier];
-    const priceId = tierInfo.stripePriceIds?.[billingType];
+    // .trim() is load-bearing, not defensive tidiness. Vercel env values added
+    // without ./scripts/vercel-env-add.sh can carry a trailing newline (see
+    // CLAUDE.md, "Adding Vercel Environment Variables"). Four wotnow production
+    // vars were found in that state on 2026-08-23, two of them Go Daisy+ price
+    // IDs. A price ID with a trailing newline matches nothing, so Stripe answers
+    // "No such price" and checkout dies — with no clue pointing at the env var.
+    const priceId = tierInfo.stripePriceIds?.[billingType]?.trim();
 
     if (!priceId) {
       return res.status(500).json({

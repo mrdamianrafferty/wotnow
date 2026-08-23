@@ -30,7 +30,15 @@ let stripePromise: Promise<Stripe | null>;
  */
 export const getStripe = (): Promise<Stripe | null> => {
   if (!stripePromise) {
-    const key = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY;
+    // .trim() is load-bearing. NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY was found
+    // carrying a trailing newline in wotnow production on 2026-08-23 — a
+    // Vercel env value added without ./scripts/vercel-env-add.sh (see
+    // CLAUDE.md). NEXT_PUBLIC_* values are inlined at build time, so the
+    // newline ships in the client bundle. If loadStripe rejects the malformed
+    // key it resolves null, and the one caller
+    // (pages/grow/premium.tsx) guards with `if (stripeClient && ...)` — so the
+    // upgrade button would silently do nothing, with no error surfaced.
+    const key = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY?.trim();
 
     if (!key) {
       throw new Error('NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY is not defined in environment variables');

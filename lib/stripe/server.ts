@@ -21,7 +21,9 @@ if (!process.env.STRIPE_SECRET_KEY) {
  * - TypeScript types enabled
  * - App info for request tracking in Stripe dashboard
  */
-export const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
+// .trim() for the same reason as lib/stripe/client.ts — a trailing newline on
+// a Vercel env value would make every API call fail authentication.
+export const stripe = new Stripe(process.env.STRIPE_SECRET_KEY.trim(), {
   // Use account's default API version (safer than hardcoding)
   typescript: true,
   // This repo serves Go Daisy and Grow Daisy. It used to identify itself as

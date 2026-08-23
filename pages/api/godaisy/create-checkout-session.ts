@@ -56,7 +56,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     // Get price ID
     const pricing = GODAISY_PRICING[billingType];
-    const priceId = pricing.stripe_price_id;
+    // .trim() is load-bearing — see the matching comment in the Grow Daisy
+    // endpoint. BOTH Go Daisy+ price IDs
+    // (STRIPE_GODAISY_PLUS_{MONTHLY,ANNUAL}_PRICE_ID) were found carrying a
+    // trailing newline in Vercel production on 2026-08-23, which means this
+    // checkout has been failing "No such price" for every caller.
+    const priceId = pricing.stripe_price_id?.trim();
 
     if (!priceId) {
       return res.status(500).json({ error: 'Price not configured. Please contact support.' });
