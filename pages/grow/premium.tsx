@@ -396,7 +396,30 @@ export default function GrowPremiumPage() {
               ]}
             />
 
-            {/* Harvest — not yet for sale */}
+            {/* Harvest — WEB ONLY, deliberately.
+             *
+             * Apple's IAP catalogue carries Sprout and Bloom only: the four
+             * Approved products in subscription group "Grow Daisy Premium"
+             * (sprout/bloom × monthly/annual). Harvest and Orchard are sold
+             * on the web, where Stripe takes ~2.9% rather than Apple's
+             * 15–30% — on a EUR 199 Orchard that is a EUR 30–60 difference
+             * per sale.
+             *
+             * Rendering this card on iOS would show a web EUR price next to
+             * a button that dead-ends at "This plan is not available for the
+             * selected billing cycle" (see handleIOSPurchase — findPackage
+             * returns nothing because no such IAP exists). That is both a
+             * broken flow and a guideline 3.1.1 risk: advertising a price
+             * inside the app that is not the IAP price.
+             *
+             * Entitlement is unaffected. Someone who buys Harvest on the web
+             * still gets Harvest in the iOS app — RevenueCat's app_user_id is
+             * the Supabase UUID, so both webhooks write the same
+             * grow_subscription_tier on the same profile row, and the iOS app
+             * loads this very page remotely. Hiding the card hides the
+             * PURCHASE, never the ACCESS.
+             */}
+            {!isIOS && (
             <PricingCard
               tier="harvest"
               currentTier={currentTier}
@@ -406,7 +429,6 @@ export default function GrowPremiumPage() {
               loading={loadingTier === 'harvest'}
               onSubscribe={() => handleSubscribe('harvest')}
               comingSoon
-              iapUnavailable={isIOS && !offeringsLoading && !findPackage('harvest')}
               features={[
                 { icon: Check, text: 'Everything in Bloom' },
                 { icon: MessageSquare, text: 'AI Expert (2/mo)' },
@@ -417,6 +439,7 @@ export default function GrowPremiumPage() {
                 { icon: Check, text: '5-year history' },
               ]}
             />
+            )}
           </div>
 
           {/* Voucher Code — hidden on iOS (Apple prohibits bypassing their payment) */}
