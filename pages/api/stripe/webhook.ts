@@ -271,14 +271,20 @@ function isGrowDaisyEvent(metadata: Stripe.Metadata | null): boolean {
  * shared profiles row — i.e. Rise Daisy subscribers were silently granted
  * Grow Daisy premium. Confirmed live on 2026-08-23: three Rise Daisy
  * subscribers held `profiles.subscription_status = 'premium'` stamped
- * with their Rise Daisy subscription ids, and `hooks/useSubscription.ts`
- * reads exactly that field to gate this app.
+ * with their Rise Daisy subscription ids, and the then-live
+ * `hooks/useSubscription.ts` read exactly that field to gate this app.
  *
  * That "Findr event" fallback was legacy in any case: findr moved to its
  * own repo, own endpoint and own `findr_stripe_subscriptions` table, and
  * reads entitlement only from there — it never reads
  * profiles.subscription_status. So there is no app left that wants the
  * fallback, and anything not explicitly ours must be ignored.
+ *
+ * `hooks/useSubscription.ts` and `lib/offline/subscriptionCache.ts` were
+ * deleted on 2026-08-23 — both were leftover findr code with no callers,
+ * and that hook was the only remaining reader of the contaminated column.
+ * Go Daisy+ and Grow Daisy gate on their own hooks and their own columns.
+ * Do not reintroduce a shared `profiles.subscription_status` reader.
  */
 function belongsToThisApp(metadata: Stripe.Metadata | null | undefined): boolean {
   return isGoDaisyPlusEvent(metadata ?? null) || isGrowDaisyEvent(metadata ?? null);

@@ -10,6 +10,7 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import Stripe from 'stripe';
 import { stripe } from '@/lib/stripe/server';
+import { checkoutTaxParams } from '@/lib/stripe/tax';
 import { createClient } from '@supabase/supabase-js';
 import { GrowSubscriptionTier, GrowSubscriptionType, GROW_TIERS } from '@/lib/grow/subscription';
 
@@ -91,13 +92,23 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     // Create Stripe customer if doesn't exist
     if (!customerId) {
-      const customer = await stripe.customers.create({
-        email,
-        metadata: {
-          supabase_user_id: userId,
-          app: 'grow_daisy',
+      // Idempotency key is deterministic per user, deliberately: exactly one
+      // Stripe customer should ever exist per Grow Daisy account. Without it,
+      // a double-clicked upgrade button or a network retry creates a second
+      // customer, and the `profiles.stripe_customer_id` write races — leaving
+      // an orphaned customer that later collects its own subscription.
+      // (Stripe expires idempotency keys after 24h, which covers the retry
+      // window this actually guards against.)
+      const customer = await stripe.customers.create(
+        {
+          email,
+          metadata: {
+            supabase_user_id: userId,
+            app: 'grow_daisy',
+          },
         },
-      });
+        { idempotencyKey: `grow-customer-create-${userId}` }
+      );
 
       customerId = customer.id;
 
@@ -171,6 +182,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       },
       ...(couponId && { discounts: [{ coupon: couponId }] }),
       allow_promotion_codes: !couponId,
+      // No-op unless STRIPE_AUTOMATIC_TAX_ENABLED=true — see lib/stripe/tax.ts
+      // for why this is opt-in rather than always on.
+      ...checkoutTaxParams(true),
     };
 
     // Add subscription-specific options

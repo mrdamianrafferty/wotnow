@@ -24,9 +24,15 @@ if (!process.env.STRIPE_SECRET_KEY) {
 export const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
   // Use account's default API version (safer than hardcoding)
   typescript: true,
+  // This repo serves Go Daisy and Grow Daisy. It used to identify itself as
+  // 'Findr' / fishfindr.eu — a leftover from before findr moved to its own
+  // repo — so every request from both apps was tagged as findr in the Stripe
+  // dashboard. Since all the Daisy apps currently share ONE Stripe account,
+  // that mislabelling actively hampers exactly the kind of per-app audit the
+  // shared account makes necessary. Keep this accurate.
   appInfo: {
-    name: 'Findr',
+    name: 'Go Daisy & Grow Daisy',
     version: '1.0.0',
-    url: 'https://fishfindr.eu',
+    url: 'https://godaisy.io',
   },
 });

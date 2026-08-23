@@ -10,6 +10,7 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import Stripe from 'stripe';
 import { stripe } from '@/lib/stripe/server';
+import { checkoutTaxParams } from '@/lib/stripe/tax';
 import { createClient } from '@supabase/supabase-js';
 import { GoDaisySubscriptionType, GODAISY_PRICING } from '@/lib/godaisy/subscription';
 
@@ -90,13 +91,19 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     let customerId = profile?.godaisy_stripe_customer_id || profile?.stripe_customer_id;
 
     if (!customerId) {
-      const customer = await stripe.customers.create({
-        email,
-        metadata: {
-          supabase_user_id: userId,
-          app: 'godaisy_plus',
+      // Deterministic idempotency key — exactly one Stripe customer per
+      // Go Daisy+ account. See the matching comment in the Grow Daisy
+      // endpoint for the duplicate-customer race this prevents.
+      const customer = await stripe.customers.create(
+        {
+          email,
+          metadata: {
+            supabase_user_id: userId,
+            app: 'godaisy_plus',
+          },
         },
-      });
+        { idempotencyKey: `godaisy-customer-create-${userId}` }
+      );
 
       customerId = customer.id;
 
@@ -153,6 +160,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       },
       ...(promotionCodeId && { discounts: [{ promotion_code: promotionCodeId }] }),
       allow_promotion_codes: !promotionCodeId,
+      // No-op unless STRIPE_AUTOMATIC_TAX_ENABLED=true — see lib/stripe/tax.ts
+      // for why this is opt-in rather than always on.
+      ...checkoutTaxParams(true),
     };
 
     const session = await stripe.checkout.sessions.create(sessionParams);
