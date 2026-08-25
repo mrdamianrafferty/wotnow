@@ -38,8 +38,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     if (!authHeader?.startsWith('Bearer ')) {
       return res.status(401).json({ error: 'Unauthorized' });
     }
-    const authClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-    const { data: { user }, error: authError } = await authClient.auth.getUser(authHeader.substring(7));
+    const accessToken = authHeader.substring(7);
+    // Carries the caller's JWT so auth.uid() resolves inside identity-guarded
+    // RPCs (validate_voucher below). The service-role client further down has no
+    // auth.uid() and those functions raise 'not authorized' for it.
+    const userClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+      auth: { autoRefreshToken: false, persistSession: false },
+      global: { headers: { Authorization: `Bearer ${accessToken}` } },
+    });
+    const { data: { user }, error: authError } = await userClient.auth.getUser(accessToken);
     if (authError || !user) {
       return res.status(401).json({ error: 'Unauthorized' });
     }
@@ -130,10 +137,16 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     let voucherMetadata: { voucherId?: string; voucherCode?: string } = {};
 
     if (voucherCode) {
-      const { data: voucherData } = await supabase.rpc('validate_voucher', {
+      const { data: voucherData, error: voucherError } = await userClient.rpc('validate_voucher', {
         voucher_code_input: voucherCode,
         user_id_input: userId,
       });
+
+      if (voucherError) {
+        // Previously swallowed: a failing voucher lookup silently produced a
+        // full-price checkout with no indication anything had gone wrong.
+        console.error('[grow] validate_voucher failed:', voucherError);
+      }
 
       if (voucherData && voucherData.valid) {
         const discountType = voucherData.discount_type;

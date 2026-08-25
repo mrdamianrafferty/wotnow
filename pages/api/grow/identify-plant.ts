@@ -10,6 +10,7 @@ import fs from 'fs/promises';
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY!;
+const SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
 
 // Disable bodyParser for file uploads
 export const config = {
@@ -106,6 +107,13 @@ export default async function handler(
       auth: { autoRefreshToken: false, persistSession: false },
     });
 
+    // grow_get_current_usage and grow_increment_usage both guard on
+    // `auth.uid() IS DISTINCT FROM p_user_id -> raise 'not authorized'`, which
+    // serviceClient can never satisfy. Called that way the quota read failed
+    // silently (destructured `data` only), currentCount fell back to 0, and the
+    // free-tier limit was never enforced. Both now go through the caller's JWT.
+    let userClient: typeof serviceClient | null = null;
+
     // Extract user from auth token if provided
     if (authHeader?.startsWith('Bearer ')) {
       const token = authHeader.substring(7);
@@ -114,6 +122,10 @@ export default async function handler(
 
       if (user) {
         userId = user.id;
+        userClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+          auth: { autoRefreshToken: false, persistSession: false },
+          global: { headers: { Authorization: `Bearer ${token}` } },
+        });
 
         // Get user's subscription tier
         const { data: profile } = await serviceClient
@@ -135,10 +147,14 @@ export default async function handler(
     const usageLimit = limits[limitKey];
 
     // Check current usage if user is authenticated and has a limit
-    if (userId && usageLimit !== -1) {
-      const { data: currentUsage } = await serviceClient.rpc('grow_get_current_usage', {
+    if (userId && userClient && usageLimit !== -1) {
+      const { data: currentUsage, error: usageReadError } = await userClient.rpc('grow_get_current_usage', {
         p_user_id: userId,
       });
+
+      if (usageReadError) {
+        console.warn('[identify-plant] Failed to read current usage:', usageReadError);
+      }
 
       const currentCount = requestData.mode === 'plant'
         ? (currentUsage?.plant_id_calls || 0)
@@ -369,7 +385,7 @@ export default async function handler(
     // =========================================================================
     if (userId && result.success) {
       try {
-        const { data: usageResult, error: usageError } = await serviceClient.rpc('grow_increment_usage', {
+        const { data: usageResult, error: usageError } = await (userClient ?? serviceClient).rpc('grow_increment_usage', {
           p_user_id: userId,
           p_usage_type: usageType,
           p_increment: 1,
