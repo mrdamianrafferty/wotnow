@@ -424,7 +424,25 @@ export function calculateConditionMatchScore(
  * safe for sailing today", which is both false and the kind of false that
  * teaches a reader to ignore the real warnings.
  */
-const SHORTFALL_NOT_HAZARD = new Set(['windSpeed', 'gust', 'waveHeight', 'swellHeight', 'swellPeriod', 'snowDepthCm']);
+const SHORTFALL_NOT_HAZARD = new Set([
+  'windSpeed', 'gust', 'waveHeight', 'swellHeight', 'swellPeriod', 'snowDepthCm',
+]);
+
+/**
+ * Quantities where NO value is dangerous, in either direction.
+ *
+ * Ground condition is the whole set. Dry ground is the best a walker can hope
+ * for — several models carried `soilMoisture<10` as a poor condition, inherited
+ * from an agricultural reading where dry soil is a real problem, and left as a
+ * hazard it vetoed a perfect summer day. And a waterlogged path is unpleasant,
+ * not unsafe: at the wettest hour of the measured year it dropped hiking from
+ * 81 to 14 on a two-point change, which is a cliff where the ground itself has
+ * a gradient.
+ *
+ * These still count towards the penalty, so a bog still costs a day most of its
+ * score. They simply cannot short-circuit the scoring the way a gale can.
+ */
+const NEVER_A_HAZARD = new Set(['soilMoisture']);
 
 /** True when a triggered condition fired because the value was BELOW its range. */
 function firedLow(condition: string, value: number | undefined): boolean {
@@ -457,7 +475,9 @@ export function scorePoorConditions(
     all.push(entry);
     if (score <= 0.7) continue;
     triggered.push(entry);
-    if (!(SHORTFALL_NOT_HAZARD.has(key) && firedLow(cond, value))) hazards.push(entry);
+    const harmless = NEVER_A_HAZARD.has(key)
+      || (SHORTFALL_NOT_HAZARD.has(key) && firedLow(cond, value));
+    if (!harmless) hazards.push(entry);
     total += score;
   }
   return {

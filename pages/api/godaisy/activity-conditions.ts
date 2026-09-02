@@ -70,9 +70,10 @@ import type { SeoLocation } from '../../../data/seoLocations';
  * Criteria the daily inland forecast cannot supply. Named so the caller can say
  * so on the page instead of implying a precision we do not have.
  *
- * `soilMoisture` was missing from this list and is referenced by birdwatching,
- * camping and dog walking, so the disclosure was incomplete in exactly the
- * activities a country park cares about.
+ * `soilMoisture` is no longer on it either: Open-Meteo publishes the top 7 cm
+ * hourly and it is now supplied as a daytime mean, converted from m³/m³ to the
+ * percentage the models are written in. It was added to this list first, when
+ * the honest answer was that nothing filled it.
  *
  * `gust` and `visibility` used to belong here and no longer do, for opposite
  * reasons. Gusts are now requested from Open-Meteo and genuinely scored — they
@@ -81,7 +82,7 @@ import type { SeoLocation } from '../../../data/seoLocations';
  * is still not carried, but it is now honestly absent rather than defaulted to a
  * fabricated 10 km, so naming it here is again true.
  */
-const INLAND_UNAVAILABLE = ['waveHeight', 'swellPeriod', 'waterTemperature', 'soilMoisture'];
+const INLAND_UNAVAILABLE = ['waveHeight', 'swellPeriod', 'waterTemperature'];
 
 /** Sibling apps allowed to call this. Not open to the world: the response is
  *  cheap but it is still our modelling, and an open CORS header on an

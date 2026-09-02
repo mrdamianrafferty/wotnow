@@ -71,7 +71,7 @@ export const lifestyleActivities: ActivityType[] = [
       'windSpeed>13',                  // Force 7 — leads, litter and no conversation
       'gust>18',
       'temperature<-2 or temperature>32', // icy paws or heatstroke risk
-      'soilMoisture<10 or soilMoisture>60', // icy pavements or boggy fields
+      'soilMoisture>50', // icy pavements or boggy fields
       'snowfallRateMmH>1',             // active snowfall reduces visibility & paw grip
       'snowDepthCm>4'                  // deeper snow becomes exhausting & icy
     ],
@@ -82,7 +82,7 @@ export const lifestyleActivities: ActivityType[] = [
       'windSpeed=9..13',               // Force 5–6, blustery on an open bank
       'gust=13..18',
       'precipitation=1..5',            // drizzle or showery
-      'soilMoisture=10..15 or soilMoisture=45..60',
+      'soilMoisture=45..50',
       'visibility=2..5'                // hazy but not unsafe
     ],
 
@@ -102,7 +102,7 @@ export const lifestyleActivities: ActivityType[] = [
       'windSpeed<5',                   // to about 10 kn — still enough to be pleasant
       'gust<8',
       'precipitation=0',
-      'soilMoisture=20..35',
+      'soilMoisture=18..35',
       'visibility>10'
     ],
 

@@ -210,7 +210,7 @@ export const natureActivities: ActivityType[] = [
       'airTemperature=18..24',
       'windSpeed<4',
       'cloudCover=50..90',
-      'soilMoisture=30..50',
+      'soilMoisture=18..35',
       'precipitation=0',
       'visibility>10',
       'gust<8.8'],
@@ -220,7 +220,7 @@ export const natureActivities: ActivityType[] = [
       'cloudCover=50..100',
       'precipitation=0',
       'humidity<80',
-      'soilMoisture=20..60',
+      'soilMoisture=15..45',
       'visibility>5',
       'gust<12.8'],
     fairConditions: [
@@ -229,7 +229,7 @@ export const natureActivities: ActivityType[] = [
       'cloudCover=20..50',
       'precipitation=2..5',
       'humidity=80..90',
-      'soilMoisture=10..20 or 60..70',
+      'soilMoisture=45..50',
       'visibility=2..5',
       'gust=12.8..16'],
     poorConditions: [
@@ -237,7 +237,7 @@ export const natureActivities: ActivityType[] = [
       'windSpeed>12',
       'precipitation>5',
       'humidity>90',
-      'soilMoisture<10 or soilMoisture>70',
+      'soilMoisture>50',
       'visibility<2',
       'snowfallRateMmH>1',
       'snowDepthCm>2',
@@ -257,7 +257,7 @@ export const natureActivities: ActivityType[] = [
       'windSpeed>12',                // uncomfortable & risky
   'precipitation>10',            // flooded ground, unpleasant
       'visibility<2',                // fog, unsafe
-      'soilMoisture<10 or soilMoisture>60', // barren or waterlogged forest floor
+      'soilMoisture>50', // barren or waterlogged forest floor
       'snowfallRateMmH>1',           // snow buries mushrooms & trails
       'snowDepthCm>3',                // snowpack hides logs and holes
       'gust>16'
@@ -268,7 +268,7 @@ export const natureActivities: ActivityType[] = [
       'windSpeed=8..12',             // breezy but manageable
       'precipitation=2..5',           // not ideal but damp enough
       'visibility=2..5',              // dim light may still be safe
-      'soilMoisture=10..15 or soilMoisture=45..60',
+      'soilMoisture=45..50',
       'gust=12.8..16'
     ],
     goodConditions: [
@@ -284,7 +284,7 @@ export const natureActivities: ActivityType[] = [
       'windSpeed<4',
       'cloudCover=20..60',
       'visibility>10',
-      'soilMoisture=20..35',
+      'soilMoisture=18..35',
       'gust<8.8'
     ],
     seasonalMonths: [9, 10, 11],
@@ -303,7 +303,7 @@ export const natureActivities: ActivityType[] = [
       'windSpeed>13',                // unsafe in forested areas
       'precipitation>15',            // heavy rain, slippery
       'visibility<2',                // foggy, disorienting
-      'soilMoisture<10 or soilMoisture>60', // icy-hard or boggy ground
+      'soilMoisture>50', // icy-hard or boggy ground
       'snowfallRateMmH>1',           // heavy snow hides markers
       'snowDepthCm>3',                // deep snow disrupts footing
       'gust>17'
@@ -314,7 +314,7 @@ export const natureActivities: ActivityType[] = [
       'windSpeed=9..13',            // breezy but doable
       'precipitation=5..10',         // light showers
       'visibility=2..5',             // reduced, but passable
-      'soilMoisture=10..15 or soilMoisture=45..60',
+      'soilMoisture=45..50',
       'gust=13.6..17'
     ],
     goodConditions: [
@@ -332,7 +332,7 @@ export const natureActivities: ActivityType[] = [
       'cloudCover=30..60',
       'precipitation=0',
       'visibility>10',
-      'soilMoisture=20..35',
+      'soilMoisture=18..35',
       'gust<9.4'
     ],
     indoorAlternative: 'Practise map reading & route planning or train on a treadmill'

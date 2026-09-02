@@ -14,7 +14,7 @@ export const teamSports: ActivityType[] = [
       'windSpeed<5',               // no ball drift or discomfort
       'clouds=40..70',              // partial cloud helps visibility without glare
       'precipitation=0',            // dry = best ball control and pitch condition
-      'soilMoisture=20..35',        // firm turf with good traction
+      'soilMoisture=18..35',        // firm turf with good traction
       'visibility>10',               // long-distance visibility ideal for playmaking
       'gust<9.4'],
 
@@ -30,7 +30,7 @@ export const teamSports: ActivityType[] = [
       'temperature=0..5 or 25..30', // chilly or hot but not dangerous
       'windSpeed=9..13',           // gusty conditions may affect long balls
       'precipitation=5..15',        // moderate rain, some puddles likely
-      'soilMoisture=10..15 or soilMoisture=45..60', // hardening or soggy patches
+      'soilMoisture=45..50', // hardening or soggy patches
       'visibility=2..5',             // foggy or poor light, may reduce situational awareness
       'gust=13.6..17'],
 
@@ -38,7 +38,7 @@ export const teamSports: ActivityType[] = [
       'temperature<0 or temperature>30',   // frozen or dangerously hot
       'windSpeed>13',                      // hard to control ball or run
       'precipitation>15',                  // waterlogged pitch, ball unplayable
-      'soilMoisture<10 or soilMoisture>60', // rock-hard or boggy pitch
+      'soilMoisture>50', // rock-hard or boggy pitch
       'visibility<2',
       // Snow-aware penalties
       'snowfallRateMmH>1',
@@ -63,7 +63,7 @@ export const teamSports: ActivityType[] = [
       'windSpeed>15',           // gusty, dangerous
       'temperature<0',          // freezing
       'temperature>30',         // oppressive heat
-      'soilMoisture<10 or soilMoisture>60', // frozen/dusty or boggy turf
+      'soilMoisture>50', // frozen/dusty or boggy turf
       'snowfallRateMmH>1',      // sustained snow makes footing unsafe
       'snowDepthCm>1',           // shallow accumulation already obscures lines
       'gust>20'
@@ -73,7 +73,7 @@ export const teamSports: ActivityType[] = [
       'temperature=0..5 or 25..30',     // cold warmups or heat-adapted sessions
       'windSpeed=11..15',               // strong winds affect play
       'precipitation=5..15',            // wet but not yet unplayable
-      'soilMoisture=10..15 or soilMoisture=45..60', // hard spots or muddy sections
+      'soilMoisture=45..50', // hard spots or muddy sections
       'visibility=2..5',                 // hazy, dusk or foggy
       'gust=16..20'
     ],
@@ -90,7 +90,7 @@ export const teamSports: ActivityType[] = [
       'temperature=12..18',             // mild & comfortable
       'windSpeed<6',
       'precipitation=0',
-      'soilMoisture=20..35',             // grippy but forgiving surface
+      'soilMoisture=18..35',             // grippy but forgiving surface
       'gust<11'
     ],
 
@@ -111,7 +111,7 @@ export const teamSports: ActivityType[] = [
       'windSpeed>13',          // gusty, dangerous for fly balls
       'temperature<5',         // freezing & unpleasant
       'temperature>35',        // oppressive heat
-      'soilMoisture<10 or soilMoisture>60', // baked infield or waterlogged outfield
+      'soilMoisture>50', // baked infield or waterlogged outfield
       'snowfallRateMmH>1',     // flurries quickly reduce visibility & grip
       'snowDepthCm>1',          // light settling snow already impacts bases
       'gust>17'
@@ -121,7 +121,7 @@ export const teamSports: ActivityType[] = [
       'temperature=5..10 or 30..35',   // chilly or hot, not ideal
       'windSpeed=9..13',              // breezy affects ball flight
       'precipitation=5..10',           // showers or on/off rain
-      'soilMoisture=10..15 or soilMoisture=45..60', // dusty basepaths or muddy turf
+      'soilMoisture=45..50', // dusty basepaths or muddy turf
       'visibility=2..5',                // dusk, fog, or haze
       'gust=13.6..17'
     ],
@@ -139,7 +139,7 @@ export const teamSports: ActivityType[] = [
       'temperature=18..24',            // ideal comfort
       'windSpeed<5',
       'precipitation=0',
-      'soilMoisture=20..35',           // true bounce, firm footing
+      'soilMoisture=18..35',           // true bounce, firm footing
       'visibility>10',
       'gust<9.4'
     ],
@@ -160,7 +160,7 @@ export const teamSports: ActivityType[] = [
       'precipitation>15',           // heavy rain, waterlogged pitch
       'windSpeed>13',               // dangerously gusty
       'temperature<2',              // freezing, hard ground
-      'soilMoisture<10 or soilMoisture>60', // baked or boggy surface
+      'soilMoisture>50', // baked or boggy surface
       'visibility<2',               // fog, unsafe
       'snowfallRateMmH>1',          // stick-and-ball play suffers in active snow
       'snowDepthCm>1',               // shallow snow hides lines and footing
@@ -170,7 +170,7 @@ export const teamSports: ActivityType[] = [
       'temperature=2..7',           // chilly but playable
       'windSpeed=9..13',           // blustery, requires skill
       'precipitation=5..15',        // moderate rain, still playable in tradition
-      'soilMoisture=10..15 or soilMoisture=45..60', // hard patches or soft sod
+      'soilMoisture=45..50', // hard patches or soft sod
       'visibility=2..5',             // hazy but manageable
       'gust=13.6..17'
     ],
@@ -186,7 +186,7 @@ export const teamSports: ActivityType[] = [
       'temperature=12..18',         // mild & ideal
       'windSpeed<5',
       'precipitation=0',
-      'soilMoisture=20..35',        // controllable pitch
+      'soilMoisture=18..35',        // controllable pitch
       'visibility>10',
       'gust<9.4'
     ],
@@ -204,7 +204,7 @@ export const teamSports: ActivityType[] = [
       'precipitation>15',           // heavy rain, waterlogged pitch
       'windSpeed>13',               // dangerously gusty
       'temperature<2',              // freezing, hard ground
-      'soilMoisture<10 or soilMoisture>60', // baked or waterlogged pitch
+      'soilMoisture>50', // baked or waterlogged pitch
       'visibility<2',               // fog, unsafe
       'snowfallRateMmH>1',          // active snowfall makes handling difficult
       'snowDepthCm>1',               // quick accumulation hides markings
@@ -214,7 +214,7 @@ export const teamSports: ActivityType[] = [
       'temperature=2..7',           // chilly but playable
       'windSpeed=9..13',           // gusty, but games often proceed
       'precipitation=5..15',        // steady rain, less pleasant but traditional
-      'soilMoisture=10..15 or soilMoisture=45..60', // hard or boggy sections
+      'soilMoisture=45..50', // hard or boggy sections
       'visibility=2..5',             // misty or foggy, but usually tolerated
       'gust=13.6..17'
     ],
@@ -230,7 +230,7 @@ export const teamSports: ActivityType[] = [
       'temperature=12..18',         // mild & ideal
       'windSpeed<5',
       'precipitation=0',
-      'soilMoisture=20..35',        // ideal traction
+      'soilMoisture=18..35',        // ideal traction
       'visibility>10',
       'gust<9.4'
     ],
@@ -249,7 +249,7 @@ export const teamSports: ActivityType[] = [
       'windSpeed>13',                // gusty, uncomfortable
       'temperature<2',               // freezing, unsafe
       'temperature>32',              // oppressive heat
-      'soilMoisture<10 or soilMoisture>60', // dusty or saturated pitch
+      'soilMoisture>50', // dusty or saturated pitch
       'visibility<2',                // fog or poor light
       'snowfallRateMmH>1',           // stick-and-ball precision fails in snow
       'snowDepthCm>1',                // carpet of snow ruins turf grip
@@ -259,7 +259,7 @@ export const teamSports: ActivityType[] = [
       'temperature=2..8 or 28..32',  // chilly or hot but tolerable
       'windSpeed=9..13',            // breezy, not ideal
       'precipitation=3..8',          // showers likely but manageable
-      'soilMoisture=10..15 or soilMoisture=45..60', // hard spots or soggy turf
+      'soilMoisture=45..50', // hard spots or soggy turf
       'visibility=2..5',              // reduced visibility, still playable
       'gust=13.6..17'
     ],
@@ -275,7 +275,7 @@ export const teamSports: ActivityType[] = [
       'temperature=15..20',          // mild & comfortable
       'windSpeed<5',
       'precipitation=0',
-      'soilMoisture=20..35',         // smooth, fast surface
+      'soilMoisture=18..35',         // smooth, fast surface
       'visibility>10',
       'gust<9.4'
     ],
@@ -442,7 +442,7 @@ export const teamSports: ActivityType[] = [
       'windSpeed>8',          // too gusty
       'temperature<8',         // uncomfortably cold
       'temperature>35',        // oppressive heat
-      'soilMoisture<10 or soilMoisture>60', // baked wicket or waterlogged outfield
+      'soilMoisture>50', // baked wicket or waterlogged outfield
       'visibility<2',          // bad light
       'snowfallRateMmH>1',     // snow showers kill visibility
       'snowDepthCm>1',          // covers wicket & outfield speed
@@ -454,7 +454,7 @@ export const teamSports: ActivityType[] = [
       'temperature=30..32',     // hot but tolerable with breaks
       'windSpeed=5.5..8',       // slightly gusty but playable
       'precipitation=0.5..1',   // occasional drizzle
-      'soilMoisture=10..15 or soilMoisture=45..60', // dry wickets or soft patches
+      'soilMoisture=45..50', // dry wickets or soft patches
       'visibility=2..5',         // hazy light but not unsafe
       'gust=8.8..11'
     ],
@@ -472,7 +472,7 @@ export const teamSports: ActivityType[] = [
       'temperature=20..25',
       'windSpeed<3',
       'precipitation=0',
-      'soilMoisture=20..35',    // firm wicket & outfield
+      'soilMoisture=18..35',    // firm wicket & outfield
       'visibility>10',
       'gust<6.1'
     ],
@@ -494,7 +494,7 @@ export const teamSports: ActivityType[] = [
       'windSpeed>15',         // dangerously gusty
       'temperature<0',        // freezing, icy
       'temperature>35',       // oppressive heat
-      'soilMoisture<10 or soilMoisture>60', // rock-hard or boggy pitch
+      'soilMoisture>50', // rock-hard or boggy pitch
       'visibility<2',         // fog, unsafe
       'snowfallRateMmH>1',    // sustained snow kills visibility & ball handling
       'snowDepthCm>1',         // snow cover hides lines and studs lose traction
@@ -506,7 +506,7 @@ export const teamSports: ActivityType[] = [
       'temperature=28..30',     // hot, with breaks/hydration
       'windSpeed=11..15',       // gusty but playable
       'precipitation=5..15',    // moderate rain, slippery pitch
-      'soilMoisture=10..15 or soilMoisture=45..60', // baked patches or soft turf
+      'soilMoisture=45..50', // baked patches or soft turf
       'visibility=2..5',         // hazy or low light
       'gust=16..20'
     ],
@@ -524,7 +524,7 @@ export const teamSports: ActivityType[] = [
       'temperature=12..18',
       'windSpeed<6',
       'precipitation=0',
-      'soilMoisture=20..35',    // true bounce and traction
+      'soilMoisture=18..35',    // true bounce and traction
       'visibility>10',
       'gust<11'
     ],

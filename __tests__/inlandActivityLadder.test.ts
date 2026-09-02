@@ -179,6 +179,72 @@ describe('condition grammar', () => {
   });
 });
 
+describe('ground condition is supplied, and it is never a hazard', () => {
+  /**
+   * Twenty-four models referenced `soilMoisture` and nothing filled it, so every
+   * one of those criteria was dropped. Wiring it needed three things settled,
+   * and each was found by measuring rather than by reading.
+   *
+   * UNITS. Open-Meteo publishes m³/m³ — 0.35, not 35 — and the models are
+   * written in percent, and the generic band scorer converts nothing. Handing
+   * over the raw figure would have compared 0.35 against `soilMoisture=20..35`
+   * and fired `soilMoisture<10` as a hazard on literally every day.
+   *
+   * CALIBRATION. A year of hourly data at Rutland ran 12.3% to 52.2%, median
+   * 39.8. Both poor thresholds the models carried — `<10` and `>60` — fire on
+   * 0.0% of that year. They were invented numbers; these are fitted ones.
+   *
+   * HAZARD. Dry ground is the best a walker can hope for, and a bog is
+   * unpleasant rather than unsafe. Neither should short-circuit a score.
+   */
+  const JULY = new Date('2026-07-15T10:00:00Z');
+  const ground = (soilMoisture?: number) => ({
+    temperature: 17, temperatureMin: 12, windspeed: 10, gustspeed: 17,
+    winddirection: 220, precipitation: 0, precipitationHours: 0,
+    clouds: 35, humidity: 72, visibility: 30000,
+    ...(soilMoisture === undefined ? {} : { soilMoisture }),
+  });
+
+  test('firm ground is the top band, and dry ground is not a disaster', () => {
+    // `soilMoisture<10` as a hazard vetoed a perfect summer day down to 14.
+    expect(scoreOf('hiking', ground(24), JULY).score).toBeGreaterThanOrEqual(80);
+    expect(scoreOf('hiking', ground(13), JULY).score).toBeGreaterThan(60);
+  });
+
+  test('a bog costs a day most of its score without vetoing it', () => {
+    // 81 to 14 on a two-point change, where the ground itself has a gradient.
+    const s = scoreOf('hiking', ground(52), JULY);
+    expect(s.score).toBeGreaterThan(20);
+    expect(s.score).toBeLessThan(60);
+    expect(s.reasoning).not.toMatch(/not safe/i);
+  });
+
+  test('the score falls as the ground gets wetter, without a cliff', () => {
+    const at = (v: number) => scoreOf('hiking', ground(v), JULY).score;
+    expect(at(24)).toBeGreaterThan(at(40));
+    expect(at(40)).toBeGreaterThanOrEqual(at(48));
+    expect(at(48)).toBeGreaterThan(at(52));
+  });
+
+  test('and it says so', () => {
+    expect(scoreOf('hiking', ground(48), JULY).reasoning?.toLowerCase()).toMatch(/mud/);
+  });
+
+  test('every soil threshold is inside the range that actually occurs', () => {
+    // Measured 12.3 to 52.2 over a year. A threshold outside that is dead code.
+    for (const a of activityTypes) {
+      const all = [...(a.perfectConditions ?? []), ...(a.goodConditions ?? []),
+                   ...(a.fairConditions ?? []), ...(a.poorConditions ?? [])];
+      for (const c of all.filter((x) => x.startsWith('soilMoisture'))) {
+        for (const n of (c.match(/\d+(?:\.\d+)?/g) ?? []).map(Number)) {
+          expect(n).toBeGreaterThanOrEqual(12);
+          expect(n).toBeLessThanOrEqual(53);
+        }
+      }
+    }
+  });
+});
+
 describe('a British day can reach the top band', () => {
   /**
    * Twenty-one models required a mid-range humidity to be scored perfect —
