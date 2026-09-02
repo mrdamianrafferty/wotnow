@@ -4,7 +4,7 @@ import Head from 'next/head';
 import { GrowLayout } from '@/components/grow/GrowLayout';
 import { HreflangLinks } from '@/components/HreflangLinks';
 import { BreadcrumbJsonLd } from '@/components/JsonLd';
-import { getSupabaseServerClient } from '@/lib/supabase/serverClient';
+import { getSupabaseServerClient, hasSupabaseServerCredentials } from '@/lib/supabase/serverClient';
 import { SpeciesDirectoryView, type SpeciesDirectoryEntry } from '@/components/grow/SpeciesDirectoryView';
 
 type SpeciesDirectoryProps = {
@@ -37,37 +37,43 @@ export const getStaticProps: GetStaticProps<SpeciesDirectoryProps> = async () =>
   // repopulates on the next revalidation instead of a failed build. Moving to
   // per-request SSR would have traded that away for a query against a
   // 50k-row table on every hit.
-  try {
-    const supabase = getSupabaseServerClient();
-
-    const { data, error } = await supabase
-      .from('plant_species')
-      .select('slug, name, scientific_name, category, image_key')
-      .order('name', { ascending: true });
-
-    if (error || !data) {
-      return EMPTY_WITH_RETRY;
-    }
-
-    const species: SpeciesDirectoryEntry[] = data.map((row) => ({
-      slug: row.slug,
-      name: row.name,
-      scientificName: row.scientific_name ?? null,
-      category: row.category ?? null,
-      imageKey: row.image_key ?? null,
-    }));
-
-    return { props: { species }, revalidate: 3600 };
-  } catch (err) {
-    // Loud, because a production build reaching this means the directory
-    // shipped empty and someone needs to know why.
+  //
+  // Note this asks whether Supabase is configured BEFORE constructing the
+  // client, rather than wrapping the constructor in a catch. A catch would
+  // also swallow a renamed table, a network failure or a plain bug, and ship
+  // an empty directory to production while the build stayed green — the same
+  // silent-degradation failure this page already suffered from, just moved.
+  // Only "no credentials in this environment" is tolerated here; every other
+  // failure stays loud and fails the build.
+  if (!hasSupabaseServerCredentials()) {
     console.warn(
-      '[grow/species] Could not load the plant directory at build time; ' +
-      'serving an empty directory that will retry in 300s.',
-      err instanceof Error ? err.message : err
+      '[grow/species] No Supabase credentials in this environment; building an ' +
+      'empty plant directory that will repopulate on the next revalidation. ' +
+      'Expected in CI — NOT expected in a production build.'
     );
     return EMPTY_WITH_RETRY;
   }
+
+  const supabase = getSupabaseServerClient();
+
+  const { data, error } = await supabase
+    .from('plant_species')
+    .select('slug, name, scientific_name, category, image_key')
+    .order('name', { ascending: true });
+
+  if (error || !data) {
+    return EMPTY_WITH_RETRY;
+  }
+
+  const species: SpeciesDirectoryEntry[] = data.map((row) => ({
+    slug: row.slug,
+    name: row.name,
+    scientificName: row.scientific_name ?? null,
+    category: row.category ?? null,
+    imageKey: row.image_key ?? null,
+  }));
+
+  return { props: { species }, revalidate: 3600 };
 };
 
 export default function SpeciesDirectoryPage({ species }: SpeciesDirectoryProps) {
