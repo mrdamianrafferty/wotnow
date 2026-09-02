@@ -4,14 +4,56 @@ import Head from 'next/head';
 import { GrowLayout } from '@/components/grow/GrowLayout';
 import { HreflangLinks } from '@/components/HreflangLinks';
 import { BreadcrumbJsonLd } from '@/components/JsonLd';
-import { getSupabaseServerClient } from '@/lib/supabase/serverClient';
+import { getSupabaseServerClient, hasSupabaseServerCredentials } from '@/lib/supabase/serverClient';
 import { SpeciesDirectoryView, type SpeciesDirectoryEntry } from '@/components/grow/SpeciesDirectoryView';
 
 type SpeciesDirectoryProps = {
   species: SpeciesDirectoryEntry[];
 };
 
+/** Empty directory, retried soon. The degraded path, used when the data is
+ *  unreachable at build time — never a reason to fail the build. */
+const EMPTY_WITH_RETRY: { props: SpeciesDirectoryProps; revalidate: number } = {
+  props: { species: [] },
+  revalidate: 300,
+};
+
 export const getStaticProps: GetStaticProps<SpeciesDirectoryProps> = async () => {
+  // The `error || !data` branch below was written to degrade gracefully when
+  // the directory could not be loaded — but it could never run in the case it
+  // was written for. getSupabaseServerClient() THROWS on absent credentials,
+  // and that throw happens a line earlier, so the whole build died here with
+  // "Export encountered an error on /grow/species, exiting the build".
+  //
+  // This is the only page in pages/ that queries Supabase from getStaticProps
+  // (every sibling species route already uses getServerSideProps), so it alone
+  // decided whether a credential-less build succeeded — and CI Build had
+  // therefore never passed on any branch.
+  //
+  // Deliberately still SSG + ISR rather than getServerSideProps: Vercel's
+  // build DOES have the credentials, so production continues to prerender the
+  // full directory with real data and serve it from cache. Only a build
+  // without credentials degrades, and it now degrades to an empty page that
+  // repopulates on the next revalidation instead of a failed build. Moving to
+  // per-request SSR would have traded that away for a query against a
+  // 50k-row table on every hit.
+  //
+  // Note this asks whether Supabase is configured BEFORE constructing the
+  // client, rather than wrapping the constructor in a catch. A catch would
+  // also swallow a renamed table, a network failure or a plain bug, and ship
+  // an empty directory to production while the build stayed green — the same
+  // silent-degradation failure this page already suffered from, just moved.
+  // Only "no credentials in this environment" is tolerated here; every other
+  // failure stays loud and fails the build.
+  if (!hasSupabaseServerCredentials()) {
+    console.warn(
+      '[grow/species] No Supabase credentials in this environment; building an ' +
+      'empty plant directory that will repopulate on the next revalidation. ' +
+      'Expected in CI — NOT expected in a production build.'
+    );
+    return EMPTY_WITH_RETRY;
+  }
+
   const supabase = getSupabaseServerClient();
 
   const { data, error } = await supabase
@@ -20,7 +62,7 @@ export const getStaticProps: GetStaticProps<SpeciesDirectoryProps> = async () =>
     .order('name', { ascending: true });
 
   if (error || !data) {
-    return { props: { species: [] }, revalidate: 300 };
+    return EMPTY_WITH_RETRY;
   }
 
   const species: SpeciesDirectoryEntry[] = data.map((row) => ({
