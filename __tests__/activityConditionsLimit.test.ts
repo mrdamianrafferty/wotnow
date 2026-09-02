@@ -12,7 +12,6 @@
  * cap does not stay silent; it just surfaces somewhere further away.
  */
 import handler from '../pages/api/godaisy/activity-conditions';
-import { activityTypes } from '../data/activityTypes';
 
 type Res = { statusCode: number; body: unknown };
 function invoke(activities: string[]): Promise<Res> {
@@ -35,11 +34,14 @@ function invoke(activities: string[]): Promise<Res> {
   });
 }
 
-const ids = (activityTypes as { id: string }[]).map((a) => a.id);
-
 describe('activity-conditions never truncates in silence', () => {
   it('refuses a list past the limit rather than shortening it', async () => {
-    const tooMany = ids.slice(0, 33);
+    /* Built by repeating one known-good id rather than taking a slice of the
+       catalogue: the intent is "one past the limit", and a slice makes that
+       depend on how many activities the library happens to hold and in what
+       order. It held 118 when this was written, which is not a fact this test
+       should rely on. */
+    const tooMany = Array.from({ length: 33 }, () => 'hiking');
     const r = await invoke(tooMany);
     expect(r.statusCode).toBe(400);
     expect(String((r.body as any).error)).toMatch(/limit/i);

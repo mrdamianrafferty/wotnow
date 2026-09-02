@@ -93,13 +93,21 @@ export async function getActivityScoreForLocation(
    * invented.
    */
   overrides?: Partial<WeatherData>,
+  /**
+   * A forecast the caller already holds, so N activities cost ONE fetch.
+   *
+   * Supplied by anything scoring several activities at one place. Omitted, this
+   * fetches its own and behaves exactly as before — the SEO pages that ask for
+   * a single activity are unchanged.
+   */
+  prefetched?: LocationForecast,
 ): Promise<ActivityScorePayload | null> {
   // 1. Find the activity definition
   const activity = activityTypes.find((a) => a.id === activityId);
   if (!activity) return null;
 
-  // 2. Fetch weather for the next 7 days
-  const raw = await fetchWeatherForLocation(location);
+  // 2. Weather for the next 7 days — the caller's, or our own
+  const raw = prefetched ?? await fetchForecastForLocation(location);
   if (!raw || raw.length === 0) return null;
   const forecast = overrides
     ? raw.map((d) => ({ ...d, weather: { ...d.weather, ...overrides } }))
@@ -179,9 +187,21 @@ function labelForOffset(offset: number): string {
  * before falling back to `getCachedFullWeather` (same Supabase-backed cache
  * the live app uses) only if Open-Meteo fails.
  */
-async function fetchWeatherForLocation(
+export type LocationForecast = Array<{ date: number; weather: WeatherData }>;
+
+/**
+ * The forecast for one place, fetched once so it can be scored many times.
+ *
+ * Exported because the cost of an activity score is almost entirely THIS, and
+ * every caller that scores more than one activity at a place was paying it per
+ * activity: the conditions endpoint fetched once per requested activity, and
+ * the SEO page does the same in a loop. Beyond the bill, N fetches are N
+ * chances to straddle a forecast run — which is how one board came to show
+ * sailing at Force 3 beside dog walking at Force 4, same water, same hour.
+ */
+export async function fetchForecastForLocation(
   location: SeoLocation
-): Promise<Array<{ date: number; weather: WeatherData }>> {
+): Promise<LocationForecast> {
   // Map an OpenWeather-One-Call-shaped payload into the shape getSuggestionsByDay wants.
   type OWMDaily = {
     dt?: number; temp?: { day?: number; min?: number; max?: number }; rain?: number;

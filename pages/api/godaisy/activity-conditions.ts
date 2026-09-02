@@ -62,7 +62,7 @@
  */
 
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { getActivityScoreForLocation } from '../../../lib/seo/getActivityScore';
+import { getActivityScoreForLocation, fetchForecastForLocation } from '../../../lib/seo/getActivityScore';
 import { activityTypes } from '../../../data/activityTypes';
 import type { SeoLocation } from '../../../data/seoLocations';
 
@@ -245,11 +245,32 @@ export default async function handler(
   };
 
   try {
+    /**
+     * ONE forecast, scored many times.
+     *
+     * This scored each activity through `getActivityScoreForLocation`, which
+     * fetches its own weather — so a ten-activity request made ten upstream
+     * calls for the same place at the same moment. Two costs, and the second is
+     * the one that shows: ten fetches are ten chances to straddle a forecast
+     * run, and every activity in a response is supposed to be describing the
+     * same day. A board cannot be asked to agree with itself if the answers
+     * behind it were fetched separately.
+     *
+     * The list cap is 32 (below) and it is the number of activities scored, not
+     * the number of requests made. It costs one fetch at 32 as it does at one.
+     */
+    const forecast = await fetchForecastForLocation(location);
+    if (!forecast.length) {
+      res.status(502).json({ error: 'No forecast available for that location right now' });
+      return;
+    }
+
     const results = await Promise.all(requested.map(async (activityId): Promise<ActivityConditions | null> => {
       const payload = await getActivityScoreForLocation(
         activityId,
         location,
         waterTempC !== null ? { waterTemperature: waterTempC } : undefined,
+        forecast,
       );
       if (!payload) return null;
       const model = activityTypes.find((a) => a.id === activityId);
