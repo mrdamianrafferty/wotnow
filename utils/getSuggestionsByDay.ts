@@ -329,8 +329,24 @@ function calculateActivityScoreWithSnow(
    * threshold to a daily total was the original error and it made every showery
    * day "Tough".
    */
+  /**
+   * Duration counts, but in proportion to whether it is actually raining.
+   *
+   * The duration limb was `rainHours / 12` flat, so THREE HOURS OF ANYTHING
+   * scored 0.25 — enough to demote a band — however little fell. Measured at
+   * Rutland: 0.3 mm across three hours is 0.1 mm/h, a fifth of the Met Office's
+   * 0.5 mm/h drizzle boundary and damp air rather than weather, and it cost a
+   * pleasant day 38 points against the identical day with one hour of it.
+   *
+   * So the limb is now weighted by intensity: half weight for rain too light to
+   * notice, full weight once it is falling at 0.5 mm/h or more. The original
+   * intent — that a day is wet partly by going on, not only by how hard it comes
+   * down — is kept, and sixteen hours of drizzle still reads as a washout.
+   */
+  const rainRate = rainHours ? rainMm / rainHours : 0;
+  const durationWeight = 0.5 + 0.5 * Math.min(1, rainRate / 0.5);
   const wetness = rainHours
-    ? Math.min(1, Math.max(rainMm / rainHours / 4, rainHours / 12))
+    ? Math.min(1, Math.max(rainRate / 4, (rainHours / 12) * durationWeight))
     : Math.min(1, rainMm / 10);
   const rainRateMmH = rainHours ? rainMm / rainHours : null;
 
@@ -369,17 +385,76 @@ function calculateActivityScoreWithSnow(
    * reach, only to stop one comfortable variable papering over the one that
    * actually decides whether the activity is possible.
    */
-  const worst = (b: { criteria: { score: number }[] }) =>
-    b.criteria.length ? Math.min(...b.criteria.map((c) => c.score)) : 1;
+  /**
+   * Rain is exempt from the floor, because rain is already priced three times.
+   *
+   * The floor asks whether one criterion is missed so badly that the activity
+   * stops being possible — no amount of sunshine makes a windless day
+   * windsurfable. Rain is not that kind of criterion for a land activity: it is
+   * a comfort variable, and it is ALREADY charged by the gate below, by
+   * `rainWeight`, and by the caps under that.
+   *
+   * Leaving it in the floor made it a fourth charge, and a fatal one. 45 of the
+   * 118 models write `precipitation=0` in their GOOD band, which scores zero at
+   * about a millimetre — so a single passing shower took `worst()` to 0, the
+   * band was refused outright, and a pleasant day fell into the bucket for days
+   * that resemble nothing the activity describes. Measured: hiking in 2 mm
+   * across six hours, otherwise a Force 3 and 18 °C, scored 29.
+   *
+   * Exempting it here fixes all 45 without inventing 45 new thresholds, and a
+   * genuinely wet day still scores badly — the caps see to that, and the ladder
+   * test pins it.
+   */
+  const PRICED_ELSEWHERE = new Set(['precipitation']);
+  const worst = (b: { criteria: { score: number; key: string }[] }) => {
+    const scored = b.criteria.filter((c) => !PRICED_ELSEWHERE.has(c.key));
+    return scored.length ? Math.min(...scored.map((c) => c.score)) : 1;
+  };
+
+  /* Set when rain alone pushed the day out of its band — see the gate below.
+     The copy layer reads it so that the score and its explanation agree. */
+  let rainDemotedBand = false;
+
+  /**
+   * Rain DEMOTES a band. It does not disqualify one.
+   *
+   * The gate below used to sit inside the `else if`, so a day that satisfied the
+   * good band on every count except the weather being dry fell past `fair` —
+   * which lists MARGINAL ranges and therefore scores near zero on a pleasant day
+   * — and landed in the "matched nothing" bucket, which tops out at 39.
+   *
+   * Measured at Rutland: Monday 7 September carried 0.3 mm across three hours,
+   * a Force 3 and 15-20 °C. Its good band scored 0.899, fractionally BETTER than
+   * the dry Sunday either side of it, which scored 81. Monday scored 33 — the
+   * bucket's ceiling of 39, less the rain penalty. Three hours of drizzle, two
+   * tenths of a millimetre of it, moved hiking from "Good" to "Not a day for
+   * hiking" while the day itself was the better of the two.
+   *
+   * Note also that this is the SECOND charge for the same rain: `rainWeight`
+   * below already subtracts for wetness, and the caps below that already stop a
+   * genuinely wet day reading well. The gate's job is only to keep the word
+   * "good" off a wet day, and a demotion does that without pretending the day
+   * resembles nothing the activity describes.
+   */
+  const rainExempt = isWaterActivity || wantsRain;
+  const goodQualifies = good.criteria.length > 0 && good.mean > 0.5 && worst(good) >= 0.35;
+  const rainBlocksGood = !rainExempt && wetness >= 0.2;
 
   if (perfect.criteria.length && perfect.mean > 0.8 && worst(perfect) >= 0.5
-      && (isWaterActivity || wantsRain || rainMm <= 0.2) && penalty < 0.3) {
+      && (rainExempt || rainMm <= 0.2) && penalty < 0.3) {
     score = span(perfect.mean, 0.8, 1, 88, 98);
     band = perfect;
-  } else if (good.criteria.length && good.mean > 0.5 && worst(good) >= 0.35
-      && (isWaterActivity || wantsRain || wetness < 0.2)) {
+  } else if (goodQualifies && !rainBlocksGood) {
     score = span(good.mean, 0.5, 1, 60, 87);
     band = good;
+  } else if (goodQualifies) {
+    /* Rain, and rain alone, refused the good band. Land in the fair range,
+       positioned by how good the day otherwise is — and take the ordinary fair
+       reading if it happens to be the kinder of the two. */
+    const asFair = fair.criteria.length && fair.mean > 0.3 ? span(fair.mean, 0.3, 1, 40, 59) : 0;
+    score = Math.max(span(good.mean, 0.5, 1, 40, 59), asFair);
+    band = good;
+    rainDemotedBand = true;
   /* No `worst()` floor on the fair band, deliberately. Perfect and good list
      DESIRABLE values, so failing one badly should disqualify the band. Fair
      lists MARGINAL ones — "temperature=5..10 or 26..30" is the chilly-or-hot
@@ -567,7 +642,16 @@ function calculateActivityScoreWithSnow(
     .filter((c) => !(c.direction === 'high' && c.value === 0))
     .slice().sort((a, b) => b.score - a.score)[0];
 
-  if (wetness > 0.35 && !wantsRain) {
+  /**
+   * Name the rain whenever the rain is what cost the points.
+   *
+   * The naming threshold (0.35) and the band gate (0.20) were different numbers,
+   * so a day in between was sunk by rain and then explained by something else.
+   * That is how Monday came back as "Not a day for hiking. Gentle breeze,
+   * Force 3, 19 °C" — a pleasant sentence under a score of 33, with the actual
+   * cause unmentioned. A demotion now always speaks.
+   */
+  if ((wetness > 0.35 || rainDemotedBand) && !wantsRain) {
     band = {
       mean: band.mean,
       criteria: [asBinding(
@@ -575,6 +659,8 @@ function calculateActivityScoreWithSnow(
           condition: 'precipitation=0..1',
           key: 'precipitation',
           score: 0,
+          /* Injected because rain is known to be the cause — see `decisive`. */
+          decisive: true,
           value: rainMm,
           /* Stated, because the numbers cannot say it: on a drizzly day the
              total is a fraction of a millimetre and reads as comfortably INSIDE

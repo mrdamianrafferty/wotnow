@@ -343,6 +343,18 @@ function evalCompoundScore(expr: string, weather: WeatherData): { score: number;
  * for Go Kayaking". Keeping the parts is what lets the copy name a reason.
  */
 export interface CriterionScore {
+  /**
+   * This criterion is the reason for the score, by construction — not merely the
+   * weakest of several that all passed.
+   *
+   * The copy layer normally quotes a limiting clause only when the binding
+   * criterion scores below a threshold, which stops a good day's softest link
+   * being read out as a complaint. That test is right for criteria the bands
+   * produced and wrong for one the scorer INJECTED to name a cause it already
+   * knows: rain that demoted a band scored 0.75 as a criterion and was dropped
+   * as "not limiting", leaving a 49 explained by a pleasant breeze.
+   */
+  decisive?: boolean;
   /** The band string as written in data/activities. */
   condition: string;
   /** The weather key it tests — `windSpeed`, `temperature`, `gust`. */

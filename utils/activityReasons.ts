@@ -552,7 +552,8 @@ export function describeConditions(input: ReasonInput): string {
    * a day that merely has a softest link. Good days get the plain conditions
    * line instead, which is still specific and cannot disagree with itself.
    */
-  const limited = vetoed || (band !== 'perfect' && band !== 'good' && binding && binding.score < 0.6);
+  const limited = vetoed || binding?.decisive
+    || (band !== 'perfect' && band !== 'good' && binding && binding.score < 0.6);
   const reason = limited && binding ? clauseFor(input.activityId, family, binding, weather) : null;
 
   if (reason) parts.push(reason);
