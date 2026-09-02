@@ -179,6 +179,54 @@ describe('condition grammar', () => {
   });
 });
 
+describe('a British day can reach the top band', () => {
+  /**
+   * Twenty-one models required a mid-range humidity to be scored perfect —
+   * `humidity=40..55` for road cycling, `40..60` for hiking, `30..50` for rock
+   * climbing. Measured at Rutland, British daily-mean humidity over a week ran
+   * 69% to 87%. Those bands are not demanding, they are unreachable.
+   *
+   * It also encodes a preference nobody has: humidity is felt at the top of the
+   * scale and not in the middle, and nobody experiences 55% as better than 70%.
+   * The high-side limits in the good, fair and poor bands say the real thing
+   * and are untouched.
+   *
+   * The second-order effect was the interesting one. With perfect unreachable,
+   * every pleasant day fell into the good band — whose criteria are loose `<`
+   * tests that a flat calm and a Force 4 both satisfy — so the score did not
+   * move with the wind at all. Hiking read 85 from calm to Force 4. That looked
+   * like a defect in the `<` operator and was not: it was this.
+   */
+  const JULY = new Date('2026-07-15T10:00:00Z');
+  const britishDay = (windspeed: number) => ({
+    temperature: 17, temperatureMin: 12, windspeed, gustspeed: windspeed * 1.6,
+    winddirection: 220, precipitation: 0, precipitationHours: 0,
+    clouds: 35, humidity: 72, visibility: 30000,
+  });
+
+  test.each(['hiking', 'camping', 'road_cycling', 'birdwatching'])(
+    '%s can be Peak on a still, mild, 72%% day', (id) => {
+      expect(scoreOf(id, britishDay(1), JULY).score).toBeGreaterThanOrEqual(80);
+    });
+
+  test.each(['hiking', 'camping', 'road_cycling', 'birdwatching'])(
+    '%s scores lower in a Force 4 than in a flat calm', (id) => {
+      const calm = scoreOf(id, britishDay(1), JULY).score;
+      const breezy = scoreOf(id, britishDay(24), JULY).score;
+      expect(breezy).toBeLessThan(calm);
+    });
+
+  test('no perfect band still demands a mid-range humidity', () => {
+    const offenders: string[] = [];
+    for (const a of activityTypes) {
+      for (const c of a.perfectConditions ?? []) {
+        if (/^humidity=\d+\.\.\d+/.test(c)) offenders.push(`${a.id}: ${c}`);
+      }
+    }
+    expect(offenders).toEqual([]);
+  });
+});
+
 describe('the reason names the thing that actually decided it', () => {
   const NIGHT = new Date('2026-01-15T20:00:00Z');
   const sky = (clouds: number, precipitation = 0, precipitationHours = 0) => ({

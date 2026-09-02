@@ -12,7 +12,6 @@ export const outdoorRecreation: ActivityType[] = [
       'temperature=15..18',
       'windSpeed<5',
       'clouds=20..50',
-      'humidity=40..60',
       'soilMoisture=20..35',
       'visibility>10',
       'precipitation=0',
@@ -57,7 +56,6 @@ export const outdoorRecreation: ActivityType[] = [
     perfectConditions: [
       'temperature=12..18',
       'windSpeed<6',
-      'humidity=30..50',
       'cloudCover=20..40',
       'visibility>10',
       'precipitation=0',
@@ -191,7 +189,6 @@ export const outdoorRecreation: ActivityType[] = [
       'temperature=16..22',
       'windSpeed<5',
       'clouds=10..50',
-      'humidity=40..55',
       'precipitation=0',
       'visibility>10',
       'gust<9.4'
@@ -261,7 +258,6 @@ export const outdoorRecreation: ActivityType[] = [
       'temperature=18..24',
       'windSpeed<3',
       'cloudCover=10..30',
-      'humidity=50..65',
       'precipitation=0',
       'gust<6.1'
     ],
@@ -310,7 +306,6 @@ export const outdoorRecreation: ActivityType[] = [
       'windSpeed<4',
       'precipitation=0',
       'cloudCover=40..70',
-      'humidity=65..75',
       'visibility>10',
       'soilMoisture=20..35',
       'gust<8.8'
@@ -655,7 +650,7 @@ export const outdoorRecreation: ActivityType[] = [
     secondaryCategory: 'Cardio & Running',
     weatherSensitive: true,
     tags: ['sport','trail','nature','outdoors','Saturday','Sunday'],
-  perfectConditions: ['temperature=8..14','windSpeed<6','clouds=10..50','humidity=40..55','soilMoisture=20..35','visibility>10','precipitation=0',
+  perfectConditions: ['temperature=8..14','windSpeed<6','clouds=10..50','soilMoisture=20..35','visibility>10','precipitation=0',
       'gust<11'],
   goodConditions: ['temperature=5..20','windSpeed<11','clouds=0..80','humidity<80','soilMoisture=20..45','visibility>2','precipitation=0',
       'gust<16'],
@@ -737,7 +732,6 @@ export const outdoorRecreation: ActivityType[] = [
       'gust<9',
       'cloudCover=20..50',
       'precipitation=0',
-      'humidity=40..60',
       'soilMoisture=20..35',
       'visibility>10'
     ],
