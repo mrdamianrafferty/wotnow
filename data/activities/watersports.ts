@@ -619,28 +619,28 @@ export const waterSports: ActivityType[] = [
     perfectConditions: [
       'waterTemperature=17..22',
       'airTemperature=18..26',
-      'windSpeed<4',
+      'windSpeed<4', 'gust<6',
       'visibility>10',
       'precipitation=0'
     ],
     goodConditions: [
       'waterTemperature=15..24',
       'airTemperature=15..28',
-      'windSpeed<6',
+      'windSpeed<6', 'gust<8',
       'visibility>5',
       'precipitation=0..2'
     ],
     fairConditions: [
       'waterTemperature=10..15 or 24..26',
       'airTemperature=11..15 or 28..30',
-      'windSpeed=6..8',
+      'windSpeed=6..8', 'gust=8..11',
       'visibility=2..5',
       'precipitation=2..5'
     ],
     poorConditions: [
       'waterTemperature<10',       // cold-water shock territory
       'airTemperature<11 or airTemperature>30',
-      'windSpeed>8',
+      'windSpeed>8', 'gust>11',
       'visibility<2',
       'precipitation>5',
       'snowfallRateMmH>0.5',

@@ -1038,3 +1038,63 @@ describe('a demoted day says which way the criterion failed', () => {
     expect(r).not.toMatch(/not enough|too little/i);
   });
 });
+
+/**
+ * Swimming reads the gust, like everything else on the water.
+ *
+ * `wild_swimming` was the only water activity in the library that scored wind
+ * and not gust — every other one has a gust ladder, and its own coastal twin
+ * `sea_swimming` has an identical windSpeed ladder plus one. So on a Force 3
+ * mean gusting Force 6 it read 84 and "Good" while sea swimming read 14 and
+ * "Not safe" on the same wind, and every boat on the same water was ashore.
+ *
+ * It matters more inland, not less. Coastal models score `waveHeight`; the
+ * inland ones deliberately do not, because on a reservoir the chop maps to the
+ * wind closely enough that a wave figure would be the same fact twice. That
+ * leaves the gust as the only thing carrying chop at all.
+ */
+describe('open-water swimming reads the gust', () => {
+  const swimmable = {
+    temperature: 20, temperatureMin: 15, windspeed: 12, windspeedMax: 18,
+    winddirection: 250, visibility: 25000, soilMoisture: 30,
+    precipitation: 0, precipitationHours: 0, clouds: 30, waterTemperature: 18,
+  };
+  const JULY_SWIM = new Date('2026-07-15T10:00:00Z');
+  const swim = (id: string, gustKph: number) =>
+    scoreOf(id, { ...swimmable, gustspeed: gustKph }, JULY_SWIM);
+
+  it('does not call a day good that its coastal twin calls unsafe', () => {
+    /* Force 3 mean, Force 6 gust — the day that started this. */
+    const inland = swim('wild_swimming', 40);
+    const coastal = swim('sea_swimming', 40);
+    expect(Math.abs(inland.score - coastal.score)).toBeLessThanOrEqual(5);
+    expect(inland.evaluation).toBe(coastal.evaluation);
+  });
+
+  it('agrees with its twin across the whole gust range', () => {
+    for (const gust of [11, 18, 25, 29, 36, 40, 50, 58]) {
+      const inland = swim('wild_swimming', gust);
+      const coastal = swim('sea_swimming', gust);
+      expect(Math.abs(inland.score - coastal.score)).toBeLessThanOrEqual(5);
+    }
+  });
+
+  it('still reads perfectly on a calm warm day', () => {
+    /* The gust must not have made swimming impossible — a still afternoon on
+       18 °C water is what this activity is for. */
+    expect(swim('wild_swimming', 11).score).toBeGreaterThan(85);
+  });
+
+  it('no water activity scores wind without also scoring gust', () => {
+    const water = (activityTypes as ActivityType[]).filter((a) => a.weatherSensitive
+      && ((a.category ?? '').toLowerCase().includes('water')
+        || (a.secondaryCategory ?? '').toLowerCase().includes('water')
+        || (a.tags ?? []).includes('water')));
+    const missing = water.filter((a) => {
+      const all = [...(a.perfectConditions ?? []), ...(a.goodConditions ?? []),
+        ...(a.fairConditions ?? []), ...(a.poorConditions ?? [])];
+      return all.some((c) => /^windSpeed/.test(c)) && !all.some((c) => /^gust/.test(c));
+    }).map((a) => a.id);
+    expect(missing).toEqual([]);
+  });
+});
