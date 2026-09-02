@@ -105,7 +105,15 @@ export function assessSoilCondition(soilMoisture: number): SoilCondition {
   }
 }
 
-// Activity-specific muddy ground messages
+/**
+ * Activity-specific muddy ground messages.
+ *
+ * Each is APPENDED to the reasoning sentence, so it ends with a full stop like
+ * any other sentence — without one the card trailed off ("…the dog will enjoy
+ * it more than you will. Your dog might get slightly muddy") and read as
+ * truncated. The separator is an em dash for the same reason it is everywhere
+ * else here: a spaced hyphen is a hyphen, not a dash.
+ */
 export function getMudMessage(activityId: string, soilCondition: SoilCondition): string | null {
   if (soilCondition.level === 'dry' || soilCondition.level === 'optimal') {
     return null; // No warning needed
@@ -114,55 +122,55 @@ export function getMudMessage(activityId: string, soilCondition: SoilCondition):
   const mudMessages: Record<string, Partial<Record<SoilLevel, string>>> = {
     // Trail activities
     trail_running: {
-      damp: 'Trails may be slightly slippery',
-      muddy: 'Expect muddy trails - consider trail shoes with good grip',
-      sodden: 'Very muddy trails - be prepared for challenging conditions',
+      damp: 'Trails may be slightly slippery.',
+      muddy: 'Expect muddy trails — consider trail shoes with good grip.',
+      sodden: 'Very muddy trails — be prepared for challenging conditions.',
     },
     mountain_biking: {
-      damp: 'Trails in good condition with some damp sections',
-      muddy: 'Muddy trails - lower tire pressure for better grip',
-      sodden: 'Extremely muddy - consider postponing to protect trails',
+      damp: 'Trails in good condition with some damp sections.',
+      muddy: 'Muddy trails — lower tire pressure for better grip.',
+      sodden: 'Extremely muddy — consider postponing to protect trails.',
     },
     hiking: {
-      damp: 'Some damp patches on trails',
-      muddy: 'Muddy paths - waterproof boots recommended',
-      sodden: 'Very muddy conditions - gaiters and poles advisable',
+      damp: 'Some damp patches on trails.',
+      muddy: 'Muddy paths — waterproof boots recommended.',
+      sodden: 'Very muddy conditions — gaiters and poles advisable.',
     },
 
     // Field sports
     football_soccer: {
-      damp: 'Pitch slightly soft but playable',
-      muddy: 'Muddy pitch - expect heavy conditions',
-      sodden: 'Pitch may be waterlogged in places',
+      damp: 'Pitch slightly soft but playable.',
+      muddy: 'Muddy pitch — expect heavy conditions.',
+      sodden: 'Pitch may be waterlogged in places.',
     },
     rugby: {
-      damp: 'Good conditions for rugby',
-      muddy: 'Traditional muddy rugby conditions',
-      sodden: 'Very heavy pitch - scrums will be challenging',
+      damp: 'Good conditions for rugby.',
+      muddy: 'Traditional muddy rugby conditions.',
+      sodden: 'Very heavy pitch — scrums will be challenging.',
     },
     cricket: {
-      damp: 'Outfield may be slow',
-      muddy: 'Poor conditions - consider postponing',
-      sodden: 'Unplayable - pitch likely waterlogged',
+      damp: 'Outfield may be slow.',
+      muddy: 'Poor conditions — consider postponing.',
+      sodden: 'Unplayable — pitch likely waterlogged.',
     },
 
     // Recreation
     camping: {
-      damp: 'Ground slightly damp - use a groundsheet',
-      muddy: 'Muddy campsite - choose pitch carefully',
-      sodden: 'Very wet ground - elevated camping recommended',
+      damp: 'Ground slightly damp — use a groundsheet.',
+      muddy: 'Muddy campsite — choose pitch carefully.',
+      sodden: 'Very wet ground — elevated camping recommended.',
     },
     dog_walking: {
-      damp: 'Your dog might get slightly muddy',
-      muddy: 'Muddy paws guaranteed - bring towels',
-      sodden: 'Very muddy - consider paved paths instead',
+      damp: 'Your dog might get slightly muddy.',
+      muddy: 'Muddy paws guaranteed — bring towels.',
+      sodden: 'Very muddy — consider paved paths instead.',
     },
 
     // Default for other activities
     default: {
-      damp: 'Ground conditions slightly damp',
-      muddy: 'Muddy conditions - dress accordingly',
-      sodden: 'Very muddy/wet ground conditions',
+      damp: 'Ground conditions slightly damp.',
+      muddy: 'Muddy conditions — dress accordingly.',
+      sodden: 'Very muddy/wet ground conditions.',
     },
   };
 
