@@ -179,6 +179,52 @@ describe('condition grammar', () => {
   });
 });
 
+describe('visibility is carried, and it decides days', () => {
+  /**
+   * Open-Meteo publishes visibility hourly and the adapter had been fetching it
+   * since it was written — it simply never reached the daily shape, so every
+   * model's visibility criteria were scored neutral and it was the one thing
+   * named in every activity's `neutralCriteria`.
+   *
+   * It is the variable that most often decides whether a day outdoors is worth
+   * it. You cannot scan three thousand acres of reservoir through murk, and it
+   * stops birding, photography and stargazing long before wind does.
+   */
+  const OCT = new Date('2026-10-15T10:00:00Z');
+  const day = (visibility: number) => ({
+    temperature: 12, temperatureMin: 8, windspeed: 8, gustspeed: 14,
+    winddirection: 200, precipitation: 0, precipitationHours: 0,
+    clouds: 45, humidity: 80, visibility,
+  });
+
+  test('a clear day and a foggy one are no longer the same day', () => {
+    const clear = scoreOf('birdwatching', day(25000), OCT).score;
+    const fog = scoreOf('birdwatching', day(800), OCT).score;
+    expect(clear).toBeGreaterThanOrEqual(80);
+    expect(fog).toBeLessThan(40);
+  });
+
+  test('and the fog is what the sentence blames', () => {
+    expect(scoreOf('birdwatching', day(800), OCT).reasoning).toMatch(/fog|visibility/i);
+  });
+
+  test('murk sits between the two rather than at one end', () => {
+    const murky = scoreOf('birdwatching', day(4000), OCT).score;
+    expect(murky).toBeLessThan(scoreOf('birdwatching', day(25000), OCT).score);
+    expect(murky).toBeGreaterThan(scoreOf('birdwatching', day(800), OCT).score);
+  });
+
+  test('an absent visibility is still absent, not a fabricated 10 km', () => {
+    // The old default was counted as a measurement and failed the strict
+    // `visibility>10` in every perfect band in the library.
+    const withNone = scoreOf('birdwatching', {
+      temperature: 12, temperatureMin: 8, windspeed: 8, gustspeed: 14,
+      winddirection: 200, precipitation: 0, precipitationHours: 0, clouds: 45, humidity: 80,
+    }, OCT).score;
+    expect(withNone).toBeGreaterThanOrEqual(80);
+  });
+});
+
 describe('the two kinds of reservoir birding', () => {
   /**
    * A large inland reservoir has two birding modes that want opposite weather,

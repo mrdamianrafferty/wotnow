@@ -123,18 +123,41 @@ export async function fetchOpenMeteoAsOneCallShape(lat: number, lon: number): Pr
    * `timezone` is UTC in the request above, so the hourly stamps line up with
    * the date string without conversion.
    */
-  function daytimeMean(dateStr: string): number | undefined {
-    const temps: number[] = [];
+  function daytimeMeanOf(series: unknown, dateStr: string): number | undefined {
+    const values = series as (number | null)[] | undefined;
+    if (!Array.isArray(values)) return undefined;
+    const kept: number[] = [];
     for (let h = 0; h < (hourly.time?.length ?? 0); h++) {
       const t = hourly.time[h] as string;
       if (!t.startsWith(dateStr)) continue;
       const hour = Number(t.slice(11, 13));
-      const v = hourly.temperature_2m?.[h];
-      if (hour >= 9 && hour < 18 && typeof v === 'number') temps.push(v);
+      const v = values[h];
+      if (hour >= 9 && hour < 18 && typeof v === 'number') kept.push(v);
     }
-    if (!temps.length) return undefined;
-    return temps.reduce((a, b) => a + b, 0) / temps.length;
+    if (!kept.length) return undefined;
+    return kept.reduce((a, b) => a + b, 0) / kept.length;
   }
+
+  const daytimeMean = (dateStr: string) => daytimeMeanOf(hourly.temperature_2m, dateStr);
+
+  /**
+   * Daytime mean visibility, in metres.
+   *
+   * Open-Meteo publishes visibility hourly and not daily, and this adapter has
+   * been fetching it for `current` since it was written — it simply never
+   * reached the daily shape, so every model's visibility criteria were scored
+   * neutral and it was the one thing named in every activity's
+   * `neutralCriteria`. It is the variable that most often decides whether a day
+   * outdoors is worth it: you cannot scan three thousand acres of reservoir
+   * through murk, and it stops birding, photography and stargazing long before
+   * wind does.
+   *
+   * The MEAN over the working hours, not the minimum. A single foggy hour at
+   * dawn does not decide a day, and the criteria are written as bands across
+   * one — `visibility>10`, `visibility=2..5` — which is a description of the
+   * day rather than of its worst moment.
+   */
+  const daytimeVisibility = (dateStr: string) => daytimeMeanOf(hourly.visibility, dateStr);
 
   const owDaily = (daily.time as string[]).map((dateStr: string, i: number) => {
     const dt = Date.UTC(
@@ -173,6 +196,9 @@ export async function fetchOpenMeteoAsOneCallShape(lat: number, lon: number): Pr
       pop: (daily.precipitation_probability_max?.[i] ?? 0) / 100,
       rain: daily.rain_sum?.[i],
       precipitation_hours: daily.precipitation_hours?.[i],
+      /* Metres, matching `current.visibility` and what the scorer expects
+         before it converts to kilometres. */
+      visibility: daytimeVisibility(dateStr),
       snow: typeof daily.snowfall_sum?.[i] === 'number' ? daily.snowfall_sum[i] * 10 : undefined,
       moon_phase: computeMoonPhase(dt),
     };

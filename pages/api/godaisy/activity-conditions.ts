@@ -31,10 +31,13 @@
  *
  *   waveHeight   there is no wave model for a reservoir. Fetch across Rutland
  *                is a few kilometres; a marine wave field does not apply.
- *   visibility   not carried in the daily forecast shape this uses. It used to
- *                be DEFAULTED to 10 km, which was worse than absent: it counted
- *                as a measurement, so this disclosure was false, and 10 km fails
- *                the strict `visibility>10` in every model's perfect band.
+ *   visibility   NOW CARRIED, and off this list. Open-Meteo publishes it
+ *                hourly and the adapter was already fetching it; it simply
+ *                never reached the daily shape. It is the daytime mean, in
+ *                metres. Before that it was DEFAULTED to 10 km, which was worse
+ *                than absent: it counted as a measurement, so this disclosure
+ *                was false, and 10 km fails the strict `visibility>10` in every
+ *                model's perfect band.
  *   waterTemp    no inland source — but a caller who has one can now pass
  *                `waterTempC`, and swimming needs it. See below.
  *
@@ -78,7 +81,7 @@ import type { SeoLocation } from '../../../data/seoLocations';
  * is still not carried, but it is now honestly absent rather than defaulted to a
  * fabricated 10 km, so naming it here is again true.
  */
-const INLAND_UNAVAILABLE = ['waveHeight', 'visibility', 'swellPeriod', 'waterTemperature', 'soilMoisture'];
+const INLAND_UNAVAILABLE = ['waveHeight', 'swellPeriod', 'waterTemperature', 'soilMoisture'];
 
 /** Sibling apps allowed to call this. Not open to the world: the response is
  *  cheap but it is still our modelling, and an open CORS header on an
