@@ -683,3 +683,68 @@ describe('the sentence says something', () => {
     }
   });
 });
+
+/**
+ * Rain demotes a day. It does not erase one.
+ *
+ * Measured at Rutland on 7 September 2026: 0.3 mm of rain across three hours,
+ * a Force 3 and 15-20 °C. The day's good band scored 0.899 — fractionally
+ * BETTER than the dry Sunday beside it, which scored 81 — and it came back as
+ * 33, "Not a day for hiking", because the rain gate sat inside the band's own
+ * `else if`. Failing it dropped the day past `fair`, which lists marginal
+ * ranges and so scores near zero on a pleasant day, into the bucket reserved
+ * for days that match nothing the activity describes.
+ */
+describe('rain demotes a band rather than disqualifying it', () => {
+  const pleasant = {
+    temperature: 18, temperatureMin: 15, windspeed: 14, gustspeed: 30,
+    visibility: 25000, soilMoisture: 30, clouds: 40,
+  };
+  const withRain = (mm: number, hours: number) =>
+    ({ ...pleasant, precipitation: mm, precipitationHours: hours });
+
+  /* The bucket for "matches nothing" tops out at 39. A day whose good band is
+     satisfied must never land in it on account of rain alone. */
+  const NOTHING_MATCHED_CEILING = 39;
+
+  for (const id of ['hiking', 'camping', 'cycling', 'trail_running']) {
+    it(`${id}: a good day with some rain lands above the matched-nothing bucket`, () => {
+      const wet = scoreOf(id, withRain(2, 6));
+      const dry = scoreOf(id, withRain(0, 0));
+      expect(dry.score).toBeGreaterThan(wet.score);
+      expect(wet.score).toBeGreaterThan(NOTHING_MATCHED_CEILING);
+    });
+  }
+
+  it('names the rain whenever the rain is what cost the points', () => {
+    /* The naming threshold and the band gate were different numbers, so a day
+       between them was sunk by rain and then explained by the breeze: "Not a
+       day for hiking. Gentle breeze, Force 3, 19 °C" under a score of 33. */
+    const s = scoreOf('hiking', withRain(2, 6));
+    expect(s.score).toBeLessThan(60);
+    expect(s.reasoning).toMatch(/rain|drizzl|wet|shower/i);
+  });
+
+  it('three hours of barely-there drizzle costs a few points, not forty', () => {
+    /* 0.3 mm over three hours is 0.1 mm/h — a fifth of the Met Office drizzle
+       boundary. It read as a quarter of a washout because the duration limb
+       counted hours regardless of what fell. */
+    const dry = scoreOf('hiking', withRain(0, 0)).score;
+    const damp = scoreOf('hiking', withRain(0.3, 3)).score;
+    expect(dry - damp).toBeLessThan(20);
+  });
+
+  it('but a genuinely wet day is still a poor one', () => {
+    for (const [mm, hours] of [[6, 10], [10, 12], [15, 16], [8, 2]] as const) {
+      expect(scoreOf('hiking', withRain(mm, hours)).score).toBeLessThan(40);
+    }
+  });
+
+  it('more rain always scores lower, with no step back up', () => {
+    const ladder = ([[0, 0], [0.3, 3], [1, 4], [2, 6], [4, 8], [6, 10], [10, 12]] as const)
+      .map(([mm, h]) => scoreOf('hiking', withRain(mm, h)).score);
+    for (let i = 1; i < ladder.length; i++) {
+      expect(ladder[i]).toBeLessThanOrEqual(ladder[i - 1]);
+    }
+  });
+});
