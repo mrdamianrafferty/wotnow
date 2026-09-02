@@ -45,7 +45,35 @@ export const teamSports: ActivityType[] = [
       'snowDepthCm>1',
       'gust>17'],
 
-    seasonalMonths: [2, 3, 4, 5, 8, 9, 10, 11],  // popular months outside winter break or summer heat
+    /*
+
+      No season. A kickabout is not a fixture list.
+
+    
+
+      This carried [2,3,4,5,8,9,10,11] — the English league season with
+
+      December and January cut out of the middle of it, which is Boxing Day
+
+      and the New Year programme, the busiest football of the year. So it was
+
+      wrong even as a fixture list.
+
+    
+
+      But a fixture list is the wrong thing to model. Somebody asking this app
+
+      whether today is any good for football is asking about a park and a ball,
+
+      and a park pitch is not CLOSED in July — which is the test this library
+
+      already applies to seasons. The weather decides, and the weather already
+
+      knows how: below freezing, lying snow, snow falling and waterlogged
+
+      ground are all in the poor band, and they are what actually stops a game.
+
+    */  // popular months outside winter break or summer heat
 
     indoorAlternative: 'Hit the gym for drills, or play futsal indoors'
   },
@@ -354,7 +382,7 @@ export const teamSports: ActivityType[] = [
     fairConditions: [
       'precipitation=0.1..1',
 
-      'temperature=5..12 or temperature=28..32',  // cool or hot but tolerable
+      'temperature=5..12 or temperature=28..35',  // cool or hot but tolerable
       'windSpeed=9..13',                         // breezy but still playable (expanded range)
       'visibility=2..5',                          // hazy or low light conditions
       'clouds=70..100',                            // overcast but dry (fixed from cloudCover)
@@ -452,7 +480,7 @@ export const teamSports: ActivityType[] = [
     ],
 
     fairConditions: [
-      'temperature=8..12',      // brisk morning matches
+      'temperature=8..12 or 30..35',      // brisk morning matches
       'temperature=30..32',     // hot but tolerable with breaks
       'windSpeed=5.5..8',       // slightly gusty but playable
       'precipitation=0.5..1',   // occasional drizzle
@@ -504,7 +532,7 @@ export const teamSports: ActivityType[] = [
     ],
 
     fairConditions: [
-      'temperature=0..5',       // cold but common in winter leagues
+      'temperature=0..5 or 28..35',       // cold but common in winter leagues
       'temperature=28..30',     // hot, with breaks/hydration
       'windSpeed=11..15',       // gusty but playable
       'precipitation=5..15',    // moderate rain, slippery pitch

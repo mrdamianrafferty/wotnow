@@ -311,7 +311,7 @@ export const natureActivities: ActivityType[] = [
       'gust>17'
     ],
     fairConditions: [
-      'temperature=0..5',            // cold but safe
+      'temperature=0..5 or 22..30',            // cold but safe
       'temperature=22..26',          // warmer but manageable
       'windSpeed=9..13',            // breezy but doable
       'precipitation=5..15',         // steady rain, still played

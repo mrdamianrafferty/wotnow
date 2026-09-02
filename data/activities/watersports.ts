@@ -81,7 +81,7 @@ export const waterSports: ActivityType[] = [
     ],
     fairConditions: [
       'waterTemperature=12..14 or 26..28',
-      'airTemperature=8..12 or 28..30',
+      'airTemperature=8..12 or 28..32',
       'waveHeight=0.25..0.5 or 1.8..2.5',
       'swellPeriod=6..8 or 12..14',
       'windSpeed=12..15',
@@ -420,6 +420,22 @@ export const waterSports: ActivityType[] = [
   },
   {
     id: 'snorkeling',
+    /*
+      Water and air read the same as sea swimming, because the exposure is the
+      same: both are at the surface, both barely moving, both usually wetsuited
+      here. This carried a tropical ladder — perfect at 22-26 °C, poor below 17
+      — which is a Mediterranean holiday, not a British one.
+
+      Measured on a good UK August sea at 16 °C: snorkelling scored 14 and "not
+      safe" while SCUBA DIVING on the same day scored 95 and sea swimming 91.
+      Deeper, longer and fully immersed was perfect; the same water with a mask
+      on was unsafe. Its exposure sits between swimming and diving, so it can
+      not score below both.
+
+      Sea swimming's numbers rather than a new set, and they are the
+      conservative choice: a wetsuited snorkeller is if anything more tolerant
+      than a swimmer who may not be wearing one.
+    */
     name: 'Go Snorkelling',
     category: 'Active Sports',
     secondaryCategory: 'Water Sports',
@@ -430,10 +446,10 @@ export const waterSports: ActivityType[] = [
 
     // Safety-first: avoid offshore winds unless extremely light and in tiny surf; keep waves small; cap gusts; watch for heavy rain (murk)
     poorConditions: [
-      'waterTemperature<17',            // uncomfortably cold for most casual snorkellers
+      'waterTemperature<12', 'airTemperature<10 or airTemperature>30',            // uncomfortably cold for most casual snorkellers
       'windSpeed>7',                   // choppy & unsafe (whitecaps likely)
       'gust>9',                        // unpredictable surface disturbance
-      'waveHeight>1',                   // hard to breathe & see in the break zone
+      'waveHeight>0.8',                   // hard to breathe & see in the break zone
       'precipitation>6',                // heavy rain reduces water clarity & surface safety
       'visibility<2',                   // foggy, unsafe for navigation/spotters
       // Directional hazards
@@ -445,7 +461,7 @@ export const waterSports: ActivityType[] = [
     ],
 
     fairConditions: [
-      'waterTemperature=17..19',        // brisk but tolerable with suitable gear
+      'waterTemperature=12..14 or 24..28', 'airTemperature=10..14 or 28..30',        // brisk but tolerable with suitable gear
       'windSpeed=5..7',
       'gust=7..9',
       'waveHeight=0.3..0.8',
@@ -459,7 +475,7 @@ export const waterSports: ActivityType[] = [
     ],
 
     goodConditions: [
-      'waterTemperature=20..28',
+      'waterTemperature=14..24', 'airTemperature=14..28',
       'windSpeed=0..5',
       'gust<7',
       'waveHeight<0.5',
@@ -471,7 +487,7 @@ export const waterSports: ActivityType[] = [
     ],
 
     perfectConditions: [
-      'waterTemperature=22..26',
+      'waterTemperature=16..22', 'airTemperature=18..24',
       'windSpeed=0..3',
       'gust<5',
       'waveHeight<0.3',
@@ -511,7 +527,7 @@ export const waterSports: ActivityType[] = [
 
     fairConditions: [
       'waterTemperature=14..18',
-      'airTemperature=12..16 or airTemperature=28..32',
+      'airTemperature=12..18 or airTemperature=28..32',
       'windSpeed=8..11',
       'gust=10..14',
       'waveHeight=1.0..1.5',
@@ -887,7 +903,7 @@ export const waterSports: ActivityType[] = [
     ],
     fairConditions: [
       'waterTemperature=10..12 or 26..28',
-      'airTemperature=8..10 or 28..30',
+      'airTemperature=8..10 or 28..32',
       'windSpeed=13.9..17.2',
       'gust=18..22',
       'waveHeight=0.2..0.3 or 2.0..2.5',
@@ -941,7 +957,7 @@ export const waterSports: ActivityType[] = [
     ],
     fairConditions: [
       'waterTemperature=10..12 or 26..28',
-      'airTemperature=8..10 or 28..30',
+      'airTemperature=8..10 or 28..32',
       'windSpeed=15..17.2',
       'gust=17..20',
       'waveHeight=0.2..0.3 or 2.2..2.5',
@@ -993,7 +1009,7 @@ export const waterSports: ActivityType[] = [
     ],
     fairConditions: [
       'waterTemperature=10..12 or 26..28',
-      'airTemperature=8..10 or 28..30',
+      'airTemperature=8..10 or 28..32',
       'windSpeed=8..11',
       'gust=10..14',
       'waveHeight=1.0..1.5',

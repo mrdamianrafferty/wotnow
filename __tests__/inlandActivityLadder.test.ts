@@ -1098,3 +1098,164 @@ describe('open-water swimming reads the gust', () => {
     expect(missing).toEqual([]);
   });
 });
+
+/**
+ * Active Sports, reviewed as a set.
+ *
+ * Three findings, and the first was mine: I reported football scoring 35 on a
+ * pleasant day as a probable defect. It was the out-of-season score, and I had
+ * measured on 15 July without checking the season. What the season list
+ * actually got wrong was different and worse.
+ */
+describe('Active Sports', () => {
+  const mild = {
+    temperature: 18, temperatureMin: 14, windspeed: 14, windspeedMax: 20, gustspeed: 28,
+    winddirection: 240, visibility: 25000, soilMoisture: 30,
+    precipitation: 0, precipitationHours: 0, clouds: 40,
+  };
+  const inMonth = (m: number) => new Date(Date.UTC(2026, m - 1, 15, 11));
+
+  it('a kickabout has no season, so the weather decides', () => {
+    /* The list read [2,3,4,5,8,9,10,11] — the league season with December and
+       January cut out of the middle, which is the busiest football of the
+       year. But a fixture list is the wrong thing to model: a park pitch is
+       not CLOSED in July, and closure is this library's own test for a
+       season. */
+    for (let m = 1; m <= 12; m += 1) {
+      expect(scoreOf('football_soccer', mild, inMonth(m)).evaluation).toBe('good');
+    }
+  });
+
+  it('and the weather still stops a game', () => {
+    const jan = inMonth(1);
+    for (const [label, w] of [
+      ['frozen', { ...mild, temperature: -2, temperatureMin: -5 }],
+      ['lying snow', { ...mild, temperature: 1, snowDepthCm: 4 }],
+      ['snowing', { ...mild, temperature: 1, snowfallRateMmH: 2 }],
+      ['waterlogged', { ...mild, soilMoisture: 55 }],
+      ['gale', { ...mild, windspeed: 55, gustspeed: 80 }],
+    ] as const) {
+      expect(scoreOf('football_soccer', w as never, jan).score).toBeLessThan(40);
+    }
+  });
+
+  it('does not offer a mud reading through the snow', () => {
+    /* "Not a day for football. 4 cm of lying snow. Pitch slightly soft but
+       playable." — the ground note describing the wrong surface, and
+       contradicting the verdict two words earlier. */
+    const snowy = { ...mild, temperature: 1, snowDepthCm: 4, soilMoisture: 32 };
+    const r = scoreOf('football_soccer', snowy, inMonth(1)).reasoning ?? '';
+    expect(r).toMatch(/snow/i);
+    expect(r).not.toMatch(/playable|slightly soft|muddy/i);
+  });
+
+  it('snorkelling is not stricter than diving about cold water', () => {
+    /* It carried a tropical ladder — perfect 22-26 °C, poor below 17. On a
+       good UK August sea at 16 °C it scored 14 and "not safe" while SCUBA
+       DIVING scored 95 and sea swimming 91: deeper, longer and fully immersed
+       was perfect, the same water with a mask on was unsafe. */
+    const aug = inMonth(8);
+    const sea = {
+      temperature: 20, temperatureMin: 15, windspeed: 10, windspeedMax: 14, gustspeed: 18,
+      winddirection: 240, visibility: 25000, precipitation: 0, precipitationHours: 0,
+      clouds: 30, waveHeight: 0.2, waterTemperature: 16,
+    };
+    const snorkel = scoreOf('snorkeling', sea, aug);
+    const swim = scoreOf('sea_swimming', sea, aug);
+    const dive = scoreOf('scuba_diving', sea, aug);
+    expect(snorkel.evaluation).not.toBe('poor');
+    /* Between its siblings, not below both of them. */
+    expect(snorkel.score).toBeGreaterThan(swim.score - 20);
+    expect(snorkel.score).toBeGreaterThan(dive.score - 25);
+  });
+});
+
+/**
+ * No value of a criterion falls between the bands.
+ *
+ * The precipitation sweep fixed 41 models on one key. The same shape of fault
+ * sits on other keys and did: road cycling and riding a motorbike wanted
+ * humidity under 75 to be good and 80-90 to be fair, so a British afternoon at
+ * 77% matched neither rung. Ice hockey was good to 0 °C and poor above 2, so
+ * the two degrees either side of thawing — the whole question on an outdoor
+ * rink — matched nothing at all.
+ *
+ * Stated as COVERAGE rather than as pairs of rungs, because a band may hold
+ * two ranges: ice fails at both ends and its fair band says so. Comparing good
+ * against fair against poor in order cannot see that, and reported ice hockey
+ * as a gap from -15 to 2 when good already covered -15 to 0. The union is what
+ * actually matters — every value the weather can take lands in some band.
+ */
+describe('the bands leave no value uncovered', () => {
+  type Span = { lo: number; hi: number };
+
+  /**
+   * Every range a criterion string describes, including its `or` branches.
+   *
+   * A branch after the first may drop the key — "temperature=0..5 or 25..30"
+   * means 25..30 OF TEMPERATURE, and the bare form is the common one in this
+   * library. Reading branches independently loses it, which is exactly the bug
+   * the scorer itself carried until `defaultKey` was threaded through every
+   * branch. A test that reproduces the bug it is guarding against reports
+   * holes that are not there: this found 66 of them, all imaginary.
+   */
+  function spans(c: string): Span[] {
+    return c.split(/ or /).map((part) => {
+      const p = part.trim().replace(/^[a-zA-Z]+/, '');      // key, where present
+      if (/&/.test(p)) return null;                          // compound, not a rung
+      let m = p.match(/^=?(-?[\d.]+)\.\.(-?[\d.]+)$/);
+      if (m) return { lo: +m[1], hi: +m[2] };
+      m = p.match(/^=(-?[\d.]+)$/);
+      if (m) return { lo: +m[1], hi: +m[1] };
+      m = p.match(/^>=?(-?[\d.]+)$/);
+      if (m) return { lo: +m[1], hi: Infinity };
+      m = p.match(/^<=?(-?[\d.]+)$/);
+      if (m) return { lo: -Infinity, hi: +m[1] };
+      return null;
+    }).filter((x): x is Span => x !== null);
+  }
+  const keyOf = (c: string) => (c.match(/^([a-zA-Z]+)/) ?? [])[1] ?? '';
+
+  /**
+   * Known holes, outside the Active Sports review that closed the rest.
+   *
+   * Listed rather than skipped silently, so the debt is visible and shrinks.
+   * Most sit at heat this country rarely reaches — 30-35 °C — and cost nothing
+   * in practice. Four are ordinary British weather and are worth doing:
+   *
+   *   outdoor_playground  10-15 °C     an ordinary afternoon, all year
+   *   foraging            20-30 °C     the whole of a warm summer
+   *   outdoor_meditation  8-12 °C      most of spring and autumn
+   *   picnicking / bbq    14-16 °C     the temperature you plan one at
+   */
+  const KNOWN_HOLES = new Set([
+    'sea_fishing_boat', 'rock_hopping', 'outdoor_playground', 'beekeeping', 'foraging',
+    'geocaching', 'rollerblading', 'urban_exploring', 'birdwatching_passage',
+    'mushroom_hunting', 'picnicking', 'bbq', 'outdoor_gym', 'outdoor_meditation',
+    'photography',
+  ]);
+
+  const models = (activityTypes as ActivityType[])
+    .filter((a) => a.weatherSensitive && !KNOWN_HOLES.has(a.id));
+
+  it.each(models.map((a) => [a.id, a] as const))('%s', (_id, a) => {
+    const bands = [a.goodConditions, a.fairConditions, a.poorConditions];
+    const keys = new Set(bands.flatMap((b) => (b ?? []).map(keyOf)).filter(Boolean));
+
+    for (const key of keys) {
+      /* Only where all three bands speak to this key — a criterion two bands
+         ignore is a different question from a hole between them. */
+      const per = bands.map((b) => (b ?? []).filter((c) => keyOf(c) === key).flatMap(spans));
+      if (per.some((x) => x.length === 0)) continue;
+
+      const merged: Span[] = [];
+      for (const s2 of per.flat().sort((x, y) => x.lo - y.lo)) {
+        const last = merged[merged.length - 1];
+        if (last && s2.lo <= last.hi) last.hi = Math.max(last.hi, s2.hi);
+        else merged.push({ ...s2 });
+      }
+      const holes = merged.slice(1).map((s2, i) => `${merged[i].hi}–${s2.lo}`);
+      expect({ activity: a.id, key, holes }).toEqual({ activity: a.id, key, holes: [] });
+    }
+  });
+});
