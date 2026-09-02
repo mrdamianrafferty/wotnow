@@ -73,7 +73,7 @@ export const teamSports: ActivityType[] = [
 
       ground are all in the poor band, and they are what actually stops a game.
 
-    */  // popular months outside winter break or summer heat
+    */
 
     indoorAlternative: 'Hit the gym for drills, or play futsal indoors'
   },
@@ -481,7 +481,6 @@ export const teamSports: ActivityType[] = [
 
     fairConditions: [
       'temperature=8..12 or 30..35',      // brisk morning matches
-      'temperature=30..32',     // hot but tolerable with breaks
       'windSpeed=5.5..8',       // slightly gusty but playable
       'precipitation=0.5..1',   // occasional drizzle
       'soilMoisture=45..50', // dry wickets or soft patches
@@ -533,7 +532,6 @@ export const teamSports: ActivityType[] = [
 
     fairConditions: [
       'temperature=0..5 or 28..35',       // cold but common in winter leagues
-      'temperature=28..30',     // hot, with breaks/hydration
       'windSpeed=11..15',       // gusty but playable
       'precipitation=5..15',    // moderate rain, slippery pitch
       'soilMoisture=45..50', // baked patches or soft turf

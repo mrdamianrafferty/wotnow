@@ -446,7 +446,8 @@ export const waterSports: ActivityType[] = [
 
     // Safety-first: avoid offshore winds unless extremely light and in tiny surf; keep waves small; cap gusts; watch for heavy rain (murk)
     poorConditions: [
-      'waterTemperature<12', 'airTemperature<10 or airTemperature>30',            // uncomfortably cold for most casual snorkellers
+      'waterTemperature<12',                         // cold-water shock territory
+      'airTemperature<10 or airTemperature>30',      // too cold to get out into, or too hot to be in a suit
       'windSpeed>7',                   // choppy & unsafe (whitecaps likely)
       'gust>9',                        // unpredictable surface disturbance
       'waveHeight>0.8',                   // hard to breathe & see in the break zone
@@ -461,7 +462,8 @@ export const waterSports: ActivityType[] = [
     ],
 
     fairConditions: [
-      'waterTemperature=12..14 or 24..28', 'airTemperature=10..14 or 28..30',        // brisk but tolerable with suitable gear
+      'waterTemperature=12..14 or 24..28',           // brisk, or warm enough to want less suit
+      'airTemperature=10..14 or 28..30',             // a shivery exit, or a hot one
       'windSpeed=5..7',
       'gust=7..9',
       'waveHeight=0.3..0.8',

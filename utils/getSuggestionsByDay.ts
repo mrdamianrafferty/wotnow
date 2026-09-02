@@ -903,10 +903,10 @@ function getReasoningForScore(
    * contradicts the verdict two words earlier. Soil moisture is still measured
    * under snow; it just stops being what somebody is standing on.
    */
-  const underSnow = (typeof weather.snowDepthCm === 'number' && weather.snowDepthCm > 0)
+  const frozenOrCovered = (typeof weather.snowDepthCm === 'number' && weather.snowDepthCm > 0)
     || (typeof weather.snowfallRateMmH === 'number' && weather.snowfallRateMmH > 0)
     || (typeof weather.temperature === 'number' && weather.temperature <= 0);
-  if (!underSnow && typeof weather.soilMoisture === 'number' && isMudSensitive(activity.id)) {
+  if (!frozenOrCovered && typeof weather.soilMoisture === 'number' && isMudSensitive(activity.id)) {
     const soil = assessSoilCondition(weather.soilMoisture);
     const msg = getMudMessage(activity.id, soil);
     if (msg) base += ` ${msg}`;
