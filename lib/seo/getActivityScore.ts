@@ -77,15 +77,33 @@ export interface ActivityScorePayload {
 
 export async function getActivityScoreForLocation(
   activityId: string,
-  location: SeoLocation
+  location: SeoLocation,
+  /**
+   * Measurements the forecast cannot supply, merged onto every day.
+   *
+   * Water temperature is the case this exists for. Several models — wild
+   * swimming above all — are decided by it, no inland forecast carries it, and
+   * a caller who HAS one (a fishery engine, a venue's own sensor) currently has
+   * no way to hand it over. Without it those models are scored on air
+   * temperature, which lags a reservoir by weeks and is warmest exactly when the
+   * water is still dangerous.
+   *
+   * Merged rather than defaulted: a value passed here is a measurement the
+   * caller stands behind, and anything absent stays absent rather than being
+   * invented.
+   */
+  overrides?: Partial<WeatherData>,
 ): Promise<ActivityScorePayload | null> {
   // 1. Find the activity definition
   const activity = activityTypes.find((a) => a.id === activityId);
   if (!activity) return null;
 
   // 2. Fetch weather for the next 7 days
-  const forecast = await fetchWeatherForLocation(location);
-  if (!forecast || forecast.length === 0) return null;
+  const raw = await fetchWeatherForLocation(location);
+  if (!raw || raw.length === 0) return null;
+  const forecast = overrides
+    ? raw.map((d) => ({ ...d, weather: { ...d.weather, ...overrides } }))
+    : raw;
 
   // 3. Run the scoring engine for this single activity
   const now = new Date();
