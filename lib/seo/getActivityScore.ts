@@ -186,7 +186,7 @@ async function fetchWeatherForLocation(
   type OWMDaily = {
     dt?: number; temp?: { day?: number; min?: number; max?: number }; rain?: number;
     wind_speed?: number; wind_gust?: number; wind_speed_mean?: number; wind_deg?: number;
-    precipitation_hours?: number; clouds?: number; humidity?: number;
+    precipitation_hours?: number; visibility?: number; clouds?: number; humidity?: number;
   };
   type OWMHourly = { dt?: number; temp?: number; rain?: { '1h'?: number }; wind_speed?: number; clouds?: number; humidity?: number };
 
@@ -221,6 +221,11 @@ async function fetchWeatherForLocation(
             windspeedMax: maxKmh,
             gustspeed: typeof d.wind_gust === 'number' ? d.wind_gust * 3.6 : undefined,
             winddirection: typeof d.wind_deg === 'number' ? d.wind_deg : undefined,
+            /* Metres. Absent when the source has no hourly series to average,
+               in which case it stays absent rather than being defaulted — a
+               fabricated 10 km was counted as a measurement and failed every
+               `visibility>10` in the library. */
+            visibility: d.visibility,
             clouds: d.clouds,
             humidity: d.humidity,
           },

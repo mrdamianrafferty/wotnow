@@ -253,7 +253,13 @@ const DEFAULTS: Record<string, Partial<Record<Direction, Phrasing>>> = {
       : `${v.toFixed(1)} mm of rain forecast.`,
   },
   visibility: {
-    low: (v) => `Visibility down to about ${v < 1 ? 'under a kilometre' : `${Math.round(v)} km`}.`,
+    /* Three registers, because a kilometre and eight are different problems:
+       one stops the activity, the other spoils it. */
+    low: (v) => {
+      if (v < 1) return 'Fog — under a kilometre of visibility.';
+      if (v < 4) return `Murky, ${Math.round(v)} km at best.`;
+      return `Hazy — visibility around ${Math.round(v)} km.`;
+    },
   },
   waveHeight: {
     high: (v) => `A ${v.toFixed(1)} m sea running.`,
