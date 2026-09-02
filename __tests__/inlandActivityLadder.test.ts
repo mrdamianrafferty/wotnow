@@ -1186,35 +1186,36 @@ describe('Active Sports', () => {
  * as a gap from -15 to 2 when good already covered -15 to 0. The union is what
  * actually matters — every value the weather can take lands in some band.
  */
-describe('the bands leave no value uncovered', () => {
-  type Span = { lo: number; hi: number };
+type Span = { lo: number; hi: number };
 
-  /**
-   * Every range a criterion string describes, including its `or` branches.
-   *
-   * A branch after the first may drop the key — "temperature=0..5 or 25..30"
-   * means 25..30 OF TEMPERATURE, and the bare form is the common one in this
-   * library. Reading branches independently loses it, which is exactly the bug
-   * the scorer itself carried until `defaultKey` was threaded through every
-   * branch. A test that reproduces the bug it is guarding against reports
-   * holes that are not there: this found 66 of them, all imaginary.
-   */
-  function spans(c: string): Span[] {
-    return c.split(/ or /).map((part) => {
-      const p = part.trim().replace(/^[a-zA-Z]+/, '');      // key, where present
-      if (/&/.test(p)) return null;                          // compound, not a rung
-      let m = p.match(/^=?(-?[\d.]+)\.\.(-?[\d.]+)$/);
-      if (m) return { lo: +m[1], hi: +m[2] };
-      m = p.match(/^=(-?[\d.]+)$/);
-      if (m) return { lo: +m[1], hi: +m[1] };
-      m = p.match(/^>=?(-?[\d.]+)$/);
-      if (m) return { lo: +m[1], hi: Infinity };
-      m = p.match(/^<=?(-?[\d.]+)$/);
-      if (m) return { lo: -Infinity, hi: +m[1] };
-      return null;
-    }).filter((x): x is Span => x !== null);
-  }
-  const keyOf = (c: string) => (c.match(/^([a-zA-Z]+)/) ?? [])[1] ?? '';
+/**
+ * Every range a criterion string describes, including its `or` branches.
+ *
+ * A branch after the first may drop the key — "temperature=0..5 or 25..30"
+ * means 25..30 OF TEMPERATURE, and the bare form is the common one in this
+ * library. Reading branches independently loses it, which is exactly the bug
+ * the scorer itself carried until `defaultKey` was threaded through every
+ * branch. A test that reproduces the bug it is guarding against reports
+ * holes that are not there: this found 66 of them, all imaginary.
+ */
+function spans(c: string): Span[] {
+  return c.split(/ or /).map((part) => {
+    const p = part.trim().replace(/^[a-zA-Z]+/, '');      // key, where present
+    if (/&/.test(p)) return null;                          // compound, not a rung
+    let m = p.match(/^=?(-?[\d.]+)\.\.(-?[\d.]+)$/);
+    if (m) return { lo: +m[1], hi: +m[2] };
+    m = p.match(/^=(-?[\d.]+)$/);
+    if (m) return { lo: +m[1], hi: +m[1] };
+    m = p.match(/^>=?(-?[\d.]+)$/);
+    if (m) return { lo: +m[1], hi: Infinity };
+    m = p.match(/^<=?(-?[\d.]+)$/);
+    if (m) return { lo: -Infinity, hi: +m[1] };
+    return null;
+  }).filter((x): x is Span => x !== null);
+}
+const keyOf = (c: string) => (c.match(/^([a-zA-Z]+)/) ?? [])[1] ?? '';
+
+describe('the bands leave no value uncovered', () => {
 
   /**
    * Known holes, outside the Active Sports review that closed the rest.
@@ -1257,5 +1258,59 @@ describe('the bands leave no value uncovered', () => {
       const holes = merged.slice(1).map((s2, i) => `${merged[i].hi}–${s2.lo}`);
       expect({ activity: a.id, key, holes }).toEqual({ activity: a.id, key, holes: [] });
     }
+  });
+});
+
+/**
+ * The opposite fault to a hole, and the one a hole-fix tends to introduce.
+ *
+ * A band's score is the MEAN of its criteria, so two criteria on the same key
+ * are two votes. That is right for a two-sided band — `temperature<5` and
+ * `temperature>32` describe genuinely different failures — but wrong when one
+ * range sits wholly inside another, because the day is then marked twice on
+ * one question and the narrower rung votes against the wider one everywhere it
+ * does not reach.
+ *
+ * Measured, on the three this caught. Cricket's fair band had gained
+ * `temperature=8..12 or 30..35` to close a hole at 33-35 °C, while the older
+ * `temperature=30..32` stayed. At 34 °C the new rung scored 0.70 and the old
+ * one 0.00, halving the band mean to 0.100 — so the fix closed the hole on
+ * paper and cancelled most of itself in the score. Rugby (28..30 inside
+ * 0..5 or 28..35) and orienteering (22..26 inside 0..5 or 22..30) were the
+ * same edit and the same arithmetic.
+ */
+describe('no band marks the same value twice', () => {
+  const models = (activityTypes as ActivityType[]).filter((a) => a.weatherSensitive);
+  const inside = (a: Span, b: Span) => a.lo >= b.lo && a.hi <= b.hi;
+
+  it.each(models.map((a) => [a.id, a] as const))('%s', (_id, a) => {
+    const bands: [string, string[] | undefined][] = [
+      ['perfect', a.perfectConditions], ['good', a.goodConditions],
+      ['fair', a.fairConditions], ['poor', a.poorConditions],
+    ];
+    const subsumed: string[] = [];
+
+    for (const [band, list] of bands) {
+      const criteria = (list ?? []).filter((c) => typeof c === 'string');
+      for (const c of criteria) {
+        for (const other of criteria) {
+          if (c === other) continue;
+          /* Same key only. `spans` strips the key so it can read the bare
+             `or` branches, which means windSpeed<5 and temperature<5 parse
+             identically — comparing across keys reports every model as
+             riddled with duplicates. */
+          if (keyOf(c) !== keyOf(other)) continue;
+          const mine = spans(c);
+          const theirs = spans(other);
+          if (!mine.length || !theirs.length) continue;
+          /* Every range this criterion describes is already covered by the
+             other one — so it can only ever agree, or drag. */
+          if (mine.every((m) => theirs.some((t) => inside(m, t)))) {
+            subsumed.push(`${band}: "${c}" is already inside "${other}"`);
+          }
+        }
+      }
+    }
+    expect({ activity: a.id, subsumed }).toEqual({ activity: a.id, subsumed: [] });
   });
 });
