@@ -179,6 +179,45 @@ describe('condition grammar', () => {
   });
 });
 
+describe('the reason names the thing that actually decided it', () => {
+  const NIGHT = new Date('2026-01-15T20:00:00Z');
+  const sky = (clouds: number, precipitation = 0, precipitationHours = 0) => ({
+    temperature: 6, temperatureMin: 2, windspeed: 8, gustspeed: 14, winddirection: 220,
+    precipitation, precipitationHours, clouds, humidity: 80, visibility: 25000,
+  });
+
+  test('cloud is the reason for stargazing, because cloud is the question', () => {
+    // The copy table was keyed on `cloudCover` while the model says `clouds`, so
+    // the cloud that vetoed the night had no words and the sentence blamed the
+    // breeze: "Not a day for stargazing. Light breeze, Force 2."
+    const r = scoreOf('stargazing', sky(95), NIGHT).reasoning ?? '';
+    expect(r.toLowerCase()).toMatch(/cloud/);
+  });
+
+  test('zero of a thing is not nearly too much of it', () => {
+    // `precipitation>0` scored 0.5 — half way to firing — on a completely dry
+    // night, because the graduated `>` scorer divides by the threshold's own
+    // magnitude and zero has none. It printed "Rain, which settles it."
+    const r = scoreOf('stargazing', sky(35), NIGHT).reasoning ?? '';
+    expect(r.toLowerCase()).not.toMatch(/rain/);
+  });
+
+  test('but real rain still is the reason', () => {
+    expect(scoreOf('stargazing', sky(5, 6, 5), NIGHT).reasoning?.toLowerCase()).toMatch(/rain/);
+  });
+
+  test('a drizzly day says hours, not a rounded-down millimetre', () => {
+    // Production printed "0.0 mm of rain forecast." on a night of continuous
+    // drizzle: the hours drove the verdict and the total rounded to nothing.
+    const r = scoreOf('road_cycling', {
+      temperature: 15, temperatureMin: 11, windspeed: 10, gustspeed: 18, winddirection: 220,
+      precipitation: 0.04, precipitationHours: 11, clouds: 85, humidity: 85, visibility: 20000,
+    }, NIGHT).reasoning ?? '';
+    expect(r).toMatch(/11 hours/);
+    expect(r).not.toMatch(/0\.0 mm/);
+  });
+});
+
 describe('a season is a closure, not a preference', () => {
   /**
    * Applying `seasonalMonths` was a fix — it had been computed and only logged.

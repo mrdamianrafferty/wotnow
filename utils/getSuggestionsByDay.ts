@@ -527,19 +527,41 @@ function calculateActivityScoreWithSnow(
    * afternoon. That produced "Not a day for trail running. Humid at 75%." on a
    * clear January morning.
    *
-   * Cloud has the same shape and the same problem. Humidity keeps its own note
-   * further down, which fires on the days it genuinely is the story.
+   * Only humidity. Cloud was excluded here too at first and that was wrong: it
+   * sits on a 0-100 scale with a meaningful zero, and for stargazing or
+   * photography it is not a comfort variable but the whole question. Humidity
+   * keeps its own note further down, which fires on the days it genuinely is
+   * the story.
    */
-  const NOT_A_REASON = new Set(['humidity', 'clouds', 'cloudCover']);
+  const NOT_A_REASON = new Set(['humidity']);
   const nearestPoor = poor.all
     .filter((c) => !NOT_A_REASON.has(c.key))
+    /**
+     * Zero of a thing is not nearly too much of it.
+     *
+     * `precipitation>0` scored 0.5 — "half way to firing" — on a completely dry
+     * day, because the graduated `>` scorer divides by the threshold's own
+     * magnitude and a threshold of zero has none. That put "Rain, which settles
+     * it." on a clear dry night.
+     */
+    .filter((c) => !(c.direction === 'high' && c.value === 0))
     .slice().sort((a, b) => b.score - a.score)[0];
 
   if (wetness > 0.35 && !wantsRain) {
     band = {
       mean: band.mean,
       criteria: [asBinding(
-        { condition: 'precipitation=0..1', key: 'precipitation', score: 0, value: rainMm },
+        {
+          condition: 'precipitation=0..1',
+          key: 'precipitation',
+          score: 0,
+          value: rainMm,
+          /* Stated, because the numbers cannot say it: on a drizzly day the
+             total is a fraction of a millimetre and reads as comfortably INSIDE
+             the range, so the copy layer found no direction and said nothing
+             about the rain at all. What made the day wet was its length. */
+          direction: 'high',
+        },
         wetness,
       )],
     };
