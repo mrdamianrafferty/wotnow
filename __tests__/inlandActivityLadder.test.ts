@@ -855,12 +855,54 @@ describe('the cards read as a set', () => {
   it('a good day says what is good about it, not only what is wrong', () => {
     /* This was a regression: marking the rain `decisive` let it become the
        whole sentence under a "good" verdict, so the tile said it was a good
-       day for sailing and then named the only bad thing about it. */
+       day for sailing and then named the only bad thing about it.
+
+       The gust here is inside what these models call good — `drizzlyBreeze`
+       gusts past it, and a day that misses its own safety criterion is no
+       longer allowed the word (see the safety-floor test below). */
+    const gentler = { ...drizzlyBreeze, gustspeed: 30 };
     for (const id of ['sailing_inland', 'windsurfing_inland']) {
-      const s = scoreOf(id, drizzlyBreeze);
+      const s = scoreOf(id, gentler);
       expect(s.evaluation).toBe('good');
       /* The wind is why it is good, and the wind has to be in there. */
       expect(s.reasoning).toMatch(/Force \d/);
+    }
+  });
+
+  it('two tiles on the same water do not describe the same wind differently', () => {
+    /*
+      Measured at Rutland, side by side on one shelf:
+
+        Kayaking   Good   "A good day on the water. Gentle breeze, Force 3."
+        Canoeing   Tough  "Not safe for canoeing today ... Force 6 at times."
+
+      One tile quoting the mean, the next quoting the gust, and no way for a
+      reader to see they were the same weather. Kayaking's own good band asks
+      for gusts under 9 m/s; the gust was 11, and it scored 0.39 — outside the
+      criterion but above the 0.35 floor, so it bought the word "good".
+
+      Two rules hold it now: the conditions line carries the gust whenever it
+      is a different force from the mean, and a criterion that decides SAFETY
+      has to be actually met (0.5 is the scorer's own in/out boundary) rather
+      than nearly met.
+    */
+    const gusty = {
+      temperature: 17, temperatureMin: 14, windspeed: 15.5, windspeedMax: 25,
+      gustspeed: 39.6, winddirection: 250, visibility: 22000, soilMoisture: 38,
+      precipitation: 2.3, precipitationHours: 10, clouds: 85,
+    };
+    const kayak = scoreOf('kayaking', gusty);
+    const canoe = scoreOf('canoeing', gusty);
+
+    /* The order stays — a kayak sits lower than an open canoe and tolerates
+       more — but the gap may not span "good" to "not safe". */
+    expect(kayak.score).toBeGreaterThan(canoe.score);
+    expect(kayak.evaluation).not.toBe('good');
+
+    /* And every tile that mentions the wind mentions the same wind. */
+    for (const id of ['kayaking', 'sailing_inland', 'windsurfing_inland']) {
+      const r = scoreOf(id, gusty).reasoning ?? '';
+      if (/Force \d/.test(r)) expect(r).toMatch(/gust/i);
     }
   });
 

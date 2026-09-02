@@ -437,20 +437,73 @@ function calculateActivityScoreWithSnow(
    * resembles nothing the activity describes.
    */
   const rainExempt = isWaterActivity || wantsRain;
+  /**
+   * A criterion that decides whether the activity is SAFE has to be met better
+   * than one that decides whether it is pleasant.
+   *
+   * The floor is 0.35 for everything, deliberately loose — it exists to stop a
+   * comfortable variable papering over the deciding one, not to make bands hard
+   * to reach. But for the deciding one itself, 0.35 is too loose. Measured on a
+   * Force 3 mean gusting Force 6 at Rutland:
+   *
+   *   kayaking   good band asks gust<9 m/s, the gust was 11 -> 0.39 -> "Good"
+   *   canoeing   good band asks gust<7 m/s, the gust was 11 -> 0.21 -> vetoed
+   *
+   * Two tiles side by side on the same water, one reading "A good day on the
+   * water" and the other "Not safe for canoeing today", separated by 0.18 on
+   * one criterion. Kayaking was being called good while failing the gust rule
+   * its own model writes down.
+   *
+   * The ORDER is right and stays — a board is a sail, an open canoe catches
+   * wind, a kayak sits low, so their thresholds should differ. What was wrong
+   * is that a clear miss still bought the word "good".
+   */
+  /* `windSpeed` is deliberately NOT here. Its common failure is too LITTLE of
+     it — a windsurfer's good band starts at 4.5 m/s and a light day misses it
+     from below — which is a shortfall, not a hazard, and the library already
+     draws that line (see SHORTFALL_NOT_HAZARD in activitySuitability). Adding
+     it demoted windsurfing on a gusty afternoon for the sin of a soft mean,
+     which is the opposite of what a windsurfer thinks of that day. Too MUCH
+     wind is caught by the poor band and its veto, as it was before. */
+  const DECIDES_SAFETY = new Set(['gust', 'waveHeight', 'waterTemperature']);
+  const worstSafety = (b: { criteria: { score: number; key: string }[] }) => {
+    const scored = b.criteria.filter((c) => DECIDES_SAFETY.has(c.key));
+    return scored.length ? Math.min(...scored.map((c) => c.score)) : 1;
+  };
+
   const goodQualifies = good.criteria.length > 0 && good.mean > 0.5 && worst(good) >= 0.35;
   const rainBlocksGood = !rainExempt && wetness >= 0.2;
+  /**
+   * ...and only where the gust is a safety question rather than a comfort one.
+   *
+   * On the water a gust is what capsizes you; on a lawn it is what takes the
+   * tablecloth. Applied to everything, this rule took golf, cricket,
+   * picnicking, outdoor yoga and painting down 25 points apiece on an ordinary
+   * breezy afternoon — which is the same over-reach as treating a bog as a
+   * hazard, and wrong for the same reason.
+   *
+   * `isWaterActivity` is the line the rest of this function already draws.
+   */
+  const safetyBlocksGood = isWaterActivity && worstSafety(good) < 0.5;
 
   if (perfect.criteria.length && perfect.mean > 0.8 && worst(perfect) >= 0.5
       && (rainExempt || rainMm <= 0.2) && penalty < 0.3) {
     score = span(perfect.mean, 0.8, 1, 88, 98);
     band = perfect;
-  } else if (goodQualifies && !rainBlocksGood) {
+  } else if (goodQualifies && !rainBlocksGood && !safetyBlocksGood) {
     score = span(good.mean, 0.5, 1, 60, 87);
     band = good;
   } else if (goodQualifies) {
-    /* Rain, and rain alone, refused the good band. Land in the fair range,
-       positioned by how good the day otherwise is — and take the ordinary fair
-       reading if it happens to be the kinder of the two. */
+    /* Rain or a missed safety criterion refused the good band — neither
+       disqualifies it. Land in the fair range, positioned by how good the day
+       otherwise is, and take the ordinary fair reading if it is the kinder of
+       the two.
+
+       Demotion rather than refusal matters as much here as it did for rain:
+       falling past `fair` lands in the bucket for days that match nothing,
+       which would have taken kayaking on a gusty afternoon from 74 to about
+       33 — from "a good day on the water" to worse than the canoeing beside
+       it, which is the same contradiction the other way round. */
     const asFair = fair.criteria.length && fair.mean > 0.3 ? span(fair.mean, 0.3, 1, 40, 59) : 0;
     score = Math.max(span(good.mean, 0.5, 1, 40, 59), asFair);
     band = good;
