@@ -279,7 +279,7 @@ export const lifestyleActivities: ActivityType[] = [
       'cloudCover=10..80',            // even overcast is fine
       'humidity<75',                 // workable
       'visibility>5',                 // decent light
-      'precipitation=0..0.1',      // no Rain,
+      'precipitation=0..0.1',      // a trace at most
       'gust<8.8'
     ],
 
@@ -324,7 +324,7 @@ export const lifestyleActivities: ActivityType[] = [
       'humidity=75..85',              // slightly muggy
       'cloudCover=80..100',            // heavy overcast
       'visibility=2..5',               // dull light but readable
-      'precipitation=0.1..1',               // no Rain,
+      'precipitation=0.1..1',               // drizzle, not rain
       'gust=8.8..11'
     ],
 
@@ -334,7 +334,7 @@ export const lifestyleActivities: ActivityType[] = [
       'cloudCover=10..80',             // even overcast is fine
       'humidity<75',                  // not too muggy
       'visibility>5',
-      'precipitation=0..0.1',               // no Rain
+      'precipitation=0..0.1',               // a trace at most
       'gust<8.8'
     ],
 

@@ -750,15 +750,20 @@ describe('rain demotes a band rather than disqualifying it', () => {
 });
 
 /**
- * The precipitation ladder, as an invariant rather than 41 pinned numbers.
+ * The precipitation ladder, as an invariant rather than a set of pinned numbers.
  *
- * Every model's four bands should form a contiguous ladder — good 0..G,
- * fair G..F, poor >F — so that any millimetre figure lands in exactly one of
- * them. They did not. 33 models had a gap, an inversion, or a fair band
- * identical to their good one, and a further 8 wrote `precipitation>0` in poor,
- * which is not a threshold but a refusal to pick one: it fires on 0.3 mm spread
- * over three hours, and a fired poor criterion is a HAZARD, so a trace of
- * drizzle vetoed them to 14 — the same score as a gale.
+ * THE RULE: every model's bands form a contiguous ladder — good 0..G, fair
+ * G..F, poor >F — so that any millimetre figure lands in exactly one of them,
+ * and no model treats measurable rain as a hazard. That is what these tests
+ * enforce, and it holds however the individual thresholds are later retuned.
+ *
+ * Why it needs enforcing, from the state that prompted it: models had gaps
+ * (good `precipitation=0` beside fair `1..5`, so 0.3 mm matched nothing),
+ * inversions (a good band reaching past its own poor threshold), and fair
+ * bands identical to their good one. Several wrote `precipitation>0` in poor,
+ * which is not a threshold but a refusal to pick one — it fires on 0.3 mm
+ * spread over three hours, and a fired poor criterion is a HAZARD, so a trace
+ * of drizzle scored the same as a gale.
  */
 describe('precipitation bands form a contiguous ladder', () => {
   type Range = { lo: number; hi: number } | null;
