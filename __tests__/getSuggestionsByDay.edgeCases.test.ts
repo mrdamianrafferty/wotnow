@@ -74,7 +74,7 @@ describe('getSuggestionsByDay - Edge Cases & Uncovered Paths', () => {
 
       const forecast = [
         {
-          date: now.getTime(), // 9 AM
+          date: Math.floor(now.getTime() / 1000), // 9 AM
           weather: {
             temperature: 22,
             precipitation: 0,
@@ -113,7 +113,7 @@ describe('getSuggestionsByDay - Edge Cases & Uncovered Paths', () => {
 
       const forecast = [
         {
-          date: now.getTime(),
+          date: Math.floor(now.getTime() / 1000),
           weather: {
             temperature: 20, // Perfect temp
             clouds: 20, // Perfect clouds
@@ -163,7 +163,7 @@ describe('getSuggestionsByDay - Edge Cases & Uncovered Paths', () => {
 
       const forecast = [
         {
-          date: now.getTime(),
+          date: Math.floor(now.getTime() / 1000),
           weather: {
             temperature: 22, // Perfect temp
             windspeed: 10, // Light wind
@@ -203,7 +203,7 @@ describe('getSuggestionsByDay - Edge Cases & Uncovered Paths', () => {
 
       const forecast = [
         {
-          date: now.getTime(),
+          date: Math.floor(now.getTime() / 1000),
           weather: {
             temperature: 18, // Perfect
             windspeed: 45, // Too windy - triggers poor condition
@@ -243,7 +243,7 @@ describe('getSuggestionsByDay - Edge Cases & Uncovered Paths', () => {
 
       const forecast = [
         {
-          date: now.getTime(),
+          date: Math.floor(now.getTime() / 1000),
           weather: {
             temperature: 16, // Good
             windspeed: 10, // Good
@@ -292,7 +292,7 @@ describe('getSuggestionsByDay - Edge Cases & Uncovered Paths', () => {
 
       const forecast = [
         {
-          date: now.getTime(),
+          date: Math.floor(now.getTime() / 1000),
           weather: {
             temperature: 20, // Good
             windspeed: 15, // Good
@@ -334,7 +334,7 @@ describe('getSuggestionsByDay - Edge Cases & Uncovered Paths', () => {
 
       const forecast = [
         {
-          date: now.getTime(),
+          date: Math.floor(now.getTime() / 1000),
           weather: {
             temperature: 15, // Fair
             windspeed: 20, // Fair
@@ -372,7 +372,7 @@ describe('getSuggestionsByDay - Edge Cases & Uncovered Paths', () => {
 
       const forecast = [
         {
-          date: now.getTime(),
+          date: Math.floor(now.getTime() / 1000),
           weather: {
             temperature: 12,
             precipitation: 0,
@@ -453,7 +453,7 @@ describe('getSuggestionsByDay - Edge Cases & Uncovered Paths', () => {
 
       const forecast = [
         {
-          date: now.getTime(),
+          date: Math.floor(now.getTime() / 1000),
           weather: {}, // Empty weather data
         },
       ];
@@ -487,7 +487,7 @@ describe('getSuggestionsByDay - Edge Cases & Uncovered Paths', () => {
 
       const forecast = [
         {
-          date: now.getTime(),
+          date: Math.floor(now.getTime() / 1000),
           weather: {
             // No temperature
             precipitation: 0,
@@ -524,7 +524,7 @@ describe('getSuggestionsByDay - Edge Cases & Uncovered Paths', () => {
 
       const forecast = [
         {
-          date: now.getTime(),
+          date: Math.floor(now.getTime() / 1000),
           weather: {
             temperature: 20,
             // No precipitation data
@@ -563,15 +563,15 @@ describe('getSuggestionsByDay - Edge Cases & Uncovered Paths', () => {
 
       const forecast = [
         {
-          date: now.getTime(),
+          date: Math.floor(now.getTime() / 1000),
           weather: { temperature: 20, precipitation: 0, windspeed: 5 },
         },
         {
-          date: now.getTime() + 24 * 60 * 60 * 1000, // Next day
+          date: Math.floor(now.getTime() / 1000) + 24 * 60 * 60 * 1000, // Next day
           weather: { temperature: 25, precipitation: 5, windspeed: 15 },
         },
         {
-          date: now.getTime() + 48 * 60 * 60 * 1000, // Two days later
+          date: Math.floor(now.getTime() / 1000) + 48 * 60 * 60 * 1000, // Two days later
           weather: { temperature: 18, precipitation: 0, windspeed: 8 },
         },
       ];
@@ -628,7 +628,7 @@ describe('getSuggestionsByDay - Edge Cases & Uncovered Paths', () => {
 
       const forecast = [
         {
-          date: now.getTime(),
+          date: Math.floor(now.getTime() / 1000),
           weather: { temperature: 20, precipitation: 0, windspeed: 10, humidity: 80 },
         },
       ];
@@ -665,7 +665,7 @@ describe('getSuggestionsByDay - Edge Cases & Uncovered Paths', () => {
 
       const forecast = [
         {
-          date: now.getTime(),
+          date: Math.floor(now.getTime() / 1000),
           weather: { temperature: 20, precipitation: 0, humidity: 80 },
         },
       ];
@@ -688,7 +688,7 @@ describe('getSuggestionsByDay - Edge Cases & Uncovered Paths', () => {
     it('should handle empty activities array', () => {
       const forecast = [
         {
-          date: now.getTime(),
+          date: Math.floor(now.getTime() / 1000),
           weather: { temperature: 20, precipitation: 0 },
         },
       ];

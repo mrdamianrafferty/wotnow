@@ -31,7 +31,18 @@
  *
  *   waveHeight   there is no wave model for a reservoir. Fetch across Rutland
  *                is a few kilometres; a marine wave field does not apply.
- *   visibility   not carried in the daily forecast shape this uses.
+ *   visibility   not carried in the daily forecast shape this uses. It used to
+ *                be DEFAULTED to 10 km, which was worse than absent: it counted
+ *                as a measurement, so this disclosure was false, and 10 km fails
+ *                the strict `visibility>10` in every model's perfect band.
+ *   waterTemp    no inland source — but a caller who has one can now pass
+ *                `waterTempC`, and swimming needs it. See below.
+ *
+ * Gusts are no longer on that list. Every water-sports model carried gust
+ * criteria and not one had ever been evaluated, because the daily forecast
+ * request never asked for them; it does now. On enclosed water the gust spread
+ * is what capsizes a dinghy, so this was the largest gap in the response and it
+ * was not among the things the response admitted to.
  *
  * `evaluateConditionScore` returns a neutral 0.5 for any missing field rather
  * than failing, so an inland score degrades gracefully — but it is then
@@ -52,9 +63,22 @@ import { getActivityScoreForLocation } from '../../../lib/seo/getActivityScore';
 import { activityTypes } from '../../../data/activityTypes';
 import type { SeoLocation } from '../../../data/seoLocations';
 
-/** Criteria the daily inland forecast cannot supply. Named so the caller can
- *  say so on the page instead of implying a precision we do not have. */
-const INLAND_UNAVAILABLE = ['waveHeight', 'visibility', 'swellPeriod', 'waterTemperature'];
+/**
+ * Criteria the daily inland forecast cannot supply. Named so the caller can say
+ * so on the page instead of implying a precision we do not have.
+ *
+ * `soilMoisture` was missing from this list and is referenced by birdwatching,
+ * camping and dog walking, so the disclosure was incomplete in exactly the
+ * activities a country park cares about.
+ *
+ * `gust` and `visibility` used to belong here and no longer do, for opposite
+ * reasons. Gusts are now requested from Open-Meteo and genuinely scored — they
+ * were referenced by every water-sports model and supplied to none, which was
+ * the largest gap in the whole response and was not disclosed either. Visibility
+ * is still not carried, but it is now honestly absent rather than defaulted to a
+ * fabricated 10 km, so naming it here is again true.
+ */
+const INLAND_UNAVAILABLE = ['waveHeight', 'visibility', 'swellPeriod', 'waterTemperature', 'soilMoisture'];
 
 /** Sibling apps allowed to call this. Not open to the world: the response is
  *  cheap but it is still our modelling, and an open CORS header on an
@@ -159,6 +183,27 @@ export default async function handler(
     ? req.query.name.trim().slice(0, 80)
     : 'This location';
 
+  /**
+   * A water temperature the CALLER has measured or modelled, which no inland
+   * forecast carries.
+   *
+   * Open-water swimming is decided by this and nothing else comes close: below
+   * about 15 °C is cold water and below 10 °C is where cold-water shock and
+   * swim failure dominate incidents. Without it the swimming models are scored
+   * on air temperature, which lags a reservoir by weeks and is at its most
+   * misleading in spring — the first warm afternoon over water still near
+   * winter temperature.
+   *
+   * Bounded to a range fresh water can actually occupy, so a caller sending
+   * Fahrenheit by mistake is refused rather than quietly scored. Absent stays
+   * absent; nothing is inferred from the air.
+   */
+  const waterTempC = num(req.query.waterTempC);
+  if (waterTempC !== null && (waterTempC < -2 || waterTempC > 40)) {
+    res.status(400).json({ error: 'waterTempC must be between -2 and 40 (°C)' });
+    return;
+  }
+
   // getActivityScoreForLocation wants a SeoLocation; everything it actually
   // reads is the coordinate, the timezone and the name.
   const location: SeoLocation = {
@@ -171,10 +216,18 @@ export default async function handler(
 
   try {
     const results = await Promise.all(requested.map(async (activityId): Promise<ActivityConditions | null> => {
-      const payload = await getActivityScoreForLocation(activityId, location);
+      const payload = await getActivityScoreForLocation(
+        activityId,
+        location,
+        waterTempC !== null ? { waterTemperature: waterTempC } : undefined,
+      );
       if (!payload) return null;
       const model = activityTypes.find((a) => a.id === activityId);
       const { neutral, coastal } = neutralFor(activityId);
+      /* Only still unavailable if the caller did not supply it. */
+      const stillNeutral = waterTempC !== null
+        ? neutral.filter((f) => f !== 'waterTemperature')
+        : neutral;
       return {
         activityId,
         name: model?.name ?? activityId,
@@ -182,7 +235,7 @@ export default async function handler(
           date: d.date, dayLabel: d.dayLabel, score: d.score,
           evaluation: d.evaluation, reasoning: d.reasoning,
         })),
-        neutralCriteria: neutral,
+        neutralCriteria: stillNeutral,
         coastalModel: coastal,
         seasonalMonths: model?.seasonalMonths,
       };

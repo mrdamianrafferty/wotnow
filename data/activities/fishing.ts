@@ -10,34 +10,34 @@ export const fishingActivities: ActivityType[] = [
     tags: ['fishing', 'freshwater', 'technique', 'quiet', 'outdoors', 'patience', 'nature', 'Saturday', 'Sunday', 'Friday'],
     perfectConditions: [
       'temperature=12..18',
-      'windSpeed<8',
+      'windSpeed<4',
       'clouds=70..100',
       'precipitation=0',
-      'visibility>10'
-    ],
+      'visibility>10',
+      'gust<8.8'],
     goodConditions: [
       'temperature=8..24',
-      'windSpeed<12',
+      'windSpeed<8',
       'clouds=50..100',
       'precipitation=0..2',
-      'visibility>5'
-    ],
+      'visibility>5',
+      'gust<12.8'],
     fairConditions: [
       'temperature=4..8 or 24..28',
-      'windSpeed=12..20',
+      'windSpeed=8..12',
       'clouds=20..50',
       'precipitation=2..5',
-      'visibility=2..5'
-    ],
+      'visibility=2..5',
+      'gust=12.8..16'],
     poorConditions: [
       'temperature<4 or temperature>28',
-      'windSpeed>20',
+      'windSpeed>12',
       'precipitation>5',
       'clouds<20',
       'visibility<2',
       'snowfallRateMmH>3',
-      'snowDepthCm>12'
-    ],
+      'snowDepthCm>12',
+      'gust>16'],
     indoorAlternative: 'Tie some flies',
     seasonalMonths: [3, 4, 5, 6, 7, 8, 9]
   },
@@ -51,33 +51,37 @@ export const fishingActivities: ActivityType[] = [
 
     perfectConditions: [
       'temperature=18..22',
-      'windSpeed=3..8',
-      'cloudCover=70-90',
-      'visibility>10'
+      'windSpeed<4',
+      'cloudCover=70..90',
+      'visibility>10',
+      'gust<8.8'
     ],
 
     goodConditions: [
       'temperature=10..24',
-      'windSpeed=0..12',
-      'cloudCover=50-100',
-      'visibility>5'
+      'windSpeed<8',
+      'cloudCover=50..100',
+      'visibility>5',
+      'gust<12.8'
     ],
 
     fairConditions: [
       'temperature=5..10 or 24..28',
-      'windSpeed=12..20',
-      'cloudCover=10-50',
+      'windSpeed=8..12',
+      'cloudCover=10..50',
       'precipitation=1..5',
-      'visibility=2..5'
+      'visibility=2..5',
+      'gust=12.8..16'
     ],
 
     poorConditions: [
       'temperature<5 or temperature>28',
-      'windSpeed>20',
+      'windSpeed>12',
       'precipitation>5',
       'visibility<2',
       'snowfallRateMmH>2',
-      'snowDepthCm>8'
+      'snowDepthCm>8',
+      'gust>16'
     ],
 
     seasonalMonths: [3, 4, 5, 6, 7, 8, 9, 10, 11],
@@ -95,8 +99,8 @@ export const fishingActivities: ActivityType[] = [
     tags: ['fishing','sea','shore','outdoors','patience','Saturday','Sunday'],
     perfectConditions: [
       'temperature=10..18',
-      'windSpeed<8',
-      'gust<10',
+      'windSpeed=0..6',
+      'gust<9',
       'waveHeight=0.3..0.8',
       'visibility>10',
       'precipitation=0..1',
@@ -104,8 +108,8 @@ export const fishingActivities: ActivityType[] = [
     ],
     goodConditions: [
       'temperature=6..22',
-      'windSpeed<12',
-      'gust<14',
+      'windSpeed=0..10',
+      'gust<13',
       'waveHeight=0.2..1.2',
       'visibility>5',
       'precipitation=0..2',
@@ -113,8 +117,8 @@ export const fishingActivities: ActivityType[] = [
     ],
     fairConditions: [
       'temperature=2..6 or 22..26',
-      'windSpeed=12..15',
-      'gust=14..17',
+      'windSpeed=10..13',
+      'gust=13..17',
       'waveHeight=1.2..1.8',
       'visibility=2..5',
       'precipitation=2..5',
@@ -122,7 +126,7 @@ export const fishingActivities: ActivityType[] = [
     ],
     poorConditions: [
       'temperature<2 or temperature>26',
-      'windSpeed>15',
+      'windSpeed>13',
       'gust>17',
       'waveHeight>1.8',
       'visibility<2',
@@ -142,32 +146,32 @@ export const fishingActivities: ActivityType[] = [
     tags: ['fishing','sea','boat','outdoors','Saturday','Sunday'],
     perfectConditions: [
       'temperature=8..20',
-      'windSpeed<7',
-      'gust<9',
+      'windSpeed=0..4',
+      'gust<6',
       'waveHeight<0.8',
       'visibility>10',
       'precipitation=0..1'
     ],
     goodConditions: [
       'temperature=5..24',
-      'windSpeed<11',
-      'gust<14',
+      'windSpeed=0..7',
+      'gust<9',
       'waveHeight<1.2',
       'visibility>5',
       'precipitation=0..2'
     ],
     fairConditions: [
       'temperature=0..5 or 24..28',
-      'windSpeed=11..15',
-      'gust=14..18',
+      'windSpeed=7..10',
+      'gust=9..13',
       'waveHeight=1.2..1.8',
       'visibility=2..5',
       'precipitation=2..5'
     ],
     poorConditions: [
       'temperature<-2 or temperature>28',
-      'windSpeed>15',
-      'gust>18',
+      'windSpeed>10',
+      'gust>13',
       'waveHeight>1.8',
       'visibility<2',
       'precipitation>5',

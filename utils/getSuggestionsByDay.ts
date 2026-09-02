@@ -6,9 +6,28 @@ import type { ActivityType } from '../data/activities/types';
 import type { SnowRecommendationLevel } from './snowRecommendations';
 
 export interface WeatherData {
-  temperature?: number;
-  precipitation?: number;             // mm
-  windspeed?: number;                 // km/h
+  temperature?: number;               // °C — daytime mean where the source has one
+  /** Overnight minimum. What decides a camping night; nothing else was reading it. */
+  temperatureMin?: number;            // °C
+  temperatureMax?: number;            // °C
+  precipitation?: number;             // mm over the period
+  /**
+   * How many hours of that period saw any rain.
+   *
+   * Carried because a daily total cannot tell 4 mm in one downpour from 4 mm
+   * spread over sixteen hours, and those are not the same day for a campsite or
+   * a walk. Absent when the source publishes no such field.
+   */
+  precipitationHours?: number;
+  windspeed?: number;                 // km/h — the period MEAN where available
+  /** The period's peak sustained wind. Used for limits, not for description. */
+  windspeedMax?: number;              // km/h
+  /**
+   * Peak gust. Absent when the source publishes none, and never inferred from
+   * the mean — a fabricated gust is worse than no gust, because the models
+   * treat an absent criterion as neutral and a present one as measured.
+   */
+  gustspeed?: number;                 // km/h
   clouds?: number;                    // %
   humidity?: number;                  // %
   visibility?: number;                // m
@@ -41,20 +60,34 @@ export interface Suggestion {
 
 // Removed unused imports to satisfy linter
 // import { selectHeroActivity } from './heroSelector';
-import { calculateConditionMatchScore,
-         calculatePoorConditionPenalty,
+import { scoreConditions,
+         scorePoorConditions,
          applySnowRecommendationScoring,
          applyWindRecommendationScoring,
          adjustScoreForMud } from './activitySuitability';
-import type { WeatherData as SuitabilityWeather, MinimalActivity } from './activitySuitability';
+import type { WeatherData as SuitabilityWeather, MinimalActivity, CriterionScore } from './activitySuitability';
 import { applyEveningBonus } from './eveningScoring';
-import { getWindActivityRecommendation } from './windRecommendations';
+import { describeConditions, phraseFor } from './activityReasons';
 import { assessSoilCondition, isMudSensitive, getMudMessage } from './soilMoistureUtils';
 // import { activityTypes } from '../data/activityTypes';
 // import { getActivityMessage } from '../data/activityMessages';
 
 // Minimum score threshold for activity suggestions (unless includeAllActivities is true)
 const MINIMUM_ACCEPTABLE_SCORE = 40; // Matches your 'fair' threshold in toLevel()
+
+/**
+ * Scoring traces, off unless asked for.
+ *
+ * These were unconditional `console.log`s, one of which dumped the whole weather
+ * object as pretty-printed JSON per activity per day. Building the Anglian
+ * board is nine waters times eight activities times seven days, so a single
+ * request wrote several hundred of them into the serverless log — enough to
+ * bury anything worth reading and to cost real time in the process.
+ */
+const TRACE = process.env.ACTIVITY_SCORING_TRACE === '1';
+function debug(...args: unknown[]): void {
+  if (TRACE) console.log(...args);
+}
 
 // Simple context tags helper used by scoring/bonuses
 function buildContextTagsForDay(dayName: string, hour: number, isToday: boolean): string[] {
@@ -69,6 +102,21 @@ function buildContextTagsForDay(dayName: string, hour: number, isToday: boolean)
 
   if (isToday) tags.add('today');
   return Array.from(tags);
+}
+
+/**
+ * A forecast entry's timestamp in milliseconds, whichever unit it arrived in.
+ *
+ * The documented contract is seconds. Milliseconds are accepted because several
+ * callers pass `Date.now()` and the mistake is undetectable downstream: a
+ * millisecond value multiplied by a thousand lands tens of thousands of years
+ * out, `getMonth()` returns something plausible, and a day is capped for being
+ * out of a season nobody chose. Anything past the year 5138 in seconds is a
+ * millisecond value, and nothing this function scores is a forecast for then.
+ */
+const YEAR_5138_IN_SECONDS = 1e11;
+function toEpochMs(date: number): number {
+  return date > YEAR_5138_IN_SECONDS ? date : date * 1000;
 }
 
 // Map numeric score to suitability label (for outdoor)
@@ -87,10 +135,15 @@ function calculateActivityScoreWithSnow(
   isEveningToday: boolean,
   contextTags: string[],
   opts: { nowTs: number; sunsetTs?: number | null; month?: number }
-): { score: number; snow?: { level: SnowRecommendationLevel; message: string } } {
-  console.log(`🎯 Scoring ${activity.id}...`);
-  console.log(`🌦️ Raw weather input:`, JSON.stringify(weather, null, 2));
-  
+): {
+  score: number;
+  /** The criterion that decided the score. Absent for indoor activities. */
+  binding?: CriterionScore;
+  /** True when a hazard fired hard enough to short-circuit the scoring. */
+  vetoed?: boolean;
+  snow?: { level: SnowRecommendationLevel; message: string };
+} {
+
   // Indoor activities: weather-reactive scoring
   if (!activity.weatherSensitive) {
     let score = 65;
@@ -120,14 +173,46 @@ function calculateActivityScoreWithSnow(
     return { score: Math.max(40, Math.min(95, Math.round(score))) };
   }
 
-  // Normalize weather to the suitability engine WeatherData
+  /**
+   * Normalise into the suitability engine's units: m/s for wind, km for
+   * visibility, °C throughout.
+   *
+   * Three corrections live in this block, all of them things the models already
+   * asked for and were never given:
+   *
+   * `gust` — every water-sports model carries gust criteria and not one had ever
+   * been evaluated, because nothing put a gust on this object. An absent gust is
+   * left absent rather than derived from the mean: `evalAtomicScore` drops a
+   * missing key instead of scoring it, which is the honest outcome, whereas a
+   * fabricated gust would be scored as though measured.
+   *
+   * `airTemperature` — a real alias, not a workaround. Half the library says
+   * `temperature` and half says `airTemperature` for the same quantity, and only
+   * the first was ever supplied. That is why `wild_swimming`, whose bands are
+   * written almost entirely in `airTemperature` and `waterTemperature`, was
+   * scoring 95 and "Perfect conditions" on a 3 °C January day: every thermal
+   * criterion it owns was invisible and it was left being scored on wind alone.
+   *
+   * `visibility` — no longer defaulted to 10 000 m. That default was worse than
+   * nothing twice over: it was counted as a measurement, so the disclosure that
+   * visibility could not be answered inland was false; and 10 km fails the
+   * strict `visibility>10` in every model's perfect band, so it quietly held a
+   * point off every top score in the library. Absent is now absent.
+   */
+  const windMeanMs = typeof weather.windspeed === 'number' ? weather.windspeed / 3.6 : undefined;
   const w: SuitabilityWeather = {
     temperature: weather.temperature,
+    airTemperature: weather.temperature,
+    temperatureMin: weather.temperatureMin,
     precipitation: weather.precipitation,
-    windSpeed: weather.windspeed ? weather.windspeed / 3.6 : 0, // Convert km/h back to m/s for activity conditions
+    precipitationHours: weather.precipitationHours,
+    windSpeed: windMeanMs ?? 0,
+    windSpeedMax: typeof weather.windspeedMax === 'number' ? weather.windspeedMax / 3.6 : undefined,
+    gust: typeof weather.gustspeed === 'number' ? weather.gustspeed / 3.6 : undefined,
     clouds: weather.clouds,
+    cloudCover: weather.clouds,
     humidity: weather.humidity,
-    visibility: (weather.visibility ?? 10000) / 1000,
+    visibility: typeof weather.visibility === 'number' ? weather.visibility / 1000 : undefined,
     waterTemperature: weather.waterTemperature,
     waveHeight: weather.waveHeight,
     swellHeight: weather.swellHeight,
@@ -143,61 +228,157 @@ function calculateActivityScoreWithSnow(
   const isWaterActivity = (activity.category?.toLowerCase().includes('water') || activity.secondaryCategory?.toLowerCase().includes('water') || activity.tags?.includes('water')) ?? false;
   const rainMm = typeof w.precipitation === 'number' ? w.precipitation : 0;
 
-  let score = 50; // Start with neutral score instead of 20
-  let cl: 'poor' | 'fair' | 'good' | 'perfect' = 'fair';
+  /**
+   * ─── Why there is no Math.random() in here any more ──────────────────────
+   *
+   * Each band used to assign its score as a base plus noise — `68 + random()*15`
+   * for good, `90 + random()*8` for perfect. Measured on identical input eight
+   * times, birdwatching returned 68, 70, 74, 79, 80, 80, 83: a spread of 15 on a
+   * scale where the gap between "Good" and "Peak" is 20.
+   *
+   * That cost three things. A page refresh changed the number. Two waters could
+   * not be compared, because the difference between them was smaller than the
+   * noise. And `bestDay`, which sorts the week by score, could pick the wrong
+   * day — the one feature most obviously built on the score meaning something.
+   *
+   * The replacement is not a constant per band, which would give a four-step
+   * chart. It is the band's own match score, projected across the band's range:
+   * a perfect match that scraped in at 0.81 lands near 88, one at 0.99 lands
+   * near 98. Same band boundaries, same semantics, and the number now moves with
+   * the weather instead of with the random number generator.
+   */
+  const span = (v: number, lo: number, hi: number, outLo: number, outHi: number) =>
+    outLo + Math.max(0, Math.min(1, (v - lo) / (hi - lo))) * (outHi - outLo);
 
-  // Dangerous conditions — make hazard veto sticky
-  let penalty = 0;
-  if (activity.poorConditions?.length) {
-    penalty = calculatePoorConditionPenalty(activity.poorConditions, w);
-    if (penalty >= 0.7) {
-      // Hard veto: cap and return early to avoid any later upgrades
-      const hardCapped = Math.max(5, Math.min(40, 20 + Math.round(Math.random() * 10)));
-      return { score: hardCapped };
-    }
+  let score = 30;
+
+  /**
+   * The hazard veto now floors the score instead of parking it mid-scale.
+   *
+   * It used to return `20 + round(random()*10)` — a band of 20 to 30 — while the
+   * ordinary path routinely finished at 5 to 10 after the wind adjustment. So
+   * the days the engine considered MOST dangerous scored ABOVE merely bad ones:
+   * sailing measured 10 at Force 7 and 29 at Force 9, and canoeing, swimming and
+   * windsurfing all did the same. On a board that ranks waters within an
+   * activity, a storm could float above a poor day.
+   *
+   * A veto now lands between 2 and 15, monotonically decreasing with the
+   * severity of what fired, and the ordinary path is clamped no lower than 16.
+   * The two ranges cannot overlap, so a vetoed day is always at the bottom.
+   */
+  const poor = scorePoorConditions(activity.poorConditions ?? [], w);
+  const penalty = poor.penalty;
+  if (poor.hazards.length) {
+    /**
+     * Graded by how many hazards fired, not by the penalty figure.
+     *
+     * The penalty is the mean of only the conditions that fired, so a single
+     * triggered hazard already saturates it at ~1 and every vetoed day would
+     * land on the same number — a Force 6 scoring identically to a hurricane.
+     * Counting them separates "over the limit" from "several things wrong at
+     * once", which is the distinction a reader can act on.
+     */
+    const byCount = [14, 10, 6, 3][Math.min(3, poor.hazards.length - 1)];
+    return {
+      score: byCount,
+      binding: poor.hazards.slice().sort((a, b) => b.score - a.score)[0],
+      vetoed: true,
+    };
   }
 
-  // Perfect
-  if (activity.perfectConditions?.length) {
-    const perfectScore = calculateConditionMatchScore(activity.perfectConditions, w);
-    if (perfectScore > 0.8) {
-      // Disallow perfect if notable rain for non-water activities or moderate risk present
-      if (!isWaterActivity && rainMm > 0) {
-        // skip perfect upgrade
-      } else if (penalty < 0.3) {
-        score = 90 + Math.random() * 8;
-        cl = 'perfect';
-        console.log(`🌟 ${activity.id} marked as perfect`);
-      }
-    }
-  }
-  // Good
-  if (cl !== 'perfect' && activity.goodConditions?.length) {
-    const goodScore = calculateConditionMatchScore(activity.goodConditions, w);
-    if (goodScore > 0.5) {
-      // Require essentially dry conditions for non-water activities
-      const allowGood = isWaterActivity || rainMm <= 0.5;
-      if (allowGood) {
-        score = 68 + Math.random() * 15;
-        cl = 'good';
-        console.log(`✅ ${activity.id} marked as good`);
-      }
-    }
-  }
-  // Fair
-  if (cl !== 'perfect' && cl !== 'good' && activity.fairConditions?.length) {
-    const fairScore = calculateConditionMatchScore(activity.fairConditions, w);
-    console.log(`👌 ${activity.id} fair match score: ${fairScore.toFixed(3)}`);
-    if (fairScore > 0.3) {
-      score = 45 + Math.random() * 15;
-      cl = 'fair';
-      console.log(`🆗 ${activity.id} marked as fair`);
-    }
-  }
-  // If no poor conditions triggered but no specific good conditions met, give moderate score
-  if (cl === 'fair' && score === 50) {
-    score = 40 + Math.random() * 20; // 40-60 range for neutral conditions
-    console.log(`📝 ${activity.id} using neutral conditions score: ${score}`);
+  /**
+   * Rain is read as an intensity, not as a daily total measured against
+   * hourly-looking thresholds.
+   *
+   * The caps below used to compare `precipitation` — a whole day's millimetres —
+   * against 1 mm and 3 mm, which are the right numbers for millimetres per hour
+   * and roughly a tenth of the right numbers for a day. An ordinary showery
+   * British day (6 mm) put dog walking on 25, birdwatching on 26 and camping on
+   * 20: all "Tough", none of them true.
+   *
+   * Where the source publishes `precipitationHours` the rate is computed and
+   * used, which also separates 4 mm of downpour from sixteen hours of drizzle —
+   * different days for a campsite, previously identical. Without it, the total
+   * is divided by a nominal twelve-hour day rather than treated as an hourly
+   * figure, which is a coarse but honest reading of what the number is.
+   */
+  const rainHours = typeof w.precipitationHours === 'number' && w.precipitationHours > 0
+    ? w.precipitationHours
+    : null;
+
+  /**
+   * How wet the day is, 0 to 1, judged against thresholds that match the
+   * quantity actually available.
+   *
+   * With hours, that is an intensity: 4 mm/h is the Met Office's own boundary
+   * for heavy rain, and a day is also wet simply by going on — twelve hours of
+   * drizzle is a washout at any rate, so duration counts too.
+   *
+   * Without hours, the only honest reading is the daily total against DAILY
+   * thresholds: about 10 mm is a properly wet British day. Applying an hourly
+   * threshold to a daily total was the original error and it made every showery
+   * day "Tough".
+   */
+  const wetness = rainHours
+    ? Math.min(1, Math.max(rainMm / rainHours / 4, rainHours / 12))
+    : Math.min(1, rainMm / 10);
+  const rainRateMmH = rainHours ? rainMm / rainHours : null;
+
+  const perfect = scoreConditions(activity.perfectConditions ?? [], w);
+  const good = scoreConditions(activity.goodConditions ?? [], w);
+  const fair = scoreConditions(activity.fairConditions ?? [], w);
+  let band = fair;
+
+  /**
+   * A band cannot be claimed while one of its own criteria is badly missed.
+   *
+   * The gate was the MEAN alone, so a criterion the day fails outright could be
+   * outvoted by two it passes. Measured: inland windsurfing read "Good weather"
+   * in a Force 2, because a pleasant temperature and no rain outweighed there
+   * being no usable wind — and no amount of sunshine makes a windless day
+   * windsurfable.
+   *
+   * The floor is deliberately loose. It is not there to make bands hard to
+   * reach, only to stop one comfortable variable papering over the one that
+   * actually decides whether the activity is possible.
+   */
+  const worst = (b: { criteria: { score: number }[] }) =>
+    b.criteria.length ? Math.min(...b.criteria.map((c) => c.score)) : 1;
+
+  if (perfect.criteria.length && perfect.mean > 0.8 && worst(perfect) >= 0.5
+      && (isWaterActivity || rainMm <= 0.2) && penalty < 0.3) {
+    score = span(perfect.mean, 0.8, 1, 88, 98);
+    band = perfect;
+  } else if (good.criteria.length && good.mean > 0.5 && worst(good) >= 0.35
+      && (isWaterActivity || wetness < 0.2)) {
+    score = span(good.mean, 0.5, 1, 60, 87);
+    band = good;
+  /* No `worst()` floor on the fair band, deliberately. Perfect and good list
+     DESIRABLE values, so failing one badly should disqualify the band. Fair
+     lists MARGINAL ones — "temperature=5..10 or 26..30" is the chilly-or-hot
+     range — so a pleasant 16 °C scores zero against it. Applying the floor here
+     would disqualify the fair band for being too nice a day. */
+  } else if (fair.criteria.length && fair.mean > 0.3) {
+    score = span(fair.mean, 0.3, 1, 40, 59);
+  } else if (!perfect.criteria.length && !good.criteria.length && !fair.criteria.length) {
+    /**
+     * Nothing could be evaluated at all — the forecast carries none of the
+     * fields this model asks about.
+     *
+     * That is a different statement from "the day is bad", and must not be
+     * scored as one. It happens whenever a model written for the coast is asked
+     * about an inland water: wave height, swell period and sea temperature are
+     * all absent, so a genuinely unanswerable question would otherwise come out
+     * as a confident "Tough". Mid-scale is the honest answer, and the endpoint's
+     * `neutralCriteria` field exists to say so alongside it.
+     */
+    score = 50;
+  } else {
+    /* Criteria WERE evaluated and none of them matched a band — so the day
+       really does sit outside everything this activity describes. Positioned by
+       the best partial match, so a near miss still reads above a total one. */
+    score = span(Math.max(perfect.mean, good.mean, fair.mean), 0, 0.5, 20, 39);
+    band = [perfect, good, fair].sort((a, b) => b.mean - a.mean)[0];
   }
 
   // Evening adjustments for outdoor
@@ -207,39 +388,153 @@ function calculateActivityScoreWithSnow(
     score *= eveningRes.multiplier;
   }
 
-  // Risk-aware finalization: subtract poor penalty and cap categories by risk
-  if (!penalty && activity.poorConditions?.length) {
-    penalty = calculatePoorConditionPenalty(activity.poorConditions, w);
-  }
-
   // Subtract penalty (40pt full-scale impact)
   score = score - Math.round(penalty * 40);
 
-  // Additional rain caps for non-water activities
+  /**
+   * Rain caps for non-water activities, now against a rate.
+   *
+   * 4 mm/h is the Met Office's own boundary for heavy rain and 0.5 mm/h is about
+   * where drizzle becomes rain you notice. Both are thresholds for an intensity,
+   * which is what `rainRateMmH` now is. A long drizzly day still lands here
+   * through duration rather than through rate — see the seasonal and duration
+   * handling below.
+   */
+  /**
+   * Rain, graded rather than only capped — and counted for water sports too.
+   *
+   * A cap alone made every wet day score the same, so a drizzle and a downpour
+   * were indistinguishable and "which day this week is driest" had no answer.
+   * More rain now always scores lower.
+   *
+   * Water activities used to be exempt outright, on the reasonable ground that
+   * someone about to get wet minds the rain less. Reasonable is not the same as
+   * nil: sixteen hours of drizzle is a worse day on a dinghy than a dry one, and
+   * exempting it entirely had 4.6 mm over sixteen hours reading as "A good day
+   * for sailing". So they carry the same shape at about a third of the weight,
+   * and keep their exemption from the hard caps.
+   */
+  const rainWeight = isWaterActivity ? 9 : 25;
+  score -= Math.round(wetness * rainWeight);
   if (!isWaterActivity) {
-    if (rainMm >= 3) score = Math.min(score, 40); // heavy rain -> poor
-    else if (rainMm >= 1) score = Math.min(score, 59); // light-moderate rain -> at most fair
+    if (rainRateMmH !== null && rainRateMmH >= 4) score = Math.min(score, 39);
+    else if (wetness >= 0.5) score = Math.min(score, 59);
+    /* Hours of it, even gentle, is its own kind of poor day. Only applied where
+       the source actually published the hours — never inferred. */
+    if (rainHours !== null && rainHours >= 8) score = Math.min(score, 55);
   }
 
-  // ➕ Apply wind-aware adjustment
-  const windAdjusted = applyWindRecommendationScoring(activity as MinimalActivity, w, score);
-  score = windAdjusted.score;
+  // ➕ Wind-aware adjustment: caps a score whose wind the model's own bands
+  // were too coarse to catch. See applyWindRecommendationScoring.
+  score = applyWindRecommendationScoring(activity as MinimalActivity, w, score).score;
 
-  // ➕ Apply soil moisture adjustment for mud-sensitive activities
-  const mudAdjusted = adjustScoreForMud(activity as MinimalActivity, w, score);
-  score = mudAdjusted.score;
+  // ➕ Soil moisture, for the activities that care about the ground.
+  score = adjustScoreForMud(activity as MinimalActivity, w, score).score;
 
-  // Apply snow-aware adjustment
+  // ➕ Snow.
   const snowAdjusted = applySnowRecommendationScoring(activity as MinimalActivity, w, score);
   score = snowAdjusted.score;
 
-  // Risk caps to prevent high categories under risk
-  if (penalty >= 0.5) score = Math.min(score, 59); // at most fair
-  else if (penalty >= 0.3) score = Math.min(score, 89); // block perfect
+  // Risk caps: a day carrying real hazard cannot present as a good one.
+  if (penalty >= 0.5) score = Math.min(score, 59);
+  else if (penalty >= 0.3) score = Math.min(score, 89);
 
-  // Clamp and round
-  score = Math.max(5, Math.min(95, score));
-  return { score: Math.round(score), snow: snowAdjusted.snow ? { level: snowAdjusted.snow.level, message: snowAdjusted.snow.message } : undefined };
+  /**
+   * Out of season, and finally acting on it.
+   *
+   * `seasonalMonths` has been on the models since they were written and
+   * `outOfSeason` has been derived from it in the caller since then too — and
+   * passed to `console.log` and nothing else. So wild swimming's [5,6,7,8,9] and
+   * camping's April-to-September had no effect on any score, and Alton's
+   * campsite scored the same in January as in July.
+   *
+   * Capped rather than zeroed: a mild February afternoon is a genuinely poor
+   * camping day rather than an impossible one, and some of these seasons are
+   * about a venue's opening hours rather than about the weather.
+   */
+  if (opts.month && activity.seasonalMonths?.length
+      && !activity.seasonalMonths.includes(opts.month)) {
+    score = Math.min(score, 35);
+  }
+
+  /**
+   * ─── What the sentence is about ─────────────────────────────────────────
+   *
+   * One ordered choice, made here rather than in the copy layer, because only
+   * this function knows which of the several things that moved the score
+   * actually moved it most.
+   *
+   *   1. Rain, when rain is what pulled it down. The band is chosen before any
+   *      of the rain handling above runs, so on a wet day the band's own weakest
+   *      criterion is not the reason and the reader was being told about the
+   *      breeze instead.
+   *
+   *   2. The poor condition nearest to firing. On a day that is not going well
+   *      this is a far more reliable source than the matched band: a poor
+   *      condition can only ever point the bad way, whereas a FAIR band lists
+   *      marginal ranges — so a day comfortably better than one scores zero
+   *      against it and gets reported as a failure. That produced "Very little
+   *      wind — Force 4" on a swimming tile whose fair band was written for
+   *      6–8 m/s.
+   *
+   *   3. The band's weakest criterion, but only for a perfect or good day,
+   *      where every criterion in the band describes something desirable and
+   *      the weakest one is therefore a real answer.
+   *
+   * Anything else leaves `binding` undefined and the copy layer falls back to a
+   * plain statement of the day, which is always true and never contradicts the
+   * verdict beside it.
+   */
+  const asBinding = (c: CriterionScore, badness: number): CriterionScore =>
+    ({ ...c, score: 1 - badness });
+
+  const nearestPoor = poor.all.slice().sort((a, b) => b.score - a.score)[0];
+
+  if (wetness > 0.35) {
+    band = {
+      mean: band.mean,
+      criteria: [asBinding(
+        { condition: 'precipitation=0..1', key: 'precipitation', score: 0, value: rainMm },
+        wetness,
+      )],
+    };
+  } else if (nearestPoor && nearestPoor.score > 0.4) {
+    band = { mean: band.mean, criteria: [asBinding(nearestPoor, nearestPoor.score)] };
+  } else if (score < 60) {
+    /* Neither rain nor a near-miss explains it, and the band's own weakest link
+       cannot be trusted below "good". Say nothing rather than something wrong. */
+    band = { mean: band.mean, criteria: [] };
+  }
+
+  /**
+   * An activity decided by water temperature cannot claim a top score without one.
+   *
+   * Every band of `wild_swimming` and its siblings is written around
+   * `waterTemperature`, and no inland source supplies it — so on a reservoir the
+   * model is left scoring air temperature and wind. That is enough to rule a day
+   * OUT, which is why the January case now reads correctly, but it is nowhere
+   * near enough to rule one IN: a reservoir lags the air by weeks and is coldest
+   * in spring, exactly when the first warm afternoon arrives.
+   *
+   * So the ceiling is the top of "Good". The day can still be described, and the
+   * band it cannot reach is the one that would have put "Peak" beside a swim in
+   * water nobody has measured.
+   */
+  if (typeof w.waterTemperature !== 'number'
+      && activity.poorConditions?.some((c) => c.includes('waterTemperature'))) {
+    score = Math.min(score, 79);
+  }
+
+  /* Floor is 16, not 5: below that belongs to the hazard veto alone, so a
+     vetoed day always sorts under an un-vetoed one. See the veto above. */
+  score = Math.max(16, Math.min(98, score));
+  return {
+    score: Math.round(score),
+    /* The criterion that held the day back — the weakest one in whichever band
+       decided the score. This is what the sentence is written from. */
+    binding: band.criteria.slice().sort((a, b) => a.score - b.score)[0],
+    snow: snowAdjusted.snow ? { level: snowAdjusted.snow.level, message: snowAdjusted.snow.message } : undefined,
+  };
 }
 
 // Define these helper functions if they don't exist elsewhere
@@ -247,32 +542,61 @@ function getScoreEvaluation(score: number): SuitabilityLevel {
   return toLevel(score);
 }
 
-function getReasoningForScore(score: number, activity: ActivityType, weather: WeatherData): string {
-  let base: string;
-  if (score >= 90) base = `Perfect conditions for ${activity.name || activity.id}!`;
-  else if (score >= 60) base = `Good weather for ${activity.name || activity.id}.`;
-  else if (score >= 40) base = `Fair conditions for ${activity.name || activity.id}.`;
-  else base = `Not ideal weather for ${activity.name || activity.id}, but still an option.`;
+/**
+ * The sentence shown under a verdict.
+ *
+ * Written from the criterion that actually decided the score — see
+ * utils/activityReasons, which owns the words. This function's whole job is now
+ * to assemble the inputs and to add the two contextual notes that are not
+ * criteria of any band.
+ */
+function getReasoningForScore(
+  score: number,
+  activity: ActivityType,
+  weather: WeatherData,
+  ctx: { binding?: CriterionScore; vetoed?: boolean; outOfSeason?: boolean } = {},
+): string {
+  /* Same normalisation the scorer used, so the sentence quotes the numbers that
+     were actually scored rather than re-deriving a different set. */
+  const w: SuitabilityWeather = {
+    temperature: weather.temperature,
+    airTemperature: weather.temperature,
+    temperatureMin: weather.temperatureMin,
+    precipitation: weather.precipitation,
+    precipitationHours: weather.precipitationHours,
+    windSpeed: typeof weather.windspeed === 'number' ? weather.windspeed / 3.6 : undefined,
+    gust: typeof weather.gustspeed === 'number' ? weather.gustspeed / 3.6 : undefined,
+    clouds: weather.clouds,
+    cloudCover: weather.clouds,
+    humidity: weather.humidity,
+    visibility: typeof weather.visibility === 'number' ? weather.visibility / 1000 : undefined,
+    waterTemperature: weather.waterTemperature,
+    waveHeight: weather.waveHeight,
+    soilMoisture: weather.soilMoisture,
+  };
 
-  // ➕ Wind context
-  const windMs = typeof weather.windspeed === 'number' ? weather.windspeed / 3.6 : undefined;
-  if (typeof windMs === 'number') {
-    const rec = getWindActivityRecommendation(activity.id, windMs);
-    if (['dangerous','unsafe','impractical','unplayable','difficult','uncomfortable','caution','min_wind_needed','optimal','beneficial'].includes(rec.level)) {
-      base += ` ${rec.emoji ?? ''} ${rec.message}`.trim();
-    }
+  let base = describeConditions({
+    activityId: activity.id,
+    phrase: phraseFor(activity.id, activity.name),
+    score,
+    weather: w,
+    binding: ctx.binding,
+    vetoed: ctx.vetoed,
+    outOfSeason: ctx.outOfSeason,
+  });
+
+  /* Humidity is in few bands but is what makes a warm day unpleasant. Skipped
+     when it is already the binding criterion, or the sentence says it twice. */
+  if (score < 40 && ctx.binding?.key !== 'humidity'
+      && typeof weather.humidity === 'number' && weather.humidity >= 90) {
+    base += ` Humid at ${Math.round(weather.humidity)}%, which will make it feel worse than the number suggests.`;
   }
 
-  // ➕ Humidity context for poor scores
-  if (score < 40 && typeof weather.humidity === 'number' && weather.humidity >= 90) {
-    base += ` High humidity (${Math.round(weather.humidity)}%) is making it feel oppressive.`;
-  }
-
-  // ➕ Soil/mud context
+  // Ground condition, where the activity is one that cares and the data exists.
   if (typeof weather.soilMoisture === 'number' && isMudSensitive(activity.id)) {
     const soil = assessSoilCondition(weather.soilMoisture);
     const msg = getMudMessage(activity.id, soil);
-    if (msg) base += ` — ${msg}`;
+    if (msg) base += ` ${msg}`;
   }
 
   return base;
@@ -287,6 +611,17 @@ export function getSuggestionsByDay({
   includeAllActivities = false,
   isEveningToday = false
 }: {
+  /**
+   * One entry per day. `date` is a UNIX timestamp in SECONDS, matching what
+   * OpenWeather and the Open-Meteo adapter both emit.
+   *
+   * The unit was undocumented and it started to matter: season is now read off
+   * the month of the day being scored, so a millisecond value silently becomes
+   * a date around the year 57,000 and the month comes out arbitrary. Callers
+   * are normalised below rather than trusted, because the failure is invisible
+   * — nothing throws, the score is just quietly capped for being out of a
+   * season it was never in.
+   */
   forecast: Array<{ date: number; weather: WeatherData }>;
   activities: ActivityType[];
   interests: string[];
@@ -295,7 +630,7 @@ export function getSuggestionsByDay({
   isEveningToday?: boolean;
 }) {
   // Add debugging logs
-  console.log('📊 getSuggestionsByDay INPUTS:', { 
+  debug('📊 getSuggestionsByDay INPUTS:', { 
     forecastLength: forecast.length,
     activitiesCount: activities.length,
     interestsCount: interests.length,
@@ -305,19 +640,24 @@ export function getSuggestionsByDay({
   });
 
   return forecast.map((day: { date: number; weather: WeatherData }) => {
-    console.log('🌤️ Processing day:', day.date);
+    debug('🌤️ Processing day:', day.date);
     
     const mapped = activities
       .map((activity: ActivityType) => {
         // Add important debugging log before scoring
-        console.log(`⚙️ Scoring activity: ${activity.id} with weather:`, day.weather);
+        debug(`⚙️ Scoring activity: ${activity.id} with weather:`, day.weather);
         
-        // Flag if out of season
-        const currentMonth = new Date(now).getMonth() + 1;
-        const outOfSeason = activity.seasonalMonths && !activity.seasonalMonths.includes(currentMonth);
-        if (outOfSeason) {
-          console.log(`🍂 Activity ${activity.id} is out of season`);
-        }
+        /**
+         * Season is the month of the DAY BEING SCORED, not of `now`.
+         *
+         * The old reading took `now`, so on 29 September every day of a seven-day
+         * outlook was scored as September — including the four that are October,
+         * which is exactly the boundary where a venue's season ends. A one-line
+         * error that only shows itself a few days a year, which is why it lasted.
+         */
+        const dayMonth = new Date(toEpochMs(day.date)).getMonth() + 1;
+        const outOfSeason = Boolean(activity.seasonalMonths?.length
+          && !activity.seasonalMonths.includes(dayMonth));
 
         // Calculate score for activity - use dynamic context tags
         const currentDate = new Date(now);
@@ -337,26 +677,24 @@ export function getSuggestionsByDay({
         if (month >= 8 && month <= 10) contextTags.push('autumn');
         if (month >= 11 || month <= 1) contextTags.push('winter');
 
-        console.log(`🏷️ Using context tags:`, contextTags);
+        debug(`🏷️ Using context tags:`, contextTags);
 
-        const { score, snow } = calculateActivityScoreWithSnow(
-          activity, 
+        const { score, snow, binding, vetoed } = calculateActivityScoreWithSnow(
+          activity,
           day.weather,
           (day.weather.precipitation ?? 0) < 5, // isWeatherGood
           isEveningToday,
           contextTags,
-          { nowTs: now.getTime() }
+          { nowTs: now.getTime(), month: dayMonth }
         );
-        
-        console.log(`📈 ${activity.id} scored: ${score}`);
-        
+
         // When includeAllActivities is true, include ALL activities regardless of score
         if (includeAllActivities || score >= MINIMUM_ACCEPTABLE_SCORE) {
           return {
             activityId: activity.id,
             score,
             evaluation: getScoreEvaluation(score),
-            reasoning: getReasoningForScore(score, activity, day.weather),
+            reasoning: getReasoningForScore(score, activity, day.weather, { binding, vetoed, outOfSeason }),
             outOfSeason,
             snow: snow ? { level: snow.level, message: snow.message } : undefined,
           };
@@ -366,7 +704,7 @@ export function getSuggestionsByDay({
       const suggestions: Suggestion[] = (mapped.filter(Boolean) as unknown) as Suggestion[];
     suggestions.sort((a, b) => b.score - a.score);
       
-    console.log(`✅ Finished day with ${suggestions.length} activities`);
+    debug(`✅ Finished day with ${suggestions.length} activities`);
     return {
       date: day.date,
       suggestions

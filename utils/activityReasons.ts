@@ -1,0 +1,466 @@
+/**
+ * What a day is actually like for one activity, in a sentence.
+ *
+ * ─── The problem this replaces ───────────────────────────────────────────
+ *
+ * Every activity in the library — a hundred of them — shared four sentence
+ * stems, picked by band and nothing else:
+ *
+ *     "Perfect conditions for {name}!"      "Good weather for {name}."
+ *     "Fair conditions for {name}."         "Not ideal weather for {name},
+ *                                            but still an option."
+ *
+ * To that, one clause could be appended from the wind table. Nothing else was
+ * ever said: not rain, not temperature, not gust, not water temperature, not
+ * season — even when one of those was the reason for the score. Surveyed across
+ * the nine Anglian waters over seven days, a wind clause appeared on 37% of
+ * entries; the other 63% carried the stem alone, which restates the badge
+ * printed next to it and tells a reader nothing they cannot already see.
+ *
+ * So the ceiling was six distinct notes, on a third of days, and no amount of
+ * rewriting those six raises it. The shortage was structural.
+ *
+ * ─── What changed ────────────────────────────────────────────────────────
+ *
+ * `scoreConditions` already worked out how well each individual criterion was
+ * met and threw the answer away. It now returns the weakest one — the criterion
+ * that actually held the day back — and this module writes from that. The
+ * sentence can therefore say *why*, which is the one thing a static page cannot
+ * do and the whole argument the Anglian demo is making.
+ *
+ * Copy is keyed on ACTIVITY FAMILY × CRITERION × DIRECTION rather than on band,
+ * because too much wind means something different to a windsurfer, a
+ * paddleboarder and a camper, and that difference is the product. Five families
+ * cover everything the reservoirs offer.
+ *
+ * ─── Rules the old copy broke, all of them ───────────────────────────────
+ *
+ *   · Numbers are rounded. It printed "6.944444444444445 m/s".
+ *   · Wind is Force and knots. Nobody at a sailing club thinks in m/s, and the
+ *     demo settled this argument already (see RiseDaisy lib/demo/wind-format).
+ *   · No tautologies. It said "wind creates use caution conditions".
+ *   · No card labels in prose. It said "Good weather for Go Sailing (Inland)"
+ *     and "Fair conditions for Walk the Dog" — those are button labels.
+ *   · A dangerous day is not "still an option". It said, verbatim: "Not ideal
+ *     weather for Go Camping, but still an option. 🚨 Dangerous". The engine had
+ *     decided a gale was dangerous and the stem in front of it shrugged.
+ *   · No emoji. They were decoration on a safety message.
+ */
+
+import type { CriterionScore, WeatherData } from './activitySuitability';
+
+// ─────────────────────────────────────────────────────────────────────────
+// Units the reader actually uses
+// ─────────────────────────────────────────────────────────────────────────
+
+/** Upper bounds of each Beaufort force in km/h. Force N is wind below BOUNDS[N]. */
+const FORCE_BOUNDS_KMH = [1, 6, 12, 20, 29, 39, 50, 62, 75, 89, 103, 118];
+
+const FORCE_NAMES = [
+  'calm', 'light air', 'light breeze', 'gentle breeze', 'moderate breeze',
+  'fresh breeze', 'strong breeze', 'near gale', 'gale', 'severe gale',
+  'storm', 'violent storm', 'hurricane',
+];
+
+export function forceFromMs(ms: number): number {
+  const kmh = ms * 3.6;
+  for (let i = 0; i < FORCE_BOUNDS_KMH.length; i++) if (kmh < FORCE_BOUNDS_KMH[i]) return i;
+  return 12;
+}
+
+export function forceName(force: number): string {
+  return FORCE_NAMES[Math.max(0, Math.min(12, force))];
+}
+
+/** "Force 5" — spelled out, never "F5". That abbreviation is ours, not the scale's. */
+function force(ms: number): string {
+  return `Force ${forceFromMs(ms)}`;
+}
+
+/** "Force 5, 18 knots" — for the one place per sentence that carries a number. */
+function forceAndKnots(ms: number): string {
+  const kn = Math.round(ms * 1.94384);
+  return `Force ${forceFromMs(ms)}, ${kn} knot${kn === 1 ? '' : 's'}`;
+}
+
+function degrees(c: number): string {
+  return `${Math.round(c)} °C`;
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+// Families
+// ─────────────────────────────────────────────────────────────────────────
+
+/**
+ * What kind of thing an activity is, for the purpose of what weather means to it.
+ *
+ * `wind_powered` wants wind and stops when there is too much; `paddle` never
+ * wants any; `immersion` is decided by water temperature and barely by anything
+ * else; `land_endurance` treats wind as effort rather than hazard once traffic
+ * is out of the picture; `stay_put` is about being comfortable in one place for
+ * hours, which makes duration of rain and the overnight minimum matter more than
+ * the afternoon.
+ */
+export type ActivityFamily =
+  | 'wind_powered' | 'paddle' | 'immersion' | 'land_endurance' | 'stay_put' | 'other';
+
+const FAMILY_BY_ID: Record<string, ActivityFamily> = {
+  sailing: 'wind_powered', sailing_inland: 'wind_powered',
+  windsurfing: 'wind_powered', windsurfing_inland: 'wind_powered',
+  kitesurfing: 'wind_powered',
+
+  kayaking: 'paddle', sea_kayaking: 'paddle', canoeing: 'paddle',
+  stand_up_paddleboarding: 'paddle', sup_sea: 'paddle', rowing: 'paddle',
+
+  wild_swimming: 'immersion', sea_swimming: 'immersion', swimming: 'immersion',
+  snorkeling: 'immersion', scuba_diving: 'immersion',
+
+  road_cycling: 'land_endurance', gravel_biking: 'land_endurance',
+  mountain_biking: 'land_endurance', cycling: 'land_endurance',
+  running: 'land_endurance', trail_running: 'land_endurance', hiking: 'land_endurance',
+
+  camping: 'stay_put', birdwatching: 'stay_put', dog_walking: 'stay_put',
+  picnicking: 'stay_put', photography: 'stay_put', stargazing: 'stay_put',
+  fly_fishing_freshwater: 'stay_put', coarse_fishing: 'stay_put',
+};
+
+export function familyFor(activityId: string): ActivityFamily {
+  return FAMILY_BY_ID[activityId] ?? 'other';
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+// Naming an activity inside a sentence
+// ─────────────────────────────────────────────────────────────────────────
+
+/**
+ * Activities whose card label will not survive being dropped into prose.
+ *
+ * A label is an instruction — "Walk the Dog", "Go Sailing (Inland)" — and
+ * instructions do not follow "a good day for". The engine was writing "Good
+ * weather for Go Sailing (Inland)." and "Fair conditions for Walk the Dog."
+ * straight onto the page.
+ *
+ * Only the awkward ones are listed; `phraseFor` derives the rest, which is why
+ * this map is short and stays short. The parenthetical qualifier goes too: it
+ * distinguishes two models in our catalogue and means nothing to a reader who
+ * is standing next to a reservoir.
+ */
+const PHRASE_OVERRIDES: Record<string, string> = {
+  dog_walking: 'walking the dog',
+  stand_up_paddleboarding: 'paddleboarding',
+  wild_swimming: 'swimming',
+  sea_swimming: 'sea swimming',
+  road_cycling: 'cycling',
+  bbq: 'a barbecue',
+  picnicking: 'a picnic',
+  outdoor_reading: 'reading outside',
+  camping: 'camping',
+};
+
+export function phraseFor(activityId: string, name?: string): string {
+  const override = PHRASE_OVERRIDES[activityId];
+  if (override) return override;
+  if (!name) return activityId.replace(/_/g, ' ');
+  return name
+    .replace(/^Go\s+/i, '')
+    .replace(/\s*\((?:Inland|Coastal)\)\s*$/i, '')
+    .trim()
+    .toLowerCase();
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+// Which way a criterion was missed
+// ─────────────────────────────────────────────────────────────────────────
+
+type Direction = 'low' | 'high' | 'marginal';
+
+/**
+ * Whether the value sat below the criterion's range, above it, or inside it but
+ * badly placed.
+ *
+ * Read off every number in the condition string rather than by re-parsing its
+ * grammar, because the strings take several shapes — `windSpeed=4..16`,
+ * `windSpeed<8`, `temperature=5..10 or 24..28` — and the only thing needed here
+ * is which side of the wanted values the day fell on. `marginal` means it was
+ * within the stated bounds and still scored badly, which happens near an edge.
+ */
+function directionOf(condition: string, value: number): Direction {
+  const nums = (condition.match(/-?\d+(?:\.\d+)?/g) ?? []).map(Number);
+  if (!nums.length) return 'marginal';
+  const lo = Math.min(...nums);
+  const hi = Math.max(...nums);
+  if (value < lo) return 'low';
+  if (value > hi) return 'high';
+  return 'marginal';
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+// The copy
+// ─────────────────────────────────────────────────────────────────────────
+
+type Phrasing = (v: number, w: WeatherData) => string | null;
+
+/**
+ * Reason clauses, by criterion and direction, with family overrides.
+ *
+ * `DEFAULTS` is what any activity says. A family entry replaces it where the
+ * same weather means something different — a light wind is a problem for a
+ * windsurfer and the best thing that can happen to a paddleboarder, and those
+ * two tiles sitting side by side saying opposite things about one number is the
+ * demo working.
+ */
+const DEFAULTS: Record<string, Partial<Record<Direction, Phrasing>>> = {
+  windSpeed: {
+    high: (v) => `Windier than it wants — ${forceAndKnots(v)}.`,
+    low: (v) => `Very little wind — ${force(v)}.`,
+  },
+  gust: {
+    high: (v, w) => typeof w.windSpeed === 'number'
+      ? `Gusting ${force(v)} on a ${force(w.windSpeed)} mean — it is the spread that catches you out, not the average.`
+      : `Gusting ${forceAndKnots(v)}.`,
+  },
+  temperature: {
+    low: (v) => `Cold for it — ${degrees(v)}.`,
+    high: (v) => `Hot for it — ${degrees(v)}.`,
+  },
+  airTemperature: {
+    low: (v) => `Cold for it — ${degrees(v)}.`,
+    high: (v) => `Hot for it — ${degrees(v)}.`,
+  },
+  temperatureMin: {
+    low: (v) => `Down to ${degrees(v)} overnight.`,
+  },
+  waterTemperature: {
+    low: (v) => `Water around ${degrees(v)}.`,
+    high: (v) => `Water up at ${degrees(v)}.`,
+  },
+  precipitation: {
+    high: (v, w) => typeof w.precipitationHours === 'number' && w.precipitationHours >= 1
+      ? `Rain for ${Math.round(w.precipitationHours)} hours of it, ${v.toFixed(1)} mm in total.`
+      : `${v.toFixed(1)} mm of rain forecast.`,
+  },
+  visibility: {
+    low: (v) => `Visibility down to about ${v < 1 ? 'under a kilometre' : `${Math.round(v)} km`}.`,
+  },
+  waveHeight: {
+    high: (v) => `A ${v.toFixed(1)} m sea running.`,
+  },
+  humidity: {
+    high: (v) => `Humid at ${Math.round(v)}%.`,
+  },
+  cloudCover: {
+    high: () => 'Overcast throughout.',
+    low: () => 'Clear and bright, with no cover from it.',
+  },
+  soilMoisture: {
+    high: () => 'The ground will be heavy underfoot.',
+    low: () => 'The ground is baked hard.',
+  },
+  snowDepthCm: { high: (v) => `${Math.round(v)} cm of lying snow.` },
+  snowfallRateMmH: { high: () => 'Snow falling.' },
+};
+
+const BY_FAMILY: Partial<Record<ActivityFamily, Record<string, Partial<Record<Direction, Phrasing>>>>> = {
+  wind_powered: {
+    windSpeed: {
+      /**
+       * Three different things, and the old copy called them all the same.
+       *
+       * A flat calm is nothing at all. Force 1 is drifting. Force 2 is a real
+       * lesson — these are tuition centres, and a beginner learning to uphaul or
+       * hold a course wants exactly the wind an experienced sailor calls dull.
+       * Telling all three "not enough wind" writes off the days a first-timer
+       * should be booking.
+       */
+      low: (v) => {
+        const f = forceFromMs(v);
+        if (f === 0) return 'Flat calm — there is nothing to work with.';
+        if (f <= 1) return `Barely moving — ${forceAndKnots(v)}. Not enough to get out and back.`;
+        return `Light — ${forceAndKnots(v)}. Fine for a lesson, not much more.`;
+      },
+      high: (v) => `Too much wind for it — ${forceAndKnots(v)}.`,
+      marginal: (v) => `Marginal at ${force(v)}.`,
+    },
+    temperature: { low: (v) => `Cold on the water — ${degrees(v)}.` },
+    airTemperature: { low: (v) => `Cold on the water — ${degrees(v)}.` },
+  },
+  paddle: {
+    windSpeed: {
+      high: (v) => `More wind than a paddle can hold against — ${forceAndKnots(v)}.`,
+      marginal: (v) => `Getting up: ${force(v)}.`,
+    },
+    gust: {
+      high: (v, w) => typeof w.windSpeed === 'number'
+        ? `Settled enough on the mean, but gusting ${force(v)}.`
+        : `Gusting ${force(v)}.`,
+    },
+  },
+  immersion: {
+    waterTemperature: {
+      /* The threshold that matters. Below 15 °C is cold water; below 10 °C is
+         where cold-water shock and swim failure dominate open-water incidents,
+         and the sentence says so rather than grading it out of a hundred. */
+      low: (v) => v < 10
+        ? `Water around ${degrees(v)} — cold-water shock territory, for acclimatised swimmers in company and not for long.`
+        : `Water around ${degrees(v)} — cold enough to shorten a swim.`,
+    },
+    airTemperature: {
+      low: (v) => `${degrees(v)} out of the water, which is the part that catches people — getting warm again is slower than it feels.`,
+    },
+    windSpeed: {
+      high: (v) => `Chop on the water and wind chill on the way out — ${force(v)}.`,
+    },
+  },
+  land_endurance: {
+    windSpeed: {
+      high: (v) => `Hard work into a ${forceName(forceFromMs(v))} — ${forceAndKnots(v)}.`,
+    },
+    precipitation: {
+      high: (v, w) => typeof w.precipitationHours === 'number' && w.precipitationHours >= 4
+        ? `Wet for ${Math.round(w.precipitationHours)} hours of it.`
+        : `${v.toFixed(1)} mm of rain about.`,
+    },
+  },
+  stay_put: {
+    windSpeed: {
+      high: (v) => `${forceName(forceFromMs(v)).replace(/^./, (c) => c.toUpperCase())} — ${force(v)}.`,
+    },
+    precipitation: {
+      high: (v, w) => typeof w.precipitationHours === 'number' && w.precipitationHours >= 6
+        ? `Rain on and off for ${Math.round(w.precipitationHours)} hours — a long time to sit in it.`
+        : `${v.toFixed(1)} mm of rain forecast.`,
+    },
+  },
+};
+
+/**
+ * The reason clause for one criterion, or null when nothing sensible can be said.
+ *
+ * Null rather than a filler sentence, deliberately. A criterion this module has
+ * no words for should cost a shorter line, never an invented one — the same rule
+ * the demo's own note classifier already follows.
+ */
+function clauseFor(
+  family: ActivityFamily,
+  criterion: CriterionScore,
+  weather: WeatherData,
+): string | null {
+  if (typeof criterion.value !== 'number') return null;
+  /* An explicit direction beats one inferred from the numbers — see
+     CriterionScore.direction. */
+  const dir = criterion.direction ?? directionOf(criterion.condition, criterion.value);
+  const table = BY_FAMILY[family]?.[criterion.key] ?? DEFAULTS[criterion.key];
+  const phrase = table?.[dir] ?? DEFAULTS[criterion.key]?.[dir];
+  return phrase ? phrase(criterion.value, weather) : null;
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+// The verdict
+// ─────────────────────────────────────────────────────────────────────────
+
+type Band = 'perfect' | 'good' | 'fair' | 'poor';
+
+function bandOf(score: number): Band {
+  if (score >= 90) return 'perfect';
+  if (score >= 60) return 'good';
+  if (score >= 40) return 'fair';
+  return 'poor';
+}
+
+const VERDICT: Record<Band, (phrase: string) => string> = {
+  perfect: (p) => `About as good as it gets for ${p}.`,
+  good: (p) => `A good day for ${p}.`,
+  fair: (p) => `Workable for ${p}.`,
+  /* Not "but still an option". That stem was being printed in front of the
+     engine's own word "Dangerous". */
+  poor: (p) => `Not a day for ${p}.`,
+};
+
+/** Said instead of a verdict when a hazard fired hard enough to stop the scoring. */
+function vetoVerdict(phrase: string, family: ActivityFamily): string {
+  if (family === 'wind_powered' || family === 'paddle' || family === 'immersion') {
+    return `Not safe for ${phrase} today.`;
+  }
+  return `Not a day for ${phrase}.`;
+}
+
+/**
+ * A plain statement of what the day is doing, used when nothing is holding the
+ * activity back.
+ *
+ * This is what fills the two-thirds of days that previously carried the stem
+ * alone. It says less than a reason clause, because there is less to say, but it
+ * is always true and always specific — which the restatement of the badge it
+ * replaces was neither.
+ */
+function conditionsLine(w: WeatherData): string | null {
+  const bits: string[] = [];
+  if (typeof w.windSpeed === 'number') {
+    const f = forceFromMs(w.windSpeed);
+    bits.push(f === 0 ? 'Flat calm' : `${forceName(f).replace(/^./, (c) => c.toUpperCase())}, ${force(w.windSpeed)}`);
+  }
+  const t = w.temperature ?? w.airTemperature;
+  if (typeof t === 'number') bits.push(degrees(t));
+  if (!bits.length) return null;
+  return `${bits.join(', ')}.`;
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+// Public
+// ─────────────────────────────────────────────────────────────────────────
+
+export interface ReasonInput {
+  activityId: string;
+  /** How the activity is named inside a sentence — "sailing", "walking the dog". */
+  phrase: string;
+  score: number;
+  weather: WeatherData;
+  /** The weakest criterion in the band that decided the score. */
+  binding?: CriterionScore;
+  /** The hazard that fired, when one did. */
+  vetoed?: boolean;
+  outOfSeason?: boolean;
+}
+
+/**
+ * One or two sentences: the verdict, then why.
+ *
+ * The reason clause is only appended when the binding criterion actually scored
+ * badly. On a day where nothing is limiting, appending "the wind is marginal"
+ * because it happened to be the weakest of several good criteria would
+ * contradict the verdict beside it — which is exactly the failure the old copy
+ * had, where a day scored 29 carried "Optimal wind for this activity".
+ */
+export function describeConditions(input: ReasonInput): string {
+  const { phrase, score, weather, binding, vetoed, outOfSeason } = input;
+  const family = familyFor(input.activityId);
+  const band = bandOf(score);
+
+  const parts: string[] = [vetoed ? vetoVerdict(phrase, family) : VERDICT[band](phrase)];
+
+  /**
+   * The limiting clause is only for days that are actually limited.
+   *
+   * On a perfect or good day the binding criterion is merely the weakest of
+   * several that all passed, and saying so contradicts the verdict in front of
+   * it — measured, this produced "A good day for windsurfing. Not enough wind to
+   * work with." The clause register is written in absolutes because that is the
+   * right voice for a day that is genuinely constrained, and the wrong one for
+   * a day that merely has a softest link. Good days get the plain conditions
+   * line instead, which is still specific and cannot disagree with itself.
+   */
+  const limited = vetoed || (band !== 'perfect' && band !== 'good' && binding && binding.score < 0.6);
+  const reason = limited && binding ? clauseFor(family, binding, weather) : null;
+
+  if (reason) parts.push(reason);
+  else {
+    const line = conditionsLine(weather);
+    if (line) parts.push(line);
+  }
+
+  /* Season last, because it is a different kind of fact from the weather — it
+     does not describe the day, it says the day is beside the point. */
+  if (outOfSeason) parts.push('Out of season for it, whatever the weather does.');
+
+  return parts.join(' ');
+}

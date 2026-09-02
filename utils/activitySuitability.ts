@@ -11,9 +11,22 @@ import { assessSoilCondition, isMudSensitive } from './soilMoistureUtils';
 export interface WeatherData {
   // Land conditions
   temperature?: number;
+  /** Alias of `temperature`. Both spellings appear across data/activities. */
+  airTemperature?: number;
+  /** Overnight minimum, for activities decided by the night rather than the day. */
+  temperatureMin?: number;
   precipitation?: number;
+  /** Hours of the period with measurable rain, where the source publishes it. */
+  precipitationHours?: number;
+  /** Mean wind over the period, m/s. What a day feels like. */
   windSpeed?: number;
+  /** Peak sustained wind, m/s. What a safety limit is set against. */
+  windSpeedMax?: number;
+  /** Peak gust, m/s. Absent rather than inferred when unpublished. */
+  gust?: number;
   clouds?: number;
+  /** Alias of `clouds`. Both spellings appear across data/activities. */
+  cloudCover?: number;
   humidity?: number;
   visibility?: number;
   // ➕ optional soil moisture (0–1 m3/m3 or 0–100 %)
@@ -126,13 +139,43 @@ export function evaluateConditionScore(condition: string, weather: WeatherData):
   if (parsed.operator === 'range') {
     if ('min' in parsed && 'max' in parsed) {
       const { min, max } = parsed;
+
+      /**
+       * A range anchored at zero is a ceiling, not a target.
+       *
+       * `precipitation=0..2` means "up to 2 mm is fine". Centre-weighting scored
+       * it as though 1 mm were ideal and a dry day were a total miss — a
+       * perfectly dry day scored ZERO on that criterion, which then dragged the
+       * whole band's mean down. Measured: kayaking on a flat calm 16 °C morning
+       * could not reach its own perfect band because it was not raining.
+       *
+       * The same reading is right for every zero-anchored quantity in the
+       * library — rain, wave height, cloud, snow — where less is never worse.
+       */
+      if (min === 0) {
+        if (value <= max) return 1;
+        return Math.max(0, 1 - (value - max) / Math.max(max, 1));
+      }
+
+      /**
+       * Inside the range always beats outside it.
+       *
+       * The old curve was `1 - |v-centre|/(span/2)`, which is 1 at the centre and
+       * ZERO at both edges — so a temperature sitting exactly on the boundary of
+       * an activity's perfect range scored the same as one nowhere near it. Only
+       * the precise midpoint scored full marks, which made every band harder to
+       * reach the wider it was written and biased the whole library downwards.
+       *
+       * In-range now spans 1 down to 0.5, out-of-range 0.5 down to 0. Same shape,
+       * same centre preference, but the two cases can no longer collide.
+       */
       const center = (min + max) / 2;
       const span = max - min;
       if (value >= min && value <= max) {
-        return 1 - Math.abs(value - center) / (span / 2);
+        return 1 - 0.5 * Math.abs(value - center) / (span / 2);
       }
       const overflow = value < min ? min - value : value - max;
-      return Math.max(0, 1 - overflow / span);
+      return Math.max(0, 0.5 * (1 - overflow / span));
     }
     return 0;
   }
@@ -249,11 +292,31 @@ function evalCompoundScore(expr: string, weather: WeatherData): { score: number;
     return { score: Math.min(...scores), counted: true };
   }
 
-  // OR of AND branches
+  /**
+   * OR of AND branches.
+   *
+   * `defaultKey` is seeded from the FIRST branch and carried into every
+   * subsequent one, which is the whole point of the shorthand and was the one
+   * place it did not work. `lastKey` used to be declared inside this loop, so it
+   * reset to undefined on each branch — meaning the second half of
+   * `windSpeed=1.5..2.5 or 8..10.8` had no key to inherit, failed to parse, and
+   * was dropped. The expression then degenerated to its first branch alone.
+   *
+   * Every criterion in the library written as `key=A..B or C..D` was affected:
+   * a value in the second range scored ZERO, exactly as though it had matched
+   * nothing. Measured before the fix, inland windsurfing at Force 5 could not
+   * match the fair band that had been written for it. Forms where both branches
+   * name their key (`temperature<5 or temperature>28`) were always fine, which
+   * is why this survived.
+   */
+  const defaultKey = parseConditionString(
+    orParts[0].split(AND_SPLIT_RE)[0].trim(),
+  )?.key;
+
   let anyCounted = false;
   let best = 0;
   for (const branch of orParts) {
-    let lastKey: string | undefined;
+    let lastKey: string | undefined = defaultKey;
     const atoms = branch.split(AND_SPLIT_RE).map(s => s.trim()).filter(Boolean);
     const scores: number[] = [];
     for (const raw of atoms) {
@@ -271,41 +334,156 @@ function evalCompoundScore(expr: string, weather: WeatherData): { score: number;
   return { score: best, counted: anyCounted };
 }
 
+/**
+ * One condition string, scored, with enough context to write a sentence about.
+ *
+ * The per-criterion score was always computed and always thrown away — the band
+ * average was the only thing that survived, so the engine knew a Tuesday scored
+ * 62 because the gust was marginal and could only tell the reader "Good weather
+ * for Go Kayaking". Keeping the parts is what lets the copy name a reason.
+ */
+export interface CriterionScore {
+  /** The band string as written in data/activities. */
+  condition: string;
+  /** The weather key it tests — `windSpeed`, `temperature`, `gust`. */
+  key: string;
+  /** 0–1, how well this single criterion was met. */
+  score: number;
+  /** What the weather actually was, where a single key could be resolved. */
+  value?: number;
+  /**
+   * Which way this criterion is failing, when the caller knows better than the
+   * numbers do.
+   *
+   * A POOR condition written `windSpeed>8` fires from above, so a day sitting
+   * just below it is approaching "too much wind" — but read off the numbers
+   * alone, 7.2 is simply lower than 8 and looks like a shortfall. That produced
+   * "Very little wind — Force 4" on a swimming tile, from a condition that means
+   * the exact opposite. The operator settles it and nothing else can.
+   */
+  direction?: 'low' | 'high';
+}
+
+/**
+ * Score a band and keep the workings.
+ *
+ * Criteria that could not be evaluated — a key the forecast does not carry — are
+ * omitted rather than scored, which is the existing behaviour and the reason a
+ * missing gust must stay missing rather than being filled in.
+ */
+export function scoreConditions(
+  conditions: string[],
+  weather: WeatherData
+): { mean: number; criteria: CriterionScore[] } {
+  const criteria: CriterionScore[] = [];
+  let total = 0;
+  for (const cond of conditions) {
+    const { score, counted } = evalCompoundScore(cond, weather);
+    if (!counted) continue;
+    const key = extractWeatherKey(cond.split(OR_SPLIT_RE)[0].split(AND_SPLIT_RE)[0].trim());
+    const raw = weather[key];
+    criteria.push({
+      condition: cond,
+      key,
+      score,
+      value: typeof raw === 'number' ? raw : undefined,
+    });
+    total += score;
+  }
+  return { mean: criteria.length ? total / criteria.length : 0, criteria };
+}
+
 export function calculateConditionMatchScore(
   conditions: string[],
   weather: WeatherData
 ): number {
   if (conditions.length === 0) return 0;
-  let total = 0;
-  let count = 0;
-  for (const cond of conditions) {
-    const { score, counted } = evalCompoundScore(cond, weather);
-    if (!counted) continue;
-    total += score;
-    count++;
-  }
-  return count > 0 ? total / count : 0;
+  return scoreConditions(conditions, weather).mean;
 }
 
 /**
  * Calculates a penalty (0–1) from poor conditions—higher when conditions are bad.
  */
+/**
+ * The poor-condition penalty, plus which conditions actually fired.
+ *
+ * Only conditions scoring above 0.7 count, and the penalty is their mean — so a
+ * single triggered hazard gives a penalty near 1 rather than being diluted by
+ * the nine that did not fire. That is deliberate and correct for a safety
+ * signal; the reason it is worth stating is that it makes `triggered` the most
+ * useful thing on this object. When a day is vetoed, the one condition in that
+ * list IS the answer to "why", and it is the sentence the reader wants.
+ */
+/**
+ * Quantities where having too LITTLE is a disappointment, not a danger.
+ *
+ * A poor condition reads as a hazard by default, which is right for almost all
+ * of them — but `windSpeed<1.5` on a dinghy, or `waveHeight<0.25` on a surfboard,
+ * says "there is nothing to work with", not "you may not come back". Before this
+ * distinction existed, a flat calm on a sailing tile produced the sentence "Not
+ * safe for sailing today", which is both false and the kind of false that
+ * teaches a reader to ignore the real warnings.
+ */
+const SHORTFALL_NOT_HAZARD = new Set(['windSpeed', 'gust', 'waveHeight', 'swellHeight', 'swellPeriod', 'snowDepthCm']);
+
+/** True when a triggered condition fired because the value was BELOW its range. */
+function firedLow(condition: string, value: number | undefined): boolean {
+  if (typeof value !== 'number') return false;
+  const nums = (condition.match(/-?\d+(?:\.\d+)?/g) ?? []).map(Number);
+  return nums.length > 0 && value < Math.min(...nums);
+}
+
+export function scorePoorConditions(
+  conditions: string[],
+  weather: WeatherData
+): { penalty: number; triggered: CriterionScore[]; hazards: CriterionScore[]; all: CriterionScore[] } {
+  const triggered: CriterionScore[] = [];
+  const hazards: CriterionScore[] = [];
+  const all: CriterionScore[] = [];
+  let total = 0;
+  for (const cond of conditions) {
+    const { score, counted } = evalCompoundScore(cond, weather);
+    if (!counted) continue;
+    const key = extractWeatherKey(cond.split(OR_SPLIT_RE)[0].split(AND_SPLIT_RE)[0].trim());
+    const raw = weather[key];
+    const value = typeof raw === 'number' ? raw : undefined;
+    /* `>` fires from above and `<` from below. A range in a poor band is
+       ambiguous and is left for the numbers to decide. */
+    const op = /^[a-zA-Z_]+\s*(>=?|<=?)/.exec(cond.trim())?.[1];
+    const entry: CriterionScore = {
+      condition: cond, key, score, value,
+      direction: op?.startsWith('>') ? 'high' : op?.startsWith('<') ? 'low' : undefined,
+    };
+    all.push(entry);
+    if (score <= 0.7) continue;
+    triggered.push(entry);
+    if (!(SHORTFALL_NOT_HAZARD.has(key) && firedLow(cond, value))) hazards.push(entry);
+    total += score;
+  }
+  return {
+    penalty: triggered.length ? Math.min(1, total / triggered.length) : 0,
+    triggered,
+    hazards,
+    /**
+     * Every poor condition that could be evaluated, fired or not, with how close
+     * it came. The one nearest to firing is the best answer to "why is this day
+     * not better", and it is a far more reliable source for that than the
+     * matched band: a poor condition always points the bad way, whereas a fair
+     * band lists MARGINAL ranges, so being below one is a good thing that reads
+     * as a failure. That mistake produced "Very little wind — Force 4" on a
+     * swimming tile, off a fair band whose wind range the day was comfortably
+     * under.
+     */
+    all,
+  };
+}
+
 export function calculatePoorConditionPenalty(
   conditions: string[],
   weather: WeatherData
 ): number {
   if (conditions.length === 0) return 0;
-  let total = 0;
-  let count = 0;
-  for (const cond of conditions) {
-    const { score, counted } = evalCompoundScore(cond, weather);
-    if (!counted) continue;
-    if (score > 0.7) {
-      total += score;
-      count++;
-    }
-  }
-  return count > 0 ? Math.min(1, total / count) : 0;
+  return scorePoorConditions(conditions, weather).penalty;
 }
 
 // --- Legacy boolean evaluators (deprecated) ---
@@ -601,18 +779,31 @@ export function applyWindRecommendationScoring(
       score = Math.max(5, score - 25);
       break;
     }
-    // Moderate negatives
+    // Moderate negatives — the bottom of Fair.
     case 'impractical':
     case 'unpleasant':
     case 'difficult': {
-      score = Math.min(score, 59);
-      score = Math.max(5, score - 12);
+      score = Math.min(score, 46);
       break;
     }
+    /**
+     * Caution caps at Fair, not at Good.
+     *
+     * It used to cap at 68, which is inside the "Good" band — so the badge said
+     * Good while the sentence beside it said "Use Caution", on the same day, off
+     * the same number. That contradiction was live: inland sailing at Force 6
+     * measured 62 and read "Good weather for Go Sailing (Inland). Use Caution".
+     *
+     * It also gives the ladder its middle rung. A day that needs caution is a
+     * day for people who know what they are doing — Force 5 on a reservoir for a
+     * dinghy or a board — and "Fair" is exactly what that should read as.
+     */
     case 'uncomfortable':
     case 'caution': {
-      score = Math.min(score, 68);
-      score = Math.max(5, score - 6);
+      /* Cap only. The old form capped AND subtracted, which double-counted: a
+         day already inside the Fair band was pushed out of it by a rule whose
+         whole purpose was to hold it there. */
+      score = Math.min(score, 59);
       break;
     }
     // Wind-required sports not meeting min wind

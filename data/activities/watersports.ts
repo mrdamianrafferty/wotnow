@@ -1,5 +1,51 @@
 import type { ActivityType } from './types';
 
+/**
+ * ─── The marine wind ladders, re-cut 2026-09 ─────────────────────────────
+ *
+ * The coastal models in this file were left alone during the inland pass, on
+ * the ground that calibrating them properly needs wave data. Auditing them
+ * afterwards showed that was too generous a reading: they were not merely
+ * uncalibrated, they had no reachable limit at all.
+ *
+ *     coastal sailing      poor above 25 m/s   = 49 kn, Force 10
+ *     windsurfing          poor above 30 m/s   = 58 kn, Force 11
+ *     kitesurfing          poor above 30 m/s,  gust above 36 = Force 12
+ *     sea kayaking         poor above 20 m/s   = 39 kn, Force 8
+ *     scuba diving         poor above 20 m/s,  gust above 22 = Force 9
+ *
+ * Nothing in British waters reaches a Force 11, and the engine applies its own
+ * universal danger cut-off at Force 10 — so every one of those thresholds was
+ * dead code, and the models behaved as though wind had no upper bound. Sea
+ * kayaking is the one that mattered most: a recreational sea kayak is a Force 4
+ * boat, Force 5 for the experienced, and this called a Force 8 acceptable.
+ *
+ * The anchor for the re-cut is the small-craft warning, issued at Force 6, and
+ * the gale warning at Force 8. Where a sport genuinely runs past a small-craft
+ * warning it is allowed to — coastal windsurfers and kitesurfers really do sail
+ * a Force 7 — and where it does not, it stops well before.
+ *
+ * Gust ceilings sit roughly a third above each mean ceiling, except kitesurfing,
+ * which is tighter: a kite lofts in a gust, so the spread is more dangerous
+ * there than anywhere else afloat.
+ *
+ * ─── What is deliberately NOT changed ────────────────────────────────────
+ *
+ * The `windRelative` clauses. Offshore, cross-shore and onshore logic is the
+ * genuinely marine part of these models, it is well-formed, and it is scored
+ * whenever a beach orientation is known. Only the plain windSpeed and gust
+ * criteria were replaced.
+ *
+ * `waveHeight` also stays, and unlike the inland models it must: swell travels,
+ * so at sea wave height is not a function of the local wind and carries real
+ * information the wind criteria cannot. That distinction is the reason the
+ * inland models lost theirs and these kept them.
+ *
+ * ⚠️ `jet_skiing` and `jetskiing` are two ids for one sport, both live in this
+ * file. They are given the same ladder so they cannot disagree, but one of them
+ * should go — which one depends on what is stored against them, so it is a data
+ * question rather than a modelling one.
+ */
 export const waterSports: ActivityType[] = [
   {
     id: 'surfing',
@@ -26,7 +72,7 @@ export const waterSports: ActivityType[] = [
       'airTemperature=12..28',
       'waveHeight=0.35..1.8',
       'swellPeriod=8..12',
-      'windSpeed=5..15',
+      'windSpeed=5..12',
       'windRelative=offshore or windRelative=side-offshore & windSpeed<=12 or windRelative=cross-shore & windSpeed<=8 or windRelative=side-onshore & windSpeed<=10 & waveHeight<=1.0',
       'gust<12',
       'visibility>5'
@@ -36,9 +82,9 @@ export const waterSports: ActivityType[] = [
       'airTemperature=8..12 or 28..30',
       'waveHeight=0.25..0.5 or 1.8..2.5',
       'swellPeriod=6..8 or 12..14',
-      'windSpeed=15..20',
+      'windSpeed=12..15',
       'windRelative=cross-shore & windSpeed=8..15 or windRelative=side-onshore & windSpeed<=12 or windRelative=onshore & windSpeed<=8 & swellPeriod>=10 & waveHeight<=1.2',
-      'gust=12..18',
+      'gust=12..17',
       'visibility=2..5',
       'precipitation=2..10'
     ],
@@ -47,9 +93,9 @@ export const waterSports: ActivityType[] = [
       'airTemperature<8 or airTemperature>32',
       'waveHeight<0.25 or waveHeight>2.5',
       'swellPeriod<6 or swellPeriod>14',
-      'windSpeed>20',
+      'windSpeed>15',
       'windRelative=onshore & windSpeed>10 or windRelative=onshore & swellPeriod<8 or windRelative=onshore & waveHeight<0.3',
-      'gust>18',
+      'gust>17',
       'visibility<2',
       'precipitation>10',
       'snowfallRateMmH>0.5',
@@ -66,37 +112,76 @@ export const waterSports: ActivityType[] = [
     weatherSensitive: true,
     tags: ['sport', 'water', 'outdoors', 'adventure', 'Saturday', 'Sunday', 'holiday'],
 
+    /**
+     * ─── Re-cut for enclosed water, 2026-09 ──────────────────────────────
+     *
+     * POOR was `windSpeed>25` — 48 knots, a Force 9 severe gale. That is not a
+     * threshold, it is the absence of one, and it is why this model read "Fair"
+     * at Force 6 and only fell over when a separate wind table caught it.
+     *
+     * A recreational kayak on 3,000 acres with five kilometres of fetch is
+     * committed once it leaves the bank: the wind that decides the day is the
+     * wind you have to paddle home against, not the wind you set out in. Force 5
+     * is a rescue-boat call on that water, so it is the stop.
+     */
+    /**
+     * ─── No waveHeight, deliberately ─────────────────────────────────────
+     *
+     * Removed 2026-09 after measuring it rather than assuming it. On enclosed
+     * water there is no swell: every wave is local wind-sea, so significant
+     * wave height is a function of wind, fetch and depth and carries no
+     * information the wind criteria do not already carry.
+     *
+     * Computed from the reservoirs' own OSM outlines (SMB fetch-limited,
+     * shallow-water form) with Rutland's longest fetch of 4.5 km:
+     *
+     *     Force 3  Hs 0.17 m     Force 5  Hs 0.42 m     Force 7  Hs 0.74 m
+     *     Force 4  Hs 0.28 m     Force 6  Hs 0.56 m
+     *
+     * Two consequences, and they point the same way. The POOR wave thresholds
+     * these models carried were unreachable: 0.9 m needs a Force 8 and the wind
+     * stop is Force 6, so that line could never fire. And where a wave
+     * threshold WAS inside the live range, it was a restatement of the wind —
+     * so supplying it would have made the band mean count wind twice and
+     * quietly doubled its weight against temperature and rain.
+     *
+     * Direction is the one thing waves could have added, since fetch varies
+     * about 1.8x across the compass here. It is not enough: at Force 5 that is
+     * 0.42 m down Rutland's long axis against 0.33 m across it, a difference
+     * smaller than the gap between any two thresholds. What direction DOES
+     * change on these waters is whether the wind blows you off the bank, which
+     * is a different question and not one wave height answers.
+     *
+     * The coastal models keep theirs, and should: swell travels, so out there
+     * wave height is genuinely independent of the local wind.
+     */
     perfectConditions: [
       'temperature=15..22',
-      'windSpeed<8',
-      'waveHeight<0.3',
-      'gust<5',
+      'windSpeed<4',               // under 8 kn — genuinely easy water
+      'gust<6',
       'visibility>10',
       'precipitation=0'
     ],
 
     goodConditions: [
       'temperature=10..24',
-      'windSpeed<15',
-      'waveHeight<0.8',
-      'gust<10',
+      'windSpeed<7',               // to about 14 kn, Force 4
+      'gust<9',
       'visibility>5',
       'precipitation=0..2'
     ],
     fairConditions: [
       'temperature=5..10 or 24..28',
-      'windSpeed=15..25',
-      'waveHeight=0.8..1.2',
-      'gust=10..15',
+      'windSpeed=7..10',           // Force 5 — hard work back upwind
+      'gust=9..12',
       'precipitation=2..10',
       'visibility=2..5'
     ],
 
     poorConditions: [
       'temperature<5 or temperature>28',
-      'windSpeed>25',
-      'waveHeight>1.2',
-      'gust>15',
+      'windSpeed>10',              // Force 5 and above
+      'gust>12',
       'precipitation>10',
       'visibility<2',
       'snowfallRateMmH>0.5',
@@ -119,8 +204,8 @@ export const waterSports: ActivityType[] = [
 
     perfectConditions: [
       'temperature=14..20',
-      'windSpeed<10',
-      'gust<8',
+      'windSpeed=0..5',
+      'gust<7',
       'waveHeight<0.3',
       'visibility>10',
       'precipitation=0',
@@ -129,8 +214,8 @@ export const waterSports: ActivityType[] = [
 
     goodConditions: [
       'temperature=10..24',
-      'windSpeed<15',
-      'gust<12',
+      'windSpeed=0..8',
+      'gust<10',
       'waveHeight<0.6',
       'visibility>5',
       'precipitation=0..2',
@@ -139,8 +224,8 @@ export const waterSports: ActivityType[] = [
 
     fairConditions: [
       'temperature=5..10 or 24..28',
-      'windSpeed=15..20',
-      'gust=12..15',
+      'windSpeed=8..10.8',
+      'gust=10..14',
       'waveHeight=0.6..1.0',
       'visibility=2..5',
       'precipitation=2..10',
@@ -149,8 +234,8 @@ export const waterSports: ActivityType[] = [
 
     poorConditions: [
       'temperature<5 or temperature>28',
-      'windSpeed>20',
-      'gust>15',
+      'windSpeed>10.8',
+      'gust>14',
       'waveHeight>1.0',
       'visibility<2',
       'precipitation>10',
@@ -172,35 +257,74 @@ export const waterSports: ActivityType[] = [
     secondaryCategory: 'Water Sports',
     weatherSensitive: true,
     tags: ['sport','water','outdoors','Saturday','Sunday','holiday'],
+    /**
+     * ─── Re-cut for enclosed water, 2026-09 ──────────────────────────────
+     *
+     * Tighter than kayaking at every step, which the old numbers already had the
+     * right instinct about and expressed an order of magnitude too loosely
+     * (POOR at 18 m/s is 35 knots, a Force 8).
+     *
+     * An open canoe has the most freeboard and the least power of anything that
+     * goes out from these centres: it is a sail with a paddler in it, and it
+     * blows downwind faster than an average crew can paddle back. Force 4 is
+     * where a hire boat should already be ashore.
+     */
+    /**
+     * ─── No waveHeight, deliberately ─────────────────────────────────────
+     *
+     * Removed 2026-09 after measuring it rather than assuming it. On enclosed
+     * water there is no swell: every wave is local wind-sea, so significant
+     * wave height is a function of wind, fetch and depth and carries no
+     * information the wind criteria do not already carry.
+     *
+     * Computed from the reservoirs' own OSM outlines (SMB fetch-limited,
+     * shallow-water form) with Rutland's longest fetch of 4.5 km:
+     *
+     *     Force 3  Hs 0.17 m     Force 5  Hs 0.42 m     Force 7  Hs 0.74 m
+     *     Force 4  Hs 0.28 m     Force 6  Hs 0.56 m
+     *
+     * Two consequences, and they point the same way. The POOR wave thresholds
+     * these models carried were unreachable: 0.9 m needs a Force 8 and the wind
+     * stop is Force 6, so that line could never fire. And where a wave
+     * threshold WAS inside the live range, it was a restatement of the wind —
+     * so supplying it would have made the band mean count wind twice and
+     * quietly doubled its weight against temperature and rain.
+     *
+     * Direction is the one thing waves could have added, since fetch varies
+     * about 1.8x across the compass here. It is not enough: at Force 5 that is
+     * 0.42 m down Rutland's long axis against 0.33 m across it, a difference
+     * smaller than the gap between any two thresholds. What direction DOES
+     * change on these waters is whether the wind blows you off the bank, which
+     * is a different question and not one wave height answers.
+     *
+     * The coastal models keep theirs, and should: swell travels, so out there
+     * wave height is genuinely independent of the local wind.
+     */
     perfectConditions: [
       'temperature=15..22',
-      'windSpeed<6',
-      'gust<8',
-      'waveHeight<0.3',
+      'windSpeed<3',               // under 6 kn
+      'gust<5',
       'visibility>10',
       'precipitation=0'
     ],
     goodConditions: [
       'temperature=10..24',
-      'windSpeed<12',
-      'gust<12',
-      'waveHeight<0.6',
+      'windSpeed<5.5',             // to about 11 kn
+      'gust<7',
       'visibility>5',
       'precipitation=0..2'
     ],
     fairConditions: [
       'temperature=5..10 or 24..28',
-      'windSpeed=12..18',
-      'gust=12..15',
-      'waveHeight=0.6..1.0',
+      'windSpeed=5.5..8',          // upper Force 4 — for competent crews only
+      'gust=7..10',
       'visibility=2..5',
       'precipitation=2..10'
     ],
     poorConditions: [
       'temperature<5 or temperature>28',
-      'windSpeed>18',
-      'gust>15',
-      'waveHeight>1.0',
+      'windSpeed>8',               // Force 5
+      'gust>10',
       'visibility<2',
       'precipitation>10',
       'snowfallRateMmH>0.5',
@@ -215,35 +339,77 @@ export const waterSports: ActivityType[] = [
     secondaryCategory: 'Water Sports',
     weatherSensitive: true,
     tags: ['sport','water','outdoors','inland','Saturday','Sunday','holiday'],
+    /**
+     * ─── Re-cut for enclosed water, 2026-09 ──────────────────────────────
+     *
+     * The highest windage and the lowest power of anything on these waters: a
+     * standing paddler is a sail, and the board underneath has no keel to
+     * resist it. POOR was 10 m/s — 19 knots, a Force 5 — which is well past the
+     * point a beginner stops making ground upwind.
+     *
+     * The dominant incident pattern in open-water paddleboarding is not being
+     * capsized, it is being blown away from the bank and not being able to
+     * return, which makes wind DIRECTION the number that matters most and which
+     * nothing in this engine currently reads. That is a real limitation and is
+     * why these thresholds are set conservatively: they are standing in for a
+     * test we cannot yet make.
+     */
+    /**
+     * ─── No waveHeight, deliberately ─────────────────────────────────────
+     *
+     * Removed 2026-09 after measuring it rather than assuming it. On enclosed
+     * water there is no swell: every wave is local wind-sea, so significant
+     * wave height is a function of wind, fetch and depth and carries no
+     * information the wind criteria do not already carry.
+     *
+     * Computed from the reservoirs' own OSM outlines (SMB fetch-limited,
+     * shallow-water form) with Rutland's longest fetch of 4.5 km:
+     *
+     *     Force 3  Hs 0.17 m     Force 5  Hs 0.42 m     Force 7  Hs 0.74 m
+     *     Force 4  Hs 0.28 m     Force 6  Hs 0.56 m
+     *
+     * Two consequences, and they point the same way. The POOR wave thresholds
+     * these models carried were unreachable: 0.9 m needs a Force 8 and the wind
+     * stop is Force 6, so that line could never fire. And where a wave
+     * threshold WAS inside the live range, it was a restatement of the wind —
+     * so supplying it would have made the band mean count wind twice and
+     * quietly doubled its weight against temperature and rain.
+     *
+     * Direction is the one thing waves could have added, since fetch varies
+     * about 1.8x across the compass here. It is not enough: at Force 5 that is
+     * 0.42 m down Rutland's long axis against 0.33 m across it, a difference
+     * smaller than the gap between any two thresholds. What direction DOES
+     * change on these waters is whether the wind blows you off the bank, which
+     * is a different question and not one wave height answers.
+     *
+     * The coastal models keep theirs, and should: swell travels, so out there
+     * wave height is genuinely independent of the local wind.
+     */
     perfectConditions: [
       'temperature=16..24',
-      'windSpeed<5',
-      'gust<7',
-      'waveHeight<0.2',
+      'windSpeed<3',               // under 6 kn — glassy
+      'gust<4.5',
       'visibility>10',
       'precipitation=0'
     ],
     goodConditions: [
       'temperature=10..26',
-      'windSpeed<8',
-      'gust<10',
-      'waveHeight<0.3',
+      'windSpeed<5',               // to about 10 kn, Force 3
+      'gust<7',
       'visibility>5',
       'precipitation=0..2'
     ],
     fairConditions: [
       'temperature=5..10 or 26..30',
-      'windSpeed=8..10',
-      'gust=10..12',
-      'waveHeight=0.3..0.5',
+      'windSpeed=5..7',            // Force 4 — competent paddlers, close in
+      'gust=7..9',
       'visibility=2..5',
       'precipitation=2..5'
     ],
     poorConditions: [
       'temperature<5 or temperature>30',
-      'windSpeed>10',
-      'gust>12',
-      'waveHeight>0.5',
+      'windSpeed>7',               // upper Force 4 and beyond
+      'gust>9',
       'visibility<2',
       'precipitation>5',
       'snowfallRateMmH>0.5',
@@ -264,8 +430,8 @@ export const waterSports: ActivityType[] = [
     // Safety-first: avoid offshore winds unless extremely light and in tiny surf; keep waves small; cap gusts; watch for heavy rain (murk)
     poorConditions: [
       'waterTemperature<17',            // uncomfortably cold for most casual snorkellers
-      'windSpeed>18',                   // choppy & unsafe (whitecaps likely)
-      'gust>16',                        // unpredictable surface disturbance
+      'windSpeed>7',                   // choppy & unsafe (whitecaps likely)
+      'gust>9',                        // unpredictable surface disturbance
       'waveHeight>1',                   // hard to breathe & see in the break zone
       'precipitation>6',                // heavy rain reduces water clarity & surface safety
       'visibility<2',                   // foggy, unsafe for navigation/spotters
@@ -279,10 +445,10 @@ export const waterSports: ActivityType[] = [
 
     fairConditions: [
       'waterTemperature=17..19',        // brisk but tolerable with suitable gear
-      'windSpeed=10..16',
-      'gust=10..14',
+      'windSpeed=5..7',
+      'gust=7..9',
       'waveHeight=0.3..0.8',
-      'cloudCover=60-90',
+      'cloudCover=60..90',
       'visibility=2..5',
       'precipitation=2..6',
       // Directional allowances (only if very light and waves are tiny)
@@ -293,10 +459,10 @@ export const waterSports: ActivityType[] = [
 
     goodConditions: [
       'waterTemperature=20..28',
-      'windSpeed<10',
-      'gust<=10',
+      'windSpeed=0..5',
+      'gust<7',
       'waveHeight<0.5',
-      'cloudCover=0-60',
+      'cloudCover=0..60',
       'visibility>5',
       'precipitation=0..2',
       // Prefer cross-shore or very light onshore; avoid offshore in exposed areas
@@ -305,10 +471,10 @@ export const waterSports: ActivityType[] = [
 
     perfectConditions: [
       'waterTemperature=22..26',
-      'windSpeed<6',
-      'gust<6',
+      'windSpeed=0..3',
+      'gust<5',
       'waveHeight<0.3',
-      'cloudCover=10-40',
+      'cloudCover=10..40',
       'visibility>10',
       'precipitation=0',
       // Flat, clear, and safe directions (no offshore)
@@ -331,8 +497,8 @@ export const waterSports: ActivityType[] = [
     poorConditions: [
       'waterTemperature<14',           // cold spray & hypothermia risk
       'airTemperature<12 or airTemperature>32',
-      'windSpeed>22',                  // strong winds create chop
-      'gust>25',                       // erratic gusts destabilise riders
+      'windSpeed>11',                  // strong winds create chop
+      'gust>14',                       // erratic gusts destabilise riders
       'waveHeight>1.5',                // large chop/waves risky for PWC
       'visibility<2',                  // tough to spot hazards or other craft
       'precipitation>8',               // heavy rain reduces visibility & control
@@ -345,8 +511,8 @@ export const waterSports: ActivityType[] = [
     fairConditions: [
       'waterTemperature=14..18',
       'airTemperature=12..16 or airTemperature=28..32',
-      'windSpeed=15..22',
-      'gust=18..25',
+      'windSpeed=8..11',
+      'gust=10..14',
       'waveHeight=1.0..1.5',
       'visibility=2..5',
       'precipitation=2..8',
@@ -357,8 +523,8 @@ export const waterSports: ActivityType[] = [
     goodConditions: [
       'waterTemperature=18..26',
       'airTemperature=18..28',
-      'windSpeed<15',
-      'gust<=18',
+      'windSpeed=0..8',
+      'gust<10',
       'waveHeight<1.0',
       'visibility>5',
       'precipitation=0..2',
@@ -368,8 +534,8 @@ export const waterSports: ActivityType[] = [
     perfectConditions: [
       'waterTemperature=20..24',
       'airTemperature=20..26',
-      'windSpeed<10',
-      'gust<12',
+      'windSpeed=0..5',
+      'gust<7',
       'waveHeight<0.6',
       'visibility>10',
       'precipitation=0',
@@ -386,35 +552,94 @@ export const waterSports: ActivityType[] = [
     secondaryCategory: 'Water Sports',
     weatherSensitive: true,
     tags: ['sport','water','outdoors','inland','nature','Saturday','Sunday','holiday'],
+    /**
+     * ─── The one that was actually dangerous, fixed 2026-09 ──────────────
+     *
+     * These bands were not wrong. They were INVISIBLE. Every criterion below is
+     * written in `waterTemperature` or `airTemperature`, and the inland
+     * forecast pipeline supplied neither — it supplied `temperature`. A key the
+     * weather object does not carry is dropped rather than scored, so the entire
+     * thermal half of this model evaluated to nothing and what remained was
+     * wind plus a fabricated visibility constant.
+     *
+     * Measured before the fix: 95 out of 100, band "perfect", sentence "Perfect
+     * conditions for Go Wild Swimming!", on a 3 °C January day. Rendered through
+     * the Anglian demo's vocabulary that is a tile reading "Swimming — Peak" at
+     * Rutland in February.
+     *
+     * Two things fixed it and neither is in this file: `airTemperature` is now
+     * supplied as an alias of `temperature`, and `seasonalMonths` is now applied
+     * to the score instead of being logged. What IS in this file is the thermal
+     * ladder, tightened to the numbers open-water swimming actually uses:
+     *
+     *   below 10 °C   cold-water shock and swim failure dominate incidents
+     *   10–15 °C      "cold water" — acclimatised swimmers, short dips
+     *   15–17 °C      swimmable with care
+     *   17–22 °C      what a supervised UK session runs in
+     *
+     * ⚠️ `waterTemperature` STILL has no inland source, so on a reservoir this
+     * model is scored on air temperature and season alone. Air is a poor proxy
+     * — a reservoir lags it by weeks, and is coldest in the spring exactly when
+     * the air first feels warm. A consumer showing this score MUST also gate on
+     * the venue's own supervised season, and RiseDaisy already holds a
+     * per-water `waterTempC` for its fishing engine that belongs here.
+     */
+    /**
+     * ─── No waveHeight, deliberately ─────────────────────────────────────
+     *
+     * Removed 2026-09 after measuring it rather than assuming it. On enclosed
+     * water there is no swell: every wave is local wind-sea, so significant
+     * wave height is a function of wind, fetch and depth and carries no
+     * information the wind criteria do not already carry.
+     *
+     * Computed from the reservoirs' own OSM outlines (SMB fetch-limited,
+     * shallow-water form) with Rutland's longest fetch of 4.5 km:
+     *
+     *     Force 3  Hs 0.17 m     Force 5  Hs 0.42 m     Force 7  Hs 0.74 m
+     *     Force 4  Hs 0.28 m     Force 6  Hs 0.56 m
+     *
+     * Two consequences, and they point the same way. The POOR wave thresholds
+     * these models carried were unreachable: 0.9 m needs a Force 8 and the wind
+     * stop is Force 6, so that line could never fire. And where a wave
+     * threshold WAS inside the live range, it was a restatement of the wind —
+     * so supplying it would have made the band mean count wind twice and
+     * quietly doubled its weight against temperature and rain.
+     *
+     * Direction is the one thing waves could have added, since fetch varies
+     * about 1.8x across the compass here. It is not enough: at Force 5 that is
+     * 0.42 m down Rutland's long axis against 0.33 m across it, a difference
+     * smaller than the gap between any two thresholds. What direction DOES
+     * change on these waters is whether the wind blows you off the bank, which
+     * is a different question and not one wave height answers.
+     *
+     * The coastal models keep theirs, and should: swell travels, so out there
+     * wave height is genuinely independent of the local wind.
+     */
     perfectConditions: [
-      'waterTemperature=16..20',
-      'airTemperature=18..24',
-      'windSpeed<8',
-      'waveHeight<0.3',
+      'waterTemperature=17..22',
+      'airTemperature=18..26',
+      'windSpeed<4',
       'visibility>10',
       'precipitation=0'
     ],
     goodConditions: [
-      'waterTemperature=14..24',
-      'airTemperature=14..28',
-      'windSpeed<12',
-      'waveHeight<0.5',
+      'waterTemperature=15..24',
+      'airTemperature=15..28',
+      'windSpeed<6',
       'visibility>5',
       'precipitation=0..2'
     ],
     fairConditions: [
-      'waterTemperature=12..14 or 24..28',
-      'airTemperature=10..14 or 28..30',
-      'windSpeed=12..18',
-      'waveHeight=0.5..0.8',
+      'waterTemperature=10..15 or 24..26',
+      'airTemperature=11..15 or 28..30',
+      'windSpeed=6..8',
       'visibility=2..5',
       'precipitation=2..5'
     ],
     poorConditions: [
-      'waterTemperature<12',
-      'airTemperature<10 or airTemperature>30',
-      'windSpeed>18',
-      'waveHeight>0.8',
+      'waterTemperature<10',       // cold-water shock territory
+      'airTemperature<11 or airTemperature>30',
+      'windSpeed>8',
       'visibility<2',
       'precipitation>5',
       'snowfallRateMmH>0.5',
@@ -434,8 +659,8 @@ export const waterSports: ActivityType[] = [
     perfectConditions: [
       'waterTemperature=16..22',
       'airTemperature=18..24',
-      'windSpeed<8',
-      'gust<10',
+      'windSpeed=0..4',
+      'gust<6',
       'waveHeight<0.4',
       'visibility>10',
       'precipitation=0',
@@ -444,8 +669,8 @@ export const waterSports: ActivityType[] = [
     goodConditions: [
       'waterTemperature=14..24',
       'airTemperature=14..28',
-      'windSpeed<12',
-      'gust<14',
+      'windSpeed=0..6',
+      'gust<8',
       'waveHeight<0.6',
       'visibility>5',
       'precipitation=0..2',
@@ -454,8 +679,8 @@ export const waterSports: ActivityType[] = [
     fairConditions: [
       'waterTemperature=12..14 or 24..28',
       'airTemperature=10..14 or 28..30',
-      'windSpeed=12..15',
-      'gust=14..18',
+      'windSpeed=6..8',
+      'gust=8..11',
       'waveHeight=0.6..0.8',
       'visibility=2..5',
       'precipitation=2..5',
@@ -464,8 +689,8 @@ export const waterSports: ActivityType[] = [
     poorConditions: [
       'waterTemperature<12',
       'airTemperature<10 or airTemperature>30',
-      'windSpeed>15',
-      'gust>18',
+      'windSpeed>8',
+      'gust>11',
       'waveHeight>0.8',
       'visibility<2',
       'precipitation>5',
@@ -492,32 +717,32 @@ export const waterSports: ActivityType[] = [
     tags: ['sport','water','sea','coastal','boat','outdoors','Saturday','Sunday','holiday'],
     perfectConditions: [
       'airTemperature=14..22',
-      'windSpeed=8..15',
-      'gust<18',
+      'windSpeed=1.7..8',
+      'gust<9',
       'waveHeight<1.0',
       'visibility>10',
       'precipitation=0'
     ],
     goodConditions: [
       'airTemperature=10..26',
-      'windSpeed=6..20',
-      'gust<24',
+      'windSpeed=1.7..10.8',
+      'gust<13',
       'waveHeight<1.5',
       'visibility>5',
       'precipitation=0..2'
     ],
     fairConditions: [
       'airTemperature=5..10 or 26..30',
-      'windSpeed=4..6 or 20..25',
-      'gust=24..30',
+      'windSpeed=10.8..13.9',
+      'gust=13..17',
       'waveHeight=1.5..2.2',
       'visibility=2..5',
       'precipitation=2..5'
     ],
     poorConditions: [
       'airTemperature<5 or airTemperature>30',
-      'windSpeed<4 or windSpeed>25',
-      'gust>30',
+      'windSpeed>13.9',
+      'gust>17',
       'waveHeight>2.2',
       'visibility<2',
       'precipitation>5',
@@ -535,41 +760,99 @@ export const waterSports: ActivityType[] = [
     weatherSensitive: true,
     applyBeaufort: true,
     tags: ['sport','water','inland','lake','dinghy','outdoors','Saturday','Sunday','holiday'],
+    /**
+     * ─── Re-cut against inland club practice, 2026-09 ────────────────────
+     *
+     * The old numbers put PERFECT at 6–12 m/s, which is 12–23 knots, Force 4 to
+     * Force 6 — and POOR only above 20 m/s, which is 39 knots, a Force 8 gale.
+     * Measured against them, this model scored 62 and "Good weather" at Force 6
+     * on a reservoir whose own keeper takes the boats off at Force 6. Those
+     * read like figures written in km/h and never converted; nothing else
+     * explains a dinghy model tolerating a gale.
+     *
+     * The ladder now is the one a reservoir sailing club actually runs:
+     *
+     *   Force 2–4   ordinary club sailing, and Force 3–4 is the good day
+     *   Force 5     experienced hands, depowered — fair, not good
+     *   Force 6     stop. Not "challenging"; ashore.
+     *   Force 1     drifting. Fair at best, and poor below it.
+     *
+     * Force 6 begins at 39 km/h, so the hard stop is 10.8 m/s. That is the same
+     * line RiseDaisy's data/demo/anglian-thresholds.json already draws as
+     * `boatsOffForce: 6` for Rutland and Grafham — the engine and the keeper now
+     * agree, which they did not before.
+     *
+     * Gusts are the addition that matters most and were previously specified
+     * here and never supplied to the scorer at all. On enclosed water the gust
+     * spread is what capsizes a dinghy: measured at Rutland on 2026-09-04, a
+     * Force 4 mean carried Force 7 gusts. 14 m/s is Force 7, which is where a
+     * gust alone ends the day whatever the mean is doing.
+     */
+    /**
+     * ─── No waveHeight, deliberately ─────────────────────────────────────
+     *
+     * Removed 2026-09 after measuring it rather than assuming it. On enclosed
+     * water there is no swell: every wave is local wind-sea, so significant
+     * wave height is a function of wind, fetch and depth and carries no
+     * information the wind criteria do not already carry.
+     *
+     * Computed from the reservoirs' own OSM outlines (SMB fetch-limited,
+     * shallow-water form) with Rutland's longest fetch of 4.5 km:
+     *
+     *     Force 3  Hs 0.17 m     Force 5  Hs 0.42 m     Force 7  Hs 0.74 m
+     *     Force 4  Hs 0.28 m     Force 6  Hs 0.56 m
+     *
+     * Two consequences, and they point the same way. The POOR wave thresholds
+     * these models carried were unreachable: 0.9 m needs a Force 8 and the wind
+     * stop is Force 6, so that line could never fire. And where a wave
+     * threshold WAS inside the live range, it was a restatement of the wind —
+     * so supplying it would have made the band mean count wind twice and
+     * quietly doubled its weight against temperature and rain.
+     *
+     * Direction is the one thing waves could have added, since fetch varies
+     * about 1.8x across the compass here. It is not enough: at Force 5 that is
+     * 0.42 m down Rutland's long axis against 0.33 m across it, a difference
+     * smaller than the gap between any two thresholds. What direction DOES
+     * change on these waters is whether the wind blows you off the bank, which
+     * is a different question and not one wave height answers.
+     *
+     * The coastal models keep theirs, and should: swell travels, so out there
+     * wave height is genuinely independent of the local wind.
+     */
     perfectConditions: [
       'temperature=14..24',
-      'windSpeed=6..12',
-      'gust<16',
-      'waveHeight<0.5',
+      'windSpeed=4..7',            // Force 3–4, 8–14 kn — the club day
+      'gust<9',                    // spread stays inside Force 5
       'visibility>10',
       'precipitation=0'
     ],
     goodConditions: [
       'temperature=10..26',
-      'windSpeed=4..16',
-      'gust<20',
-      'waveHeight<0.8',
+      'windSpeed=1.7..8',          // all of Force 2 to the top of Force 4
+      'gust<11',
       'visibility>5',
       'precipitation=0..2'
     ],
     fairConditions: [
       'temperature=5..10 or 26..30',
-      'windSpeed=2..4 or 16..20',
-      'gust=20..24',
-      'waveHeight=0.8..1.0',
+      'windSpeed=0.5..1.7 or 8..10.8',  // Force 1 drifting, or Force 5 for experienced hands
+      'gust=11..14',
       'visibility=2..5',
       'precipitation=2..5'
     ],
     poorConditions: [
       'temperature<5 or temperature>30',
-      'windSpeed<2 or windSpeed>20',
-      'gust>24',
-      'waveHeight>1.0',
+      /* Only a genuine flat calm counts as too little. Force 1 is drifting and
+         Force 2 is a lesson — neither is nothing, and the centres these models
+         describe teach in exactly that. Below Force 1 there is no sailing. */
+      'windSpeed<0.5 or windSpeed>10.8',  // Force 6 is the stop
+      'gust>14',                          // a Force 7 gust ends it on the mean alone
       'visibility<2',
       'precipitation>5',
       'snowfallRateMmH>0.5',
       'snowDepthCm>0.5'
     ],
-    seasonalMonths: [4,5,6,7,8,9,10],
+    seasonalMonths: [3,4,5,6,7,8,9,10],
     indoorAlternative: 'Knot practice, rules revision, or simulator'
   },
   {
@@ -584,8 +867,8 @@ export const waterSports: ActivityType[] = [
     perfectConditions: [
       'waterTemperature=14..24',
       'airTemperature=12..26',
-      'windSpeed=12..20',
-      'gust<25',
+      'windSpeed=8..12',
+      'gust<15',
       'waveHeight=0.5..1.5',
       'visibility>5',
       'precipitation=0..2',
@@ -594,8 +877,8 @@ export const waterSports: ActivityType[] = [
     goodConditions: [
       'waterTemperature=12..26',
       'airTemperature=10..28',
-      'windSpeed=10..25',
-      'gust<30',
+      'windSpeed=6..13.9',
+      'gust<18',
       'waveHeight=0.3..2.0',
       'visibility>5',
       'precipitation=0..4',
@@ -604,8 +887,8 @@ export const waterSports: ActivityType[] = [
     fairConditions: [
       'waterTemperature=10..12 or 26..28',
       'airTemperature=8..10 or 28..30',
-      'windSpeed=8..10 or 25..30',
-      'gust=30..35',
+      'windSpeed=13.9..17.2',
+      'gust=18..22',
       'waveHeight=0.2..0.3 or 2.0..2.5',
       'visibility=2..5',
       'precipitation=4..8',
@@ -614,8 +897,8 @@ export const waterSports: ActivityType[] = [
     poorConditions: [
       'waterTemperature<10',
       'airTemperature<8 or airTemperature>32',
-      'windSpeed<8 or windSpeed>30',
-      'gust>35',
+      'windSpeed>17.2',
+      'gust>22',
       'waveHeight>2.5',
       'visibility<2',
       'precipitation>8',
@@ -638,8 +921,8 @@ export const waterSports: ActivityType[] = [
     perfectConditions: [
       'waterTemperature=16..24',
       'airTemperature=14..26',
-      'windSpeed=14..22',
-      'gust<28',
+      'windSpeed=7..12',
+      'gust<14',
       'waveHeight=0.5..1.8',
       'visibility>5',
       'precipitation=0..2',
@@ -648,8 +931,8 @@ export const waterSports: ActivityType[] = [
     goodConditions: [
       'waterTemperature=12..26',
       'airTemperature=10..28',
-      'windSpeed=12..26',
-      'gust<32',
+      'windSpeed=5.5..15',
+      'gust<17',
       'waveHeight=0.3..2.2',
       'visibility>5',
       'precipitation=0..4',
@@ -658,8 +941,8 @@ export const waterSports: ActivityType[] = [
     fairConditions: [
       'waterTemperature=10..12 or 26..28',
       'airTemperature=8..10 or 28..30',
-      'windSpeed=10..12 or 26..30',
-      'gust=32..36',
+      'windSpeed=15..17.2',
+      'gust=17..20',
       'waveHeight=0.2..0.3 or 2.2..2.5',
       'visibility=2..5',
       'precipitation=4..8',
@@ -668,8 +951,8 @@ export const waterSports: ActivityType[] = [
     poorConditions: [
       'waterTemperature<10',
       'airTemperature<8 or airTemperature>32',
-      'windSpeed<10 or windSpeed>30',
-      'gust>36',
+      'windSpeed>17.2',
+      'gust>20',
       'waveHeight>2.5',
       'visibility<2',
       'precipitation>8',
@@ -690,8 +973,8 @@ export const waterSports: ActivityType[] = [
     perfectConditions: [
       'waterTemperature=14..24',
       'airTemperature=12..26',
-      'windSpeed<10',
-      'gust<12',
+      'windSpeed=0..5',
+      'gust<7',
       'waveHeight<0.6',
       'swellPeriod=8..14',
       'visibility>10',
@@ -700,8 +983,8 @@ export const waterSports: ActivityType[] = [
     goodConditions: [
       'waterTemperature=12..26',
       'airTemperature=10..28',
-      'windSpeed<15',
-      'gust<18',
+      'windSpeed=0..8',
+      'gust<10',
       'waveHeight<1.0',
       'swellPeriod=6..14',
       'visibility>5',
@@ -710,8 +993,8 @@ export const waterSports: ActivityType[] = [
     fairConditions: [
       'waterTemperature=10..12 or 26..28',
       'airTemperature=8..10 or 28..30',
-      'windSpeed=15..20',
-      'gust=18..22',
+      'windSpeed=8..11',
+      'gust=10..14',
       'waveHeight=1.0..1.5',
       'swellPeriod=5..8',
       'visibility=2..5',
@@ -720,8 +1003,8 @@ export const waterSports: ActivityType[] = [
     poorConditions: [
       'waterTemperature<10',
       'airTemperature<8 or airTemperature>32',
-      'windSpeed>20',
-      'gust>22',
+      'windSpeed>11',
+      'gust>14',
       'waveHeight>1.5',
       'visibility<2',
       'precipitation>5',
@@ -741,8 +1024,8 @@ export const waterSports: ActivityType[] = [
     perfectConditions: [
       'waterTemperature=16..26',
       'airTemperature=18..28',
-      'windSpeed<10',
-      'gust<12',
+      'windSpeed=0..5',
+      'gust<7',
       'waveHeight<0.8',
       'visibility>10',
       'precipitation=0'
@@ -750,8 +1033,8 @@ export const waterSports: ActivityType[] = [
     goodConditions: [
       'waterTemperature=14..28',
       'airTemperature=14..30',
-      'windSpeed<15',
-      'gust<18',
+      'windSpeed=0..8',
+      'gust<10',
       'waveHeight<1.2',
       'visibility>5',
       'precipitation=0..2'
@@ -759,8 +1042,8 @@ export const waterSports: ActivityType[] = [
     fairConditions: [
       'waterTemperature=12..14 or 28..30',
       'airTemperature=10..14 or 30..32',
-      'windSpeed=15..20',
-      'gust=18..22',
+      'windSpeed=8..11',
+      'gust=10..14',
       'waveHeight=1.2..1.8',
       'visibility=2..5',
       'precipitation=2..5'
@@ -768,8 +1051,8 @@ export const waterSports: ActivityType[] = [
     poorConditions: [
       'waterTemperature<12',
       'airTemperature<10 or airTemperature>32',
-      'windSpeed>20',
-      'gust>22',
+      'windSpeed>11',
+      'gust>14',
       'waveHeight>1.8',
       'visibility<2',
       'precipitation>5',
@@ -791,8 +1074,8 @@ export const waterSports: ActivityType[] = [
     perfectConditions: [
       'waterTemperature=16..24',
       'airTemperature=18..26',
-      'windSpeed<6',
-      'gust<8',
+      'windSpeed=0..2.5',
+      'gust<4',
       'waveHeight<0.3',
       'visibility>10',
       'precipitation=0',
@@ -801,8 +1084,8 @@ export const waterSports: ActivityType[] = [
     goodConditions: [
       'waterTemperature=14..26',
       'airTemperature=14..28',
-      'windSpeed<10',
-      'gust<12',
+      'windSpeed=0..4.5',
+      'gust<6',
       'waveHeight<0.5',
       'visibility>5',
       'precipitation=0..2',
@@ -811,8 +1094,8 @@ export const waterSports: ActivityType[] = [
     fairConditions: [
       'waterTemperature=12..14 or 26..28',
       'airTemperature=10..14 or 28..30',
-      'windSpeed=10..12',
-      'gust=12..15',
+      'windSpeed=4.5..6',
+      'gust=6..8',
       'waveHeight=0.5..0.7',
       'visibility=2..5',
       'precipitation=2..5',
@@ -821,8 +1104,8 @@ export const waterSports: ActivityType[] = [
     poorConditions: [
       'waterTemperature<12',
       'airTemperature<10 or airTemperature>30',
-      'windSpeed>12',
-      'gust>15',
+      'windSpeed>6',
+      'gust>8',
       'waveHeight>0.7',
       'visibility<2',
       'precipitation>5',
@@ -842,41 +1125,104 @@ export const waterSports: ActivityType[] = [
     usesWindRelative: false,            // direction relative to a shoreline not required for lakes
     requiresBeachOrientation: false,
     tags: ['water', 'wind', 'lake', 'reservoir', 'flatwater', 'Saturday', 'Sunday', 'holiday'],
-    // Simpler, flat-water focused thresholds (OpenWeather data only)
+    /**
+     * ─── Re-cut against inland club practice, 2026-09 ────────────────────
+     *
+     * These were the closest to right in the library — the comments below were
+     * written by somebody who sails, and 12 knots for planing is the correct
+     * number — but the ladder had a hole in it and no top.
+     *
+     * The hole: GOOD stopped at 14 m/s and FAIR resumed at 16, so 14–16 m/s
+     * (27–31 knots) matched no band at all and fell through to the neutral
+     * fallback. That is why this model measured 70 and "Good weather" at Force 7.
+     * A near gale reading as a good day is the single worst output the engine
+     * produced, and it was a gap between two ranges rather than a bad judgement.
+     *
+     * The top: POOR began at 20 m/s, a Force 8 gale.
+     *
+     * Both are now cut to the same ladder as `sailing_inland`, because these are
+     * the same water on the same day under the same safety-boat cover:
+     *
+     *   below Force 3   not enough to plane, and not enough to get back
+     *   Force 3–4       the good sailing, planing for most recreational rigs
+     *   Force 5         experienced riders only — fair, not good
+     *   Force 6         stop
+     *
+     * A windsurfer will tell you Force 6 is when it gets interesting, and on the
+     * open coast they are right. This is a reservoir with a rescue boat and a
+     * shoreline on every side; the operator's limit is the limit.
+     */
+    /**
+     * ─── No waveHeight, deliberately ─────────────────────────────────────
+     *
+     * Removed 2026-09 after measuring it rather than assuming it. On enclosed
+     * water there is no swell: every wave is local wind-sea, so significant
+     * wave height is a function of wind, fetch and depth and carries no
+     * information the wind criteria do not already carry.
+     *
+     * Computed from the reservoirs' own OSM outlines (SMB fetch-limited,
+     * shallow-water form) with Rutland's longest fetch of 4.5 km:
+     *
+     *     Force 3  Hs 0.17 m     Force 5  Hs 0.42 m     Force 7  Hs 0.74 m
+     *     Force 4  Hs 0.28 m     Force 6  Hs 0.56 m
+     *
+     * Two consequences, and they point the same way. The POOR wave thresholds
+     * these models carried were unreachable: 0.9 m needs a Force 8 and the wind
+     * stop is Force 6, so that line could never fire. And where a wave
+     * threshold WAS inside the live range, it was a restatement of the wind —
+     * so supplying it would have made the band mean count wind twice and
+     * quietly doubled its weight against temperature and rain.
+     *
+     * Direction is the one thing waves could have added, since fetch varies
+     * about 1.8x across the compass here. It is not enough: at Force 5 that is
+     * 0.42 m down Rutland's long axis against 0.33 m across it, a difference
+     * smaller than the gap between any two thresholds. What direction DOES
+     * change on these waters is whether the wind blows you off the bank, which
+     * is a different question and not one wave height answers.
+     *
+     * The coastal models keep theirs, and should: swell travels, so out there
+     * wave height is genuinely independent of the local wind.
+     */
     poorConditions: [
-      'windSpeed<5',                    // too light to make progress/return
-      'windSpeed>20',                   // very strong; advanced only
-      'gust>16',                        // unstable, unpleasant
+      /* Force 2 is where a beginner can uphaul, balance and get back. Below it
+         there is no return leg, which is the reason this is a poor condition at
+         all — not that it would be dull. */
+      'windSpeed<1.7',                  // below Force 2: no way home
+      'windSpeed>10.8',                 // Force 6 — the stop
+      'gust>14',                        // a Force 7 gust ends it whatever the mean does
       'precipitation>6',                // heavy rain reduces visibility
-      'temperature<10',                 // cold air without good gear
+      'temperature<8',                  // cold air without good gear
       'temperature>32',                 // heat stress
       'visibility<2',                   // fog, low contrast
       'snowfallRateMmH>0.5',            // snowfall hides horizon and gear
       'snowDepthCm>0.5'                 // beach ramps & rigs buried quickly
     ],
     fairConditions: [
-      'windSpeed=5..7',                 // learner/float, non-planing
-      'windSpeed=16..20',               // strong; experienced riders
-      'gust=12..16',                    // gusty but doable
-      'temperature=10..14 or temperature=28..32',
+      /* One entry, OR'd — not two. Two array entries on the same key are scored
+         as two independent criteria and averaged, so satisfying either one
+         guarantees failing the other and halves the band's mean. That is why a
+         Force 2 could not reach the fair band it was written for. */
+      'windSpeed=1.7..4.5 or 8..10.8',  // tuition and schlogging, or Force 5 for experienced riders
+      'gust=11..14',
+      'temperature=8..12 or temperature=28..32',
       'precipitation=1..6',
       'visibility=2..5'
     ],
     goodConditions: [
-      'windSpeed=7..14',                // planing likely for many set-ups
-      'gust<=12',
-      'temperature=14..28',
+      'windSpeed=4.5..8',               // planing likely for many set-ups
+      'gust<11',
+      'temperature=12..28',
       'precipitation<=2',
       'visibility>5'
     ],
     perfectConditions: [
-      'windSpeed=8..12',                // steady, forgiving
-      'gust<8',
-      'temperature=18..24',
+      'windSpeed=5.5..8',               // Force 4 — steady, forgiving, planing
+      'gust<9',
+      'temperature=16..26',
       'precipitation=0',
       'visibility>10'
     ],
-    seasonalMonths: [4, 5, 6, 7, 8, 9, 10],
+    seasonalMonths: [3, 4, 5, 6, 7, 8, 9, 10],
     indoorAlternative: 'Practise balance, study technique videos, or maintain your gear'
   },
 ];

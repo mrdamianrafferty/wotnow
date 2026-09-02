@@ -53,6 +53,8 @@ export interface ActivityScorePayload {
     temperatureC?: number;
     feelsLikeC?: number;
     windSpeedKmh?: number;
+    /** Peak gust. Absent when the source publishes none — never inferred. */
+    windGustKmh?: number;
     windDirection?: string;
     precipitationMm?: number;
     cloudCoverPct?: number;
@@ -75,15 +77,33 @@ export interface ActivityScorePayload {
 
 export async function getActivityScoreForLocation(
   activityId: string,
-  location: SeoLocation
+  location: SeoLocation,
+  /**
+   * Measurements the forecast cannot supply, merged onto every day.
+   *
+   * Water temperature is the case this exists for. Several models — wild
+   * swimming above all — are decided by it, no inland forecast carries it, and
+   * a caller who HAS one (a fishery engine, a venue's own sensor) currently has
+   * no way to hand it over. Without it those models are scored on air
+   * temperature, which lags a reservoir by weeks and is warmest exactly when the
+   * water is still dangerous.
+   *
+   * Merged rather than defaulted: a value passed here is a measurement the
+   * caller stands behind, and anything absent stays absent rather than being
+   * invented.
+   */
+  overrides?: Partial<WeatherData>,
 ): Promise<ActivityScorePayload | null> {
   // 1. Find the activity definition
   const activity = activityTypes.find((a) => a.id === activityId);
   if (!activity) return null;
 
   // 2. Fetch weather for the next 7 days
-  const forecast = await fetchWeatherForLocation(location);
-  if (!forecast || forecast.length === 0) return null;
+  const raw = await fetchWeatherForLocation(location);
+  if (!raw || raw.length === 0) return null;
+  const forecast = overrides
+    ? raw.map((d) => ({ ...d, weather: { ...d.weather, ...overrides } }))
+    : raw;
 
   // 3. Run the scoring engine for this single activity
   const now = new Date();
@@ -119,6 +139,7 @@ export async function getActivityScoreForLocation(
   const conditionsToday: ActivityScorePayload['conditionsToday'] = {
     temperatureC: todayWeather.temperature,
     windSpeedKmh: todayWeather.windspeed,
+    windGustKmh: todayWeather.gustspeed,
     precipitationMm: todayWeather.precipitation,
     cloudCoverPct: todayWeather.clouds,
     waveHeightM: todayWeather.waveHeight,
@@ -162,21 +183,48 @@ async function fetchWeatherForLocation(
   location: SeoLocation
 ): Promise<Array<{ date: number; weather: WeatherData }>> {
   // Map an OpenWeather-One-Call-shaped payload into the shape getSuggestionsByDay wants.
-  type OWMDaily = { dt?: number; temp?: { day?: number; min?: number; max?: number }; rain?: number; wind_speed?: number; clouds?: number; humidity?: number };
+  type OWMDaily = {
+    dt?: number; temp?: { day?: number; min?: number; max?: number }; rain?: number;
+    wind_speed?: number; wind_gust?: number; wind_speed_mean?: number;
+    precipitation_hours?: number; clouds?: number; humidity?: number;
+  };
   type OWMHourly = { dt?: number; temp?: number; rain?: { '1h'?: number }; wind_speed?: number; clouds?: number; humidity?: number };
 
+  /**
+   * `wind_speed` here is the day's MAXIMUM and is deliberately not the only wind
+   * figure carried any more.
+   *
+   * A single number was being asked to answer two different questions — "is it
+   * safe" (a peak) and "what is it like" (a mean) — and the peak was winning
+   * both. That is why a Force 4 day at Rutland scored as a Force 5. The mean is
+   * now passed as `windspeed`, the peak as `windspeedMax` and the gust as
+   * `gustSpeed`, and the scorer decides which one a given criterion wants.
+   *
+   * The mean can legitimately be absent (the OpenWeather backstop publishes no
+   * daily mean), in which case the max stands in — which is the old behaviour,
+   * so the fallback is never worse than what it replaced.
+   */
   function mapOneCallShape(data: { daily?: unknown; hourly?: unknown } | null | undefined): Array<{ date: number; weather: WeatherData }> {
     if (Array.isArray(data?.daily)) {
-      return (data.daily as OWMDaily[]).slice(0, 7).map((d: OWMDaily) => ({
-        date: d.dt ?? Math.floor(Date.now() / 1000),
-        weather: {
-          temperature: d.temp?.day ?? d.temp?.max,
-          precipitation: d.rain ?? 0,
-          windspeed: (d.wind_speed ?? 0) * 3.6, // m/s → km/h
-          clouds: d.clouds,
-          humidity: d.humidity,
-        },
-      }));
+      return (data.daily as OWMDaily[]).slice(0, 7).map((d: OWMDaily) => {
+        const maxKmh = typeof d.wind_speed === 'number' ? d.wind_speed * 3.6 : undefined;
+        const meanKmh = typeof d.wind_speed_mean === 'number' ? d.wind_speed_mean * 3.6 : undefined;
+        return {
+          date: d.dt ?? Math.floor(Date.now() / 1000),
+          weather: {
+            temperature: d.temp?.day ?? d.temp?.max,
+            temperatureMin: d.temp?.min,
+            temperatureMax: d.temp?.max,
+            precipitation: d.rain ?? 0,
+            precipitationHours: d.precipitation_hours,
+            windspeed: meanKmh ?? maxKmh ?? 0,
+            windspeedMax: maxKmh,
+            gustspeed: typeof d.wind_gust === 'number' ? d.wind_gust * 3.6 : undefined,
+            clouds: d.clouds,
+            humidity: d.humidity,
+          },
+        };
+      });
     }
 
     // Fallback: try hourly[0..6] as daily proxies

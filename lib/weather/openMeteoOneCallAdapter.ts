@@ -43,7 +43,29 @@ export async function fetchOpenMeteoAsOneCallShape(lat: number, lon: number): Pr
     longitude: String(lon),
     current: 'temperature_2m,relative_humidity_2m,apparent_temperature,precipitation,rain,snowfall,weather_code,pressure_msl,wind_speed_10m,wind_direction_10m,wind_gusts_10m',
     hourly: 'temperature_2m,relative_humidity_2m,dew_point_2m,precipitation_probability,precipitation,rain,snowfall,weather_code,wind_speed_10m,visibility,uv_index',
-    daily: 'weather_code,temperature_2m_max,temperature_2m_min,sunrise,sunset,precipitation_sum,rain_sum,snowfall_sum,precipitation_probability_max,wind_speed_10m_max',
+    /**
+     * `wind_speed_10m_mean`, `wind_gusts_10m_max` and `precipitation_hours` are
+     * asked for because the activity models already reference all three and were
+     * being scored without them.
+     *
+     * Every water-sports model in data/activities carries gust criteria
+     * (`gust<16`, `gust=20..24`) and none of them had ever been evaluated: the
+     * field simply was not in this list, and a missing key is dropped silently
+     * rather than failing. On enclosed water the gust spread is what capsizes a
+     * dinghy — measured at Rutland on 2026-09-04, a Force 4 mean carried Force 7
+     * gusts — so it is the single most load-bearing number for the reservoir
+     * activities and it was the one nobody had.
+     *
+     * The mean matters for a different reason: a day was being scored on
+     * `wind_speed_10m_max`, its windiest moment, which is the right number for a
+     * safety limit and the wrong one for "what is it like out there". Both are
+     * carried now and the scorer uses each for its own job.
+     *
+     * `precipitation_hours` separates a 4 mm downpour from sixteen hours of
+     * drizzle. Those are very different days for a campsite and a daily total
+     * cannot tell them apart.
+     */
+    daily: 'weather_code,temperature_2m_max,temperature_2m_min,sunrise,sunset,precipitation_sum,rain_sum,snowfall_sum,precipitation_probability_max,wind_speed_10m_max,wind_speed_10m_mean,wind_gusts_10m_max,precipitation_hours',
     timezone: 'UTC',
     wind_speed_unit: 'ms',
     forecast_days: '7',
@@ -89,6 +111,31 @@ export async function fetchOpenMeteoAsOneCallShape(lat: number, lon: number): Pr
     snow: typeof current.snowfall === 'number' ? { '1h': current.snowfall * 10 } : undefined,
   };
 
+  /**
+   * The mean temperature over daylight hours, which is what OpenWeather's daily
+   * `temp.day` means and what Open-Meteo does not publish.
+   *
+   * Worth computing rather than leaving absent, because the consumer falls back
+   * to `temp.max` — so every day was being scored on its warmest moment while
+   * simultaneously being scored on its windiest. Those two rarely happen
+   * together, and pairing them flattered warm blustery days and punished cool
+   * still ones. 09:00–18:00 is the window an activity is actually done in;
+   * `timezone` is UTC in the request above, so the hourly stamps line up with
+   * the date string without conversion.
+   */
+  function daytimeMean(dateStr: string): number | undefined {
+    const temps: number[] = [];
+    for (let h = 0; h < (hourly.time?.length ?? 0); h++) {
+      const t = hourly.time[h] as string;
+      if (!t.startsWith(dateStr)) continue;
+      const hour = Number(t.slice(11, 13));
+      const v = hourly.temperature_2m?.[h];
+      if (hour >= 9 && hour < 18 && typeof v === 'number') temps.push(v);
+    }
+    if (!temps.length) return undefined;
+    return temps.reduce((a, b) => a + b, 0) / temps.length;
+  }
+
   const owDaily = (daily.time as string[]).map((dateStr: string, i: number) => {
     const dt = Date.UTC(
       Number(dateStr.slice(0, 4)),
@@ -99,11 +146,23 @@ export async function fetchOpenMeteoAsOneCallShape(lat: number, lon: number): Pr
     const main = wmoToMain(daily.weather_code?.[i]);
     return {
       dt: dt / 1000,
-      temp: { min: daily.temperature_2m_min?.[i], max: daily.temperature_2m_max?.[i] },
+      temp: {
+        day: daytimeMean(dateStr),
+        min: daily.temperature_2m_min?.[i],
+        max: daily.temperature_2m_max?.[i],
+      },
       weather: [{ description: WMO_DESCRIPTIONS[daily.weather_code?.[i]] || 'Unknown', main }],
       wind_speed: daily.wind_speed_10m_max?.[i],
+      /* Named as OpenWeather names it, so a consumer reading either source finds
+         the gust in the same place. */
+      wind_gust: daily.wind_gusts_10m_max?.[i],
+      /* Not an OpenWeather field. Prefixed nowhere and simply absent when the
+         backstop provider is used, which is the honest outcome — a consumer
+         must handle a missing mean anyway. */
+      wind_speed_mean: daily.wind_speed_10m_mean?.[i],
       pop: (daily.precipitation_probability_max?.[i] ?? 0) / 100,
       rain: daily.rain_sum?.[i],
+      precipitation_hours: daily.precipitation_hours?.[i],
       snow: typeof daily.snowfall_sum?.[i] === 'number' ? daily.snowfall_sum[i] * 10 : undefined,
       moon_phase: computeMoonPhase(dt),
     };
