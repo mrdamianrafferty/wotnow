@@ -11,43 +11,43 @@ export const socialActivities: ActivityType[] = [
 
     perfectConditions: [
       'temperature=18..25',
-      'windSpeed<8',
-      'cloudCover=20-50',
+      'windSpeed<3',
+      'cloudCover=20..50',
       'humidity=40..60',
       'soilMoisture=20..35',
       'visibility>10',
-      'precipitation=0'
-    ],
+      'precipitation=0',
+      'gust<6.1'],
 
     goodConditions: [
       'temperature=15..28',
-      'windSpeed<12',
-      'cloudCover=10-70',
+      'windSpeed<5.5',
+      'cloudCover=10..70',
       'humidity<75',
       'soilMoisture=15..45',
       'visibility>5',
-      'precipitation=0'
-    ],
+      'precipitation=0',
+      'gust<8.8'],
     fairConditions: [
       'temperature=10..14 or 29..34',
-      'windSpeed=12..20',
-      'cloudCover=70-100',
+      'windSpeed=5.5..8',
+      'cloudCover=70..100',
       'humidity=75..85',
       'soilMoisture=10..15 or soilMoisture=45..60',
       'precipitation=0..1',
-      'visibility=2..5'
-    ],
+      'visibility=2..5',
+      'gust=8.8..11'],
     poorConditions: [
       'temperature<10',
       'temperature>34',
-      'windSpeed>20',
+      'windSpeed>8',
       'precipitation>1',
       'humidity>85',
       'soilMoisture<10 or soilMoisture>60',
       'visibility<2',
       'snowfallRateMmH>0.5',
-      'snowDepthCm>1'
-    ],
+      'snowDepthCm>1',
+      'gust>11'],
 
     seasonalMonths: [4, 5, 6, 7, 8, 9],
 
@@ -63,37 +63,41 @@ export const socialActivities: ActivityType[] = [
 
     perfectConditions: [
       'temperature=20..26',
-      'windSpeed<10',
-      'cloudCover=10-50',
-      'humidity=40-65',
+      'windSpeed<3',
+      'cloudCover=10..50',
+      'humidity=40..65',
       'visibility>10',
-      'precipitation=0'
+      'precipitation=0',
+      'gust<6.1'
     ],
 
     goodConditions: [
       'temperature=16..30',
-      'windSpeed<18',
-      'cloudCover=0-80',
+      'windSpeed<5.5',
+      'cloudCover=0..80',
       'humidity<80',
       'visibility>5',
-      'precipitation=0'
+      'precipitation=0',
+      'gust<8.8'
     ],
     fairConditions: [
       'temperature=12..15 or 31..34',
-      'windSpeed=18..25',
-      'cloudCover=80-100',
+      'windSpeed=5.5..8',
+      'cloudCover=80..100',
       'humidity=80..90',
       'precipitation=0..1',
-      'visibility=2..5'
+      'visibility=2..5',
+      'gust=8.8..11'
     ],
     poorConditions: [
       'temperature<12',
       'temperature>34',
-      'windSpeed>25',
+      'windSpeed>8',
       'precipitation>1',
       'visibility<2',
       'snowfallRateMmH>0.5',
-      'snowDepthCm>1'
+      'snowDepthCm>1',
+      'gust>11'
     ],
 
     seasonalMonths: [4, 5, 6, 7, 8, 9],
@@ -113,8 +117,8 @@ export const socialActivities: ActivityType[] = [
       'waterTemperature=18..24',
       'windSpeed<10',
       'waveHeight=0..0.5',
-      'cloudCover=0-10',
-      'humidity=40-65',
+      'cloudCover=0..10',
+      'humidity=40..65',
       'visibility>10',
       'precipitation=0'
     ],
@@ -124,7 +128,7 @@ export const socialActivities: ActivityType[] = [
       'waterTemperature=16..26',
       'windSpeed<14',
       'waveHeight=0..0.8',
-      'cloudCover=0-40',
+      'cloudCover=0..40',
       'humidity<75',
       'visibility>6',
       'precipitation=0'

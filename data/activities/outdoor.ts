@@ -10,41 +10,41 @@ export const outdoorRecreation: ActivityType[] = [
     tags: ['nature', 'walking', 'outdoors', 'leisure', 'Saturday', 'Sunday'],
     perfectConditions: [
       'temperature=15..18',
-      'windSpeed<10',
+      'windSpeed<5',
       'clouds=20..50',
       'humidity=40..60',
       'soilMoisture=20..35',
       'visibility>10',
-      'precipitation=0'
-    ],
+      'precipitation=0',
+      'gust<9.4'],
     goodConditions: [
       'temperature=8..24',
-      'windSpeed<15',
+      'windSpeed<9',
       'clouds=20..80',
       'humidity<75',
       'soilMoisture=20..45',
       'visibility>5',
-      'precipitation=0'
-    ],
+      'precipitation=0',
+      'gust<13.6'],
     fairConditions: [
       'temperature=2..8 or 24..28',
-      'windSpeed=15..25',
+      'windSpeed=9..13',
       'clouds=0..20 or 80..100',
       'humidity=75..90',
       'precipitation=1..5',
       'soilMoisture=45..60',
-      'visibility=1..5'
-    ],
+      'visibility=1..5',
+      'gust=13.6..17'],
     poorConditions: [
       'temperature<2 or temperature>28',
-      'windSpeed>25',
+      'windSpeed>13',
       'precipitation>5',
       'humidity>90',
       'soilMoisture>60',
       'visibility<1',
       'snowfallRateMmH>1',
-      'snowDepthCm>4'
-    ],
+      'snowDepthCm>4',
+      'gust>17'],
     seasonalMonths: [3, 4, 5, 6, 7, 8, 9, 10],
     indoorAlternative: 'Hit the gym for a treadmill incline workout or a strength session'
   },
@@ -57,35 +57,39 @@ export const outdoorRecreation: ActivityType[] = [
     tags: ['sport', 'outdoors', 'adventure', 'technical', 'Saturday', 'Sunday', 'Friday'],
     perfectConditions: [
       'temperature=12..18',
-      'windSpeed<8',
-      'humidity=30-50',
-      'cloudCover=20-40',
+      'windSpeed<6',
+      'humidity=30..50',
+      'cloudCover=20..40',
       'visibility>10',
-      'precipitation=0'
+      'precipitation=0',
+      'gust<11'
     ],
     goodConditions: [
       'temperature=10..22',
-      'windSpeed<15',
+      'windSpeed<11',
       'humidity<60',
-      'cloudCover=20-50',
+      'cloudCover=20..50',
       'visibility>5',
-      'precipitation=0'
+      'precipitation=0',
+      'gust<16'
     ],
     fairConditions: [
       'temperature=5..10 or 22..28',
-      'windSpeed=15..25',
+      'windSpeed=11..15',
       'humidity=60..80',
-      'cloudCover=50-100',
-      'visibility=2..5'
+      'cloudCover=50..100',
+      'visibility=2..5',
+      'gust=16..20'
     ],
     poorConditions: [
       'temperature<5 or temperature>28',
-      'windSpeed>25',
+      'windSpeed>15',
       'precipitation>2',
       'humidity>80',
       'visibility<2',
       'snowfallRateMmH>1',
-      'snowDepthCm>2'
+      'snowDepthCm>2',
+      'gust>20'
     ],
     seasonalMonths: [3, 4, 5, 6, 9, 10],
     indoorAlternative: 'Train at an indoor climbing gym or work on finger strength at home'
@@ -104,29 +108,33 @@ export const outdoorRecreation: ActivityType[] = [
       'windSpeed>15',
       'visibility<2',
       'snowfallRateMmH>0.5',
-      'snowDepthCm>0.5'
+      'snowDepthCm>0.5',
+      'gust>20'
     ],
     fairConditions: [
       'temperature=5..10',
       'temperature=22..26',
-      'windSpeed=10..15',
-      'cloudCover=60-90',
+      'windSpeed=11..15',
+      'cloudCover=60..90',
       'visibility=2..5',
-      'precipitation=0..0.5'
+      'precipitation=0..0.5',
+      'gust=16..20'
     ],
     goodConditions: [
       'temperature=10..22',
-      'windSpeed<10',
-      'cloudCover=10-60',
+      'windSpeed<11',
+      'cloudCover=10..60',
       'precipitation=0',
-      'visibility>5'
+      'visibility>5',
+      'gust<16'
     ],
     perfectConditions: [
       'temperature=15..20',
-      'windSpeed<5',
-      'cloudCover=20-50',
+      'windSpeed<6',
+      'cloudCover=20..50',
       'precipitation=0',
-      'visibility>10'
+      'visibility>10',
+      'gust<11'
     ],
     seasonalMonths: [4, 5, 6, 7, 8, 9, 10],
     indoorAlternative: 'Plan your next coastal walk or practise balance & agility exercises'
@@ -143,32 +151,36 @@ export const outdoorRecreation: ActivityType[] = [
     ],
     poorConditions: [
       'precipitation>0',
-      'windSpeed>20',
+      'windSpeed>8',
       'temperature<5',
       'temperature>30',
       'soilMoisture<10 or soilMoisture>60',
       'snowfallRateMmH>0.5',
-      'snowDepthCm>1'
+      'snowDepthCm>1',
+      'gust>11'
     ],
     fairConditions: [
       'temperature=5..10 or 25..30',
-      'windSpeed=15..20',
-      'cloudCover=70-100',
+      'windSpeed=5.5..8',
+      'cloudCover=70..100',
       'humidity=70..85',
       'soilMoisture=10..15 or soilMoisture=45..60',
-      'visibility=2..5'
+      'visibility=2..5',
+      'gust=8.8..11'
     ],
     goodConditions: [
       'temperature=15..25',
-      'windSpeed<15',
+      'windSpeed<5.5',
       'precipitation=0',
-      'soilMoisture=15..45'
+      'soilMoisture=15..45',
+      'gust<8.8'
     ],
     perfectConditions: [
       'temperature=18..22',
-      'windSpeed<10',
+      'windSpeed<3',
       'precipitation=0',
-      'soilMoisture=20..35'
+      'soilMoisture=20..35',
+      'gust<6.1'
     ],
     seasonalMonths: [4, 5, 6, 7, 8, 9, 10]
   },
@@ -181,35 +193,39 @@ export const outdoorRecreation: ActivityType[] = [
     tags: ['sport', 'auto', 'social', 'group', 'solo', 'Saturday', 'Sunday', 'Wednesday'],
     perfectConditions: [
       'temperature=16..22',
-      'windSpeed<8',
+      'windSpeed<5',
       'clouds=10..50',
       'humidity=40..55',
       'precipitation=0',
-      'visibility>10'
+      'visibility>10',
+      'gust<9.4'
     ],
     goodConditions: [
       'temperature=10..28',
-      'windSpeed<15',
+      'windSpeed<9',
       'clouds=0..80',
       'humidity<75',
       'precipitation=0',
-      'visibility>5'
+      'visibility>5',
+      'gust<13.6'
     ],
     fairConditions: [
       'temperature=5..10 or 28..32',
-      'windSpeed=15..25',
+      'windSpeed=9..13',
       'humidity=80..90',
       'precipitation=1..3',
-      'visibility=2..5'
+      'visibility=2..5',
+      'gust=13.6..17'
     ],
     poorConditions: [
       'temperature<5 or temperature>30',
-      'windSpeed>25',
+      'windSpeed>13',
       'precipitation>3',
       'humidity>90',
       'visibility<2',
       'snowfallRateMmH>0.5',
-      'snowDepthCm>0.5'
+      'snowDepthCm>0.5',
+      'gust>17'
     ],
     seasonalMonths: [3, 4, 5, 6, 7, 8, 9, 10]
   },
@@ -224,31 +240,35 @@ export const outdoorRecreation: ActivityType[] = [
       'temperature<12',                // bees stay clustered
       'temperature>32',                // stressful for bees & beekeeper
       'precipitation>2',              // bees stay inside
-      'windSpeed>15',                 // bees irritable & hard to control
+      'windSpeed>8',                 // bees irritable & hard to control
       'cloudCover>80',                // bees defensive under dark skies
       'humidity>85',                  // damp, sticky, bees agitated
       'snowfallRateMmH>0.5',          // snowfall chills colonies rapidly
-      'snowDepthCm>2'                 // hive access blocked by drifts
+      'snowDepthCm>2',                 // hive access blocked by drifts
+      'gust>11'
     ],
     fairConditions: [
       'temperature=12..15',           // cooler, bees less active
-      'windSpeed=10..15',             // light breeze, not ideal
-      'cloudCover=60-80',             // duller conditions
+      'windSpeed=5.5..8',             // light breeze, not ideal
+      'cloudCover=60..80',             // duller conditions
       'humidity=75..85',              // borderline sticky
-      'precipitation=0..2'            // light drizzle
+      'precipitation=0..2',            // light drizzle
+      'gust=8.8..11'
     ],
     goodConditions: [
       'temperature=15..28',
-      'windSpeed<10',
-      'cloudCover=10-60',
-      'humidity<75'
+      'windSpeed<5.5',
+      'cloudCover=10..60',
+      'humidity<75',
+      'gust<8.8'
     ],
     perfectConditions: [
       'temperature=18..24',
-      'windSpeed<5',
-      'cloudCover=10-30',
-      'humidity=50-65',
-      'precipitation=0'
+      'windSpeed<3',
+      'cloudCover=10..30',
+      'humidity=50..65',
+      'precipitation=0',
+      'gust<6.1'
     ],
     seasonalMonths: [3, 4, 5, 6, 7, 8, 9, 10],
     indoorAlternative: 'Inspect and repair equipment, assemble frames, render wax, or read up on hive management'
@@ -264,37 +284,41 @@ export const outdoorRecreation: ActivityType[] = [
       'temperature<5',                 // uncomfortable & limited growth
       'temperature>30',                // too dry or hot
       'precipitation>10',              // soaking, slippery, poor footing
-      'windSpeed>25',                  // makes identifying & reaching plants harder
+      'windSpeed>12',                  // makes identifying & reaching plants harder
       'visibility<2',                  // unsafe, difficult to see or ID
       'soilMoisture<10 or soilMoisture>60', // parched ground or boggy forest floor
       'snowfallRateMmH>1',             // active snow hides foliage & paths
-      'snowDepthCm>3'                  // ground cover inaccessible under snow
+      'snowDepthCm>3',                  // ground cover inaccessible under snow
+      'gust>16'
     ],
     fairConditions: [
       'temperature=6..12',
-      'windSpeed<20',
+      'windSpeed=8..12',
       'precipitation=0..5',            // light drizzle okay
-      'cloudCover=30-100',
+      'cloudCover=30..100',
       'visibility=3..5',
-      'soilMoisture=10..15 or soilMoisture=45..60'
+      'soilMoisture=10..15 or soilMoisture=45..60',
+      'gust=12.8..16'
     ],
     goodConditions: [
       'temperature=12..20',
-      'windSpeed<15',
+      'windSpeed<8',
       'precipitation=0..1',            // recent light rain helps growth
-      'cloudCover=30-80',
+      'cloudCover=30..80',
       'humidity=60..85',
       'visibility>5',
-      'soilMoisture=15..45'
+      'soilMoisture=15..45',
+      'gust<12.8'
     ],
     perfectConditions: [
       'temperature=14..18',
-      'windSpeed<8',
+      'windSpeed<4',
       'precipitation=0',
-      'cloudCover=40-70',
+      'cloudCover=40..70',
       'humidity=65..75',
       'visibility>10',
-      'soilMoisture=20..35'
+      'soilMoisture=20..35',
+      'gust<8.8'
     ],
     seasonalMonths: [3, 4, 5, 6, 7, 8, 9, 10, 11],
     indoorAlternative: 'Research seasonal finds, preserve what you’ve picked, or prep recipes with past harvests'
@@ -310,35 +334,39 @@ export const outdoorRecreation: ActivityType[] = [
     poorConditions: [
       'temperature<5',              // too cold to enjoy
       'temperature>32',             // too hot & uncomfortable
-      'windSpeed>20',               // frisbee control very poor
+      'windSpeed>8',               // frisbee control very poor
       'precipitation>2',            // wet & slippery
       'visibility<2',               // foggy, unsafe
       'snowfallRateMmH>0.5',        // flakes ruin disc flight & grip
-      'snowDepthCm>1'               // settling snow hides footing
+      'snowDepthCm>1',               // settling snow hides footing
+      'gust>11'
     ],
 
     fairConditions: [
       'temperature=5..10 or temperature=28..32', // chilly or hot but playable
-      'windSpeed=15..20',                        // breezy, throws go wild
-      'cloudCover=80-100',                       // overcast or grey skies
+      'windSpeed=5.5..8',                        // breezy, throws go wild
+      'cloudCover=80..100',                       // overcast or grey skies
       'precipitation=0.5..2',                    // light drizzle possible
-      'visibility=2..5'                          // a bit murky
+      'visibility=2..5',                          // a bit murky
+      'gust=8.8..11'
     ],
 
     goodConditions: [
       'temperature=10..28',        // comfortable for most
-      'windSpeed<15',              // still playable
-      'cloudCover=0-80',
+      'windSpeed<5.5',              // still playable
+      'cloudCover=0..80',
       'visibility>5',
-      'precipitation=0'
+      'precipitation=0',
+      'gust<8.8'
     ],
 
     perfectConditions: [
       'temperature=18..24',        // ideal comfort
-      'windSpeed<8',               // calm & easy control
-      'cloudCover=20-50',
+      'windSpeed<3',               // calm & easy control
+      'cloudCover=20..50',
       'visibility>10',
-      'precipitation=0'
+      'precipitation=0',
+      'gust<6.1'
     ],
 
     seasonalMonths: [3, 4, 5, 6, 7, 8, 9, 10],
@@ -355,39 +383,43 @@ export const outdoorRecreation: ActivityType[] = [
     poorConditions: [
       'temperature<-2',               // freezing and uncomfortable
       'temperature>34',              // risk of overheating
-      'windSpeed>30',                // dangerous in wooded or exposed areas
+      'windSpeed>12',                // dangerous in wooded or exposed areas
       'precipitation>10',           // heavy rain or storms
       'visibility<2',                // poor navigation and safety risks
       'soilMoisture<10 or soilMoisture>60', // frozen ground or boggy terrain
       'snowfallRateMmH>1',           // snow hides caches & trails fast
-      'snowDepthCm>3'                // deep snow makes tracking unsafe
+      'snowDepthCm>3',                // deep snow makes tracking unsafe
+      'gust>16'
     ],
 
     fairConditions: [
       'temperature=0..8',            // chilly but manageable
       'temperature=26..32',          // a bit hot for walking, but fine in short bursts
-      'windSpeed=20..30',            // gusty but not extreme
+      'windSpeed=8..12',            // gusty but not extreme
       'precipitation=2..6',          // light to moderate rain, may affect enjoyment
       'visibility=2..5',             // limited visibility but not unsafe
-      'soilMoisture=10..15 or soilMoisture=45..60'
+      'soilMoisture=10..15 or soilMoisture=45..60',
+      'gust=12.8..16'
     ],
 
     goodConditions: [
       'temperature=8..26',
-      'windSpeed<20',
-      'cloudCover=0-80',
+      'windSpeed<8',
+      'cloudCover=0..80',
       'precipitation=0..2',          // light drizzle at most
       'visibility>5',
-      'soilMoisture=15..45'
+      'soilMoisture=15..45',
+      'gust<12.8'
     ],
 
     perfectConditions: [
       'temperature=15..22',
-      'windSpeed<10',
-      'cloudCover=10-50',            // pleasant light, not too bright or gloomy
+      'windSpeed<4',
+      'cloudCover=10..50',            // pleasant light, not too bright or gloomy
       'precipitation=0',
       'visibility>10',
-      'soilMoisture=20..35'
+      'soilMoisture=20..35',
+      'gust<8.8'
     ],
 
     seasonalMonths: [3, 4, 5, 6, 7, 8, 9, 10],
@@ -404,37 +436,41 @@ export const outdoorRecreation: ActivityType[] = [
 
     perfectConditions: [
       'temperature=15..20',         // optimal comfort for horse and rider
-      'windSpeed<10',               // low wind = safe control and calm horses
-      'cloudCover=20-50',           // soft light, not glaring or gloomy
+      'windSpeed<5',               // low wind = safe control and calm horses
+      'cloudCover=20..50',           // soft light, not glaring or gloomy
       'soilMoisture=20..35',        // secure footing without deep mud
-      'visibility>10'               // ideal for hacking, eventing, or lessons
+      'visibility>10',               // ideal for hacking, eventing, or lessons
+      'gust<9.4'
     ],
 
     goodConditions: [
       'temperature=8..27',          // broad comfortable range
-      'windSpeed<15',               // manageable breeze
-      'cloudCover=10-80',           // sunny to overcast, no issue
+      'windSpeed<9',               // manageable breeze
+      'cloudCover=10..80',           // sunny to overcast, no issue
       'soilMoisture=15..45',        // some give but not hazardous
-      'visibility>5'                // clear enough for trail or arena riding
+      'visibility>5',                // clear enough for trail or arena riding
+      'gust<13.6'
     ],
 
     fairConditions: [
       'temperature=5..8 or 27..30', // cool or hot but rideable
-      'windSpeed=15..25',           // windier = less pleasant, possibly spookier
-      'cloudCover=80-100',          // flat light or gloom
+      'windSpeed=9..13',           // windier = less pleasant, possibly spookier
+      'cloudCover=80..100',          // flat light or gloom
       'precipitation=0..10',        // light rain or recent damp, may affect footing
       'soilMoisture=10..15 or soilMoisture=45..60', // hard or boggy patches
-      'visibility=2..5'             // murky conditions, not unsafe but not ideal
+      'visibility=2..5',             // murky conditions, not unsafe but not ideal
+      'gust=13.6..17'
     ],
 
     poorConditions: [
       'temperature<5 or temperature>30',  // icy or dangerously hot
-      'windSpeed>25',                    // hard to control horses, trees blowing
+      'windSpeed>13',                    // hard to control horses, trees blowing
       'precipitation>10',                // muddy, unsafe ground
       'soilMoisture<10 or soilMoisture>60', // either rock-hard or deep mud
       'visibility<2',                    // fog, dusk, or heavy rain limit sight
       'snowfallRateMmH>1',               // heavy snow spooks horses & destroys footing
-      'snowDepthCm>3'                    // deeper snow risks slips & tendon strains
+      'snowDepthCm>3',                    // deeper snow risks slips & tendon strains
+      'gust>17'
     ],
 
     seasonalMonths: [3, 4, 5, 6, 7, 8, 9, 10],  // reflects most outdoor riding seasons
@@ -453,37 +489,41 @@ export const outdoorRecreation: ActivityType[] = [
     poorConditions: [
       'temperature<5',               // cold, stiff joints
       'temperature>32',              // heat stress
-      'windSpeed>20',                // gusty, unstable
+      'windSpeed>13',                // gusty, unstable
       'precipitation>0',             // wet surface, dangerous
       'visibility<2',                // fog, unsafe
       'snowfallRateMmH>0.5',         // light snow makes surfaces slick instantly
-      'snowDepthCm>0.5'              // thin snow cover hides cracks
+      'snowDepthCm>0.5',              // thin snow cover hides cracks
+      'gust>17'
     ],
 
     // Manageable but not ideal — may require caution
     fairConditions: [
       'temperature=5..10 or 28..30', // brisk or slightly hot
-      'windSpeed=15..20',            // breezy, may affect balance
-      'cloudCover=80-100',           // overcast skies
-      'visibility=2..5'              // misty or hazy
+      'windSpeed=9..13',            // breezy, may affect balance
+      'cloudCover=80..100',           // overcast skies
+      'visibility=2..5',              // misty or hazy
+      'gust=13.6..17'
     ],
 
     // Comfortable and safe conditions
     goodConditions: [
       'temperature=10..28',          // wide comfort range
-      'windSpeed<15',
-      'cloudCover=0-80',
+      'windSpeed<9',
+      'cloudCover=0..80',
       'visibility>5',
-      'precipitation=0'
+      'precipitation=0',
+      'gust<13.6'
     ],
 
     // Optimal, enjoyable weather
     perfectConditions: [
       'temperature=18..24',          // mild and comfortable
-      'windSpeed<8',                 // stable and safe
-      'cloudCover=10-50',
+      'windSpeed<5',                 // stable and safe
+      'cloudCover=10..50',
       'visibility>10',
-      'precipitation=0'
+      'precipitation=0',
+      'gust<9.4'
     ],
 
     seasonalMonths: [3, 4, 5, 6, 7, 8, 9, 10],
@@ -501,35 +541,39 @@ export const outdoorRecreation: ActivityType[] = [
     poorConditions: [
       'temperature<5',               // too cold, stiff joints
       'temperature>32',              // oppressive heat
-      'windSpeed>20',                // gusty, unstable
+      'windSpeed>13',                // gusty, unstable
       'precipitation>0',             // wet surface, unsafe
       'visibility<2',                // fog, unsafe
       'snowfallRateMmH>0.5',         // snow makes decks & ramps treacherous
-      'snowDepthCm>0.5'              // light snow hides cracks & coping
+      'snowDepthCm>0.5',              // light snow hides cracks & coping
+      'gust>17'
     ],
 
     fairConditions: [
       'temperature=5..12 or temperature=28..32', // cool or hot but tolerable
-      'windSpeed=18..20',                        // breezy but manageable
-      'cloudCover=90-100',                       // overcast, not ideal
-      'visibility=2..5'                          // dim or hazy
+      'windSpeed=9..13',                        // breezy but manageable
+      'cloudCover=90..100',                       // overcast, not ideal
+      'visibility=2..5',                          // dim or hazy
+      'gust=13.6..17'
     ],
 
     goodConditions: [
       'temperature=12..28',         // broad range
-      'windSpeed<18',
-      'cloudCover=0-90',
+      'windSpeed<9',
+      'cloudCover=0..90',
       'visibility>5',
-      'precipitation=0'
+      'precipitation=0',
+      'gust<13.6'
 
     ],
 
     perfectConditions: [
       'temperature=18..24',         // comfortable
-      'windSpeed<10',               // calm
-      'cloudCover=10-50',
+      'windSpeed<5',               // calm
+      'cloudCover=10..50',
       'precipitation=0',
-      'visibility>10'
+      'visibility>10',
+      'gust<9.4'
     ],
 
     seasonalMonths: [3, 4, 5, 6, 7, 8, 9, 10],
@@ -546,30 +590,34 @@ export const outdoorRecreation: ActivityType[] = [
     poorConditions: [
       'clouds>50',          // too much cloud cover
       'precipitation>0',    // rain blocks view
-      'windSpeed>20',       // hard to stay comfortable
+      'windSpeed>12',       // hard to stay comfortable
       'temperature<-5',     // extreme cold
       'snowfallRateMmH>0.5',// falling snow obscures the sky instantly
-      'snowDepthCm>2'       // deep snow makes travel & setup difficult
+      'snowDepthCm>2',       // deep snow makes travel & setup difficult
+      'gust>16'
     ],
 
     fairConditions: [
       'temperature=-5..5',    // chilly but manageable
       'clouds=20..50',        // patchy, some gaps
-      'windSpeed=10..20'      // breezy, may reduce comfort
+      'windSpeed=8..12',      // breezy, may reduce comfort
+      'gust=12.8..16'
     ],
 
     goodConditions: [
       'temperature=5..15',     // crisp but pleasant
       'clouds<=20',            // mostly clear
-      'windSpeed<10',           // calm or gentle breeze
-      'precipitation=0',     // no rain
+      'windSpeed<8',           // calm or gentle breeze
+      'precipitation=0',     // no rain,
+      'gust<12.8'
     ],
 
     perfectConditions: [
       'temperature=8..12',     // just right
       'clouds=0',              // clear skies
-      'windSpeed<5',           // still night
-      'precipitation=0',      // no rain
+      'windSpeed<4',           // still night
+      'precipitation=0',      // no rain,
+      'gust<8.8'
     ],
 
     seasonalMonths: [4, 5, 6, 7, 8, 9, 10]
@@ -584,32 +632,36 @@ export const outdoorRecreation: ActivityType[] = [
     poorConditions: [
       'temperature<-5',                // freezing & icy
       'temperature>35',               // heat exhaustion risk
-      'windSpeed>40',                 // strong gales
+      'windSpeed>12',                 // strong gales
       'precipitation>3',             // torrential rain
       'visibility<2',                 // fog, unsafe
       'snowfallRateMmH>1',            // heavy snow reduces visibility & traction
-      'snowDepthCm>4'                 // deep snow makes pavements slippery
+      'snowDepthCm>4',                 // deep snow makes pavements slippery
+      'gust>16'
     ],
     fairConditions: [
       'temperature=-5..5',            // cold but tolerable
       'temperature=25..30',           // warm for brisk walking
-      'windSpeed=15..30',             // breezy but manageable
+      'windSpeed=8..12',             // breezy but manageable
       'precipitation=0..3',          // light to moderate rain
-      'visibility=2..5'               // reduced visibility but acceptable
+      'visibility=2..5',               // reduced visibility but acceptable
+      'gust=12.8..16'
     ],
     goodConditions: [
       'temperature=6..25',
-      'windSpeed<15',
-      'cloudCover=0-90',
+      'windSpeed<8',
+      'cloudCover=0..90',
       'precipitation=0',
-      'visibility>5'
+      'visibility>5',
+      'gust<12.8'
     ],
     perfectConditions: [
       'temperature=12..20',
-      'windSpeed<8',
-      'cloudCover=20-60',
+      'windSpeed<4',
+      'cloudCover=20..60',
       'precipitation=0',
-      'visibility>10'
+      'visibility>10',
+      'gust<8.8'
     ],
     seasonalMonths: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
     indoorAlternative: 'Stretch, do light yoga, or walk laps indoors at a mall or gym'
@@ -621,10 +673,14 @@ export const outdoorRecreation: ActivityType[] = [
     secondaryCategory: 'Cardio & Running',
     weatherSensitive: true,
     tags: ['sport','trail','nature','outdoors','Saturday','Sunday'],
-  perfectConditions: ['temperature=8..14','windSpeed<8','clouds=10..50','humidity=40..55','soilMoisture=20..35','visibility>10','precipitation=0'],
-  goodConditions: ['temperature=5..20','windSpeed<15','clouds=0..80','humidity<80','soilMoisture=20..45','visibility=2','precipitation=0'],
-  fairConditions: ['temperature=2..5 or 20..25','windSpeed<=25','humidity<=90','precipitation=2..4','soilMoisture=45..60','visibility=1..2'],
-  poorConditions: ['temperature=2..5 or 20..25','windSpeed>25','precipitation>4','humidity>90','soilMoisture>60','visibility<1','snowfallRateMmH>1','snowDepthCm>4'],
+  perfectConditions: ['temperature=8..14','windSpeed<6','clouds=10..50','humidity=40..55','soilMoisture=20..35','visibility>10','precipitation=0',
+      'gust<11'],
+  goodConditions: ['temperature=5..20','windSpeed<11','clouds=0..80','humidity<80','soilMoisture=20..45','visibility=2','precipitation=0',
+      'gust<16'],
+  fairConditions: ['temperature=2..5 or 20..25','windSpeed=11..15','humidity<=90','precipitation=2..4','soilMoisture=45..60','visibility=1..2',
+      'gust=16..20'],
+  poorConditions: ['temperature=2..5 or 20..25','windSpeed>15','precipitation>4','humidity>90','soilMoisture>60','visibility<1','snowfallRateMmH>1','snowDepthCm>4',
+      'gust>20'],
     seasonalMonths: [3,4,5,6,7,8,9,10]
   },
   {
@@ -634,10 +690,38 @@ export const outdoorRecreation: ActivityType[] = [
     secondaryCategory: 'Nature Activities',
     weatherSensitive: true,
     tags: ['nature', 'leisure', 'adventure', 'outdoors', 'social', 'holiday', 'Saturday', 'Sunday'],
+    /**
+     * ─── The wind was right; the temperature was the wrong one, 2026-09 ──
+     *
+     * This is the one wind ladder in the library that did not need re-cutting.
+     * 11, 15 and 18 m/s are 40, 54 and 65 km/h, which match both tent
+     * manufacturers' ratings and ordinary campsite practice — struck at a gale,
+     * guyed hard below it. Left alone apart from adding the gust criteria the
+     * scorer can finally evaluate, because a tent fails to a gust and not to a
+     * mean.
+     *
+     * What was wrong was `temperature`. The pipeline was feeding the day's
+     * MAXIMUM, so a night was scored on its afternoon: measured at Rutland on
+     * 2026-09-06, a 25.1 °C maximum over a 12.1 °C minimum, and the model read
+     * the first. Camping is the clearest case in the set where the number that
+     * decides it is the overnight low, so `temperatureMin` is now scored beside
+     * the daytime figure.
+     *
+     * Two hyphens also fixed: `cloudCover=10-70` and `humidity=40-60` used a
+     * hyphen where the parser needs `..`, so both were silently unparseable and
+     * dropped. `cloudCover` was additionally a key the weather object did not
+     * carry — it is `clouds` — which is now aliased upstream.
+     *
+     * Season extended to October to match Alton Water, the only Anglian site
+     * with a campsite, which runs 1 April to 31 October. The model stopped in
+     * September and would have called the last five weeks of the actual season
+     * out of season.
+     */
     poorConditions: [
-      'temperature<5',                // freezing nights
+      'temperatureMin<2',            // a genuinely cold night under canvas
       'temperature>30',              // uncomfortable heat
-      'windSpeed>25',                // tents unsafe
+      'windSpeed>15',                // tents unsafe
+      'gust>18',                     // what actually breaks a pole
       'precipitation>5',            // heavy rain
       'soilMoisture<10 or soilMoisture>60', // ground either baked hard or boggy
       'visibility<2',                // fog & disorienting
@@ -645,9 +729,10 @@ export const outdoorRecreation: ActivityType[] = [
       'snowDepthCm>3'                // deep snow makes pitching hazardous
     ],
     fairConditions: [
-      'temperature=5..10',           // chilly mornings
+      'temperatureMin=2..6',         // cold enough to feel it by morning
       'temperature=25..30',          // hot but manageable
-      'windSpeed=12..18',            // breezy but fine with guy lines
+      'windSpeed=11..15',            // guy it out properly
+      'gust=14..18',
       'precipitation=0..5',         // showers, muddy but okay
       'humidity=80..90',             // muggy
       'soilMoisture=10..15 or soilMoisture=45..60', // firming or sloppy ground
@@ -655,23 +740,27 @@ export const outdoorRecreation: ActivityType[] = [
     ],
     goodConditions: [
       'temperature=10..25',
-      'windSpeed<12',
-      'cloudCover=10-70',
+      'temperatureMin>6',
+      'windSpeed<11',
+      'gust<14',
+      'cloudCover=10..70',
       'precipitation=0',
       'humidity<80',
       'soilMoisture=15..45',
       'visibility>5'
     ],
     perfectConditions: [
-      'temperature=15..20',
-      'windSpeed<8',
-      'cloudCover=20-50',
+      'temperature=15..24',
+      'temperatureMin>10',           // a night you sleep through
+      'windSpeed<6',
+      'gust<9',
+      'cloudCover=20..50',
       'precipitation=0',
-      'humidity=40-60',
+      'humidity=40..60',
       'soilMoisture=20..35',
       'visibility>10'
     ],
-    seasonalMonths: [4, 5, 6, 7, 8, 9],
+    seasonalMonths: [4, 5, 6, 7, 8, 9, 10],
     indoorAlternative: 'Plan your next trip, check and pack gear, or camp in your garden for fun'
   },
 ];

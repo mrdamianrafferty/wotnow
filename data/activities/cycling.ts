@@ -8,9 +8,28 @@ export const cyclingSports: ActivityType[] = [
     secondaryCategory: 'Outdoor Recreation',
     weatherSensitive: true,
     tags: ['sport', 'cycling', 'cardio', 'group', 'solo', 'Saturday', 'Sunday', 'Wednesday'],
+    /**
+     * ─── Wind is effort, not danger, 2026-09 ─────────────────────────────
+     *
+     * The band numbers here were the least wrong in the library (PERFECT under
+     * 8 m/s is a reasonable 16 knots), but the separate wind table put UNSAFE at
+     * 9 m/s — 32 km/h, a Force 5 — and dropped the score to 10 out of 100 there.
+     *
+     * That threshold encodes a real risk and the wrong one: being pushed into
+     * traffic by a crosswind. On the reservoir circuits this model is being
+     * asked about — Rutland's 23 miles, Grafham's 10 — there is no traffic, and
+     * a Force 5 is a hard lap rather than a hazard. Scoring it 10 is the finding
+     * a cyclist would dismiss the whole board over.
+     *
+     * The hazard that IS real on those routes is the exposed dam crossings, and
+     * it is gust-driven — a steady blow you lean into, a gust puts you off your
+     * line. So the mean now carries effort and gusts carry danger, which is the
+     * split the data supports now that gusts are actually supplied.
+     */
     perfectConditions: [
       'temperature=16..22',
-      'windSpeed<8',
+      'windSpeed<5',
+      'gust<8',
       'clouds=10..50',
       'humidity=40..55',
       'precipitation=0',
@@ -18,7 +37,8 @@ export const cyclingSports: ActivityType[] = [
     ],
     goodConditions: [
       'temperature=10..28',
-      'windSpeed<15',
+      'windSpeed<9',               // to about 17 kn — a headwind, not a problem
+      'gust<13',
       'clouds=0..80',
       'humidity<75',
       'precipitation=0',
@@ -26,14 +46,16 @@ export const cyclingSports: ActivityType[] = [
     ],
     fairConditions: [
       'temperature=5..10 or 28..32',
-      'windSpeed=15..25',
+      'windSpeed=9..13',           // Force 6 — a genuinely hard ride
+      'gust=13..17',
       'humidity=80..90',
       'precipitation=1..3',
       'visibility=2..5'
     ],
     poorConditions: [
       'temperature<5 or temperature>32',
-      'windSpeed>25',
+      'windSpeed>13',
+      'gust>17',                   // Force 8 in the gusts — blown off line
       'precipitation>3',
       'humidity>90',
       'visibility<2',
@@ -50,40 +72,40 @@ export const cyclingSports: ActivityType[] = [
     tags: ['sport', 'cycling', 'trail', 'nature', 'Saturday', 'Sunday'],
     perfectConditions: [
       'temperature=10..18',
-      'windSpeed<10',
+      'windSpeed<6',
       'clouds=10..50',
       'humidity=50..65',
       'soilMoisture=20..35',
       'precipitation=0',
-      'visibility>10'
-    ],
+      'visibility>10',
+      'gust<11'],
     goodConditions: [
       'temperature=8..24',
-      'windSpeed<20',
+      'windSpeed<11',
       'clouds=0..90',
       'humidity<80',
       'soilMoisture=20..45',
       'precipitation=0',
-      'visibility>5'
-    ],
+      'visibility>5',
+      'gust<16'],
     fairConditions: [
       'temperature=4..8 or 24..28',
-      'windSpeed=20..30',
+      'windSpeed=11..15',
       'humidity=80..90',
       'precipitation=2..5',
       'soilMoisture=45..60',
-      'visibility=2..5'
-    ],
+      'visibility=2..5',
+      'gust=16.0..20'],
     poorConditions: [
       'temperature<4 or temperature>28',
-      'windSpeed>30',
+      'windSpeed>15',
       'precipitation>5',
       'humidity>90',
       'soilMoisture>60',
       'visibility<2',
       'snowfallRateMmH>2',
-      'snowDepthCm>6'
-    ],
+      'snowDepthCm>6',
+      'gust>20'],
     seasonalMonths: [3, 4, 5, 6, 7, 8, 9, 10]
   },
   {
@@ -95,39 +117,43 @@ export const cyclingSports: ActivityType[] = [
     tags: ['sport', 'cycling', 'mixed_surface', 'adventure'],
     perfectConditions: [
       'temperature=10..18',
-      'windSpeed<8',
+      'windSpeed<5',
       'clouds=20..50',
       'humidity=45..55',
       'soilMoisture=20..35',
       'precipitation=0',
-      'visibility>10'
+      'visibility>10',
+      'gust<9.4'
     ],
     goodConditions: [
       'temperature=7..24',
-      'windSpeed<15',
+      'windSpeed<9',
       'clouds=0..75',
       'humidity<75',
       'soilMoisture=20..45',
       'precipitation=0',
-      'visibility>5'
+      'visibility>5',
+      'gust<13.6'
     ],
     fairConditions: [
       'temperature=2..7 or 24..28',
-      'windSpeed=15..25',
+      'windSpeed=9..13',
       'humidity=75..90',
       'precipitation=1..4',
       'soilMoisture=45..60',
-      'visibility=2..5'
+      'visibility=2..5',
+      'gust=13.6..17'
     ],
     poorConditions: [
       'temperature<2 or temperature>28',
-      'windSpeed>25',
+      'windSpeed>13',
       'precipitation>4',
       'humidity>90',
       'soilMoisture>60',
       'visibility<2',
       'snowfallRateMmH>2',
-      'snowDepthCm>6'
+      'snowDepthCm>6',
+      'gust>17'
     ],
     seasonalMonths: [3, 4, 5, 6, 7, 8, 9, 10]
   }

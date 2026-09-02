@@ -61,10 +61,16 @@ export type WindThresholds = Partial<{
 
 const WIND_ACTIVITY_THRESHOLDS: Record<string, WindThresholds> = {
   // Cycling activities - very sensitive to wind, especially crosswinds
+  /**
+   * Relaxed 2026-09. The old 9 m/s "unsafe" encodes being pushed into traffic by
+   * a crosswind, which is a real risk on an open road and not one that exists on
+   * a traffic-free reservoir circuit — where it was scoring a Force 5 headwind
+   * at 10 out of 100. Wind is effort here; gusts are the hazard.
+   */
   road_cycling: {
-    caution: 7, // 25 km/h, 15 mph - crosswinds affect handling
-    unsafe: 9, // 32 km/h, 20 mph - many cyclists' limit
-    dangerous: 13, // 47 km/h, 29 mph - risk of being blown off road
+    caution: 9,     // Force 5 — a hard lap
+    difficult: 13,  // Force 6
+    unsafe: 17,     // Force 7
   },
   mountain_biking: {
     caution: 9, // 32 km/h - less exposed but still affected
@@ -90,12 +96,28 @@ const WIND_ACTIVITY_THRESHOLDS: Record<string, WindThresholds> = {
     caution: 13, // 47 km/h, 30 mph
     dangerous: 15, // 54 km/h, 35 mph - "bad day for most sailboats"
   },
+  /**
+   * Inland dinghy sailing, re-cut 2026-09 to agree with the condition bands.
+   *
+   * These and `data/activities/watersports.ts` were calibrated separately and
+   * disagreed on the same sport: at Force 6 the band said "Good weather" while
+   * this table said "Use Caution", and the engine printed both in one sentence.
+   * They now describe the same ladder — Force 3-4 good, Force 5 for experienced
+   * hands, Force 6 ashore.
+   *
+   * Force 6 starts at 39 km/h, i.e. 10.8 m/s, which is also the `boatsOffForce`
+   * that Rutland and Grafham already declare in RiseDaisy's own thresholds file.
+   */
   sailing_inland: {
-    min_wind: 3,
-    optimal_min: 4,
-    optimal_max: 9, // 32 km/h - smaller boats, more protected
-    caution: 11,
-    dangerous: 13, // 47 km/h - small boats can be knocked down at 20 mph
+    /* Force 2. Below it you drift rather than sail — which is a disappointment
+       and not a danger, so `poorConditions` in the model stops only at a flat
+       calm while this rung says "you want more wind than this". */
+    min_wind: 1.7,
+    optimal_min: 1.7,   // Force 2 — beginners sail in this
+    optimal_max: 8,     // Force 4 — the club day
+    caution: 8,         // Force 5, experienced hands only
+    unsafe: 10.8,       // Force 6 — the stop
+    dangerous: 13.9,    // Force 7
   },
   windsurfing: {
     min_wind: 4, // 14 km/h - minimum for beginners
@@ -104,12 +126,25 @@ const WIND_ACTIVITY_THRESHOLDS: Record<string, WindThresholds> = {
     expert_max: 15, // 54 km/h
     dangerous: 18, // 65 km/h
   },
+  /**
+   * Inland windsurfing, re-cut 2026-09 to the same operator limit as sailing.
+   *
+   * The old `expert_max: 15` (29 kn) combined with `dangerous: 18` left Force 7
+   * returning a bare "safe" with no message at all, which is how a near gale
+   * came to read as a good day. A windsurfer will say Force 6 is when it gets
+   * interesting and on open coast they are right; this is enclosed water under
+   * a rescue boat, and the operator's limit is the limit.
+   */
   windsurfing_inland: {
-    min_wind: 4,
-    optimal_min: 6,
-    optimal_max: 11,
-    expert_max: 15,
-    dangerous: 18,
+    min_wind: 1.7,      // below Force 2 there is no way back
+    optimal_min: 3.4,   // Force 3 — a beginner is moving
+    optimal_max: 8,     // Force 4 — planing for most recreational rigs
+    /* Deliberately NO `expert_max`. That key routes Force 5 to the "beneficial"
+       level, which adds points; here Force 5 is the experienced-riders rung and
+       must read as Fair, so it falls through to `caution` below instead. */
+    caution: 8,         // Force 5
+    unsafe: 10.8,       // Force 6 — the stop
+    dangerous: 13.9,    // Force 7
   },
   kitesurfing: {
     min_wind: 6, // 22 km/h - minimum for kitesurfing
@@ -120,25 +155,33 @@ const WIND_ACTIVITY_THRESHOLDS: Record<string, WindThresholds> = {
   },
 
   // Other water sports
+  /* Enclosed water, and committed once off the bank: the wind that matters is
+     the one you paddle home against. Force 5 is a rescue-boat call. */
   kayaking: {
-    caution: 7, // 25 km/h
-    difficult: 11, // 40 km/h
-    unsafe: 15, // 54 km/h
+    caution: 5.5,   // upper Force 3
+    difficult: 7,   // Force 4
+    unsafe: 10,     // Force 5
   },
   sea_kayaking: {
     caution: 6, // 22 km/h - more exposed
     difficult: 9, // 32 km/h
     unsafe: 13, // 47 km/h
   },
+  /* An open canoe is a sail with a paddler in it — the most wind-affected hull
+     on these waters and the first ashore. */
   canoeing: {
-    caution: 6, // 22 km/h - high profile, catches wind
-    difficult: 9,
-    unsafe: 13,
+    caution: 4,     // Force 3
+    difficult: 5.5,
+    unsafe: 8,      // Force 5
   },
+  /* Highest windage, lowest power, no keel. The dominant incident is being
+     blown off the bank and not getting back, which is a DIRECTION problem the
+     engine cannot yet read — so these stand in conservatively for a test we
+     cannot make. */
   stand_up_paddleboarding: {
-    caution: 6,
-    difficult: 9,
-    unsafe: 11, // 40 km/h
+    caution: 3.5,   // Force 3
+    difficult: 5,
+    unsafe: 7,      // upper Force 4
   },
   sup_sea: {
     caution: 5,
@@ -312,10 +355,11 @@ const WIND_ACTIVITY_THRESHOLDS: Record<string, WindThresholds> = {
     difficult: 17, // 61 km/h - risk of falling branches
     dangerous: 26, // 94 km/h - risk of being blown over (60+ mph)
   },
+  /* A scope on a tripod is unusable well before a walker is uncomfortable. */
   birdwatching: {
-    caution: 11, // 40 km/h - affects bird behavior and observation
-    difficult: 15,
-    impractical: 18,
+    caution: 8,      // Force 5
+    difficult: 12,   // Force 6
+    impractical: 16, // Force 7
   },
   photography: {
     caution: 9, // 32 km/h - camera stability issues
@@ -337,10 +381,13 @@ const WIND_ACTIVITY_THRESHOLDS: Record<string, WindThresholds> = {
     difficult: 15,
     unsafe: 18,
   },
+  /* Open water. Chop makes a swimmer invisible to anyone watching from the bank
+     long before it makes them uncomfortable, which is why this is tighter than
+     it looks. Water temperature, not wind, is the real limit — see the model. */
   wild_swimming: {
-    caution: 7, // 25 km/h - water conditions affected
-    unsafe: 11,
-    dangerous: 15,
+    caution: 5,     // Force 3
+    unsafe: 8,      // Force 5
+    dangerous: 11,  // Force 6
   },
   gardening: {
     caution: 9, // 32 km/h - tools and materials affected
@@ -352,10 +399,12 @@ const WIND_ACTIVITY_THRESHOLDS: Record<string, WindThresholds> = {
     difficult: 13,
     impractical: 17,
   },
+  /* Matched to the model's own new bands. The model previously had no
+     reachable wind limit at all, so this table was the only thing acting. */
   dog_walking: {
-    caution: 11,
-    difficult: 15,
-    unsafe: 18,
+    caution: 9,     // Force 5
+    difficult: 13,  // Force 6
+    unsafe: 17,     // Force 7
   },
 
   // Recreation activities
@@ -522,9 +571,58 @@ const WIND_ACTIVITY_THRESHOLDS: Record<string, WindThresholds> = {
   },
 };
 
-function toKmh(ms: number) {
-  return Math.round(ms * 3.6);
+/**
+ * ─── How these messages are worded, and why they changed ─────────────────
+ *
+ * Every string below used to print the raw m/s float. Verbatim from the engine:
+ * "Use Caution — 6.944444444444445 m/s (25 km/h) wind creates use caution
+ * conditions". Three faults in one line — an unrounded float, a unit nobody at
+ * a sailing club uses, and a tautology that defines the label by repeating it.
+ *
+ * They now speak Beaufort and knots, which is what the people on these waters
+ * ask each other, and they say what the wind will DO rather than restating the
+ * severity word already shown beside them.
+ *
+ * These are the fallback voice. Where the scorer can identify which criterion
+ * actually decided the day, `utils/activityReasons` writes the sentence instead
+ * and never reaches here.
+ */
+const FORCE_BOUNDS_KMH = [1, 6, 12, 20, 29, 39, 50, 62, 75, 89, 103, 118];
+
+function toForce(ms: number): number {
+  const kmh = ms * 3.6;
+  for (let i = 0; i < FORCE_BOUNDS_KMH.length; i++) if (kmh < FORCE_BOUNDS_KMH[i]) return i;
+  return 12;
 }
+
+function toKnots(ms: number): number {
+  return Math.round(ms * 1.94384);
+}
+
+/** "Force 5, 18 knots" — the one number a wind sentence should carry. */
+function windPhrase(ms: number): string {
+  const kn = toKnots(ms);
+  return `Force ${toForce(ms)}, ${kn} knot${kn === 1 ? '' : 's'}`;
+}
+
+/**
+ * What each negative level MEANS, in place of the label repeating itself.
+ *
+ * The old template read "{label} — {n} m/s wind creates {label} conditions",
+ * which tells a reader nothing they did not get from the badge. These say what
+ * the wind will actually do to the activity.
+ */
+const NEGATIVE_EFFECT: Record<string, string> = {
+  dangerous: 'genuinely dangerous to be out in.',
+  unsafe: 'past the point this is safe.',
+  impossible: 'simply not happening today.',
+  unplayable: 'too much to play in.',
+  impractical: 'more trouble than it is worth.',
+  unpleasant: 'no fun at all.',
+  difficult: 'hard going, and it will not let up.',
+  uncomfortable: 'enough to take the pleasure out of it.',
+  caution: 'manageable, but worth respecting.',
+};
 
 // Universal danger threshold (all outdoor activities)
 const UNIVERSAL_DANGER_MS = 26; // 94 km/h ~ 60 mph
@@ -554,7 +652,7 @@ export function getWindActivityRecommendation(activityKey: string, windSpeedMs: 
   if (windSpeedMs >= UNIVERSAL_DANGER_MS) {
     return {
       level: 'dangerous',
-      message: `Extreme winds (${windSpeedMs} m/s, ${toKmh(windSpeedMs)} km/h). Unsafe for outdoor activities`,
+      message: `${windPhrase(windSpeedMs)}. Too much wind to be outdoors safely.`,
       safety: 'unsafe',
       ...WIND_RECOMMENDATION_LEVELS.dangerous,
     };
@@ -565,7 +663,7 @@ export function getWindActivityRecommendation(activityKey: string, windSpeedMs: 
     if (windSpeedMs < (thresholds.min_wind as number)) {
       return {
         level: 'min_wind_needed',
-        message: `Insufficient wind. Need at least ${thresholds.min_wind} m/s (${toKmh(thresholds.min_wind)} km/h)` ,
+        message: `Not enough wind — ${windPhrase(windSpeedMs)}. It needs about ${windPhrase(thresholds.min_wind as number)} to work at all.`,
         safety: 'challenging',
         ...WIND_RECOMMENDATION_LEVELS.min_wind_needed,
       };
@@ -578,7 +676,7 @@ export function getWindActivityRecommendation(activityKey: string, windSpeedMs: 
     if (typeof optMin === 'number' && typeof optMax === 'number' && windSpeedMs >= optMin && windSpeedMs <= optMax) {
       return {
         level: 'optimal',
-        message: `Optimal wind for this activity (${windSpeedMs} m/s, ${toKmh(windSpeedMs)} km/h)`,
+        message: `${windPhrase(windSpeedMs)} — right in the band this wants.`,
         safety: 'safe',
         ...WIND_RECOMMENDATION_LEVELS.optimal,
       };
@@ -587,7 +685,7 @@ export function getWindActivityRecommendation(activityKey: string, windSpeedMs: 
     if (typeof expertMax === 'number' && windSpeedMs <= expertMax) {
       return {
         level: 'beneficial',
-        message: `Good wind conditions (better for experienced participants)`,
+        message: `${windPhrase(windSpeedMs)} — enough to be worth it, and enough to want some experience.`,
         safety: 'safe',
         ...WIND_RECOMMENDATION_LEVELS.beneficial,
       };
@@ -615,7 +713,7 @@ export function getWindActivityRecommendation(activityKey: string, windSpeedMs: 
       const rec = WIND_RECOMMENDATION_LEVELS[check.level];
       return {
         level: check.level,
-        message: `${rec.label} — ${windSpeedMs} m/s (${toKmh(windSpeedMs)} km/h) wind creates ${rec.label.toLowerCase()} conditions`,
+        message: `${windPhrase(windSpeedMs)} — ${NEGATIVE_EFFECT[check.level]}`,
         safety: ['dangerous', 'unsafe', 'impossible', 'unplayable'].includes(check.level) ? 'unsafe'
               : ['difficult', 'impractical'].includes(check.level) ? 'challenging' : 'manageable',
         ...rec,
@@ -626,7 +724,7 @@ export function getWindActivityRecommendation(activityKey: string, windSpeedMs: 
   // Default safe
   return {
     level: 'safe',
-    message: windSpeedMs === 0 ? 'Calm conditions' : `Wind conditions are manageable (${windSpeedMs} m/s, ${toKmh(windSpeedMs)} km/h)`,
+    message: windSpeedMs === 0 ? 'Flat calm.' : `${windPhrase(windSpeedMs)} — nothing the wind is going to spoil.`,
     safety: 'safe',
     ...WIND_RECOMMENDATION_LEVELS.safe,
   };
