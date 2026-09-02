@@ -409,27 +409,20 @@ function calculateActivityScoreWithSnow(
     if (rainHours !== null && rainHours >= 8) score = Math.min(score, 55);
   }
 
-  /**
-   * If rain is what actually pulled the score down, rain is what the sentence
-   * should be about.
-   *
-   * The binding criterion comes from the band, and the band is chosen before any
-   * of the rain handling above runs — so on a wet day the reader was being told
-   * "Moderate breeze, Force 4, 17 °C", which was true, was not the reason, and
-   * left a poor verdict looking unexplained. Substituting here keeps one
-   * mechanism rather than teaching the copy layer a second way to find a reason.
-   */
-  if (wetness > 0.25 && band.criteria.every((c) => c.key !== 'precipitation')) {
-    band = {
-      mean: band.mean,
-      criteria: [{
-        condition: 'precipitation=0..1',
-        key: 'precipitation',
-        score: Math.max(0, 1 - wetness),
-        value: rainMm,
-      }],
-    };
-  }
+  // ➕ Wind-aware adjustment: caps a score whose wind the model's own bands
+  // were too coarse to catch. See applyWindRecommendationScoring.
+  score = applyWindRecommendationScoring(activity as MinimalActivity, w, score).score;
+
+  // ➕ Soil moisture, for the activities that care about the ground.
+  score = adjustScoreForMud(activity as MinimalActivity, w, score).score;
+
+  // ➕ Snow.
+  const snowAdjusted = applySnowRecommendationScoring(activity as MinimalActivity, w, score);
+  score = snowAdjusted.score;
+
+  // Risk caps: a day carrying real hazard cannot present as a good one.
+  if (penalty >= 0.5) score = Math.min(score, 59);
+  else if (penalty >= 0.3) score = Math.min(score, 89);
 
   /**
    * Out of season, and finally acting on it.
@@ -442,29 +435,61 @@ function calculateActivityScoreWithSnow(
    *
    * Capped rather than zeroed: a mild February afternoon is a genuinely poor
    * camping day rather than an impossible one, and some of these seasons are
-   * about a venue's opening hours rather than about the weather. The cap says
-   * "not now" without claiming the conditions themselves are dangerous.
+   * about a venue's opening hours rather than about the weather.
    */
   if (opts.month && activity.seasonalMonths?.length
       && !activity.seasonalMonths.includes(opts.month)) {
     score = Math.min(score, 35);
   }
 
-  // ➕ Apply wind-aware adjustment
-  const windAdjusted = applyWindRecommendationScoring(activity as MinimalActivity, w, score);
-  score = windAdjusted.score;
+  /**
+   * ─── What the sentence is about ─────────────────────────────────────────
+   *
+   * One ordered choice, made here rather than in the copy layer, because only
+   * this function knows which of the several things that moved the score
+   * actually moved it most.
+   *
+   *   1. Rain, when rain is what pulled it down. The band is chosen before any
+   *      of the rain handling above runs, so on a wet day the band's own weakest
+   *      criterion is not the reason and the reader was being told about the
+   *      breeze instead.
+   *
+   *   2. The poor condition nearest to firing. On a day that is not going well
+   *      this is a far more reliable source than the matched band: a poor
+   *      condition can only ever point the bad way, whereas a FAIR band lists
+   *      marginal ranges — so a day comfortably better than one scores zero
+   *      against it and gets reported as a failure. That produced "Very little
+   *      wind — Force 4" on a swimming tile whose fair band was written for
+   *      6–8 m/s.
+   *
+   *   3. The band's weakest criterion, but only for a perfect or good day,
+   *      where every criterion in the band describes something desirable and
+   *      the weakest one is therefore a real answer.
+   *
+   * Anything else leaves `binding` undefined and the copy layer falls back to a
+   * plain statement of the day, which is always true and never contradicts the
+   * verdict beside it.
+   */
+  const asBinding = (c: CriterionScore, badness: number): CriterionScore =>
+    ({ ...c, score: 1 - badness });
 
-  // ➕ Apply soil moisture adjustment for mud-sensitive activities
-  const mudAdjusted = adjustScoreForMud(activity as MinimalActivity, w, score);
-  score = mudAdjusted.score;
+  const nearestPoor = poor.all.slice().sort((a, b) => b.score - a.score)[0];
 
-  // Apply snow-aware adjustment
-  const snowAdjusted = applySnowRecommendationScoring(activity as MinimalActivity, w, score);
-  score = snowAdjusted.score;
-
-  // Risk caps to prevent high categories under risk
-  if (penalty >= 0.5) score = Math.min(score, 59); // at most fair
-  else if (penalty >= 0.3) score = Math.min(score, 89); // block perfect
+  if (wetness > 0.35) {
+    band = {
+      mean: band.mean,
+      criteria: [asBinding(
+        { condition: 'precipitation=0..1', key: 'precipitation', score: 0, value: rainMm },
+        wetness,
+      )],
+    };
+  } else if (nearestPoor && nearestPoor.score > 0.4) {
+    band = { mean: band.mean, criteria: [asBinding(nearestPoor, nearestPoor.score)] };
+  } else if (score < 60) {
+    /* Neither rain nor a near-miss explains it, and the band's own weakest link
+       cannot be trusted below "good". Say nothing rather than something wrong. */
+    band = { mean: band.mean, criteria: [] };
+  }
 
   /**
    * An activity decided by water temperature cannot claim a top score without one.

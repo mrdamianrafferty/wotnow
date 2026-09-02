@@ -179,6 +179,31 @@ describe('condition grammar', () => {
   });
 });
 
+describe('the sentence agrees with the verdict', () => {
+  test('approaching a "too much wind" limit is not reported as too little', () => {
+    // `windSpeed>8` is a poor condition that fires from ABOVE, so a day at 7.2
+    // is approaching too much wind. Read off the numbers alone it looks like a
+    // shortfall, and swimming tiles carried "Very little wind — Force 4".
+    const r = scoreOf('wild_swimming', fair(26, { temperature: 17 })).reasoning ?? '';
+    expect(r).not.toMatch(/very little wind|not enough wind/i);
+  });
+
+  test('rain is named when rain is what pulled the score down', () => {
+    // The band is chosen before any rain handling runs, so its weakest criterion
+    // is not the reason on a wet day — the reader was told about the breeze.
+    const r = scoreOf('dog_walking', fair(15, { precipitation: 4.6, precipitationHours: 16 })).reasoning ?? '';
+    expect(r.toLowerCase()).toMatch(/rain|wet/);
+  });
+
+  test('a good day is never given a limiting reason that contradicts it', () => {
+    for (const kph of FORCE_KPH) {
+      const s = scoreOf('kayaking', fair(kph));
+      if (s.score < 60) continue;
+      expect(s.reasoning ?? '').not.toMatch(/not enough|too much|no way|not safe/i);
+    }
+  });
+});
+
 describe('the sentence says something', () => {
   test('no raw m/s floats reach the reader', () => {
     for (const id of ['sailing_inland', 'kayaking', 'camping', 'road_cycling']) {

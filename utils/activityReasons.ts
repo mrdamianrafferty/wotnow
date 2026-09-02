@@ -346,7 +346,9 @@ function clauseFor(
   weather: WeatherData,
 ): string | null {
   if (typeof criterion.value !== 'number') return null;
-  const dir = directionOf(criterion.condition, criterion.value);
+  /* An explicit direction beats one inferred from the numbers — see
+     CriterionScore.direction. */
+  const dir = criterion.direction ?? directionOf(criterion.condition, criterion.value);
   const table = BY_FAMILY[family]?.[criterion.key] ?? DEFAULTS[criterion.key];
   const phrase = table?.[dir] ?? DEFAULTS[criterion.key]?.[dir];
   return phrase ? phrase(criterion.value, weather) : null;

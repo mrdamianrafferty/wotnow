@@ -351,6 +351,17 @@ export interface CriterionScore {
   score: number;
   /** What the weather actually was, where a single key could be resolved. */
   value?: number;
+  /**
+   * Which way this criterion is failing, when the caller knows better than the
+   * numbers do.
+   *
+   * A POOR condition written `windSpeed>8` fires from above, so a day sitting
+   * just below it is approaching "too much wind" — but read off the numbers
+   * alone, 7.2 is simply lower than 8 and looks like a shortfall. That produced
+   * "Very little wind — Force 4" on a swimming tile, from a condition that means
+   * the exact opposite. The operator settles it and nothing else can.
+   */
+  direction?: 'low' | 'high';
 }
 
 /**
@@ -425,17 +436,26 @@ function firedLow(condition: string, value: number | undefined): boolean {
 export function scorePoorConditions(
   conditions: string[],
   weather: WeatherData
-): { penalty: number; triggered: CriterionScore[]; hazards: CriterionScore[] } {
+): { penalty: number; triggered: CriterionScore[]; hazards: CriterionScore[]; all: CriterionScore[] } {
   const triggered: CriterionScore[] = [];
   const hazards: CriterionScore[] = [];
+  const all: CriterionScore[] = [];
   let total = 0;
   for (const cond of conditions) {
     const { score, counted } = evalCompoundScore(cond, weather);
-    if (!counted || score <= 0.7) continue;
+    if (!counted) continue;
     const key = extractWeatherKey(cond.split(OR_SPLIT_RE)[0].split(AND_SPLIT_RE)[0].trim());
     const raw = weather[key];
     const value = typeof raw === 'number' ? raw : undefined;
-    const entry: CriterionScore = { condition: cond, key, score, value };
+    /* `>` fires from above and `<` from below. A range in a poor band is
+       ambiguous and is left for the numbers to decide. */
+    const op = /^[a-zA-Z_]+\s*(>=?|<=?)/.exec(cond.trim())?.[1];
+    const entry: CriterionScore = {
+      condition: cond, key, score, value,
+      direction: op?.startsWith('>') ? 'high' : op?.startsWith('<') ? 'low' : undefined,
+    };
+    all.push(entry);
+    if (score <= 0.7) continue;
     triggered.push(entry);
     if (!(SHORTFALL_NOT_HAZARD.has(key) && firedLow(cond, value))) hazards.push(entry);
     total += score;
@@ -444,6 +464,17 @@ export function scorePoorConditions(
     penalty: triggered.length ? Math.min(1, total / triggered.length) : 0,
     triggered,
     hazards,
+    /**
+     * Every poor condition that could be evaluated, fired or not, with how close
+     * it came. The one nearest to firing is the best answer to "why is this day
+     * not better", and it is a far more reliable source for that than the
+     * matched band: a poor condition always points the bad way, whereas a fair
+     * band lists MARGINAL ranges, so being below one is a good thing that reads
+     * as a failure. That mistake produced "Very little wind — Force 4" on a
+     * swimming tile, off a fair band whose wind range the day was comfortably
+     * under.
+     */
+    all,
   };
 }
 
