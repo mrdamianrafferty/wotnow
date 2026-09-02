@@ -179,6 +179,50 @@ describe('condition grammar', () => {
   });
 });
 
+describe('inland models do not carry wave height', () => {
+  /**
+   * On enclosed water every wave is local wind-sea, so significant wave height
+   * is a function of wind, fetch and depth and carries nothing the wind criteria
+   * do not. Computed from the reservoirs' own outlines, the POOR wave lines
+   * these models used to carry needed a Force 8 while the wind stop is Force 6,
+   * so they could never fire; and where a wave line WAS inside the live range it
+   * was a restatement of the wind, which would have made the band mean count
+   * wind twice.
+   *
+   * Coastal models keep theirs, and must: swell travels, so out there wave
+   * height is genuinely independent of the local wind.
+   */
+  const INLAND = ['sailing_inland', 'windsurfing_inland', 'kayaking', 'canoeing',
+                  'stand_up_paddleboarding', 'wild_swimming'];
+
+  test.each(INLAND)('%s has no waveHeight criterion', (id) => {
+    const a = activityTypes.find((x) => x.id === id)!;
+    const bands = [a.perfectConditions, a.goodConditions, a.fairConditions, a.poorConditions];
+    for (const band of bands) {
+      expect((band ?? []).filter((c) => c.includes('waveHeight'))).toEqual([]);
+    }
+  });
+
+  test('coastal models still do', () => {
+    for (const id of ['surfing', 'sea_kayaking', 'sea_swimming']) {
+      const a = activityTypes.find((x) => x.id === id)!;
+      const bands = [...(a.perfectConditions ?? []), ...(a.poorConditions ?? [])];
+      expect(bands.some((c) => c.includes('waveHeight'))).toBe(true);
+    }
+  });
+
+  test('a wave height in the forecast cannot sway an inland score', () => {
+    // The property the removal buys, stated directly: wind decides these, and a
+    // wave figure — measured, modelled or mistaken — cannot move the answer.
+    // Before the removal it could, and would have been counting wind twice.
+    for (const id of INLAND) {
+      const plain = scoreOf(id, fair(FORCE_KPH[3])).score;
+      const withWaves = scoreOf(id, fair(FORCE_KPH[3], { waveHeight: 0.9 })).score;
+      expect(withWaves).toBe(plain);
+    }
+  });
+});
+
 describe('the sentence agrees with the verdict', () => {
   test('approaching a "too much wind" limit is not reported as too little', () => {
     // `windSpeed>8` is a poor condition that fires from ABOVE, so a day at 7.2

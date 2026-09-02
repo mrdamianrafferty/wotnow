@@ -78,10 +78,40 @@ export const waterSports: ActivityType[] = [
      * wind you have to paddle home against, not the wind you set out in. Force 5
      * is a rescue-boat call on that water, so it is the stop.
      */
+    /**
+     * ─── No waveHeight, deliberately ─────────────────────────────────────
+     *
+     * Removed 2026-09 after measuring it rather than assuming it. On enclosed
+     * water there is no swell: every wave is local wind-sea, so significant
+     * wave height is a function of wind, fetch and depth and carries no
+     * information the wind criteria do not already carry.
+     *
+     * Computed from the reservoirs' own OSM outlines (SMB fetch-limited,
+     * shallow-water form) with Rutland's longest fetch of 4.5 km:
+     *
+     *     Force 3  Hs 0.17 m     Force 5  Hs 0.42 m     Force 7  Hs 0.74 m
+     *     Force 4  Hs 0.28 m     Force 6  Hs 0.56 m
+     *
+     * Two consequences, and they point the same way. The POOR wave thresholds
+     * these models carried were unreachable: 0.9 m needs a Force 8 and the wind
+     * stop is Force 6, so that line could never fire. And where a wave
+     * threshold WAS inside the live range, it was a restatement of the wind —
+     * so supplying it would have made the band mean count wind twice and
+     * quietly doubled its weight against temperature and rain.
+     *
+     * Direction is the one thing waves could have added, since fetch varies
+     * about 1.8x across the compass here. It is not enough: at Force 5 that is
+     * 0.42 m down Rutland's long axis against 0.33 m across it, a difference
+     * smaller than the gap between any two thresholds. What direction DOES
+     * change on these waters is whether the wind blows you off the bank, which
+     * is a different question and not one wave height answers.
+     *
+     * The coastal models keep theirs, and should: swell travels, so out there
+     * wave height is genuinely independent of the local wind.
+     */
     perfectConditions: [
       'temperature=15..22',
       'windSpeed<4',               // under 8 kn — genuinely easy water
-      'waveHeight<0.3',
       'gust<6',
       'visibility>10',
       'precipitation=0'
@@ -90,7 +120,6 @@ export const waterSports: ActivityType[] = [
     goodConditions: [
       'temperature=10..24',
       'windSpeed<7',               // to about 14 kn, Force 4
-      'waveHeight<0.6',
       'gust<9',
       'visibility>5',
       'precipitation=0..2'
@@ -98,7 +127,6 @@ export const waterSports: ActivityType[] = [
     fairConditions: [
       'temperature=5..10 or 24..28',
       'windSpeed=7..10',           // Force 5 — hard work back upwind
-      'waveHeight=0.6..0.9',
       'gust=9..12',
       'precipitation=2..10',
       'visibility=2..5'
@@ -107,7 +135,6 @@ export const waterSports: ActivityType[] = [
     poorConditions: [
       'temperature<5 or temperature>28',
       'windSpeed>10',              // Force 5 and above
-      'waveHeight>0.9',
       'gust>12',
       'precipitation>10',
       'visibility<2',
@@ -196,11 +223,41 @@ export const waterSports: ActivityType[] = [
      * blows downwind faster than an average crew can paddle back. Force 4 is
      * where a hire boat should already be ashore.
      */
+    /**
+     * ─── No waveHeight, deliberately ─────────────────────────────────────
+     *
+     * Removed 2026-09 after measuring it rather than assuming it. On enclosed
+     * water there is no swell: every wave is local wind-sea, so significant
+     * wave height is a function of wind, fetch and depth and carries no
+     * information the wind criteria do not already carry.
+     *
+     * Computed from the reservoirs' own OSM outlines (SMB fetch-limited,
+     * shallow-water form) with Rutland's longest fetch of 4.5 km:
+     *
+     *     Force 3  Hs 0.17 m     Force 5  Hs 0.42 m     Force 7  Hs 0.74 m
+     *     Force 4  Hs 0.28 m     Force 6  Hs 0.56 m
+     *
+     * Two consequences, and they point the same way. The POOR wave thresholds
+     * these models carried were unreachable: 0.9 m needs a Force 8 and the wind
+     * stop is Force 6, so that line could never fire. And where a wave
+     * threshold WAS inside the live range, it was a restatement of the wind —
+     * so supplying it would have made the band mean count wind twice and
+     * quietly doubled its weight against temperature and rain.
+     *
+     * Direction is the one thing waves could have added, since fetch varies
+     * about 1.8x across the compass here. It is not enough: at Force 5 that is
+     * 0.42 m down Rutland's long axis against 0.33 m across it, a difference
+     * smaller than the gap between any two thresholds. What direction DOES
+     * change on these waters is whether the wind blows you off the bank, which
+     * is a different question and not one wave height answers.
+     *
+     * The coastal models keep theirs, and should: swell travels, so out there
+     * wave height is genuinely independent of the local wind.
+     */
     perfectConditions: [
       'temperature=15..22',
       'windSpeed<3',               // under 6 kn
       'gust<5',
-      'waveHeight<0.2',
       'visibility>10',
       'precipitation=0'
     ],
@@ -208,7 +265,6 @@ export const waterSports: ActivityType[] = [
       'temperature=10..24',
       'windSpeed<5.5',             // to about 11 kn
       'gust<7',
-      'waveHeight<0.4',
       'visibility>5',
       'precipitation=0..2'
     ],
@@ -216,7 +272,6 @@ export const waterSports: ActivityType[] = [
       'temperature=5..10 or 24..28',
       'windSpeed=5.5..8',          // upper Force 4 — for competent crews only
       'gust=7..10',
-      'waveHeight=0.4..0.7',
       'visibility=2..5',
       'precipitation=2..10'
     ],
@@ -224,7 +279,6 @@ export const waterSports: ActivityType[] = [
       'temperature<5 or temperature>28',
       'windSpeed>8',               // Force 5
       'gust>10',
-      'waveHeight>0.7',
       'visibility<2',
       'precipitation>10',
       'snowfallRateMmH>0.5',
@@ -254,11 +308,41 @@ export const waterSports: ActivityType[] = [
      * why these thresholds are set conservatively: they are standing in for a
      * test we cannot yet make.
      */
+    /**
+     * ─── No waveHeight, deliberately ─────────────────────────────────────
+     *
+     * Removed 2026-09 after measuring it rather than assuming it. On enclosed
+     * water there is no swell: every wave is local wind-sea, so significant
+     * wave height is a function of wind, fetch and depth and carries no
+     * information the wind criteria do not already carry.
+     *
+     * Computed from the reservoirs' own OSM outlines (SMB fetch-limited,
+     * shallow-water form) with Rutland's longest fetch of 4.5 km:
+     *
+     *     Force 3  Hs 0.17 m     Force 5  Hs 0.42 m     Force 7  Hs 0.74 m
+     *     Force 4  Hs 0.28 m     Force 6  Hs 0.56 m
+     *
+     * Two consequences, and they point the same way. The POOR wave thresholds
+     * these models carried were unreachable: 0.9 m needs a Force 8 and the wind
+     * stop is Force 6, so that line could never fire. And where a wave
+     * threshold WAS inside the live range, it was a restatement of the wind —
+     * so supplying it would have made the band mean count wind twice and
+     * quietly doubled its weight against temperature and rain.
+     *
+     * Direction is the one thing waves could have added, since fetch varies
+     * about 1.8x across the compass here. It is not enough: at Force 5 that is
+     * 0.42 m down Rutland's long axis against 0.33 m across it, a difference
+     * smaller than the gap between any two thresholds. What direction DOES
+     * change on these waters is whether the wind blows you off the bank, which
+     * is a different question and not one wave height answers.
+     *
+     * The coastal models keep theirs, and should: swell travels, so out there
+     * wave height is genuinely independent of the local wind.
+     */
     perfectConditions: [
       'temperature=16..24',
       'windSpeed<3',               // under 6 kn — glassy
       'gust<4.5',
-      'waveHeight<0.15',
       'visibility>10',
       'precipitation=0'
     ],
@@ -266,7 +350,6 @@ export const waterSports: ActivityType[] = [
       'temperature=10..26',
       'windSpeed<5',               // to about 10 kn, Force 3
       'gust<7',
-      'waveHeight<0.25',
       'visibility>5',
       'precipitation=0..2'
     ],
@@ -274,7 +357,6 @@ export const waterSports: ActivityType[] = [
       'temperature=5..10 or 26..30',
       'windSpeed=5..7',            // Force 4 — competent paddlers, close in
       'gust=7..9',
-      'waveHeight=0.25..0.4',
       'visibility=2..5',
       'precipitation=2..5'
     ],
@@ -282,7 +364,6 @@ export const waterSports: ActivityType[] = [
       'temperature<5 or temperature>30',
       'windSpeed>7',               // upper Force 4 and beyond
       'gust>9',
-      'waveHeight>0.4',
       'visibility<2',
       'precipitation>5',
       'snowfallRateMmH>0.5',
@@ -457,11 +538,41 @@ export const waterSports: ActivityType[] = [
      * the venue's own supervised season, and RiseDaisy already holds a
      * per-water `waterTempC` for its fishing engine that belongs here.
      */
+    /**
+     * ─── No waveHeight, deliberately ─────────────────────────────────────
+     *
+     * Removed 2026-09 after measuring it rather than assuming it. On enclosed
+     * water there is no swell: every wave is local wind-sea, so significant
+     * wave height is a function of wind, fetch and depth and carries no
+     * information the wind criteria do not already carry.
+     *
+     * Computed from the reservoirs' own OSM outlines (SMB fetch-limited,
+     * shallow-water form) with Rutland's longest fetch of 4.5 km:
+     *
+     *     Force 3  Hs 0.17 m     Force 5  Hs 0.42 m     Force 7  Hs 0.74 m
+     *     Force 4  Hs 0.28 m     Force 6  Hs 0.56 m
+     *
+     * Two consequences, and they point the same way. The POOR wave thresholds
+     * these models carried were unreachable: 0.9 m needs a Force 8 and the wind
+     * stop is Force 6, so that line could never fire. And where a wave
+     * threshold WAS inside the live range, it was a restatement of the wind —
+     * so supplying it would have made the band mean count wind twice and
+     * quietly doubled its weight against temperature and rain.
+     *
+     * Direction is the one thing waves could have added, since fetch varies
+     * about 1.8x across the compass here. It is not enough: at Force 5 that is
+     * 0.42 m down Rutland's long axis against 0.33 m across it, a difference
+     * smaller than the gap between any two thresholds. What direction DOES
+     * change on these waters is whether the wind blows you off the bank, which
+     * is a different question and not one wave height answers.
+     *
+     * The coastal models keep theirs, and should: swell travels, so out there
+     * wave height is genuinely independent of the local wind.
+     */
     perfectConditions: [
       'waterTemperature=17..22',
       'airTemperature=18..26',
       'windSpeed<4',
-      'waveHeight<0.2',
       'visibility>10',
       'precipitation=0'
     ],
@@ -469,7 +580,6 @@ export const waterSports: ActivityType[] = [
       'waterTemperature=15..24',
       'airTemperature=15..28',
       'windSpeed<6',
-      'waveHeight<0.4',
       'visibility>5',
       'precipitation=0..2'
     ],
@@ -477,7 +587,6 @@ export const waterSports: ActivityType[] = [
       'waterTemperature=10..15 or 24..26',
       'airTemperature=11..15 or 28..30',
       'windSpeed=6..8',
-      'waveHeight=0.4..0.6',
       'visibility=2..5',
       'precipitation=2..5'
     ],
@@ -485,7 +594,6 @@ export const waterSports: ActivityType[] = [
       'waterTemperature<10',       // cold-water shock territory
       'airTemperature<11 or airTemperature>30',
       'windSpeed>8',
-      'waveHeight>0.6',
       'visibility<2',
       'precipitation>5',
       'snowfallRateMmH>0.5',
@@ -634,11 +742,41 @@ export const waterSports: ActivityType[] = [
      * Force 4 mean carried Force 7 gusts. 14 m/s is Force 7, which is where a
      * gust alone ends the day whatever the mean is doing.
      */
+    /**
+     * ─── No waveHeight, deliberately ─────────────────────────────────────
+     *
+     * Removed 2026-09 after measuring it rather than assuming it. On enclosed
+     * water there is no swell: every wave is local wind-sea, so significant
+     * wave height is a function of wind, fetch and depth and carries no
+     * information the wind criteria do not already carry.
+     *
+     * Computed from the reservoirs' own OSM outlines (SMB fetch-limited,
+     * shallow-water form) with Rutland's longest fetch of 4.5 km:
+     *
+     *     Force 3  Hs 0.17 m     Force 5  Hs 0.42 m     Force 7  Hs 0.74 m
+     *     Force 4  Hs 0.28 m     Force 6  Hs 0.56 m
+     *
+     * Two consequences, and they point the same way. The POOR wave thresholds
+     * these models carried were unreachable: 0.9 m needs a Force 8 and the wind
+     * stop is Force 6, so that line could never fire. And where a wave
+     * threshold WAS inside the live range, it was a restatement of the wind —
+     * so supplying it would have made the band mean count wind twice and
+     * quietly doubled its weight against temperature and rain.
+     *
+     * Direction is the one thing waves could have added, since fetch varies
+     * about 1.8x across the compass here. It is not enough: at Force 5 that is
+     * 0.42 m down Rutland's long axis against 0.33 m across it, a difference
+     * smaller than the gap between any two thresholds. What direction DOES
+     * change on these waters is whether the wind blows you off the bank, which
+     * is a different question and not one wave height answers.
+     *
+     * The coastal models keep theirs, and should: swell travels, so out there
+     * wave height is genuinely independent of the local wind.
+     */
     perfectConditions: [
       'temperature=14..24',
       'windSpeed=4..7',            // Force 3–4, 8–14 kn — the club day
       'gust<9',                    // spread stays inside Force 5
-      'waveHeight<0.4',
       'visibility>10',
       'precipitation=0'
     ],
@@ -646,7 +784,6 @@ export const waterSports: ActivityType[] = [
       'temperature=10..26',
       'windSpeed=1.7..8',          // all of Force 2 to the top of Force 4
       'gust<11',
-      'waveHeight<0.6',
       'visibility>5',
       'precipitation=0..2'
     ],
@@ -654,7 +791,6 @@ export const waterSports: ActivityType[] = [
       'temperature=5..10 or 26..30',
       'windSpeed=0.5..1.7 or 8..10.8',  // Force 1 drifting, or Force 5 for experienced hands
       'gust=11..14',
-      'waveHeight=0.6..0.9',
       'visibility=2..5',
       'precipitation=2..5'
     ],
@@ -665,7 +801,6 @@ export const waterSports: ActivityType[] = [
          describe teach in exactly that. Below Force 1 there is no sailing. */
       'windSpeed<0.5 or windSpeed>10.8',  // Force 6 is the stop
       'gust>14',                          // a Force 7 gust ends it on the mean alone
-      'waveHeight>0.9',
       'visibility<2',
       'precipitation>5',
       'snowfallRateMmH>0.5',
@@ -970,6 +1105,37 @@ export const waterSports: ActivityType[] = [
      * A windsurfer will tell you Force 6 is when it gets interesting, and on the
      * open coast they are right. This is a reservoir with a rescue boat and a
      * shoreline on every side; the operator's limit is the limit.
+     */
+    /**
+     * ─── No waveHeight, deliberately ─────────────────────────────────────
+     *
+     * Removed 2026-09 after measuring it rather than assuming it. On enclosed
+     * water there is no swell: every wave is local wind-sea, so significant
+     * wave height is a function of wind, fetch and depth and carries no
+     * information the wind criteria do not already carry.
+     *
+     * Computed from the reservoirs' own OSM outlines (SMB fetch-limited,
+     * shallow-water form) with Rutland's longest fetch of 4.5 km:
+     *
+     *     Force 3  Hs 0.17 m     Force 5  Hs 0.42 m     Force 7  Hs 0.74 m
+     *     Force 4  Hs 0.28 m     Force 6  Hs 0.56 m
+     *
+     * Two consequences, and they point the same way. The POOR wave thresholds
+     * these models carried were unreachable: 0.9 m needs a Force 8 and the wind
+     * stop is Force 6, so that line could never fire. And where a wave
+     * threshold WAS inside the live range, it was a restatement of the wind —
+     * so supplying it would have made the band mean count wind twice and
+     * quietly doubled its weight against temperature and rain.
+     *
+     * Direction is the one thing waves could have added, since fetch varies
+     * about 1.8x across the compass here. It is not enough: at Force 5 that is
+     * 0.42 m down Rutland's long axis against 0.33 m across it, a difference
+     * smaller than the gap between any two thresholds. What direction DOES
+     * change on these waters is whether the wind blows you off the bank, which
+     * is a different question and not one wave height answers.
+     *
+     * The coastal models keep theirs, and should: swell travels, so out there
+     * wave height is genuinely independent of the local wind.
      */
     poorConditions: [
       /* Force 2 is where a beginner can uphaul, balance and get back. Below it
