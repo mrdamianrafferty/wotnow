@@ -25,7 +25,7 @@ describe('getSuggestionsByDay humidity reasoning', () => {
 
     const forecast = [
       {
-        date: now.getTime(),
+        date: Math.floor(now.getTime() / 1000),
         weather: {
           temperature: 22,
           humidity: 95,
@@ -71,7 +71,7 @@ describe('getSuggestionsByDay humidity reasoning', () => {
         poorConditions: ['windSpeed>13'],
       },
     ];
-    const forecast = [{ date: now.getTime(), weather: { temperature: 17, windspeed: 20 } }];
+    const forecast = [{ date: Math.floor(now.getTime() / 1000), weather: { temperature: 17, windspeed: 20 } }];
 
     const run = () => getSuggestionsByDay({
       forecast, activities, interests: [], now, includeAllActivities: true,

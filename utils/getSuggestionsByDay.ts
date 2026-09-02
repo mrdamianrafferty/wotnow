@@ -104,6 +104,21 @@ function buildContextTagsForDay(dayName: string, hour: number, isToday: boolean)
   return Array.from(tags);
 }
 
+/**
+ * A forecast entry's timestamp in milliseconds, whichever unit it arrived in.
+ *
+ * The documented contract is seconds. Milliseconds are accepted because several
+ * callers pass `Date.now()` and the mistake is undetectable downstream: a
+ * millisecond value multiplied by a thousand lands tens of thousands of years
+ * out, `getMonth()` returns something plausible, and a day is capped for being
+ * out of a season nobody chose. Anything past the year 5138 in seconds is a
+ * millisecond value, and nothing this function scores is a forecast for then.
+ */
+const YEAR_5138_IN_SECONDS = 1e11;
+function toEpochMs(date: number): number {
+  return date > YEAR_5138_IN_SECONDS ? date : date * 1000;
+}
+
 // Map numeric score to suitability label (for outdoor)
 function toLevel(score: number): SuitabilityLevel | 'poor' {
   if (score >= 90) return 'perfect';
@@ -596,6 +611,17 @@ export function getSuggestionsByDay({
   includeAllActivities = false,
   isEveningToday = false
 }: {
+  /**
+   * One entry per day. `date` is a UNIX timestamp in SECONDS, matching what
+   * OpenWeather and the Open-Meteo adapter both emit.
+   *
+   * The unit was undocumented and it started to matter: season is now read off
+   * the month of the day being scored, so a millisecond value silently becomes
+   * a date around the year 57,000 and the month comes out arbitrary. Callers
+   * are normalised below rather than trusted, because the failure is invisible
+   * — nothing throws, the score is just quietly capped for being out of a
+   * season it was never in.
+   */
   forecast: Array<{ date: number; weather: WeatherData }>;
   activities: ActivityType[];
   interests: string[];
@@ -629,7 +655,7 @@ export function getSuggestionsByDay({
          * which is exactly the boundary where a venue's season ends. A one-line
          * error that only shows itself a few days a year, which is why it lasted.
          */
-        const dayMonth = new Date(day.date * 1000).getMonth() + 1;
+        const dayMonth = new Date(toEpochMs(day.date)).getMonth() + 1;
         const outOfSeason = Boolean(activity.seasonalMonths?.length
           && !activity.seasonalMonths.includes(dayMonth));
 
