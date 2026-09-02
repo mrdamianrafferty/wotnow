@@ -181,6 +181,45 @@ export async function fetchOpenMeteoAsOneCallShape(lat: number, lon: number): Pr
     return typeof v === 'number' ? v * 100 : undefined;
   };
 
+  /**
+   * WHICH part of the day the rain falls in.
+   *
+   * The daily shape carries how MUCH and for how many hours, which makes two
+   * very different days read identically. Measured at Rutland: 4 September
+   * puts 91% of its 12 mm before noon and is dry from lunchtime, while 8
+   * September smears 4 mm across sixteen hours. "Rain for N hours of it" was
+   * the sentence for both.
+   *
+   * Six-hour windows, and a window has to hold 60% of the day's total to be
+   * named. Below that the rain genuinely is spread, and saying "in the
+   * afternoon" of a day that rains all day would be worse than the two numbers
+   * it replaced — a reader who plans a morning around it gets wet.
+   */
+  const NAMEABLE_SHARE = 0.6;
+  function rainWindowFor(dateStr: string): 'overnight' | 'morning' | 'afternoon' | 'evening' | 'spread' | undefined {
+    const series = hourly.precipitation as (number | null)[] | undefined;
+    if (!Array.isArray(series)) return undefined;
+    const buckets = { overnight: 0, morning: 0, afternoon: 0, evening: 0 };
+    let total = 0;
+    for (let h = 0; h < (hourly.time?.length ?? 0); h++) {
+      const t = hourly.time[h] as string;
+      if (!t.startsWith(dateStr)) continue;
+      const v = series[h];
+      if (typeof v !== 'number' || v <= 0) continue;
+      const hour = Number(t.slice(11, 13));
+      total += v;
+      if (hour < 6) buckets.overnight += v;
+      else if (hour < 12) buckets.morning += v;
+      else if (hour < 18) buckets.afternoon += v;
+      else buckets.evening += v;
+    }
+    if (total <= 0) return undefined;
+    const [name, amount] = Object.entries(buckets).sort((a, b) => b[1] - a[1])[0];
+    return amount / total >= NAMEABLE_SHARE
+      ? (name as 'overnight' | 'morning' | 'afternoon' | 'evening')
+      : 'spread';
+  }
+
   const owDaily = (daily.time as string[]).map((dateStr: string, i: number) => {
     const dt = Date.UTC(
       Number(dateStr.slice(0, 4)),
@@ -197,6 +236,7 @@ export async function fetchOpenMeteoAsOneCallShape(lat: number, lon: number): Pr
         max: daily.temperature_2m_max?.[i],
       },
       weather: [{ description: WMO_DESCRIPTIONS[daily.weather_code?.[i]] || 'Unknown', main }],
+      rain_window: rainWindowFor(dateStr),
       wind_speed: daily.wind_speed_10m_max?.[i],
       /* Named as OpenWeather names it, so a consumer reading either source finds
          the gust in the same place. */

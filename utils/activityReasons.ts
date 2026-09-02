@@ -103,13 +103,51 @@ function compass(deg: number): string {
  * night of continuous drizzle, because the hours drove the verdict and the
  * millimetres rounded to nothing.
  */
-function rainPhrase(mm: number, w: WeatherData, longThreshold = 4): string {
+/** "in the morning", or null where the rain is spread across the day. */
+function whenPhrase(window?: RainWindow): string | null {
+  switch (window) {
+    case 'overnight': return 'overnight';
+    case 'morning': return 'in the morning';
+    case 'afternoon': return 'in the afternoon';
+    case 'evening': return 'in the evening';
+    default: return null;
+  }
+}
+
+/**
+ * The rain, as a person would mention it.
+ *
+ * "Rain for 10 hours of it, 2.3 mm in total" is two numbers and no picture,
+ * and it was the sentence for two quite different days: 4 September puts 91%
+ * of its 12 mm before noon and is dry by lunchtime, 8 September smears 4 mm
+ * across sixteen hours. Where the forecast knows which it is — see
+ * `rainWindow` — the sentence says so, because "showers in the morning" is
+ * something a reader can plan around and a millimetre total is not.
+ *
+ * Showers or rain is decided by RATE rather than by total: 0.5 mm/h is about
+ * where drizzle becomes rain you would put a coat on for, and it is the same
+ * boundary the wetness calculation uses.
+ */
+function rainPhrase(mm: number, w: WeatherData, longThreshold = 4, window?: RainWindow): string {
   const hours = typeof w.precipitationHours === 'number' ? Math.round(w.precipitationHours) : null;
+  const when = whenPhrase(window);
+  const rate = hours && hours > 0 ? mm / hours : null;
+  const showery = rate !== null && rate < 0.5;
+
+  if (when) {
+    if (mm < 0.3) return `A little drizzle ${when}.`;
+    return showery ? `Showers ${when}.` : `Rain ${when}.`;
+  }
+
+  /* No window worth naming: the rain really is spread, and duration is then
+     the most useful thing that can be said about it. */
   if (hours !== null && hours >= 1 && mm < 0.5) {
-    return `Drizzle on and off for ${hours} hour${hours === 1 ? '' : 's'}.`;
+    return `Spitting on and off for ${hours} hour${hours === 1 ? '' : 's'}.`;
   }
   if (hours !== null && hours >= longThreshold) {
-    return `Rain for ${hours} hours of it, ${mm.toFixed(1)} mm in total.`;
+    return showery
+      ? `Showery on and off, ${hours} hours of it.`
+      : `Rain most of the day, ${hours} hours of it.`;
   }
   return `${mm.toFixed(1)} mm of rain forecast.`;
 }
@@ -252,7 +290,10 @@ function directionOf(condition: string, value: number): Direction {
 // The copy
 // ─────────────────────────────────────────────────────────────────────────
 
-type Phrasing = (v: number, w: WeatherData) => string | null;
+/* The rain window rides as a third argument rather than on the weather, for
+   the reason given on SuitabilityWeather's index signature: everything the
+   scorer reads is a number, and this is a word. */
+type Phrasing = (v: number, w: WeatherData, window?: RainWindow) => string | null;
 
 /**
  * Reason clauses, by criterion and direction, with family overrides.
@@ -289,7 +330,7 @@ const DEFAULTS: Record<string, Partial<Record<Direction, Phrasing>>> = {
     high: (v) => `Water up at ${degrees(v)}.`,
   },
   precipitation: {
-    high: (v, w) => rainPhrase(v, w, 1),
+    high: (v, w, win) => rainPhrase(v, w, 1, win),
   },
   visibility: {
     /* Three registers, because a kilometre and eight are different problems:
@@ -361,14 +402,23 @@ const BY_ACTIVITY: Record<string, Record<string, Partial<Record<Direction, Phras
    */
   dog_walking: {
     precipitation: {
-      high: (v, w) => {
+      high: (v, w, win) => {
+        const when = whenPhrase(win);
+        /* Where the forecast knows when, that beats a duration: "showers in the
+           morning" tells somebody which walk to take, "on and off for 9 hours"
+           tells them only that today is a wash. */
+        if (when) {
+          return v < 0.5
+            ? `A little drizzle ${when} — nothing a dog will notice.`
+            : `Showers ${when} — the dog will enjoy it more than you will.`;
+        }
         const h = typeof w.precipitationHours === 'number' ? Math.round(w.precipitationHours) : null;
         if (h !== null && h >= 6) {
           return v < 0.5
             ? `Drizzling on and off for ${h} hours — the dog will mind it less than you will.`
             : `Rain on and off for ${h} hours — the dog will enjoy it more than you will.`;
         }
-        return v < 0.5 ? 'Spitting a bit — nothing a dog will notice.' : rainPhrase(v, w);
+        return v < 0.5 ? 'Spitting a bit — nothing a dog will notice.' : rainPhrase(v, w, 4, win);
       },
     },
   },
@@ -453,7 +503,17 @@ const BY_FAMILY: Partial<Record<ActivityFamily, Record<string, Partial<Record<Di
       high: (v) => `Hard work into a ${forceName(forceFromMs(v))} — ${forceAndKnots(v)}.`,
     },
     precipitation: {
-      high: (v, w) => {
+      high: (v, w, win) => {
+        /* On the move, the useful question is whether you can go round it —
+           so when the forecast knows the rain has a window, say it, and say
+           what is on either side of it. */
+        const when = whenPhrase(win);
+        if (when) {
+          if (v < 0.3) return `A little drizzle ${when}.`;
+          return v < 0.5 * Math.max(1, w.precipitationHours ?? 1)
+            ? `Showers ${when}.`
+            : `Rain ${when}.`;
+        }
         const h = typeof w.precipitationHours === 'number' ? Math.round(w.precipitationHours) : null;
         if (h !== null && h >= 1 && v < 0.5) return `Drizzling on and off for ${h} hour${h === 1 ? '' : 's'}.`;
         if (h !== null && h >= 4) return `Wet for ${h} hours of it.`;
@@ -466,14 +526,20 @@ const BY_FAMILY: Partial<Record<ActivityFamily, Record<string, Partial<Record<Di
       high: (v) => `${forceName(forceFromMs(v)).replace(/^./, (c) => c.toUpperCase())} — ${force(v)}.`,
     },
     precipitation: {
-      high: (v, w) => {
+      high: (v, w, win) => {
+        const when = whenPhrase(win);
+        if (when) {
+          return v < 0.5
+            ? `A little drizzle ${when}.`
+            : `Showers ${when} — a while to sit out.`;
+        }
         const h = typeof w.precipitationHours === 'number' ? Math.round(w.precipitationHours) : null;
         if (h !== null && h >= 6) {
           return v < 0.5
             ? `Drizzling on and off for ${h} hours — a long time to sit in it.`
             : `Rain on and off for ${h} hours — a long time to sit in it.`;
         }
-        return rainPhrase(v, w);
+        return rainPhrase(v, w, 4, win);
       },
     },
   },
@@ -491,6 +557,7 @@ function clauseFor(
   family: ActivityFamily,
   criterion: CriterionScore,
   weather: WeatherData,
+  window?: RainWindow,
 ): string | null {
   if (typeof criterion.value !== 'number') return null;
   /* An explicit direction beats one inferred from the numbers — see
@@ -500,7 +567,7 @@ function clauseFor(
     ?? BY_FAMILY[family]?.[criterion.key]
     ?? DEFAULTS[criterion.key];
   const phrase = table?.[dir] ?? DEFAULTS[criterion.key]?.[dir];
-  return phrase ? phrase(criterion.value, weather) : null;
+  return phrase ? phrase(criterion.value, weather, window) : null;
 }
 
 // ─────────────────────────────────────────────────────────────────────────
@@ -709,8 +776,18 @@ function conditionsLine(w: WeatherData): string | null {
 // Public
 // ─────────────────────────────────────────────────────────────────────────
 
+export type RainWindow = 'overnight' | 'morning' | 'afternoon' | 'evening' | 'spread';
+
 export interface ReasonInput {
   activityId: string;
+  /**
+   * When the rain falls, where the forecast publishes it hour by hour.
+   *
+   * Carried beside the weather rather than inside it, because everything the
+   * scorer reads is a number and this is a word — see the index signature on
+   * SuitabilityWeather.
+   */
+  rainWindow?: RainWindow;
   /** How the activity is named inside a sentence — "sailing", "walking the dog". */
   phrase: string;
   score: number;
@@ -764,7 +841,7 @@ export function describeConditions(input: ReasonInput): string {
    */
   const limited = vetoed
     || (constrained && !!binding && (binding.decisive || binding.score < 0.6));
-  const reason = limited && binding ? clauseFor(input.activityId, family, binding, weather) : null;
+  const reason = limited && binding ? clauseFor(input.activityId, family, binding, weather, input.rainWindow) : null;
 
   if (reason) parts.push(reason);
   else {
@@ -785,7 +862,7 @@ export function describeConditions(input: ReasonInput): string {
      * adding something; rain is not in the conditions line and still does.
      */
     if (!constrained && binding?.decisive && !COVERED_BY_CONDITIONS.has(binding.key)) {
-      const caveat = clauseFor(input.activityId, family, binding, weather);
+      const caveat = clauseFor(input.activityId, family, binding, weather, input.rainWindow);
       if (caveat) parts.push(caveat);
     }
   }
