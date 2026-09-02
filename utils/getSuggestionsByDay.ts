@@ -729,7 +729,22 @@ function calculateActivityScoreWithSnow(
     : undefined;
 
   if (safetyBinding) {
-    band = { mean: band.mean, criteria: [{ ...safetyBinding, decisive: true, direction: 'high' }] };
+    /**
+     * Marked decisive, and NOT told which way it failed.
+     *
+     * This forced `direction: 'high'`, which is true of a gust and false of the
+     * other thing in the safety set: water temperature fails from BELOW.
+     * Measured, sea swimming in 12 °C water — under the good band, over the
+     * poor one, so it reaches this path rather than the veto:
+     *
+     *   Workable for sea swimming. Water up at 12 °C.
+     *
+     * "Up at", of water too cold to be in. `clauseFor` infers the direction
+     * from the condition and the value when none is given, and it infers it
+     * correctly; the override existed only because every case I had in front
+     * of me was a gust.
+     */
+    band = { mean: band.mean, criteria: [{ ...safetyBinding, decisive: true }] };
   } else if ((wetness > 0.35 || demotedBy === 'rain') && !wantsRain) {
     band = {
       mean: band.mean,

@@ -1007,3 +1007,34 @@ describe('a demoted day says what demoted it', () => {
     }
   });
 });
+
+/**
+ * A safety criterion can fail from either side.
+ *
+ * The injected safety binding forced `direction: 'high'`, which is true of the
+ * gust that prompted it and false of the other key in the set. Water
+ * temperature fails from BELOW, and sea swimming in 12 °C water — under the
+ * good band, over the poor one, so it reaches the demotion rather than the
+ * veto — came back as "Water up at 12 °C". Up at, of water too cold to be in.
+ */
+describe('a demoted day says which way the criterion failed', () => {
+  const calm = {
+    temperature: 17, temperatureMin: 12, windspeed: 10, windspeedMax: 14, gustspeed: 18,
+    winddirection: 250, visibility: 25000, soilMoisture: 30,
+    precipitation: 0, precipitationHours: 0, clouds: 30,
+  };
+
+  it('does not describe cold water as warm', () => {
+    const r = scoreOf('sea_swimming', { ...calm, waterTemperature: 12 }).reasoning ?? '';
+    expect(r).toMatch(/12 °C/);
+    expect(r).not.toMatch(/up at|too warm|warm enough/i);
+    expect(r).toMatch(/cold/i);
+  });
+
+  it('still describes a gust as the excess it is', () => {
+    const gusty = { ...calm, windspeed: 15, windspeedMax: 25, gustspeed: 40 };
+    const r = scoreOf('kayaking', gusty).reasoning ?? '';
+    expect(r).toMatch(/gust/i);
+    expect(r).not.toMatch(/not enough|too little/i);
+  });
+});
