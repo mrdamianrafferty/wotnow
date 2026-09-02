@@ -31,7 +31,7 @@ export interface WeatherData {
    * `spread` is the honest answer when no window holds enough of the total to
    * be worth naming — and it is common, so it is not a failure state.
    */
-  rainWindow?: 'overnight' | 'morning' | 'afternoon' | 'evening' | 'spread';
+  rainWindow?: RainWindow;
   windspeed?: number;                 // km/h — the period MEAN where available
   /** The period's peak sustained wind. Used for limits, not for description. */
   windspeedMax?: number;              // km/h
@@ -89,7 +89,7 @@ import { scoreConditions,
          adjustScoreForMud } from './activitySuitability';
 import type { WeatherData as SuitabilityWeather, MinimalActivity, CriterionScore } from './activitySuitability';
 import { applyEveningBonus } from './eveningScoring';
-import { describeConditions, phraseFor } from './activityReasons';
+import { describeConditions, phraseFor, type RainWindow } from './activityReasons';
 import { assessSoilCondition, isMudSensitive, getMudMessage } from './soilMoistureUtils';
 // import { activityTypes } from '../data/activityTypes';
 // import { getActivityMessage } from '../data/activityMessages';

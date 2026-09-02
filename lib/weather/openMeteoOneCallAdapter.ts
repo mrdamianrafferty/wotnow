@@ -197,7 +197,17 @@ export async function fetchOpenMeteoAsOneCallShape(lat: number, lon: number): Pr
    */
   const NAMEABLE_SHARE = 0.6;
   function rainWindowFor(dateStr: string): 'overnight' | 'morning' | 'afternoon' | 'evening' | 'spread' | undefined {
-    const series = hourly.precipitation as (number | null)[] | undefined;
+    /**
+     * `rain`, not `precipitation` — the latter counts snowfall too.
+     *
+     * The daily figure this sentence quotes is `rain_sum`, so summing
+     * `precipitation` here made the two disagree on any day with snow in it:
+     * the window would be derived from snowfall and then described as
+     * "showers in the morning". `precipitation` remains the fallback for a
+     * response that carries no `rain` series, where it is the best available
+     * answer rather than the wrong one.
+     */
+    const series = (Array.isArray(hourly.rain) ? hourly.rain : hourly.precipitation) as (number | null)[] | undefined;
     if (!Array.isArray(series)) return undefined;
     const buckets = { overnight: 0, morning: 0, afternoon: 0, evening: 0 };
     let total = 0;

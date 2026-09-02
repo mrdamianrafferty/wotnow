@@ -9,17 +9,20 @@
  * knew which was which the whole time — the hourly precipitation series was
  * already being fetched and never read.
  */
-import { getSuggestionsByDay } from '../utils/getSuggestionsByDay';
+import { getSuggestionsByDay, type WeatherData } from '../utils/getSuggestionsByDay';
 import { activityTypes } from '../data/activityTypes';
 import type { ActivityType } from '../data/activities/types';
 
 const JULY = new Date('2026-07-15T10:00:00Z');
 
-function reasonFor(id: string, weather: Record<string, unknown>): string {
+/* `Partial<WeatherData>` rather than a cast: `as never` turns off the check
+   that these fixtures still describe the shape the engine reads, which is the
+   one thing a test built out of fixtures most needs. */
+function reasonFor(id: string, weather: Partial<WeatherData>): string {
   const activity = (activityTypes as ActivityType[]).find((a) => a.id === id);
   if (!activity) throw new Error(`no such activity: ${id}`);
   const [day] = getSuggestionsByDay({
-    forecast: [{ date: Math.floor(JULY.getTime() / 1000), weather: weather as never }],
+    forecast: [{ date: Math.floor(JULY.getTime() / 1000), weather }],
     activities: [activity], interests: [id], now: JULY, includeAllActivities: true,
   });
   return day.suggestions.find((s) => s.activityId === id)?.reasoning ?? '';
