@@ -287,7 +287,7 @@ export const outdoorRecreation: ActivityType[] = [
     fairConditions: [
       'temperature=6..12',
       'windSpeed=8..12',
-      'precipitation=2..10',            // light drizzle okay
+      'precipitation=2..10',            // light to moderate rain
       'cloudCover=30..100',
       'visibility=3..5',
       'soilMoisture=45..50',
@@ -595,7 +595,7 @@ export const outdoorRecreation: ActivityType[] = [
       'temperature=5..15',     // crisp but pleasant
       'clouds<=20',            // mostly clear
       'windSpeed<8',           // calm or gentle breeze
-      'precipitation=0..0.1',     // no rain,
+      'precipitation=0..0.1',     // a trace at most
       'gust<12.8'
     ],
 

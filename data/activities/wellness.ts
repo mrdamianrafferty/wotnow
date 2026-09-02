@@ -142,7 +142,7 @@ export const wellnessSports: ActivityType[] = [
       'cloudCover=80..100',            // dull, but not oppressive
       'humidity=85..95',              // moved humidity threshold up - 84% should be fine
       'visibility=2..5',               // hazy or misty, calming to some
-      'precipitation=0.1..1',               // no Rain,
+      'precipitation=0.1..1',               // drizzle, not rain
       'gust=12.8..16'
     ],
 
@@ -152,7 +152,7 @@ export const wellnessSports: ActivityType[] = [
       'humidity<85',                   // added humidity condition for good weather
       'cloudCover=0..80',              // clear to partly cloudy
       'visibility>5',                 // clear enough to see surroundings
-      'precipitation=0..0.1',               // no Rain
+      'precipitation=0..0.1',               // a trace at most
       'gust<12.8'
     ],
 

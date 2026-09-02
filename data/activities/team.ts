@@ -22,7 +22,7 @@ export const teamSports: ActivityType[] = [
       'temperature=5..25',          // widely playable for most amateur players
       'windSpeed<9',               // breezy but not disruptive
       'clouds=20..90',              // glare or overcast is manageable
-      'precipitation=0..5',            // tightened: dry required for good
+      'precipitation=0..5',            // played through rain; 5 mm is the limit
       'soilMoisture=15..45',        // playable with some softness
       'visibility>5',                // enough to see the game well
       'gust<13.6'],
@@ -107,7 +107,7 @@ export const teamSports: ActivityType[] = [
     tags: ['sport', 'team', 'bat-and-ball', 'outdoors', 'social', 'Saturday', 'Sunday', 'holiday', 'Friday'],
 
     poorConditions: [
-      'precipitation>2',      // heavy rain cancels play
+      'precipitation>2',      // steady rain cancels play
       'windSpeed>13',          // gusty, dangerous for fly balls
       'temperature<5',         // freezing & unpleasant
       'temperature>35',        // oppressive heat
@@ -129,7 +129,7 @@ export const teamSports: ActivityType[] = [
     goodConditions: [
       'temperature=10..30',            // wide range tolerated
       'windSpeed<9',
-      'precipitation=0..0.5',               // tightened: dry only for good
+      'precipitation=0..0.5',               // a passing shower at most
       'soilMoisture=15..45',           // playable field conditions
       'visibility>5',
       'gust<13.6'
@@ -365,7 +365,7 @@ export const teamSports: ActivityType[] = [
       'temperature=12..28',   // comfortable for most
       'windSpeed<9',         // less windy (increased from 18)
       'visibility>5',
-      'precipitation=0..0.1',      // no Rain,
+      'precipitation=0..0.1',      // a trace at most
       'gust<13.6'
     ],
 
