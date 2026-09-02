@@ -172,9 +172,35 @@ export default async function handler(
   }
 
   const requested = String(req.query.activities ?? '')
-    .split(',').map((s) => s.trim()).filter(Boolean).slice(0, 8);
+    .split(',').map((s) => s.trim()).filter(Boolean);
   if (!requested.length) {
     res.status(400).json({ error: 'activities is required — a comma-separated list of activity ids' });
+    return;
+  }
+  /**
+   * A cap that says so, instead of one that quietly obeys itself.
+   *
+   * This was `.slice(0, 8)`: ask for nine and the ninth vanished, with a 200
+   * and no field to say anything had gone. Rise Daisy found it the hard way —
+   * Rutland asks for ten activities, and birdwatching, at one of Britain's
+   * best-known birdwatching reservoirs, was simply absent from the board.
+   *
+   * Their workaround was to split the request into batches of eight, which
+   * fixed the disappearance and bought a subtler fault: each call fetches its
+   * own forecast, so two batches can land on two different snapshots and the
+   * tiles disagree about the wind. Measured on one shelf at Rutland — sailing
+   * "Force 3" beside dog walking "Force 4", same water, same hour.
+   *
+   * The cap is now 32, which is more activities than any one place has, and
+   * exceeding it is a 400 that names the limit. The work per activity is a
+   * band evaluation over seven days; the cost of the request is the ONE
+   * forecast fetch, and that does not grow with the list.
+   */
+  const ACTIVITY_LIMIT = 32;
+  if (requested.length > ACTIVITY_LIMIT) {
+    res.status(400).json({
+      error: `Too many activities: ${requested.length}. The limit is ${ACTIVITY_LIMIT} per request.`,
+    });
     return;
   }
   const unknown = requested.filter((id) => !activityTypes.some((a) => a.id === id));
