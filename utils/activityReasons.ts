@@ -763,10 +763,20 @@ export function describeConditions(input: ReasonInput): string {
        alone never gave. */
     const line = conditionsLine(weather);
     if (line) parts.push(line);
-    /* And then the one thing worth knowing in spite of it. Only a criterion
-       the scorer marked decisive earns this; an ordinary weakest link on a
-       good day is not worth a sentence. */
-    if (!constrained && binding?.decisive) {
+    /**
+     * And then the one thing worth knowing in spite of it — provided the line
+     * above has not just said it.
+     *
+     * `conditionsLine` now carries the gust, so a gust caveat behind it read:
+     *
+     *   Gentle breeze, Force 3, gusting Force 6, 18 °C. Force 3, but gusting
+     *   Force 6 — it is the spread that catches you out.
+     *
+     * The same figure twice in two registers. A caveat earns its sentence by
+     * adding something; rain is not in the conditions line and still does.
+     */
+    const COVERED_BY_CONDITIONS = new Set(['windSpeed', 'gust', 'temperature', 'airTemperature']);
+    if (!constrained && binding?.decisive && !COVERED_BY_CONDITIONS.has(binding.key)) {
       const caveat = clauseFor(input.activityId, family, binding, weather);
       if (caveat) parts.push(caveat);
     }

@@ -961,3 +961,49 @@ describe('every activity has a phrase that fits the sentence', () => {
     },
   );
 });
+
+/**
+ * A demotion names the thing that caused it.
+ *
+ * Two criteria can now push a day out of its good band — rain and a missed
+ * safety threshold — and for a while a single boolean recorded that one of
+ * them had. The copy layer reads that flag to decide whether to name the rain,
+ * so a bone-dry gusty afternoon came back as "Paddleable, with something to
+ * watch. 0.0 mm of rain forecast." Nought millimetres, offered as the reason.
+ */
+describe('a demoted day says what demoted it', () => {
+  const base = {
+    temperature: 18, temperatureMin: 14, visibility: 25000,
+    soilMoisture: 30, clouds: 30, winddirection: 250,
+  };
+  const dryGusty = { ...base, windspeed: 15, windspeedMax: 25, gustspeed: 40, precipitation: 0, precipitationHours: 0 };
+  const wetCalm = { ...base, windspeed: 12, windspeedMax: 16, gustspeed: 20, precipitation: 4, precipitationHours: 9 };
+
+  it('never blames rain on a day with no rain', () => {
+    for (const id of ['kayaking', 'sea_kayaking', 'scuba_diving', 'jetskiing', 'sailing_inland']) {
+      const r = scoreOf(id, dryGusty).reasoning ?? '';
+      expect(r).not.toMatch(/rain|drizzl|0\.0 mm/i);
+    }
+  });
+
+  it('names the gust that actually demoted it', () => {
+    const r = scoreOf('kayaking', dryGusty).reasoning ?? '';
+    expect(scoreOf('kayaking', dryGusty).evaluation).toBe('fair');
+    expect(r).toMatch(/gust/i);
+  });
+
+  it('still names the rain where the rain is the cause', () => {
+    const r = scoreOf('hiking', wetCalm).reasoning ?? '';
+    expect(r).toMatch(/wet|rain/i);
+  });
+
+  it('does not say the same wind twice', () => {
+    /* The conditions line carries the gust now, so a gust caveat behind it
+       printed the same figure in two registers one sentence apart. */
+    for (const id of ['sailing_inland', 'windsurfing_inland', 'kayaking']) {
+      const r = scoreOf(id, dryGusty).reasoning ?? '';
+      const gusts = r.match(/gusting Force \d|gusts rather than|but gusting/gi) ?? [];
+      expect(gusts.length).toBeLessThanOrEqual(1);
+    }
+  });
+});

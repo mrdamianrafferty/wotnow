@@ -411,9 +411,22 @@ function calculateActivityScoreWithSnow(
     return scored.length ? Math.min(...scored.map((c) => c.score)) : 1;
   };
 
-  /* Set when rain alone pushed the day out of its band — see the gate below.
-     The copy layer reads it so that the score and its explanation agree. */
-  let rainDemotedBand = false;
+  /**
+   * WHAT pushed the day out of its band, not merely THAT something did.
+   *
+   * This was a boolean called `rainDemotedBand`, which was true and honest
+   * while rain was the only thing that could demote a band. Once a missed
+   * safety criterion could do it too, the flag was set for both and the copy
+   * layer — which reads it to decide whether to name the rain — blamed the
+   * rain for the gust. Measured on a bone-dry, gusty afternoon:
+   *
+   *   Paddleable, with something to watch. 0.0 mm of rain forecast.
+   *
+   * Nought millimetres, offered as the reason. Naming the cause instead of a
+   * cause makes the sentence say the true thing rather than merely stop
+   * saying the false one.
+   */
+  let demotedBy: 'rain' | 'safety' | null = null;
 
   /**
    * Rain DEMOTES a band. It does not disqualify one.
@@ -507,7 +520,9 @@ function calculateActivityScoreWithSnow(
     const asFair = fair.criteria.length && fair.mean > 0.3 ? span(fair.mean, 0.3, 1, 40, 59) : 0;
     score = Math.max(span(good.mean, 0.5, 1, 40, 59), asFair);
     band = good;
-    rainDemotedBand = true;
+    /* Rain first where both apply: it is the more legible complaint, and it is
+       the one a reader can see out of the window. */
+    demotedBy = rainBlocksGood ? 'rain' : 'safety';
   /* No `worst()` floor on the fair band, deliberately. Perfect and good list
      DESIRABLE values, so failing one badly should disqualify the band. Fair
      lists MARGINAL ones — "temperature=5..10 or 26..30" is the chilly-or-hot
@@ -704,7 +719,18 @@ function calculateActivityScoreWithSnow(
    * Force 3, 19 °C" — a pleasant sentence under a score of 33, with the actual
    * cause unmentioned. A demotion now always speaks.
    */
-  if ((wetness > 0.35 || rainDemotedBand) && !wantsRain) {
+  /* A day the SAFETY floor demoted says so, naming the criterion that did it —
+     which for a paddler is the gust, and is the whole reason the day dropped a
+     band. Ahead of the nearest-poor guess below, because this is not a guess. */
+  const safetyBinding = demotedBy === 'safety'
+    ? good.criteria
+      .filter((c) => DECIDES_SAFETY.has(c.key))
+      .slice().sort((a, b) => a.score - b.score)[0]
+    : undefined;
+
+  if (safetyBinding) {
+    band = { mean: band.mean, criteria: [{ ...safetyBinding, decisive: true, direction: 'high' }] };
+  } else if ((wetness > 0.35 || demotedBy === 'rain') && !wantsRain) {
     band = {
       mean: band.mean,
       criteria: [asBinding(
