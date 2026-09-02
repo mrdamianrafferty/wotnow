@@ -673,6 +673,22 @@ function conditionsLine(w: WeatherData): string | null {
   if (typeof w.windSpeed === 'number') {
     const f = forceFromMs(w.windSpeed);
     bits.push(f === 0 ? 'Flat calm' : `${forceName(f).replace(/^./, (c) => c.toUpperCase())}, ${force(w.windSpeed)}`);
+    /**
+     * The gust, whenever it is a different force from the mean.
+     *
+     * This line quoted the mean and nothing else, which made two tiles on the
+     * same shelf contradict each other: kayaking read "Gentle breeze, Force 3,
+     * 17 °C" beside canoeing reading "Not safe for canoeing today ... Force 6
+     * at times" — the same wind, one tile describing the average and the other
+     * the peak, with no way for a reader to see they were the same weather.
+     *
+     * A good day with a big spread is still a good day. It is not a gentle
+     * one, and saying only the gentle half of it is what made the shelf look
+     * like it was disagreeing with itself.
+     */
+    if (typeof w.gust === 'number' && forceFromMs(w.gust) > f) {
+      bits.push(`gusting ${force(w.gust)}`);
+    }
   }
   const t = w.temperature ?? w.airTemperature;
   if (typeof t === 'number') bits.push(degrees(t));
