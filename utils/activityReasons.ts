@@ -668,6 +668,15 @@ function vetoVerdict(phrase: string, family: ActivityFamily): string {
  * is always true and always specific — which the restatement of the badge it
  * replaces was neither.
  */
+/**
+ * The keys `conditionsLine` already reports, and which a caveat must not repeat.
+ *
+ * Module scope rather than rebuilt per call: it is a constant, it is read on
+ * every sentence the library writes, and having it next to the function whose
+ * output it describes is how it stays true when that output changes.
+ */
+const COVERED_BY_CONDITIONS = new Set(['windSpeed', 'gust', 'temperature', 'airTemperature']);
+
 function conditionsLine(w: WeatherData): string | null {
   const bits: string[] = [];
   if (typeof w.windSpeed === 'number') {
@@ -775,7 +784,6 @@ export function describeConditions(input: ReasonInput): string {
      * The same figure twice in two registers. A caveat earns its sentence by
      * adding something; rain is not in the conditions line and still does.
      */
-    const COVERED_BY_CONDITIONS = new Set(['windSpeed', 'gust', 'temperature', 'airTemperature']);
     if (!constrained && binding?.decisive && !COVERED_BY_CONDITIONS.has(binding.key)) {
       const caveat = clauseFor(input.activityId, family, binding, weather);
       if (caveat) parts.push(caveat);
