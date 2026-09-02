@@ -40,7 +40,7 @@ export const cyclingSports: ActivityType[] = [
       'gust<13',
       'clouds=0..80',
       'humidity<75',
-      'precipitation=0',
+      'precipitation=0..1',
       'visibility>5'
     ],
     fairConditions: [
@@ -83,7 +83,7 @@ export const cyclingSports: ActivityType[] = [
       'clouds=0..90',
       'humidity<80',
       'soilMoisture=15..45',
-      'precipitation=0',
+      'precipitation=0..2',
       'visibility>5',
       'gust<16'],
     fairConditions: [
@@ -127,7 +127,7 @@ export const cyclingSports: ActivityType[] = [
       'clouds=0..75',
       'humidity<75',
       'soilMoisture=15..45',
-      'precipitation=0',
+      'precipitation=0..1',
       'visibility>5',
       'gust<13.6'
     ],

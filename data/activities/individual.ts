@@ -22,7 +22,7 @@ export const individualSports: ActivityType[] = [
       'temperature=10..25',
       'windSpeed<5.5',
       'cloudCover=20..90',
-      'precipitation=0',
+      'precipitation=0..3',
       'soilMoisture=15..45',
       'visibility>5',
       'gust<8.8'],
@@ -67,7 +67,7 @@ export const individualSports: ActivityType[] = [
       'temperature=10..25',
       'windSpeed<5.5',
       'cloudCover=20..80',
-      'precipitation=0',
+      'precipitation=0..1',
       'visibility>5',
       'gust<8.8'
     ],
@@ -122,7 +122,7 @@ export const individualSports: ActivityType[] = [
       'temperature=10..25',
       'windSpeed<5.5',
       'cloudCover=0..80',
-      'precipitation=0',
+      'precipitation=0..1',
       'visibility>5',
       'soilMoisture=15..45',
       'gust<8.8'
@@ -182,7 +182,7 @@ export const individualSports: ActivityType[] = [
     weatherSensitive: true,
     tags: ['sport', 'racquet', 'social', 'outdoors', 'leisure', 'Saturday', 'Sunday', 'holiday'],
     poorConditions: [
-      'precipitation>0',
+      'precipitation>1',
       'windSpeed>8',
       'temperature<8',
       'temperature>32',
@@ -191,6 +191,8 @@ export const individualSports: ActivityType[] = [
       'gust>11'
     ],
     fairConditions: [
+      'precipitation=0.1..1',
+
       'temperature=8..10 or 28..32',
       'windSpeed=5.5..8',
       'gust=8.8..11'
@@ -198,7 +200,7 @@ export const individualSports: ActivityType[] = [
     goodConditions: [
       'temperature=10..28',
       'windSpeed<5.5',
-      'precipitation=0',
+      'precipitation=0..0.1',
       'gust<8.8'
     ],
     perfectConditions: [

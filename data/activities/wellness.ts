@@ -27,7 +27,7 @@ export const wellnessSports: ActivityType[] = [
     tags: ['sport','cycling','cardio','group','solo','Saturday','Sunday','Wednesday'],
     perfectConditions: ['temperature=18..24','windSpeed<5','clouds=10..50','precipitation=0','visibility>10',
       'gust<9.4'],
-    goodConditions: ['temperature=14..28','windSpeed<9','clouds=0..80','humidity<75','precipitation=0','visibility>5',
+    goodConditions: ['temperature=14..28','windSpeed<9','clouds=0..80','humidity<75','precipitation=0..1','visibility>5',
       'gust<13.6'],
     fairConditions: ['temperature=8..14 or 28..30','windSpeed=9..13','humidity=75..85','precipitation=1..2','visibility=2..5',
       'gust=13.6..17'],
@@ -127,7 +127,7 @@ export const wellnessSports: ActivityType[] = [
     ],
 
     poorConditions: [
-      'precipitation>0',         // wet conditions ruin stillness
+      'precipitation>1',         // wet conditions ruin stillness
       'windSpeed>12',            // increased from 20 - strong gusts are distracting, but moderate wind is fine
       'temperature<2',           // reduced from 5 - mildly cool is manageable with proper clothing
       'temperature>32',          // increased from 30 - hot but not dangerous
@@ -142,7 +142,7 @@ export const wellnessSports: ActivityType[] = [
       'cloudCover=80..100',            // dull, but not oppressive
       'humidity=85..95',              // moved humidity threshold up - 84% should be fine
       'visibility=2..5',               // hazy or misty, calming to some
-      'precipitation>0.5',               // no Rain,
+      'precipitation=0.1..1',               // no Rain,
       'gust=12.8..16'
     ],
 
@@ -152,7 +152,7 @@ export const wellnessSports: ActivityType[] = [
       'humidity<85',                   // added humidity condition for good weather
       'cloudCover=0..80',              // clear to partly cloudy
       'visibility>5',                 // clear enough to see surroundings
-      'precipitation=0',               // no Rain
+      'precipitation=0..0.1',               // no Rain
       'gust<12.8'
     ],
 
@@ -187,7 +187,7 @@ export const wellnessSports: ActivityType[] = [
     ],
 
     poorConditions: [
-      'precipitation>0',            // rain makes it wet and unsafe
+      'precipitation>1',            // rain makes it wet and unsafe
       'windSpeed>8',               // increased from 20 - strong gusts make balance difficult
       'temperature<5',              // increased tolerance from 8
       'temperature>32',             // increased from 30 - oppressive heat
@@ -199,6 +199,8 @@ export const wellnessSports: ActivityType[] = [
     ],
 
     fairConditions: [
+      'precipitation=0.1..1',
+
       'temperature=5..10 or temperature=28..32', // wider range
       'windSpeed=5.5..8',                        // adjusted range
       'humidity=85..90',                         // narrower range - move 84% to good
@@ -213,7 +215,7 @@ export const wellnessSports: ActivityType[] = [
       'cloudCover=0..70',
       'humidity<85',               // 84% humidity should now be good!
       'visibility>5',
-      'precipitation=0',
+      'precipitation=0..0.1',
       'gust<8.8'
     ],
 

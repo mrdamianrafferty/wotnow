@@ -125,7 +125,7 @@ export const socialActivities: ActivityType[] = [
       'cloudCover=0..40',
       'humidity<75',
       'visibility>6',
-      'precipitation=0',
+      'precipitation=0..0.1',
       'gust<10'
     ],
     fairConditions: [
@@ -136,7 +136,7 @@ export const socialActivities: ActivityType[] = [
       'cloudCover=40..90',
       'humidity<85',
       'visibility=3..6',
-      'precipitation=0..0.1',
+      'precipitation=0.1..1',
       'gust=10..16'
     ],
     poorConditions: [
@@ -146,7 +146,7 @@ export const socialActivities: ActivityType[] = [
       'windSpeed>12',
       'waveHeight>1.2',
       'cloudCover>90',
-      'precipitation>0',
+      'precipitation>1',
       'visibility<3',
       'snowfallRateMmH>0.5',
       'snowDepthCm>0.5',

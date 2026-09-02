@@ -57,6 +57,8 @@ export const fishingActivities: ActivityType[] = [
     ],
 
     goodConditions: [
+      'precipitation=0..1',
+
       'temperature=10..24',
       'windSpeed<8',
       'cloudCover=50..100',
