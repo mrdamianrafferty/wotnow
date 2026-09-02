@@ -1,5 +1,51 @@
 import type { ActivityType } from './types';
 
+/**
+ * ─── The marine wind ladders, re-cut 2026-09 ─────────────────────────────
+ *
+ * The coastal models in this file were left alone during the inland pass, on
+ * the ground that calibrating them properly needs wave data. Auditing them
+ * afterwards showed that was too generous a reading: they were not merely
+ * uncalibrated, they had no reachable limit at all.
+ *
+ *     coastal sailing      poor above 25 m/s   = 49 kn, Force 10
+ *     windsurfing          poor above 30 m/s   = 58 kn, Force 11
+ *     kitesurfing          poor above 30 m/s,  gust above 36 = Force 12
+ *     sea kayaking         poor above 20 m/s   = 39 kn, Force 8
+ *     scuba diving         poor above 20 m/s,  gust above 22 = Force 9
+ *
+ * Nothing in British waters reaches a Force 11, and the engine applies its own
+ * universal danger cut-off at Force 10 — so every one of those thresholds was
+ * dead code, and the models behaved as though wind had no upper bound. Sea
+ * kayaking is the one that mattered most: a recreational sea kayak is a Force 4
+ * boat, Force 5 for the experienced, and this called a Force 8 acceptable.
+ *
+ * The anchor for the re-cut is the small-craft warning, issued at Force 6, and
+ * the gale warning at Force 8. Where a sport genuinely runs past a small-craft
+ * warning it is allowed to — coastal windsurfers and kitesurfers really do sail
+ * a Force 7 — and where it does not, it stops well before.
+ *
+ * Gust ceilings sit roughly a third above each mean ceiling, except kitesurfing,
+ * which is tighter: a kite lofts in a gust, so the spread is more dangerous
+ * there than anywhere else afloat.
+ *
+ * ─── What is deliberately NOT changed ────────────────────────────────────
+ *
+ * The `windRelative` clauses. Offshore, cross-shore and onshore logic is the
+ * genuinely marine part of these models, it is well-formed, and it is scored
+ * whenever a beach orientation is known. Only the plain windSpeed and gust
+ * criteria were replaced.
+ *
+ * `waveHeight` also stays, and unlike the inland models it must: swell travels,
+ * so at sea wave height is not a function of the local wind and carries real
+ * information the wind criteria cannot. That distinction is the reason the
+ * inland models lost theirs and these kept them.
+ *
+ * ⚠️ `jet_skiing` and `jetskiing` are two ids for one sport, both live in this
+ * file. They are given the same ladder so they cannot disagree, but one of them
+ * should go — which one depends on what is stored against them, so it is a data
+ * question rather than a modelling one.
+ */
 export const waterSports: ActivityType[] = [
   {
     id: 'surfing',
@@ -26,7 +72,7 @@ export const waterSports: ActivityType[] = [
       'airTemperature=12..28',
       'waveHeight=0.35..1.8',
       'swellPeriod=8..12',
-      'windSpeed=5..15',
+      'windSpeed=5..12',
       'windRelative=offshore or windRelative=side-offshore & windSpeed<=12 or windRelative=cross-shore & windSpeed<=8 or windRelative=side-onshore & windSpeed<=10 & waveHeight<=1.0',
       'gust<12',
       'visibility>5'
@@ -36,9 +82,9 @@ export const waterSports: ActivityType[] = [
       'airTemperature=8..12 or 28..30',
       'waveHeight=0.25..0.5 or 1.8..2.5',
       'swellPeriod=6..8 or 12..14',
-      'windSpeed=15..20',
+      'windSpeed=12..15',
       'windRelative=cross-shore & windSpeed=8..15 or windRelative=side-onshore & windSpeed<=12 or windRelative=onshore & windSpeed<=8 & swellPeriod>=10 & waveHeight<=1.2',
-      'gust=12..18',
+      'gust=12..17',
       'visibility=2..5',
       'precipitation=2..10'
     ],
@@ -47,9 +93,9 @@ export const waterSports: ActivityType[] = [
       'airTemperature<8 or airTemperature>32',
       'waveHeight<0.25 or waveHeight>2.5',
       'swellPeriod<6 or swellPeriod>14',
-      'windSpeed>20',
+      'windSpeed>15',
       'windRelative=onshore & windSpeed>10 or windRelative=onshore & swellPeriod<8 or windRelative=onshore & waveHeight<0.3',
-      'gust>18',
+      'gust>17',
       'visibility<2',
       'precipitation>10',
       'snowfallRateMmH>0.5',
@@ -158,8 +204,8 @@ export const waterSports: ActivityType[] = [
 
     perfectConditions: [
       'temperature=14..20',
-      'windSpeed<10',
-      'gust<8',
+      'windSpeed=0..5',
+      'gust<7',
       'waveHeight<0.3',
       'visibility>10',
       'precipitation=0',
@@ -168,8 +214,8 @@ export const waterSports: ActivityType[] = [
 
     goodConditions: [
       'temperature=10..24',
-      'windSpeed<15',
-      'gust<12',
+      'windSpeed=0..8',
+      'gust<10',
       'waveHeight<0.6',
       'visibility>5',
       'precipitation=0..2',
@@ -178,8 +224,8 @@ export const waterSports: ActivityType[] = [
 
     fairConditions: [
       'temperature=5..10 or 24..28',
-      'windSpeed=15..20',
-      'gust=12..15',
+      'windSpeed=8..10.8',
+      'gust=10..14',
       'waveHeight=0.6..1.0',
       'visibility=2..5',
       'precipitation=2..10',
@@ -188,8 +234,8 @@ export const waterSports: ActivityType[] = [
 
     poorConditions: [
       'temperature<5 or temperature>28',
-      'windSpeed>20',
-      'gust>15',
+      'windSpeed>10.8',
+      'gust>14',
       'waveHeight>1.0',
       'visibility<2',
       'precipitation>10',
@@ -384,8 +430,8 @@ export const waterSports: ActivityType[] = [
     // Safety-first: avoid offshore winds unless extremely light and in tiny surf; keep waves small; cap gusts; watch for heavy rain (murk)
     poorConditions: [
       'waterTemperature<17',            // uncomfortably cold for most casual snorkellers
-      'windSpeed>18',                   // choppy & unsafe (whitecaps likely)
-      'gust>16',                        // unpredictable surface disturbance
+      'windSpeed>7',                   // choppy & unsafe (whitecaps likely)
+      'gust>9',                        // unpredictable surface disturbance
       'waveHeight>1',                   // hard to breathe & see in the break zone
       'precipitation>6',                // heavy rain reduces water clarity & surface safety
       'visibility<2',                   // foggy, unsafe for navigation/spotters
@@ -399,8 +445,8 @@ export const waterSports: ActivityType[] = [
 
     fairConditions: [
       'waterTemperature=17..19',        // brisk but tolerable with suitable gear
-      'windSpeed=10..16',
-      'gust=10..14',
+      'windSpeed=5..7',
+      'gust=7..9',
       'waveHeight=0.3..0.8',
       'cloudCover=60..90',
       'visibility=2..5',
@@ -413,8 +459,8 @@ export const waterSports: ActivityType[] = [
 
     goodConditions: [
       'waterTemperature=20..28',
-      'windSpeed<10',
-      'gust<=10',
+      'windSpeed=0..5',
+      'gust<7',
       'waveHeight<0.5',
       'cloudCover=0..60',
       'visibility>5',
@@ -425,8 +471,8 @@ export const waterSports: ActivityType[] = [
 
     perfectConditions: [
       'waterTemperature=22..26',
-      'windSpeed<6',
-      'gust<6',
+      'windSpeed=0..3',
+      'gust<5',
       'waveHeight<0.3',
       'cloudCover=10..40',
       'visibility>10',
@@ -451,8 +497,8 @@ export const waterSports: ActivityType[] = [
     poorConditions: [
       'waterTemperature<14',           // cold spray & hypothermia risk
       'airTemperature<12 or airTemperature>32',
-      'windSpeed>22',                  // strong winds create chop
-      'gust>25',                       // erratic gusts destabilise riders
+      'windSpeed>11',                  // strong winds create chop
+      'gust>14',                       // erratic gusts destabilise riders
       'waveHeight>1.5',                // large chop/waves risky for PWC
       'visibility<2',                  // tough to spot hazards or other craft
       'precipitation>8',               // heavy rain reduces visibility & control
@@ -465,8 +511,8 @@ export const waterSports: ActivityType[] = [
     fairConditions: [
       'waterTemperature=14..18',
       'airTemperature=12..16 or airTemperature=28..32',
-      'windSpeed=15..22',
-      'gust=18..25',
+      'windSpeed=8..11',
+      'gust=10..14',
       'waveHeight=1.0..1.5',
       'visibility=2..5',
       'precipitation=2..8',
@@ -477,8 +523,8 @@ export const waterSports: ActivityType[] = [
     goodConditions: [
       'waterTemperature=18..26',
       'airTemperature=18..28',
-      'windSpeed<15',
-      'gust<=18',
+      'windSpeed=0..8',
+      'gust<10',
       'waveHeight<1.0',
       'visibility>5',
       'precipitation=0..2',
@@ -488,8 +534,8 @@ export const waterSports: ActivityType[] = [
     perfectConditions: [
       'waterTemperature=20..24',
       'airTemperature=20..26',
-      'windSpeed<10',
-      'gust<12',
+      'windSpeed=0..5',
+      'gust<7',
       'waveHeight<0.6',
       'visibility>10',
       'precipitation=0',
@@ -613,8 +659,8 @@ export const waterSports: ActivityType[] = [
     perfectConditions: [
       'waterTemperature=16..22',
       'airTemperature=18..24',
-      'windSpeed<8',
-      'gust<10',
+      'windSpeed=0..4',
+      'gust<6',
       'waveHeight<0.4',
       'visibility>10',
       'precipitation=0',
@@ -623,8 +669,8 @@ export const waterSports: ActivityType[] = [
     goodConditions: [
       'waterTemperature=14..24',
       'airTemperature=14..28',
-      'windSpeed<12',
-      'gust<14',
+      'windSpeed=0..6',
+      'gust<8',
       'waveHeight<0.6',
       'visibility>5',
       'precipitation=0..2',
@@ -633,8 +679,8 @@ export const waterSports: ActivityType[] = [
     fairConditions: [
       'waterTemperature=12..14 or 24..28',
       'airTemperature=10..14 or 28..30',
-      'windSpeed=12..15',
-      'gust=14..18',
+      'windSpeed=6..8',
+      'gust=8..11',
       'waveHeight=0.6..0.8',
       'visibility=2..5',
       'precipitation=2..5',
@@ -643,8 +689,8 @@ export const waterSports: ActivityType[] = [
     poorConditions: [
       'waterTemperature<12',
       'airTemperature<10 or airTemperature>30',
-      'windSpeed>15',
-      'gust>18',
+      'windSpeed>8',
+      'gust>11',
       'waveHeight>0.8',
       'visibility<2',
       'precipitation>5',
@@ -671,32 +717,32 @@ export const waterSports: ActivityType[] = [
     tags: ['sport','water','sea','coastal','boat','outdoors','Saturday','Sunday','holiday'],
     perfectConditions: [
       'airTemperature=14..22',
-      'windSpeed=8..15',
-      'gust<18',
+      'windSpeed=1.7..8',
+      'gust<9',
       'waveHeight<1.0',
       'visibility>10',
       'precipitation=0'
     ],
     goodConditions: [
       'airTemperature=10..26',
-      'windSpeed=6..20',
-      'gust<24',
+      'windSpeed=1.7..10.8',
+      'gust<13',
       'waveHeight<1.5',
       'visibility>5',
       'precipitation=0..2'
     ],
     fairConditions: [
       'airTemperature=5..10 or 26..30',
-      'windSpeed=4..6 or 20..25',
-      'gust=24..30',
+      'windSpeed=10.8..13.9',
+      'gust=13..17',
       'waveHeight=1.5..2.2',
       'visibility=2..5',
       'precipitation=2..5'
     ],
     poorConditions: [
       'airTemperature<5 or airTemperature>30',
-      'windSpeed<4 or windSpeed>25',
-      'gust>30',
+      'windSpeed>13.9',
+      'gust>17',
       'waveHeight>2.2',
       'visibility<2',
       'precipitation>5',
@@ -821,8 +867,8 @@ export const waterSports: ActivityType[] = [
     perfectConditions: [
       'waterTemperature=14..24',
       'airTemperature=12..26',
-      'windSpeed=12..20',
-      'gust<25',
+      'windSpeed=8..12',
+      'gust<15',
       'waveHeight=0.5..1.5',
       'visibility>5',
       'precipitation=0..2',
@@ -831,8 +877,8 @@ export const waterSports: ActivityType[] = [
     goodConditions: [
       'waterTemperature=12..26',
       'airTemperature=10..28',
-      'windSpeed=10..25',
-      'gust<30',
+      'windSpeed=6..13.9',
+      'gust<18',
       'waveHeight=0.3..2.0',
       'visibility>5',
       'precipitation=0..4',
@@ -841,8 +887,8 @@ export const waterSports: ActivityType[] = [
     fairConditions: [
       'waterTemperature=10..12 or 26..28',
       'airTemperature=8..10 or 28..30',
-      'windSpeed=8..10 or 25..30',
-      'gust=30..35',
+      'windSpeed=13.9..17.2',
+      'gust=18..22',
       'waveHeight=0.2..0.3 or 2.0..2.5',
       'visibility=2..5',
       'precipitation=4..8',
@@ -851,8 +897,8 @@ export const waterSports: ActivityType[] = [
     poorConditions: [
       'waterTemperature<10',
       'airTemperature<8 or airTemperature>32',
-      'windSpeed<8 or windSpeed>30',
-      'gust>35',
+      'windSpeed>17.2',
+      'gust>22',
       'waveHeight>2.5',
       'visibility<2',
       'precipitation>8',
@@ -875,8 +921,8 @@ export const waterSports: ActivityType[] = [
     perfectConditions: [
       'waterTemperature=16..24',
       'airTemperature=14..26',
-      'windSpeed=14..22',
-      'gust<28',
+      'windSpeed=7..12',
+      'gust<14',
       'waveHeight=0.5..1.8',
       'visibility>5',
       'precipitation=0..2',
@@ -885,8 +931,8 @@ export const waterSports: ActivityType[] = [
     goodConditions: [
       'waterTemperature=12..26',
       'airTemperature=10..28',
-      'windSpeed=12..26',
-      'gust<32',
+      'windSpeed=5.5..15',
+      'gust<17',
       'waveHeight=0.3..2.2',
       'visibility>5',
       'precipitation=0..4',
@@ -895,8 +941,8 @@ export const waterSports: ActivityType[] = [
     fairConditions: [
       'waterTemperature=10..12 or 26..28',
       'airTemperature=8..10 or 28..30',
-      'windSpeed=10..12 or 26..30',
-      'gust=32..36',
+      'windSpeed=15..17.2',
+      'gust=17..20',
       'waveHeight=0.2..0.3 or 2.2..2.5',
       'visibility=2..5',
       'precipitation=4..8',
@@ -905,8 +951,8 @@ export const waterSports: ActivityType[] = [
     poorConditions: [
       'waterTemperature<10',
       'airTemperature<8 or airTemperature>32',
-      'windSpeed<10 or windSpeed>30',
-      'gust>36',
+      'windSpeed>17.2',
+      'gust>20',
       'waveHeight>2.5',
       'visibility<2',
       'precipitation>8',
@@ -927,8 +973,8 @@ export const waterSports: ActivityType[] = [
     perfectConditions: [
       'waterTemperature=14..24',
       'airTemperature=12..26',
-      'windSpeed<10',
-      'gust<12',
+      'windSpeed=0..5',
+      'gust<7',
       'waveHeight<0.6',
       'swellPeriod=8..14',
       'visibility>10',
@@ -937,8 +983,8 @@ export const waterSports: ActivityType[] = [
     goodConditions: [
       'waterTemperature=12..26',
       'airTemperature=10..28',
-      'windSpeed<15',
-      'gust<18',
+      'windSpeed=0..8',
+      'gust<10',
       'waveHeight<1.0',
       'swellPeriod=6..14',
       'visibility>5',
@@ -947,8 +993,8 @@ export const waterSports: ActivityType[] = [
     fairConditions: [
       'waterTemperature=10..12 or 26..28',
       'airTemperature=8..10 or 28..30',
-      'windSpeed=15..20',
-      'gust=18..22',
+      'windSpeed=8..11',
+      'gust=10..14',
       'waveHeight=1.0..1.5',
       'swellPeriod=5..8',
       'visibility=2..5',
@@ -957,8 +1003,8 @@ export const waterSports: ActivityType[] = [
     poorConditions: [
       'waterTemperature<10',
       'airTemperature<8 or airTemperature>32',
-      'windSpeed>20',
-      'gust>22',
+      'windSpeed>11',
+      'gust>14',
       'waveHeight>1.5',
       'visibility<2',
       'precipitation>5',
@@ -978,8 +1024,8 @@ export const waterSports: ActivityType[] = [
     perfectConditions: [
       'waterTemperature=16..26',
       'airTemperature=18..28',
-      'windSpeed<10',
-      'gust<12',
+      'windSpeed=0..5',
+      'gust<7',
       'waveHeight<0.8',
       'visibility>10',
       'precipitation=0'
@@ -987,8 +1033,8 @@ export const waterSports: ActivityType[] = [
     goodConditions: [
       'waterTemperature=14..28',
       'airTemperature=14..30',
-      'windSpeed<15',
-      'gust<18',
+      'windSpeed=0..8',
+      'gust<10',
       'waveHeight<1.2',
       'visibility>5',
       'precipitation=0..2'
@@ -996,8 +1042,8 @@ export const waterSports: ActivityType[] = [
     fairConditions: [
       'waterTemperature=12..14 or 28..30',
       'airTemperature=10..14 or 30..32',
-      'windSpeed=15..20',
-      'gust=18..22',
+      'windSpeed=8..11',
+      'gust=10..14',
       'waveHeight=1.2..1.8',
       'visibility=2..5',
       'precipitation=2..5'
@@ -1005,8 +1051,8 @@ export const waterSports: ActivityType[] = [
     poorConditions: [
       'waterTemperature<12',
       'airTemperature<10 or airTemperature>32',
-      'windSpeed>20',
-      'gust>22',
+      'windSpeed>11',
+      'gust>14',
       'waveHeight>1.8',
       'visibility<2',
       'precipitation>5',
@@ -1028,8 +1074,8 @@ export const waterSports: ActivityType[] = [
     perfectConditions: [
       'waterTemperature=16..24',
       'airTemperature=18..26',
-      'windSpeed<6',
-      'gust<8',
+      'windSpeed=0..2.5',
+      'gust<4',
       'waveHeight<0.3',
       'visibility>10',
       'precipitation=0',
@@ -1038,8 +1084,8 @@ export const waterSports: ActivityType[] = [
     goodConditions: [
       'waterTemperature=14..26',
       'airTemperature=14..28',
-      'windSpeed<10',
-      'gust<12',
+      'windSpeed=0..4.5',
+      'gust<6',
       'waveHeight<0.5',
       'visibility>5',
       'precipitation=0..2',
@@ -1048,8 +1094,8 @@ export const waterSports: ActivityType[] = [
     fairConditions: [
       'waterTemperature=12..14 or 26..28',
       'airTemperature=10..14 or 28..30',
-      'windSpeed=10..12',
-      'gust=12..15',
+      'windSpeed=4.5..6',
+      'gust=6..8',
       'waveHeight=0.5..0.7',
       'visibility=2..5',
       'precipitation=2..5',
@@ -1058,8 +1104,8 @@ export const waterSports: ActivityType[] = [
     poorConditions: [
       'waterTemperature<12',
       'airTemperature<10 or airTemperature>30',
-      'windSpeed>12',
-      'gust>15',
+      'windSpeed>6',
+      'gust>8',
       'waveHeight>0.7',
       'visibility<2',
       'precipitation>5',

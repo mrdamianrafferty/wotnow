@@ -179,6 +179,60 @@ describe('condition grammar', () => {
   });
 });
 
+describe('marine models have a reachable wind limit', () => {
+  /**
+   * Before 2026-09 they did not. Coastal sailing called a Force 10 acceptable,
+   * windsurfing and kitesurfing a Force 11, with a Force 12 gust ceiling — above
+   * anything British waters record and above the engine's own universal danger
+   * cut-off, so those criteria were dead and the models behaved as though wind
+   * had no upper bound.
+   *
+   * The ceiling asserted here is a gale, Force 8 at 20.6 m/s. Anything that
+   * tolerates more than that is not modelling a sport.
+   */
+  const MARINE = ['sailing', 'windsurfing', 'kitesurfing', 'surfing', 'sea_kayaking',
+                  'sea_swimming', 'snorkeling', 'scuba_diving', 'jet_skiing', 'jetskiing',
+                  'sea_fishing_boat', 'sea_fishing_shore', 'sup_sea', 'beach'];
+
+  test.each(MARINE)('%s stops at or below a gale', (id) => {
+    const a = activityTypes.find((x) => x.id === id)!;
+    const limits = (a.poorConditions ?? [])
+      .filter((c) => /^(windSpeed|gust)>/.test(c))
+      .map((c) => Number(/>([\d.]+)/.exec(c)![1]));
+    expect(limits.length).toBeGreaterThan(0);
+    for (const v of limits) expect(v).toBeLessThanOrEqual(23);
+  });
+
+  test('sea kayaking is a Force 5 boat, not a Force 8 one', () => {
+    // Recreational sea kayaking is Force 4, Force 5 for the experienced. This
+    // model previously called a Force 8 — 39 knots — acceptable.
+    const a = activityTypes.find((x) => x.id === 'sea_kayaking')!;
+    const stop = Number(/windSpeed>([\d.]+)/.exec((a.poorConditions ?? []).join(' '))![1]);
+    expect(stop).toBeLessThanOrEqual(11);   // top of Force 5
+  });
+
+  test('the two jet-ski ids carry the same ladder', () => {
+    // They are one sport with two records. Until one is retired they must at
+    // least not disagree about when it is unsafe.
+    const wind = (id: string) => (activityTypes.find((x) => x.id === id)!.poorConditions ?? [])
+      .filter((c) => /^(windSpeed|gust)>/.test(c)).sort();
+    expect(wind('jet_skiing')).toEqual(wind('jetskiing'));
+  });
+
+  test('marine models keep their wave height, because swell is not local wind', () => {
+    for (const id of ['surfing', 'sea_kayaking', 'sea_swimming', 'kitesurfing']) {
+      const a = activityTypes.find((x) => x.id === id)!;
+      const all = [...(a.perfectConditions ?? []), ...(a.poorConditions ?? [])];
+      expect(all.some((c) => c.includes('waveHeight'))).toBe(true);
+    }
+  });
+
+  test('and their wind-relative logic, which is the genuinely marine part', () => {
+    const a = activityTypes.find((x) => x.id === 'surfing')!;
+    expect((a.goodConditions ?? []).some((c) => c.includes('windRelative'))).toBe(true);
+  });
+});
+
 describe('inland models do not carry wave height', () => {
   /**
    * On enclosed water every wave is local wind-sea, so significant wave height

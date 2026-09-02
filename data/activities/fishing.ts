@@ -99,8 +99,8 @@ export const fishingActivities: ActivityType[] = [
     tags: ['fishing','sea','shore','outdoors','patience','Saturday','Sunday'],
     perfectConditions: [
       'temperature=10..18',
-      'windSpeed<8',
-      'gust<10',
+      'windSpeed=0..6',
+      'gust<9',
       'waveHeight=0.3..0.8',
       'visibility>10',
       'precipitation=0..1',
@@ -108,8 +108,8 @@ export const fishingActivities: ActivityType[] = [
     ],
     goodConditions: [
       'temperature=6..22',
-      'windSpeed<12',
-      'gust<14',
+      'windSpeed=0..10',
+      'gust<13',
       'waveHeight=0.2..1.2',
       'visibility>5',
       'precipitation=0..2',
@@ -117,8 +117,8 @@ export const fishingActivities: ActivityType[] = [
     ],
     fairConditions: [
       'temperature=2..6 or 22..26',
-      'windSpeed=12..15',
-      'gust=14..17',
+      'windSpeed=10..13',
+      'gust=13..17',
       'waveHeight=1.2..1.8',
       'visibility=2..5',
       'precipitation=2..5',
@@ -126,7 +126,7 @@ export const fishingActivities: ActivityType[] = [
     ],
     poorConditions: [
       'temperature<2 or temperature>26',
-      'windSpeed>15',
+      'windSpeed>13',
       'gust>17',
       'waveHeight>1.8',
       'visibility<2',
@@ -146,32 +146,32 @@ export const fishingActivities: ActivityType[] = [
     tags: ['fishing','sea','boat','outdoors','Saturday','Sunday'],
     perfectConditions: [
       'temperature=8..20',
-      'windSpeed<7',
-      'gust<9',
+      'windSpeed=0..4',
+      'gust<6',
       'waveHeight<0.8',
       'visibility>10',
       'precipitation=0..1'
     ],
     goodConditions: [
       'temperature=5..24',
-      'windSpeed<11',
-      'gust<14',
+      'windSpeed=0..7',
+      'gust<9',
       'waveHeight<1.2',
       'visibility>5',
       'precipitation=0..2'
     ],
     fairConditions: [
       'temperature=0..5 or 24..28',
-      'windSpeed=11..15',
-      'gust=14..18',
+      'windSpeed=7..10',
+      'gust=9..13',
       'waveHeight=1.2..1.8',
       'visibility=2..5',
       'precipitation=2..5'
     ],
     poorConditions: [
       'temperature<-2 or temperature>28',
-      'windSpeed>15',
-      'gust>18',
+      'windSpeed>10',
+      'gust>13',
       'waveHeight>1.8',
       'visibility<2',
       'precipitation>5',
