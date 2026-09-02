@@ -11,6 +11,16 @@
  * the fault it guards against is invisible in the response — ten snapshots of
  * the same calm afternoon look exactly like one.
  */
+/* The mock is declared before the handler is imported, and stays there.
+   `jest.mock` is hoisted, so the current order happened to work — but the
+   thing under test reaches the provider through two modules, and a test whose
+   correctness rests on hoisting is one refactor away from making real network
+   calls and passing anyway. The repo's other API tests mock first; so does
+   this one now. */
+jest.mock('../lib/weather/openMeteoOneCallAdapter', () => ({
+  fetchOpenMeteoAsOneCallShape: jest.fn(),
+}));
+import { fetchOpenMeteoAsOneCallShape } from '../lib/weather/openMeteoOneCallAdapter';
 import handler from '../pages/api/godaisy/activity-conditions';
 
 const ACTIVITIES = [
@@ -29,11 +39,6 @@ function oneCallShape() {
   });
   return { daily: Array.from({ length: 7 }, (_, i) => day(i)), hourly: [] };
 }
-
-jest.mock('../lib/weather/openMeteoOneCallAdapter', () => ({
-  fetchOpenMeteoAsOneCallShape: jest.fn(),
-}));
-import { fetchOpenMeteoAsOneCallShape } from '../lib/weather/openMeteoOneCallAdapter';
 
 function invoke(activities: string[]) {
   return new Promise<{ statusCode: number; body: any }>((resolve) => {
