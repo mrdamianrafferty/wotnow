@@ -10,6 +10,7 @@
 import { getSuggestionsByDay } from '../utils/getSuggestionsByDay';
 import { scoreConditions, evaluateConditionScore } from '../utils/activitySuitability';
 import { activityTypes } from '../data/activityTypes';
+import { phraseFor } from '../utils/activityReasons';
 import type { ActivityType } from '../data/activities/types';
 
 const JULY = new Date('2026-07-15T10:00:00Z');
@@ -670,9 +671,23 @@ describe('the sentence says something', () => {
     expect(r).not.toMatch(/still an option/i);
   });
 
-  test('the activity is named the way a person says it', () => {
-    expect(scoreOf('dog_walking', fair(10)).reasoning).toContain('walking the dog');
-    expect(scoreOf('sailing_inland', fair(16)).reasoning).not.toContain('Go Sailing');
+  test('the activity is named the way a person says it, never by its label', () => {
+    /* The rule is that the LABEL never reaches the sentence — "Go Sailing" and
+       "Walk the Dog" are how the library files an activity, not how anybody
+       refers to it. It used to be checked by pinning one idiom ("walking the
+       dog"), which also pinned the phrasing: giving dog walking its own verdict
+       failed this while satisfying it, because "Ideal for a long one with the
+       dog" is the same rule kept better. So the label is what is asserted on,
+       and the subject is asserted separately. */
+    for (const [id, label, subject] of [
+      ['dog_walking', 'Walk the Dog', /dog/i],
+      ['sailing_inland', 'Go Sailing', /sail/i],
+      ['birdwatching', 'Go Birdwatching', /watch|binocular|bird/i],
+    ] as const) {
+      const r = scoreOf(id, fair(10)).reasoning ?? '';
+      expect(r).not.toContain(label);
+      expect(r).toMatch(subject);
+    }
   });
 
   test('every day gets a reason, not just a restated badge', () => {
@@ -812,4 +827,95 @@ describe('precipitation bands form a contiguous ladder', () => {
       expect(trace).toBeGreaterThan(16);
     }
   });
+});
+
+/**
+ * What a shelf of cards reads like, which is not the same as what one reads like.
+ *
+ * These were all found by looking at eight tiles at once on the Anglian board.
+ * Individually every sentence was defensible; together they repeated, and one
+ * of them answered the wrong question.
+ */
+describe('the cards read as a set', () => {
+  const drizzlyBreeze = {
+    temperature: 17, temperatureMin: 14, windspeed: 24, windspeedMax: 32,
+    gustspeed: 42, winddirection: 250, visibility: 20000, soilMoisture: 40,
+    precipitation: 2.7, precipitationHours: 9, clouds: 85,
+  };
+
+  it('two activities side by side do not open with the same sentence', () => {
+    /* "A good day for sailing." beside "A good day for windsurfing." — one
+       template across a whole shelf read as generated rather than written. */
+    const opener = (id: string) => (scoreOf(id, drizzlyBreeze).reasoning ?? '').split('. ')[0];
+    const openers = ['sailing_inland', 'windsurfing_inland', 'kayaking', 'wild_swimming',
+      'road_cycling', 'dog_walking', 'birdwatching'].map(opener);
+    expect(new Set(openers).size).toBe(openers.length);
+  });
+
+  it('a good day says what is good about it, not only what is wrong', () => {
+    /* This was a regression: marking the rain `decisive` let it become the
+       whole sentence under a "good" verdict, so the tile said it was a good
+       day for sailing and then named the only bad thing about it. */
+    for (const id of ['sailing_inland', 'windsurfing_inland']) {
+      const s = scoreOf(id, drizzlyBreeze);
+      expect(s.evaluation).toBe('good');
+      /* The wind is why it is good, and the wind has to be in there. */
+      expect(s.reasoning).toMatch(/Force \d/);
+    }
+  });
+
+  it('nobody sits down to walk a dog', () => {
+    const r = scoreOf('dog_walking', drizzlyBreeze).reasoning ?? '';
+    expect(r).not.toMatch(/sit in it/);
+    expect(r).toMatch(/dog/i);
+    /* Birdwatching keeps it, because a birdwatcher really is sitting still. */
+    expect(scoreOf('birdwatching', drizzlyBreeze).reasoning).toMatch(/sit in it/);
+  });
+
+  it('says gusts in English rather than in statistics', () => {
+    /* "on the mean" and "on a Force 4 mean" are both terms of art. Two figures
+       and the word "but" carry the same point to somebody stood on a bank. */
+    const gusty = { ...drizzlyBreeze, windspeed: 24, gustspeed: 58 };
+    for (const id of ['stand_up_paddleboarding', 'sailing_inland', 'windsurfing_inland', 'hiking']) {
+      const r = scoreOf(id, gusty).reasoning ?? '';
+      expect(r).not.toMatch(/\bmean\b/);
+    }
+    expect(scoreOf('sailing_inland', gusty).reasoning).toMatch(/Force \d, but gusting Force \d/);
+  });
+
+  it('every sentence it appends ends as a sentence', () => {
+    /* The ground note was pasted on without a full stop, so the card trailed
+       off mid-line. */
+    for (const id of ['dog_walking', 'hiking', 'birdwatching', 'mountain_biking']) {
+      const r = (scoreOf(id, { ...drizzlyBreeze, soilMoisture: 48 }).reasoning ?? '').trim();
+      expect(r).toMatch(/[.!?]$/);
+      expect(r).not.toMatch(/ - /);   // a spaced hyphen is not a dash
+    }
+  });
+});
+
+/**
+ * Every activity can be named inside a sentence.
+ *
+ * The library names activities as instructions — "Play Golf", "Do Archery",
+ * "Go to the Beach" — and the sentence needs a noun phrase. Stripping the verb
+ * covers most of them and produced "A good day for do archery" and "A good day
+ * for to the beach" for the rest, which is the sort of thing nobody sees until
+ * the whole shelf is on screen at once.
+ */
+describe('every activity has a phrase that fits the sentence', () => {
+  /* A phrase that opens with a bare verb or a preposition cannot follow "a
+     good day for". This is the whole rule, applied to the whole library. */
+  const CANNOT_OPEN = /^(?:do|hit|head|visit|explore|meditate|read|paint|play|watch|make|take|have|try|go|to|get|enjoy|see|catch|find|learn|practi[cs]e|shoot|throw)\b/i;
+
+  it.each((activityTypes as ActivityType[]).filter((a) => a.weatherSensitive).map((a) => [a.id, a] as const))(
+    '%s reads as a noun phrase',
+    (_id, a) => {
+      const phrase = phraseFor(a.id, a.name);
+      expect(phrase).not.toMatch(CANNOT_OPEN);
+      expect(phrase).not.toMatch(/\s{2,}/);
+      expect(phrase.trim()).toBe(phrase);
+      expect(phrase.length).toBeGreaterThan(1);
+    },
+  );
 });

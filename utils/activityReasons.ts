@@ -189,6 +189,22 @@ const PHRASE_OVERRIDES: Record<string, string> = {
   picnicking: 'a picnic',
   outdoor_reading: 'reading outside',
   camping: 'camping',
+  /**
+   * Names whose verb cannot simply be stripped.
+   *
+   * The strip below removes a leading instruction verb, which works while the
+   * remainder is a noun — "Play Golf" -> "golf". It fails where the verb is
+   * load-bearing ("Meditate Outdoors" -> "meditate outdoors") or where what is
+   * left is a preposition ("Go to the Beach" -> "to the beach"), and the card
+   * then read "A good day for to the beach". Seven of them, written out.
+   */
+  archery: 'archery',
+  beach: 'a day at the beach',
+  outdoor_playground: 'the playground',
+  outdoor_gym: 'the outdoor gym',
+  outdoor_meditation: 'meditating outdoors',
+  outdoor_yoga: 'yoga in the park',
+  outdoor_painting: 'painting outdoors',
 };
 
 export function phraseFor(activityId: string, name?: string): string {
@@ -254,7 +270,7 @@ const DEFAULTS: Record<string, Partial<Record<Direction, Phrasing>>> = {
   },
   gust: {
     high: (v, w) => typeof w.windSpeed === 'number'
-      ? `Gusting ${force(v)} on a ${force(w.windSpeed)} mean — it is the spread that catches you out, not the average.`
+      ? `${force(w.windSpeed)}, but gusting ${force(v)} — it is the spread that catches you out, not the average.`
       : `Gusting ${forceAndKnots(v)}.`,
   },
   temperature: {
@@ -333,6 +349,30 @@ const BY_ACTIVITY: Record<string, Record<string, Partial<Record<Direction, Phras
     precipitation: { high: () => 'Rain, which settles it.' },
   },
 
+  /**
+   * Walking the dog is filed under `stay_put` because the wind and the
+   * overnight minimum matter to it the way they matter to birdwatching. The
+   * rain does not: that family's line is "a long time to sit in it", written
+   * for a person in one place for hours, and nobody sits down to walk a dog.
+   *
+   * It also has the one thing none of the others have — a companion who is
+   * enjoying it. Go Daisy's own copy has said so for years ("The dog will
+   * enjoy it much more than you today"); it simply never reached this module.
+   */
+  dog_walking: {
+    precipitation: {
+      high: (v, w) => {
+        const h = typeof w.precipitationHours === 'number' ? Math.round(w.precipitationHours) : null;
+        if (h !== null && h >= 6) {
+          return v < 0.5
+            ? `Drizzling on and off for ${h} hours — the dog will mind it less than you will.`
+            : `Rain on and off for ${h} hours — the dog will enjoy it more than you will.`;
+        }
+        return v < 0.5 ? 'Spitting a bit — nothing a dog will notice.' : rainPhrase(v, w);
+      },
+    },
+  },
+
   birdwatching_passage: {
     windSpeed: {
       low: (v) => forceFromMs(v) <= 3
@@ -381,8 +421,14 @@ const BY_FAMILY: Partial<Record<ActivityFamily, Record<string, Partial<Record<Di
       marginal: (v) => `Getting up: ${force(v)}.`,
     },
     gust: {
+      /* "Settled enough on the mean" was statistics, not English — `mean` is a
+         word from the model, and a reader on a bank has no reason to know the
+         sentence is comparing two wind figures. The point survives without it:
+         it is the gusts, not the wind. The DEFAULTS gust clause above lost the
+         same word for the same reason — "Force 4, but gusting Force 7" says
+         both figures and needs no term of art to join them. */
       high: (v, w) => typeof w.windSpeed === 'number'
-        ? `Settled enough on the mean, but gusting ${force(v)}.`
+        ? `It is the gusts rather than the wind — ${force(v)} at times.`
         : `Gusting ${force(v)}.`,
     },
   },
@@ -470,6 +516,125 @@ function bandOf(score: number): Band {
   return 'poor';
 }
 
+/**
+ * The verdict, in the activity's own idiom where it has one.
+ *
+ * One stem for everything read as a template on a board that shows eight cards
+ * at once: "A good day for sailing." beside "A good day for windsurfing."
+ * beside "A good day for kayaking." — three tiles, one sentence, and the
+ * repetition made the whole shelf look generated rather than considered.
+ *
+ * Note that a FAMILY table cannot fix this on its own, because the two tiles
+ * that sat next to each other and read identically — sailing and windsurfing —
+ * are the same family. So the things people compare side by side get their own
+ * wording, and the family table catches everything else.
+ *
+ * Deterministic, and hand-written. There is no rotation and no hashing: the
+ * same activity says the same thing every day, because a sentence that changes
+ * on its own is a sentence a reader cannot trust twice.
+ */
+const VERDICT_BY_ACTIVITY: Record<string, Partial<Record<Band, string>>> = {
+  sailing_inland: {
+    perfect: 'A fine day to be under sail.',
+    good: 'A good day to be under sail.',
+    fair: 'Sailable, with something to work around.',
+    poor: 'Not a day to take a boat out.',
+  },
+  sailing: {
+    perfect: 'A fine day to be under sail.',
+    good: 'A good day to be under sail.',
+    fair: 'Sailable, with something to work around.',
+    poor: 'Not a day to take a boat out.',
+  },
+  windsurfing_inland: {
+    perfect: 'About the best a board gets here.',
+    good: 'Conditions are good for windsurfing.',
+    fair: 'Rideable, but you will work for it.',
+    poor: 'Not a day for the board.',
+  },
+  windsurfing: {
+    perfect: 'About the best a board gets here.',
+    good: 'Conditions are good for windsurfing.',
+    fair: 'Rideable, but you will work for it.',
+    poor: 'Not a day for the board.',
+  },
+  stand_up_paddleboarding: {
+    perfect: 'Glassy — ideal paddling.',
+    good: 'Good paddling weather.',
+    fair: 'Paddleable if you pick your bank.',
+    poor: 'Not a day to be stood up on a board.',
+  },
+  kayaking: {
+    perfect: 'About as good as the water gets for a kayak.',
+    good: 'A good day on the water.',
+    fair: 'Paddleable, with something to watch.',
+    poor: 'Not a day for the kayak.',
+  },
+  canoeing: {
+    perfect: 'About as good as the water gets for a canoe.',
+    good: 'A good day on the water.',
+    fair: 'Paddleable, with something to watch.',
+    poor: 'Not a day for the canoe.',
+  },
+  wild_swimming: {
+    perfect: 'Ideal for a swim.',
+    good: 'Good swimming weather.',
+    fair: 'Swimmable, but check the water first.',
+    poor: 'Not a day to get in.',
+  },
+  road_cycling: {
+    perfect: 'Ideal on the road.',
+    good: 'Good going on the bike.',
+    fair: 'Rideable, with something against you.',
+    poor: 'Not a day for the road bike.',
+  },
+  cycling: {
+    perfect: 'Ideal riding.',
+    good: 'Good going on the bike.',
+    fair: 'Rideable, with something against you.',
+    poor: 'Not a day for the bike.',
+  },
+  dog_walking: {
+    perfect: 'Ideal for a long one with the dog.',
+    good: 'A good day for a walk with the dog.',
+    fair: 'Fine for a shorter walk.',
+    poor: 'One for a quick loop round the block.',
+  },
+  birdwatching: {
+    perfect: 'Ideal watching conditions.',
+    good: 'Good watching weather.',
+    fair: 'Workable, if you can find shelter.',
+    poor: 'Not a day for the binoculars.',
+  },
+  hiking: {
+    perfect: 'Ideal walking weather.',
+    good: 'Good walking weather.',
+    fair: 'Walkable, with something to put up with.',
+    poor: 'Not a day for the hills.',
+  },
+  fly_fishing_freshwater: {
+    perfect: 'About as good as the fishing gets.',
+    good: 'A good day to be on the water.',
+    fair: 'Fishable, with something against you.',
+    poor: 'Not a day for the fly rod.',
+  },
+  coarse_fishing: {
+    perfect: 'About as good as the fishing gets.',
+    good: 'A good day on the bank.',
+    fair: 'Fishable, with something against you.',
+    poor: 'Not a day on the bank.',
+  },
+};
+
+/** Everything without its own idiom, varied by what kind of thing it is. */
+const VERDICT_BY_FAMILY: Partial<Record<ActivityFamily, Partial<Record<Band, (phrase: string) => string>>>> = {
+  wind_powered: { good: (p) => `Conditions are good for ${p}.` },
+  paddle: { good: (p) => `A good day on the water for ${p}.` },
+  immersion: { good: (p) => `Good conditions for ${p}.` },
+  land_endurance: { good: (p) => `Good going for ${p}.` },
+  stay_put: { good: (p) => `A good day to be out for ${p}.` },
+};
+
 const VERDICT: Record<Band, (phrase: string) => string> = {
   perfect: (p) => `About as good as it gets for ${p}.`,
   good: (p) => `A good day for ${p}.`,
@@ -478,6 +643,13 @@ const VERDICT: Record<Band, (phrase: string) => string> = {
      engine's own word "Dangerous". */
   poor: (p) => `Not a day for ${p}.`,
 };
+
+/** The activity's own wording, then its family's, then the generic stem. */
+function verdictFor(activityId: string, family: ActivityFamily, band: Band, phrase: string): string {
+  return VERDICT_BY_ACTIVITY[activityId]?.[band]
+    ?? VERDICT_BY_FAMILY[family]?.[band]?.(phrase)
+    ?? VERDICT[band](phrase);
+}
 
 /** Said instead of a verdict when a hazard fired hard enough to stop the scoring. */
 function vetoVerdict(phrase: string, family: ActivityFamily): string {
@@ -539,7 +711,7 @@ export function describeConditions(input: ReasonInput): string {
   const family = familyFor(input.activityId);
   const band = bandOf(score);
 
-  const parts: string[] = [vetoed ? vetoVerdict(phrase, family) : VERDICT[band](phrase)];
+  const parts: string[] = [vetoed ? vetoVerdict(phrase, family) : verdictFor(input.activityId, family, band, phrase)];
 
   /**
    * The limiting clause is only for days that are actually limited.
@@ -552,14 +724,36 @@ export function describeConditions(input: ReasonInput): string {
    * a day that merely has a softest link. Good days get the plain conditions
    * line instead, which is still specific and cannot disagree with itself.
    */
-  const limited = vetoed || binding?.decisive
-    || (band !== 'perfect' && band !== 'good' && binding && binding.score < 0.6);
+  const constrained = band !== 'perfect' && band !== 'good';
+  /**
+   * `decisive` says WHICH criterion decided the day. It does not say the day
+   * was a bad one, and it must not be allowed to turn a good verdict into a
+   * complaint.
+   *
+   * Adding it to this test made rain the whole of the sentence on days that
+   * scored well: "A good day for sailing. Rain for 9 hours of it, 2.7 mm in
+   * total." — a reader is told it is a good day and then told the one thing
+   * about it that is not good, and nothing at all about the wind that made it
+   * good. On a constrained day naming the limit is the point; on a good day it
+   * is a caveat, and it goes after the conditions rather than instead of them.
+   */
+  const limited = vetoed
+    || (constrained && !!binding && (binding.decisive || binding.score < 0.6));
   const reason = limited && binding ? clauseFor(input.activityId, family, binding, weather) : null;
 
   if (reason) parts.push(reason);
   else {
+    /* What the day IS — the answer to "why is this good?", which the verdict
+       alone never gave. */
     const line = conditionsLine(weather);
     if (line) parts.push(line);
+    /* And then the one thing worth knowing in spite of it. Only a criterion
+       the scorer marked decisive earns this; an ordinary weakest link on a
+       good day is not worth a sentence. */
+    if (!constrained && binding?.decisive) {
+      const caveat = clauseFor(input.activityId, family, binding, weather);
+      if (caveat) parts.push(caveat);
+    }
   }
 
   /* Season last, because it is a different kind of fact from the weather — it
