@@ -517,7 +517,23 @@ function calculateActivityScoreWithSnow(
   const asBinding = (c: CriterionScore, badness: number): CriterionScore =>
     ({ ...c, score: 1 - badness });
 
-  const nearestPoor = poor.all.slice().sort((a, b) => b.score - a.score)[0];
+  /**
+   * Keys that cannot be the stated reason, however close to firing they look.
+   *
+   * `evaluateConditionScore` grades a `>` condition against the threshold's own
+   * magnitude, which is a reasonable proxy for wind (span 8) and a poor one for
+   * humidity (span 90): 75% reads as 42% of the way to a 90% limit, when in
+   * practice British humidity never goes near zero and 75 is an ordinary
+   * afternoon. That produced "Not a day for trail running. Humid at 75%." on a
+   * clear January morning.
+   *
+   * Cloud has the same shape and the same problem. Humidity keeps its own note
+   * further down, which fires on the days it genuinely is the story.
+   */
+  const NOT_A_REASON = new Set(['humidity', 'clouds', 'cloudCover']);
+  const nearestPoor = poor.all
+    .filter((c) => !NOT_A_REASON.has(c.key))
+    .slice().sort((a, b) => b.score - a.score)[0];
 
   if (wetness > 0.35 && !wantsRain) {
     band = {

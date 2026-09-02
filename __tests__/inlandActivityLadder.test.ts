@@ -179,6 +179,69 @@ describe('condition grammar', () => {
   });
 });
 
+describe('a season is a closure, not a preference', () => {
+  /**
+   * Applying `seasonalMonths` was a fix — it had been computed and only logged.
+   * It also made forty models actively wrong overnight, because most of those
+   * month lists were never a statement about possibility. They said "this is
+   * nicer in summer", which the temperature bands already say, and a 35-point
+   * cap is the wrong instrument for it.
+   *
+   * Stargazing was the clearest case: listed April to October, when the dark
+   * hours are longest in December. The cap was on precisely the best months.
+   *
+   * A season now survives only where the activity is genuinely closed —
+   * snow, ice, a fixture list, a campsite's gates, a fruiting body, a passage.
+   */
+  const JAN = new Date('2026-01-15T10:00:00Z');
+  const clearWinterDay = {
+    temperature: 6, temperatureMin: 1, windspeed: 10, gustspeed: 18,
+    winddirection: 200, precipitation: 0, precipitationHours: 0,
+    clouds: 20, humidity: 75, visibility: 30000,
+  };
+
+  test.each(['hiking', 'stargazing', 'geocaching', 'golf', 'mountain_biking', 'trail_running'])(
+    '%s is not out of season in January', (id) => {
+      const s = scoreOf(id, clearWinterDay, JAN);
+      expect(s.score).toBeGreaterThan(35);        // the season cap
+      expect(s.reasoning).not.toMatch(/out of season/i);
+    });
+
+  test.each(['skiing', 'mushroom_hunting', 'camping', 'cricket'])(
+    '%s keeps its season, because that one is real', (id) => {
+      const a = activityTypes.find((x) => x.id === id)!;
+      expect(a.seasonalMonths?.length).toBeGreaterThan(0);
+      expect(a.seasonalMonths?.length).toBeLessThan(12);
+    });
+
+  test('stargazing in particular is no longer capped in its best month', () => {
+    expect(activityTypes.find((x) => x.id === 'stargazing')!.seasonalMonths).toBeUndefined();
+  });
+});
+
+describe('the sentence names the activity as a person would', () => {
+  test('imperative name prefixes are stripped, not just "Go"', () => {
+    // "a good day for play golf" and "not a day for do some gardening".
+    const JAN = new Date('2026-01-15T10:00:00Z');
+    const day = { temperature: 6, temperatureMin: 1, windspeed: 10, gustspeed: 18,
+                  precipitation: 0, precipitationHours: 0, clouds: 20, humidity: 75, visibility: 30000 };
+    expect(scoreOf('golf', day, JAN).reasoning).toMatch(/for golf/);
+    expect(scoreOf('outdoor_gardening', day, JAN).reasoning).toMatch(/for gardening/);
+  });
+
+  test('humidity is not offered as the reason when it is nowhere near its limit', () => {
+    // 75% read as 42% of the way to a 90% limit, because the `>` scorer grades
+    // against the threshold's own magnitude. "Not a day for trail running.
+    // Humid at 75%." on a clear January morning.
+    const JAN = new Date('2026-01-15T10:00:00Z');
+    const r = scoreOf('trail_running', {
+      temperature: 6, temperatureMin: 1, windspeed: 10, gustspeed: 18,
+      precipitation: 0, precipitationHours: 0, clouds: 20, humidity: 75, visibility: 30000,
+    }, JAN).reasoning ?? '';
+    expect(r).not.toMatch(/humid/i);
+  });
+});
+
 describe('visibility is carried, and it decides days', () => {
   /**
    * Open-Meteo publishes visibility hourly and the adapter had been fetching it

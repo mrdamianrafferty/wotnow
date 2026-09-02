@@ -189,7 +189,6 @@ export const lifestyleActivities: ActivityType[] = [
       'visibility>10',
       'precipitation=0',
       'gust<6.1'],
-    seasonalMonths: [3, 4, 5, 6, 7, 8, 9, 10],
     indoorAlternative: 'Play online, at a café, or solve puzzles at home'
   },
   
@@ -239,7 +238,6 @@ export const lifestyleActivities: ActivityType[] = [
       'visibility>10',
       'gust<6.1'
     ],
-    seasonalMonths: [4, 5, 6, 7, 8, 9, 10],
     indoorAlternative: 'Practise at home, compose, or maintain instruments'
   },
   {
@@ -295,8 +293,6 @@ export const lifestyleActivities: ActivityType[] = [
       'gust<6.1'
     ],
 
-    seasonalMonths: [4, 5, 6, 7, 8, 9, 10],
-
     indoorAlternative: 'Work on studio pieces, practise techniques, or plan your next plein air session'
   },
   {
@@ -351,8 +347,6 @@ export const lifestyleActivities: ActivityType[] = [
       'precipitation=0',               // no Rain
       'gust<6.1'
     ],
-
-    seasonalMonths: [4, 5, 6, 7, 8, 9, 10],
 
     indoorAlternative: 'Curl up with your book at home or in a cosy café'
   },

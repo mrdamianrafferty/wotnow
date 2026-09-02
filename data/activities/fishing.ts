@@ -39,7 +39,6 @@ export const fishingActivities: ActivityType[] = [
       'snowDepthCm>12',
       'gust>16'],
     indoorAlternative: 'Tie some flies',
-    seasonalMonths: [3, 4, 5, 6, 7, 8, 9]
   },
   {
     id: 'coarse_fishing',
@@ -83,8 +82,6 @@ export const fishingActivities: ActivityType[] = [
       'snowDepthCm>8',
       'gust>16'
     ],
-
-    seasonalMonths: [3, 4, 5, 6, 7, 8, 9, 10, 11],
 
     indoorAlternative: 'Tie rigs, sort your tackle box, or plan your next session'
   },
@@ -135,7 +132,6 @@ export const fishingActivities: ActivityType[] = [
       'snowfallRateMmH>0.5',
       'snowDepthCm>0.5'
     ],
-    seasonalMonths: [3,4,5,6,7,8,9,10,11]
   },
   {
     id: 'sea_fishing_boat',
@@ -178,7 +174,6 @@ export const fishingActivities: ActivityType[] = [
       'snowfallRateMmH>0.5',
       'snowDepthCm>0.5'
     ],
-    seasonalMonths: [3,4,5,6,7,8,9,10,11]
   }
 ];
 

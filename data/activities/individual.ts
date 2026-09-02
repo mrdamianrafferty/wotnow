@@ -44,8 +44,6 @@ export const individualSports: ActivityType[] = [
       'snowDepthCm>1',
       'gust>11'],
 
-    seasonalMonths: [3, 4, 5, 6, 7, 8, 9, 10],
-
     indoorAlternative: 'Practise your swing at the driving range or putting indoors with a mat'
   },
   {
@@ -90,8 +88,6 @@ export const individualSports: ActivityType[] = [
       'snowDepthCm>0.5',
       'gust>11'
     ],
-
-    seasonalMonths: [4, 5, 6, 7, 8, 9, 10],
 
     indoorAlternative: 'Book a court at an indoor tennis centre or work on fitness at the gym'
   },
@@ -140,7 +136,6 @@ export const individualSports: ActivityType[] = [
       'soilMoisture=20..35',
       'gust<6.1'
     ],
-    seasonalMonths: [3, 4, 5, 6, 7, 8, 9, 10],
     indoorAlternative: 'Practise at an indoor range, tune your bow, or work on strength & focus exercises'
   },
   {
@@ -177,7 +172,6 @@ export const individualSports: ActivityType[] = [
       'precipitation=0',
       'gust<6.1'
     ],
-    seasonalMonths: [3, 4, 5, 6, 7, 8, 9, 10],
     indoorAlternative: 'Book an indoor court, practise drills at home, or watch strategy videos'
   },
   {
@@ -213,7 +207,6 @@ export const individualSports: ActivityType[] = [
       'precipitation=0',
       'gust<6.1'
     ],
-    seasonalMonths: [3, 4, 5, 6, 7, 8, 9, 10],
     indoorAlternative: 'Book an indoor court, practise drills at home, or watch strategy videos'
   },
   {

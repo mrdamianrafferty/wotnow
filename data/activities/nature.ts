@@ -243,7 +243,6 @@ export const natureActivities: ActivityType[] = [
       'snowfallRateMmH>1',
       'snowDepthCm>2',
       'gust>16'],
-    seasonalMonths: [3, 4, 5, 6, 7, 8, 9, 10, 11],
     indoorAlternative: 'Plan garden layout or start seedlings indoors'
   },
    {
@@ -337,7 +336,6 @@ export const natureActivities: ActivityType[] = [
       'soilMoisture=20..35',
       'gust<9.4'
     ],
-    seasonalMonths: [3, 4, 5, 6, 7, 8, 9, 10],
     indoorAlternative: 'Practise map reading & route planning or train on a treadmill'
   },
 ];

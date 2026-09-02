@@ -114,8 +114,6 @@ export const wellnessSports: ActivityType[] = [
       'precipitation=0',
       'gust<8.8'
     ],
-
-    seasonalMonths: [3, 4, 5, 6, 7, 8, 9, 10],
     indoorAlternative: 'Head to an indoor gym or do a bodyweight workout at home'
   },
   {
@@ -168,8 +166,6 @@ export const wellnessSports: ActivityType[] = [
       'precipitation=0',                // no Rain
       'gust<8.8'
     ],
-
-    seasonalMonths: [4, 5, 6, 7, 8, 9, 10]
   },
   {
     id: 'outdoor_yoga',
@@ -231,8 +227,6 @@ export const wellnessSports: ActivityType[] = [
       'precipitation=0',
       'gust<6.1'
     ],
-
-    seasonalMonths: [4, 5, 6, 7, 8, 9, 10],
     indoorAlternative: 'Practise at home with a video, visit a studio, or do a short meditation session'
   },
   {

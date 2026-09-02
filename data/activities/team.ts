@@ -425,9 +425,7 @@ export const teamSports: ActivityType[] = [
       'snowfallRateMmH>0.5',              // snow makes footing slippery and visibility poor
       'snowDepthCm>0.5',                   // cold sand and hidden hazards
       'gust>11'
-    ],
-
-    seasonalMonths: [5, 6, 7, 8, 9],       // peak summer activity
+    ],       // peak summer activity
 
     indoorAlternative: 'Play indoor volleyball at a sports hall or practise drills at home'
   },

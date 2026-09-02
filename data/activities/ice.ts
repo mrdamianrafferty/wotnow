@@ -48,7 +48,6 @@ export const iceSports: ActivityType[] = [
     poorConditions: [],
     goodConditions: [],
     perfectConditions: [],
-    seasonalMonths: [9, 10, 11, 12, 1, 2, 3, 4],
     indoorAlternative: ''
   },
   {
@@ -96,7 +95,6 @@ export const iceSports: ActivityType[] = [
     poorConditions: [],
     goodConditions: [],
     perfectConditions: [],
-    seasonalMonths: [1, 2, 3, 10, 11, 12],
   },
    {
     id: 'ice_skating',

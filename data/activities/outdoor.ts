@@ -45,7 +45,6 @@ export const outdoorRecreation: ActivityType[] = [
       'snowfallRateMmH>1',
       'snowDepthCm>4',
       'gust>17'],
-    seasonalMonths: [3, 4, 5, 6, 7, 8, 9, 10],
     indoorAlternative: 'Hit the gym for a treadmill incline workout or a strength session'
   },
   {
@@ -91,7 +90,6 @@ export const outdoorRecreation: ActivityType[] = [
       'snowDepthCm>2',
       'gust>20'
     ],
-    seasonalMonths: [3, 4, 5, 6, 9, 10],
     indoorAlternative: 'Train at an indoor climbing gym or work on finger strength at home'
   },
   {
@@ -136,7 +134,6 @@ export const outdoorRecreation: ActivityType[] = [
       'visibility>10',
       'gust<11'
     ],
-    seasonalMonths: [4, 5, 6, 7, 8, 9, 10],
     indoorAlternative: 'Plan your next coastal walk or practise balance & agility exercises'
   },
   {
@@ -182,7 +179,6 @@ export const outdoorRecreation: ActivityType[] = [
       'soilMoisture=20..35',
       'gust<6.1'
     ],
-    seasonalMonths: [4, 5, 6, 7, 8, 9, 10]
   },
   {
     id: 'riding_motorbike',
@@ -227,7 +223,6 @@ export const outdoorRecreation: ActivityType[] = [
       'snowDepthCm>0.5',
       'gust>17'
     ],
-    seasonalMonths: [3, 4, 5, 6, 7, 8, 9, 10]
   },
   {
     id: 'beekeeping',
@@ -320,7 +315,6 @@ export const outdoorRecreation: ActivityType[] = [
       'soilMoisture=20..35',
       'gust<8.8'
     ],
-    seasonalMonths: [3, 4, 5, 6, 7, 8, 9, 10, 11],
     indoorAlternative: 'Research seasonal finds, preserve what you’ve picked, or prep recipes with past harvests'
   },
   {
@@ -368,8 +362,6 @@ export const outdoorRecreation: ActivityType[] = [
       'precipitation=0',
       'gust<6.1'
     ],
-
-    seasonalMonths: [3, 4, 5, 6, 7, 8, 9, 10],
     indoorAlternative: 'Practise throws indoors or play a tabletop game with friends'
   },
    {
@@ -422,8 +414,6 @@ export const outdoorRecreation: ActivityType[] = [
       'gust<8.8'
     ],
 
-    seasonalMonths: [3, 4, 5, 6, 7, 8, 9, 10],
-
     indoorAlternative: 'Log past finds online, solve puzzle caches, or plan your next route'
   },
  {
@@ -471,9 +461,7 @@ export const outdoorRecreation: ActivityType[] = [
       'snowfallRateMmH>1',               // heavy snow spooks horses & destroys footing
       'snowDepthCm>3',                    // deeper snow risks slips & tendon strains
       'gust>17'
-    ],
-
-    seasonalMonths: [3, 4, 5, 6, 7, 8, 9, 10],  // reflects most outdoor riding seasons
+    ],  // reflects most outdoor riding seasons
 
     indoorAlternative: 'Ride in the indoor school, groom your horse, or clean tack'
   },
@@ -526,8 +514,6 @@ export const outdoorRecreation: ActivityType[] = [
       'gust<9.4'
     ],
 
-    seasonalMonths: [3, 4, 5, 6, 7, 8, 9, 10],
-
     indoorAlternative: 'Visit an indoor roller rink or practise strength & balance exercises at home'
   },
   {
@@ -575,8 +561,6 @@ export const outdoorRecreation: ActivityType[] = [
       'visibility>10',
       'gust<9.4'
     ],
-
-    seasonalMonths: [3, 4, 5, 6, 7, 8, 9, 10],
     indoorAlternative: 'Find a covered spot under a bridge, in a garage, or at an indoor skatepark'
   },
   {
@@ -619,8 +603,6 @@ export const outdoorRecreation: ActivityType[] = [
       'precipitation=0',      // no rain,
       'gust<8.8'
     ],
-
-    seasonalMonths: [4, 5, 6, 7, 8, 9, 10]
   },
   {
     id: 'urban_exploring',
@@ -675,13 +657,12 @@ export const outdoorRecreation: ActivityType[] = [
     tags: ['sport','trail','nature','outdoors','Saturday','Sunday'],
   perfectConditions: ['temperature=8..14','windSpeed<6','clouds=10..50','humidity=40..55','soilMoisture=20..35','visibility>10','precipitation=0',
       'gust<11'],
-  goodConditions: ['temperature=5..20','windSpeed<11','clouds=0..80','humidity<80','soilMoisture=20..45','visibility=2','precipitation=0',
+  goodConditions: ['temperature=5..20','windSpeed<11','clouds=0..80','humidity<80','soilMoisture=20..45','visibility>2','precipitation=0',
       'gust<16'],
   fairConditions: ['temperature=2..5 or 20..25','windSpeed=11..15','humidity<=90','precipitation=2..4','soilMoisture=45..60','visibility=1..2',
       'gust=16..20'],
   poorConditions: ['temperature=2..5 or 20..25','windSpeed>15','precipitation>4','humidity>90','soilMoisture>60','visibility<1','snowfallRateMmH>1','snowDepthCm>4',
       'gust>20'],
-    seasonalMonths: [3,4,5,6,7,8,9,10]
   },
   {
     id: 'camping',
