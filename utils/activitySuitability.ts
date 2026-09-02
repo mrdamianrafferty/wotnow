@@ -817,9 +817,25 @@ export function applyWindRecommendationScoring(
       score = Math.min(95, score + 5);
       break;
     }
+    /**
+     * A bonus, not a floor.
+     *
+     * This was `Math.max(score, 82)`, which let a table that knows exactly ONE
+     * variable overwrite a verdict the bands reached from all of them. The wind
+     * being in an activity's sweet spot cannot make a day good on its own, and
+     * saying so out-argued every other criterion in the model.
+     *
+     * Found through `birdwatching_passage`, where it is most visible: a Force 7
+     * from the EAST scored identically to one from the west, because the bands
+     * correctly rejected the easterly on direction and this floor put it
+     * straight back to 82. But it was never specific to that — a sailing day
+     * with perfect wind and a 4 °C afternoon was floored the same way.
+     *
+     * A bonus still says what it knows, and the bands keep the last word.
+     */
     case 'optimal':
     case 'excellent': {
-      score = Math.max(score, 82);
+      score = Math.min(95, score + 8);
       break;
     }
     case 'irrelevant':

@@ -179,6 +179,96 @@ describe('condition grammar', () => {
   });
 });
 
+describe('the two kinds of reservoir birding', () => {
+  /**
+   * A large inland reservoir has two birding modes that want opposite weather,
+   * and one model could not hold both. The ordinary kind wants a still bright
+   * day; storm birding wants an Atlantic gale, because that is what forces
+   * seabirds inland onto Rutland and Grafham.
+   *
+   * This is also the demo's argument in its purest form: two rows, one
+   * forecast, opposite answers — and not a contrivance, but how the people who
+   * go there actually behave.
+   */
+  const OCT = new Date('2026-10-15T10:00:00Z');
+  const gale = (dir: number) => ({
+    temperature: 11, temperatureMin: 8, windspeed: 56, gustspeed: 80,
+    winddirection: dir, precipitation: 8, precipitationHours: 9, clouds: 95, humidity: 88,
+  });
+  const still = {
+    temperature: 14, temperatureMin: 9, windspeed: 6, gustspeed: 12,
+    winddirection: 200, precipitation: 0, precipitationHours: 0, clouds: 35, humidity: 70,
+  };
+
+  test('an October westerly gale splits the two apart', () => {
+    const ordinary = scoreOf('birdwatching', gale(245), OCT);
+    const storm = scoreOf('birdwatching_passage', gale(245), OCT);
+    expect(ordinary.score).toBeLessThan(40);
+    expect(storm.score).toBeGreaterThanOrEqual(80);
+  });
+
+  test('a still bright day splits them the other way', () => {
+    expect(scoreOf('birdwatching', still, OCT).score).toBeGreaterThanOrEqual(80);
+    expect(scoreOf('birdwatching_passage', still, OCT).score).toBeLessThan(40);
+  });
+
+  test('direction is the whole thing — the same gale from the east is not the same day', () => {
+    // Until wind direction was threaded through the inland pipeline the engine
+    // could not tell these apart at all, and scored them identically.
+    const west = scoreOf('birdwatching_passage', gale(245), OCT).score;
+    const east = scoreOf('birdwatching_passage', gale(85), OCT).score;
+    expect(west - east).toBeGreaterThan(25);
+  });
+
+  test('and it says so, rather than blaming the wind speed', () => {
+    const r = scoreOf('birdwatching_passage', gale(85), OCT).reasoning ?? '';
+    expect(r.toLowerCase()).toMatch(/compass|atlantic|land/);
+  });
+
+  test('storm birding is out of season in midwinter, gale or not', () => {
+    const JAN = new Date('2026-01-15T10:00:00Z');
+    const s = scoreOf('birdwatching_passage', gale(245), JAN);
+    expect(s.score).toBeLessThan(40);
+    expect(s.reasoning).toMatch(/season/i);
+  });
+
+  test('a calm day is not "unsafe" for something that merely wants wind', () => {
+    // windSpeed<8 is a shortfall, not a hazard. See SHORTFALL_NOT_HAZARD.
+    expect(scoreOf('birdwatching_passage', still, OCT).reasoning).not.toMatch(/not safe/i);
+  });
+
+  test('an activity that asks for rain is not also charged for it', () => {
+    // Its perfect band reads `precipitation=1..8` — rain in the wind is what
+    // puts them down. It scored 38 on the best day of its year before this.
+    expect(scoreOf('birdwatching_passage', gale(245), OCT).score).toBeGreaterThanOrEqual(80);
+  });
+
+  test('a hard frost is good birding, not poor', () => {
+    // The old bands called anything below freezing poor, reading the
+    // thermometer as though the observer were the subject. A frost ices the
+    // shallow waters and concentrates everything onto the deep ones.
+    const JAN = new Date('2026-01-15T10:00:00Z');
+    const s = scoreOf('birdwatching', {
+      temperature: -2, temperatureMin: -5, windspeed: 5, gustspeed: 10,
+      winddirection: 60, precipitation: 0, precipitationHours: 0, clouds: 15, humidity: 85,
+    }, JAN);
+    expect(s.score).toBeGreaterThanOrEqual(60);
+  });
+});
+
+describe('a wind bonus cannot outvote the rest of the model', () => {
+  test('the right wind from the wrong quarter does not float a day to 82', () => {
+    // `optimal` used to set `Math.max(score, 82)` — a floor, letting a table
+    // that knows one variable overwrite a verdict reached from all of them.
+    const OCT = new Date('2026-10-15T10:00:00Z');
+    const s = scoreOf('birdwatching_passage', {
+      temperature: 11, temperatureMin: 8, windspeed: 56, gustspeed: 80,
+      winddirection: 85, precipitation: 8, precipitationHours: 9, clouds: 95, humidity: 88,
+    }, OCT);
+    expect(s.score).toBeLessThan(80);
+  });
+});
+
 describe('marine models have a reachable wind limit', () => {
   /**
    * Before 2026-09 they did not. Coastal sailing called a Force 10 acceptable,

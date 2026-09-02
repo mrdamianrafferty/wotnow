@@ -355,6 +355,26 @@ const WIND_ACTIVITY_THRESHOLDS: Record<string, WindThresholds> = {
     difficult: 17, // 61 km/h - risk of falling branches
     dangerous: 26, // 94 km/h - risk of being blown over (60+ mph)
   },
+  /**
+   * The one entry in this table that WANTS wind.
+   *
+   * Storm birding is the reason `min_wind` exists outside the sailing family:
+   * below a Force 5 nothing is displaced onto an inland reservoir and there is
+   * no reason to be standing there. Above a Force 8 the observer is the
+   * problem — a scope will not stay on a tripod and the rain is horizontal.
+   *
+   * Without an entry here this activity would fall through to `unknown` and
+   * every wind verdict would be silent, which on the one activity where wind IS
+   * the event would be the worst possible omission.
+   */
+  birdwatching_passage: {
+    min_wind: 8,        // Force 5
+    optimal_min: 13,    // Force 6
+    optimal_max: 20,    // Force 8
+    unsafe: 24,         // Force 9 — the observer, not the birds
+    dangerous: 28,
+  },
+
   /* A scope on a tripod is unusable well before a walker is uncomfortable. */
   birdwatching: {
     caution: 8,      // Force 5
