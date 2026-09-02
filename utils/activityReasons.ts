@@ -174,8 +174,12 @@ export function phraseFor(activityId: string, name?: string): string {
   const override = PHRASE_OVERRIDES[activityId];
   if (override) return override;
   if (!name) return activityId.replace(/_/g, ' ');
+  /* The library names activities as instructions, and not all of them start
+     with "Go": "Play Golf", "Do Some Gardening", "Watch for Storm-Driven
+     Birds". Stripping only "Go " produced "a good day for play golf" and "not a
+     day for do some gardening". */
   return name
-    .replace(/^Go\s+/i, '')
+    .replace(/^(?:Go|Play|Watch(?: for)?|Make|Take|Have|Try|Do Some)\s+/i, '')
     .replace(/\s*\((?:Inland|Coastal)\)\s*$/i, '')
     .trim()
     .toLowerCase();

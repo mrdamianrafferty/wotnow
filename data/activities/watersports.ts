@@ -101,7 +101,6 @@ export const waterSports: ActivityType[] = [
       'snowfallRateMmH>0.5',
       'snowDepthCm>0.5'
     ],
-    seasonalMonths: [3, 4, 5, 6, 7, 8, 9, 10],
     indoorAlternative: 'Watch surf films or work on your pop-up at home'
   },
   {

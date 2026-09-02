@@ -49,8 +49,6 @@ export const socialActivities: ActivityType[] = [
       'snowDepthCm>1',
       'gust>11'],
 
-    seasonalMonths: [4, 5, 6, 7, 8, 9],
-
     indoorAlternative: 'Prepare a picnic-style meal indoors or plan your next outdoor gathering'
   },
   {
@@ -99,8 +97,6 @@ export const socialActivities: ActivityType[] = [
       'snowDepthCm>1',
       'gust>11'
     ],
-
-    seasonalMonths: [4, 5, 6, 7, 8, 9],
 
     indoorAlternative: 'Grill indoors or host a casual dinner party with BBQ flavours'
   },
@@ -159,8 +155,6 @@ export const socialActivities: ActivityType[] = [
       'snowDepthCm>0.5',
       'gust>16'
     ],
-
-    seasonalMonths: [5, 6, 7, 8, 9],
 
     indoorAlternative: 'Get that Baywatch box set out and watch some classic beach scenes or plan your next beach trip'
   },

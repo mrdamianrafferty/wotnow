@@ -106,7 +106,6 @@ export const cyclingSports: ActivityType[] = [
       'snowfallRateMmH>2',
       'snowDepthCm>6',
       'gust>20'],
-    seasonalMonths: [3, 4, 5, 6, 7, 8, 9, 10]
   },
   {
     id: 'gravel_biking',
@@ -155,7 +154,6 @@ export const cyclingSports: ActivityType[] = [
       'snowDepthCm>6',
       'gust>17'
     ],
-    seasonalMonths: [3, 4, 5, 6, 7, 8, 9, 10]
   }
 ];
 
