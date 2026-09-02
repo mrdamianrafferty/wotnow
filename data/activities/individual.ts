@@ -111,10 +111,10 @@ export const individualSports: ActivityType[] = [
     ],
     fairConditions: [
       'temperature=5..10',
-      'temperature=26..30',
+      'temperature=25..32',
       'windSpeed=5.5..8',
       'precipitation=1..5',
-      'visibility=3..5',
+      'visibility=2..5',
       'soilMoisture=45..50',
       'gust=8.8..11'
     ],

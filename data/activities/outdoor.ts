@@ -207,7 +207,10 @@ export const outdoorRecreation: ActivityType[] = [
     fairConditions: [
       'temperature=5..10 or 28..32',
       'windSpeed=9..13',
-      'humidity=80..90',
+      /* 75..90, not 80..90: the old pair left 75-80 in neither band, and
+         British afternoons sit in that window constantly, so the gap cost a
+         score on a very ordinary day. */
+      'humidity=75..90',
       'precipitation=1..3',
       'visibility=2..5',
       'gust=13.6..17'

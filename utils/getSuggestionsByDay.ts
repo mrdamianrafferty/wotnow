@@ -890,8 +890,23 @@ function getReasoningForScore(
     base += ` Humid at ${Math.round(weather.humidity)}%, which will make it feel worse than the number suggests.`;
   }
 
-  // Ground condition, where the activity is one that cares and the data exists.
-  if (typeof weather.soilMoisture === 'number' && isMudSensitive(activity.id)) {
+  /**
+   * Ground condition, where the activity cares, the data exists — and there is
+   * not snow on top of it.
+   *
+   * The note describes mud, and under snow it describes the wrong surface:
+   *
+   *   Not a day for football. 4 cm of lying snow. Pitch slightly soft but
+   *   playable.
+   *
+   * A frozen or covered pitch is not "slightly soft", and "playable" directly
+   * contradicts the verdict two words earlier. Soil moisture is still measured
+   * under snow; it just stops being what somebody is standing on.
+   */
+  const underSnow = (typeof weather.snowDepthCm === 'number' && weather.snowDepthCm > 0)
+    || (typeof weather.snowfallRateMmH === 'number' && weather.snowfallRateMmH > 0)
+    || (typeof weather.temperature === 'number' && weather.temperature <= 0);
+  if (!underSnow && typeof weather.soilMoisture === 'number' && isMudSensitive(activity.id)) {
     const soil = assessSoilCondition(weather.soilMoisture);
     const msg = getMudMessage(activity.id, soil);
     if (msg) base += ` ${msg}`;

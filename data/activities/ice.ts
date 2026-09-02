@@ -18,7 +18,12 @@ export const iceSports: ActivityType[] = [
       'snowDepthCm>5'
     ],
     fairConditions: [
-      'temperature=-20..-15',
+      /* Two-sided, because ice fails at both ends. The cold rung is -20..-15;
+         the warm one is 0..2, which was missing entirely — good stopped at 0
+         and poor began above 2, so the two degrees either side of thawing
+         matched no band at all. On an outdoor rink that is the whole question:
+         0-2 °C is the difference between hard ice and slush. */
+      'temperature=-20..-15 or 0..2',
       'windSpeed=15..20',
       'precipitation=1..2',
       'visibility=2..5'

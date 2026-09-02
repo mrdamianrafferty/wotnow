@@ -14,7 +14,7 @@ export const wellnessSports: ActivityType[] = [
       'gust<13.6'],
     fairConditions: ['temperature=0..5 or 20..25','windSpeed=9..13','humidity<=90','precipitation<=4','visibility>=1',
       'gust=13.6..17'],
-    poorConditions: ['temperature<0 or temperature>25..28','windSpeed>13','precipitation>4','humidity>90','visibility<1','snowfallRateMmH>1','snowDepthCm>3',
+    poorConditions: ['temperature<0 or temperature>25','windSpeed>13','precipitation>4','humidity>90','visibility<1','snowfallRateMmH>1','snowDepthCm>3',
       'gust>17']
   },
   
