@@ -18,6 +18,7 @@ export interface WeatherData {
   precipitation?: number;
   /** Hours of the period with measurable rain, where the source publishes it. */
   precipitationHours?: number;
+
   /** Mean wind over the period, m/s. What a day feels like. */
   windSpeed?: number;
   /** Peak sustained wind, m/s. What a safety limit is set against. */
@@ -48,6 +49,16 @@ export interface WeatherData {
   beachOrientation?: number; // seaward-facing beach bearing (0–359)
 
   // Fallback for any other numeric fields
+  /**
+   * Every scored value is a NUMBER. Deliberately, and it is load-bearing.
+   *
+   * The band grammar compares `key` against a threshold, and two of the reads
+   * below guard only against absent rather than against non-numeric. Rain
+   * TIMING wanted to live here and does not: it is a word, it is never
+   * compared against a threshold, and putting it behind this signature would
+   * make it possible for a future band to try. It reaches the copy layer
+   * through ReasonInput instead — see utils/activityReasons.
+   */
   [key: string]: number | undefined | null;
 }
 

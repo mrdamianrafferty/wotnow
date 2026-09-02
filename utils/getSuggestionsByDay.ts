@@ -19,6 +19,19 @@ export interface WeatherData {
    * a walk. Absent when the source publishes no such field.
    */
   precipitationHours?: number;
+  /**
+   * WHEN the rain falls, where the source publishes it hour by hour.
+   *
+   * "Rain for 10 hours of it, 2.3 mm in total" is two numbers and no picture.
+   * The forecast knows more than that: measured at Rutland, 4 September has
+   * 91% of its rain before noon and nothing after, which is a different day
+   * from 8 September, whose 4 mm is smeared across sixteen hours. Both came
+   * out as the same sentence.
+   *
+   * `spread` is the honest answer when no window holds enough of the total to
+   * be worth naming — and it is common, so it is not a failure state.
+   */
+  rainWindow?: 'overnight' | 'morning' | 'afternoon' | 'evening' | 'spread';
   windspeed?: number;                 // km/h — the period MEAN where available
   /** The period's peak sustained wind. Used for limits, not for description. */
   windspeedMax?: number;              // km/h
@@ -859,6 +872,9 @@ function getReasoningForScore(
 
   let base = describeConditions({
     activityId: activity.id,
+    /* When the rain falls. Beside the weather rather than in it — see the
+       index signature on SuitabilityWeather. */
+    rainWindow: weather.rainWindow,
     phrase: phraseFor(activity.id, activity.name),
     score,
     weather: w,
