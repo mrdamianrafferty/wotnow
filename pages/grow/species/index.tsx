@@ -11,27 +11,63 @@ type SpeciesDirectoryProps = {
   species: SpeciesDirectoryEntry[];
 };
 
+/** Empty directory, retried soon. The degraded path, used when the data is
+ *  unreachable at build time — never a reason to fail the build. */
+const EMPTY_WITH_RETRY: { props: SpeciesDirectoryProps; revalidate: number } = {
+  props: { species: [] },
+  revalidate: 300,
+};
+
 export const getStaticProps: GetStaticProps<SpeciesDirectoryProps> = async () => {
-  const supabase = getSupabaseServerClient();
+  // The `error || !data` branch below was written to degrade gracefully when
+  // the directory could not be loaded — but it could never run in the case it
+  // was written for. getSupabaseServerClient() THROWS on absent credentials,
+  // and that throw happens a line earlier, so the whole build died here with
+  // "Export encountered an error on /grow/species, exiting the build".
+  //
+  // This is the only page in pages/ that queries Supabase from getStaticProps
+  // (every sibling species route already uses getServerSideProps), so it alone
+  // decided whether a credential-less build succeeded — and CI Build had
+  // therefore never passed on any branch.
+  //
+  // Deliberately still SSG + ISR rather than getServerSideProps: Vercel's
+  // build DOES have the credentials, so production continues to prerender the
+  // full directory with real data and serve it from cache. Only a build
+  // without credentials degrades, and it now degrades to an empty page that
+  // repopulates on the next revalidation instead of a failed build. Moving to
+  // per-request SSR would have traded that away for a query against a
+  // 50k-row table on every hit.
+  try {
+    const supabase = getSupabaseServerClient();
 
-  const { data, error } = await supabase
-    .from('plant_species')
-    .select('slug, name, scientific_name, category, image_key')
-    .order('name', { ascending: true });
+    const { data, error } = await supabase
+      .from('plant_species')
+      .select('slug, name, scientific_name, category, image_key')
+      .order('name', { ascending: true });
 
-  if (error || !data) {
-    return { props: { species: [] }, revalidate: 300 };
+    if (error || !data) {
+      return EMPTY_WITH_RETRY;
+    }
+
+    const species: SpeciesDirectoryEntry[] = data.map((row) => ({
+      slug: row.slug,
+      name: row.name,
+      scientificName: row.scientific_name ?? null,
+      category: row.category ?? null,
+      imageKey: row.image_key ?? null,
+    }));
+
+    return { props: { species }, revalidate: 3600 };
+  } catch (err) {
+    // Loud, because a production build reaching this means the directory
+    // shipped empty and someone needs to know why.
+    console.warn(
+      '[grow/species] Could not load the plant directory at build time; ' +
+      'serving an empty directory that will retry in 300s.',
+      err instanceof Error ? err.message : err
+    );
+    return EMPTY_WITH_RETRY;
   }
-
-  const species: SpeciesDirectoryEntry[] = data.map((row) => ({
-    slug: row.slug,
-    name: row.name,
-    scientificName: row.scientific_name ?? null,
-    category: row.category ?? null,
-    imageKey: row.image_key ?? null,
-  }));
-
-  return { props: { species }, revalidate: 3600 };
 };
 
 export default function SpeciesDirectoryPage({ species }: SpeciesDirectoryProps) {
