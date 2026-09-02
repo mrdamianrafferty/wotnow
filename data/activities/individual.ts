@@ -14,7 +14,7 @@ export const individualSports: ActivityType[] = [
       'windSpeed<3',
       'cloudCover=30..60',
       'precipitation=0',
-      'soilMoisture=20..35',
+      'soilMoisture=18..35',
       'visibility>10',
       'gust<6.1'],
 
@@ -32,14 +32,14 @@ export const individualSports: ActivityType[] = [
       'precipitation=3..10',
       'cloudCover=90..100',
       'visibility=2..5',
-      'soilMoisture=10..15 or soilMoisture=45..60',
+      'soilMoisture=45..50',
       'gust=8.8..11'],
     poorConditions: [
       'temperature<5 or temperature>32',
       'windSpeed>8',
       'precipitation>10',
       'visibility<2',
-      'soilMoisture<10 or soilMoisture>60',
+      'soilMoisture>50',
       'snowfallRateMmH>1',
       'snowDepthCm>1',
       'gust>11'],
@@ -104,7 +104,7 @@ export const individualSports: ActivityType[] = [
       'windSpeed>8',
       'precipitation>5',
       'visibility<2',
-      'soilMoisture<10 or soilMoisture>60',
+      'soilMoisture>50',
       'snowfallRateMmH>0.5',
       'snowDepthCm>1',
       'gust>11'
@@ -115,7 +115,7 @@ export const individualSports: ActivityType[] = [
       'windSpeed=5.5..8',
       'precipitation=1..5',
       'visibility=3..5',
-      'soilMoisture=10..15 or soilMoisture=45..60',
+      'soilMoisture=45..50',
       'gust=8.8..11'
     ],
     goodConditions: [
@@ -133,7 +133,7 @@ export const individualSports: ActivityType[] = [
       'cloudCover=20..50',
       'precipitation=0',
       'visibility>10',
-      'soilMoisture=20..35',
+      'soilMoisture=18..35',
       'gust<6.1'
     ],
     indoorAlternative: 'Practise at an indoor range, tune your bow, or work on strength & focus exercises'

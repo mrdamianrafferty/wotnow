@@ -42,7 +42,7 @@ export async function fetchOpenMeteoAsOneCallShape(lat: number, lon: number): Pr
     latitude: String(lat),
     longitude: String(lon),
     current: 'temperature_2m,relative_humidity_2m,apparent_temperature,precipitation,rain,snowfall,weather_code,pressure_msl,wind_speed_10m,wind_direction_10m,wind_gusts_10m',
-    hourly: 'temperature_2m,relative_humidity_2m,dew_point_2m,precipitation_probability,precipitation,rain,snowfall,weather_code,wind_speed_10m,visibility,uv_index',
+    hourly: 'temperature_2m,relative_humidity_2m,dew_point_2m,precipitation_probability,precipitation,rain,snowfall,weather_code,wind_speed_10m,visibility,uv_index,soil_moisture_0_to_7cm',
     /**
      * `wind_speed_10m_mean`, `wind_gusts_10m_max` and `precipitation_hours` are
      * asked for because the activity models already reference all three and were
@@ -159,6 +159,28 @@ export async function fetchOpenMeteoAsOneCallShape(lat: number, lon: number): Pr
    */
   const daytimeVisibility = (dateStr: string) => daytimeMeanOf(hourly.visibility, dateStr);
 
+  /**
+   * Daytime mean soil moisture in the top 7 cm, as a PERCENTAGE.
+   *
+   * Open-Meteo publishes it hourly, in m³/m³ — volumetric water content, so
+   * 0.35 rather than 35. The activity models are written in percent
+   * (`soilMoisture=20..35` for firm turf, `<10` baked, `>60` waterlogged) and
+   * the generic band scorer does no unit conversion at all, so handing it the
+   * raw figure would compare 0.35 against a range of 20 to 35 and fire
+   * `soilMoisture<10` as a hazard on every single day. Converted here, once, at
+   * the edge.
+   *
+   * The top layer rather than 7-28 cm: the question these models ask is whether
+   * the ground is soft underfoot, not what the roots are drinking. The two also
+   * behave differently — measured at Rutland the surface ran 0.352 to 0.440
+   * over three days while the layer below it moved 0.318 to 0.323, because rain
+   * shows up at the top and is buffered below.
+   */
+  const daytimeSoilMoisture = (dateStr: string) => {
+    const v = daytimeMeanOf(hourly.soil_moisture_0_to_7cm, dateStr);
+    return typeof v === 'number' ? v * 100 : undefined;
+  };
+
   const owDaily = (daily.time as string[]).map((dateStr: string, i: number) => {
     const dt = Date.UTC(
       Number(dateStr.slice(0, 4)),
@@ -199,6 +221,8 @@ export async function fetchOpenMeteoAsOneCallShape(lat: number, lon: number): Pr
       /* Metres, matching `current.visibility` and what the scorer expects
          before it converts to kilometres. */
       visibility: daytimeVisibility(dateStr),
+      /* Percent, not m³/m³ — see daytimeSoilMoisture. */
+      soil_moisture: daytimeSoilMoisture(dateStr),
       snow: typeof daily.snowfall_sum?.[i] === 'number' ? daily.snowfall_sum[i] * 10 : undefined,
       moon_phase: computeMoonPhase(dt),
     };

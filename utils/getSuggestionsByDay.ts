@@ -457,8 +457,28 @@ function calculateActivityScoreWithSnow(
   // were too coarse to catch. See applyWindRecommendationScoring.
   score = applyWindRecommendationScoring(activity as MinimalActivity, w, score).score;
 
-  // ➕ Soil moisture, for the activities that care about the ground.
-  score = adjustScoreForMud(activity as MinimalActivity, w, score).score;
+  /**
+   * Soil moisture, for the activities that care about the ground — but only
+   * where their own bands do not already score it.
+   *
+   * `adjustScoreForMud` is a generic penalty written for models that say
+   * nothing about the ground. All twenty-four that DO say something now have
+   * calibrated bands, and applying both charges them twice: measured, a muddy
+   * day took the band's own reduction and then another 15 points and a cap at
+   * 65 on top. Same shape as the rain caps, same resolution — the model's own
+   * judgement wins, and the generic rule covers what the model is silent about.
+   *
+   * Its message survives either way: `getMudMessage` is appended to the
+   * reasoning separately, and "Muddy paths — waterproof boots recommended" is
+   * worth saying whichever half did the scoring.
+   */
+  const bandsScoreSoil = [
+    ...(activity.perfectConditions ?? []), ...(activity.goodConditions ?? []),
+    ...(activity.fairConditions ?? []), ...(activity.poorConditions ?? []),
+  ].some((c) => c.startsWith('soilMoisture'));
+  if (!bandsScoreSoil) {
+    score = adjustScoreForMud(activity as MinimalActivity, w, score).score;
+  }
 
   // ➕ Snow.
   const snowAdjusted = applySnowRecommendationScoring(activity as MinimalActivity, w, score);

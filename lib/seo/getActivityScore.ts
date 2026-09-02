@@ -186,7 +186,8 @@ async function fetchWeatherForLocation(
   type OWMDaily = {
     dt?: number; temp?: { day?: number; min?: number; max?: number }; rain?: number;
     wind_speed?: number; wind_gust?: number; wind_speed_mean?: number; wind_deg?: number;
-    precipitation_hours?: number; visibility?: number; clouds?: number; humidity?: number;
+    precipitation_hours?: number; visibility?: number; soil_moisture?: number;
+    clouds?: number; humidity?: number;
   };
   type OWMHourly = { dt?: number; temp?: number; rain?: { '1h'?: number }; wind_speed?: number; clouds?: number; humidity?: number };
 
@@ -226,6 +227,9 @@ async function fetchWeatherForLocation(
                fabricated 10 km was counted as a measurement and failed every
                `visibility>10` in the library. */
             visibility: d.visibility,
+            /* Already a percentage when it arrives — the adapter converts from
+               m³/m³ so the band criteria and the scorer agree on units. */
+            soilMoisture: d.soil_moisture,
             clouds: d.clouds,
             humidity: d.humidity,
           },

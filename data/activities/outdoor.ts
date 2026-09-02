@@ -12,7 +12,7 @@ export const outdoorRecreation: ActivityType[] = [
       'temperature=15..18',
       'windSpeed<5',
       'clouds=20..50',
-      'soilMoisture=20..35',
+      'soilMoisture=18..35',
       'visibility>10',
       'precipitation=0',
       'gust<9.4'],
@@ -21,7 +21,7 @@ export const outdoorRecreation: ActivityType[] = [
       'windSpeed<9',
       'clouds=20..80',
       'humidity<75',
-      'soilMoisture=20..45',
+      'soilMoisture=15..45',
       'visibility>5',
       'precipitation=0',
       'gust<13.6'],
@@ -31,7 +31,7 @@ export const outdoorRecreation: ActivityType[] = [
       'clouds=0..20 or 80..100',
       'humidity=75..90',
       'precipitation=1..5',
-      'soilMoisture=45..60',
+      'soilMoisture=45..50',
       'visibility=1..5',
       'gust=13.6..17'],
     poorConditions: [
@@ -39,7 +39,7 @@ export const outdoorRecreation: ActivityType[] = [
       'windSpeed>13',
       'precipitation>5',
       'humidity>90',
-      'soilMoisture>60',
+      'soilMoisture>50',
       'visibility<1',
       'snowfallRateMmH>1',
       'snowDepthCm>4',
@@ -149,7 +149,7 @@ export const outdoorRecreation: ActivityType[] = [
       'windSpeed>8',
       'temperature<5',
       'temperature>30',
-      'soilMoisture<10 or soilMoisture>60',
+      'soilMoisture>50',
       'snowfallRateMmH>0.5',
       'snowDepthCm>1',
       'gust>11'
@@ -159,7 +159,7 @@ export const outdoorRecreation: ActivityType[] = [
       'windSpeed=5.5..8',
       'cloudCover=70..100',
       'humidity=70..85',
-      'soilMoisture=10..15 or soilMoisture=45..60',
+      'soilMoisture=45..50',
       'visibility=2..5',
       'gust=8.8..11'
     ],
@@ -174,7 +174,7 @@ export const outdoorRecreation: ActivityType[] = [
       'temperature=18..22',
       'windSpeed<3',
       'precipitation=0',
-      'soilMoisture=20..35',
+      'soilMoisture=18..35',
       'gust<6.1'
     ],
   },
@@ -277,7 +277,7 @@ export const outdoorRecreation: ActivityType[] = [
       'precipitation>10',              // soaking, slippery, poor footing
       'windSpeed>12',                  // makes identifying & reaching plants harder
       'visibility<2',                  // unsafe, difficult to see or ID
-      'soilMoisture<10 or soilMoisture>60', // parched ground or boggy forest floor
+      'soilMoisture>50', // parched ground or boggy forest floor
       'snowfallRateMmH>1',             // active snow hides foliage & paths
       'snowDepthCm>3',                  // ground cover inaccessible under snow
       'gust>16'
@@ -288,7 +288,7 @@ export const outdoorRecreation: ActivityType[] = [
       'precipitation=0..5',            // light drizzle okay
       'cloudCover=30..100',
       'visibility=3..5',
-      'soilMoisture=10..15 or soilMoisture=45..60',
+      'soilMoisture=45..50',
       'gust=12.8..16'
     ],
     goodConditions: [
@@ -307,7 +307,7 @@ export const outdoorRecreation: ActivityType[] = [
       'precipitation=0',
       'cloudCover=40..70',
       'visibility>10',
-      'soilMoisture=20..35',
+      'soilMoisture=18..35',
       'gust<8.8'
     ],
     indoorAlternative: 'Research seasonal finds, preserve what you’ve picked, or prep recipes with past harvests'
@@ -373,7 +373,7 @@ export const outdoorRecreation: ActivityType[] = [
       'windSpeed>12',                // dangerous in wooded or exposed areas
       'precipitation>10',           // heavy rain or storms
       'visibility<2',                // poor navigation and safety risks
-      'soilMoisture<10 or soilMoisture>60', // frozen ground or boggy terrain
+      'soilMoisture>50', // frozen ground or boggy terrain
       'snowfallRateMmH>1',           // snow hides caches & trails fast
       'snowDepthCm>3',                // deep snow makes tracking unsafe
       'gust>16'
@@ -385,7 +385,7 @@ export const outdoorRecreation: ActivityType[] = [
       'windSpeed=8..12',            // gusty but not extreme
       'precipitation=2..6',          // light to moderate rain, may affect enjoyment
       'visibility=2..5',             // limited visibility but not unsafe
-      'soilMoisture=10..15 or soilMoisture=45..60',
+      'soilMoisture=45..50',
       'gust=12.8..16'
     ],
 
@@ -405,7 +405,7 @@ export const outdoorRecreation: ActivityType[] = [
       'cloudCover=10..50',            // pleasant light, not too bright or gloomy
       'precipitation=0',
       'visibility>10',
-      'soilMoisture=20..35',
+      'soilMoisture=18..35',
       'gust<8.8'
     ],
 
@@ -423,7 +423,7 @@ export const outdoorRecreation: ActivityType[] = [
       'temperature=15..20',         // optimal comfort for horse and rider
       'windSpeed<5',               // low wind = safe control and calm horses
       'cloudCover=20..50',           // soft light, not glaring or gloomy
-      'soilMoisture=20..35',        // secure footing without deep mud
+      'soilMoisture=18..35',        // secure footing without deep mud
       'visibility>10',               // ideal for hacking, eventing, or lessons
       'gust<9.4'
     ],
@@ -442,7 +442,7 @@ export const outdoorRecreation: ActivityType[] = [
       'windSpeed=9..13',           // windier = less pleasant, possibly spookier
       'cloudCover=80..100',          // flat light or gloom
       'precipitation=0..10',        // light rain or recent damp, may affect footing
-      'soilMoisture=10..15 or soilMoisture=45..60', // hard or boggy patches
+      'soilMoisture=45..50', // hard or boggy patches
       'visibility=2..5',             // murky conditions, not unsafe but not ideal
       'gust=13.6..17'
     ],
@@ -451,7 +451,7 @@ export const outdoorRecreation: ActivityType[] = [
       'temperature<5 or temperature>30',  // icy or dangerously hot
       'windSpeed>13',                    // hard to control horses, trees blowing
       'precipitation>10',                // muddy, unsafe ground
-      'soilMoisture<10 or soilMoisture>60', // either rock-hard or deep mud
+      'soilMoisture>50', // either rock-hard or deep mud
       'visibility<2',                    // fog, dusk, or heavy rain limit sight
       'snowfallRateMmH>1',               // heavy snow spooks horses & destroys footing
       'snowDepthCm>3',                    // deeper snow risks slips & tendon strains
@@ -650,13 +650,13 @@ export const outdoorRecreation: ActivityType[] = [
     secondaryCategory: 'Cardio & Running',
     weatherSensitive: true,
     tags: ['sport','trail','nature','outdoors','Saturday','Sunday'],
-  perfectConditions: ['temperature=8..14','windSpeed<6','clouds=10..50','soilMoisture=20..35','visibility>10','precipitation=0',
+  perfectConditions: ['temperature=8..14','windSpeed<6','clouds=10..50','soilMoisture=18..35','visibility>10','precipitation=0',
       'gust<11'],
-  goodConditions: ['temperature=5..20','windSpeed<11','clouds=0..80','humidity<80','soilMoisture=20..45','visibility>2','precipitation=0',
+  goodConditions: ['temperature=5..20','windSpeed<11','clouds=0..80','humidity<80','soilMoisture=15..45','visibility>2','precipitation=0',
       'gust<16'],
-  fairConditions: ['temperature=2..5 or 20..25','windSpeed=11..15','humidity<=90','precipitation=2..4','soilMoisture=45..60','visibility=1..2',
+  fairConditions: ['temperature=2..5 or 20..25','windSpeed=11..15','humidity<=90','precipitation=2..4','soilMoisture=45..50','visibility=1..2',
       'gust=16..20'],
-  poorConditions: ['temperature=2..5 or 20..25','windSpeed>15','precipitation>4','humidity>90','soilMoisture>60','visibility<1','snowfallRateMmH>1','snowDepthCm>4',
+  poorConditions: ['temperature=2..5 or 20..25','windSpeed>15','precipitation>4','humidity>90','soilMoisture>50','visibility<1','snowfallRateMmH>1','snowDepthCm>4',
       'gust>20'],
   },
   {
@@ -699,7 +699,7 @@ export const outdoorRecreation: ActivityType[] = [
       'windSpeed>15',                // tents unsafe
       'gust>18',                     // what actually breaks a pole
       'precipitation>5',            // heavy rain
-      'soilMoisture<10 or soilMoisture>60', // ground either baked hard or boggy
+      'soilMoisture>50', // ground either baked hard or boggy
       'visibility<2',                // fog & disorienting
       'snowfallRateMmH>1',           // tents collapse in active snowfall
       'snowDepthCm>3'                // deep snow makes pitching hazardous
@@ -711,7 +711,7 @@ export const outdoorRecreation: ActivityType[] = [
       'gust=14..18',
       'precipitation=0..5',         // showers, muddy but okay
       'humidity=80..90',             // muggy
-      'soilMoisture=10..15 or soilMoisture=45..60', // firming or sloppy ground
+      'soilMoisture=45..50', // firming or sloppy ground
       'visibility=2..5'              // misty but still campable
     ],
     goodConditions: [
@@ -732,7 +732,7 @@ export const outdoorRecreation: ActivityType[] = [
       'gust<9',
       'cloudCover=20..50',
       'precipitation=0',
-      'soilMoisture=20..35',
+      'soilMoisture=18..35',
       'visibility>10'
     ],
     seasonalMonths: [4, 5, 6, 7, 8, 9, 10],
