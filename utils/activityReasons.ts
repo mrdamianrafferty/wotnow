@@ -93,6 +93,27 @@ function compass(deg: number): string {
   return POINTS[Math.round(((deg % 360) + 360) % 360 / 45) % 8];
 }
 
+
+/**
+ * Rain described by what makes it matter, which is not always the millimetres.
+ *
+ * A day can be wet because a lot fell, or because a little fell for hours. The
+ * second is the common British case and the total is a useless way to say it:
+ * production printed "Not a day for stargazing. 0.0 mm of rain forecast." on a
+ * night of continuous drizzle, because the hours drove the verdict and the
+ * millimetres rounded to nothing.
+ */
+function rainPhrase(mm: number, w: WeatherData, longThreshold = 4): string {
+  const hours = typeof w.precipitationHours === 'number' ? Math.round(w.precipitationHours) : null;
+  if (hours !== null && hours >= 1 && mm < 0.5) {
+    return `Drizzle on and off for ${hours} hour${hours === 1 ? '' : 's'}.`;
+  }
+  if (hours !== null && hours >= longThreshold) {
+    return `Rain for ${hours} hours of it, ${mm.toFixed(1)} mm in total.`;
+  }
+  return `${mm.toFixed(1)} mm of rain forecast.`;
+}
+
 // ─────────────────────────────────────────────────────────────────────────
 // Families
 // ─────────────────────────────────────────────────────────────────────────
@@ -252,9 +273,7 @@ const DEFAULTS: Record<string, Partial<Record<Direction, Phrasing>>> = {
     high: (v) => `Water up at ${degrees(v)}.`,
   },
   precipitation: {
-    high: (v, w) => typeof w.precipitationHours === 'number' && w.precipitationHours >= 1
-      ? `Rain for ${Math.round(w.precipitationHours)} hours of it, ${v.toFixed(1)} mm in total.`
-      : `${v.toFixed(1)} mm of rain forecast.`,
+    high: (v, w) => rainPhrase(v, w, 1),
   },
   visibility: {
     /* Three registers, because a kilometre and eight are different problems:
@@ -276,8 +295,16 @@ const DEFAULTS: Record<string, Partial<Record<Direction, Phrasing>>> = {
     high: (v) => `Wind out of the ${compass(v)}.`,
     marginal: (v) => `Wind out of the ${compass(v)}.`,
   },
+  /* Both spellings, because the library uses both and a table keyed on only
+     one leaves the other silent. `clouds>50` on stargazing had no words at all,
+     so the cloud that vetoed the night went unmentioned and the sentence
+     blamed the breeze. */
   cloudCover: {
     high: () => 'Overcast throughout.',
+    low: () => 'Clear and bright, with no cover from it.',
+  },
+  clouds: {
+    high: (v) => `Overcast — ${Math.round(v)}% cloud.`,
     low: () => 'Clear and bright, with no cover from it.',
   },
   soilMoisture: {
@@ -296,6 +323,16 @@ const DEFAULTS: Record<string, Partial<Record<Direction, Phrasing>>> = {
  * families exist so that claim is rarely true.
  */
 const BY_ACTIVITY: Record<string, Record<string, Partial<Record<Direction, Phrasing>>>> = {
+  stargazing: {
+    /* Cloud is not a comfort question here, it is the entire question. */
+    clouds: {
+      high: (v) => v >= 80
+        ? 'Cloud right over — there will be nothing to see.'
+        : `Too much cloud for it — about ${Math.round(v)}% of the sky.`,
+    },
+    precipitation: { high: () => 'Rain, which settles it.' },
+  },
+
   birdwatching_passage: {
     windSpeed: {
       low: (v) => forceFromMs(v) <= 3
@@ -370,9 +407,12 @@ const BY_FAMILY: Partial<Record<ActivityFamily, Record<string, Partial<Record<Di
       high: (v) => `Hard work into a ${forceName(forceFromMs(v))} — ${forceAndKnots(v)}.`,
     },
     precipitation: {
-      high: (v, w) => typeof w.precipitationHours === 'number' && w.precipitationHours >= 4
-        ? `Wet for ${Math.round(w.precipitationHours)} hours of it.`
-        : `${v.toFixed(1)} mm of rain about.`,
+      high: (v, w) => {
+        const h = typeof w.precipitationHours === 'number' ? Math.round(w.precipitationHours) : null;
+        if (h !== null && h >= 1 && v < 0.5) return `Drizzling on and off for ${h} hour${h === 1 ? '' : 's'}.`;
+        if (h !== null && h >= 4) return `Wet for ${h} hours of it.`;
+        return `${v.toFixed(1)} mm of rain about.`;
+      },
     },
   },
   stay_put: {
@@ -380,9 +420,15 @@ const BY_FAMILY: Partial<Record<ActivityFamily, Record<string, Partial<Record<Di
       high: (v) => `${forceName(forceFromMs(v)).replace(/^./, (c) => c.toUpperCase())} — ${force(v)}.`,
     },
     precipitation: {
-      high: (v, w) => typeof w.precipitationHours === 'number' && w.precipitationHours >= 6
-        ? `Rain on and off for ${Math.round(w.precipitationHours)} hours — a long time to sit in it.`
-        : `${v.toFixed(1)} mm of rain forecast.`,
+      high: (v, w) => {
+        const h = typeof w.precipitationHours === 'number' ? Math.round(w.precipitationHours) : null;
+        if (h !== null && h >= 6) {
+          return v < 0.5
+            ? `Drizzling on and off for ${h} hours — a long time to sit in it.`
+            : `Rain on and off for ${h} hours — a long time to sit in it.`;
+        }
+        return rainPhrase(v, w);
+      },
     },
   },
 };
