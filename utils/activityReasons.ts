@@ -270,7 +270,7 @@ const DEFAULTS: Record<string, Partial<Record<Direction, Phrasing>>> = {
   },
   gust: {
     high: (v, w) => typeof w.windSpeed === 'number'
-      ? `Gusting ${force(v)} on a ${force(w.windSpeed)} mean — it is the spread that catches you out, not the average.`
+      ? `${force(w.windSpeed)}, but gusting ${force(v)} — it is the spread that catches you out, not the average.`
       : `Gusting ${forceAndKnots(v)}.`,
   },
   temperature: {
@@ -424,7 +424,9 @@ const BY_FAMILY: Partial<Record<ActivityFamily, Record<string, Partial<Record<Di
       /* "Settled enough on the mean" was statistics, not English — `mean` is a
          word from the model, and a reader on a bank has no reason to know the
          sentence is comparing two wind figures. The point survives without it:
-         it is the gusts, not the wind. */
+         it is the gusts, not the wind. The DEFAULTS gust clause above lost the
+         same word for the same reason — "Force 4, but gusting Force 7" says
+         both figures and needs no term of art to join them. */
       high: (v, w) => typeof w.windSpeed === 'number'
         ? `It is the gusts rather than the wind — ${force(v)} at times.`
         : `Gusting ${force(v)}.`,

@@ -873,9 +873,14 @@ describe('the cards read as a set', () => {
   });
 
   it('says gusts in English rather than in statistics', () => {
-    const r = scoreOf('stand_up_paddleboarding', drizzlyBreeze).reasoning ?? '';
-    expect(r).not.toMatch(/on the mean|the mean\b/);
-    expect(r).toMatch(/gust/i);
+    /* "on the mean" and "on a Force 4 mean" are both terms of art. Two figures
+       and the word "but" carry the same point to somebody stood on a bank. */
+    const gusty = { ...drizzlyBreeze, windspeed: 24, gustspeed: 58 };
+    for (const id of ['stand_up_paddleboarding', 'sailing_inland', 'windsurfing_inland', 'hiking']) {
+      const r = scoreOf(id, gusty).reasoning ?? '';
+      expect(r).not.toMatch(/\bmean\b/);
+    }
+    expect(scoreOf('sailing_inland', gusty).reasoning).toMatch(/Force \d, but gusting Force \d/);
   });
 
   it('every sentence it appends ends as a sentence', () => {
