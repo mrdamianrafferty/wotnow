@@ -159,7 +159,7 @@ export const fishingActivities: ActivityType[] = [
       'precipitation=0..2'
     ],
     fairConditions: [
-      'temperature=0..5 or 24..28',
+      'temperature=-2..5 or 24..28',
       'windSpeed=7..10',
       'gust=9..13',
       'waveHeight=1.2..1.8',

@@ -87,7 +87,7 @@ export const wellnessSports: ActivityType[] = [
     ],
 
     fairConditions: [
-      'temperature=2..8 or temperature=28..32', // cool or warm but manageable
+      'temperature=2..8 or temperature=28..35', // cool or warm but manageable
       'windSpeed=8..12',                       // breezy but not unsafe
       'cloudCover=80..100',                      // overcast or dull light
       'humidity=80..90',                        // muggy but tolerable
@@ -137,7 +137,7 @@ export const wellnessSports: ActivityType[] = [
     ],
 
     fairConditions: [
-      'temperature=2..8 or 28..32',   // wider acceptable range
+      'temperature=2..12 or 28..32',   // wider acceptable range
       'windSpeed=8..12',             // moved threshold up
       'cloudCover=80..100',            // dull, but not oppressive
       'humidity=85..95',              // moved humidity threshold up - 84% should be fine

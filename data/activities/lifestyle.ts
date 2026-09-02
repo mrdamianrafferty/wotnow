@@ -376,7 +376,7 @@ export const lifestyleActivities: ActivityType[] = [
       'gust>16'
     ],
     fairConditions: [
-      'temperature=-5..5 or temperature=30..35',  // extended cold range, reduced hot range
+      'temperature=-10..5 or temperature=30..35',  // extended cold range, reduced hot range
       'windSpeed=8..12',             // reduced from 20-30 - quite windy but manageable
       'cloudCover=95..100',            // reduced from 90-100 - very overcast only
       'precipitation=8..15',          // reduced from 5-20 - moderate rain

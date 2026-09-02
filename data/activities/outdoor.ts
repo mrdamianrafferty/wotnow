@@ -109,7 +109,7 @@ export const outdoorRecreation: ActivityType[] = [
     ],
     fairConditions: [
       'temperature=5..10',
-      'temperature=22..26',
+      'temperature=22..28',
       'windSpeed=11..15',
       'cloudCover=60..90',
       'visibility=2..5',
@@ -157,7 +157,7 @@ export const outdoorRecreation: ActivityType[] = [
     fairConditions: [
       'precipitation=0.1..1',
 
-      'temperature=5..10 or 25..30',
+      'temperature=5..15 or 25..30',
       'windSpeed=5.5..8',
       'cloudCover=70..100',
       'humidity=70..85',
@@ -245,7 +245,7 @@ export const outdoorRecreation: ActivityType[] = [
       'gust>11'
     ],
     fairConditions: [
-      'temperature=12..15',           // cooler, bees less active
+      'temperature=12..15 or 28..32',           // cooler, bees less active
       'windSpeed=5.5..8',             // light breeze, not ideal
       'cloudCover=60..80',             // duller conditions
       'humidity=75..85',              // borderline sticky
@@ -288,11 +288,11 @@ export const outdoorRecreation: ActivityType[] = [
       'gust>16'
     ],
     fairConditions: [
-      'temperature=6..12',
+      'temperature=5..12 or 20..30',
       'windSpeed=8..12',
       'precipitation=2..10',            // light to moderate rain
       'cloudCover=30..100',
-      'visibility=3..5',
+      'visibility=2..5',
       'soilMoisture=45..50',
       'gust=12.8..16'
     ],
@@ -385,8 +385,8 @@ export const outdoorRecreation: ActivityType[] = [
     ],
 
     fairConditions: [
-      'temperature=0..8',            // chilly but manageable
-      'temperature=26..32',          // a bit hot for walking, but fine in short bursts
+      'temperature=-2..8',            // chilly but manageable
+      'temperature=26..34',          // a bit hot for walking, but fine in short bursts
       'windSpeed=8..12',            // gusty but not extreme
       'precipitation=2..10',          // light to moderate rain, may affect enjoyment
       'visibility=2..5',             // limited visibility but not unsafe
@@ -489,7 +489,7 @@ export const outdoorRecreation: ActivityType[] = [
     fairConditions: [
       'precipitation=0.1..1',
 
-      'temperature=5..10 or 28..30', // brisk or slightly hot
+      'temperature=5..10 or 28..32', // brisk or slightly hot
       'windSpeed=9..13',            // breezy, may affect balance
       'cloudCover=80..100',           // overcast skies
       'visibility=2..5',              // misty or hazy
@@ -628,8 +628,8 @@ export const outdoorRecreation: ActivityType[] = [
       'gust>16'
     ],
     fairConditions: [
-      'temperature=-5..5',            // cold but tolerable
-      'temperature=25..30',           // warm for brisk walking
+      'temperature=-5..6',            // cold but tolerable
+      'temperature=25..35',           // warm for brisk walking
       'windSpeed=8..12',             // breezy but manageable
       'precipitation=0..3',          // light to moderate rain
       'visibility=2..5',               // reduced visibility but acceptable

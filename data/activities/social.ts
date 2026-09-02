@@ -28,7 +28,7 @@ export const socialActivities: ActivityType[] = [
       'precipitation=0',
       'gust<8.8'],
     fairConditions: [
-      'temperature=10..14 or 29..34',
+      'temperature=10..15 or 28..34',
       'windSpeed=5.5..8',
       'cloudCover=70..100',
       'humidity=75..85',
@@ -77,7 +77,7 @@ export const socialActivities: ActivityType[] = [
       'gust<8.8'
     ],
     fairConditions: [
-      'temperature=12..15 or 31..34',
+      'temperature=12..16 or 30..34',
       'windSpeed=5.5..8',
       'cloudCover=80..100',
       'humidity=80..90',

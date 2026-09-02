@@ -1217,26 +1217,15 @@ describe('the bands leave no value uncovered', () => {
   const keyOf = (c: string) => (c.match(/^([a-zA-Z]+)/) ?? [])[1] ?? '';
 
   /**
-   * Known holes, outside the Active Sports review that closed the rest.
+   * Every weather-sensitive model, with no exceptions list.
    *
-   * Listed rather than skipped silently, so the debt is visible and shrinks.
-   * Most sit at heat this country rarely reaches — 30-35 °C — and cost nothing
-   * in practice. Four are ordinary British weather and are worth doing:
-   *
-   *   outdoor_playground  10-15 °C     an ordinary afternoon, all year
-   *   foraging            20-30 °C     the whole of a warm summer
-   *   outdoor_meditation  8-12 °C      most of spring and autumn
-   *   picnicking / bbq    14-16 °C     the temperature you plan one at
+   * There was one: sixteen models carried a hole the Active Sports review did
+   * not reach, and they were named here rather than skipped quietly so the
+   * debt stayed visible. They are all closed, so the list is gone — and its
+   * absence is the point. A new model with a gap now fails on the way in
+   * rather than being added to a register.
    */
-  const KNOWN_HOLES = new Set([
-    'sea_fishing_boat', 'rock_hopping', 'outdoor_playground', 'beekeeping', 'foraging',
-    'geocaching', 'rollerblading', 'urban_exploring', 'birdwatching_passage',
-    'mushroom_hunting', 'picnicking', 'bbq', 'outdoor_gym', 'outdoor_meditation',
-    'photography',
-  ]);
-
-  const models = (activityTypes as ActivityType[])
-    .filter((a) => a.weatherSensitive && !KNOWN_HOLES.has(a.id));
+  const models = (activityTypes as ActivityType[]).filter((a) => a.weatherSensitive);
 
   it.each(models.map((a) => [a.id, a] as const))('%s', (_id, a) => {
     const bands = [a.goodConditions, a.fairConditions, a.poorConditions];
@@ -1257,5 +1246,36 @@ describe('the bands leave no value uncovered', () => {
       const holes = merged.slice(1).map((s2, i) => `${merged[i].hi}–${s2.lo}`);
       expect({ activity: a.id, key, holes }).toEqual({ activity: a.id, key, holes: [] });
     }
+  });
+});
+
+/**
+ * What a hole in the ladder actually costs.
+ *
+ * The coverage test above says none remain. This says why that was worth
+ * doing, because the answer is not "scores changed": closing all sixteen moved
+ * nothing across 81 models at fifteen temperatures. A hole is LATENT. It only
+ * shows when the good band is refused and the fair band is the one deciding,
+ * and then the criterion that fell in the hole scores near zero in both.
+ */
+describe('a hole is felt when the fair band decides', () => {
+  it('scores the criterion properly at a temperature that used to fall between bands', () => {
+    /* Foraging wanted 12-20 °C for good and 6-12 for fair, so 20-30 — the
+       whole of a warm summer — was in neither. On a windy day at 25 °C, where
+       the wind refuses the good band and fair is left to decide, that used to
+       cost it: 46 before, 50 after. Small, and only ever visible here. */
+    const windy25 = {
+      temperature: 25, temperatureMin: 22, windspeed: 30, windspeedMax: 40, gustspeed: 50,
+      winddirection: 240, visibility: 4000, soilMoisture: 32,
+      precipitation: 0, precipitationHours: 0, humidity: 70, clouds: 60,
+    };
+    const s = scoreOf('foraging', windy25, new Date('2026-07-15T11:00:00Z'));
+    expect(s.evaluation).toBe('fair');
+
+    /* And the rung itself covers the value now, which is the durable claim —
+       the score is a consequence and will move as other thresholds change. */
+    const foraging = (activityTypes as ActivityType[]).find((a) => a.id === 'foraging');
+    const fair = (foraging?.fairConditions ?? []).find((c) => c.startsWith('temperature'));
+    expect(fair).toMatch(/20\.\.30/);
   });
 });
