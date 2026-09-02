@@ -28,6 +28,15 @@ export interface WeatherData {
    * treat an absent criterion as neutral and a present one as measured.
    */
   gustspeed?: number;                 // km/h
+  /**
+   * Degrees the wind is blowing FROM, 0-359, dominant over the period.
+   *
+   * The engine has had a `windDirection` field for coastal models since they
+   * were written, and no inland source ever filled it — so every criterion that
+   * mentioned direction was scored neutral. It is the difference between two
+   * entirely different days at one wind speed.
+   */
+  winddirection?: number;             // degrees
   clouds?: number;                    // %
   humidity?: number;                  // %
   visibility?: number;                // m
@@ -209,6 +218,7 @@ function calculateActivityScoreWithSnow(
     windSpeed: windMeanMs ?? 0,
     windSpeedMax: typeof weather.windspeedMax === 'number' ? weather.windspeedMax / 3.6 : undefined,
     gust: typeof weather.gustspeed === 'number' ? weather.gustspeed / 3.6 : undefined,
+    windDirection: weather.winddirection,
     clouds: weather.clouds,
     cloudCover: weather.clouds,
     humidity: weather.humidity,
@@ -324,6 +334,23 @@ function calculateActivityScoreWithSnow(
     : Math.min(1, rainMm / 10);
   const rainRateMmH = rainHours ? rainMm / rainHours : null;
 
+  /**
+   * Does this activity's own model ASK for rain?
+   *
+   * The band gates and the caps further down both assume rain is unwelcome
+   * unless the activity is on the water, which is true of almost everything and
+   * false of the one that matters: storm birding's perfect band reads
+   * `precipitation=1..8`, because rain in the wind is what puts seabirds down
+   * on an inland reservoir. Without this it could never reach its good band on
+   * the best day of its year, and was charged for the weather twice besides.
+   *
+   * The test is a lower bound above zero. `precipitation=0..2` means "a bit is
+   * tolerable" and is treated as normal; `precipitation=1..8` means "it needs
+   * to be raining", which is a different claim about the world.
+   */
+  const wantsRain = (activity.perfectConditions ?? []).some((c) =>
+    /^precipitation=([1-9]|[1-9]\d)/.test(c));
+
   const perfect = scoreConditions(activity.perfectConditions ?? [], w);
   const good = scoreConditions(activity.goodConditions ?? [], w);
   const fair = scoreConditions(activity.fairConditions ?? [], w);
@@ -346,11 +373,11 @@ function calculateActivityScoreWithSnow(
     b.criteria.length ? Math.min(...b.criteria.map((c) => c.score)) : 1;
 
   if (perfect.criteria.length && perfect.mean > 0.8 && worst(perfect) >= 0.5
-      && (isWaterActivity || rainMm <= 0.2) && penalty < 0.3) {
+      && (isWaterActivity || wantsRain || rainMm <= 0.2) && penalty < 0.3) {
     score = span(perfect.mean, 0.8, 1, 88, 98);
     band = perfect;
   } else if (good.criteria.length && good.mean > 0.5 && worst(good) >= 0.35
-      && (isWaterActivity || wetness < 0.2)) {
+      && (isWaterActivity || wantsRain || wetness < 0.2)) {
     score = span(good.mean, 0.5, 1, 60, 87);
     band = good;
   /* No `worst()` floor on the fair band, deliberately. Perfect and good list
@@ -414,9 +441,11 @@ function calculateActivityScoreWithSnow(
    * for sailing". So they carry the same shape at about a third of the weight,
    * and keep their exemption from the hard caps.
    */
-  const rainWeight = isWaterActivity ? 9 : 25;
+  /* An activity whose bands ask for rain is not also charged for getting it —
+     the model already made that judgement. See wantsRain above. */
+  const rainWeight = wantsRain ? 0 : isWaterActivity ? 9 : 25;
   score -= Math.round(wetness * rainWeight);
-  if (!isWaterActivity) {
+  if (!isWaterActivity && !wantsRain) {
     if (rainRateMmH !== null && rainRateMmH >= 4) score = Math.min(score, 39);
     else if (wetness >= 0.5) score = Math.min(score, 59);
     /* Hours of it, even gentle, is its own kind of poor day. Only applied where
@@ -490,7 +519,7 @@ function calculateActivityScoreWithSnow(
 
   const nearestPoor = poor.all.slice().sort((a, b) => b.score - a.score)[0];
 
-  if (wetness > 0.35) {
+  if (wetness > 0.35 && !wantsRain) {
     band = {
       mean: band.mean,
       criteria: [asBinding(
@@ -501,9 +530,23 @@ function calculateActivityScoreWithSnow(
   } else if (nearestPoor && nearestPoor.score > 0.4) {
     band = { mean: band.mean, criteria: [asBinding(nearestPoor, nearestPoor.score)] };
   } else if (score < 60) {
-    /* Neither rain nor a near-miss explains it, and the band's own weakest link
-       cannot be trusted below "good". Say nothing rather than something wrong. */
-    band = { mean: band.mean, criteria: [] };
+    /**
+     * Neither rain nor a near-miss explains it, and below "good" the band's own
+     * weakest link generally cannot be trusted — a fair band lists marginal
+     * RANGES, so a day better than one scores zero against it.
+     *
+     * That reasoning holds for scalars, where "outside the range" can mean
+     * either side. It does not hold for a direction: a wind outside the arc an
+     * activity wants is simply the wrong wind, and there is no sense in which a
+     * north-easterly is "better than marginal" for something that needs an
+     * Atlantic westerly. So those keys survive the suppression, and the tile
+     * gets to say the thing the reader most needs to hear.
+     */
+    const OUTSIDE_IS_SIMPLY_WRONG = new Set(['windDirection']);
+    const directional = band.criteria
+      .filter((c) => OUTSIDE_IS_SIMPLY_WRONG.has(c.key) && c.score < 0.5)
+      .sort((a, b) => a.score - b.score)[0];
+    band = { mean: band.mean, criteria: directional ? [directional] : [] };
   }
 
   /**
@@ -566,6 +609,7 @@ function getReasoningForScore(
     precipitationHours: weather.precipitationHours,
     windSpeed: typeof weather.windspeed === 'number' ? weather.windspeed / 3.6 : undefined,
     gust: typeof weather.gustspeed === 'number' ? weather.gustspeed / 3.6 : undefined,
+    windDirection: weather.winddirection,
     clouds: weather.clouds,
     cloudCover: weather.clouds,
     humidity: weather.humidity,

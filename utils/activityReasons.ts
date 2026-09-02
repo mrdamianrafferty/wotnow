@@ -87,6 +87,12 @@ function degrees(c: number): string {
   return `${Math.round(c)} °C`;
 }
 
+/** A bearing as a point of the compass. Nobody says "the wind is 247 degrees". */
+const POINTS = ['north', 'north-east', 'east', 'south-east', 'south', 'south-west', 'west', 'north-west'];
+function compass(deg: number): string {
+  return POINTS[Math.round(((deg % 360) + 360) % 360 / 45) % 8];
+}
+
 // ─────────────────────────────────────────────────────────────────────────
 // Families
 // ─────────────────────────────────────────────────────────────────────────
@@ -120,6 +126,12 @@ const FAMILY_BY_ID: Record<string, ActivityFamily> = {
   running: 'land_endurance', trail_running: 'land_endurance', hiking: 'land_endurance',
 
   camping: 'stay_put', birdwatching: 'stay_put', dog_walking: 'stay_put',
+  /* Storm birding is `wind_powered` — not because anything is being sailed, but
+     because the family decides what too LITTLE wind means, and here it means
+     the same as it does to a windsurfer: nothing is happening, come back when
+     it blows. Filed under stay_put it would have said "Strong breeze, Force 6"
+     as though that were the problem. */
+  birdwatching_passage: 'wind_powered',
   picnicking: 'stay_put', photography: 'stay_put', stargazing: 'stay_put',
   fly_fishing_freshwater: 'stay_put', coarse_fishing: 'stay_put',
 };
@@ -147,6 +159,7 @@ export function familyFor(activityId: string): ActivityFamily {
  */
 const PHRASE_OVERRIDES: Record<string, string> = {
   dog_walking: 'walking the dog',
+  birdwatching_passage: 'storm birding',
   stand_up_paddleboarding: 'paddleboarding',
   wild_swimming: 'swimming',
   sea_swimming: 'sea swimming',
@@ -248,6 +261,11 @@ const DEFAULTS: Record<string, Partial<Record<Direction, Phrasing>>> = {
   humidity: {
     high: (v) => `Humid at ${Math.round(v)}%.`,
   },
+  windDirection: {
+    low: (v) => `Wind out of the ${compass(v)}.`,
+    high: (v) => `Wind out of the ${compass(v)}.`,
+    marginal: (v) => `Wind out of the ${compass(v)}.`,
+  },
   cloudCover: {
     high: () => 'Overcast throughout.',
     low: () => 'Clear and bright, with no cover from it.',
@@ -258,6 +276,32 @@ const DEFAULTS: Record<string, Partial<Record<Direction, Phrasing>>> = {
   },
   snowDepthCm: { high: (v) => `${Math.round(v)} cm of lying snow.` },
   snowfallRateMmH: { high: () => 'Snow falling.' },
+};
+
+/**
+ * Copy for a single activity, where its family's voice is close but not right.
+ *
+ * Consulted before the family table. Kept deliberately small: an entry here is
+ * a claim that this activity is unlike everything it is grouped with, and the
+ * families exist so that claim is rarely true.
+ */
+const BY_ACTIVITY: Record<string, Record<string, Partial<Record<Direction, Phrasing>>>> = {
+  birdwatching_passage: {
+    windSpeed: {
+      low: (v) => forceFromMs(v) <= 3
+        ? `Nothing like enough wind to displace anything — ${force(v)}. Ordinary birding weather.`
+        : `${force(v)} and steady. Worth a look, but nothing is being blown inland.`,
+      high: (v) => `${forceAndKnots(v)} — as much as anyone would want to stand out in.`,
+    },
+    windDirection: {
+      low: () => 'Wind is off the land rather than the Atlantic, which is the wrong half of the compass for this.',
+      high: () => 'Wind is off the land rather than the Atlantic, which is the wrong half of the compass for this.',
+      marginal: () => 'Direction is only half right — worth an hour rather than an afternoon.',
+    },
+    precipitation: {
+      low: () => 'Dry, which is the one thing missing: rain in the wind is what puts them down on the water.',
+    },
+  },
 };
 
 const BY_FAMILY: Partial<Record<ActivityFamily, Record<string, Partial<Record<Direction, Phrasing>>>>> = {
@@ -341,6 +385,7 @@ const BY_FAMILY: Partial<Record<ActivityFamily, Record<string, Partial<Record<Di
  * the demo's own note classifier already follows.
  */
 function clauseFor(
+  activityId: string,
   family: ActivityFamily,
   criterion: CriterionScore,
   weather: WeatherData,
@@ -349,7 +394,9 @@ function clauseFor(
   /* An explicit direction beats one inferred from the numbers — see
      CriterionScore.direction. */
   const dir = criterion.direction ?? directionOf(criterion.condition, criterion.value);
-  const table = BY_FAMILY[family]?.[criterion.key] ?? DEFAULTS[criterion.key];
+  const table = BY_ACTIVITY[activityId]?.[criterion.key]
+    ?? BY_FAMILY[family]?.[criterion.key]
+    ?? DEFAULTS[criterion.key];
   const phrase = table?.[dir] ?? DEFAULTS[criterion.key]?.[dir];
   return phrase ? phrase(criterion.value, weather) : null;
 }
@@ -450,7 +497,7 @@ export function describeConditions(input: ReasonInput): string {
    * line instead, which is still specific and cannot disagree with itself.
    */
   const limited = vetoed || (band !== 'perfect' && band !== 'good' && binding && binding.score < 0.6);
-  const reason = limited && binding ? clauseFor(family, binding, weather) : null;
+  const reason = limited && binding ? clauseFor(input.activityId, family, binding, weather) : null;
 
   if (reason) parts.push(reason);
   else {

@@ -65,7 +65,7 @@ export async function fetchOpenMeteoAsOneCallShape(lat: number, lon: number): Pr
      * drizzle. Those are very different days for a campsite and a daily total
      * cannot tell them apart.
      */
-    daily: 'weather_code,temperature_2m_max,temperature_2m_min,sunrise,sunset,precipitation_sum,rain_sum,snowfall_sum,precipitation_probability_max,wind_speed_10m_max,wind_speed_10m_mean,wind_gusts_10m_max,precipitation_hours',
+    daily: 'weather_code,temperature_2m_max,temperature_2m_min,sunrise,sunset,precipitation_sum,rain_sum,snowfall_sum,precipitation_probability_max,wind_speed_10m_max,wind_speed_10m_mean,wind_gusts_10m_max,wind_direction_10m_dominant,precipitation_hours',
     timezone: 'UTC',
     wind_speed_unit: 'ms',
     forecast_days: '7',
@@ -160,6 +160,16 @@ export async function fetchOpenMeteoAsOneCallShape(lat: number, lon: number): Pr
          backstop provider is used, which is the honest outcome — a consumer
          must handle a missing mean anyway. */
       wind_speed_mean: daily.wind_speed_10m_mean?.[i],
+      /**
+       * Degrees the wind blew FROM, dominant over the day.
+       *
+       * Requested because direction is the difference between two completely
+       * different days at the same wind speed, and nothing inland carried it.
+       * A westerly gale in October puts storm-driven seabirds onto an inland
+       * reservoir and is the best birding of the year; the same speed from the
+       * east is just a cold day with no birds in it.
+       */
+      wind_deg: daily.wind_direction_10m_dominant?.[i],
       pop: (daily.precipitation_probability_max?.[i] ?? 0) / 100,
       rain: daily.rain_sum?.[i],
       precipitation_hours: daily.precipitation_hours?.[i],
