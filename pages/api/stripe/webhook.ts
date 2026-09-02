@@ -16,9 +16,21 @@
  * Events handled:
  * - customer.subscription.created
  * - customer.subscription.updated
+ * - customer.subscription.trial_will_end (notification only; no tier change)
  * - customer.subscription.deleted
  * - checkout.session.completed (including one-time lifetime purchases)
- * - invoice.payment_failed (records only; does not downgrade)
+ * - invoice.payment_failed (records + dunning email; does not downgrade)
+ *
+ * Grow Daisy events also dispatch transactional email via
+ * lib/grow/sendSubscriptionEmail. Those calls are deliberately awaited but
+ * never allowed to throw: the sender resolves to a result object on every
+ * path, because a rejection here would return 500, and Stripe would then
+ * retry the event and re-run the tier writes. An email outage must not
+ * become a billing-state problem.
+ *
+ * NOTE: trial_will_end must be enabled on the Stripe webhook endpoint's
+ * event list, or it will simply never arrive. Adding the case here is
+ * necessary but not sufficient.
  *
  * @route POST /api/stripe/webhook
  */
@@ -28,8 +40,18 @@ import { buffer } from 'micro';
 import Stripe from 'stripe';
 import { stripe } from '@/lib/stripe/server';
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
-import { GrowSubscriptionTier } from '@/lib/grow/subscription';
+import { GrowSubscriptionTier, getTierDisplayName } from '@/lib/grow/subscription';
 import { GoDaisyTier } from '@/lib/godaisy/subscription';
+import {
+  sendTrialStarted,
+  sendTrialEnding,
+  sendSubscriptionConfirmed,
+  sendSubscriptionCancelled,
+  sendPaymentFailed,
+  formatStripeAmount,
+  formatEpochDate,
+  type GrowLifecycleContext,
+} from '@/lib/grow/sendSubscriptionEmail';
 
 type SupabaseServerClient = SupabaseClient<unknown>;
 
@@ -262,14 +284,29 @@ async function recordGrowEvent(
   tier: GrowSubscriptionTier,
   eventData: Stripe.Checkout.Session | Stripe.Subscription
 ) {
-  // @ts-expect-error - Supabase type inference issue with grow_subscription_events
-  await supabase.from('grow_subscription_events').insert({
-    user_id: userId,
-    event_type: eventType,
-    stripe_event_id: stripeEventId,
-    tier,
-    event_data: eventData as unknown,
-  });
+  // `new_tier`, NOT `tier`. The two audit tables have divergent shapes —
+  // godaisy_subscription_events has a `tier` column, grow_subscription_events
+  // has old_tier/new_tier — and this function was written against the Go Daisy
+  // shape. Postgres rejected every insert with "column tier does not exist",
+  // the returned error was never inspected, and so from launch until
+  // 2026-09-02 not one Stripe event was recorded here: the table held only
+  // RevenueCat rows. The @ts-expect-error below is what hid it, by suppressing
+  // the very mismatch that would have failed the build.
+  const { error } = await supabase
+    .from('grow_subscription_events')
+    // @ts-expect-error - Supabase type inference issue with grow_subscription_events
+    .insert({
+      user_id: userId,
+      event_type: eventType,
+      stripe_event_id: stripeEventId,
+      new_tier: tier,
+      event_data: eventData as unknown,
+    });
+
+  if (error) {
+    // Audit-log failure must not fail the webhook, but it must be visible.
+    console.error(`[grow] Failed to record ${eventType} (${stripeEventId}):`, error.message);
+  }
 }
 
 /**
@@ -277,6 +314,61 @@ async function recordGrowEvent(
  */
 function isGrowDaisyEvent(metadata: Stripe.Metadata | null): boolean {
   return metadata?.app === 'grow_daisy';
+}
+
+// =============================================================================
+// GROW DAISY TRANSACTIONAL EMAIL
+// =============================================================================
+
+/**
+ * Billing facts for the email copy, read off the subscription's own price
+ * rather than the GROW_TIERS price table. The table is in EUR only, whereas
+ * Stripe charges in whatever currency the price is denominated in — quoting a
+ * figure the customer will not see on their statement is worse than quoting
+ * nothing.
+ */
+function growBillingFacts(subscription: Stripe.Subscription, locale: string) {
+  const item = subscription.items?.data?.[0];
+  const price = item?.price;
+  const interval = price?.recurring?.interval;
+
+  return {
+    amount: formatStripeAmount(price?.unit_amount, price?.currency, locale),
+    interval: interval === 'year' ? ('year' as const) : interval === 'month' ? ('month' as const) : null,
+  };
+}
+
+/**
+ * Which platform this subscriber bought on, which decides the cancellation
+ * instructions. A Stripe subscription is by definition the web purchase path —
+ * iOS purchases go through Apple and surface via the RevenueCat webhook, never
+ * here. Telling a Stripe subscriber to cancel in iOS Settings (or the reverse)
+ * sends them somewhere that cannot work.
+ */
+const STRIPE_PLATFORM = 'web' as const;
+
+/** Tier label for copy, e.g. 'bloom' → 'Bloom'. */
+function growTierName(tier: GrowSubscriptionTier): string {
+  try {
+    return getTierDisplayName(tier);
+  } catch {
+    return tier.charAt(0).toUpperCase() + tier.slice(1);
+  }
+}
+
+function growEmailContext(
+  supabase: SupabaseServerClient,
+  userId: string,
+  eventId: string,
+  subscriptionId: string | null
+): GrowLifecycleContext {
+  return {
+    supabase: supabase as never,
+    userId,
+    platform: STRIPE_PLATFORM,
+    stripeEventId: eventId,
+    stripeSubscriptionId: subscriptionId,
+  };
 }
 
 /**
@@ -524,6 +616,22 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           await updateGrowProfileFromLifetime(supabase, userId, session);
           const tier = (session.metadata?.tier as GrowSubscriptionTier) || 'sprout';
           await recordGrowEvent(supabase, userId, event.type, event.id, tier, session);
+
+          // Lifetime purchases never produce a subscription object, so this is
+          // the only place they can be confirmed. Keyed on the session id —
+          // a customer may legitimately buy more than once (e.g. upgrading
+          // tier), and each purchase deserves its own receipt.
+          await sendSubscriptionConfirmed(
+            growEmailContext(supabase, userId, event.id, null),
+            {
+              tierName: growTierName(tier),
+              amount: formatStripeAmount(session.amount_total, session.currency, 'en-GB'),
+              interval: null,
+              nextBillingOn: null,
+            },
+            session.id
+          );
+
           console.log(`[grow] Processed lifetime checkout for user ${userId}`);
         } else if (isGrowDaisyEvent(session.metadata)) {
           // Subscription checkout - tier will be updated by subscription.created event
@@ -560,12 +668,86 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           await updateGrowProfileFromSubscription(supabase, userId, subscription);
           const tier = (subscription.metadata?.tier as GrowSubscriptionTier) || 'sprout';
           await recordGrowEvent(supabase, userId, event.type, event.id, tier, subscription);
+
+          // ── Transactional email ──────────────────────────────────
+          // Both created and updated land here, and both can represent the
+          // same transition, so the dedupe keys are semantic (keyed on the
+          // subscription, not the event id). Whichever event arrives first
+          // sends; the other is skipped by the ledger.
+          const ctx = growEmailContext(supabase, userId, event.id, subscription.id);
+          const legacy = subscription as Stripe.Subscription & SubscriptionLegacyFields;
+          const locale = 'en-GB';
+          const facts = growBillingFacts(subscription, locale);
+          const tierName = growTierName(tier);
+
+          if (subscription.status === 'trialing' && legacy.trial_end) {
+            await sendTrialStarted(ctx, {
+              tierName,
+              trialEndsOn: formatEpochDate(legacy.trial_end, locale) || '',
+              firstChargeAmount: facts.amount,
+            });
+          } else if (subscription.status === 'active') {
+            await sendSubscriptionConfirmed(
+              ctx,
+              {
+                tierName,
+                amount: facts.amount,
+                interval: facts.interval,
+                nextBillingOn: formatEpochDate(currentPeriodEnd(subscription), locale),
+              },
+              subscription.id
+            );
+          }
         } else {
           // Unreachable after the ownership guard. This is the exact
           // branch that granted Rise Daisy subscribers Grow Daisy
           // premium — it called updateProfileFromSubscription(), which
           // sets profiles.subscription_status = 'premium'. Now a no-op.
           console.warn(`[webhook] Unroutable subscription event reached switch: ${event.id}`);
+        }
+        break;
+      }
+
+      case 'customer.subscription.trial_will_end': {
+        // Previously unhandled. Stripe fires this ~3 days before a trial
+        // converts; without it a 7-day trial became a live charge with no
+        // warning of any kind, which is both poor practice and the thing UK/EU
+        // subscribers most reasonably expect notice of.
+        //
+        // Note this event does NOT change the tier — it is purely a
+        // notification. The conversion itself still arrives later as
+        // customer.subscription.updated.
+        const subscription = event.data.object as Stripe.Subscription;
+        const userId = subscription.metadata?.supabase_user_id;
+
+        if (!userId) {
+          // 200, not 400 — see the ownership guard above.
+          console.error('No user ID in trial_will_end metadata', event.id);
+          return res.status(200).json({ received: true, ignored: 'no_user_id' });
+        }
+
+        if (isGrowDaisyEvent(subscription.metadata)) {
+          const tier = (subscription.metadata?.tier as GrowSubscriptionTier) || 'sprout';
+          await recordGrowEvent(supabase, userId, event.type, event.id, tier, subscription);
+
+          const legacy = subscription as Stripe.Subscription & SubscriptionLegacyFields;
+          const locale = 'en-GB';
+          const facts = growBillingFacts(subscription, locale);
+
+          await sendTrialEnding(
+            growEmailContext(supabase, userId, event.id, subscription.id),
+            {
+              tierName: growTierName(tier),
+              trialEndsOn: formatEpochDate(legacy.trial_end, locale) || '',
+              chargeAmount: facts.amount,
+            },
+            legacy.trial_end ?? null
+          );
+
+          console.log(`[grow] Trial ending soon for user ${userId} (sub ${subscription.id})`);
+        } else {
+          // Go Daisy+ has no trial configured today; nothing to send.
+          console.log(`[webhook] trial_will_end for non-Grow subscription: ${event.id}`);
         }
         break;
       }
@@ -607,6 +789,18 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
           const tier = (subscription.metadata?.tier as GrowSubscriptionTier) || 'seed';
           await recordGrowEvent(supabase, userId, event.type, event.id, tier, subscription);
+
+          // Access usually runs to the end of the paid period rather than
+          // stopping the moment Stripe deletes the subscription, so quote the
+          // period end when we have it rather than implying instant cut-off.
+          await sendSubscriptionCancelled(
+            growEmailContext(supabase, userId, event.id, subscription.id),
+            {
+              tierName: growTierName(tier),
+              accessEndsOn: formatEpochDate(currentPeriodEnd(subscription), 'en-GB'),
+            }
+          );
+
           console.log(`[grow] Subscription cancelled for user ${userId}, downgraded to seed`);
         } else {
           // Unreachable after the ownership guard. Previously downgraded
@@ -648,6 +842,23 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         } else if (isGrowDaisyEvent(failedSub.metadata)) {
           const tier = (failedSub.metadata?.tier as GrowSubscriptionTier) || 'sprout';
           await recordGrowEvent(supabase, failedUserId, event.type, event.id, tier, failedSub);
+
+          // Dunning email. Keyed on the INVOICE, not the event: Stripe fires
+          // this once per retry attempt across several days, and one failed
+          // card should produce one email, not four.
+          const nextAttempt = (invoice as Stripe.Invoice & { next_payment_attempt?: number | null })
+            .next_payment_attempt ?? null;
+
+          await sendPaymentFailed(
+            growEmailContext(supabase, failedUserId, event.id, subId),
+            {
+              tierName: growTierName(tier),
+              amount: formatStripeAmount(invoice.amount_due, invoice.currency, 'en-GB'),
+              nextAttemptOn: formatEpochDate(nextAttempt, 'en-GB'),
+            },
+            invoice.id || `sub_${subId}_${invoice.period_end ?? 'na'}`
+          );
+
           console.warn(`[grow] Payment FAILED for user ${failedUserId} (sub ${subId}) — tier unchanged pending Stripe retries`);
         }
         break;

@@ -93,3 +93,6 @@ supabase/.temp/
 
 # Backup files
 *.bak-grow
+
+# Local email template previews (scripts/test-grow-emails.ts)
+.email-previews/
