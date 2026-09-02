@@ -8,7 +8,7 @@ export const wellnessSports: ActivityType[] = [
     secondaryCategory: 'Cardio & Running',
     weatherSensitive: true,
     tags: ['sport','cardio','exercise','Monday','Tuesday','Wednesday','Thursday','Saturday','Sunday'],
-    perfectConditions: ['temperature=10..13','windSpeed<5','clouds=20..60','humidity=45..60','visibility>10','precipitation=0',
+    perfectConditions: ['temperature=10..13','windSpeed<5','clouds=20..60','visibility>10','precipitation=0',
       'gust<9.4'],
     goodConditions: ['temperature=5..20','windSpeed<9','clouds=0..100','humidity<80','visibility>2','precipitation=0',
       'gust<13.6'],
@@ -25,7 +25,7 @@ export const wellnessSports: ActivityType[] = [
     secondaryCategory: 'Cardio & Running',
     weatherSensitive: true,
     tags: ['sport','cycling','cardio','group','solo','Saturday','Sunday','Wednesday'],
-    perfectConditions: ['temperature=18..24','windSpeed<5','clouds=10..50','humidity=40..60','precipitation=0','visibility>10',
+    perfectConditions: ['temperature=18..24','windSpeed<5','clouds=10..50','precipitation=0','visibility>10',
       'gust<9.4'],
     goodConditions: ['temperature=14..28','windSpeed<9','clouds=0..80','humidity<75','precipitation=0','visibility>5',
       'gust<13.6'],
@@ -109,7 +109,6 @@ export const wellnessSports: ActivityType[] = [
       'temperature=15..22',        // mild & comfortable
       'windSpeed<4',
       'cloudCover=20..50',
-      'humidity=40..65',
       'visibility>10',
       'precipitation=0',
       'gust<8.8'
@@ -160,7 +159,7 @@ export const wellnessSports: ActivityType[] = [
     perfectConditions: [
       'temperature=18..24',           // slightly wider ideal balance
       'windSpeed<4',
-      'humidity<70',                   // perfect conditions have low humidity
+      'humidity<80',                   // perfect conditions have low humidity
       'cloudCover=20..50',             // some sun for warmth
       'visibility>10',                 // clear and bright
       'precipitation=0',                // no Rain
@@ -222,7 +221,6 @@ export const wellnessSports: ActivityType[] = [
       'temperature=18..22',
       'windSpeed<3',
       'cloudCover=20..50',
-      'humidity=50..65',
       'visibility>10',
       'precipitation=0',
       'gust<6.1'

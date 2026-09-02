@@ -210,7 +210,6 @@ export const natureActivities: ActivityType[] = [
       'airTemperature=18..24',
       'windSpeed<4',
       'cloudCover=50..90',
-      'humidity=50..70',
       'soilMoisture=30..50',
       'precipitation=0',
       'visibility>10',

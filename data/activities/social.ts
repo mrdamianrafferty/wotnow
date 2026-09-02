@@ -13,7 +13,6 @@ export const socialActivities: ActivityType[] = [
       'temperature=18..25',
       'windSpeed<3',
       'cloudCover=20..50',
-      'humidity=40..60',
       'soilMoisture=20..35',
       'visibility>10',
       'precipitation=0',
@@ -63,7 +62,6 @@ export const socialActivities: ActivityType[] = [
       'temperature=20..26',
       'windSpeed<3',
       'cloudCover=10..50',
-      'humidity=40..65',
       'visibility>10',
       'precipitation=0',
       'gust<6.1'
@@ -114,7 +112,6 @@ export const socialActivities: ActivityType[] = [
       'windSpeed=0..4',
       'waveHeight=0..0.5',
       'cloudCover=0..10',
-      'humidity=40..65',
       'visibility>10',
       'precipitation=0',
       'gust<6'

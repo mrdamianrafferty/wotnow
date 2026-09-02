@@ -234,7 +234,6 @@ export const lifestyleActivities: ActivityType[] = [
       'windSpeed<3',
       'cloudCover=20..50',
       'precipitation=0',
-      'humidity=50..65',
       'visibility>10',
       'gust<6.1'
     ],
@@ -286,8 +285,7 @@ export const lifestyleActivities: ActivityType[] = [
     perfectConditions: [
       'temperature=18..22',          // ideal comfort
       'windSpeed<3',                 // very calm
-      'cloudCover=20..50',            // some sun for highlights
-      'humidity=50..65',              // comfortable
+      'cloudCover=20..50',            // some sun for highlights              // comfortable
       'visibility>10' ,               // clear & bright
       'precipitation=0',      // no Rain,
       'gust<6.1'
@@ -341,8 +339,7 @@ export const lifestyleActivities: ActivityType[] = [
     perfectConditions: [
       'temperature=18..22',           // ideal comfort
       'windSpeed<3',                  // very calm
-      'cloudCover=20..50',             // some sun for light
-      'humidity=50..65',               // pleasant
+      'cloudCover=20..50',             // some sun for light               // pleasant
       'visibility>10',
       'precipitation=0',               // no Rain
       'gust<6.1'
