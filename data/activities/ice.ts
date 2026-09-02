@@ -26,7 +26,7 @@ export const iceSports: ActivityType[] = [
     goodConditions: [
       'temperature=-15..0',
       'windSpeed<15',
-      'precipitation=0',
+      'precipitation=0..1',
       'visibility>5'
     ],
     perfectConditions: [

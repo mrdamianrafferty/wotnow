@@ -159,7 +159,7 @@ export const lifestyleActivities: ActivityType[] = [
     weatherSensitive: true,
     tags: ['leisure', 'strategy', 'outdoor', 'social', 'Saturday', 'Sunday'],
     poorConditions: [
-      'precipitation>0.1',             // rain ruins the board
+      'precipitation>1',             // rain ruins the board
       'windSpeed>8',                // blows pieces away
       'temperature<2',               // fingers too cold to move pieces
       'temperature>30',              // overheated and uncomfortable
@@ -173,14 +173,14 @@ export const lifestyleActivities: ActivityType[] = [
       'windSpeed=5.5..8',            // breezy, may need to hold the board
       'cloudCover=80..100',           // grey skies, low contrast
       'visibility=2..5',              // misty but moody
-      'precipitation=0',               // light drizzle acceptable,
+      'precipitation=0.1..1',               // light drizzle acceptable,
       'gust=8.8..11'],
     goodConditions: [
       'temperature=10..26',
       'windSpeed<5.5',
       'cloudCover=0..80',
       'visibility>5',
-      'precipitation=0',
+      'precipitation=0..0.1',
       'gust<8.8'],
     perfectConditions: [
       'temperature=18..22',
@@ -217,14 +217,14 @@ export const lifestyleActivities: ActivityType[] = [
       'cloudCover=70..90',            // grey skies, less vibrant
       'humidity=70..85',             // damp but manageable
       'visibility=2..5',              // misty but atmospheric
-      'precipitation=0',
+      'precipitation=0.2..1',
       'gust=8.8..11'
     ],
     goodConditions: [
       'temperature=12..25',
       'windSpeed<5.5',
       'cloudCover=10..70',
-      'precipitation=0',
+      'precipitation=0..0.2',
       'humidity=40..70',
       'visibility>5',
       'gust<8.8'
@@ -249,7 +249,7 @@ export const lifestyleActivities: ActivityType[] = [
 
     // Unsafe, uncomfortable, or impractical for painting
     poorConditions: [
-      'precipitation>0',            // rain spoils paper, canvas, paint
+      'precipitation>1',            // rain spoils paper, canvas, paint
       'windSpeed>8',               // blows over easel & supplies
       'temperature<5',              // too cold for hands & comfort
       'temperature>30',             // uncomfortable & damaging to paints
@@ -262,6 +262,8 @@ export const lifestyleActivities: ActivityType[] = [
 
     // Conditions that require adaptation (wind blocks, sun shelter, etc.)
     fairConditions: [
+      'precipitation=0.1..1',
+
       'temperature=5..12 or 26..30', // chilly or quite warm
       'windSpeed=5.5..8',            // breezy, may disturb paper
       'humidity=75..85',             // sticky, paint drying issues
@@ -277,7 +279,7 @@ export const lifestyleActivities: ActivityType[] = [
       'cloudCover=10..80',            // even overcast is fine
       'humidity<75',                 // workable
       'visibility>5',                 // decent light
-      'precipitation=0',      // no Rain,
+      'precipitation=0..0.1',      // no Rain,
       'gust<8.8'
     ],
 
@@ -305,7 +307,7 @@ export const lifestyleActivities: ActivityType[] = [
     ],
 
     poorConditions: [
-      'precipitation>0',            // rain ruins book & comfort
+      'precipitation>1',            // rain ruins book & comfort
       'windSpeed>8',               // pages blow, unpleasant
       'temperature<8',              // too chilly to sit still
       'temperature>30',             // too hot for comfort
@@ -322,7 +324,7 @@ export const lifestyleActivities: ActivityType[] = [
       'humidity=75..85',              // slightly muggy
       'cloudCover=80..100',            // heavy overcast
       'visibility=2..5',               // dull light but readable
-      'precipitation=0',               // no Rain,
+      'precipitation=0.1..1',               // no Rain,
       'gust=8.8..11'
     ],
 
@@ -332,7 +334,7 @@ export const lifestyleActivities: ActivityType[] = [
       'cloudCover=10..80',             // even overcast is fine
       'humidity<75',                  // not too muggy
       'visibility>5',
-      'precipitation=0',               // no Rain
+      'precipitation=0..0.1',               // no Rain
       'gust<8.8'
     ],
 

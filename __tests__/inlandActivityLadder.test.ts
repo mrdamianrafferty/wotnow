@@ -748,3 +748,63 @@ describe('rain demotes a band rather than disqualifying it', () => {
     }
   });
 });
+
+/**
+ * The precipitation ladder, as an invariant rather than 41 pinned numbers.
+ *
+ * Every model's four bands should form a contiguous ladder — good 0..G,
+ * fair G..F, poor >F — so that any millimetre figure lands in exactly one of
+ * them. They did not. 33 models had a gap, an inversion, or a fair band
+ * identical to their good one, and a further 8 wrote `precipitation>0` in poor,
+ * which is not a threshold but a refusal to pick one: it fires on 0.3 mm spread
+ * over three hours, and a fired poor criterion is a HAZARD, so a trace of
+ * drizzle vetoed them to 14 — the same score as a gale.
+ */
+describe('precipitation bands form a contiguous ladder', () => {
+  type Range = { lo: number; hi: number } | null;
+  const parse = (c?: string): Range => {
+    if (!c) return null;
+    let m = c.match(/^precipitation=(-?[\d.]+)\.\.(-?[\d.]+)$/);
+    if (m) return { lo: +m[1], hi: +m[2] };
+    m = c.match(/^precipitation=(-?[\d.]+)$/);
+    if (m) return { lo: +m[1], hi: +m[1] };
+    m = c.match(/^precipitation>=?(-?[\d.]+)$/);
+    if (m) return { lo: +m[1], hi: Infinity };
+    m = c.match(/^precipitation<=?(-?[\d.]+)$/);
+    if (m) return { lo: 0, hi: +m[1] };
+    return null;
+  };
+  const pick = (b: string[] = []) => b.find((c) => c.startsWith('precipitation'));
+
+  /* Storm birding WANTS rain, and the snow models read this key as snowfall. */
+  const NOT_RAIN_AVERSE = new Set([
+    'birdwatching_passage', 'skiing', 'snowboarding', 'cross_country_skiing', 'ice_fishing',
+  ]);
+  const models = (activityTypes as ActivityType[])
+    .filter((a) => a.weatherSensitive && !NOT_RAIN_AVERSE.has(a.id));
+
+  it.each(models.map((a) => [a.id, a] as const))('%s: good, fair and poor meet without a gap', (_id, a) => {
+    const G = parse(pick(a.goodConditions)), F = parse(pick(a.fairConditions)), P = parse(pick(a.poorConditions));
+    if (G && F) expect(F.lo).toBeLessThanOrEqual(G.hi);        // no crack between good and fair
+    if (F && P) expect(P.lo).toBeLessThanOrEqual(F.hi);        // no crack between fair and poor
+    if (F && P) expect(F.lo).toBeLessThan(P.lo);               // fair is not a subset of poor
+    if (G && P) expect(G.hi).toBeLessThanOrEqual(P.lo);        // good does not reach into poor
+  });
+
+  it('no model treats any measurable rain as a hazard', () => {
+    /* `precipitation>0` vetoed a pleasant day to 14 on 0.1 mm/h of drizzle. */
+    const offenders = models
+      .map((a) => [a.id, parse(pick(a.poorConditions))] as const)
+      .filter(([, P]) => P && P.hi === Infinity && P.lo <= 0.1)
+      .map(([id]) => id);
+    expect(offenders).toEqual([]);
+  });
+
+  it('a trace of drizzle no longer scores the same as a gale', () => {
+    const base = { temperature: 18, temperatureMin: 14, windspeed: 14, gustspeed: 28, visibility: 25000, soilMoisture: 30, clouds: 40 };
+    for (const id of ['outdoor_chess', 'outdoor_reading', 'stargazing', 'skateboarding', 'beach']) {
+      const trace = scoreOf(id, { ...base, precipitation: 0.3, precipitationHours: 3 }).score;
+      expect(trace).toBeGreaterThan(16);
+    }
+  });
+});

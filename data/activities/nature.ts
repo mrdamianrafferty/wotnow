@@ -218,7 +218,7 @@ export const natureActivities: ActivityType[] = [
       'airTemperature=12..27',
       'windSpeed<8',
       'cloudCover=50..100',
-      'precipitation=0',
+      'precipitation=0..2',
       'humidity<80',
       'soilMoisture=15..45',
       'visibility>5',
@@ -266,12 +266,14 @@ export const natureActivities: ActivityType[] = [
       'temperature=0..8',             // cool but possible
       'temperature=18..22',           // a bit warm, but shaded forests may be fine
       'windSpeed=8..12',             // breezy but manageable
-      'precipitation=2..5',           // not ideal but damp enough
+      'precipitation=2..10',           // not ideal but damp enough
       'visibility=2..5',              // dim light may still be safe
       'soilMoisture=45..50',
       'gust=12.8..16'
     ],
     goodConditions: [
+      'precipitation=0..2',
+
       'temperature=8..18',
       'windSpeed<8',
       'cloudCover=10..90',
@@ -312,7 +314,7 @@ export const natureActivities: ActivityType[] = [
       'temperature=0..5',            // cold but safe
       'temperature=22..26',          // warmer but manageable
       'windSpeed=9..13',            // breezy but doable
-      'precipitation=5..10',         // light showers
+      'precipitation=5..15',         // light showers
       'visibility=2..5',             // reduced, but passable
       'soilMoisture=45..50',
       'gust=13.6..17'
@@ -321,7 +323,7 @@ export const natureActivities: ActivityType[] = [
       'temperature=5..22',
       'windSpeed<9',
       'cloudCover=10..80',
-      'precipitation=0',
+      'precipitation=0..5',
       'visibility>5',
       'soilMoisture=15..45',
       'gust<13.6'

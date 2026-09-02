@@ -68,6 +68,8 @@ export const waterSports: ActivityType[] = [
       'precipitation=0'
     ],
     goodConditions: [
+      'precipitation=0..2',
+
       'waterTemperature=14..26',
       'airTemperature=12..28',
       'waveHeight=0.35..1.8',

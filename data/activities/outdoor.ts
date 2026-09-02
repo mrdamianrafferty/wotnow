@@ -23,7 +23,7 @@ export const outdoorRecreation: ActivityType[] = [
       'humidity<75',
       'soilMoisture=15..45',
       'visibility>5',
-      'precipitation=0',
+      'precipitation=0..1',
       'gust<13.6'],
     fairConditions: [
       'temperature=2..8 or 24..28',
@@ -100,7 +100,7 @@ export const outdoorRecreation: ActivityType[] = [
     poorConditions: [
       'temperature<5',
       'temperature>28',
-      'precipitation>0',
+      'precipitation>1',
       'windSpeed>15',
       'visibility<2',
       'snowfallRateMmH>0.5',
@@ -113,14 +113,14 @@ export const outdoorRecreation: ActivityType[] = [
       'windSpeed=11..15',
       'cloudCover=60..90',
       'visibility=2..5',
-      'precipitation=0..0.5',
+      'precipitation=0.1..1',
       'gust=16..20'
     ],
     goodConditions: [
       'temperature=10..22',
       'windSpeed<11',
       'cloudCover=10..60',
-      'precipitation=0',
+      'precipitation=0..0.1',
       'visibility>5',
       'gust<16'
     ],
@@ -145,7 +145,7 @@ export const outdoorRecreation: ActivityType[] = [
       'Saturday', 'Sunday', 'holiday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'
     ],
     poorConditions: [
-      'precipitation>0',
+      'precipitation>1',
       'windSpeed>8',
       'temperature<5',
       'temperature>30',
@@ -155,6 +155,8 @@ export const outdoorRecreation: ActivityType[] = [
       'gust>11'
     ],
     fairConditions: [
+      'precipitation=0.1..1',
+
       'temperature=5..10 or 25..30',
       'windSpeed=5.5..8',
       'cloudCover=70..100',
@@ -166,7 +168,7 @@ export const outdoorRecreation: ActivityType[] = [
     goodConditions: [
       'temperature=15..25',
       'windSpeed<5.5',
-      'precipitation=0',
+      'precipitation=0..0.1',
       'soilMoisture=15..45',
       'gust<8.8'
     ],
@@ -198,7 +200,7 @@ export const outdoorRecreation: ActivityType[] = [
       'windSpeed<9',
       'clouds=0..80',
       'humidity<75',
-      'precipitation=0',
+      'precipitation=0..1',
       'visibility>5',
       'gust<13.6'
     ],
@@ -285,7 +287,7 @@ export const outdoorRecreation: ActivityType[] = [
     fairConditions: [
       'temperature=6..12',
       'windSpeed=8..12',
-      'precipitation=0..5',            // light drizzle okay
+      'precipitation=2..10',            // light drizzle okay
       'cloudCover=30..100',
       'visibility=3..5',
       'soilMoisture=45..50',
@@ -294,7 +296,7 @@ export const outdoorRecreation: ActivityType[] = [
     goodConditions: [
       'temperature=12..20',
       'windSpeed<8',
-      'precipitation=0..1',            // recent light rain helps growth
+      'precipitation=0..2',            // recent light rain helps growth
       'cloudCover=30..80',
       'humidity=60..85',
       'visibility>5',
@@ -345,7 +347,7 @@ export const outdoorRecreation: ActivityType[] = [
       'windSpeed<5.5',              // still playable
       'cloudCover=0..80',
       'visibility>5',
-      'precipitation=0',
+      'precipitation=0..0.5',
       'gust<8.8'
     ],
 
@@ -383,7 +385,7 @@ export const outdoorRecreation: ActivityType[] = [
       'temperature=0..8',            // chilly but manageable
       'temperature=26..32',          // a bit hot for walking, but fine in short bursts
       'windSpeed=8..12',            // gusty but not extreme
-      'precipitation=2..6',          // light to moderate rain, may affect enjoyment
+      'precipitation=2..10',          // light to moderate rain, may affect enjoyment
       'visibility=2..5',             // limited visibility but not unsafe
       'soilMoisture=45..50',
       'gust=12.8..16'
@@ -473,7 +475,7 @@ export const outdoorRecreation: ActivityType[] = [
       'temperature<5',               // cold, stiff joints
       'temperature>32',              // heat stress
       'windSpeed>13',                // gusty, unstable
-      'precipitation>0',             // wet surface, dangerous
+      'precipitation>1',             // wet surface, dangerous
       'visibility<2',                // fog, unsafe
       'snowfallRateMmH>0.5',         // light snow makes surfaces slick instantly
       'snowDepthCm>0.5',              // thin snow cover hides cracks
@@ -482,6 +484,8 @@ export const outdoorRecreation: ActivityType[] = [
 
     // Manageable but not ideal — may require caution
     fairConditions: [
+      'precipitation=0.1..1',
+
       'temperature=5..10 or 28..30', // brisk or slightly hot
       'windSpeed=9..13',            // breezy, may affect balance
       'cloudCover=80..100',           // overcast skies
@@ -495,7 +499,7 @@ export const outdoorRecreation: ActivityType[] = [
       'windSpeed<9',
       'cloudCover=0..80',
       'visibility>5',
-      'precipitation=0',
+      'precipitation=0..0.1',
       'gust<13.6'
     ],
 
@@ -523,7 +527,7 @@ export const outdoorRecreation: ActivityType[] = [
       'temperature<5',               // too cold, stiff joints
       'temperature>32',              // oppressive heat
       'windSpeed>13',                // gusty, unstable
-      'precipitation>0',             // wet surface, unsafe
+      'precipitation>1',             // wet surface, unsafe
       'visibility<2',                // fog, unsafe
       'snowfallRateMmH>0.5',         // snow makes decks & ramps treacherous
       'snowDepthCm>0.5',              // light snow hides cracks & coping
@@ -531,6 +535,8 @@ export const outdoorRecreation: ActivityType[] = [
     ],
 
     fairConditions: [
+      'precipitation=0.1..1',
+
       'temperature=5..12 or temperature=28..32', // cool or hot but tolerable
       'windSpeed=9..13',                        // breezy but manageable
       'cloudCover=90..100',                       // overcast, not ideal
@@ -543,7 +549,7 @@ export const outdoorRecreation: ActivityType[] = [
       'windSpeed<9',
       'cloudCover=0..90',
       'visibility>5',
-      'precipitation=0',
+      'precipitation=0..0.1',
       'gust<13.6'
 
     ],
@@ -568,7 +574,7 @@ export const outdoorRecreation: ActivityType[] = [
 
     poorConditions: [
       'clouds>50',          // too much cloud cover
-      'precipitation>0',    // rain blocks view
+      'precipitation>1',    // rain blocks view
       'windSpeed>12',       // hard to stay comfortable
       'temperature<-5',     // extreme cold
       'snowfallRateMmH>0.5',// falling snow obscures the sky instantly
@@ -577,6 +583,8 @@ export const outdoorRecreation: ActivityType[] = [
     ],
 
     fairConditions: [
+      'precipitation=0.1..1',
+
       'temperature=-5..5',    // chilly but manageable
       'clouds=20..50',        // patchy, some gaps
       'windSpeed=8..12',      // breezy, may reduce comfort
@@ -587,7 +595,7 @@ export const outdoorRecreation: ActivityType[] = [
       'temperature=5..15',     // crisp but pleasant
       'clouds<=20',            // mostly clear
       'windSpeed<8',           // calm or gentle breeze
-      'precipitation=0',     // no rain,
+      'precipitation=0..0.1',     // no rain,
       'gust<12.8'
     ],
 
@@ -652,7 +660,7 @@ export const outdoorRecreation: ActivityType[] = [
     tags: ['sport','trail','nature','outdoors','Saturday','Sunday'],
   perfectConditions: ['temperature=8..14','windSpeed<6','clouds=10..50','soilMoisture=18..35','visibility>10','precipitation=0',
       'gust<11'],
-  goodConditions: ['temperature=5..20','windSpeed<11','clouds=0..80','humidity<80','soilMoisture=15..45','visibility>2','precipitation=0',
+  goodConditions: ['temperature=5..20','windSpeed<11','clouds=0..80','humidity<80','soilMoisture=15..45','visibility>2','precipitation=0..2',
       'gust<16'],
   fairConditions: ['temperature=2..5 or 20..25','windSpeed=11..15','humidity<=90','precipitation=2..4','soilMoisture=45..50','visibility=1..2',
       'gust=16..20'],
