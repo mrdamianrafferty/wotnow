@@ -11,7 +11,6 @@ import { createClient } from '@supabase/supabase-js';
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
-const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 
 interface RedeemRequest {
   code: string;
@@ -29,8 +28,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     if (!authHeader?.startsWith('Bearer ')) {
       return res.status(401).json({ error: 'Unauthorized' });
     }
-    const authClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-    const { data: { user }, error: authError } = await authClient.auth.getUser(authHeader.substring(7));
+    const accessToken = authHeader.substring(7);
+    // Identity-guarded RPC: redeem_godaisy_promo_code checks
+    // `auth.uid() IS DISTINCT FROM p_user_id -> raise 'not authorized'`, which the
+    // service-role key can never satisfy. Call it with the user's own JWT.
+    const userClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+      auth: { autoRefreshToken: false, persistSession: false },
+      global: { headers: { Authorization: `Bearer ${accessToken}` } },
+    });
+    const { data: { user }, error: authError } = await userClient.auth.getUser(accessToken);
     if (authError || !user) {
       return res.status(401).json({ error: 'Unauthorized' });
     }
@@ -41,12 +47,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return res.status(400).json({ error: 'Promo code is required' });
     }
 
-    // Use service role to call RPC (SECURITY DEFINER function)
-    const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
-      auth: { autoRefreshToken: false, persistSession: false },
-    });
-
-    const { data, error } = await supabase.rpc('redeem_godaisy_promo_code', {
+    const { data, error } = await userClient.rpc('redeem_godaisy_promo_code', {
       p_user_id: user.id,
       p_code: code.trim(),
     });

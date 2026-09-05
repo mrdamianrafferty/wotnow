@@ -13,8 +13,9 @@ import { createClient } from '@supabase/supabase-js';
 
 const SUPABASE_URL = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
 const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
+const SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
 
-if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
+if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY || !SUPABASE_ANON_KEY) {
   throw new Error('Missing Supabase configuration');
 }
 
@@ -33,6 +34,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   const accessToken = authHeader.substring(7);
+  // grow_get_latest_station_data guards on auth.uid(), which the module-level
+  // service-role client does not carry — route that RPC through the caller's JWT.
+  const userClient = createClient(SUPABASE_URL!, SUPABASE_ANON_KEY, {
+    auth: { autoRefreshToken: false, persistSession: false },
+    global: { headers: { Authorization: `Bearer ${accessToken}` } },
+  });
+
   const { data: { user }, error: authError } = await supabase.auth.getUser(accessToken);
 
   if (authError || !user) {
@@ -70,7 +78,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
       if (includeData && integrations && integrations.length > 0) {
         // Get latest weather station data using the RPC (takes p_user_id)
-        const { data: latestData } = await supabase
+        const { data: latestData } = await userClient
           .rpc('grow_get_latest_station_data', { p_user_id: userId });
 
         // Merge data with integrations
