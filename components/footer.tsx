@@ -2,15 +2,17 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { trackEvent } from '../lib/analytics/events';
+import { daisyFamily } from '../lib/daisyFamily';
 
-// Go Daisy is the umbrella app in the Daisy family, so its footer links out
-// to every sibling app (unlike the specialist apps, which only link to the
-// one or two siblings relevant to their audience).
-const DAISY_FAMILY_LINKS = [
-  { label: 'Rise Daisy', toApp: 'rise_daisy', url: 'https://www.risedaisy.com/?utm_source=go_daisy&utm_medium=cross_promo&utm_content=footer' },
-  { label: 'findr', toApp: 'findr', url: 'https://fishfindr.eu/?utm_source=go_daisy&utm_medium=cross_promo&utm_content=footer' },
-  { label: 'Fly Cast Coach', toApp: 'fly_cast_coach', url: 'https://flycastcoach.com/?utm_source=go_daisy&utm_medium=cross_promo&utm_content=footer' },
-] as const;
+// Go Daisy is the umbrella app in the Daisy family, so its footer links out to
+// every sibling (unlike the specialist apps, which only link to the one or two
+// relevant to their audience).
+//
+// The list moved to `lib/daisyFamily` when the spot pages started showing it
+// too. It was three apps here and had already fallen behind by two — a second
+// copy is a copy that will be wrong, and this one now appears on ~2,000
+// indexed pages.
+const DAISY_FAMILY_LINKS = daisyFamily('footer');
 
 function handleCrossPromoClick(toApp: string) {
   trackEvent('cross_promo_click', { from_app: 'go_daisy', to_app: toApp, placement: 'footer' });
