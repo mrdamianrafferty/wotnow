@@ -1,12 +1,13 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { getCachedFullWeather, fetchOpenMeteoWeather } from '../../../lib/services/weatherService';
-import { getOpenWeatherKey } from '../../../lib/utils/openWeatherKey';
 import { geocodeForward } from '../../../lib/utils/serverGeocode';
 import { fetchOpenMeteoAsOneCallShape } from '../../../lib/weather/openMeteoOneCallAdapter';
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-const OPENWEATHER_API_KEY = getOpenWeatherKey();
+// OpenWeather is gone; the weather service reads Open-Meteo. The key argument
+// remains in these signatures and is ignored — see fetchOpenWeatherOneCall.
+const OPENWEATHER_API_KEY = '';
 
 // Soil data interface
 interface SoilData {

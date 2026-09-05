@@ -1360,7 +1360,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const exclude = (req.query.exclude as string) || '';
 
 
-  const apiKey = process.env.OPENWEATHER_KEY || process.env.NEXT_PUBLIC_OPENWEATHER_KEY;
+  /*
+   * Empty, deliberately. The weather service reads Open-Meteo now, and every
+   * `apiKey` below it is ignored — see `fetchOpenWeatherOneCall`. Left as a
+   * variable rather than threaded out of eight call sites in the same change.
+   */
+  const apiKey = '';
 
   // Precompute region and intended provider order (for debug headers)
   const preRegion = detectRegion(Number(lat || 0), Number(lon || 0));
@@ -1373,7 +1378,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   // Attach debug headers as early as possible so even early failures include them
   try {
     res.setHeader('X-Mode', weatherMode);
-    res.setHeader('X-Has-OW-Key', apiKey ? '1' : '0');
+
     const sgKeyEarly = process.env.STORMGLASS_SECRET_KEY || process.env.STORMGLASS_API_KEY;
     res.setHeader('X-Has-SG-Key', sgKeyEarly ? '1' : '0');
     res.setHeader('X-Region', preRegion);
@@ -1468,19 +1473,18 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       }
     }
 
-    // Base weather (OpenWeather One Call) with provider-specific precision (fallback)
+    /*
+     * The One Call-shaped fallback, which is Open-Meteo now.
+     *
+     * The `if (!apiKey) return 502` that used to guard this is REMOVED, not
+     * left with an empty key — an empty key would have made this branch
+     * unreachable, and this branch is the one that now reads Open-Meteo. Two
+     * tests caught exactly that: 502 where they expected 200. The variable
+     * names below still say "ow" because they name a cache bucket and a
+     * response shape, both of which are still the One Call ones.
+     */
     if (!normalizedData) {
-      if (!apiKey) {
-        try {
-          res.setHeader('X-Weather-Source', 'none');
-          res.setHeader('X-Error-Reason', 'no-free-provider-and-no-ow-key');
-        } catch { /* noop */ }
-        return res.status(502).json({
-          error: 'No free provider returned data and no OpenWeather API key is configured',
-        });
-      }
-
-      // Always use 2dp for OpenWeather (maximum caching for fallback)
+      // 2dp for this path (maximum caching for the fallback)
       const { lat: owLat, lon: owLon, precision: owPrecision } = roundForProvider(latNum, lonNum, 'openweather');
       const owCacheKey = `ow:${getCacheKey(latNum, lonNum, 'openweather')}_${units}_${exclude}`;
       const weatherCached = owWeatherCache.get(owCacheKey);

@@ -1256,7 +1256,7 @@ function useWeatherData({ isMarine, lat, lon, onError }: { isMarine: boolean; la
     sunriseISO: w.sunriseISO,
     sunsetISO: w.sunsetISO,
     uvi: w.uvi,
-    aqi: w.airQuality ? { aqi: w.airQuality.aqi ?? undefined, pm25: w.airQuality.components?.pm2_5 ?? undefined, pm10: w.airQuality.components?.pm10 ?? undefined, source: "OpenWeather" } : undefined,
+    aqi: w.airQuality ? { aqi: w.airQuality.aqi ?? undefined, pm25: w.airQuality.components?.pm2_5 ?? undefined, pm10: w.airQuality.components?.pm10 ?? undefined, source: "Open-Meteo" } : undefined,
     airQuality: w.airQuality,
     pollen: w.pollen ? { tree: w.pollen.tree, grass: w.pollen.grass, weed: w.pollen.weed, olive: w.pollen.olive, alder_pollen: w.pollen.alder_pollen, birch_pollen: w.pollen.birch_pollen, ragweed_pollen: w.pollen.ragweed_pollen, mugwort_pollen: w.pollen.mugwort_pollen, source: "Open-Meteo" } : undefined,
     // expose hourly pollen series for per-hour icon rendering

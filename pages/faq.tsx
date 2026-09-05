@@ -145,11 +145,11 @@ const FAQ_GROUPS: FaqGroup[] = [
       },
       {
         q: 'How is Go Daisy different from Windy, the Met Office app, or AccuWeather?',
-        a: 'The general weather apps tell you the weather and trust you to interpret it. Go Daisy tells you whether your thing is on. Windy gives you a beautiful wind map; the Met Office gives you the authoritative UK forecast; AccuWeather gives you the headline numbers. Go Daisy reads the same kinds of data — from OpenWeather, Stormglass and api.met.no — and then applies it to whichever activities you have told us you do, so you do not have to do the mental arithmetic of "is 14 mph from the south-west too much for a paddleboard at my local lake?" every time you open the app.',
+        a: 'The general weather apps tell you the weather and trust you to interpret it. Go Daisy tells you whether your thing is on. Windy gives you a beautiful wind map; the Met Office gives you the authoritative UK forecast; AccuWeather gives you the headline numbers. Go Daisy reads the same kinds of data — from Open-Meteo, Stormglass and api.met.no — and then applies it to whichever activities you have told us you do, so you do not have to do the mental arithmetic of "is 14 mph from the south-west too much for a paddleboard at my local lake?" every time you open the app.',
       },
       {
         q: 'Where does the weather data come from?',
-        a: 'OpenWeather for general forecasts, Stormglass for marine and wave data, and api.met.no (the Norwegian Meteorological Institute) for high-resolution Northern European forecasting. Tide data and astronomy come from established public ephemerides. We do not run our own weather model — we read the best public and commercial ones and turn the numbers into activity decisions.',
+        a: 'Open-Meteo for general forecasts, air quality and pollen, Stormglass for marine, wave and tide data, and api.met.no (the Norwegian Meteorological Institute) for high-resolution Northern European forecasting. Tide data and astronomy come from established public ephemerides. We do not run our own weather model — we read the best public and commercial ones and turn the numbers into activity decisions.',
       },
       {
         q: 'How does the surf traffic-light work?',

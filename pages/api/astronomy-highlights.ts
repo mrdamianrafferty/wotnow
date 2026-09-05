@@ -1,6 +1,6 @@
 // Enhanced WotNow Astronomy Integration
 // Integrates with existing API patterns to provide astronomy highlights
-// Note: Open-Meteo requires **no API key**; OpenWeather still uses NEXT_PUBLIC_OPENWEATHER_KEY.
+// Note: no API key anywhere in here — Open-Meteo needs none, and OpenWeather is gone.
 // Flow: Try Open-Meteo astronomy → normalise → if unavailable, fall back to OpenWeather daily and derive illumination.
 
 import type { NextApiRequest, NextApiResponse } from 'next';
@@ -132,9 +132,9 @@ class WotNowAstronomyAPI {
   // Use existing WotNow pattern for OpenWeather
   // Fetch and cache OpenWeather daily forecast (One Call API)
   async fetchOpenWeatherDaily(lat: number, lon: number) {
-    if (!this.openweatherKey) {
-      throw new Error('Missing NEXT_PUBLIC_OPENWEATHER_KEY');
-    }
+    // No key to be missing any more: `getOneCallData` reads Open-Meteo through
+    // the weather service. Throwing here would have made every astronomy
+    // request fail the moment the key was removed.
     const cacheKey = `${lat},${lon}`;
     const cached = openWeatherDailyCache[cacheKey];
     if (cached && (Date.now() - cached.timestamp < 3 * 60 * 60 * 1000) && Array.isArray(cached.days) && cached.days.length >= 2) {
