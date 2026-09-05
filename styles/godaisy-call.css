@@ -819,6 +819,10 @@ h1.call-setup-question, h1.call-verdict { margin-block: 0; }
   border-radius: var(--call-r-card); text-decoration: none;
 }
 .gd-family-list a:hover { border-color: var(--call-border-strong); }
+/* The card sets its own two colours on its children, so the anchor itself was
+   left carrying `a { color: #4a90e2 }` from index.css — invisible until a bare
+   text node or a stray inherit picks it up, and 3.29:1 if one does. */
+.gd-family-list a { color: var(--call-ink-2); }
 .gd-family-name { font: 600 14px var(--call-font-body); color: var(--call-ink-1); }
 .gd-family-blurb { font-size: var(--call-caption); color: var(--call-ink-3); }
 

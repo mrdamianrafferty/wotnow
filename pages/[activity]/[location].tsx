@@ -24,7 +24,7 @@ import Link from 'next/link';
 import dynamic from 'next/dynamic';
 import type { GetStaticPaths, GetStaticProps } from 'next';
 import SEO from '../../components/SEO';
-import AppHeader from '../../components/AppHeader';
+import { PageHeader } from '../../components/call/PageHeader';
 import {
   getLocationBySlug,
   getLocationsForActivity,
@@ -357,7 +357,16 @@ export default function ProgrammaticSeoPage({
         />
       </Head>
 
-      <AppHeader />
+      {/*
+        * `PageHeader`, not `AppHeader`.
+        *
+        * The body of this page was redesigned in phase 6 and the header was
+        * not, so about 2,500 indexed pages — the largest surface Go Daisy has,
+        * and the one a stranger arriving from Google lands on — carried the old
+        * DaisyUI navbar and its violet "Log in" above content in the new
+        * design. It was the last of them.
+        */}
+      <PageHeader />
 
       <main className="gd-spot">
         {/* ===================================================================

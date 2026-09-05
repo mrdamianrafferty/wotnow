@@ -26,11 +26,11 @@ const config: CapacitorConfig = {
     SplashScreen: {
       launchShowDuration: 2000,
       launchAutoHide: true,
-      backgroundColor: '#0f172a',  // Go Daisy dark blue (slate-900)
+      backgroundColor: '#1c1917',  // "The Call" ink (--call-ink-1) — matches the Trailhead splash's base tone
       androidSplashResourceName: 'splash',
       androidScaleType: 'CENTER_CROP',
       showSpinner: true,
-      spinnerColor: '#0284c7',  // Sky blue (sky-600)
+      spinnerColor: '#b8860b',  // "The Call" amber (--call-amber)
       androidSpinnerStyle: 'small',
       iosSpinnerStyle: 'small',
     },
