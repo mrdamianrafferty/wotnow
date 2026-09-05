@@ -96,3 +96,6 @@ supabase/.temp/
 
 # Local email template previews (scripts/test-grow-emails.ts)
 .email-previews/
+
+# Local translation backups — recovery data, not source (see scripts/backups/README.md)
+scripts/backups/*.json

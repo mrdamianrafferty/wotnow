@@ -4,7 +4,7 @@ npm run typecheck        # TypeScript type checking without emit
 
 # CLAUDE.md
 
-**Updated: 2026-04-27**
+**Updated: 2026-09-05**
 
 ## Project Overview
 
@@ -47,7 +47,7 @@ npm run env:sync         # Sync .env.local to .env.cli for scripts
 
 - **Routes:** `/grow`, `/grow/garden`, `/grow/plan`, `/grow/activities`, `/grow/species/[slug]`, `/grow/settings`, etc.
 - **Features:**  
-  - Plant database (50k+ species, 8 languages)
+  - Plant database (450 species, 8 languages)
   - Smart planting calendar (climate-aware)
   - Weather-integrated gardening tasks (soil temp, frost, watering, pest/disease risk)
   - Companion planting, guilds, harvest tracking, photo log
@@ -117,7 +117,10 @@ Sync with `npm run env:sync` for scripts.
 ## Grow Daisy: Specialist Details
 
 - **Plant Data:**  
-  - Table: `plant_species` (50k+ rows, 8 languages, companion/rotation/frost data)
+  - Table: `plant_species` (**450 rows** — verified 2026-09-05, not the 50k this file
+    claimed for months; 410 have a French common name. 8 languages via `name_*`
+    columns. `description`, `advice` and `care_guides` are English-only and are
+    translated on demand at request time, not stored per language.)
   - API: `/api/grow/species/[slug]`, `/api/grow/species/batch`
   - Images: `/public/grow/plants/` (multiple sizes)
   - Perenual API enrichment (see `lib/grow/perenualApi.ts`)
