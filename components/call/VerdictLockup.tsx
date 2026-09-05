@@ -14,7 +14,8 @@ import type { CallFact } from '@/lib/godaisy/call/facts';
 import { FactTile } from './FactTile';
 
 export interface VerdictLockupProps {
-  kicker: string;
+  /** Omitted where the screen draws its own — the call puts it in ScreenChrome. */
+  kicker?: string;
   /** Omitted for sentence-shaped verdicts, which carry their own subject. */
   leadIn?: string;
   verdict: string;
@@ -46,7 +47,7 @@ export function VerdictLockup({ kicker, leadIn, verdict, reason, facts, cycleKey
 
   return (
     <div className="call-lockup" key={cycleKey}>
-      <p className="call-label call-label--on-dark call-kicker">{kicker}</p>
+      {kicker ? <p className="call-label call-label--on-dark call-kicker">{kicker}</p> : null}
       <div className="call-body">
         {leadIn ? <span className="call-leadin">{leadIn}</span> : null}
         <p className="call-verdict" ref={ref}>{verdict}</p>

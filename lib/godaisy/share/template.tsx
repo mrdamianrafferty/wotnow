@@ -144,7 +144,14 @@ export function shareTemplate(d: ShareData, crop: ShareCrop): unknown {
   ]);
 }
 
-/** The fourth render. No layout, same data — for people who hate images. */
+/**
+ * The fourth render. No layout, same data — for people who hate images.
+ *
+ * The URL is made ABSOLUTE here even though the card prints it short. On the
+ * card a bare host is typography and a scheme would be noise; in a message it is
+ * a link someone taps, and clients treat a scheme-less host as relative.
+ */
 export function shareText(d: ShareData): string {
-  return `${d.verdict} ${d.place}, ${d.reason.toLowerCase()}\n${d.url}`;
+  const href = /^https?:\/\//.test(d.url) ? d.url : `https://${d.url}`;
+  return `${d.verdict} ${d.place}, ${d.reason.toLowerCase()}\n${href}`;
 }

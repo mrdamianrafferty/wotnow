@@ -30,6 +30,8 @@ import { AlternatesControl } from '@/components/call/AlternatesControl';
 const DAYS = 7;
 
 interface CallPageProps {
+  /** The location's slug, so the share endpoint can be addressed. */
+  slug: string;
   place: string;
   /** One serialisable call per day. */
   days: Call[];
@@ -41,10 +43,14 @@ interface CallPageProps {
 /** Swipe threshold in px. Below this a drag is a tap, not a day turn. */
 const SWIPE_MIN = 48;
 
-export default function CallPage({ place, days, photos, error }: CallPageProps) {
+/** What `navigator.share` takes. Typed here because the DOM lib's version omits files. */
+interface ShareData { title?: string; text?: string; url?: string; files?: File[] }
+
+export default function CallPage({ slug, place, days, photos, error }: CallPageProps) {
   const [dayIndex, setDayIndex] = useState(0);
   const [altIndex, setAltIndex] = useState(0);
   const [touchX, setTouchX] = useState<number | null>(null);
+  const [sendState, setSendState] = useState<'idle' | 'working' | 'sent' | 'copied'>('idle');
 
   // altIndex is a view state, not a preference: the daily call stays
   // deterministic, so turning the day resets which alternate is showing.
@@ -92,6 +98,51 @@ export default function CallPage({ place, days, photos, error }: CallPageProps) 
 
   const photo = photos[option.activityId];
 
+  /*
+   * The share sheet is phase 4; this is the minimum that makes the BET testable.
+   *
+   * Phases 0-3 exist to find out whether people send these cards, and a Send
+   * button that does nothing measures nothing. So: the native share sheet where
+   * the platform has one, with the card image attached when the browser will
+   * carry files, and a copied link where it will not.
+   *
+   * The URL carries the day AND the displayed alternate, so what lands is what
+   * was on screen — not the day's default.
+   */
+  const send = async () => {
+    setSendState('working');
+    const iso = new Date(day.date * 1000).toISOString().slice(0, 10);
+    const qs = `place=${encodeURIComponent(slug)}&day=${dayIndex}&alt=${altIndex}&date=${iso}`;
+    const link = `${window.location.origin}/call?${qs}`;
+    try {
+      const text = await fetch(`/api/call/share?${qs}&crop=text`).then((r) => r.text());
+      const payload: ShareData = { title: 'Go Daisy', text, url: link };
+
+      if (navigator.canShare) {
+        try {
+          const blob = await fetch(`/api/call/share?${qs}&crop=card`).then((r) => r.blob());
+          const file = new File([blob], 'the-call.png', { type: 'image/png' });
+          if (navigator.canShare({ files: [file] })) payload.files = [file];
+        } catch {
+          // No card is a reason to send words, not a reason to send nothing.
+        }
+      }
+
+      if (navigator.share) {
+        await navigator.share(payload);
+        setSendState('sent');
+      } else {
+        await navigator.clipboard.writeText(`${text}`);
+        setSendState('copied');
+      }
+    } catch {
+      // A cancelled share sheet lands here too, which is not a failure.
+      setSendState('idle');
+      return;
+    }
+    setTimeout(() => setSendState('idle'), 2400);
+  };
+
   return (
     <Shell title={`${option.verdict.verdict.replace(/\.$/, '')} — Go Daisy`}>
       <main
@@ -128,7 +179,9 @@ export default function CallPage({ place, days, photos, error }: CallPageProps) 
           />
 
           <div className="call-actions">
-            <button type="button" className="call-btn">Send the call</button>
+            <button type="button" className="call-btn" onClick={send} disabled={sendState === 'working'}>
+              {sendState === 'sent' ? 'Sent' : sendState === 'copied' ? 'Copied' : 'Send the call'}
+            </button>
             {hasAlternates && (
               <AlternatesControl
                 onCycle={() => setAltIndex((i) => (i + 1) % options.length)}
@@ -224,12 +277,13 @@ export const getServerSideProps: GetServerSideProps<CallPageProps> = async (ctx)
       }
     }
 
-    return { props: { place: location.name, days, photos } };
+    return { props: { slug: location.slug, place: location.name, days, photos } };
   } catch (e) {
     // The verdict is withheld rather than guessed. Never a confident sentence
     // over incomplete data.
     return {
       props: {
+        slug: location.slug,
         place: location.name,
         days: [],
         photos: {},

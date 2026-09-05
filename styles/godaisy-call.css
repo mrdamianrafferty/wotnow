@@ -231,8 +231,11 @@
 
 /* ════════════════════════════════════════════════════════════════════
    The Call — screen styles (phase 2)
-   Everything below composes the tokens above. Nothing here introduces a
-   value; if a number appears that is not a token, that is a bug.
+   Colour, type, spacing, radii and motion come from the tokens above.
+   Screen-specific geometry does not, and should not be read as tokenisable:
+   the phone's own measurements — safe-area padding, the 430px content cap, the
+   scrim's gradient stops — belong to this one layout and would be noise in a
+   token set that other surfaces share.
    ════════════════════════════════════════════════════════════════════ */
 
 .call-screen {

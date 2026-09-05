@@ -22,8 +22,13 @@ import { bake } from '../lib/godaisy/share/bake';
 import type { ShareCrop } from '../lib/godaisy/share/template';
 
 const ARGS = process.argv.slice(2);
-const only = (ARGS.find((a) => a.startsWith('--crop=')) || '').split('=')[1] as ShareCrop | undefined;
-const crops = (only ? [only] : (Object.keys(CROP_PHOTO) as ShareCrop[]));
+const ALL_CROPS = Object.keys(CROP_PHOTO) as ShareCrop[];
+const only = (ARGS.find((a) => a.startsWith('--crop=')) || '').split('=')[1];
+if (only && !(ALL_CROPS as string[]).includes(only)) {
+  console.error(`--crop must be one of: ${ALL_CROPS.join(', ')} (got "${only}")`);
+  process.exit(1);
+}
+const crops = only ? [only as ShareCrop] : ALL_CROPS;
 
 async function main() {
   fs.mkdirSync(BAKED_DIR, { recursive: true });

@@ -28,14 +28,44 @@ export const config = { api: { responseLimit: false } };
 
 const CROPS: ShareCrop[] = ['card', 'story', 'og'];
 
+/** Today in Europe/London, which is the timezone the call is written in. */
+function todayISO(): string {
+  return new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/London' }).format(new Date());
+}
+
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   const slug = String(req.query.place ?? '');
   const cropParam = String(req.query.crop ?? 'card');
   const dayIndex = Math.max(0, Math.min(6, Number(req.query.day ?? 0) || 0));
 
-  const location: SeoLocation | undefined =
-    SEO_LOCATIONS.find((l: SeoLocation) => l.slug === slug) ?? SEO_LOCATIONS[0];
-  if (!location) return res.status(404).json({ error: 'Unknown place' });
+  // No fallback to SEO_LOCATIONS[0]: that made "Unknown place" unreachable, hid
+  // broken share links behind a plausible-looking card, and left the response
+  // depending on the order of rows in a data file.
+  const location: SeoLocation | undefined = SEO_LOCATIONS.find((l: SeoLocation) => l.slug === slug);
+  if (!location) return res.status(404).json({ error: `Unknown place: ${slug || '(none)'}` });
+
+  /*
+   * The date must be IN the URL, not merely in a comment.
+   *
+   * The first version claimed the cache key carried the date and it did not, so
+   * a CDN could serve yesterday's verdict over today's URL — around midnight, or
+   * across a call-hour boundary, the card would outlive its own forecast. That
+   * is the one failure the voice rules forbid, and a header cannot fix it
+   * because the header is not the key.
+   *
+   * A request without a date is redirected to one with it, so every day is a
+   * distinct URL and a stale entry simply falls out of use.
+   */
+  const date = String(req.query.date ?? '');
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+    const q = new URLSearchParams(
+      Object.entries(req.query).flatMap(([k, v]) =>
+        v === undefined || k === 'date' ? [] : [[k, String(v)] as [string, string]]),
+    );
+    q.set('date', todayISO());
+    res.setHeader('Cache-Control', 'public, max-age=0, s-maxage=60');
+    return res.redirect(307, `/api/call/share?${q.toString()}`);
+  }
 
   try {
     const forecast = (await fetchForecastForLocation(location)).slice(0, 7);
@@ -65,6 +95,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     if (!option) return res.status(404).json({ error: 'No call for that day' });
 
     const iso = new Date(d.date * 1000).toISOString().slice(0, 10);
+    // The URL's date must match the day it actually renders. A link kept
+    // overnight asks for a day the forecast has moved past; say so rather than
+    // serving a card for a different date under the requested one.
+    if (dayIndex === 0 && date !== iso) {
+      return res.status(410).json({ error: `That call was for ${date}; today is ${iso}.` });
+    }
     const data = {
       place: location.name,
       date: new Intl.DateTimeFormat('en-GB', { weekday: 'short', day: 'numeric', month: 'short' })
@@ -72,6 +108,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       verdict: asSentence({ ...option.verdict, reason: '' }).trim(),
       reason: option.verdict.reason,
       facts: option.facts,
+      // Short on the card, because it is typography there and a scheme is noise.
+      // The plain-text render substitutes an absolute one — see shareText.
       url: `godaisy.io/${location.slug}`,
       photo: '',
     };
