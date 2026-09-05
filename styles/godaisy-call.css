@@ -521,6 +521,26 @@ h1.call-setup-question, h1.call-verdict { margin-block: 0; }
 .call-setup-note { margin: 0; font-size: var(--call-caption); color: var(--call-ink-4); text-align: center; }
 
 .call-setup-chips { display: flex; flex-wrap: wrap; gap: var(--call-chip-gap); }
+
+/*
+ * The expanded list's headings.
+ *
+ * Eighty-one chips need something to scan by, and the subcategory is the thing
+ * a person is actually navigating — "Water Sports", "Fishing", "Kicking Back
+ * and Relaxing". Quiet on purpose: it is a signpost between chips, not a
+ * section title competing with the question at the top of the screen.
+ */
+/* `padding: 0` and not just the gutters: the shared reset above zeroes the
+   global `section` rule's horizontal padding but leaves its 2rem top and
+   bottom, which here stacked 64px of dead air between every heading and the
+   chips above it. */
+.call-setup-group { padding: 0; margin-top: var(--call-block); }
+.call-setup-group:first-of-type { margin-top: var(--call-card-pad); }
+.call-setup-group-title {
+  display: flex; align-items: baseline; gap: .4em;
+  margin: 0 0 var(--call-grid-gap);
+  color: var(--call-ink-4);
+}
 .call-setup-chip {
   font: 500 14px var(--call-font-body);
   padding: 10px 15px; border-radius: var(--call-r-pill);

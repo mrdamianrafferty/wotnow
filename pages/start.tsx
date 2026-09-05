@@ -25,6 +25,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/router';
 import Head from 'next/head';
 import { allSports } from '@/data/activities';
+import { ACTIVITY_GROUPS } from '@/data/activityGroups';
 import { useGoDaisyPushNotifications } from '@/hooks/useGoDaisyPushNotifications';
 import {
   writeSetup, readSetup, mirrorToPreferences, DEFAULT_SPORTS,
@@ -77,15 +78,36 @@ export default function StartPage() {
   const push = useGoDaisyPushNotifications();
   const [pushWorking, setPushWorking] = useState(false);
 
-  const options: SportOption[] = useMemo(
-    () =>
-      (allSports as Array<{ id: string; name: string; category: string; weatherSensitive: boolean }>)
-        // Indoor activities are what a write-off offers instead; they are not
-        // what the call is about, and offering them here would say otherwise.
-        .filter((a) => a.weatherSensitive)
-        .map((a) => ({ id: a.id, label: chipLabel(a.name), category: a.category, water: WATER.has(a.id) })),
-    [],
-  );
+  const options: SportOption[] = useMemo(() => {
+    const all = (allSports as Array<{ id: string; name: string; category: string; weatherSensitive: boolean }>)
+      // Indoor activities are what a write-off offers instead; they are not
+      // what the call is about, and offering them here would say otherwise.
+      .filter((a) => a.weatherSensitive)
+      .map((a) => ({ id: a.id, label: chipLabel(a.name), category: a.category, water: WATER.has(a.id) }));
+
+    /*
+     * The library has two of at least one thing.
+     *
+     * `jet_skiing` and `jetskiing` are both "Go Jet Skiing", and before the
+     * expanded list was grouped they merely sat next to each other; grouped,
+     * they appear in two different sections, which reads as a bug rather than
+     * as data. Deduping by the label the person actually sees, and keeping the
+     * id the curated tree knows about, puts the survivor in the section it
+     * belongs to. Neither row is deleted from the library — saved preferences
+     * may reference either id, and `parseSetup` still accepts both.
+     */
+    const curated = new Set(
+      ACTIVITY_GROUPS.flatMap((c) => c.subcategories.flatMap((sub) => sub.acts)),
+    );
+    const byLabel = new Map<string, SportOption>();
+    for (const o of all) {
+      const seen = byLabel.get(o.label);
+      if (!seen || (!curated.has(seen.id) && curated.has(o.id))) byLabel.set(o.label, o);
+    }
+    // Library order, not Map order, so the lead set's top-up is unaffected.
+    const keep = new Set([...byLabel.values()].map((o) => o.id));
+    return all.filter((o) => keep.has(o.id));
+  }, []);
 
   // Coming back to change something should not start from an empty screen.
   useEffect(() => {

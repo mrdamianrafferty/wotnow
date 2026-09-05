@@ -16,6 +16,7 @@
 import { useMemo, useState } from 'react';
 import type { SetupPlace } from '@/lib/godaisy/call/setup';
 import { DEFAULT_INTEREST_IDS } from '@/context/UserPreferencesContext';
+import { ACTIVITY_GROUPS } from '@/data/activityGroups';
 
 /* ── Sports ──────────────────────────────────────────────────────────────── */
 
@@ -34,6 +35,25 @@ export interface SportOption {
  * to invent two more interests to get past a screen.
  */
 export const SEED_TARGET = 3;
+
+function Chip({
+  option, on, onToggle,
+}: {
+  option: SportOption;
+  on: boolean;
+  onToggle: (id: string) => void;
+}) {
+  return (
+    <button
+      type="button"
+      className={`call-setup-chip${on ? ' is-on' : ''}`}
+      aria-pressed={on}
+      onClick={() => onToggle(option.id)}
+    >
+      {option.label}
+    </button>
+  );
+}
 
 export function SportsStep({
   options, chosen, onToggle,
@@ -93,11 +113,48 @@ export function SportsStep({
     return out.slice(0, 12);
   }, [options]);
 
+  /*
+   * THE EXPANDED LIST IS GROUPED, NOT DUMPED.
+   *
+   * Opened flat it was the library's own order — football, american football,
+   * baseball, hurling, gaelic football, hockey, netball — which is the exact
+   * failure the lead set above was rewritten to avoid, just eighty-one chips
+   * further down the page. Somebody who taps "show everything" is looking for
+   * the one thing they actually do, and a wall of undifferentiated chips is
+   * the worst possible shape for that.
+   *
+   * So it uses `ACTIVITY_GROUPS`, the hand-ordered tree from `/interests`:
+   * recognisable-first inside each subcategory, with the subcategory name as a
+   * heading to scan by. Anything in the library the tree does not mention is
+   * collected at the end rather than dropped — the tree is a curation, not a
+   * registry, and a new activity must not become invisible by being added to
+   * the library and nowhere else.
+   */
+  const groups = useMemo(() => {
+    if (!showAll) return [];
+    const byId = new Map(options.map((o) => [o.id, o]));
+    const placed = new Set<string>();
+    const out: Array<{ key: string; icon: string; items: SportOption[] }> = [];
+    for (const cat of ACTIVITY_GROUPS) {
+      for (const sub of cat.subcategories) {
+        const items: SportOption[] = [];
+        for (const id of sub.acts) {
+          const o = byId.get(id);
+          // Absent = an indoor activity, filtered out upstream, or an id in the
+          // tree that no longer exists in the library.
+          if (o && !placed.has(id)) { items.push(o); placed.add(id); }
+        }
+        if (items.length) out.push({ key: sub.key, icon: sub.icon, items });
+      }
+    }
+    const rest = options.filter((o) => !placed.has(o.id));
+    if (rest.length) out.push({ key: 'Everything else', icon: '·', items: rest });
+    return out;
+  }, [options, showAll]);
+
   // Anything already chosen stays visible when the list collapses, or a choice
   // made in the expanded list would look like it had been discarded.
-  const shown = showAll
-    ? options
-    : [...lead, ...options.filter((o) => chosen.includes(o.id) && !lead.includes(o))];
+  const shown = [...lead, ...options.filter((o) => chosen.includes(o.id) && !lead.includes(o))];
 
   return (
     <>
@@ -105,22 +162,26 @@ export function SportsStep({
       <p className="call-setup-help">
         Three is plenty to start with. You can add more whenever you like.
       </p>
-      <div className="call-setup-chips">
-        {shown.map((o) => {
-          const on = chosen.includes(o.id);
-          return (
-            <button
-              key={o.id}
-              type="button"
-              className={`call-setup-chip${on ? ' is-on' : ''}`}
-              aria-pressed={on}
-              onClick={() => onToggle(o.id)}
-            >
-              {o.label}
-            </button>
-          );
-        })}
-      </div>
+      {showAll ? (
+        groups.map((g) => (
+          <section key={g.key} className="call-setup-group">
+            <h2 className="call-label call-setup-group-title">
+              <span aria-hidden="true">{g.icon}</span> {g.key}
+            </h2>
+            <div className="call-setup-chips">
+              {g.items.map((o) => (
+                <Chip key={o.id} option={o} on={chosen.includes(o.id)} onToggle={onToggle} />
+              ))}
+            </div>
+          </section>
+        ))
+      ) : (
+        <div className="call-setup-chips">
+          {shown.map((o) => (
+            <Chip key={o.id} option={o} on={chosen.includes(o.id)} onToggle={onToggle} />
+          ))}
+        </div>
+      )}
       {!showAll && options.length > shown.length && (
         <button type="button" className="call-setup-more" onClick={() => setShowAll(true)}>
           Show everything ({options.length})
