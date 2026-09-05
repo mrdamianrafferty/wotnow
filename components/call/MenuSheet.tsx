@@ -43,7 +43,7 @@ const GROUPS: ReadonlyArray<{ title: string; items: readonly Item[] }> = [
   {
     title: 'Yours',
     items: [
-      { href: '/start', label: 'Sports and spots', note: 'Change what the call is about' },
+      { href: '/start', label: 'Sports and spots', note: 'Change what Go Daisy tells you about' },
       { href: '/account', label: 'Account' },
     ],
   },
@@ -112,7 +112,7 @@ export function MenuSheet({ onClose }: { onClose: () => void }) {
         ))}
 
         <p className="call-drawer-foot">
-          Free and ad-free. Weather from Open-Meteo, marine from Open-Meteo Marine.
+          Free and ad-free. Weather from Open-Meteo.
         </p>
       </div>
     </div>

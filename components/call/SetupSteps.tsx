@@ -246,7 +246,7 @@ export function HourStep({
 }) {
   return (
     <>
-      <p className="call-setup-question">When do you want the call?</p>
+      <p className="call-setup-question">When should Go Daisy tell you?</p>
       <p className="call-setup-help">One message a day. Nothing else, ever.</p>
       <div className="call-setup-hours">
         {HOUR_OPTIONS.map((o) => (
@@ -273,10 +273,10 @@ export function HourStep({
       {hour !== undefined && pushState !== 'unsupported' && (
         <div className="call-setup-push">
           {pushState === 'granted' ? (
-            <p className="call-setup-help">That is set. The call arrives at {labelFor(hour)}.</p>
+            <p className="call-setup-help">That is set. Go Daisy will tell you at {labelFor(hour)}.</p>
           ) : pushState === 'denied' ? (
             <p className="call-setup-help">
-              Notifications are blocked for this site, so the call will be here on the screen
+              Notifications are blocked for this site, so Go Daisy will be here on the screen
               instead. Your browser settings can undo that.
             </p>
           ) : (

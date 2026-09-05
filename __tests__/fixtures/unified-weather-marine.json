@@ -1,0 +1,216 @@
+{
+ "name": "MET Norway",
+ "lat": 50.4155,
+ "lon": -5.0737,
+ "isMarine": true,
+ "temperatureC": 17,
+ "feelsLikeC": 19.3,
+ "dewPointC": 11.6,
+ "humidityPct": 70.3,
+ "humidity": 70.3,
+ "pressureHpa": 1024.8,
+ "windSpeedMS": 1.7,
+ "windDeg": 38.7,
+ "visibilityKm": 29.2,
+ "uvi": 0,
+ "cloudsPct": 68,
+ "description": "scattered clouds",
+ "icon": "03d",
+ "sunriseISO": "2026-09-05T05:41:00+00:00",
+ "sunsetISO": "2026-09-05T18:56:00+00:00",
+ "hourly": [
+  {
+   "timeISO": "2026-09-05T18:00:00Z",
+   "tempC": 17,
+   "windMS": 1.7,
+   "windDeg": 38.7,
+   "precipMM": 0,
+   "icon": "03d",
+   "pressureHpa": 1024.6,
+   "waveHeightM": 0.3,
+   "snowDepthCm": 0,
+   "snowfallRateMmH": 0,
+   "uvi": 0,
+   "weatherCode": 1
+  },
+  {
+   "timeISO": "2026-09-05T19:00:00Z",
+   "tempC": 16.5,
+   "windMS": 1.9,
+   "windDeg": 92.8,
+   "precipMM": 0,
+   "icon": "04d",
+   "pressureHpa": 1024.9,
+   "waveHeightM": 0.3,
+   "snowDepthCm": 0,
+   "snowfallRateMmH": 0,
+   "uvi": 0,
+   "weatherCode": 3
+  },
+  {
+   "timeISO": "2026-09-05T20:00:00Z",
+   "tempC": 16.2,
+   "windMS": 3.3,
+   "windDeg": 127.9,
+   "precipMM": 0.6,
+   "icon": "10d",
+   "pressureHpa": 1025,
+   "waveHeightM": 0.3,
+   "snowDepthCm": 0,
+   "snowfallRateMmH": 0,
+   "uvi": 0,
+   "weatherCode": 0
+  }
+ ],
+ "daily": [
+  {
+   "dateISO": "2026-09-05",
+   "minC": 15,
+   "maxC": 17,
+   "summary": "scattered clouds",
+   "icon": "10d",
+   "windMS": 3.4166666666666665,
+   "windDeg": 121.88333333333333,
+   "precipMM": 1.4000000000000001,
+   "moonriseISO": "2026-09-05T21:04:00+00:00",
+   "moonsetISO": "2026-09-05T15:08:00+00:00",
+   "moonPhase": 0.7957,
+   "sunriseISO": "2026-09-05T05:41:00+00:00",
+   "sunsetISO": "2026-09-05T18:56:00+00:00",
+   "pollen": {
+    "grass": 0.2,
+    "tree": 0,
+    "weed": 0,
+    "olive": 0,
+    "alder_pollen": 0,
+    "birch_pollen": 0,
+    "ragweed_pollen": 0,
+    "mugwort_pollen": 0
+   }
+  },
+  {
+   "dateISO": "2026-09-06",
+   "minC": 14.9,
+   "maxC": 21.3,
+   "summary": "rain",
+   "icon": "01d",
+   "windMS": 6.462499999999999,
+   "windDeg": 173.23749999999998,
+   "precipMM": 1.4,
+   "pollen": {
+    "grass": 0.3,
+    "tree": 0,
+    "weed": 0.1,
+    "olive": 0,
+    "alder_pollen": 0,
+    "birch_pollen": 0,
+    "ragweed_pollen": 0,
+    "mugwort_pollen": 0.1
+   }
+  }
+ ],
+ "source": "metno",
+ "moon": {
+  "timezone": "Europe/London",
+  "sunriseISO": "2026-09-05T05:41:00+00:00",
+  "sunsetISO": "2026-09-05T18:56:00+00:00",
+  "moonriseISO": "2026-09-05T21:04:00+00:00",
+  "moonsetISO": "2026-09-05T15:08:00+00:00",
+  "phaseFraction": 0.7957,
+  "illuminationPct": 35.82651733503405,
+  "source": "openmeteo",
+  "cachedAt": "2026-09-05T18:02:35.481355+00:00",
+  "expiresAt": "2026-09-05T23:00:00+00:00",
+  "latBucket": 50.416,
+  "lonBucket": -5.074,
+  "localDate": "2026-09-05"
+ },
+ "marineAnchor": {
+  "rectangleCode": "27G1",
+  "lat": 50.328,
+  "lon": -4.512,
+  "source": "coastal_sample"
+ },
+ "tides": [
+  {
+   "time": "2026-09-05T23:37:33.000Z",
+   "type": "high",
+   "height": 4.204
+  },
+  {
+   "time": "2026-09-06T06:17:18.000Z",
+   "type": "low",
+   "height": 2.089
+  },
+  {
+   "time": "2026-09-06T12:27:06.000Z",
+   "type": "high",
+   "height": 4.308
+  }
+ ],
+ "marineHourly": [
+  {
+   "timeISO": "2026-09-05T19:00:00.000Z",
+   "waveHeightM": 0.3,
+   "waveDirectionDeg": 219,
+   "waterTempC": 18.2,
+   "windSpeedMS": 3.5,
+   "windDirectionDeg": 207,
+   "currentSpeedMS": 0,
+   "currentDirectionDeg": 211.1
+  },
+  {
+   "timeISO": "2026-09-05T20:00:00.000Z",
+   "waveHeightM": 0.3,
+   "waveDirectionDeg": 219,
+   "waterTempC": 18.2,
+   "windSpeedMS": 2.9,
+   "windDirectionDeg": 196,
+   "currentSpeedMS": 0,
+   "currentDirectionDeg": 232.1
+  }
+ ],
+ "hasMarineData": true,
+ "seaTemp": 18.2,
+ "marine": {
+  "waveHeight": 0.3,
+  "waveDirection": 219,
+  "wavePeriod": null,
+  "swellHeight": null,
+  "swellDirection": null,
+  "swellPeriod": null
+ },
+ "airQuality": {
+  "aqi": 36,
+  "components": {
+   "pm2_5": 4.3,
+   "pm10": 12.5,
+   "no2": 1.8,
+   "o3": 69,
+   "so2": 0.3,
+   "co": 139
+  }
+ },
+ "pollen": {
+  "grass": 0.2,
+  "tree": 0,
+  "weed": 0,
+  "olive": 0,
+  "alder_pollen": 0,
+  "birch_pollen": 0,
+  "ragweed_pollen": 0,
+  "mugwort_pollen": 0
+ },
+ "pressureTrend": "steady",
+ "soil": {
+  "temp0cm": 23.7,
+  "temp6cm": 18.3,
+  "temp18cm": 17.2,
+  "temp54cm": 18.2,
+  "moisture0to1": 0.296,
+  "moisture1to3": 0.296,
+  "moisture3to9": 0.296,
+  "moisture9to27": 0.27
+ },
+ "soilTimeISO": "2026-09-05T10:00:00.000Z"
+}

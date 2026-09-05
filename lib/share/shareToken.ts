@@ -31,6 +31,18 @@ export interface GoDaisyShareData extends BaseShareData {
   date: string;
   location?: string;
   weatherSummary?: string;
+  /**
+   * The place's slug and which day of the run, so the landing page can address
+   * the share renderer.
+   *
+   * Optional because tokens minted before this existed do not carry them, and a
+   * link someone sent last week must still open. Without them the landing page
+   * simply has no preview image, which is what every Go Daisy share had until
+   * now — the card was rendered for the native share sheet and a link pasted
+   * into a chat previewed as bare text.
+   */
+  slug?: string;
+  dayIndex?: number;
 }
 
 /**
@@ -185,8 +197,20 @@ export function getShareUrl(token: string): string {
  */
 export function getShareTitle(data: ShareData): string {
   switch (data.app) {
-    case 'godaisy':
-      return `${data.activityName} - ${data.score}% match`;
+    case 'godaisy': {
+      /*
+       * THIS IS THE HEADLINE OF THE LINK PREVIEW, so it is the first thing a
+       * stranger reads about Go Daisy — and it said "Go Cycling - 85% match",
+       * which is a database row. Nobody forwards a database row. It reads like
+       * the sentence their friend actually sent them now.
+       */
+      const activity = data.activityName
+        .replace(/^(?:Go to|Do Some|Go|Play|Do|Have|Take|Try|Hit|Visit)\s+/i, '')
+        .toLowerCase();
+      return data.location
+        ? `It is ${activity} weather in ${data.location}`
+        : `It is ${activity} weather`;
+    }
     case 'findr':
       return `${data.speciesName} fishing - ${data.confidence}% confidence`;
     case 'growdaisy':

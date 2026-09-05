@@ -934,3 +934,38 @@
 }
 .call-why:hover { color: var(--call-on-dark); }
 .call-why:focus-visible { outline: 2px solid var(--call-on-dark); outline-offset: 2px; }
+
+/* ── The share landing ────────────────────────────────────────────────────
+   Where a shared card lands, and the front door of the whole bet: every
+   session is meant to produce an object a non-user sees, and this is the
+   page that non-user arrives at. It was a generic three-app receipt with
+   an icon and a percentage badge.
+
+   Paper rather than photography. The card they were sent already carried
+   the image; this page's job is to say the sentence and offer them their
+   own, not to re-perform the card.                                       */
+.gd-share {
+  min-height: 100vh;
+  background: var(--call-page);
+  color: var(--call-ink-1);
+  font-family: var(--call-font-body);
+}
+.gd-share-inner {
+  max-width: 560px; margin: 0 auto;
+  padding: 56px var(--call-gutter-app) 44px;
+}
+.gd-share-kicker { margin: 0 0 16px; color: var(--call-ink-4); }
+.gd-share-verdict {
+  margin: 0 0 14px;
+  font-family: var(--call-font-display);
+  font-size: clamp(32px, 8vw, 46px);
+  font-weight: 700; line-height: 1.04; letter-spacing: -.02em;
+  text-wrap: balance;
+}
+.gd-share-activity { color: var(--call-moss-ink); }
+.gd-share-reason { margin: 0 0 18px; max-width: 46ch; font-size: var(--call-body-lg); line-height: 1.5; color: var(--call-ink-2); }
+.gd-share-said {
+  margin: 22px 0 24px; max-width: 48ch;
+  font-size: var(--call-body-sm); line-height: 1.6; color: var(--call-ink-3);
+}
+.gd-share-cta { display: inline-flex; }
