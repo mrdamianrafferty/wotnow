@@ -442,16 +442,16 @@ const LandingPage: React.FC = () => {
 
       <AppHeader />
 
-      <main className="min-h-screen bg-base-100 text-base-content">
+      <main className="gd-land">
         {/* =================================================================
             HERO
             ================================================================= */}
-        <section className="px-4 py-12 md:py-20 bg-gradient-to-b from-base-200 to-base-100">
-          <div className="max-w-5xl mx-auto text-center">
-            <h1 className="text-4xl md:text-6xl font-bold leading-tight mb-6">
+        <section className="gd-land-hero">
+          <div className="gd-land-inner is-centred">
+            <h1 className="gd-land-h1">
               Weather-perfect days for the things you actually love.
             </h1>
-            <p className="text-lg md:text-2xl text-base-content/80 max-w-3xl mx-auto mb-8 leading-relaxed">
+            <p className="gd-land-lede">
               Tell Go Daisy what you do — from surfing and stargazing to padel,
               pilates and pub afternoons — and we&rsquo;ll read the wind,
               waves, tides, UV and sky to tell you exactly when each one is on.
@@ -483,7 +483,7 @@ const LandingPage: React.FC = () => {
             <div className="flex flex-col sm:flex-row gap-3 justify-center items-center mb-4">
               <Link
                 href={WEB_APP_CTA_URL}
-                className="btn btn-primary btn-lg w-full sm:w-auto"
+                className="gd-app-store"
               >
                 Try the web app — free
               </Link>
@@ -491,13 +491,13 @@ const LandingPage: React.FC = () => {
                 href={APP_STORE_URL}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="btn btn-outline btn-lg w-full sm:w-auto"
+                className="gd-land-alt"
               >
                 Download for iPhone
               </a>
             </div>
 
-            <p className="text-sm text-base-content/60">
+            <p className="gd-land-small">
               Free, forever. No ads. No data sold. UK and Europe, 10 languages.
               iOS today, Android in closed beta —{' '}
               <a href="#android-testers" className="link link-primary">
@@ -515,14 +515,14 @@ const LandingPage: React.FC = () => {
         {/* =================================================================
             HOW IT WORKS
             ================================================================= */}
-        <section className="px-4 py-16 bg-base-100">
-          <div className="max-w-5xl mx-auto">
-            <h2 className="text-3xl md:text-4xl font-bold text-center mb-12">
+        <section className="gd-land-band">
+          <div className="gd-land-inner">
+            <h2 className="gd-land-h2">
               How Go Daisy works
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div className="card bg-base-200 shadow-md">
-                <div className="card-body">
+              <div className="gd-land-card">
+                <div className="gd-land-card-body">
                   <div className="text-4xl mb-2">🧡</div>
                   <h3 className="card-title">1. Tell us what you love</h3>
                   <p>
@@ -533,8 +533,8 @@ const LandingPage: React.FC = () => {
                   </p>
                 </div>
               </div>
-              <div className="card bg-base-200 shadow-md">
-                <div className="card-body">
+              <div className="gd-land-card">
+                <div className="gd-land-card-body">
                   <div className="text-4xl mb-2">🌤️</div>
                   <h3 className="card-title">
                     2. We read the conditions for each one
@@ -547,8 +547,8 @@ const LandingPage: React.FC = () => {
                   </p>
                 </div>
               </div>
-              <div className="card bg-base-200 shadow-md">
-                <div className="card-body">
+              <div className="gd-land-card">
+                <div className="gd-land-card-body">
                   <div className="text-4xl mb-2">✅</div>
                   <h3 className="card-title">
                     3. You get a &ldquo;go&rdquo; when conditions line up
@@ -567,12 +567,12 @@ const LandingPage: React.FC = () => {
         {/* =================================================================
             ACTIVITIES — the SEO engine
             ================================================================= */}
-        <section className="px-4 py-16 bg-base-200">
+        <section className="gd-land-band is-tint">
           <div className="max-w-6xl mx-auto">
-            <h2 className="text-3xl md:text-4xl font-bold text-center mb-4">
+            <h2 className="gd-land-h2">
               What Go Daisy is for
             </h2>
-            <p className="text-center text-base-content/80 max-w-2xl mx-auto mb-12">
+            <p className="gd-land-copy">
               Six worlds, more than a hundred ways to spend a day. Pick the
               ones you do. Ignore the ones you don&rsquo;t.
             </p>
@@ -580,24 +580,24 @@ const LandingPage: React.FC = () => {
             <div className="space-y-10">
               {ACTIVITY_CATEGORIES.map((category) => (
                 <div key={category.name} className="card bg-base-100 shadow-lg">
-                  <div className="card-body">
+                  <div className="gd-land-card-body">
                     <h3 className="card-title text-2xl mb-2">
                       <span className="text-3xl mr-2" aria-hidden="true">
                         {category.icon}
                       </span>
                       {category.name}
                     </h3>
-                    <p className="text-base-content/80 mb-4">
+                    <p className="gd-land-copy">
                       {category.description}
                     </p>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       {category.subCategories.map((sub) => (
                         <div key={sub.name}>
-                          <h4 className="font-semibold text-base-content mb-2">
+                          <h4 className="gd-land-strong">
                             {sub.name}
                           </h4>
-                          <p className="text-sm text-base-content/70">
+                          <p className="gd-land-small">
                             {sub.activities.join(' · ')}
                           </p>
                         </div>
@@ -613,12 +613,12 @@ const LandingPage: React.FC = () => {
         {/* =================================================================
             WHAT WE READ
             ================================================================= */}
-        <section className="px-4 py-16 bg-base-100">
-          <div className="max-w-5xl mx-auto">
-            <h2 className="text-3xl md:text-4xl font-bold text-center mb-6">
+        <section className="gd-land-band">
+          <div className="gd-land-inner">
+            <h2 className="gd-land-h2">
               The conditions we watch so you don&rsquo;t have to
             </h2>
-            <p className="text-center text-base-content/80 max-w-3xl mx-auto mb-10">
+            <p className="gd-land-copy">
               Professional-grade forecasts from Open-Meteo, Stormglass marine
               services and the Norwegian Meteorological Institute (api.met.no),
               plus tide data and astronomy ephemerides. For any hour of any
@@ -652,16 +652,16 @@ const LandingPage: React.FC = () => {
                   v: 'Soil temperature and soil moisture for gardeners, snow depth and freeze-thaw cycles for winter sports.',
                 },
               ].map((item) => (
-                <div key={item.k} className="card bg-base-200">
-                  <div className="card-body p-5">
+                <div key={item.k} className="gd-land-card">
+                  <div className="gd-land-card-body">
                     <h3 className="text-lg font-semibold">{item.k}</h3>
-                    <p className="text-sm text-base-content/80">{item.v}</p>
+                    <p className="gd-land-small">{item.v}</p>
                   </div>
                 </div>
               ))}
             </div>
 
-            <p className="text-center mt-8 text-base-content/80 max-w-2xl mx-auto">
+            <p className="gd-land-copy">
               For each activity you have told us you care about, we score how
               good <em>this hour</em> is for <em>that thing</em>. No mental
               arithmetic required.
@@ -672,9 +672,9 @@ const LandingPage: React.FC = () => {
         {/* =================================================================
             TOP FAQS
             ================================================================= */}
-        <section className="px-4 py-16 bg-base-200">
-          <div className="max-w-4xl mx-auto">
-            <h2 className="text-3xl md:text-4xl font-bold text-center mb-10">
+        <section className="gd-land-band is-tint">
+          <div className="gd-land-inner">
+            <h2 className="gd-land-h2">
               Frequently asked questions
             </h2>
 
@@ -682,7 +682,7 @@ const LandingPage: React.FC = () => {
               {TOP_FAQS.map((faq, i) => (
                 <div
                   key={faq.q}
-                  className="collapse collapse-arrow join-item border border-base-300 bg-base-100"
+                  className="gd-land-faq"
                 >
                   <input
                     type="checkbox"
@@ -714,21 +714,21 @@ const LandingPage: React.FC = () => {
           id="android-testers"
           className="px-4 py-16 bg-gradient-to-b from-base-100 to-base-200"
         >
-          <div className="max-w-3xl mx-auto text-center">
+          <div className="gd-land-inner is-centred">
             <div className="text-5xl mb-4" aria-hidden="true">
               🤖
             </div>
-            <h2 className="text-3xl md:text-4xl font-bold mb-6">
+            <h2 className="gd-land-h2">
               Help us launch on Android.
             </h2>
-            <p className="text-lg text-base-content/80 mb-6 leading-relaxed">
+            <p className="gd-land-copy">
               The Android version of Go Daisy is built and ready. Google Play
               asks us to find twelve testers to use it on real Android phones
               for two weeks before we can release it to the world — so
               that&rsquo;s what we&rsquo;re doing.
             </p>
 
-            <ul className="text-left max-w-xl mx-auto mb-8 space-y-2 text-base-content/80">
+            <ul className="gd-land-copy">
               <li>
                 <span className="text-success">✓</span> Early access to Go
                 Daisy on Android, before anyone else
@@ -744,7 +744,7 @@ const LandingPage: React.FC = () => {
               </li>
             </ul>
 
-            <p className="text-sm text-base-content/70 mb-6">
+            <p className="gd-land-small">
               About ten minutes a week of normal use. No bug-hunting expected.
               We just need real phones in real hands for the fortnight Google
               needs.
@@ -759,7 +759,7 @@ const LandingPage: React.FC = () => {
             */}
             <Link
               href="/android-testers"
-              className="btn btn-primary btn-lg"
+              className="gd-app-store"
             >
               Sign me up as an Android tester &rarr;
             </Link>
@@ -769,12 +769,12 @@ const LandingPage: React.FC = () => {
         {/* =================================================================
             FINAL CTA
             ================================================================= */}
-        <section className="px-4 py-20 bg-base-100">
-          <div className="max-w-3xl mx-auto text-center">
-            <h2 className="text-3xl md:text-5xl font-bold mb-6">
+        <section className="gd-land-band">
+          <div className="gd-land-inner is-centred">
+            <h2 className="gd-land-h2">
               Get out there. Or in. Whichever today asks for.
             </h2>
-            <p className="text-lg text-base-content/80 mb-8 max-w-2xl mx-auto">
+            <p className="gd-land-copy">
               Download Go Daisy for iPhone, or open the web app and tell us
               what you love. The forecast looks a lot more interesting when
               it&rsquo;s pointed at the things you actually do.
@@ -782,7 +782,7 @@ const LandingPage: React.FC = () => {
             <div className="flex flex-col sm:flex-row gap-3 justify-center">
               <Link
                 href={WEB_APP_CTA_URL}
-                className="btn btn-primary btn-lg"
+                className="gd-app-store"
               >
                 Try the web app — free
               </Link>
@@ -790,7 +790,7 @@ const LandingPage: React.FC = () => {
                 href={APP_STORE_URL}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="btn btn-outline btn-lg"
+                className="gd-land-alt"
               >
                 Download for iPhone
               </a>
@@ -801,8 +801,8 @@ const LandingPage: React.FC = () => {
         {/* =================================================================
             TRUST / FOOTER STRIP
             ================================================================= */}
-        <section className="px-4 py-10 bg-base-200 border-t border-base-300">
-          <div className="max-w-4xl mx-auto text-center text-sm text-base-content/70">
+        <section className="gd-land-foot">
+          <div className="gd-land-inner is-centred gd-land-small">
             <p className="mb-2">
               Built by independent makers in the UK and Asturias, Spain.
             </p>

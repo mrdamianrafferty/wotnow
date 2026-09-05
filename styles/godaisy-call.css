@@ -1111,3 +1111,64 @@ section.gd-spot-colophon { padding: 28px var(--call-gutter-app) 40px; }
   font: 500 var(--call-body-sm) var(--call-font-body);
   display: inline-block;
 }
+
+/* ── The landing page ─────────────────────────────────────────────────────
+   Phase 6's last piece, done in phase 7 because it was never a migration
+   step — it is the indexed homepage, and swapping what a stranger and
+   Googlebot read is a decision about search and conversion.
+
+   RESTYLED, NOT REGENERATED. Every heading, every paragraph and both
+   JSON-LD blocks are the ones that were there; only the presentation
+   moved. 13 headings before, 13 after.                                   */
+.gd-land {
+  min-height: 100vh;
+  background: var(--call-page);
+  color: var(--call-ink-1);
+  font-family: var(--call-font-body);
+}
+.gd-land-hero { padding: 56px var(--call-gutter-app) 48px; background: var(--call-panel); border-bottom: 1px solid var(--call-border); text-align: center; }
+.gd-land-band { padding: 48px var(--call-gutter-app); border-bottom: 1px solid var(--call-border); }
+.gd-land-band.is-tint { background: var(--call-panel); }
+.gd-land-foot { padding: 32px var(--call-gutter-app) 44px; color: var(--call-ink-4); }
+.gd-land-inner { max-width: 760px; margin: 0 auto; }
+.gd-land-inner.is-centred { text-align: center; }
+
+.gd-land-h1 {
+  margin: 0 0 18px;
+  font-family: var(--call-font-display);
+  font-size: clamp(34px, 8vw, 56px);
+  font-weight: 700; line-height: 1.02; letter-spacing: -.025em;
+  text-wrap: balance; max-width: 18ch; margin-inline: auto;
+}
+.gd-land-h2 {
+  margin: 0 0 16px;
+  font-family: var(--call-font-display);
+  font-size: var(--call-section-title); font-weight: 700;
+  line-height: 1.14; letter-spacing: -.01em; text-wrap: balance;
+}
+.gd-land-lede {
+  margin: 0 auto 26px; max-width: 46ch;
+  font-size: var(--call-body-lg); line-height: 1.5; color: var(--call-ink-2);
+}
+.gd-land-copy { margin: 0 auto 16px; max-width: 62ch; font-size: var(--call-body); line-height: 1.6; color: var(--call-ink-2); }
+.gd-land-small { font-size: var(--call-caption); color: var(--call-ink-4); }
+.gd-land-strong { font-weight: 600; color: var(--call-ink-1); margin: 0 0 6px; }
+.gd-land-alt {
+  display: inline-flex; align-items: center; justify-content: center;
+  min-height: var(--call-tap-min); padding: 12px 22px;
+  border-radius: var(--call-r-button); border: 1px solid var(--call-border-strong);
+  background: none; color: var(--call-ink-1);
+  font: 500 15px var(--call-font-body); text-decoration: none;
+}
+.gd-land-alt:hover { border-color: var(--call-ink-4); }
+
+.gd-land-card {
+  background: var(--call-card); border: 1px solid var(--call-border);
+  border-radius: var(--call-r-card);
+}
+.gd-land-card-body { padding: 18px 20px; }
+.gd-land-faq {
+  border: 1px solid var(--call-border); border-radius: var(--call-r-card);
+  background: var(--call-card); margin-bottom: 8px;
+}
+.gd-land-alt:focus-visible { outline: 2px solid var(--call-moss-ink); outline-offset: 2px; }
