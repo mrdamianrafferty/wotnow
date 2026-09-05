@@ -34,6 +34,7 @@ import {
   getActivityScoreForLocation,
   type ActivityScorePayload,
 } from '../../lib/seo/getActivityScore';
+import { useRouter } from 'next/router';
 import { activityTypes } from '../../data/activityTypes';
 import GetTheApp from '../../components/GetTheApp';
 import { bandFor, BAND_LABEL, type CallBand } from '../../lib/godaisy/call/bands';
@@ -283,6 +284,13 @@ export default function ProgrammaticSeoPage({
   relatedAtLocation,
   relatedLocations,
 }: PageProps) {
+  const router = useRouter();
+  /*
+   * Read on the client, not in getStaticProps: this page is statically
+   * generated and cached at the edge, so a server-side read of the query would
+   * bake one visitor's `?from=share` into the page everyone else gets.
+   */
+  const invited = router.query.from === 'share';
   const today = bandWords(score.todayScore);
   const canonicalUrl = `https://godaisy.io/${activityIdToSlug(activityId)}/${location.slug}`;
   const pageTitle = `Is today a good day for ${activityName} in ${location.name}?`;
@@ -327,6 +335,16 @@ export default function ProgrammaticSeoPage({
         title={pageTitle}
         description={pageDescription}
         url={canonicalUrl}
+        /*
+         * THE CARD, AS THE LINK PREVIEW.
+         *
+         * Passed to SEO rather than added as another <meta>: that component
+         * already emits an og:image, defaulting to the site logo, and a second
+         * tag does not override the first — crawlers take whichever comes
+         * first, which would have been the logo. The duplicate looked right in
+         * the source and did nothing.
+         */
+        image={`https://godaisy.io/api/call/share?place=${location.slug}&day=0&alt=0&date=${score.weeklyOutlook[0]?.date ?? ''}&crop=og`}
       />
       <Head>
         <script
@@ -361,6 +379,19 @@ export default function ProgrammaticSeoPage({
               * that over. What changes is that the ANSWER now comes first and
               * reads like the app's: the sentence, then the evidence.
               */}
+            {/*
+              * SOMEBODY SENT THIS. A share lands here now, and a page that
+              * greets an invitation with "Is today a good day for cycling in
+              * Newquay?" is answering a question the reader did not ask — they
+              * were asked out. The line costs nothing to anyone arriving from
+              * search, because they never see it.
+              */}
+            {invited && (
+              <p className="gd-spot-invite">
+                Someone sent you this — here is what today looks like.
+              </p>
+            )}
+
             <h1 className="gd-spot-q">
               Is today a good day for {activityName} in {location.name}?
             </h1>

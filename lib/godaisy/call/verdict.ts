@@ -427,3 +427,21 @@ export function asSentence(v: Verdict): string {
   const head = v.leadIn ? `${v.leadIn} ${v.verdict}` : v.verdict;
   return `${head} ${v.reason}`.trim();
 }
+
+/**
+ * The verdict as it should leave the app — without the "also".
+ *
+ * "Today is ALSO a day for a walk" went out in a real iMessage. On screen that
+ * word is doing work: you have tapped past the first answer and this is the
+ * second, and "also" is what makes the noun frame parse. Sent to someone who
+ * never saw the first answer, it is a sentence referring to something that does
+ * not exist — and it makes the app sound unsure of its own recommendation.
+ *
+ * The lead-in is the only place it appears, so this is a frame swap rather than
+ * a rewrite: "{When} is also" becomes "{When} is", and the verdict beneath it
+ * is already the noun form that follows either.
+ */
+export function asSharedSentence(v: Verdict): string {
+  const leadIn = v.leadIn?.replace(/\s+also\b/i, '');
+  return asSentence({ ...v, ...(leadIn ? { leadIn } : {}) });
+}

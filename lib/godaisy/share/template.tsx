@@ -147,14 +147,24 @@ export function shareTemplate(d: ShareData, crop: ShareCrop): unknown {
 /**
  * The fourth render. No layout, same data — for people who hate images.
  *
+ * IT IS AN INVITATION, NOT A FORECAST. The first version stated the verdict and
+ * stopped — "Today is a day for a walk. Newquay, dry, 19°." — which is a weather
+ * report, and nobody forwards a weather report. What a person actually sends a
+ * friend is an ask, and the whole growth bet is that this message gets sent.
+ * The conditions stay because they are the argument; the question is what makes
+ * it a message rather than a readout.
+ *
+ * "Join me?" rather than "Would you like to join me?" — the app's voice is
+ * British and understated ("a write-off", "the wind gets up after that"), and
+ * the long form reads like a calendar invite from work.
+ *
  * NO URL. It used to promote `d.url` — the short host the card prints — into an
- * absolute link, on the reasoning that a bare host is typography on a card and a
- * tappable link in a message. Both halves were right; the conclusion was not.
- * `d.url` names a place, and the link a share has to carry names a CALL: the day,
- * the sport, the numbers, wrapped in a token that renders a landing page to
- * someone who has never heard of the app. Composing the sentence and the link is
- * the sender's job, because only the sender has the token.
+ * absolute link. `d.url` names a place; the sender composes the link, because
+ * only the sender knows which one is short enough to send.
  */
 export function shareText(d: ShareData): string {
-  return `${d.verdict} ${d.place}, ${d.reason.toLowerCase()}`;
+  const where = d.place ? ` ${d.place}` : '';
+  return `${d.verdict}${where ? `${where},` : ''} ${d.reason.toLowerCase()} Join me?`
+    .replace(/\s+/g, ' ')
+    .trim();
 }

@@ -18,7 +18,7 @@ import { fetchForecastForLocation } from '@/lib/seo/getActivityScore';
 import { getSuggestionsByDay, type Suggestion } from '@/utils/getSuggestionsByDay';
 import { allSports } from '@/data/activities';
 import { makeCall } from '@/lib/godaisy/call/makeCall';
-import { asSentence } from '@/lib/godaisy/call/verdict';
+import { asSharedSentence } from '@/lib/godaisy/call/verdict';
 import { SEO_LOCATIONS, type SeoLocation } from '@/data/seoLocations';
 import { renderShare } from '@/lib/godaisy/share/render';
 import { shareText, type ShareCrop } from '@/lib/godaisy/share/template';
@@ -105,7 +105,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       place: location.name,
       date: new Intl.DateTimeFormat('en-GB', { weekday: 'short', day: 'numeric', month: 'short' })
         .format(new Date(d.date * 1000)),
-      verdict: asSentence({ ...option.verdict, reason: '' }).trim(),
+      verdict: asSharedSentence({ ...option.verdict, reason: '' }).trim(),
       reason: option.verdict.reason,
       facts: option.facts,
       /*
