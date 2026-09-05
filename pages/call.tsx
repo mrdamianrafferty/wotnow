@@ -31,6 +31,7 @@ import { AlternatesControl } from '@/components/call/AlternatesControl';
 import { IndoorPrompt, type IndoorOption } from '@/components/call/IndoorPrompt';
 import { generateShareToken, getShareUrl, type GoDaisyShareData } from '@/lib/share/shareToken';
 import { EvidenceDrawer } from '@/components/call/EvidenceDrawer';
+import { MenuSheet } from '@/components/call/MenuSheet';
 import { asSentence } from '@/lib/godaisy/call/verdict';
 
 const DAYS = 7;
@@ -89,6 +90,7 @@ export default function CallPage({ slug, place, days, photos, indoor, coords, co
   const [touchX, setTouchX] = useState<number | null>(null);
   const [sendState, setSendState] = useState<'idle' | 'working' | 'sent' | 'copied'>('idle');
   const [drawer, setDrawer] = useState(false);
+  const [menu, setMenu] = useState(false);
 
   // altIndex is a view state, not a preference: the daily call stays
   // deterministic, so turning the day resets which alternate is showing.
@@ -230,10 +232,17 @@ export default function CallPage({ slug, place, days, photos, indoor, coords, co
         <div className="call-content">
           <div className="call-chrome">
             <p className="call-label call-label--on-dark">{kicker}</p>
-            {/* The dot's first job: the evidence. It was rendered as nothing
-                until something lived behind it — a focusable control that does
-                nothing is worse than an absent one. */}
-            <ScreenChrome onMenu={() => setDrawer(true)} />
+            {/*
+              * The dot is the MENU, which is what ScreenChrome always said it
+              * was — "everything else lives behind the dot". It briefly opened
+              * the evidence drawer instead, because the drawer was the first
+              * thing that existed to put there, and that left the whole new
+              * surface with no route to settings, an account or a privacy
+              * policy. The evidence has its own control below, where it is
+              * more discoverable anyway: it belongs to the verdict, not to
+              * navigation.
+              */}
+            <ScreenChrome onMenu={() => setMenu(true)} />
           </div>
 
           <VerdictLockup
@@ -251,6 +260,9 @@ export default function CallPage({ slug, place, days, photos, indoor, coords, co
             <button type="button" className="call-btn" onClick={send} disabled={sendState === 'working'}>
               {sendState === 'sent' ? 'Sent' : sendState === 'copied' ? 'Copied' : 'Send out the call'}
             </button>
+            <button type="button" className="call-why" onClick={() => setDrawer(true)}>
+              Why?
+            </button>
             {hasAlternates && (
               <AlternatesControl
                 onCycle={() => setAltIndex((i) => (i + 1) % options.length)}
@@ -266,6 +278,8 @@ export default function CallPage({ slug, place, days, photos, indoor, coords, co
             <span>swipe for tomorrow</span>
           </div>
         </div>
+
+        {menu && <MenuSheet onClose={() => setMenu(false)} />}
 
         {drawer && (
           <EvidenceDrawer

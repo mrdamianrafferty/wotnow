@@ -56,9 +56,9 @@ export default function Footer() {
           </nav>
 
           <nav className="grid grid-flow-row gap-2" aria-label="Legal links">
-            <Link href="/TermsAndConditions" className="block hover:underline hover:text-primary" style={{ color: '#1f2937' }}>Terms of use</Link>
-            <Link href="/PrivacyPolicy" className="block hover:underline hover:text-primary" style={{ color: '#1f2937' }}>Privacy policy</Link>
-            <Link href="/CookiePolicy" className="block hover:underline hover:text-primary" style={{ color: '#1f2937' }}>Cookie policy</Link>
+            <Link href="/terms" className="block hover:underline hover:text-primary" style={{ color: '#1f2937' }}>Terms of use</Link>
+            <Link href="/privacy" className="block hover:underline hover:text-primary" style={{ color: '#1f2937' }}>Privacy policy</Link>
+            <Link href="/cookies" className="block hover:underline hover:text-primary" style={{ color: '#1f2937' }}>Cookie policy</Link>
           </nav>
         </div>
 

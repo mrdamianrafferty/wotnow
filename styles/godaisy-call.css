@@ -899,3 +899,38 @@
 .gd-spot-link:focus-visible, .gd-spot-crumbs a:focus-visible {
   outline: 2px solid var(--call-moss-ink); outline-offset: 2px;
 }
+
+/* ── The menu sheet, behind the dot ───────────────────────────────────────
+   Everything that is not today's call: your sports and spots, your
+   account, and the small print. The privacy link here is an App Store
+   requirement rather than a nicety — Apple wants one reachable from
+   inside the app, and this surface had none.                            */
+.call-menu { padding-bottom: calc(20px + env(safe-area-inset-bottom)); }
+.call-menu-group { margin-bottom: 22px; }
+.call-menu-group-title { margin: 0 0 6px; color: var(--call-ink-4); }
+.call-menu-list { list-style: none; margin: 0; padding: 0; }
+.call-menu-item {
+  display: flex; flex-direction: column; gap: 1px;
+  padding: 12px 2px; min-height: var(--call-tap-min);
+  border-bottom: 1px solid var(--call-border);
+  text-decoration: none; color: var(--call-ink-1);
+}
+.call-menu-list li:last-child .call-menu-item { border-bottom: 0; }
+.call-menu-item:hover { color: var(--call-moss-ink); }
+.call-menu-label { font: 500 var(--call-body) var(--call-font-body); }
+.call-menu-note { font-size: var(--call-caption); color: var(--call-ink-4); }
+.call-menu-item:focus-visible { outline: 2px solid var(--call-moss-ink); outline-offset: -2px; }
+
+/* The evidence used to open from the dot. It belongs to the verdict, not to
+   navigation, so it sits under the facts where someone doubting the sentence
+   is already looking.                                                     */
+.call-why {
+  align-self: flex-start;
+  background: none; border: 0; cursor: pointer;
+  padding: 6px 2px; margin: 2px 0 0;
+  font-family: var(--call-font-display); font-style: italic;
+  font-size: var(--call-body-sm); color: var(--call-on-dark-quiet);
+  text-decoration: underline; text-underline-offset: 3px;
+}
+.call-why:hover { color: var(--call-on-dark); }
+.call-why:focus-visible { outline: 2px solid var(--call-on-dark); outline-offset: 2px; }
