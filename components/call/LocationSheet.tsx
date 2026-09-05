@@ -15,7 +15,7 @@
  */
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { readSetup, writeSetup, mirrorToPreferences, type SetupPlace } from '@/lib/godaisy/call/setup';
+import { readSetup, writeSetup, mirrorToPreferences, DEFAULT_SPORTS, type SetupPlace } from '@/lib/godaisy/call/setup';
 import { Spinner } from './Spinner';
 
 interface Suggestion extends SetupPlace {
@@ -85,7 +85,7 @@ export function LocationSheet({ current, onClose }: { current: string; onClose: 
       ? { ...saved, place }
       // Somebody who never onboarded still gets to move the map. The sports
       // fall back to what the place is known for on the next render.
-      : { v: 1 as const, sports: ['hiking', 'running', 'cycling'], place };
+      : { v: 1 as const, sports: [...DEFAULT_SPORTS], place };
     writeSetup(setup);
     mirrorToPreferences(setup);
     window.location.assign('/');

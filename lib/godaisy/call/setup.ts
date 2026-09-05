@@ -53,6 +53,35 @@ const VALID_SPORTS: ReadonlySet<string> = new Set(
 );
 
 /**
+ * What everybody starts with.
+ *
+ * An empty first screen asks a stranger to describe themselves before the app
+ * has shown them anything, and a call with no sports in it has nothing to be
+ * about. These four are the ones almost nobody would call wrong: they need no
+ * kit, no club and no skill, and between them they cover a bright afternoon, a
+ * warm lunchtime, a mild hour sitting still and a clear night — so the seven
+ * days have something to say whatever the week does.
+ *
+ * They are a starting point, not a guess at who you are. Every one is a chip
+ * you can tap off on the first screen.
+ *
+ * Reading is here as `outdoor_reading` ("Read in the Park") rather than
+ * `reading`, which is the indoor one. A café was wanted too, and the library
+ * has no outdoor equivalent of it, so it is deliberately absent: both `cafe`
+ * and `reading` are `weatherSensitive: false`, and the setup screen filters
+ * those out on purpose — indoor things are what a write-off offers *instead*,
+ * and scoring "visit a café" against the forecast would return a perfect day
+ * every day of the year. The café is already in the write-off prompt's
+ * library, which is where a day the weather has ruined goes looking.
+ */
+export const DEFAULT_SPORTS: readonly string[] = [
+  'urban_exploring',  // Go for a Walk
+  'picnicking',       // Have a Picnic
+  'outdoor_reading',  // Read in the Park
+  'stargazing',       // Go Stargazing
+];
+
+/**
  * Parse a cookie into a setup, or return null.
  *
  * A COOKIE IS USER INPUT. This value reaches `fetchForecastForLocation`, which

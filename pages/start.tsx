@@ -27,7 +27,8 @@ import Head from 'next/head';
 import { allSports } from '@/data/activities';
 import { useGoDaisyPushNotifications } from '@/hooks/useGoDaisyPushNotifications';
 import {
-  writeSetup, readSetup, mirrorToPreferences, type CallSetup, type SetupPlace,
+  writeSetup, readSetup, mirrorToPreferences, DEFAULT_SPORTS,
+  type CallSetup, type SetupPlace,
 } from '@/lib/godaisy/call/setup';
 import {
   SportsStep, SpotsStep, HourStep, SEED_TARGET,
@@ -60,7 +61,10 @@ export default function StartPage() {
   const router = useRouter();
   const [step, setStep] = useState(0);
 
-  const [sports, setSports] = useState<string[]>([]);
+  // Not empty: an opening screen that asks a stranger to describe themselves
+  // before it has shown them anything is a worse first move than three
+  // sensible chips they can tap off. See DEFAULT_SPORTS.
+  const [sports, setSports] = useState<string[]>([...DEFAULT_SPORTS]);
   const [place, setPlace] = useState<SetupPlace | null>(null);
   const [coastal, setCoastal] = useState<SetupPlace | null>(null);
   const [pickingCoastal, setPickingCoastal] = useState(false);
