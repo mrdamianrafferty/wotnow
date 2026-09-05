@@ -286,7 +286,11 @@ async function withMarine(
   location: SeoLocation,
   forecast: LocationForecast,
 ): Promise<LocationForecast> {
-  if (location.beachFacingDeg === null || location.beachFacingDeg === undefined) return forecast;
+  // A seeded town declares which way its beach faces; a place someone named in
+  // onboarding only declares that it is on the coast. Either is enough to want
+  // the swell — see `SeoLocation.coastal`.
+  const onTheCoast = location.beachFacingDeg !== null && location.beachFacingDeg !== undefined;
+  if (!onTheCoast && !location.coastal) return forecast;
   try {
     const url =
       `https://marine-api.open-meteo.com/v1/marine?latitude=${location.lat}&longitude=${location.lon}` +

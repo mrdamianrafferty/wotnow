@@ -73,7 +73,18 @@ const DEFAULT_COASTAL_LOCATION: Location = {
 
 const VALID_ACTIVITY_IDS = new Set(activityTypes.map(a => a.id));
 
-const DEFAULT_INTEREST_IDS = [
+/**
+ * What the app assumes about someone it knows nothing about.
+ *
+ * Exported for `/start`, which opens on these: an onboarding screen has exactly
+ * one job on first paint, which is to show a stranger something they recognise.
+ * Deriving the opening set from the activity library instead — one per category,
+ * biggest categories first — produced "american football, music outdoors, fly
+ * fishing" above "hiking", because file order is not popularity. This list is
+ * the app's existing answer to the same question and there is no reason to have
+ * a second one.
+ */
+export const DEFAULT_INTEREST_IDS = [
   'hiking',
   'running',
   'cycling',
