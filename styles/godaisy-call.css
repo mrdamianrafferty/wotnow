@@ -1074,3 +1074,32 @@ section.gd-app { padding: 44px var(--call-gutter-app); }
 section.gd-spot-section { padding: 36px var(--call-gutter-app); }
 section.gd-spot-hero { padding: 40px var(--call-gutter-app) 44px; }
 section.gd-spot-colophon { padding: 28px var(--call-gutter-app) 40px; }
+
+/* ── Waiting ──────────────────────────────────────────────────────────────
+   One spinner, and it holds itself back for 400ms before appearing. A
+   warm marine response lands in 350ms, and a spinner that flashes for a
+   third of a second is more distracting than the wait it describes. The
+   delay is in the animation rather than in a timer, so there is no state
+   to get wrong and nothing to clean up.                                  */
+.call-spin { display: flex; align-items: center; gap: 9px; margin: 0; }
+.call-spin-dot {
+  width: 13px; height: 13px; flex: 0 0 auto;
+  border: 2px solid var(--call-border-strong);
+  border-top-color: var(--call-moss-ink);
+  border-radius: 50%;
+  opacity: 0;
+  animation: call-spin-turn 700ms linear infinite, call-spin-in 1ms linear 400ms forwards;
+}
+.call-spin-label {
+  font-size: var(--call-body-sm); color: var(--call-ink-4);
+  opacity: 0; animation: call-spin-in 1ms linear 400ms forwards;
+}
+@keyframes call-spin-turn { to { transform: rotate(360deg); } }
+@keyframes call-spin-in { to { opacity: 1; } }
+
+/* Reduced motion gets the words without the wheel: the label is the part that
+   carries the meaning, and a spinning ring is decoration for it. */
+@media (prefers-reduced-motion: reduce) {
+  .call-spin-dot { animation: call-spin-in 1ms linear 400ms forwards; border-top-color: var(--call-border-strong); }
+  .call-spin-label { animation: call-spin-in 1ms linear 400ms forwards; }
+}

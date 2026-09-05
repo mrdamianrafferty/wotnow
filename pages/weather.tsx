@@ -27,6 +27,7 @@ import type { GetServerSideProps } from 'next';
 import { EVIDENCE_SECTIONS, type EvidenceSectionId } from '@/lib/godaisy/call/evidence';
 import { rowsFor, type Readings, type Row } from '@/lib/godaisy/call/readings';
 import { setupFromCookieHeader } from '@/lib/godaisy/call/setup';
+import { Spinner } from '@/components/call/Spinner';
 import { SEO_LOCATIONS, type SeoLocation } from '@/data/seoLocations';
 
 const DEFAULT_PLACE = 'newquay-cornwall';
@@ -56,22 +57,55 @@ interface WeatherPageProps {
 export default function WeatherPage({ place, lat, lon, coastal }: WeatherPageProps) {
   const [readings, setReadings] = useState<Readings | null>(null);
   const [state, setState] = useState<'loading' | 'ready' | 'failed'>('loading');
+  /** The sea arrives separately and later — see below. */
+  const [sea, setSea] = useState<'idle' | 'loading' | 'ready' | 'failed'>('idle');
 
+  /*
+   * THE SEA IS FETCHED SECOND, NOT INSTEAD.
+   *
+   * `mode=marine` goes to a second provider for waves, swell, sea temperature
+   * and tide extremes, and measured, it takes about 3s cold against 0.35s for
+   * everything else. Asking for it up front made a coastal visitor wait three
+   * seconds to be told the temperature — the slowest thing on the page holding
+   * up the fastest.
+   *
+   * So: the ordinary conditions land immediately, and the sea fills in behind
+   * them with a spinner in its own two sections. Inland the second request is
+   * never made at all.
+   */
   useEffect(() => {
     let live = true;
     (async () => {
       try {
-        // `mode=marine` is the only thing that returns marine, tides and sea
-        // temperature at all — asking for it inland would be a slower request
-        // for fields this page has already decided not to show.
-        const res = await fetch(
-          `/api/unified-weather?lat=${lat}&lon=${lon}&mode=${coastal ? 'marine' : 'full'}`,
-        );
+        const res = await fetch(`/api/unified-weather?lat=${lat}&lon=${lon}&mode=full`);
         if (!res.ok) throw new Error(String(res.status));
         const j = (await res.json()) as Readings;
         if (live) { setReadings(j); setState('ready'); }
       } catch {
         if (live) setState('failed');
+      }
+    })();
+    return () => { live = false; };
+  }, [lat, lon]);
+
+  useEffect(() => {
+    if (!coastal) return;
+    let live = true;
+    setSea('loading');
+    (async () => {
+      try {
+        const res = await fetch(`/api/unified-weather?lat=${lat}&lon=${lon}&mode=marine`);
+        if (!res.ok) throw new Error(String(res.status));
+        const j = (await res.json()) as Readings;
+        // Merged, not replaced: the marine response carries the ordinary fields
+        // too, and swapping wholesale would make the temperature flicker as a
+        // second copy of the same numbers arrived.
+        if (live) {
+          setReadings((prev) => ({ ...(prev ?? {}), marine: j.marine, tides: j.tides, marineHourly: j.marineHourly }));
+          setSea('ready');
+        }
+      } catch {
+        if (live) setSea('failed');
       }
     })();
     return () => { live = false; };
@@ -81,7 +115,12 @@ export default function WeatherPage({ place, lat, lon, coastal }: WeatherPagePro
     .filter((id) => coastal || !COASTAL_ONLY.has(id))
     .map((id) => EVIDENCE_SECTIONS.find((s) => s.id === id))
     .filter((s): s is (typeof EVIDENCE_SECTIONS)[number] => Boolean(s))
-    .map((s) => ({ section: s, rows: state === 'ready' ? rowsFor({ ...s, because: undefined }, readings) : [] }))
+    .map((s) => ({
+      section: s,
+      rows: state === 'ready' ? rowsFor({ ...s, because: undefined }, readings) : [],
+      waiting: COASTAL_ONLY.has(s.id) && (sea === 'loading' || sea === 'idle'),
+      lost: COASTAL_ONLY.has(s.id) && sea === 'failed',
+    }))
     /*
      * A section with nothing in it is not shown.
      *
@@ -90,7 +129,9 @@ export default function WeatherPage({ place, lat, lon, coastal }: WeatherPagePro
      * cannot tell the difference between "no pollen today" and "no pollen data
      * for anywhere in Spain".
      */
-    .filter(({ rows }) => state !== 'ready' || rows.length > 0);
+    // A sea section still waiting is kept, or it would pop into existence
+    // three seconds after the page settled and shift everything under it.
+    .filter(({ rows, waiting, lost }) => state !== 'ready' || rows.length > 0 || waiting || lost);
 
   const now = state === 'ready' ? headline(readings) : null;
 
@@ -115,17 +156,21 @@ export default function WeatherPage({ place, lat, lon, coastal }: WeatherPagePro
             * find that out is the dashboard problem in miniature.
             */}
           {now && <p className="gd-cond-now">{now}</p>}
-          {state === 'loading' && <p className="gd-cond-quiet">Reading the sky…</p>}
+          {state === 'loading' && <Spinner label="Reading the sky…" />}
           {state === 'failed' && (
             <p className="gd-cond-quiet">
               Those numbers did not load. <Link href="/weather">Try again</Link>.
             </p>
           )}
 
-          {sections.map(({ section, rows }) => (
+          {sections.map(({ section, rows, waiting, lost }) => (
             <section key={section.id} className="gd-cond-block">
               <h2 className="call-label gd-cond-block-title">{section.title}</h2>
-              {rows.length === 0 ? (
+              {waiting && rows.length === 0 ? (
+                <Spinner label={section.id === 'tide' ? 'Reading the tide…' : 'Reading the water…'} />
+              ) : lost && rows.length === 0 ? (
+                <p className="gd-cond-quiet">The sea did not answer.</p>
+              ) : rows.length === 0 ? (
                 <p className="gd-cond-quiet">…</p>
               ) : (
                 <dl className="gd-cond-rows">
