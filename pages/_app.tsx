@@ -5,6 +5,7 @@ import '../styles/Card.css'
 import '../styles/Popup.css'
 // weather-icons-wind.min.css (124KB) moved to weather pages for code splitting
 import '../styles/windwave.css'
+import '../styles/godaisy-call.css'
 // Leaflet CSS moved to map components for code splitting
 
 import type { AppProps } from 'next/app'
