@@ -83,7 +83,7 @@ export default function Footer() {
             </ul>
           </nav>
 
-          <nav className="gd-foot-col" aria-labelledby="foot-family">
+          <nav className="gd-foot-col is-family" aria-labelledby="foot-family">
             <h2 className="call-label gd-foot-title" id="foot-family">The Daisy family</h2>
             <ul className="gd-foot-list">
               {DAISY_FAMILY_LINKS.map(({ label, toApp, url }) => (

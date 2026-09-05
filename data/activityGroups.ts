@@ -203,6 +203,12 @@ export const ACTIVITY_GROUPS: ActivityCategory[] = [
           "outdoor_chess",
           "outdoor_painting",
           "outdoor_music",
+          // Cross-listed from Home Activities. `/interests` shows a thing in
+          // every section that claims it; `/start` places it once, first claim
+          // wins, and cooking on its own under "Home Activities" was a group of
+          // one. Listing it here too puts it with reading and the pub, and
+          // leaves that subcategory empty for `/start` alone to skip.
+          "cooking",
         ],
             },
         ],

@@ -1176,21 +1176,35 @@ section.gd-spot-colophon { padding: 28px var(--call-gutter-app) 40px; }
 .gd-foot-inner {
   max-width: var(--call-measure);
   margin: 0 auto;
-  padding: 40px var(--call-gutter-app) 32px;
+  padding: 32px var(--call-gutter-app) 28px;
 }
 @media (min-width: 700px) {
   .gd-foot-inner { max-width: 900px; padding: 48px var(--call-gutter-web) 36px; }
 }
 
+/* TWO COLUMNS ON A PHONE, NOT ONE.
+   Stacked, the twelve links ran to about 1,100px of footer — three screens of
+   scrolling past a page the reader had already finished. Paired, the same
+   links fit in one. The brand spans both so the wordmark still opens it. */
 .gd-foot-cols {
   display: grid;
-  gap: var(--call-block);
-  grid-template-columns: 1fr;
+  gap: 26px 20px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
 }
-/* Two columns before four: at 700px four tracks give each link list about
-   14 characters, which wraps every second label. */
-@media (min-width: 560px) { .gd-foot-cols { grid-template-columns: repeat(2, 1fr); } }
-@media (min-width: 860px) { .gd-foot-cols { grid-template-columns: 1.4fr 1fr 1fr 1fr; } }
+.gd-foot-brand { grid-column: 1 / -1; }
+/* Five siblings in a single narrow track left the other half of the row empty
+   and added five rows of height for nothing. Spanning both and pairing them
+   costs three rows instead of five. */
+.gd-foot-col.is-family { grid-column: 1 / -1; }
+.gd-foot-col.is-family .gd-foot-list { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+/* Four across only at 860px: any earlier and each list gets about fourteen
+   characters, which wraps every second label. */
+@media (min-width: 860px) {
+  .gd-foot-cols { grid-template-columns: 1.4fr 1fr 1fr 1fr; gap: var(--call-block); }
+  .gd-foot-brand { grid-column: auto; }
+  .gd-foot-col.is-family { grid-column: auto; }
+  .gd-foot-col.is-family .gd-foot-list { grid-template-columns: 1fr; }
+}
 
 .gd-foot-brand img { display: block; margin-bottom: 10px; }
 .gd-foot-mark {
@@ -1206,7 +1220,7 @@ section.gd-spot-colophon { padding: 28px var(--call-gutter-app) 40px; }
 
 .gd-foot-title { margin: 0 0 12px; color: var(--call-ink-4); }
 
-.gd-foot-list { margin: 0; padding: 0; list-style: none; display: grid; gap: 9px; }
+.gd-foot-list { margin: 0; padding: 0; list-style: none; display: grid; gap: 8px; }
 .gd-foot-list a {
   color: var(--call-ink-3);
   text-decoration: none;
@@ -1226,8 +1240,8 @@ section.gd-spot-colophon { padding: 28px var(--call-gutter-app) 40px; }
   gap: 8px 16px;
   justify-content: space-between;
   align-items: baseline;
-  margin: var(--call-block) 0 0;
-  padding-top: 18px;
+  margin: 26px 0 0;
+  padding-top: 16px;
   border-top: 1px solid var(--call-border);
   font-size: var(--call-caption);
   color: var(--call-ink-4);

@@ -243,6 +243,27 @@ const PHRASE_OVERRIDES: Record<string, string> = {
   outdoor_meditation: 'meditating outdoors',
   outdoor_yoga: 'yoga in the park',
   outdoor_painting: 'painting outdoors',
+
+  /**
+   * The indoor set, for the same reason as the seven above.
+   *
+   * These stopped being hypothetical when the setup screen stopped filtering
+   * indoor activities out. Each is a name the strip cannot rescue: taking the
+   * verb off "Read" or "Paint" or "Dance" leaves nothing, and leaving it on
+   * gives "a day for read".
+   */
+  reading: 'reading',
+  painting: 'painting',
+  cooking: 'cooking',
+  dance: 'dancing',
+  meditation: 'meditating',
+  gym_workout: 'the gym',
+  spinning: 'a spin class',
+  diy: 'some DIY',
+  gaming: 'some games',
+  watch_a_movie: 'television',
+  playing_records: 'records',
+  playing_cards: 'cards',
 };
 
 export function phraseFor(activityId: string, name?: string): string {
@@ -254,8 +275,15 @@ export function phraseFor(activityId: string, name?: string): string {
      Birds". Stripping only "Go " produced "a good day for play golf" and "not a
      day for do some gardening". */
   return name
-    .replace(/^(?:Go|Play|Watch(?: for)?|Make|Take|Have|Try|Do Some)\s+/i, '')
+    /* "Visit", "Hit" and a bare "Do" arrived with the indoor activities, which
+       the setup screen used to filter out — "a day for visit a café" and "a day
+       for do yoga" were both live the moment it stopped. */
+    .replace(/^(?:Go|Play|Watch(?: for)?|Make|Take|Have|Try|Visit|Hit|Do(?: Some)?)\s+/i, '')
     .replace(/\s*\((?:Inland|Coastal)\)\s*$/i, '')
+    /* "(Indoor)" is not a qualifier to drop — indoor tennis and tennis are two
+       different afternoons — so it moves to the front where English puts it,
+       rather than trailing the noun as "tennis (indoor)". */
+    .replace(/^(.*?)\s*\(indoor\)\s*$/i, 'indoor $1')
     .trim()
     .toLowerCase();
 }

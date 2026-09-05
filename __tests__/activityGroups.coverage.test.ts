@@ -9,8 +9,9 @@
  * else, so they appeared last, unlabelled, under a heading that told the reader
  * nothing.
  *
- * This test is the thing that was missing. Adding a weather-sensitive activity
- * now fails here until it has been filed somewhere a person would look for it.
+ * This test is the thing that was missing. Adding an activity now fails here
+ * until it has been filed somewhere a person would look for it — indoor ones
+ * included, since the setup screen stopped filtering those out.
  */
 
 import { allSports } from '@/data/activities';
@@ -19,7 +20,6 @@ import { ACTIVITY_GROUPS } from '@/data/activityGroups';
 interface Activity {
   id: string;
   name: string;
-  weatherSensitive: boolean;
 }
 
 const library = allSports as Activity[];
@@ -37,9 +37,9 @@ const curatedSet = new Set(curated);
 const DEDUPED_IN_UI = new Set(['jetskiing']);
 
 describe('ACTIVITY_GROUPS', () => {
-  it('files every weather-sensitive activity the setup screen can show', () => {
+  it('files every activity the setup screen can show', () => {
     const missing = library
-      .filter((a) => a.weatherSensitive && !curatedSet.has(a.id) && !DEDUPED_IN_UI.has(a.id))
+      .filter((a) => !curatedSet.has(a.id) && !DEDUPED_IN_UI.has(a.id))
       .map((a) => `${a.id} (${a.name})`);
 
     expect(missing).toEqual([]);

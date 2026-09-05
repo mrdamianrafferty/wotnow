@@ -57,28 +57,27 @@ const VALID_SPORTS: ReadonlySet<string> = new Set(
  *
  * An empty first screen asks a stranger to describe themselves before the app
  * has shown them anything, and a call with no sports in it has nothing to be
- * about. These four are the ones almost nobody would call wrong: they need no
+ * about. These five are the ones almost nobody would call wrong: they need no
  * kit, no club and no skill, and between them they cover a bright afternoon, a
- * warm lunchtime, a mild hour sitting still and a clear night — so the seven
- * days have something to say whatever the week does.
+ * warm lunchtime, a clear night and — through the café and the book — the days
+ * the weather takes away. So the seven days have something to say whatever the
+ * week does, including the weeks that are a write-off.
  *
  * They are a starting point, not a guess at who you are. Every one is a chip
  * you can tap off on the first screen.
  *
- * Reading is here as `outdoor_reading` ("Read in the Park") rather than
- * `reading`, which is the indoor one. A café was wanted too, and the library
- * has no outdoor equivalent of it, so it is deliberately absent: both `cafe`
- * and `reading` are `weatherSensitive: false`, and the setup screen filters
- * those out on purpose — indoor things are what a write-off offers *instead*,
- * and scoring "visit a café" against the forecast would return a perfect day
- * every day of the year. The café is already in the write-off prompt's
- * library, which is where a day the weather has ruined goes looking.
+ * `cafe` and `reading` are `weatherSensitive: false`, which is deliberate and
+ * not a problem: the scorer opens an indoor activity at 65, lifts it to 80 in
+ * heavy rain and drops it to 55 on a bright still day, so they sit below the
+ * outdoor four exactly when they should and rise above them exactly when they
+ * should.
  */
 export const DEFAULT_SPORTS: readonly string[] = [
   'urban_exploring',  // Go for a Walk
   'picnicking',       // Have a Picnic
-  'outdoor_reading',  // Read in the Park
   'stargazing',       // Go Stargazing
+  'cafe',             // Visit a Café
+  'reading',          // Read
 ];
 
 /**

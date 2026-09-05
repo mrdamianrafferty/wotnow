@@ -79,10 +79,23 @@ export default function StartPage() {
   const [pushWorking, setPushWorking] = useState(false);
 
   const options: SportOption[] = useMemo(() => {
+    /*
+     * INDOOR ACTIVITIES ARE IN THE LIST.
+     *
+     * They were filtered out at first, on the argument that the call is about
+     * what the weather decides and an indoor thing is what a write-off offers
+     * *instead*. The argument was wrong about the scoring. `scoreActivity`
+     * already has a branch for `weatherSensitive: false`: it opens at 65,
+     * climbs to 80 in heavy rain and drops to 55 on a bright, still 20° day.
+     * So a café never wins a good afternoon from a bike ride, and on a wet
+     * Tuesday it rises to the top on its own — which is the behaviour the
+     * separate write-off prompt was built to fake.
+     *
+     * It was also wrong about people. Somebody who reads, cooks and goes to
+     * galleries was being told this app had nothing for them on the first
+     * screen it showed them.
+     */
     const all = (allSports as Array<{ id: string; name: string; category: string; weatherSensitive: boolean }>)
-      // Indoor activities are what a write-off offers instead; they are not
-      // what the call is about, and offering them here would say otherwise.
-      .filter((a) => a.weatherSensitive)
       .map((a) => ({ id: a.id, label: chipLabel(a.name), category: a.category, water: WATER.has(a.id) }));
 
     /*
