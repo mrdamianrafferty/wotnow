@@ -336,9 +336,32 @@ export function HourStep({
           {pushState === 'granted' ? (
             <p className="call-setup-help">That is set. Go Daisy will tell you at {labelFor(hour)}.</p>
           ) : pushState === 'denied' ? (
+            /*
+              * WORDED TO BE TRUE ON EVERY PLATFORM IT CAN REACH.
+              *
+              * It said "blocked for this site" and "your browser settings",
+              * which is right in a browser tab and wrong in the two places
+              * this actually renders as an app. `useGoDaisyPushNotifications`
+              * gates on `serviceWorker` and `PushManager`, so:
+              *
+              *   - iOS in Capacitor: WKWebView has no service worker, the
+              *     whole block is `unsupported` and never renders.
+              *   - iOS installed to the home screen (16.4+): service workers
+              *     and Web Push both work, so this DOES render — inside what
+              *     the person experiences as an app, telling them to change a
+              *     browser setting for a site. The fix there is iOS Settings ›
+              *     Notifications › Go Daisy.
+              *   - Android WebView: exposes service workers in some
+              *     configurations, so the same applies.
+              *
+              * Detecting all of that to fork one sentence is more machinery
+              * than the sentence is worth, and it would still be wrong on the
+              * next platform. So the sentence names neither a site nor a
+              * browser, and stays true wherever it lands.
+              */
             <p className="call-setup-help">
-              Notifications are blocked for this site, so Go Daisy will be here on the screen
-              instead. Your browser settings can undo that.
+              Notifications are switched off for Go Daisy, so it will be here on the screen
+              instead. You can turn them on in your device settings whenever you like.
             </p>
           ) : (
             <button
@@ -347,7 +370,10 @@ export function HourStep({
               onClick={onEnablePush}
               disabled={pushState === 'working'}
             >
-              {pushState === 'working' ? 'Asking…' : 'Send it to my phone'}
+              {/* Not "send it to my phone": this screen is reached from a
+                  laptop as often as a handset, and it goes to whatever you
+                  said yes on. */}
+              {pushState === 'working' ? 'Asking…' : 'Send it to me'}
             </button>
           )}
         </div>

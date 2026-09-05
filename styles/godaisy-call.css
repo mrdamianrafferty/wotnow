@@ -342,6 +342,29 @@
 .call-lockup { margin-top: auto; }
 .call-body { display: flex; flex-direction: column; gap: 14px; }
 
+/*
+ * TABLETS ARE NOT BIG PHONES.
+ *
+ * On an iPad the call was a phone layout inflated: a 62px verdict in the corner
+ * of an 820px canvas, three fact tiles and a Send button stretched the full
+ * width, and a void where the composition should be. The type was at its
+ * ceiling and the ceiling was measured against a 390px screen.
+ *
+ * Two changes and no new layout. The verdict's ceiling rises — `fitVerdict`
+ * reads this token rather than its own constant, so the media query is the
+ * whole change — and the text column stops at a measure instead of running the
+ * full width. Left-aligned rather than centred, because the photograph is the
+ * other half of the composition and centring the words would fight it.
+ */
+@media (min-width: 700px) {
+  :root { --call-verdict-max: 92px; }
+  .call-content { max-width: 620px; padding-left: 40px; padding-right: 40px; }
+}
+@media (min-width: 1100px) {
+  :root { --call-verdict-max: 108px; }
+  .call-content { max-width: 720px; padding-left: 48px; padding-right: 48px; }
+}
+
 .call-leadin {
   font-family: var(--call-font-display);
   font-size: 19px;
