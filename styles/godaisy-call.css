@@ -567,3 +567,115 @@
 .call-setup-link:focus-visible, .call-setup-push-btn:focus-visible {
   outline: 2px solid var(--call-moss-ink); outline-offset: 2px;
 }
+
+/* ── The evidence drawer ──────────────────────────────────────────────────
+   Phase 5. Paper over the photograph: the call is the image and the
+   sentence; this is the workings, and workings are read, not admired.
+   It comes up from the bottom because it belongs to the screen it
+   explains rather than replacing it — the verdict stays visible above.  */
+.call-drawer-scrim {
+  position: fixed; inset: 0; z-index: 60;
+  background: rgba(28, 25, 23, .55);
+  display: flex; align-items: flex-end; justify-content: center;
+  animation: call-drawer-in var(--call-t-drawer) var(--call-ease-out);
+}
+.call-drawer {
+  width: 100%; max-width: 520px;
+  max-height: 88dvh; overflow-y: auto; overscroll-behavior: contain;
+  background: var(--call-page); color: var(--call-ink-1);
+  border-radius: var(--call-r-panel) var(--call-r-panel) 0 0;
+  box-shadow: var(--call-shadow-drawer);
+  padding: 10px var(--call-gutter-app) calc(24px + env(safe-area-inset-bottom));
+  animation: call-drawer-up var(--call-t-drawer) var(--call-ease-out);
+}
+@keyframes call-drawer-in { from { opacity: 0 } to { opacity: 1 } }
+@keyframes call-drawer-up { from { transform: translateY(4%) } to { transform: none } }
+@media (prefers-reduced-motion: reduce) {
+  .call-drawer-scrim, .call-drawer { animation: none; }
+}
+
+.call-drawer-grab {
+  width: 36px; height: 4px; margin: 0 auto 14px;
+  border-radius: var(--call-r-pill); background: var(--call-border-strong);
+}
+.call-drawer-head { position: relative; padding-right: 62px; margin-bottom: var(--call-block); }
+.call-drawer-kicker { margin: 0 0 4px; color: var(--call-ink-4); }
+/* The drawer opens on the sentence it is explaining, so there is never a
+   moment where you are reading numbers and have forgotten the question.   */
+.call-drawer-headline {
+  margin: 0; font-family: var(--call-font-display);
+  font-size: var(--call-screen-title); font-weight: 700;
+  line-height: 1.16; letter-spacing: -.01em; text-wrap: balance;
+}
+.call-drawer-close {
+  position: absolute; top: -2px; right: 0;
+  font: 400 14px var(--call-font-body); cursor: pointer;
+  background: none; border: 0; padding: 6px 2px;
+  color: var(--call-ink-3); text-decoration: underline; text-underline-offset: 3px;
+}
+
+/* Three bars, never twenty-four — the same resolution the window is built
+   on. A 24-bar chart claims the wind turns at 10:00; this claims only what
+   was actually scored.                                                    */
+.call-drawer-bars { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--call-grid-gap); margin-bottom: var(--call-block); }
+.call-drawer-bar {
+  display: flex; flex-direction: column; gap: 3px;
+  padding: 11px 12px; border-radius: var(--call-r-card);
+  border: 1px solid var(--call-border);
+}
+.call-drawer-bar-part { font: 600 13px var(--call-font-body); }
+.call-drawer-bar-band {
+  font-family: var(--call-font-display); font-style: italic;
+  font-variant-caps: small-caps; font-size: var(--call-label); letter-spacing: .08em;
+}
+.call-drawer-bar.is-prime      { background: var(--call-band-prime-bg);     border-color: var(--call-band-prime-bg); }
+.call-drawer-bar.is-prime      .call-drawer-bar-band { color: var(--call-band-prime-fg); }
+.call-drawer-bar.is-worthALook { background: var(--call-band-look-bg);      border-color: var(--call-band-look-bg); }
+.call-drawer-bar.is-worthALook .call-drawer-bar-band { color: var(--call-band-look-fg); }
+.call-drawer-bar.is-marginal   { background: var(--call-band-marginal-bg);  border-color: var(--call-band-marginal-bg); }
+.call-drawer-bar.is-marginal   .call-drawer-bar-band { color: var(--call-band-marginal-fg); }
+.call-drawer-bar.is-notToday   { background: var(--call-band-not-today-bg); border-color: var(--call-band-not-today-bg); }
+.call-drawer-bar.is-notToday   .call-drawer-bar-band { color: var(--call-band-not-today-fg); }
+.call-drawer-bar.is-unsafe     { background: var(--call-band-unsafe-bg);    border-color: var(--call-band-unsafe-bg); }
+.call-drawer-bar.is-unsafe     .call-drawer-bar-band { color: var(--call-band-unsafe-fg); }
+.call-drawer-bars-note {
+  grid-column: 1 / -1; margin: 2px 0 0;
+  font-size: var(--call-caption); color: var(--call-ink-4);
+}
+
+.call-drawer-sections { display: flex; flex-direction: column; }
+.call-drawer-section { border-top: 1px solid var(--call-border); }
+.call-drawer-section:last-child { border-bottom: 1px solid var(--call-border); }
+.call-drawer-section-head {
+  width: 100%; display: flex; align-items: center; gap: 10px;
+  padding: 14px 2px; min-height: var(--call-tap-min);
+  background: none; border: 0; cursor: pointer; text-align: left;
+  font: 600 var(--call-body) var(--call-font-body); color: var(--call-ink-1);
+}
+.call-drawer-section-title { flex: 1 1 auto; }
+/* Only sections a criterion actually pointed at are marked. If everything is
+   labelled evidence the word stops meaning anything.                      */
+.call-drawer-section-why {
+  font-family: var(--call-font-display); font-style: italic;
+  font-size: var(--call-caption); color: var(--call-ink-3);
+  font-weight: 400; flex: 0 0 auto;
+}
+.call-drawer-section.is-evidence .call-drawer-section-title { color: var(--call-moss-ink); }
+.call-drawer-section-chev {
+  font: 400 18px var(--call-font-body); color: var(--call-ink-4);
+  width: 18px; text-align: center; flex: 0 0 auto;
+}
+.call-drawer-section-body { padding: 0 2px 14px; display: flex; flex-direction: column; gap: 7px; }
+.call-drawer-row { display: flex; justify-content: space-between; gap: 16px; margin: 0; font-size: var(--call-body-sm); }
+.call-drawer-row-label { color: var(--call-ink-3); }
+.call-drawer-row-value { color: var(--call-ink-1); font-weight: 600; font-variant-numeric: tabular-nums; }
+.call-drawer-quiet { margin: 0; font-size: var(--call-body-sm); color: var(--call-ink-4); }
+
+.call-drawer-foot {
+  margin: var(--call-block) 0 0; text-align: center;
+  font-size: var(--call-caption); color: var(--call-ink-4);
+  font-variant-numeric: tabular-nums;
+}
+.call-drawer-close:focus-visible, .call-drawer-section-head:focus-visible {
+  outline: 2px solid var(--call-moss-ink); outline-offset: -2px;
+}

@@ -30,6 +30,8 @@ import { ScreenChrome } from '@/components/call/ScreenChrome';
 import { AlternatesControl } from '@/components/call/AlternatesControl';
 import { IndoorPrompt, type IndoorOption } from '@/components/call/IndoorPrompt';
 import { generateShareToken, getShareUrl, type GoDaisyShareData } from '@/lib/share/shareToken';
+import { EvidenceDrawer } from '@/components/call/EvidenceDrawer';
+import { asSentence } from '@/lib/godaisy/call/verdict';
 
 const DAYS = 7;
 
@@ -68,6 +70,10 @@ interface CallPageProps {
   photos: Record<string, string>;
   /** Offered on a write-off. Weather-insensitive, so the day cannot spoil them. */
   indoor: IndoorOption[];
+  /** Where the drawer reads its numbers from, on demand. */
+  coords: { lat: number; lon: number };
+  /** Whether the sea and the tides are evidence here, or dashboard furniture. */
+  coastal: boolean;
   error?: string;
 }
 
@@ -77,11 +83,12 @@ const SWIPE_MIN = 48;
 /** What `navigator.share` takes. Typed here because the DOM lib's version omits files. */
 interface ShareData { title?: string; text?: string; url?: string; files?: File[] }
 
-export default function CallPage({ slug, place, days, photos, indoor, error }: CallPageProps) {
+export default function CallPage({ slug, place, days, photos, indoor, coords, coastal, error }: CallPageProps) {
   const [dayIndex, setDayIndex] = useState(0);
   const [altIndex, setAltIndex] = useState(0);
   const [touchX, setTouchX] = useState<number | null>(null);
   const [sendState, setSendState] = useState<'idle' | 'working' | 'sent' | 'copied'>('idle');
+  const [drawer, setDrawer] = useState(false);
 
   // altIndex is a view state, not a preference: the daily call stays
   // deterministic, so turning the day resets which alternate is showing.
@@ -223,7 +230,10 @@ export default function CallPage({ slug, place, days, photos, indoor, error }: C
         <div className="call-content">
           <div className="call-chrome">
             <p className="call-label call-label--on-dark">{kicker}</p>
-            <ScreenChrome />
+            {/* The dot's first job: the evidence. It was rendered as nothing
+                until something lived behind it — a focusable control that does
+                nothing is worse than an absent one. */}
+            <ScreenChrome onMenu={() => setDrawer(true)} />
           </div>
 
           <VerdictLockup
@@ -256,6 +266,18 @@ export default function CallPage({ slug, place, days, photos, indoor, error }: C
             <span>swipe for tomorrow</span>
           </div>
         </div>
+
+        {drawer && (
+          <EvidenceDrawer
+            option={option}
+            place={place}
+            lat={coords.lat}
+            lon={coords.lon}
+            coastal={coastal}
+            headline={asSentence(option.verdict)}
+            onClose={() => setDrawer(false)}
+          />
+        )}
       </main>
     </Shell>
   );
@@ -431,7 +453,19 @@ export const getServerSideProps: GetServerSideProps<CallPageProps> = async (ctx)
         label: a.name.replace(/^(?:Go to|Do Some|Go|Play|Do|Have|Take|Try|Hit|Visit)\s+/i, '').toLowerCase(),
       }));
 
-    return { props: { slug: location.slug, place: location.name, days, photos, indoor } };
+    return {
+      props: {
+        slug: location.slug,
+        place: location.name,
+        days,
+        photos,
+        indoor,
+        coords: { lat: location.lat, lon: location.lon },
+        // Coastal by the same test `withMarine` uses, so the drawer offers the
+        // sea exactly where the sea was scored.
+        coastal: location.beachFacingDeg != null || location.coastal === true,
+      },
+    };
   } catch (e) {
     // The verdict is withheld rather than guessed. Never a confident sentence
     // over incomplete data.
@@ -442,6 +476,10 @@ export const getServerSideProps: GetServerSideProps<CallPageProps> = async (ctx)
         days: [],
         photos: {},
         indoor: [],
+        // The location resolved; it is the forecast that failed. These stay
+        // correct so a retry has somewhere to read from.
+        coords: { lat: location.lat, lon: location.lon },
+        coastal: location.beachFacingDeg != null || location.coastal === true,
         error: e instanceof Error ? e.message : 'The forecast is unavailable.',
       },
     };

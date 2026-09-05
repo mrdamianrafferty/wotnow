@@ -52,7 +52,7 @@ export interface CallWindow {
  * One scorer call for all the parts, because `getSuggestionsByDay` maps over the
  * array it is given and a second call would double the work for nothing.
  */
-function scoreParts(
+export function scoreParts(
   activityId: string,
   parts: ForecastParts,
   date: number,
@@ -78,6 +78,25 @@ function scoreParts(
     if (!s) return { name, band: 'notToday' as CallBand };
     return { name, band: bandFor(s.score, s.vetoed, s.binding?.key), key: s.binding?.key };
   });
+}
+
+/**
+ * The three parts as bands, for the drawer's bars.
+ *
+ * DAYPARTS, NOT TWENTY-FOUR HOURS — the same decision as the window itself. A
+ * 24-bar chart is the app claiming to know that the wind turns at 10:00, which
+ * the forecast cannot support; three bars claim exactly what was scored. It is
+ * also free, because these scores were computed for the window anyway.
+ */
+export function partBands(
+  activityId: string,
+  parts: ForecastParts | undefined,
+  date: number,
+  activities: ActivityType[],
+  now: Date,
+): Array<{ name: PartName; band: CallBand }> {
+  if (!parts) return [];
+  return scoreParts(activityId, parts, date, activities, now).map(({ name, band }) => ({ name, band }));
 }
 
 /**
