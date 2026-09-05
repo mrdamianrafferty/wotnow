@@ -74,6 +74,25 @@ function verdictNoun(activityId: string, name?: string): string {
   return `a day for ${phrase}.`;
 }
 
+/**
+ * How a sport is named after the word "for".
+ *
+ * `phraseFor` writes for a clause, and some of its phrases arrive carrying the
+ * preposition or frame they expect to sit in: "for a walk", "to the pub",
+ * "a day at the beach". Dropped straight into a "for ___" slot they read
+ * "past the safe limit for for a walk" — which was live in the unsafe branch,
+ * and would have been in the write-off too.
+ *
+ * Strip the frame and keep the thing itself.
+ */
+function afterFor(activityId: string, name?: string): string {
+  const p = phraseFor(activityId, name);
+  if (/^for\s/.test(p)) return p.replace(/^for\s/, '');       // "for a walk" → "a walk"
+  if (/^to\s/.test(p)) return p.replace(/^to\s/, '');         // "to the pub" → "the pub"
+  if (/^a day\s/.test(p)) return p.replace(/^a day\s+\w+\s/, ''); // "a day at the beach" → "the beach"
+  return p;
+}
+
 export interface VerdictInput {
   suggestion: Pick<Suggestion, 'activityId' | 'score' | 'binding' | 'vetoed'>;
   activityName?: string;
@@ -242,7 +261,7 @@ export function makeVerdict(input: VerdictInput): Verdict {
     const gustClause = gust !== undefined ? ` Gusting to ${Math.round(gust)} km/h.` : '';
     return {
       verdict: when('{When} is one to sit out.'),
-      reason: `Conditions are past the safe limit for ${phraseFor(suggestion.activityId, activityName)}.${gustClause}${
+      reason: `Conditions are past the safe limit for ${afterFor(suggestion.activityId, activityName)}.${gustClause}${
         nextYes ? ` ${nextYes} is the one.` : ''
       }`.trim(),
     };
@@ -271,8 +290,23 @@ export function makeVerdict(input: VerdictInput): Verdict {
       ? 'Nothing you have picked is at its best.'
       : 'Nothing you have picked would be any fun.';
     const first = bits.length ? `${bits.join(' with ')}.` : fallback;
+    /*
+     * The write-off NAMES THE SPORT, and takes the lead-in frame to do it.
+     *
+     * "Friday is a write-off." is true of the weather and says nothing about
+     * the person reading it, who came here about one thing. "a write-off for
+     * cycling" is the same sentence doing the job.
+     *
+     * The lead-in is what makes it fit. As one line, "Wednesday is a write-off
+     * for cross-country skiing." is 50 characters against a 41-character budget
+     * — 35 of 81 sports would have overflowed the lockup. Split the way every
+     * good-day verdict already splits, the big line is 37 at its worst.
+     */
     return {
-      verdict: when(band === 'marginal' ? '{When} is nothing special.' : '{When} is a write-off.'),
+      leadIn: when('{When} is'),
+      verdict: band === 'marginal'
+        ? 'nothing special.'
+        : `a write-off for ${afterFor(suggestion.activityId, activityName)}.`,
       // A no ALWAYS names the next yes. Without it the app has told you to close
       // it and given you no reason to come back.
       reason: `${first[0].toUpperCase()}${first.slice(1)}${nextYes ? ` ${nextYes} is the one.` : ''}`,

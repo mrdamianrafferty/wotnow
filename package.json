@@ -3,8 +3,8 @@
   "type": "module",
   "version": "1.0.0",
   "scripts": {
-    "prebuild": "",
-    "prevercel-build": "",
+    "prebuild": "npm run prebake:call",
+    "prevercel-build": "npm run prebake:call",
     "postinstall": "(git config core.hooksPath .githooks || true) && (bash patches/apply-apple-sign-in-fix.sh || true)",
     "clean:dev": "bash ./scripts/clean-dev.sh",
     "dev": "node ./scripts/ensure-next-manifests.cjs && next dev --webpack",
@@ -66,7 +66,8 @@
     "android:release:growdaisy": "./scripts/build-android.sh growdaisy release",
     "version:bump:findr": "./scripts/bump-version.sh findr",
     "version:bump:godaisy": "./scripts/bump-version.sh godaisy",
-    "version:bump:growdaisy": "./scripts/bump-version.sh growdaisy"
+    "version:bump:growdaisy": "./scripts/bump-version.sh growdaisy",
+    "prebake:call": "tsx scripts/prebake-call-images.ts"
   },
   "resolutions": {
     "next": {
