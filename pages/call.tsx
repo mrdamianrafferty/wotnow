@@ -29,6 +29,9 @@ import { AlternatesControl } from '@/components/call/AlternatesControl';
 
 const DAYS = 7;
 
+/** Where a visitor with no query lands. A real place with several sports. */
+const DEFAULT_PLACE = 'newquay-cornwall';
+
 interface CallPageProps {
   /** The location's slug, so the share endpoint can be addressed. */
   slug: string;
@@ -216,11 +219,18 @@ function Shell({ title, children }: { title: string; children: React.ReactNode }
 }
 
 export const getServerSideProps: GetServerSideProps<CallPageProps> = async (ctx) => {
-  const slug = String(ctx.query.place ?? 'croyde-bay');
-  const location =
-    SEO_LOCATIONS.find((l: SeoLocation) => l.slug === slug) ??
-    SEO_LOCATIONS.find((l: SeoLocation) => l.slug.includes('croyde')) ??
-    SEO_LOCATIONS[0];
+  /*
+   * A place that was ASKED FOR and does not exist must 404, not quietly become
+   * another one. Requesting ?place=croyde-bay served Llanes — the first row in
+   * the data file — under a kicker naming Llanes, which reads as a bug in the
+   * forecast rather than a bad URL. A visitor with no query still gets a default,
+   * because a stranger arriving cold should see a working call.
+   */
+  const asked = ctx.query.place ? String(ctx.query.place) : null;
+  const location = asked
+    ? SEO_LOCATIONS.find((l: SeoLocation) => l.slug === asked)
+    : (SEO_LOCATIONS.find((l: SeoLocation) => l.slug === DEFAULT_PLACE) ?? SEO_LOCATIONS[0]);
+  if (!location) return { notFound: true };
 
   const sports = String(ctx.query.sports ?? '')
     .split(',')
