@@ -102,3 +102,4 @@ scripts/backups/*.json
 
 # Baked share photography — regenerate with scripts/prebake-call-images.ts
 public/call-photos/
+scratch/

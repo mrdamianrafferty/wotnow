@@ -58,10 +58,18 @@ export type DaypartName = (typeof PART_ORDER)[number];
 /**
  * Overnight is aggregated and never offered as a window.
  *
- * "Best overnight" is not advice for anything in the library, and the two
- * activities that happen after dark — stargazing, camping — read the evening
- * part. It is bucketed rather than discarded so the boundaries stay the rain
- * window's, which has always had four.
+ * "Best overnight" is not advice for anything in the library, and what happens
+ * after dark reads the evening part instead. It is bucketed rather than
+ * discarded so the boundaries stay the rain window's, which has always had
+ * four.
+ *
+ * That "reads the evening part" was a description of intent for months and not
+ * of behaviour: `scoreParts` scored all three parts for everything, so
+ * stargazing was judged on the sky at ten in the morning and the call said
+ * "Best in the morning" under it. `usableParts` in `window.ts` is where the
+ * intent is now actually enforced, off the `night` tag — and stargazing is the
+ * only activity carrying it, camping included, which this comment used to
+ * claim otherwise.
  */
 export type BucketName = 'overnight' | DaypartName;
 

@@ -47,6 +47,38 @@ export interface CallWindow {
 }
 
 /**
+ * The parts of the day an activity can actually happen in.
+ *
+ * `dayparts.ts` has always said that the things that happen after dark "read
+ * the evening part", but nothing enforced it: `scoreParts` scored morning,
+ * afternoon and evening alike for everything, so stargazing was judged on how
+ * clear the sky was at ten in the morning. On a September Saturday in Sheffield
+ * the call read "a stargazing day. Dry, 18°. Best in the morning." — advice
+ * about when to go and look at the stars, given for an hour when there are
+ * none.
+ *
+ * Derived from the `night` tag rather than a list, so an activity added to the
+ * library with that tag gets the behaviour without anyone remembering to come
+ * back here.
+ *
+ * It is deliberately not the reverse rule. Plenty of things are *typically*
+ * done in daylight and are perfectly possible at dusk, and "you cannot picnic
+ * in the evening" is the app inventing a limit. Only darkness is a fact.
+ */
+function usableParts(
+  activityId: string,
+  activities: ActivityType[],
+): ReadonlySet<PartName> {
+  const tags = activities.find((a) => a.id === activityId)?.tags;
+  return tags?.includes('night') ? NIGHT_ONLY : ALL_PARTS;
+}
+
+const ALL_PARTS: ReadonlySet<PartName> = new Set(PART_ORDER);
+/* Overnight is bucketed and never offered as a window — see `dayparts.ts` — so
+   the evening is where a night activity is scored. */
+const NIGHT_ONLY: ReadonlySet<PartName> = new Set<PartName>(['evening']);
+
+/**
  * Which parts of this day are good enough to do this activity in.
  *
  * One scorer call for all the parts, because `getSuggestionsByDay` maps over the
@@ -59,7 +91,8 @@ export function scoreParts(
   activities: ActivityType[],
   now: Date,
 ): Array<{ name: PartName; band: CallBand; score: number; key?: string }> {
-  const present = PART_ORDER.filter((p): p is PartName => Boolean(parts[p]));
+  const usable = usableParts(activityId, activities);
+  const present = PART_ORDER.filter((p): p is PartName => Boolean(parts[p]) && usable.has(p));
   if (!present.length) return [];
 
   const scored = getSuggestionsByDay({
