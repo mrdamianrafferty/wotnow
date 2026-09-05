@@ -105,6 +105,13 @@ export interface VerdictInput {
    * Undefined until then, and every sentence below reads correctly without it.
    */
   window?: { parts: readonly string[]; ends?: string };
+  /**
+   * True when the day was called off by its own totals and promoted by its
+   * parts — see `promote` in makeCall.
+   *
+   * The reason is written differently for one of these: see below.
+   */
+  promoted?: boolean;
   /** For a no-day: the next day that is a yes, already formatted ("Tuesday"). */
   nextYes?: string;
   /** Seeds the phrasing so the same day at the same place always reads the same. */
@@ -308,7 +315,7 @@ const LIMITING_BELOW = 0.5;
  * told you to close it and given you no reason to come back.
  */
 export function makeVerdict(input: VerdictInput): Verdict {
-  const { suggestion, activityName, weather, band, isFirst, window, nextYes, place = '', dayIndex = 0, weekday = '' } = input;
+  const { suggestion, activityName, weather, band, isFirst, window, promoted, nextYes, place = '', dayIndex = 0, weekday = '' } = input;
   const when = (text: string) => fillWhen(text, weekday, dayIndex === 0);
   const windowClause = window ? windowSentence(window.parts, window.ends) : '';
 
@@ -375,7 +382,24 @@ export function makeVerdict(input: VerdictInput): Verdict {
   const clause = limiting
     ? bindingClause(weather, suggestion.activityId, suggestion.binding?.key)
     : goodClause(weather, suggestion.activityId);
-  const reason = [clause ? `${upperFirst(clause)}.` : '', windowClause].filter(Boolean).join(' ').trim();
+  /*
+   * A PROMOTED DAY DOES NOT GET TO DESCRIBE ITSELF.
+   *
+   * Its conditions clause is written from the run's weather — the hours the
+   * verdict is about — and read as a claim about the whole day it overstates:
+   * "Monday is a walking day. Dry through." went out over a day carrying 3.7 mm
+   * of rain, because the afternoon was dry and the afternoon is what was being
+   * recommended. True of the hours, false of the day, and the reader has no way
+   * to tell which was meant.
+   *
+   * So where a window exists, it carries the reason alone — "Best in the
+   * afternoon, and the rain comes in after that" is time-bound by construction
+   * and cannot be misread as the day. Where no window exists the day really did
+   * hold up part by part, and the clause is honest again.
+   */
+  const suppressClause = promoted && Boolean(windowClause);
+  const reason = [suppressClause || !clause ? '' : `${upperFirst(clause)}.`, windowClause]
+    .filter(Boolean).join(' ').trim();
 
   const phrase = choosePhrase(
     suggestion.activityId,

@@ -58,7 +58,7 @@ export function scoreParts(
   date: number,
   activities: ActivityType[],
   now: Date,
-): Array<{ name: PartName; band: CallBand; key?: string }> {
+): Array<{ name: PartName; band: CallBand; score: number; key?: string }> {
   const present = PART_ORDER.filter((p): p is PartName => Boolean(parts[p]));
   if (!present.length) return [];
 
@@ -75,8 +75,8 @@ export function scoreParts(
 
   return present.map((name, i) => {
     const s = scored[i]?.suggestions.find((x) => x.activityId === activityId);
-    if (!s) return { name, band: 'notToday' as CallBand };
-    return { name, band: bandFor(s.score, s.vetoed, s.binding?.key), key: s.binding?.key };
+    if (!s) return { name, band: 'notToday' as CallBand, score: 0 };
+    return { name, band: bandFor(s.score, s.vetoed, s.binding?.key), score: s.score, key: s.binding?.key };
   });
 }
 
@@ -94,9 +94,34 @@ export function partBands(
   date: number,
   activities: ActivityType[],
   now: Date,
-): Array<{ name: PartName; band: CallBand }> {
+): Array<{ name: PartName; band: CallBand; score: number }> {
   if (!parts) return [];
-  return scoreParts(activityId, parts, date, activities, now).map(({ name, band }) => ({ name, band }));
+  return scoreParts(activityId, parts, date, activities, now)
+    .map(({ name, band, score }) => ({ name, band, score }));
+}
+
+/**
+ * The best contiguous run of good parts, from bands already scored.
+ *
+ * Split out of `bestWindow` so the caller can ask the question twice without
+ * scoring three parts twice: once to decide whether the day's verdict should be
+ * promoted, and once to phrase the window. Longest run wins; earliest on a tie,
+ * because a window is advice about when to go and a person can still act on the
+ * earlier one.
+ */
+export function bestRun<T extends { band: CallBand }>(
+  scored: readonly T[],
+): { start: number; length: number } | null {
+  const good = scored.map((s) => isGood(s.band));
+  let best = { start: 0, length: 0 };
+  for (let i = 0; i < good.length; i++) {
+    if (!good[i]) continue;
+    let j = i;
+    while (j + 1 < good.length && good[j + 1]) j++;
+    if (j - i + 1 > best.length) best = { start: i, length: j - i + 1 };
+    i = j;
+  }
+  return best.length ? best : null;
 }
 
 /**
@@ -129,19 +154,12 @@ export function bestWindow(
   const good = scored.map((s) => isGood(s.band));
   if (good.every(Boolean) || !good.some(Boolean)) return undefined;
 
-  let best = { start: 0, len: 0 };
-  for (let i = 0; i < good.length; i++) {
-    if (!good[i]) continue;
-    let j = i;
-    while (j + 1 < good.length && good[j + 1]) j++;
-    if (j - i + 1 > best.len) best = { start: i, len: j - i + 1 };
-    i = j;
-  }
-  if (!best.len) return undefined;
+  const best = bestRun(scored);
+  if (!best) return undefined;
 
-  const after = scored[best.start + best.len];
+  const after = scored[best.start + best.length];
   return {
-    parts: scored.slice(best.start, best.start + best.len).map((s) => s.name),
+    parts: scored.slice(best.start, best.start + best.length).map((s) => s.name),
     ...(after?.key ? { ends: after.key } : {}),
   };
 }
