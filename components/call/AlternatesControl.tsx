@@ -6,6 +6,10 @@
  * and the product's thesis is that it refuses to hand you a list. Marginal and
  * below never enter the cycle.
  *
+ * No `title`. The browser's native tooltip drew a grey slab across the bottom
+ * of the photograph on hover, and it said what `aria-label` already says to
+ * anyone who needs it — a second, uglier copy of the same sentence.
+ *
  * @module components/call/AlternatesControl
  */
 
@@ -25,7 +29,6 @@ export function AlternatesControl({ onCycle, index, total, label }: AlternatesCo
         className="call-icon-btn call-icon-btn--lg"
         onClick={onCycle}
         aria-label={`${label} (${index + 1} of ${total})`}
-        title={label}
       >
         {/* Larger than the 22px it was, now that there is no box around it to
             fill: the icon has to carry the control on its own. */}

@@ -47,45 +47,6 @@ const WEB_APP_CTA_URL = '/login';
 // Update the question/answer text here and the JSON-LD updates automatically.
 // ============================================================================
 
-interface FaqItem {
-  q: string;
-  a: string;
-}
-
-const TOP_FAQS: FaqItem[] = [
-  {
-    q: 'What does Go Daisy do?',
-    a: "Go Daisy is a free weather app organised around the things you want to do, not the weather itself. You tell it which activities you care about — from surfing and hiking to padel, cricket and Sunday pub afternoons — and it reads the forecast to tell you when conditions are right for each one. Less '70% chance of rain at 3pm', more 'great evening for a swim, terrible morning for the bike, classic museum afternoon.'",
-  },
-  {
-    q: 'How many activities does Go Daisy cover?',
-    a: 'Over 100, organised into six worlds: active sports (team, individual, water, action), fitness and wellness, outdoor activities (nature, fishing, kicking back), winter sports, creative and arts, and indoor recreation. You only see the ones you tell us you care about.',
-  },
-  {
-    q: 'Is Go Daisy free?',
-    a: 'Yes — completely. No paywall, no premium tier, no ads, no in-app purchases. Go Daisy is the part of what we do that is for everyone, supported by our deeper specialist apps for anglers, fly fishers and gardeners.',
-  },
-  {
-    q: 'Does Go Daisy cover water sports?',
-    a: 'Yes — surfing, stand-up paddleboarding (SUP) on sea and inland, kayaking and sea kayaking, canoeing, sea swimming, wild swimming, snorkelling, sailing on sea and inland, windsurfing on sea and inland, kitesurfing, jet skiing, scuba diving and sea fishing from shore or boat. We pull wave height, swell period and direction, wind, sea temperature, tides and UV from Stormglass marine services and score each sport on its own terms.',
-  },
-  {
-    q: 'Does Go Daisy cover padel, pickleball and team sports?',
-    a: 'Yes — and they are scored properly, not lumped under "tennis". Padel and pickleball each have their own scoring; team sports include football, rugby, cricket, basketball, beach volleyball, American football, baseball, hurling, camogie, Gaelic football, hockey, netball and ice hockey. Cricket gets the strictest answer because cricket has the strictest weather.',
-  },
-  {
-    q: 'What about winter sports and indoor activities?',
-    a: 'Yes to both. Winter: skiing (alpine), snowboarding, cross-country skiing, ice skating, curling, ice hockey, ice fishing. Indoor: indoor climbing, indoor tennis, squash, badminton, indoor swimming, gym, pilates, yoga, meditation — plus social and home days like the pub, cinema, museums, galleries, bowling, cooking, reading, gaming, crafts and making music. When the outdoor scores are bad, the indoor activities you have picked get a quiet promotion.',
-  },
-  {
-    q: 'How is Go Daisy different from Windy or the Met Office?',
-    a: 'General weather apps tell you the weather and trust you to interpret it. Go Daisy tells you whether your thing is on. We read the same kinds of data — from Open-Meteo, Stormglass and api.met.no — and then apply it to whichever activities you have told us you do, so you do not have to do the mental arithmetic of "is 14 mph from the south-west too much for a paddleboard at my local lake?" every time you open the app.',
-  },
-  {
-    q: 'Is Go Daisy on Android?',
-    a: 'The Android version is built and in closed beta. Google Play asks new apps to put twelve testers through a fortnight of real-world use before launching to the public, and we are recruiting that group now. If you have an Android phone and would like to be one of our twelve, see the Android testers section on this page. The web app at godaisy.io works in any browser, on any phone, in the meantime.',
-  },
-];
 
 // ============================================================================
 // Activity lists by category — full taxonomy from the app.
@@ -379,18 +340,6 @@ const ACTIVITY_CATEGORIES: ActivityCategory[] = [
 // JSON-LD blocks for FAQ rich result + SoftwareApplication
 // ============================================================================
 
-const faqJsonLd = {
-  '@context': 'https://schema.org',
-  '@type': 'FAQPage',
-  mainEntity: TOP_FAQS.map((f) => ({
-    '@type': 'Question',
-    name: f.q,
-    acceptedAnswer: {
-      '@type': 'Answer',
-      text: f.a,
-    },
-  })),
-};
 
 const softwareAppJsonLd = {
   '@context': 'https://schema.org',
@@ -430,10 +379,16 @@ const LandingPage: React.FC = () => {
       />
 
       <Head>
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }}
-        />
+        {/*
+          * The FAQPage structured data went with the visible FAQs.
+          *
+          * Google's rule is that FAQ markup must correspond to content a
+          * visitor can actually see on that page. Keeping the JSON-LD after
+          * removing the section would be a structured-data violation, and the
+          * kind that gets a manual action rather than a warning. The asset is
+          * not lost: `/faq` is a fuller version of the same questions and
+          * carries its own markup.
+          */}
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(softwareAppJsonLd) }}
@@ -500,9 +455,11 @@ const LandingPage: React.FC = () => {
             <p className="gd-land-small">
               Free, forever. No ads. No data sold. UK and Europe, 10 languages.
               iOS today, Android in closed beta —{' '}
-              <a href="#android-testers" className="link link-primary">
+              {/* Was an in-page anchor to a section removed for length. The
+                  page it points at has always existed. */}
+              <Link href="/android-testers" className="gd-land-link">
                 help us launch
-              </a>
+              </Link>
               .
             </p>
 
@@ -671,104 +628,6 @@ const LandingPage: React.FC = () => {
 
         {/* =================================================================
             TOP FAQS
-            ================================================================= */}
-        <section className="gd-land-band is-tint">
-          <div className="gd-land-inner">
-            <h2 className="gd-land-h2">
-              Frequently asked questions
-            </h2>
-
-            <div className="join join-vertical w-full">
-              {TOP_FAQS.map((faq, i) => (
-                <div
-                  key={faq.q}
-                  className="gd-land-faq"
-                >
-                  <input
-                    type="checkbox"
-                    aria-label={faq.q}
-                    defaultChecked={i === 0}
-                  />
-                  <h3 className="collapse-title text-lg font-medium">
-                    {faq.q}
-                  </h3>
-                  <div className="collapse-content">
-                    <p>{faq.a}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            <div className="text-center mt-8">
-              <Link href="/faq" className="link link-primary">
-                See the full FAQ &rarr;
-              </Link>
-            </div>
-          </div>
-        </section>
-
-        {/* =================================================================
-            ANDROID TESTER RECRUITMENT
-            ================================================================= */}
-        <section
-          id="android-testers"
-          className="px-4 py-16 bg-gradient-to-b from-base-100 to-base-200"
-        >
-          <div className="gd-land-inner is-centred">
-            <div className="text-5xl mb-4" aria-hidden="true">
-              🤖
-            </div>
-            <h2 className="gd-land-h2">
-              Help us launch on Android.
-            </h2>
-            <p className="gd-land-copy">
-              The Android version of Go Daisy is built and ready. Google Play
-              asks us to find twelve testers to use it on real Android phones
-              for two weeks before we can release it to the world — so
-              that&rsquo;s what we&rsquo;re doing.
-            </p>
-
-            <ul className="gd-land-copy">
-              <li>
-                <span className="text-success">✓</span> Early access to Go
-                Daisy on Android, before anyone else
-              </li>
-              <li>
-                <span className="text-success">✓</span> Free lifetime access
-                to our specialist sister apps (Findr, Rise Daisy, Grow Daisy)
-                when they ship on Android
-              </li>
-              <li>
-                <span className="text-success">✓</span> A direct line to us
-                for feedback
-              </li>
-            </ul>
-
-            <p className="gd-land-small">
-              About ten minutes a week of normal use. No bug-hunting expected.
-              We just need real phones in real hands for the fortnight Google
-              needs.
-            </p>
-
-            {/*
-              TODO: wire this button to a real sign-up form.
-              Simplest path: a Supabase table `android_testers` with columns
-              email, country, primary_activity, created_at — and a Resend
-              confirmation email. See the Android tester recruitment plan
-              for details.
-            */}
-            <Link
-              href="/android-testers"
-              className="gd-app-store"
-            >
-              Sign me up as an Android tester &rarr;
-            </Link>
-          </div>
-        </section>
-
-        {/* =================================================================
-            FINAL CTA
-            ================================================================= */}
         <section className="gd-land-band">
           <div className="gd-land-inner is-centred">
             <h2 className="gd-land-h2">

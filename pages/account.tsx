@@ -77,6 +77,12 @@ export default function AccountPage() {
    * Held back one frame rather than fixed in the context, because the default
    * is right for everything else that reads it — it is only wrong to PRINT one
    * before the stored value has been read.
+   *
+   * EVERY branch on a stored spot has to wait, not only the name. Gating the
+   * place text alone left the button beneath it flipping "Set location" →
+   * "Change", which is the same mismatch one element further down — and it was
+   * reported by a user, not by me, because I fixed the symptom I could see
+   * rather than every read of the value behind it.
    */
   const [mounted, setMounted] = useState(false);
   useEffect(() => { setMounted(true); }, []);
@@ -485,7 +491,7 @@ export default function AccountPage() {
                   className="gd-acct-btn"
                   onClick={() => mapsReady ? setOpenHome(true) : alert('Loading map…')}
                 >
-                  {homeSpot ? 'Change' : 'Set location'}
+                  {!mounted ? 'Change' : homeSpot ? 'Change' : 'Set location'}
                 </button>
               </div>
 
@@ -502,7 +508,7 @@ export default function AccountPage() {
                   className="gd-acct-btn"
                   onClick={() => mapsReady ? setOpenMarine(true) : alert('Loading map…')}
                 >
-                  {coastalSpot ? 'Change' : 'Set location'}
+                  {!mounted ? 'Change' : coastalSpot ? 'Change' : 'Set location'}
                 </button>
                 {!isMarineUser && (
                   <p className="gd-acct-note">Tip: add sea activities for tide/swell suggestions.</p>
