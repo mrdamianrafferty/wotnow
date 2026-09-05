@@ -1,6 +1,6 @@
 # Go Daisy → The Call · migration plan
 
-**Plan dated:** 5 September 2026 · **Status measured at:** merge of #127
+**Plan dated:** 5 September 2026 · **Status measured at:** merge of #133
 
 > **All seven phases have shipped.** The status table below is what actually
 > happened, kept because the reasoning in the rest of the document is still the
@@ -45,16 +45,37 @@ Four pieces of work that were not phases and turned out to be load-bearing:
   a 413-character token URL, a leaked "also", and a message that read as a
   weather report rather than an ask.
 
+### Closed since (2026-09-06)
+
+- **The landing CTA.** Settled: one button to `/start`, App Store as a quiet
+  line under it. It had been three — "Try the new Go Daisy", "Try the web app"
+  and "Download for iPhone" — and the first was a temporary door from before
+  phase 7 that shipped telling strangers there was an old Go Daisy and a new
+  one ([#131](https://github.com/mrdamianrafferty/wotnow/pull/131)).
+- **The tail.** Every content page, the account chrome, the error pages and the
+  spot pages' header are in the new design
+  ([#131](https://github.com/mrdamianrafferty/wotnow/pull/131),
+  [#132](https://github.com/mrdamianrafferty/wotnow/pull/132)). `AppHeader` is
+  down to `/android-testers`, and `/interests` and `/onboarding` are reachable
+  from nothing.
+
 ### Still open
 
-- Whether the landing page's primary CTA should be the redesign rather than
-  `/login`. A conversion decision, deliberately not made as a side effect.
 - `LandingPage` still serves logged-out visitors and Googlebot. Restyled, not
   replaced — the cookie fork is narrower but not gone.
 - `BottomNav` is imported by nothing since `/activities` was archived.
+- `/interests` and `/onboarding` are now orphaned and can be archived. Not done
+  here: deleting two live-looking screens is its own change.
 - Measurement. Nothing counts a share, and the "before" for anything `/call`
   changed is unrecoverable. D7 against the old dashboard is also gone now that
   `/` is the call.
+- A notification history. Deliberately not built: the daily call's notification
+  IS the message, and tapping it opens the call. The event alerts — extreme
+  weather, astronomy, tides — are a different case and may want one. The app
+  icon badge was removed on the same reasoning
+  ([#133](https://github.com/mrdamianrafferty/wotnow/pull/133)).
+- The spot pages hold a 740px measure for body text where the documents hold
+  68ch. Wide for reading, and worth a decision rather than a drift.
 
 ### Two preconditions the build ran past
 
