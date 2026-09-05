@@ -27,6 +27,9 @@ import crypto from 'crypto';
 // This provides instant lookups without hitting the database
 const memoryCache = new Map<string, string>();
 
+// How many DeepL calls to have in flight at once from the batch path.
+const DEEPL_BATCH_CONCURRENCY = 5;
+
 // Manual override cache keeps high-priority translations available without re-querying
 const MANUAL_OVERRIDE_TTL_MS = 5 * 60 * 1000; // 5 minutes
 type ManualOverrideCacheEntry = { value: string | null; expiresAt: number };
@@ -319,6 +322,19 @@ async function storeDatabaseCache(
   try {
     const supabase = getSupabaseAdminClient();
 
+    // A translation identical to its source is suspicious but not necessarily
+    // wrong: 55-64% of this table was once the English source, written by a
+    // quota-exhausted backfill, but plenty of strings legitimately survive
+    // translation unchanged — "Padel" everywhere, and multi-word proper nouns
+    // like "New York" in most of our languages.
+    //
+    // Callers no longer pass failures here at all (translateWithDeepL returns
+    // null and is never cached), so anything reaching this point came back from
+    // a SUCCESSFUL DeepL call. Refusing to store it would mean re-requesting the
+    // same string on every view — burning the quota this change exists to
+    // protect. So cache it, and flag it for review instead.
+    const isPassthrough = sourceText.trim() === translatedText.trim();
+
     const hasFishingTerms = hasFishingTerminology(sourceText);
     const contentHash = hashText(sourceText);
 
@@ -329,8 +345,9 @@ async function storeDatabaseCache(
         translated_text: translatedText,
         translation_source: 'auto',
         source_content_hash: contentHash,
-        needs_review: hasFishingTerms,
+        needs_review: hasFishingTerms || isPassthrough,
         has_fishing_terminology: hasFishingTerms,
+        quality_issues: isPassthrough ? ['identical_to_source'] : null,
         access_count: 1,
         created_at: new Date().toISOString(),
         last_accessed_at: new Date().toISOString(),
@@ -352,14 +369,14 @@ async function storeDatabaseCache(
 async function translateWithDeepL(
   text: string,
   targetLang: string
-): Promise<string> {
+): Promise<string | null> {
   try {
     const translator = getTranslator();
     const deeplLangCode = DEEPL_LANGUAGE_MAP[targetLang.toLowerCase()];
 
     if (!deeplLangCode) {
       console.warn(`Language ${targetLang} not supported by DeepL`);
-      return text;
+      return null;
     }
 
     const result = await translator.translateText(
@@ -368,14 +385,23 @@ async function translateWithDeepL(
       deeplLangCode,
       {
         preserveFormatting: true,
-        formality: 'default',
+        // Go Daisy addresses the reader the way a friend would. Measured across
+        // the shipped UI strings, German and Spanish were already informal
+        // (du / tú) while French was formal in every single string (51-0 on
+        // vous). 'prefer_less' asks DeepL for the informal register and is the
+        // variant that degrades quietly on languages without one (sv, tr, en),
+        // rather than erroring the way bare 'less' does.
+        formality: 'prefer_less',
       }
     );
 
     return result.text;
   } catch (error) {
+    // Return NULL, never the source text. Callers fall back to English for
+    // display, but must not persist that fallback — see the note in
+    // storeDatabaseCache.
     console.error('DeepL translation failed:', error);
-    return text; // Return original text if translation fails
+    return null;
   }
 }
 
@@ -417,6 +443,13 @@ export async function autoTranslate(
 
   // Fall back to DeepL API (slow, costs money)
   const translated = await translateWithDeepL(text, targetLang);
+
+  // A failed call returns null. Show English, but do NOT cache it: a cached
+  // failure is permanent, because the next lookup is a cache hit and the string
+  // is never retried.
+  if (translated === null) {
+    return text;
+  }
 
   // Store in both caches for future use
   memoryCache.set(cacheKey, translated);
@@ -536,15 +569,28 @@ export async function autoTranslateBatch(
   // Translate remaining uncached texts via DeepL
   const stillUncachedIndexes = uncachedIndexes.filter(idx => idx >= 0);
   if (stillUncachedIndexes.length > 0) {
-    const translations = await Promise.all(
-      stillUncachedIndexes.map(idx => translateWithDeepL(texts[idx], targetLang))
-    );
+    // DeepL rate-limits on concurrency, and a 429 used to come back as the
+    // English source and get cached forever — which is how the cache filled
+    // with passthroughs. Send them in small waves instead of all at once.
+    const translations: (string | null)[] = [];
+    for (let i = 0; i < stillUncachedIndexes.length; i += DEEPL_BATCH_CONCURRENCY) {
+      const wave = stillUncachedIndexes.slice(i, i + DEEPL_BATCH_CONCURRENCY);
+      translations.push(
+        ...(await Promise.all(wave.map(idx => translateWithDeepL(texts[idx], targetLang))))
+      );
+    }
 
     // Store translations in both caches
     for (let i = 0; i < stillUncachedIndexes.length; i++) {
       const idx = stillUncachedIndexes[i];
       const text = texts[idx];
       const translated = translations[i];
+
+      // null means the call failed. Fall back to English for display only —
+      // caching it would make the failure permanent.
+      if (translated === null) {
+        continue;
+      }
 
       results[idx] = translated;
       memoryCache.set(getCacheKey(text, targetLang), translated);

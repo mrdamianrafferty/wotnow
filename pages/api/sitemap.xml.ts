@@ -191,7 +191,16 @@ async function getGrowDaisyUrls(baseUrl: string): Promise<SitemapUrl[]> {
           return withAlternates(enPath, {
             loc: `${baseUrl}${enPath}`,
             lastmod: row.date_modified ?? today,
-            changefreq: 'weekly',
+            // MONTHLY, not weekly. withAlternates() attaches hreflang links to
+            // all seven other languages, so each species here advertises eight
+            // URLs — 450 species become 3,150 localised pages. Those pages
+            // translate on demand in pages/grow/[lang]/species/[slug].tsx, so a
+            // full crawl of every language costs roughly 1.03 million DeepL
+            // characters against a 500,000/month allowance. A warm cache makes
+            // re-crawls free; it is the re-crawl *rate* that decides how often
+            // we pay for a cold one. Species descriptions change rarely, and
+            // lastmod already tells crawlers when one actually did.
+            changefreq: 'monthly',
             priority: 0.8,
           });
         });
