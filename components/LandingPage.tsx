@@ -31,9 +31,12 @@ import SEO from './SEO';
 
 const Footer = dynamic(() => import('./footer'), { ssr: true });
 
-// App Store URL — update if you change territories
-const APP_STORE_URL =
-  'https://apps.apple.com/gb/app/go-daisy/id6755695873';
+// The App Store URL lives in `lib/daisyFamily` now. This file had its own copy
+// with a shortened slug — `go-daisy` rather than Apple's own
+// `go-daisy-the-active-life-app`. Apple resolves on the id and ignored it, so
+// it worked; it just was not the app's name, and it had already drifted from
+// the one the spot pages use.
+import { APP_STORE_URL } from '../lib/daisyFamily';
 
 // Where the primary CTA sends visitors who want to try the web app.
 // `/login` shows the sign-up / sign-in screen.

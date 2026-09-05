@@ -35,6 +35,7 @@ import {
   type ActivityScorePayload,
 } from '../../lib/seo/getActivityScore';
 import { activityTypes } from '../../data/activityTypes';
+import GetTheApp from '../../components/GetTheApp';
 import { getActivityEmoji } from '../../data/emojiMap';
 
 const Footer = dynamic(() => import('../../components/footer'), { ssr: false });
@@ -562,21 +563,15 @@ export default function ProgrammaticSeoPage({
         {/* ===================================================================
             FINAL CTA + FOOTER STRIP
             =================================================================== */}
-        <section className="px-4 py-14 bg-gradient-to-b from-base-100 to-base-200">
-          <div className="max-w-3xl mx-auto text-center">
-            <h2 className="text-2xl md:text-3xl font-bold mb-4">
-              See {activityName} scored for every hour, every day, for your spot
-            </h2>
-            <p className="text-base-content/80 mb-6 max-w-2xl mx-auto">
-              Go Daisy is a free weather app that scores 100+ activities — set
-              your home location, pick the ones you do, and we&rsquo;ll tell you
-              when each is on.
-            </p>
-            <Link href="/" className="btn btn-primary btn-lg">
-              Open Go Daisy — free
-            </Link>
-          </div>
-        </section>
+        {/*
+          * "scored for every hour" was a claim the app cannot support and has
+          * deliberately decided not to make: the forecast is scored by part of
+          * the day, because twenty-four discrete scores invite the app to say
+          * the wind turns at 10:00 when nothing behind it knows that. The page
+          * that brings strangers in should not promise something the product
+          * then refuses to do.
+          */}
+        <GetTheApp placement="spot_page" place={location.name} />
 
         <section className="px-4 py-8 bg-base-200 border-t border-base-300">
           <div className="max-w-4xl mx-auto text-center text-sm text-base-content/70">
