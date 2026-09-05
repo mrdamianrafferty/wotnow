@@ -17,7 +17,7 @@ import { render, screen } from '@testing-library/react';
 import { MenuSheet } from '@/components/call/MenuSheet';
 
 /** The routes the sheet is allowed to offer, all verified to resolve. */
-const CANONICAL = ['/start', '/account', '/privacy', '/terms', '/cookies', '/whether-weather', '/support', '/app'];
+const CANONICAL = ['/weather', '/start', '/account', '/privacy', '/terms', '/cookies', '/whether-weather', '/support', '/app'];
 
 describe('the menu behind the dot', () => {
   beforeEach(() => { render(<MenuSheet onClose={() => {}} />); });
@@ -34,6 +34,17 @@ describe('the menu behind the dot', () => {
 
   it('offers a way to reach the account, which is where deletion lives', () => {
     expect(screen.getByRole('link', { name: /account/i })).toHaveAttribute('href', '/account');
+  });
+
+  /*
+   * `/weather` had no way in at all after the swap: the old bottom nav and
+   * header linked to it and both went, leaving it reachable only by typing the
+   * URL — the same way `/call` was orphaned before phase 7. This menu is now
+   * the only route to it, so it is the only thing standing between that page
+   * and being lost again.
+   */
+  it('offers the conditions page, which nothing else links to', () => {
+    expect(screen.getByRole('link', { name: /conditions/i })).toHaveAttribute('href', '/weather');
   });
 
   it('offers a way back to onboarding, so the call can be changed', () => {

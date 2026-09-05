@@ -286,6 +286,7 @@ export default function CallPage({ slug, place, days, photos, indoor, coords, co
             reason={option.verdict.reason}
             facts={option.facts}
             cycleKey={`${dayIndex}-${altIndex}`}
+            onWhy={() => setDrawer(true)}
           />
 
           {day.isNoDay && <IndoorPrompt options={indoor} />}
@@ -293,9 +294,6 @@ export default function CallPage({ slug, place, days, photos, indoor, coords, co
           <div className="call-actions">
             <button type="button" className="call-btn" onClick={send} disabled={sendState === 'working'}>
               {sendState === 'sent' ? 'Sent' : sendState === 'copied' ? 'Copied' : 'Send out the call'}
-            </button>
-            <button type="button" className="call-why" onClick={() => setDrawer(true)}>
-              Why?
             </button>
             {hasAlternates && (
               <AlternatesControl

@@ -23,9 +23,11 @@ export interface VerdictLockupProps {
   facts: CallFact[];
   /** Changes whenever the verdict does, so the fit and the motion re-run. */
   cycleKey: string | number;
+  /** Opens the evidence. Rendered inline, at the end of the sentence. */
+  onWhy?: () => void;
 }
 
-export function VerdictLockup({ kicker, leadIn, verdict, reason, facts, cycleKey }: VerdictLockupProps) {
+export function VerdictLockup({ kicker, leadIn, verdict, reason, facts, cycleKey, onWhy }: VerdictLockupProps) {
   const ref = useRef<HTMLHeadingElement>(null);
 
   /*
@@ -55,7 +57,25 @@ export function VerdictLockup({ kicker, leadIn, verdict, reason, facts, cycleKey
             heading at all, which reads to a screen reader as a page about
             nothing. The lead-in above is not a heading: it is half of this
             sentence, split for typography. */}
-        <h1 className="call-verdict" ref={ref}>{verdict}</h1>
+        {/*
+          * "Why?" LIVES AT THE END OF THE SENTENCE, not under the send button.
+          *
+          * It sat below the primary action, where it read as a question about
+          * sending rather than about the weather — "why send this?" Attached to
+          * the full stop it can only be asking about the claim it follows, and
+          * the word stops being cryptic because its position says what it means.
+          *
+          * Inside the heading, so it sits on the last line's baseline however
+          * the verdict wraps, and small enough not to compete with 62px type.
+          */}
+        <h1 className="call-verdict" ref={ref}>
+          {verdict}
+          {onWhy && (
+            <button type="button" className="call-why" onClick={onWhy}>
+              Why?
+            </button>
+          )}
+        </h1>
         <p className="call-reason">{reason}</p>
         {facts.length > 0 && (
           <div className="call-facts">

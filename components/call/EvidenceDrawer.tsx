@@ -19,6 +19,7 @@
  */
 
 import { useEffect, useRef, useState } from 'react';
+import Link from 'next/link';
 import { visibleSections, type RankedSection } from '@/lib/godaisy/call/evidence';
 import { rowsFor, type Readings } from '@/lib/godaisy/call/readings';
 import { BAND_LABEL, type CallBand } from '@/lib/godaisy/call/bands';
@@ -119,6 +120,11 @@ export function EvidenceDrawer({
 
         <p className="call-drawer-foot">
           {place} · scored {option.score} out of 100 · {BAND_LABEL[option.band]}
+          {/* The drawer is the evidence for THIS verdict; the conditions page is
+              every reading whether it moved the verdict or not. Someone who
+              opened this and wants more has exactly one place to go. */}
+          <br />
+          <Link href="/weather" className="call-drawer-more">Every reading →</Link>
         </p>
       </div>
     </div>

@@ -1,5 +1,5 @@
 /**
- * The alternates control — a 44px refresh-cw below the primary action.
+ * The alternates control — a refresh-cw below the primary action.
  *
  * It renders only when the day has two or more options in Prime or Worth a look,
  * and it took the place of the secondary button: two controls were doing one job,
@@ -27,8 +27,10 @@ export function AlternatesControl({ onCycle, index, total, label }: AlternatesCo
         aria-label={`${label} (${index + 1} of ${total})`}
         title={label}
       >
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-             strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+        {/* Larger than the 22px it was, now that there is no box around it to
+            fill: the icon has to carry the control on its own. */}
+        <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+             strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
           <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8" />
           <path d="M21 3v5h-5" />
           <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16" />

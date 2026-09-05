@@ -316,8 +316,17 @@
 .call-icon-btn:hover { background: rgba(250, 248, 245, .12); }
 .call-icon-btn:active { transform: scale(.98); }
 .call-icon-btn:focus-visible { outline: 2px solid var(--call-on-dark); outline-offset: 3px; }
-.call-icon-btn--lg { width: var(--call-tap-min); height: var(--call-tap-min); border-color: rgba(250,248,245,.28); }
+/* The large variant carries NO box. A bordered square under a lone icon read as
+   a button someone had forgotten to finish, and it was the heaviest thing in
+   the bottom third of a screen whose only loud element should be the verdict.
+   The tap target is still 44px — it is the ::after, not the border, that has
+   ever been doing that work. */
+.call-icon-btn--lg {
+  width: var(--call-tap-min); height: var(--call-tap-min);
+  border: 0; border-radius: var(--call-r-pill);
+}
 .call-icon-btn--lg::after { inset: 0; }
+.call-icon-btn--lg:hover { background: none; opacity: .78; }
 
 .call-lockup { margin-top: auto; }
 .call-body { display: flex; flex-direction: column; gap: 14px; }
@@ -942,12 +951,20 @@ h1.call-setup-question, h1.call-verdict { margin-block: 0; }
 /* The evidence used to open from the dot. It belongs to the verdict, not to
    navigation, so it sits under the facts where someone doubting the sentence
    is already looking.                                                     */
+/* Inline, at the end of the sentence it is asking about. Under the send button
+   it read as "why send this?"; after the full stop it can only be about the
+   claim. Sized to a footnote — it must not compete with 62px display type — and
+   nudged up so it rides the cap height rather than the baseline of a much
+   larger line. */
 .call-why {
-  align-self: flex-start;
+  display: inline-block;
   background: none; border: 0; cursor: pointer;
-  padding: 6px 2px; margin: 2px 0 0;
+  padding: 4px 6px; margin-left: 6px;
+  vertical-align: 0.45em;
   font-family: var(--call-font-display); font-style: italic;
-  font-size: var(--call-body-sm); color: var(--call-on-dark-quiet);
+  font-size: var(--call-body-sm); font-weight: 400;
+  letter-spacing: 0; line-height: 1;
+  color: var(--call-on-dark-quiet);
   text-decoration: underline; text-underline-offset: 3px;
 }
 .call-why:hover { color: var(--call-on-dark); }
@@ -1195,16 +1212,20 @@ section.gd-spot-colophon { padding: 28px var(--call-gutter-app) 40px; }
    control that announces itself would compete with the verdict, which is
    the only thing on that screen meant to be loud — so the only tell is a
    dotted underline and a bigger tap target than the text.            */
+/* It looks exactly like the label it replaced — no underline, no chrome. The
+   dotted underline the first version had was louder than the kicker itself and
+   turned a quiet line into a control asking to be noticed. The affordance is
+   the tap target and the hover, and on a phone the tap target is the whole of
+   it. */
 .call-kicker-btn {
   background: none; border: 0; cursor: pointer;
   padding: 6px 0; margin: -6px 0;
   color: inherit; font: inherit; letter-spacing: inherit;
-  text-decoration: underline dotted;
-  text-underline-offset: 4px;
-  text-decoration-color: var(--call-on-dark-quiet);
+  text-decoration: none;
   text-align: left;
+  transition: opacity var(--call-t-press) var(--call-ease-out);
 }
-.call-kicker-btn:hover { text-decoration-color: var(--call-on-dark); }
+.call-kicker-btn:hover { opacity: .72; }
 .call-kicker-btn:focus-visible { outline: 2px solid var(--call-on-dark); outline-offset: 3px; }
 
 .call-place-results { margin-top: 4px; }
@@ -1215,3 +1236,4 @@ section.gd-spot-colophon { padding: 28px var(--call-gutter-app) 40px; }
 /* The picker is paper, like the drawer — it is a form, not part of the call. */
 .call-place .call-setup-input { background: var(--call-card); }
 .call-place .call-setup-result { color: var(--call-ink-1); }
+.call-drawer-more { display: inline-block; margin-top: 6px; color: var(--call-moss-ink); }
