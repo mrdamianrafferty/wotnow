@@ -101,7 +101,7 @@ export function SportsStep({
 
   return (
     <>
-      <p className="call-setup-question">What do you actually do?</p>
+      <h1 className="call-setup-question">What do you actually do?</h1>
       <p className="call-setup-help">
         Three is plenty to start with. You can add more whenever you like.
       </p>
@@ -155,9 +155,9 @@ export function SpotsStep({
   const target = pickingCoastal ? coastal : place;
   return (
     <>
-      <p className="call-setup-question">
+      <h1 className="call-setup-question">
         {pickingCoastal ? 'And where do you go for the water?' : 'Where are you?'}
-      </p>
+      </h1>
       <p className="call-setup-help">
         {pickingCoastal
           ? 'The swell and the sea temperature come from here, not from home.'
@@ -246,7 +246,7 @@ export function HourStep({
 }) {
   return (
     <>
-      <p className="call-setup-question">When should Go Daisy tell you?</p>
+      <h1 className="call-setup-question">When should Go Daisy tell you?</h1>
       <p className="call-setup-help">One message a day. Nothing else, ever.</p>
       <div className="call-setup-hours">
         {HOUR_OPTIONS.map((o) => (

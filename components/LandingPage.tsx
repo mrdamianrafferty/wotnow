@@ -457,6 +457,29 @@ const LandingPage: React.FC = () => {
               waves, tides, UV and sky to tell you exactly when each one is on.
             </p>
 
+            {/*
+              * THE DOOR INTO THE REDESIGN, and it is temporary.
+              *
+              * `/` server-renders this landing page, not the app home screen —
+              * the cookie fork — so this is what a stranger actually sees, and
+              * nothing on it pointed at `/call`. The redesign was reachable
+              * only by typing the URL or following a shared link, which is no
+              * way to dogfood it.
+              *
+              * It sits BESIDE the existing primary CTA rather than replacing
+              * it: which of the two should be primary is a product decision,
+              * not a side effect of adding a link. Phase 7 makes `/call` the
+              * home screen and deletes this file, and this with it.
+              */}
+            <div className="flex justify-center mb-4">
+              <Link href="/call" className="gd-try-call gd-try-call--hero">
+                <span className="gd-try-call-lead">Try the new Go Daisy →</span>
+                <span className="gd-try-call-note">
+                  One sentence telling you what today is good for. No sign-in.
+                </span>
+              </Link>
+            </div>
+
             <div className="flex flex-col sm:flex-row gap-3 justify-center items-center mb-4">
               <Link
                 href={WEB_APP_CTA_URL}

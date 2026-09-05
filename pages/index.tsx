@@ -801,6 +801,13 @@ function buildForecastFromOneCall(weatherData: WeatherWithPollen): WeatherForeca
           lcpImage={lcpFallbackImage}
         />
         <AppHeader />
+        {/* Also in the skeleton paths, not only after mount: this screen renders a
+            skeleton during SSR and while loading, so a door that waits for
+            hydration is a door most arrivals never see. */}
+        <Link href="/call" className="gd-try-call">
+          <span className="gd-try-call-lead">Try the new Go Daisy</span>
+          <span className="gd-try-call-note">One sentence telling you what today is good for</span>
+        </Link>
         <SkeletonHomePage />
         <BottomNav />
       </>
@@ -856,6 +863,13 @@ function buildForecastFromOneCall(weatherData: WeatherWithPollen): WeatherForeca
           lcpImage={lcpFallbackImage}
         />
         <AppHeader />
+        {/* Also in the skeleton paths, not only after mount: this screen renders a
+            skeleton during SSR and while loading, so a door that waits for
+            hydration is a door most arrivals never see. */}
+        <Link href="/call" className="gd-try-call">
+          <span className="gd-try-call-lead">Try the new Go Daisy</span>
+          <span className="gd-try-call-note">One sentence telling you what today is good for</span>
+        </Link>
         <SkeletonHomePage />
         <BottomNav />
       </>
@@ -915,6 +929,22 @@ function buildForecastFromOneCall(weatherData: WeatherWithPollen): WeatherForeca
   onOpenCoastDialog={() => setShowCoastDialog(true)}
 />
 <main id="main-content" role="main">
+{/*
+  * THE DOOR INTO THE REDESIGN, and it is temporary.
+  *
+  * `/call` was reachable only by typing the URL or following a shared link:
+  * `/start` sits behind its menu, and nothing on this screen pointed at either.
+  * A redesign nobody can navigate to cannot be dogfooded, and every session
+  * that lands here is a session that never sees it.
+  *
+  * Phase 7 makes `/call` the home screen and deletes this file, and this strip
+  * with it. Until then it is one line, deliberately plain — a banner styled to
+  * argue for itself would be a second product on the page.
+  */}
+<Link href="/call" className="gd-try-call">
+  <span className="gd-try-call-lead">Try the new Go Daisy</span>
+  <span className="gd-try-call-note">One sentence telling you what today is good for</span>
+</Link>
 {marineError ? (
   <div className="alert alert-warning mx-4 my-2">
     <span>{marineErrorText}</span>
