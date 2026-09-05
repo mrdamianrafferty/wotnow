@@ -40,7 +40,19 @@ import { APP_STORE_URL } from '../lib/daisyFamily';
 
 // Where the primary CTA sends visitors who want to try the web app.
 // `/login` shows the sign-up / sign-in screen.
-const WEB_APP_CTA_URL = '/login';
+/*
+ * Onboarding, not the sign-in wall.
+ *
+ * This pointed at `/login` from before the redesign, when the app could not
+ * tell you anything without an account. It can now: `/start` asks for three
+ * sports and a place, writes the setup cookie and lands on the call, with no
+ * account at any point. A button that says "free" and opens a sign-in form is
+ * the single worst thing this page could do.
+ *
+ * `/` is not the answer either — a logged-out visitor is served this same
+ * marketing page, so it would be a loop.
+ */
+const WEB_APP_CTA_URL = '/start';
 
 // ============================================================================
 // FAQ data — keep questions phrased exactly as people search for them.
