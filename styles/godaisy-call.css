@@ -1087,6 +1087,24 @@ h1.call-setup-question, h1.call-verdict { margin-block: 0; }
    Reset here rather than changed there, because the old pages are built
    on that rule and phase 7 deletes them. Scoped to the new namespaces so
    nothing else moves.                                                    */
+/* `index.css` styles the bare `header` element too — white ground, 1rem of
+   padding, centred text — so every <header> in the redesign was inheriting a
+   card and a centre-align it never asked for. Same fix, same reason as the
+   `section` rule below it. */
+.gd-head,
+.gd-acct header,
+.gd-cond header,
+.gd-spot header,
+.gd-land header,
+.call-drawer header {
+  background: none;
+  padding: 0;
+  text-align: left;
+  color: inherit;
+}
+.gd-head { background: var(--call-page); padding-top: env(safe-area-inset-top); }
+
+.gd-acct section,
 .gd-cond section,
 .gd-spot section,
 .gd-share section,
@@ -1094,6 +1112,7 @@ h1.call-setup-question, h1.call-verdict { margin-block: 0; }
 .call-setup section,
 section.gd-app,
 section.gd-cond-block,
+section.gd-acct-block,
 section.gd-spot-section,
 section.gd-spot-hero,
 section.gd-spot-colophon {
@@ -1237,3 +1256,108 @@ section.gd-spot-colophon { padding: 28px var(--call-gutter-app) 40px; }
 .call-place .call-setup-input { background: var(--call-card); }
 .call-place .call-setup-result { color: var(--call-ink-1); }
 .call-drawer-more { display: inline-block; margin-top: 6px; color: var(--call-moss-ink); }
+
+/* ── The slim header ──────────────────────────────────────────────────────
+   For every page that is not the call. A wordmark, an optional title and
+   the same menu — on a hairline, and nothing else. Anything more would be
+   the fifth navigation system this redesign exists to have removed.     */
+.gd-head {
+  position: sticky; top: 0; z-index: 20;
+  background: var(--call-page);
+  border-bottom: 1px solid var(--call-border);
+  padding-top: env(safe-area-inset-top);
+}
+.gd-head-inner {
+  max-width: 760px; margin: 0 auto;
+  display: flex; align-items: center; gap: 12px;
+  padding: 10px var(--call-gutter-app);
+  min-height: var(--call-tap-min);
+}
+.gd-head-mark {
+  font-family: var(--call-font-display);
+  font-size: var(--call-body); font-weight: 700;
+  letter-spacing: -.01em; color: var(--call-ink-1); text-decoration: none;
+}
+.gd-head-mark:hover { color: var(--call-moss-ink); }
+.gd-head-title {
+  flex: 1 1 auto;
+  font-family: var(--call-font-display); font-style: italic;
+  font-variant-caps: small-caps; font-size: var(--call-label);
+  letter-spacing: .09em; color: var(--call-ink-4);
+}
+.gd-head-menu {
+  margin-left: auto; flex: 0 0 auto;
+  width: var(--call-tap-min); height: var(--call-tap-min);
+  display: grid; place-items: center;
+  background: none; border: 0; cursor: pointer; color: var(--call-ink-2);
+}
+.gd-head-menu:hover { color: var(--call-ink-1); }
+.gd-head-mark:focus-visible, .gd-head-menu:focus-visible {
+  outline: 2px solid var(--call-moss-ink); outline-offset: 2px;
+}
+
+/* ── Account ──────────────────────────────────────────────────────────────
+   Restyled with everything it did intact — profile, locations,
+   activities, notifications, the tip jar and account deletion. It was
+   fourteen white cards on grey; it is one column of blocks on paper.  */
+.gd-acct { min-height: 100vh; background: var(--call-page); color: var(--call-ink-1); font-family: var(--call-font-body); }
+.gd-acct-inner { max-width: 620px; margin: 0 auto; padding: 28px var(--call-gutter-app) 56px; }
+.gd-acct-top { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; margin-bottom: var(--call-block); }
+.gd-acct-h1 {
+  margin: 0; font-family: var(--call-font-display);
+  font-size: var(--call-page-title); font-weight: 700;
+  line-height: 1.05; letter-spacing: -.02em;
+}
+.gd-acct-signout {
+  background: none; border: 0; cursor: pointer; padding: 6px 2px;
+  font: 400 14px var(--call-font-body); color: var(--call-ink-3);
+  text-decoration: underline; text-underline-offset: 3px;
+}
+.gd-acct-signout:hover { color: var(--call-ink-1); }
+
+.gd-acct-block { border-top: 1px solid var(--call-border); padding: 20px 0; }
+.gd-acct-h2 {
+  margin: 0 0 8px; font-family: var(--call-font-display);
+  font-size: var(--call-screen-title); font-weight: 700; letter-spacing: -.01em;
+}
+.gd-acct-label { display: block; margin: 0 0 5px; font-size: var(--call-body-sm); color: var(--call-ink-3); }
+.gd-acct-note { margin: 0 0 12px; max-width: 58ch; font-size: var(--call-body-sm); line-height: 1.55; color: var(--call-ink-3); }
+.gd-acct-input {
+  width: 100%; max-width: 20rem; box-sizing: border-box;
+  font: 400 var(--call-body) var(--call-font-body);
+  padding: 11px 13px; min-height: var(--call-tap-min);
+  border: 1px solid var(--call-border-strong); border-radius: var(--call-r-input);
+  background: var(--call-card); color: var(--call-ink-1);
+}
+
+/* Deleting an account is a real option, not a dare. Red on the ACTION, never
+   on the heading — a section headed in red reads as a place you should not be,
+   and this is a thing people are entitled to do. */
+.gd-acct-block.is-danger { border-top-color: var(--call-border-strong); margin-top: 8px; }
+.gd-acct-danger-btn {
+  min-height: var(--call-tap-min); padding: 11px 18px; cursor: pointer;
+  border: 1px solid var(--call-poor-ink); border-radius: var(--call-r-button);
+  background: none; color: var(--call-poor-ink);
+  font: 500 15px var(--call-font-body);
+}
+.gd-acct-danger-btn:hover { background: var(--call-band-unsafe-bg); }
+.gd-acct-danger-btn.is-armed { background: var(--call-poor-ink); color: var(--call-page); border-color: var(--call-poor-ink); }
+.gd-acct-danger-btn:disabled { opacity: .45; cursor: default; }
+.gd-acct-danger-confirm { display: flex; flex-direction: column; gap: 10px; align-items: flex-start; }
+.gd-acct-danger-row { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+.gd-acct-signout:focus-visible, .gd-acct-danger-btn:focus-visible, .gd-acct-input:focus-visible {
+  outline: 2px solid var(--call-moss-ink); outline-offset: 2px;
+}
+.gd-acct-card { border: 1px solid var(--call-border); border-radius: var(--call-r-card); padding: 14px; background: var(--call-card); }
+.gd-acct-card-title { font: 600 14px var(--call-font-body); margin-bottom: 8px; }
+.gd-acct-place {
+  margin: 0 0 10px; font: 600 var(--call-body) var(--call-font-body);
+  color: var(--call-moss-ink);
+}
+.gd-acct-btn {
+  min-height: var(--call-tap-min); padding: 10px 16px; cursor: pointer;
+  border: 1px solid var(--call-border-strong); border-radius: var(--call-r-button);
+  background: none; color: var(--call-ink-1); font: 500 14px var(--call-font-body);
+}
+.gd-acct-btn:hover { background: var(--call-panel); }
+.gd-acct-btn:focus-visible { outline: 2px solid var(--call-moss-ink); outline-offset: 2px; }

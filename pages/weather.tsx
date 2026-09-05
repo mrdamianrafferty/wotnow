@@ -28,6 +28,7 @@ import { EVIDENCE_SECTIONS, type EvidenceSectionId } from '@/lib/godaisy/call/ev
 import { rowsFor, type Readings, type Row } from '@/lib/godaisy/call/readings';
 import { setupFromCookieHeader } from '@/lib/godaisy/call/setup';
 import { Spinner } from '@/components/call/Spinner';
+import { PageHeader } from '@/components/call/PageHeader';
 import { SEO_LOCATIONS, type SeoLocation } from '@/data/seoLocations';
 
 const DEFAULT_PLACE = 'newquay-cornwall';
@@ -145,6 +146,7 @@ export default function WeatherPage({ place, lat, lon, coastal }: WeatherPagePro
         />
       </Head>
 
+      <PageHeader title="Conditions" />
       <main className="gd-cond">
         <div className="gd-cond-inner">
           <p className="call-label gd-cond-kicker">{place}</p>
