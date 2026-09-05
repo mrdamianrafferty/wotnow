@@ -17,7 +17,8 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import bgMap from '../data/bgMap';
-import { bake, bakedPath, BAKED_DIR, CROP_PHOTO } from '../lib/godaisy/share/prebake';
+import { bakedPath, BAKED_DIR, CROP_PHOTO } from '../lib/godaisy/share/photos';
+import { bake } from '../lib/godaisy/share/bake';
 import type { ShareCrop } from '../lib/godaisy/share/template';
 
 const ARGS = process.argv.slice(2);

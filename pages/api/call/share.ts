@@ -20,11 +20,9 @@ import { allSports } from '@/data/activities';
 import { makeCall } from '@/lib/godaisy/call/makeCall';
 import { asSentence } from '@/lib/godaisy/call/verdict';
 import { SEO_LOCATIONS, type SeoLocation } from '@/data/seoLocations';
-import bgMap from '@/data/bgMap';
-import path from 'node:path';
 import { renderShare } from '@/lib/godaisy/share/render';
 import { shareText, type ShareCrop } from '@/lib/godaisy/share/template';
-import { photoDataUri } from '@/lib/godaisy/share/prebake';
+import { bakedDataUri } from '@/lib/godaisy/share/photos';
 
 export const config = { api: { responseLimit: false } };
 
@@ -89,10 +87,16 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
 
     const crop = (CROPS as string[]).includes(cropParam) ? (cropParam as ShareCrop) : 'card';
-    const src = bgMap[option.activityId];
-    if (!src) return res.status(404).json({ error: 'No imagery for that activity' });
 
-    data.photo = await photoDataUri(option.activityId, path.join(process.cwd(), 'public', src), crop);
+    // Baked at build time. The request path never runs sharp: bundling it took
+    // this function to 361 MB against Vercel's 250 MB limit.
+    const photo = bakedDataUri(option.activityId, crop);
+    if (!photo) {
+      return res.status(503).json({
+        error: `No baked ${crop} image for ${option.activityId}. Run scripts/prebake-call-images.ts.`,
+      });
+    }
+    data.photo = photo;
 
     const image = await renderShare(data, crop);
     const buf = Buffer.from(await image.arrayBuffer());
