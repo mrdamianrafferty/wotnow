@@ -151,6 +151,7 @@ export default function CallPage({ slug, place, days, photos, indoor, coords, co
    */
   const send = async () => {
     setSendState('working');
+    const origin = typeof window !== 'undefined' ? window.location.origin : 'https://godaisy.io';
     const iso = new Date(day.date * 1000).toISOString().slice(0, 10);
     const qs = `place=${encodeURIComponent(slug)}&day=${dayIndex}&alt=${altIndex}&date=${iso}`;
 
@@ -164,22 +165,38 @@ export default function CallPage({ slug, place, days, photos, indoor, coords, co
      * renderer's card is what appears in the message; this is where tapping it
      * lands.
      */
-    const link = getShareUrl(
-      generateShareToken({
-        // Typed to the Go Daisy variant: `Omit` over the ShareData union does not
-        // narrow, so an untyped literal is checked against all three apps at once.
-        app: 'godaisy',
-        activityId: option.activityId,
-        activityName: option.activityName ?? option.activityId,
-        score: option.score,
-        date: iso,
-        location: place,
-        weatherSummary: option.verdict.reason,
-        // So the landing page can render the same card as a link preview.
-        slug,
-        dayIndex,
-      } as Omit<GoDaisyShareData, 'createdAt' | 'expiresAt'>),
-    );
+    /*
+     * THE LINK IS THE SPOT PAGE, NOT THE TOKEN.
+     *
+     * A real share went out reading `godaisy.io/share/eyJ2IjoxLCJkIjp7ImFwc…`
+     * — 413 characters of base64 that filled an iMessage bubble and looked like
+     * something you would not tap. The spot page is 51, and it is not a
+     * compromise: `/{activity}/{location}` is a real page that answers the same
+     * question, already ranks, and is the URL the card itself prints along its
+     * footer. The message and the card now say the same thing.
+     *
+     * The token stays for places that have no spot page — anywhere someone
+     * named in onboarding, whose synthetic `setup:lat,lon` slug is not a route.
+     * There the long URL is still better than no link.
+     */
+    const spotSlug = SEO_LOCATIONS.some((l: SeoLocation) => l.slug === slug) ? slug : null;
+    const link = spotSlug
+      ? `${origin}/${option.activityId.replace(/_/g, '-')}/${spotSlug}?from=share`
+      : getShareUrl(
+        generateShareToken({
+          // Typed to the Go Daisy variant: `Omit` over the ShareData union does
+          // not narrow, so an untyped literal is checked against all three apps.
+          app: 'godaisy',
+          activityId: option.activityId,
+          activityName: option.activityName ?? option.activityId,
+          score: option.score,
+          date: iso,
+          location: place,
+          weatherSummary: option.verdict.reason,
+          slug,
+          dayIndex,
+        } as Omit<GoDaisyShareData, 'createdAt' | 'expiresAt'>),
+      );
     try {
       const text = await fetch(`/api/call/share?${qs}&crop=text`).then((r) => r.text());
       const payload: ShareData = { title: 'Go Daisy', text, url: link };

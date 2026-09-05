@@ -1103,3 +1103,11 @@ section.gd-spot-colophon { padding: 28px var(--call-gutter-app) 40px; }
   .call-spin-dot { animation: call-spin-in 1ms linear 400ms forwards; border-top-color: var(--call-border-strong); }
   .call-spin-label { animation: call-spin-in 1ms linear 400ms forwards; }
 }
+/* Only shown to someone who arrived from a share — see `invited`. */
+.gd-spot-invite {
+  margin: 0 0 10px; padding: 8px 12px;
+  background: var(--call-band-prime-bg); color: var(--call-band-prime-fg);
+  border-radius: var(--call-r-card);
+  font: 500 var(--call-body-sm) var(--call-font-body);
+  display: inline-block;
+}
