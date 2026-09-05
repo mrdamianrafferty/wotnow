@@ -11,6 +11,8 @@
 import type { Suggestion, WeatherData } from '@/utils/getSuggestionsByDay';
 import type { SupportedLanguageCode } from '@/lib/i18n/translate';
 import { bandFor, isGood, isSevere, type CallBand } from './bands';
+import { bestWindow, type ForecastParts } from './window';
+import type { ActivityType } from '@/data/activities/types';
 import { factsFor, nextYesFact, type CallFact } from './facts';
 import { makeVerdict, type Verdict } from './verdict';
 
@@ -56,11 +58,24 @@ export interface MakeCallInput {
   dayIndex?: number;
   /** The weekday this call is for, already localised ("Tuesday"). */
   weekday?: string;
+  /**
+   * The day cut into parts — phase 1b. Absent where the source published no
+   * usable hourly series, in which case every call on this day is window-free
+   * and simply says less.
+   */
+  parts?: ForecastParts;
+  /** Needed to score the parts. The same list the day was scored against. */
+  activities?: ActivityType[];
+  /** Anchors season and context tags for the parts. Defaults to now. */
+  now?: Date;
   lang?: SupportedLanguageCode;
 }
 
 export function makeCall(input: MakeCallInput): Call {
-  const { date, place, weather, suggestions, sports, seeded = [], names = {}, nextYes, dayIndex = 0, weekday = '', lang = 'en' } = input;
+  const {
+    date, place, weather, suggestions, sports, seeded = [], names = {}, nextYes,
+    dayIndex = 0, weekday = '', parts, activities = [], now = new Date(), lang = 'en',
+  } = input;
 
   const mine = suggestions.filter((s) => sports.includes(s.activityId));
 
@@ -85,6 +100,18 @@ export function makeCall(input: MakeCallInput): Call {
     const activityName = names[s.activityId];
     // Omitted, not `undefined` — this object crosses getServerSideProps, where an
     // explicit undefined is a serialization error rather than an absent field.
+    /*
+     * The window is only computed for a day that is actually a yes.
+     *
+     * Scoring three parts costs three more passes through the activity models,
+     * and a no-day has no use for the answer — "best in the morning" over "a
+     * write-off" is a contradiction, not a refinement. `bestWindow` would return
+     * undefined for those anyway; this just declines to ask.
+     */
+    const window = isGood(band)
+      ? bestWindow(s.activityId, parts, date, activities, now)
+      : undefined;
+
     return {
       activityId: s.activityId,
       ...(activityName ? { activityName } : {}),
@@ -100,6 +127,7 @@ export function makeCall(input: MakeCallInput): Call {
         place,
         dayIndex,
         weekday,
+        ...(window ? { window } : {}),
       }),
       facts: factsFor(s, weather, lang),
     };

@@ -4,10 +4,16 @@
  * that already consume OpenWeather's shape (current/hourly/daily transforms)
  * work unchanged regardless of which source supplied the data.
  *
- * Used as the free-first primary by pages/api/grow/weather.ts and
- * lib/seo/getActivityScore.ts, with OpenWeather kept as a fallback only.
+ * Used as the primary by pages/api/grow/weather.ts and lib/seo/getActivityScore.ts.
+ *
+ * It also emits `dayparts`, which One Call has no equivalent of — see the block
+ * that builds it. That is deliberate: the shape is imitated where a consumer
+ * depends on it and extended where nothing does.
  */
 import { WMO_DESCRIPTIONS } from '../grow/dailyForecast';
+import { aggregateDayparts, type HourlySeries } from './dayparts';
+
+export type { DaypartAggregate, DaypartName } from './dayparts';
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
@@ -42,7 +48,16 @@ export async function fetchOpenMeteoAsOneCallShape(lat: number, lon: number): Pr
     latitude: String(lat),
     longitude: String(lon),
     current: 'temperature_2m,relative_humidity_2m,apparent_temperature,precipitation,rain,snowfall,weather_code,pressure_msl,wind_speed_10m,wind_direction_10m,wind_gusts_10m',
-    hourly: 'temperature_2m,relative_humidity_2m,dew_point_2m,precipitation_probability,precipitation,rain,snowfall,weather_code,wind_speed_10m,visibility,uv_index,soil_moisture_0_to_7cm',
+    /*
+     * `wind_gusts_10m` and `wind_direction_10m` were added for DAYPARTS.
+     *
+     * Gust is the criterion the danger band turns on, and direction is the
+     * difference between two completely different days at the same speed. Both
+     * were requested daily and not hourly, so a part-of-day score would have
+     * been missing the one number that decides whether it is safe — and an
+     * absent criterion scores NEUTRAL, which is worse than a low one.
+     */
+    hourly: 'temperature_2m,relative_humidity_2m,dew_point_2m,precipitation_probability,precipitation,rain,snowfall,weather_code,wind_speed_10m,wind_gusts_10m,wind_direction_10m,visibility,uv_index,soil_moisture_0_to_7cm',
     /**
      * `wind_speed_10m_mean`, `wind_gusts_10m_max` and `precipitation_hours` are
      * asked for because the activity models already reference all three and were
@@ -278,6 +293,21 @@ export async function fetchOpenMeteoAsOneCallShape(lat: number, lon: number): Pr
     };
   });
 
+  /*
+   * Per-date, per-part aggregates — phase 1b.
+   *
+   * Emitted BESIDE the One Call shape rather than inside it. `hourly` here is
+   * imitating OpenWeather's, which is 24 entries from now; dayparts need five
+   * days, and widening it would make every existing consumer's assumption
+   * quietly wrong. So this is an additive field One Call has no equivalent of,
+   * and callers that do not know about it are unaffected.
+   *
+   * The bucketing lives in `lib/weather/dayparts` because scripts/print-calls.ts
+   * has to cut its series the same way — a script that checks the app's output
+   * against different arithmetic checks nothing.
+   */
+  const dayparts = aggregateDayparts(hourly as HourlySeries, { windUnit: 'ms' });
+
   const owHourly = (hourly.time as string[])
     .map((timeStr: string, i: number) => ({ ms: Date.parse(`${timeStr}Z`), i }))
     .filter(({ ms }) => ms >= nowMs - 60 * 60 * 1000)
@@ -298,6 +328,7 @@ export async function fetchOpenMeteoAsOneCallShape(lat: number, lon: number): Pr
     current: owCurrent,
     daily: owDaily,
     hourly: owHourly,
+    dayparts,
     alerts: [], // Open-Meteo has no global alerts equivalent; OpenWeather fallback still supplies these when used.
   };
 }

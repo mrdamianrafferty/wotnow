@@ -32,6 +32,7 @@ import type { Suggestion, WeatherData } from '../../utils/getSuggestionsByDay';
 import { activityTypes } from '../../data/activityTypes';
 import type { SeoLocation } from '../../data/seoLocations';
 import { fetchOpenMeteoAsOneCallShape } from '../weather/openMeteoOneCallAdapter';
+import type { DaypartAggregate, DaypartName } from '../weather/openMeteoOneCallAdapter';
 
 // ============================================================================
 // Public types
@@ -206,7 +207,57 @@ function labelForOffset(offset: number): string {
  * before falling back to `getCachedFullWeather` (same Supabase-backed cache
  * the live app uses) only if Open-Meteo fails.
  */
-export type LocationForecast = Array<{ date: number; weather: WeatherData }>;
+/**
+ * One part of a day, ready to score — phase 1b.
+ *
+ * A part starts as a COPY OF THE DAY and overrides only what the hourly series
+ * actually measures. Building one from scratch would drop every criterion the
+ * hourly feed does not carry — sea temperature, swell, cloud, moon phase — and
+ * the scoring models read an absent criterion as NEUTRAL, not as bad. A morning
+ * built from scratch would therefore out-score the day it belongs to, purely by
+ * knowing less about it.
+ */
+export type ForecastParts = Partial<Record<DaypartName, WeatherData>>;
+
+export type LocationForecast = Array<{
+  date: number;
+  weather: WeatherData;
+  /** Absent where the source published no usable hourly series for that day. */
+  parts?: ForecastParts;
+}>;
+
+/**
+ * A daypart aggregate as a `WeatherData`.
+ *
+ * Wind arrives in km/h — `aggregateDayparts` normalises it at the edge, because
+ * Open-Meteo answers in whichever unit the request asked for and this file's
+ * request asks for m/s. Soil moisture does still need converting: it is
+ * published as m³/m³ and the band criteria are in percent, exactly as
+ * `daytimeSoilMoisture` handles it for the daily path.
+ */
+function partWeather(day: WeatherData, p: DaypartAggregate): WeatherData {
+  const set = <T,>(key: string, v: T | undefined) => (v === undefined ? {} : { [key]: v });
+  return {
+    ...day,
+    // `rainWindow` describes WHICH PART of a day the rain fell in, so it is
+    // meaningless once you are inside one. Carried down it would tell a morning
+    // that its rain falls in the afternoon.
+    rainWindow: undefined,
+    ...set('temperature', p.temperature),
+    ...set('temperatureMin', p.temperatureMin),
+    ...set('temperatureMax', p.temperatureMax),
+    ...set('precipitation', p.precipitation),
+    ...set('precipitationHours', p.precipitationHours),
+    ...set('windspeed', p.windspeed),
+    ...set('windspeedMax', p.windspeedMax),
+    ...set('gustspeed', p.gustspeed),
+    ...set('winddirection', p.windDirection),
+    ...set('visibility', p.visibility),
+    ...set('humidity', p.humidity),
+    ...set('clouds', p.cloudCover),
+    ...set('soilMoisture', typeof p.soilMoisture === 'number' ? p.soilMoisture * 100 : undefined),
+  };
+}
 
 /**
  * The forecast for one place, fetched once so it can be scored many times.
@@ -272,15 +323,35 @@ async function withMarine(
       // Same rule as `conditionsToday`: a reading the marine API did not publish
       // leaves the key alone rather than writing `undefined` over it.
       const set = <T,>(key: string, v: T | undefined) => (v === undefined ? {} : { [key]: v });
+      const marine = {
+        ...set('waveHeight', num('wave_height_max', i)),
+        ...set('swellHeight', num('swell_wave_height_max', i)),
+        ...set('swellPeriod', num('swell_wave_period_max', i)),
+        ...set('waterTemperature', seaByDay.get(iso)),
+      };
+      /*
+       * THE PARTS GET THE MARINE DATA TOO.
+       *
+       * They are built in `mapOneCallShape`, which runs before this, so without
+       * this loop a surf morning would carry no swell, no wave height and no sea
+       * temperature — the three criteria surfing's model is mostly made of. The
+       * scorer reads an absent criterion as neutral, so every part would have
+       * out-scored the day it belongs to and the window would always have been
+       * "all day" at a surf break.
+       *
+       * The marine feed is daily, so each part gets the day's figure. That is a
+       * real limitation, not a rounding: a swell that builds through the
+       * afternoon looks flat to this. It is honest at the resolution available.
+       */
+      const parts = day.parts
+        ? Object.fromEntries(
+            Object.entries(day.parts).map(([name, w]) => [name, { ...w, ...marine }]),
+          )
+        : undefined;
       return {
         ...day,
-        weather: {
-          ...day.weather,
-          ...set('waveHeight', num('wave_height_max', i)),
-          ...set('swellHeight', num('swell_wave_height_max', i)),
-          ...set('swellPeriod', num('swell_wave_period_max', i)),
-          ...set('waterTemperature', seaByDay.get(iso)),
-        },
+        weather: { ...day.weather, ...marine },
+        ...(parts ? { parts } : {}),
       };
     });
   } catch {
@@ -315,7 +386,11 @@ export async function fetchForecastForLocation(
    * daily mean), in which case the max stands in — which is the old behaviour,
    * so the fallback is never worse than what it replaced.
    */
-  function mapOneCallShape(data: { daily?: unknown; hourly?: unknown } | null | undefined): Array<{ date: number; weather: WeatherData }> {
+  function mapOneCallShape(data: { daily?: unknown; hourly?: unknown; dayparts?: unknown } | null | undefined): LocationForecast {
+    // Keyed by YYYY-MM-DD, as the adapter emits it. Absent on the OpenWeather
+    // shape and on anything else that does not publish an hourly series.
+    const allParts = (data?.dayparts ?? {}) as Record<string, Record<string, DaypartAggregate>>;
+
     if (Array.isArray(data?.daily)) {
       return (data.daily as OWMDaily[]).slice(0, 7).map((d: OWMDaily) => {
         const maxKmh = typeof d.wind_speed === 'number' ? d.wind_speed * 3.6 : undefined;
@@ -345,6 +420,24 @@ export async function fetchForecastForLocation(
             humidity: d.humidity,
           },
         };
+      }).map((day) => {
+        /*
+         * A part is only offered when it has ENOUGH HOURS to be worth scoring.
+         *
+         * The first and last days of a forecast are partial — a request made at
+         * 4pm has one hour of that afternoon — and three hours is the floor at
+         * which a mean, a max and a rain total say anything. Below it the part
+         * is dropped, which costs a window and never invents one.
+         */
+        const iso = new Date(day.date * 1000).toISOString().slice(0, 10);
+        const raw = allParts[iso];
+        if (!raw) return day;
+        const parts: ForecastParts = {};
+        for (const name of ['morning', 'afternoon', 'evening'] as DaypartName[]) {
+          const p = raw[name];
+          if (p && p.hours >= 3) parts[name] = partWeather(day.weather, p);
+        }
+        return Object.keys(parts).length ? { ...day, parts } : day;
       });
     }
 
