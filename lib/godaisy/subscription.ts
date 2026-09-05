@@ -1,8 +1,12 @@
 /**
  * Go Daisy+ — remnant.
  *
- * **Go Daisy+ was removed on 5 September 2026.** Go Daisy is free, with no tiers,
- * no limits and nothing to buy. Nobody ever subscribed: at removal there were
+ * **Go Daisy+ was removed on 5 September 2026.** Nothing in the app reads a tier
+ * or enforces a limit any more, and there is nothing to buy. The last gate to go
+ * was `pages/api/godaisy/planned-activities.ts`, which read
+ * `godaisy_subscription_tier` off `profiles` directly rather than through the
+ * helpers here — which is why the first sweep, done by grepping for this module,
+ * missed it. Nobody ever subscribed: at removal there were
  * zero rows in `godaisy_subscription_events`, zero profiles with a Stripe
  * subscription id, zero with a RevenueCat product id, and all 177 users on
  * `free`. The paywall gated the redesign — a three-day forecast cap and a
