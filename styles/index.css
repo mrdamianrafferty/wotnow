@@ -384,9 +384,24 @@ h1, h2, h3 {
   color: #222;
 }
 
-button:not(.btn) {
-  /* background-color: #4a90e2; */
-  /* color: #fff; - Removed: causes white text on white background when bg-color is not set */
+/*
+ * THE REDESIGN IS EXCLUDED FROM THIS, and that is the whole of the fix.
+ *
+ * These three rules style the bare `button` element for the old app, and
+ * `button:not(.btn)` is specificity (0,1,1) — which beats a plain class like
+ * `.call-icon-btn` (0,1,0). So every button in the new design was silently
+ * carrying 8px/16px of padding, a 4px radius and a shadow it never asked for,
+ * and filling to solid #555 on hover. That grey square behind the hamburger and
+ * the alternates icon was this, not anything in the new stylesheet — which is
+ * why setting `background: none` there changed nothing.
+ *
+ * It is the third global element rule to reach into the redesign, after
+ * `section` and `header`. Excluding the namespaces here rather than fighting
+ * specificity in a hundred component rules: the new design brings its own
+ * styling for every control it draws, and phase 7 deletes the pages that need
+ * these.
+ */
+button:not(.btn):not([class*="call-"]):not([class*="gd-"]) {
   border: none;
   padding: 0.5rem 1rem;
   cursor: pointer;
@@ -395,11 +410,11 @@ button:not(.btn) {
   transition: box-shadow 0.2s, background 0.2s;
 }
 
-button:not(.btn):hover {
+button:not(.btn):not([class*="call-"]):not([class*="gd-"]):hover {
   background-color: #555;
 }
 
-button:not(.btn):active {
+button:not(.btn):not([class*="call-"]):not([class*="gd-"]):active {
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
 }
 

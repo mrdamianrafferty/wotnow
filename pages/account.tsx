@@ -510,7 +510,12 @@ export default function AccountPage() {
                 >
                   {!mounted ? 'Change' : coastalSpot ? 'Change' : 'Set location'}
                 </button>
-                {!isMarineUser && (
+                {/* Gated on `mounted` for the same reason the place name is:
+                    `preferences.interests` is empty on the server and full on the
+                    client's first render, so an ungated tip is in the server HTML
+                    and absent from the client's — which is a hydration mismatch,
+                    not a cosmetic one. */}
+                {mounted && !isMarineUser && (
                   <p className="gd-acct-note">Tip: add sea activities for tide/swell suggestions.</p>
                 )}
               </div>
@@ -520,7 +525,12 @@ export default function AccountPage() {
           {/* Activities */}
           <section className="gd-acct-block">
             <h2 className="gd-acct-h2">Activities</h2>
-            {selectedActivities.length ? (
+            {/* Same hydration rule as the locations block: the saved interests
+                are not known on the server, so the choice between the chip list
+                and the empty line has to wait for the client. */}
+            {!mounted ? (
+              <p className="gd-acct-note">…</p>
+            ) : selectedActivities.length ? (
               <div className="flex flex-wrap gap-2 mb-3">
                 {selectedActivities.map(a => (
                   <span key={a} className="inline-flex items-center gap-1 px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm">
