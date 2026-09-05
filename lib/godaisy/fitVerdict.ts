@@ -29,11 +29,24 @@ export interface FitOptions {
 
 /** Largest px size at which `el`'s text fits. Reads layout; call in an effect. */
 export function fitVerdict(el: HTMLElement, opts: FitOptions = {}): number {
-  const min = opts.min ?? MIN;
-  const max = opts.max ?? MAX;
-  const maxLines = opts.maxLines ?? MAX_LINES;
-
   const styles = getComputedStyle(el);
+
+  /*
+   * THE CEILING COMES FROM CSS, NOT FROM THIS FILE.
+   *
+   * 62px was measured against a phone, and on an iPad the same verdict sat at
+   * 62px in the corner of an 820px canvas with a void above it — a phone
+   * layout inflated rather than a tablet one. The breakpoint that fixes that
+   * belongs in the stylesheet with the rest of the design, so this reads
+   * `--call-verdict-max` and a media query is all it takes to change.
+   *
+   * The constant stays as the fallback for a caller with no stylesheet, and
+   * `opts.max` still wins for anyone who wants to be explicit.
+   */
+  const cssMax = parseFloat(styles.getPropertyValue('--call-verdict-max'));
+  const min = opts.min ?? MIN;
+  const max = opts.max ?? (Number.isFinite(cssMax) && cssMax > 0 ? cssMax : MAX);
+  const maxLines = opts.maxLines ?? MAX_LINES;
   const lineHeightRatio = parseFloat(styles.lineHeight) / parseFloat(styles.fontSize) || 0.96;
 
   const fits = (px: number): boolean => {
