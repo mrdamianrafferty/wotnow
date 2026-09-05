@@ -1159,6 +1159,81 @@ section.gd-spot-section { padding: 36px var(--call-gutter-app); }
 section.gd-spot-hero { padding: 40px var(--call-gutter-app) 44px; }
 section.gd-spot-colophon { padding: 28px var(--call-gutter-app) 40px; }
 
+/* ── Footer ───────────────────────────────────────────────────────────────
+   A base, not a card. The page ends on a shift of ground and a hairline —
+   no border box, no shadow, nothing that reads as one last panel stacked on
+   the bottom of an article.
+
+   The columns are labelled because the links had none: seven of them sat in
+   one undifferentiated run, so a reader after the privacy policy had to read
+   all seven to find it.                                                    */
+.gd-foot {
+  background: var(--call-panel);
+  border-top: 1px solid var(--call-border);
+  color: var(--call-ink-3);
+  font-family: var(--call-font-body);
+}
+.gd-foot-inner {
+  max-width: var(--call-measure);
+  margin: 0 auto;
+  padding: 40px var(--call-gutter-app) 32px;
+}
+@media (min-width: 700px) {
+  .gd-foot-inner { max-width: 900px; padding: 48px var(--call-gutter-web) 36px; }
+}
+
+.gd-foot-cols {
+  display: grid;
+  gap: var(--call-block);
+  grid-template-columns: 1fr;
+}
+/* Two columns before four: at 700px four tracks give each link list about
+   14 characters, which wraps every second label. */
+@media (min-width: 560px) { .gd-foot-cols { grid-template-columns: repeat(2, 1fr); } }
+@media (min-width: 860px) { .gd-foot-cols { grid-template-columns: 1.4fr 1fr 1fr 1fr; } }
+
+.gd-foot-brand img { display: block; margin-bottom: 10px; }
+.gd-foot-mark {
+  margin: 0;
+  font: 400 var(--call-section-title)/1.1 var(--call-font-display);
+  color: var(--call-ink-1);
+}
+.gd-foot-line {
+  margin: 6px 0 0;
+  font-size: var(--call-caption);
+  color: var(--call-ink-4);
+}
+
+.gd-foot-title { margin: 0 0 12px; color: var(--call-ink-4); }
+
+.gd-foot-list { margin: 0; padding: 0; list-style: none; display: grid; gap: 9px; }
+.gd-foot-list a {
+  color: var(--call-ink-3);
+  text-decoration: none;
+  font-size: var(--call-body-sm);
+  transition: color var(--call-t-press) var(--call-ease-out);
+}
+.gd-foot-list a:hover { color: var(--call-ink-1); text-decoration: underline; }
+.gd-foot-list a:focus-visible {
+  outline: 2px solid var(--call-moss);
+  outline-offset: 3px;
+  border-radius: 2px;
+}
+
+.gd-foot-rule {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  justify-content: space-between;
+  align-items: baseline;
+  margin: var(--call-block) 0 0;
+  padding-top: 18px;
+  border-top: 1px solid var(--call-border);
+  font-size: var(--call-caption);
+  color: var(--call-ink-4);
+}
+.gd-foot-sendoff { font-family: var(--call-font-display); font-size: var(--call-body-sm); color: var(--call-ink-3); }
+
 /* ── Waiting ──────────────────────────────────────────────────────────────
    One spinner, and it holds itself back for 400ms before appearing. A
    warm marine response lands in 350ms, and a spinner that flashes for a
