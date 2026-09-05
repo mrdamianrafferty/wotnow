@@ -285,7 +285,7 @@ export default function StartPage() {
               disabled={!canAdvance}
               onClick={() => (step === STEPS.length - 1 ? finish() : setStep((s) => s + 1))}
             >
-              {step === STEPS.length - 1 ? 'Get my call' : 'Next'}
+              {step === STEPS.length - 1 ? "Let's go!" : 'Next'}
             </button>
           </div>
 

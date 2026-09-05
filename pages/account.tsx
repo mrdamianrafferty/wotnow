@@ -572,8 +572,25 @@ export default function AccountPage() {
             </div>
           </section>
 
-          {/* Notifications — hidden on iOS native (use device settings instead) */}
-          {isSignedIn && !isIOSNative && (
+          {/*
+            * THE OFF SWITCH NEEDS NO ACCOUNT, BECAUSE THE ON SWITCH DID NOT.
+            *
+            * `/start` asks for notification permission during onboarding, and
+            * onboarding deliberately requires no account — so the common case
+            * was somebody turning notifications ON with no account and then
+            * finding nothing in the app to turn them OFF, because this whole
+            * section was gated on `isSignedIn`. Offering a thing and hiding
+            * its undo is not a dark pattern by intent, but it is one by
+            * effect, and Apple treats it as one either way.
+            *
+            * What genuinely needs an account is the per-type preferences and
+            * quiet hours, because those persist server-side against a user id.
+            * Those stay gated, below, and say so.
+            *
+            * Still hidden on iOS native: there the notifications are the
+            * system's, and iOS Settings is where they are managed.
+            */}
+          {mounted && !isIOSNative && (
             <section className="gd-acct-block">
               <h2 className="gd-acct-h2">Notifications</h2>
               <p className="gd-acct-note">
@@ -581,13 +598,14 @@ export default function AccountPage() {
               </p>
 
               {!pushSupported ? (
-                <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 text-amber-800 text-sm">
-                  Push notifications are not supported in this browser.
-                  Try Chrome, Firefox, or Edge.
+                <div className="gd-note">
+                  This browser cannot deliver notifications. Chrome, Firefox and
+                  Edge can, and so can Go Daisy on iPhone.
                 </div>
               ) : pushPermission === 'denied' ? (
                 <div className="gd-note gd-note--bad">
-                  Notification permission was denied. Update your browser settings to allow notifications.
+                  Notifications are switched off for Go Daisy. You can turn them
+                  back on in your device settings.
                 </div>
               ) : (
                 <>
@@ -604,11 +622,7 @@ export default function AccountPage() {
                       </div>
                     </div>
                     <button
-                      className={`px-4 py-2 rounded-lg font-medium ${
-                        pushSubscribed
-                          ? 'gd-btn gd-btn--quiet'
-                          : 'gd-btn'
-                      } disabled:opacity-50`}
+                      className={pushSubscribed ? 'gd-btn gd-btn--quiet' : 'gd-btn'}
                       disabled={pushLoading || notifPrefsLoading}
                       onClick={async () => {
                         if (pushSubscribed) {
@@ -623,8 +637,18 @@ export default function AccountPage() {
                     </button>
                   </div>
 
+                  {/* What each notification is about, and when it may not
+                      arrive. Persisted against a user id, so it needs one. */}
+                  {pushSubscribed && !isSignedIn && (
+                    <p className="gd-acct-note">
+                      <Link href="/login">Sign in</Link> to choose which
+                      notifications you get and to set quiet hours. Turning them
+                      off here works either way.
+                    </p>
+                  )}
+
                   {/* Preferences - only when subscribed */}
-                  {pushSubscribed && !notifPrefsLoading && (
+                  {isSignedIn && pushSubscribed && !notifPrefsLoading && (
                     <div className="space-y-2">
                       <NotifToggle
                         label="Extreme weather"
