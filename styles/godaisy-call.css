@@ -127,9 +127,24 @@
      with sharp for the share renderer, which cannot run CSS filters. */
   --call-photo-filter: saturate(0.85) brightness(0.62);
   --call-scrim-up:     linear-gradient(to top, rgba(28,25,23,0.86), rgba(28,25,23,0.10));
+  /*
+   * Re-cut for illustration, 5 September 2026.
+   *
+   * The four stops were tuned against the dark surf PHOTOGRAPH in the mocks. The
+   * imagery decision settled on the existing per-activity artwork instead, and
+   * that artwork is flat vector colour: measured across 38 of them, the band the
+   * verdict occupies sits at luminance 28-107 after brightness(.62), median 60.
+   * Bright, and — worse for type — detailed, so it competes rather than recedes.
+   *
+   * The old curve gave 0.52 alpha there, which held contrast (11.8:1) but not
+   * calm. 0.77 puts even the brightest illustration under luminance 45. The top
+   * still opens up, because the content is bottom-pinned and the image has that
+   * half to itself.
+   */
   --call-scrim-call:   linear-gradient(to bottom,
-                         rgba(28,25,23,0.55) 0%, rgba(28,25,23,0.15) 30%,
-                         rgba(28,25,23,0.86) 78%, rgba(28,25,23,0.96) 100%);
+                         rgba(28,25,23,0.55) 0%, rgba(28,25,23,0.18) 25%,
+                         rgba(28,25,23,0.70) 50%, rgba(28,25,23,0.90) 78%,
+                         rgba(28,25,23,0.96) 100%);
 
   /* ── motion · four movements, no more ─────────────────────────── */
   --call-ease-out:  cubic-bezier(0.16, 1, 0.3, 1);
@@ -246,8 +261,9 @@
    dropping it — the light variant is for the share card and the web. */
 .call-scrim--no {
   background: linear-gradient(to bottom,
-    rgba(28,25,23,.72) 0%, rgba(28,25,23,.55) 30%,
-    rgba(28,25,23,.92) 78%, rgba(28,25,23,.97) 100%);
+    rgba(28,25,23,.72) 0%, rgba(28,25,23,.55) 25%,
+    rgba(28,25,23,.86) 50%, rgba(28,25,23,.94) 78%,
+    rgba(28,25,23,.97) 100%);
 }
 
 .call-content {
