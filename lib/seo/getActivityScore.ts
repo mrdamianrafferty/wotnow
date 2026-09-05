@@ -157,7 +157,7 @@ export async function getActivityScoreForLocation(
     const lift = parts
       ? promote(
           bandFor(dayScore, suggestion?.vetoed, suggestion?.binding?.key),
-          partBands(activityId, parts, day.date, [activity], now),
+          partBands(activityId, parts, day.date, [activity], now, { lat: location.lat, lon: location.lon }),
           parts,
           isSevere(w.precipitation, w.gustspeed ?? w.windspeed),
           w.gustspeed ?? w.windspeedMax ?? w.windspeed,

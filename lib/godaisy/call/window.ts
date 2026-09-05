@@ -26,6 +26,9 @@ import type { Suggestion, WeatherData } from '@/utils/getSuggestionsByDay';
 import type { ActivityType } from '@/data/activities/types';
 import { bandFor, isGood, type CallBand } from './bands';
 
+import { lightTagsFor } from '@/data/activityLight';
+import SunCalc from 'suncalc';
+
 /** In the order the day happens. Overnight is never offered — see the adapter. */
 export const PART_ORDER = ['morning', 'afternoon', 'evening'] as const;
 export type PartName = (typeof PART_ORDER)[number];
@@ -78,6 +81,90 @@ const ALL_PARTS: ReadonlySet<PartName> = new Set(PART_ORDER);
    the evening is where a night activity is scored. */
 const NIGHT_ONLY: ReadonlySet<PartName> = new Set<PartName>(['evening']);
 
+/** Where the day is, so the sun can be put in the right place. */
+export interface Coords { lat: number; lon: number }
+
+/**
+ * The hour each bucket is judged at.
+ *
+ * A bucket is six hours wide and the sun moves through it, so one moment has to
+ * stand for the whole thing. The middle of each is the fair choice: it is the
+ * hour most of the bucket looks like, and picking either edge would make the
+ * answer flip on a technicality twice a year.
+ */
+const PART_HOUR: Record<PartName, number> = { morning: 9, afternoon: 15, evening: 20 };
+
+/*
+ * NIGHT IS SUNSET TO SUNRISE.
+ *
+ * `computeEveningLightMultiplier` answers a neighbouring question — how good is
+ * it outdoors *right now*, with a civil-twilight buffer and softening nudges as
+ * sunset approaches — and it is not reused here, because it keys off the
+ * current hour. That is exactly why this bug existed: `scoreParts` scores all
+ * three parts with the same `now`, so for a call built at nine in the morning
+ * its `hour` was 9 for the evening bucket too and it returned 1.0 every time.
+ * Football in Sheffield on 12 December came out prime/81 in the evening — the
+ * identical score to ten in the morning, six hours after sunset.
+ *
+ * The question here is simpler and it is about a bucket rather than a moment,
+ * so it gets the simple answer: is the middle of this bucket between sunrise
+ * and sunset. No twilight allowance — half an hour of afterglow is not an
+ * evening's cricket, and a rule with no edge cases is a rule that stays right.
+ */
+const AFTER_DARK_DAMPED = 0.7;   // done in the dark routinely, but not as well
+const AFTER_DARK_SUPPRESSED = 0.4;   // needs the light it will not have
+
+/**
+ * How much of a part's score survives, given where the sun is.
+ *
+ * `suncalc` rather than the forecast's `daily.sunset`, which the adapter only
+ * publishes for day zero — this has to answer for all seven.
+ */
+function daylight(
+  part: PartName,
+  activityId: string,
+  activities: ActivityType[],
+  date: number,
+  coords: Coords | undefined,
+): number {
+  // Without a position there is no sun to place, and guessing at the season
+  // would be a worse answer than not damping at all.
+  if (!coords) return 1;
+
+  const activity = activities.find((a) => a.id === activityId);
+  // Indoor activities do not care, and one we cannot find is not one to start
+  // guessing about.
+  if (!activity || activity.weatherSensitive === false) return 1;
+
+  /*
+   * UTC, because the buckets are.
+   *
+   * `dayparts.ts` cuts morning/afternoon/evening on the forecast's own UTC
+   * stamps — the call has never asked anywhere for its timezone, and `/call`
+   * says so in as many words. Reading the hour back in the server's local zone
+   * instead put a Sheffield December morning an hour before its own sunrise and
+   * damped it, on a machine happening to run in Madrid. The known limitation
+   * this inherits is the same one the buckets have: a long way east or west,
+   * "morning" is an hour out.
+   */
+  const at = new Date(date * 1000);
+  at.setUTCHours(PART_HOUR[part], 0, 0, 0);
+
+  const { sunrise, sunset } = SunCalc.getTimes(at, coords.lat, coords.lon);
+  // Inside the polar circles there are days with no sunrise and days with no
+  // sunset, and `getTimes` returns an Invalid Date rather than throwing. A day
+  // whose sun cannot be placed is left alone.
+  if (!Number.isFinite(sunrise?.getTime()) || !Number.isFinite(sunset?.getTime())) return 1;
+
+  const t = at.getTime();
+  if (t >= sunrise.getTime() && t <= sunset.getTime()) return 1;
+
+  const tags = lightTagsFor(activityId, activity.tags ?? []);
+  if (tags.includes('floodlit')) return 1;
+  if (tags.includes('evening_ok') || tags.includes('night')) return AFTER_DARK_DAMPED;
+  return AFTER_DARK_SUPPRESSED;
+}
+
 /**
  * Which parts of this day are good enough to do this activity in.
  *
@@ -90,6 +177,7 @@ export function scoreParts(
   date: number,
   activities: ActivityType[],
   now: Date,
+  coords?: Coords,
 ): Array<{ name: PartName; band: CallBand; score: number; key?: string }> {
   const usable = usableParts(activityId, activities);
   const present = PART_ORDER.filter((p): p is PartName => Boolean(parts[p]) && usable.has(p));
@@ -109,7 +197,11 @@ export function scoreParts(
   return present.map((name, i) => {
     const s = scored[i]?.suggestions.find((x) => x.activityId === activityId);
     if (!s) return { name, band: 'notToday' as CallBand, score: 0 };
-    return { name, band: bandFor(s.score, s.vetoed, s.binding?.key), score: s.score, key: s.binding?.key };
+    // The band is recomputed from the damped score rather than carried over: a
+    // dark evening still reading "prime" under a halved number is the drawer
+    // contradicting itself in public, which is how the promotion bug was found.
+    const score = Math.round(s.score * daylight(name, activityId, activities, date, coords));
+    return { name, band: bandFor(score, s.vetoed, s.binding?.key), score, key: s.binding?.key };
   });
 }
 
@@ -127,9 +219,10 @@ export function partBands(
   date: number,
   activities: ActivityType[],
   now: Date,
+  coords?: Coords,
 ): Array<{ name: PartName; band: CallBand; score: number }> {
   if (!parts) return [];
-  return scoreParts(activityId, parts, date, activities, now)
+  return scoreParts(activityId, parts, date, activities, now, coords)
     .map(({ name, band, score }) => ({ name, band, score }));
 }
 
@@ -179,9 +272,10 @@ export function bestWindow(
   date: number,
   activities: ActivityType[],
   now: Date,
+  coords?: Coords,
 ): CallWindow | undefined {
   if (!parts) return undefined;
-  const scored = scoreParts(activityId, parts, date, activities, now);
+  const scored = scoreParts(activityId, parts, date, activities, now, coords);
   if (scored.length < 2) return undefined; // one part is a day, not a window
 
   const good = scored.map((s) => isGood(s.band));
