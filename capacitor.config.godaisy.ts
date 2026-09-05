@@ -35,7 +35,19 @@ const config: CapacitorConfig = {
       iosSpinnerStyle: 'small',
     },
     PushNotifications: {
-      presentationOptions: ['badge', 'sound', 'alert'],
+      /*
+       * NO BADGE. There is nothing for a number to count.
+       *
+       * Go Daisy sends one message a day and that message IS the product —
+       * tapping it opens the call, which is the whole of what it had to say.
+       * There is no inbox behind it and no unread state, so a red 1 on the
+       * icon would be counting something that does not exist and asking to be
+       * cleared by opening an app the person had already decided not to open.
+       *
+       * `sound` and `alert` stay: the notification should arrive properly when
+       * the app is in the foreground. It is only the icon badge that is wrong.
+       */
+      presentationOptions: ['sound', 'alert'],
     },
   },
 };

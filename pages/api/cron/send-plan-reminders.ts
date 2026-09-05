@@ -165,7 +165,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             app: activity.app,
             deepLink: getDeepLink(activity),
           },
-          badge: 1,
+          /*
+           * No `badge`. It was `badge: 1` for all three apps, so every reminder
+           * put a red 1 on the icon — a count of an inbox none of them has. The
+           * notification is the message; opening the app is not "reading" it,
+           * and there is nothing to clear.
+           */
           sound: 'default',
         });
 
