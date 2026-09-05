@@ -12,19 +12,25 @@
  *   3. Run the scoring engine for the chosen activity
  *   4. Return a clean, page-ready payload
  *
- * Free-first: Open-Meteo (via fetchOpenMeteoAsOneCallShape) is the PRIMARY
- * source, adapted into the same shape OpenWeather One Call 3.0 returns.
- * OpenWeather (getCachedFullWeather) is only used as a fallback when
- * Open-Meteo fails — SEO regeneration is a lot of locations, so keeping it
- * off OpenWeather's quota by default matters more here than for live traffic.
+ * Open-Meteo (via fetchOpenMeteoAsOneCallShape) is the ONLY source here,
+ * adapted into the shape OpenWeather One Call 3.0 returns because that is what
+ * the scoring engine reads.
+ *
+ * The OpenWeather backstop was removed on 5 September 2026. It fired on
+ * Open-Meteo's 429s — and a 429 is what this page produces for itself, since
+ * one render fans out to eighteen more locations for its related lists. So the
+ * backstop was not covering an outage; it was covering our own burst, and doing
+ * it with a payload that publishes fewer fields. That is how the whole
+ * /{activity}/{location} surface came to 500 on `cloudCoverPct`: the fallback
+ * ran, `clouds` was absent, and an absent field was fatal. One source, one
+ * shape, and a rate-limited fetch now fails visibly instead of degrading into
+ * something subtly different.
  */
 
 import { getSuggestionsByDay } from '../../utils/getSuggestionsByDay';
 import type { Suggestion, WeatherData } from '../../utils/getSuggestionsByDay';
 import { activityTypes } from '../../data/activityTypes';
 import type { SeoLocation } from '../../data/seoLocations';
-import { getCachedFullWeather } from '../services/weatherService';
-import { getOpenWeatherKey } from '../utils/openWeatherKey';
 import { fetchOpenMeteoAsOneCallShape } from '../weather/openMeteoOneCallAdapter';
 
 // ============================================================================
@@ -359,32 +365,24 @@ export async function fetchForecastForLocation(
     return [];
   }
 
-  // PRIMARY: Open-Meteo (free, unlimited)
-  try {
-    const data = await fetchOpenMeteoAsOneCallShape(location.lat, location.lon);
-    const mapped = mapOneCallShape(data);
-    if (mapped.length) return withMarine(location, mapped);
-  } catch (err) {
-    console.warn(`[getActivityScore] Open-Meteo failed for ${location.slug}, falling back to OpenWeather:`, err);
+  /*
+   * One attempt, then one retry. Open-Meteo's limit is per minute, and the
+   * bursts that trip it are our own related-list fan-out, so a short wait
+   * clears most of them. Two is the whole budget: a page that cannot get a
+   * forecast should say so quickly, not hold a request open retrying.
+   */
+  for (let attempt = 0; attempt < 2; attempt++) {
+    try {
+      const data = await fetchOpenMeteoAsOneCallShape(location.lat, location.lon);
+      const mapped = mapOneCallShape(data);
+      if (mapped.length) return withMarine(location, mapped);
+    } catch (err) {
+      if (attempt === 0) {
+        await new Promise((r) => setTimeout(r, 400));
+        continue;
+      }
+      console.error(`[getActivityScore] Open-Meteo failed for ${location.slug}:`, err);
+    }
   }
-
-  // BACKSTOP: OpenWeather One Call 3.0 (Supabase-cached)
-  const apiKey = getOpenWeatherKey();
-  if (!apiKey) {
-    console.error(`Weather fetch skipped for ${location.slug}: missing OpenWeather API key`);
-    return [];
-  }
-
-  try {
-    const data = await getCachedFullWeather({
-      lat: location.lat,
-      lon: location.lon,
-      apiKey,
-      options: { units: 'metric', exclude: '' },
-    });
-    return mapOneCallShape(data);
-  } catch (err) {
-    console.error(`Weather fetch error for ${location.slug}:`, err);
-    return [];
-  }
+  return [];
 }
