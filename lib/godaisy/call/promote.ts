@@ -13,7 +13,7 @@
 
 import type { WeatherData } from '@/utils/getSuggestionsByDay';
 import { isGood, type CallBand } from './bands';
-import { bestRun, type ForecastParts, type PartName } from './window';
+import { bestRun, PART_ORDER, type ForecastParts, type PartName } from './window';
 
 /**
  * A DAY WITH A GOOD RUN IN IT IS NOT A WRITE-OFF.
@@ -56,7 +56,18 @@ export function promote(
 ): { band: CallBand; score: number; weather: WeatherData } | null {
   if (isGood(dayBand)) return null;
   if (dayBand === 'unsafe') return null;
-  if (!parts || bars.length < 2) return null;
+  /*
+   * The floor is on the DAY's coverage, not on this activity's bar count.
+   *
+   * It was `bars.length < 2`, which read the same on real data until night
+   * activities started being scored in the evening alone: stargazing has one
+   * bar by design, and the old guard silently turned promotion off for it —
+   * losing the case that matters most, a clouded-over day whose evening clears.
+   * What the guard was ever protecting against is a partial first or last day
+   * with too few hours to judge, and that is a question about `parts`.
+   */
+  if (!parts || !bars.length) return null;
+  if (PART_ORDER.filter((p) => parts[p]).length < 2) return null;
   if (bars.some((b) => b.band === 'unsafe')) return null;
   /*
    * And a floor on the DAY's own gust, independent of how anything was scored.

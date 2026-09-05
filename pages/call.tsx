@@ -456,6 +456,7 @@ export const getServerSideProps: GetServerSideProps<CallPageProps> = async (ctx)
       const c = makeCall({
         date: d.date, place: location.name, weather: forecast[i].weather,
         suggestions: d.suggestions, sports: chosen, seeded: chosen, dayIndex: i,
+        coords: { lat: location.lat, lon: location.lon },
       });
       return c.call && isGood(c.call.band) ? weekday(d.date) : null;
     });
@@ -469,6 +470,8 @@ export const getServerSideProps: GetServerSideProps<CallPageProps> = async (ctx)
         suggestions: d.suggestions,
         sports: chosen,
         seeded: chosen,
+        // Where, so the dayparts know whether the sun is up in them.
+        coords: { lat: location.lat, lon: location.lon },
         names: Object.fromEntries(
           (allSports as Array<{ id: string; name: string }>).map((a) => [a.id, a.name]),
         ),

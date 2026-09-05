@@ -84,6 +84,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const call = makeCall({
       date: d.date, place: location.name, weather: forecast[dayIndex].weather,
       suggestions: d.suggestions, sports: chosen, seeded: chosen,
+      // The card has to agree with the screen, daylight damping included.
+      coords: { lat: location.lat, lon: location.lon },
       names: Object.fromEntries((allSports as Array<{ id: string; name: string }>).map((a) => [a.id, a.name])),
       dayIndex, weekday: weekday(d.date),
     });

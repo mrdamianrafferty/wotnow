@@ -86,13 +86,18 @@ export interface MakeCallInput {
   activities?: ActivityType[];
   /** Anchors season and context tags for the parts. Defaults to now. */
   now?: Date;
+  /**
+   * Where this is, so the parts can be told whether the sun is up.
+   * Absent means no daylight damping — see `daylight` in `window.ts`.
+   */
+  coords?: { lat: number; lon: number };
   lang?: SupportedLanguageCode;
 }
 
 export function makeCall(input: MakeCallInput): Call {
   const {
     date, place, weather, suggestions, sports, seeded = [], names = {}, nextYes,
-    dayIndex = 0, weekday = '', parts, activities = [], now = new Date(), lang = 'en',
+    dayIndex = 0, weekday = '', parts, activities = [], now = new Date(), lang = 'en', coords,
   } = input;
 
   const mine = suggestions.filter((s) => sports.includes(s.activityId));
@@ -121,7 +126,7 @@ export function makeCall(input: MakeCallInput): Call {
   const barsFor = (activityId: string) => {
     const held = barCache.get(activityId);
     if (held) return held;
-    const made = partBands(activityId, parts, date, activities, now);
+    const made = partBands(activityId, parts, date, activities, now, coords);
     barCache.set(activityId, made);
     return made;
   };
@@ -163,7 +168,7 @@ export function makeCall(input: MakeCallInput): Call {
      * contradiction; over "a good day to get the bike out" it is the point.
      */
     const window = isGood(band)
-      ? bestWindow(s.activityId, parts, date, activities, now)
+      ? bestWindow(s.activityId, parts, date, activities, now, coords)
       : undefined;
 
     const weighed = (s.criteria ?? [])
