@@ -1,6 +1,7 @@
 import { GetServerSideProps } from 'next';
 import Head from 'next/head';
 import Link from 'next/link';
+import { ShareLanding } from '@/components/call/ShareLanding';
 import { useState } from 'react';
 import {
   Calendar,
@@ -136,6 +137,18 @@ export default function SharePage({ data, error }: SharePageProps) {
   const appUrl = getAppUrl(data.app);
   const deepLinkPath = getDeepLinkPath(data);
 
+  /*
+   * The card that draws itself, addressed through the share renderer.
+   *
+   * Absolute, because Open Graph consumers do not resolve relative URLs — a
+   * crawler on Slack's side has no base to resolve against.
+   */
+  const ogImage = data.app === 'godaisy' && data.slug
+    ? `${typeof window !== 'undefined' ? window.location.origin : 'https://godaisy.io'}` +
+      `/api/call/share?place=${encodeURIComponent(data.slug)}&day=${data.dayIndex ?? 0}` +
+      `&alt=0&date=${encodeURIComponent(data.date)}&crop=og`
+    : null;
+
   // Expired state
   if (expired) {
     return (
@@ -177,8 +190,24 @@ export default function SharePage({ data, error }: SharePageProps) {
         <meta property="og:url" content={typeof window !== 'undefined' ? window.location.href : ''} />
         <meta property="og:site_name" content={appName} />
 
+        {/*
+          * THE LINK PREVIEW. There was no og:image at all, so every shared Go
+          * Daisy link previewed as bare text — while the renderer that draws the
+          * card sat there being used only for the native share sheet. For a
+          * product whose whole bet is that a shared object recruits, the object
+          * was invisible in the one place it travels.
+          *
+          * Only where the token carries a slug: tokens minted before that field
+          * existed cannot address the renderer, and a link sent last week must
+          * still open.
+          */}
+        {ogImage && <meta property="og:image" content={ogImage} />}
+        {ogImage && <meta property="og:image:width" content="1200" />}
+        {ogImage && <meta property="og:image:height" content="630" />}
+
         {/* Twitter Card */}
-        <meta name="twitter:card" content="summary" />
+        <meta name="twitter:card" content={ogImage ? 'summary_large_image' : 'summary'} />
+        {ogImage && <meta name="twitter:image" content={ogImage} />}
         <meta name="twitter:title" content={title} />
         <meta name="twitter:description" content={description} />
 
@@ -186,6 +215,21 @@ export default function SharePage({ data, error }: SharePageProps) {
         <meta name="theme-color" content={appColor} />
       </Head>
 
+      {/*
+        * Go Daisy shares land on a Go Daisy page. The template below serves
+        * three apps, and Findr and Grow Daisy have their own designs — so this
+        * branches rather than restyling a surface that is not only ours.
+        */}
+      {data.app === 'godaisy' ? (
+        <ShareLanding
+          place={data.location}
+          date={data.date}
+          activityName={data.activityName}
+          score={data.score}
+          reason={data.weatherSummary}
+          ctaHref={data.slug ? `/call?place=${encodeURIComponent(data.slug)}` : '/call'}
+        />
+      ) : (
       <div className="min-h-screen bg-base-200 py-8 px-4">
         <div className="max-w-lg mx-auto space-y-6">
           {/* App branding */}
@@ -233,32 +277,11 @@ export default function SharePage({ data, error }: SharePageProps) {
                   </>
                 )}
 
-                {data.app === 'godaisy' && (
-                  <>
-                    {data.location && (
-                      <div className="flex items-center gap-2 text-sm">
-                        <MapPin className="h-4 w-4 text-primary shrink-0" />
-                        <span>{data.location}</span>
-                      </div>
-                    )}
-                    <div className="flex items-center gap-2 text-sm">
-                      <Calendar className="h-4 w-4 text-primary shrink-0" />
-                      <span>{formatDisplayDate(data.date)}</span>
-                    </div>
-                    <div className="flex items-center gap-2 text-sm">
-                      <Sun className="h-4 w-4 text-warning shrink-0" />
-                      <span>{data.activityName}</span>
-                      <span className={`badge badge-sm ${
-                        data.score >= 80 ? 'badge-success' :
-                        data.score >= 60 ? 'badge-warning' :
-                        'badge-info'
-                      }`}>
-                        {data.score}%
-                      </span>
-                    </div>
-                  </>
-                )}
-
+                {/* Go Daisy shares never reach this template — they render
+                    `ShareLanding` above. Its block is deleted rather than left
+                    unreachable: TypeScript narrowed `data.app` here to findr or
+                    growdaisy and refused to compile the dead branch, which is
+                    the compiler doing the review. */}
                 {data.app === 'growdaisy' && (
                   <>
                     {data.location && (
@@ -324,6 +347,7 @@ export default function SharePage({ data, error }: SharePageProps) {
           </div>
         </div>
       </div>
+      )}
     </>
   );
 }

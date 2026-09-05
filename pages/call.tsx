@@ -175,6 +175,9 @@ export default function CallPage({ slug, place, days, photos, indoor, coords, co
         date: iso,
         location: place,
         weatherSummary: option.verdict.reason,
+        // So the landing page can render the same card as a link preview.
+        slug,
+        dayIndex,
       } as Omit<GoDaisyShareData, 'createdAt' | 'expiresAt'>),
     );
     try {

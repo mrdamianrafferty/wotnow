@@ -458,7 +458,7 @@ export default function ProgrammaticSeoPage({
               )}
             </div>
             <p className="gd-spot-note">
-              Data from OpenWeather, Stormglass marine services and api.met.no.
+              Data from Open-Meteo, and Open-Meteo Marine for waves and sea temperature.
               Last updated{' '}
               {new Date(score.lastUpdated).toLocaleTimeString('en-GB', {
                 hour: '2-digit',
@@ -567,7 +567,7 @@ export default function ProgrammaticSeoPage({
               Free, ad-free. Built by independent makers in the UK and Asturias, Spain.
             </p>
             <p>
-              Weather data from OpenWeather, Stormglass and api.met.no.
+              Weather data from Open-Meteo.
             </p>
           </div>
         </section>
