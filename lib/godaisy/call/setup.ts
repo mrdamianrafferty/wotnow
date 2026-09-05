@@ -53,6 +53,34 @@ const VALID_SPORTS: ReadonlySet<string> = new Set(
 );
 
 /**
+ * What everybody starts with.
+ *
+ * An empty first screen asks a stranger to describe themselves before the app
+ * has shown them anything, and a call with no sports in it has nothing to be
+ * about. These five are the ones almost nobody would call wrong: they need no
+ * kit, no club and no skill, and between them they cover a bright afternoon, a
+ * warm lunchtime, a clear night and — through the café and the book — the days
+ * the weather takes away. So the seven days have something to say whatever the
+ * week does, including the weeks that are a write-off.
+ *
+ * They are a starting point, not a guess at who you are. Every one is a chip
+ * you can tap off on the first screen.
+ *
+ * `cafe` and `reading` are `weatherSensitive: false`, which is deliberate and
+ * not a problem: the scorer opens an indoor activity at 65, lifts it to 80 in
+ * heavy rain and drops it to 55 on a bright still day, so they sit below the
+ * outdoor four exactly when they should and rise above them exactly when they
+ * should.
+ */
+export const DEFAULT_SPORTS: readonly string[] = [
+  'urban_exploring',  // Go for a Walk
+  'picnicking',       // Have a Picnic
+  'stargazing',       // Go Stargazing
+  'cafe',             // Visit a Café
+  'reading',          // Read
+];
+
+/**
  * Parse a cookie into a setup, or return null.
  *
  * A COOKIE IS USER INPUT. This value reaches `fetchForecastForLocation`, which

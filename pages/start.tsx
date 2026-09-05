@@ -25,9 +25,11 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/router';
 import Head from 'next/head';
 import { allSports } from '@/data/activities';
+import { ACTIVITY_GROUPS } from '@/data/activityGroups';
 import { useGoDaisyPushNotifications } from '@/hooks/useGoDaisyPushNotifications';
 import {
-  writeSetup, readSetup, mirrorToPreferences, type CallSetup, type SetupPlace,
+  writeSetup, readSetup, mirrorToPreferences, DEFAULT_SPORTS,
+  type CallSetup, type SetupPlace,
 } from '@/lib/godaisy/call/setup';
 import {
   SportsStep, SpotsStep, HourStep, SEED_TARGET,
@@ -60,7 +62,10 @@ export default function StartPage() {
   const router = useRouter();
   const [step, setStep] = useState(0);
 
-  const [sports, setSports] = useState<string[]>([]);
+  // Not empty: an opening screen that asks a stranger to describe themselves
+  // before it has shown them anything is a worse first move than three
+  // sensible chips they can tap off. See DEFAULT_SPORTS.
+  const [sports, setSports] = useState<string[]>([...DEFAULT_SPORTS]);
   const [place, setPlace] = useState<SetupPlace | null>(null);
   const [coastal, setCoastal] = useState<SetupPlace | null>(null);
   const [pickingCoastal, setPickingCoastal] = useState(false);
@@ -73,15 +78,49 @@ export default function StartPage() {
   const push = useGoDaisyPushNotifications();
   const [pushWorking, setPushWorking] = useState(false);
 
-  const options: SportOption[] = useMemo(
-    () =>
-      (allSports as Array<{ id: string; name: string; category: string; weatherSensitive: boolean }>)
-        // Indoor activities are what a write-off offers instead; they are not
-        // what the call is about, and offering them here would say otherwise.
-        .filter((a) => a.weatherSensitive)
-        .map((a) => ({ id: a.id, label: chipLabel(a.name), category: a.category, water: WATER.has(a.id) })),
-    [],
-  );
+  const options: SportOption[] = useMemo(() => {
+    /*
+     * INDOOR ACTIVITIES ARE IN THE LIST.
+     *
+     * They were filtered out at first, on the argument that the call is about
+     * what the weather decides and an indoor thing is what a write-off offers
+     * *instead*. The argument was wrong about the scoring. `scoreActivity`
+     * already has a branch for `weatherSensitive: false`: it opens at 65,
+     * climbs to 80 in heavy rain and drops to 55 on a bright, still 20° day.
+     * So a café never wins a good afternoon from a bike ride, and on a wet
+     * Tuesday it rises to the top on its own — which is the behaviour the
+     * separate write-off prompt was built to fake.
+     *
+     * It was also wrong about people. Somebody who reads, cooks and goes to
+     * galleries was being told this app had nothing for them on the first
+     * screen it showed them.
+     */
+    const all = (allSports as Array<{ id: string; name: string; category: string; weatherSensitive: boolean }>)
+      .map((a) => ({ id: a.id, label: chipLabel(a.name), category: a.category, water: WATER.has(a.id) }));
+
+    /*
+     * The library has two of at least one thing.
+     *
+     * `jet_skiing` and `jetskiing` are both "Go Jet Skiing", and before the
+     * expanded list was grouped they merely sat next to each other; grouped,
+     * they appear in two different sections, which reads as a bug rather than
+     * as data. Deduping by the label the person actually sees, and keeping the
+     * id the curated tree knows about, puts the survivor in the section it
+     * belongs to. Neither row is deleted from the library — saved preferences
+     * may reference either id, and `parseSetup` still accepts both.
+     */
+    const curated = new Set(
+      ACTIVITY_GROUPS.flatMap((c) => c.subcategories.flatMap((sub) => sub.acts)),
+    );
+    const byLabel = new Map<string, SportOption>();
+    for (const o of all) {
+      const seen = byLabel.get(o.label);
+      if (!seen || (!curated.has(seen.id) && curated.has(o.id))) byLabel.set(o.label, o);
+    }
+    // Library order, not Map order, so the lead set's top-up is unaffected.
+    const keep = new Set([...byLabel.values()].map((o) => o.id));
+    return all.filter((o) => keep.has(o.id));
+  }, []);
 
   // Coming back to change something should not start from an empty screen.
   useEffect(() => {

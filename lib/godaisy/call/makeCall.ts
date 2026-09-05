@@ -205,7 +205,33 @@ export function makeCall(input: MakeCallInput): Call {
     };
   };
 
+  /*
+   * AN INDOOR ACTIVITY CANNOT WIN A GOOD DAY.
+   *
+   * Indoor activities are scored by their own branch in `scoreActivity`: they
+   * open at 65, climb toward 80 in heavy rain and fall to 55 on a bright, still
+   * day. That is the right *shape* and the wrong *scale* — the "gorgeous day"
+   * penalty needs literally zero precipitation, so a dry 18° afternoon with
+   * 0.1 mm on the radar left the café sitting at 65 and beating a walk. The
+   * first thing the screen said was "a day for a café", outdoors, in September,
+   * in the sun.
+   *
+   * Rather than retune a scorer that four other screens depend on, the call
+   * states the rule it actually wants: while anything outdoors is good, that is
+   * the answer, and the indoor options wait in the alternates. When nothing
+   * outdoors is good the indoor ones rise on their own — which is the write-off
+   * behaviour the separate indoor prompt was built to fake, now falling out of
+   * the ranking instead of being bolted onto it.
+   */
+  const indoor = new Set(
+    activities.filter((a) => a.weatherSensitive === false).map((a) => a.id),
+  );
   const good = ranked.filter((s) => isGood(bandOf(s)));
+  if (good.some((s) => !indoor.has(s.activityId))) {
+    // Stable: `ranked` is already the score order, and this only lifts the
+    // outdoor block above the indoor one without disturbing either.
+    good.sort((a, b) => Number(indoor.has(a.activityId)) - Number(indoor.has(b.activityId)));
+  }
 
   if (!good.length) {
     // Nothing worth putting on the call screen. The verdict is built from the

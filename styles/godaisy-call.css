@@ -521,6 +521,26 @@ h1.call-setup-question, h1.call-verdict { margin-block: 0; }
 .call-setup-note { margin: 0; font-size: var(--call-caption); color: var(--call-ink-4); text-align: center; }
 
 .call-setup-chips { display: flex; flex-wrap: wrap; gap: var(--call-chip-gap); }
+
+/*
+ * The expanded list's headings.
+ *
+ * Eighty-one chips need something to scan by, and the subcategory is the thing
+ * a person is actually navigating — "Water Sports", "Fishing", "Kicking Back
+ * and Relaxing". Quiet on purpose: it is a signpost between chips, not a
+ * section title competing with the question at the top of the screen.
+ */
+/* `padding: 0` and not just the gutters: the shared reset above zeroes the
+   global `section` rule's horizontal padding but leaves its 2rem top and
+   bottom, which here stacked 64px of dead air between every heading and the
+   chips above it. */
+.call-setup-group { padding: 0; margin-top: var(--call-block); }
+.call-setup-group:first-of-type { margin-top: var(--call-card-pad); }
+.call-setup-group-title {
+  display: flex; align-items: baseline; gap: .4em;
+  margin: 0 0 var(--call-grid-gap);
+  color: var(--call-ink-4);
+}
 .call-setup-chip {
   font: 500 14px var(--call-font-body);
   padding: 10px 15px; border-radius: var(--call-r-pill);
@@ -1138,6 +1158,95 @@ section.gd-app { padding: 44px var(--call-gutter-app); }
 section.gd-spot-section { padding: 36px var(--call-gutter-app); }
 section.gd-spot-hero { padding: 40px var(--call-gutter-app) 44px; }
 section.gd-spot-colophon { padding: 28px var(--call-gutter-app) 40px; }
+
+/* ── Footer ───────────────────────────────────────────────────────────────
+   A base, not a card. The page ends on a shift of ground and a hairline —
+   no border box, no shadow, nothing that reads as one last panel stacked on
+   the bottom of an article.
+
+   The columns are labelled because the links had none: seven of them sat in
+   one undifferentiated run, so a reader after the privacy policy had to read
+   all seven to find it.                                                    */
+.gd-foot {
+  background: var(--call-panel);
+  border-top: 1px solid var(--call-border);
+  color: var(--call-ink-3);
+  font-family: var(--call-font-body);
+}
+.gd-foot-inner {
+  max-width: var(--call-measure);
+  margin: 0 auto;
+  padding: 32px var(--call-gutter-app) 28px;
+}
+@media (min-width: 700px) {
+  .gd-foot-inner { max-width: 900px; padding: 48px var(--call-gutter-web) 36px; }
+}
+
+/* TWO COLUMNS ON A PHONE, NOT ONE.
+   Stacked, the twelve links ran to about 1,100px of footer — three screens of
+   scrolling past a page the reader had already finished. Paired, the same
+   links fit in one. The brand spans both so the wordmark still opens it. */
+.gd-foot-cols {
+  display: grid;
+  gap: 26px 20px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+.gd-foot-brand { grid-column: 1 / -1; }
+/* Five siblings in a single narrow track left the other half of the row empty
+   and added five rows of height for nothing. Spanning both and pairing them
+   costs three rows instead of five. */
+.gd-foot-col.is-family { grid-column: 1 / -1; }
+.gd-foot-col.is-family .gd-foot-list { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+/* Four across only at 860px: any earlier and each list gets about fourteen
+   characters, which wraps every second label. */
+@media (min-width: 860px) {
+  .gd-foot-cols { grid-template-columns: 1.4fr 1fr 1fr 1fr; gap: var(--call-block); }
+  .gd-foot-brand { grid-column: auto; }
+  .gd-foot-col.is-family { grid-column: auto; }
+  .gd-foot-col.is-family .gd-foot-list { grid-template-columns: 1fr; }
+}
+
+.gd-foot-brand img { display: block; margin-bottom: 10px; }
+.gd-foot-mark {
+  margin: 0;
+  font: 400 var(--call-section-title)/1.1 var(--call-font-display);
+  color: var(--call-ink-1);
+}
+.gd-foot-line {
+  margin: 6px 0 0;
+  font-size: var(--call-caption);
+  color: var(--call-ink-4);
+}
+
+.gd-foot-title { margin: 0 0 12px; color: var(--call-ink-4); }
+
+.gd-foot-list { margin: 0; padding: 0; list-style: none; display: grid; gap: 8px; }
+.gd-foot-list a {
+  color: var(--call-ink-3);
+  text-decoration: none;
+  font-size: var(--call-body-sm);
+  transition: color var(--call-t-press) var(--call-ease-out);
+}
+.gd-foot-list a:hover { color: var(--call-ink-1); text-decoration: underline; }
+.gd-foot-list a:focus-visible {
+  outline: 2px solid var(--call-moss);
+  outline-offset: 3px;
+  border-radius: 2px;
+}
+
+.gd-foot-rule {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  justify-content: space-between;
+  align-items: baseline;
+  margin: 26px 0 0;
+  padding-top: 16px;
+  border-top: 1px solid var(--call-border);
+  font-size: var(--call-caption);
+  color: var(--call-ink-4);
+}
+.gd-foot-sendoff { font-family: var(--call-font-display); font-size: var(--call-body-sm); color: var(--call-ink-3); }
 
 /* ── Waiting ──────────────────────────────────────────────────────────────
    One spinner, and it holds itself back for 400ms before appearing. A
