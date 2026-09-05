@@ -108,8 +108,8 @@ export default function Custom404() {
                 Go Home
               </Link>
 
-              <Link href="/activities" className="btn btn-outline btn-lg">
-                View Activities
+              <Link href="/weather" className="btn btn-outline btn-lg">
+                Today&rsquo;s conditions
               </Link>
             </div>
 

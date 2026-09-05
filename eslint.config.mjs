@@ -9,6 +9,9 @@ const compat = new FlatCompat({
 const eslintConfig = [
   // Ignore build and vendor directories and non-critical debug/scripts
   { ignores: [
+    // Superseded code kept for reference — see archive/code/README.md. Not
+    // built, not routed, and deliberately not held to the current lint rules.
+    'archive/**',
     '**/.next/**',
     '**/.claude/**',
     '**/node_modules/**',

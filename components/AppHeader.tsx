@@ -481,7 +481,6 @@ const AppHeader: React.FC<AppHeaderProps> = ({
               {/* Use root path for Home */}
               <li><Link href="/">{t('Home')}</Link></li>
               <li><Link href="/weather">{t('My Weather')}</Link></li>
-              <li><Link href="/activities">{t('Activity dashboard')}</Link></li>
               <li><Link href="/interests">{t('Set activities')}</Link></li>
               <li className="mt-1 border-t border-base-200" />
               {authReady && userId ? (

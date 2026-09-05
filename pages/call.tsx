@@ -61,7 +61,7 @@ function seedSports(location: SeoLocation): string[] {
   return [...water, ...land].slice(0, 3);
 }
 
-interface CallPageProps {
+export interface CallPageProps {
   /** The location's slug, so the share endpoint can be addressed. */
   slug: string;
   place: string;
@@ -348,6 +348,13 @@ function locationFromSetup(setup: CallSetup): SeoLocation {
   };
 }
 
+/**
+ * Also used by `/`, which is the home screen now — see `pages/index.tsx`.
+ *
+ * Exported rather than duplicated: the home screen and this route answer the
+ * same question about the same person, and two loaders would drift the day one
+ * of them learned something the other did not.
+ */
 export const getServerSideProps: GetServerSideProps<CallPageProps> = async (ctx) => {
   /*
    * A place that was ASKED FOR and does not exist must 404, not quietly become

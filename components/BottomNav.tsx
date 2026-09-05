@@ -3,7 +3,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
-import { Home, Mountain, CloudSun, Settings } from 'lucide-react';
+import { Home, CloudSun, Settings } from 'lucide-react';
 import { supabase } from '../lib/supabase/client';
 import { uiHaptics } from '../lib/capacitor/haptics';
 
@@ -33,12 +33,6 @@ export default function BottomNav() {
       icon: Home,
       label: 'Home',
       match: (path: string) => path === '/',
-    },
-    {
-      href: '/activities',
-      icon: Mountain,
-      label: 'Activities',
-      match: (path: string) => path.startsWith('/activities'),
     },
     {
       href: '/weather',
