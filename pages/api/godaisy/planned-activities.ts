@@ -17,7 +17,6 @@ import { createClient } from '@supabase/supabase-js';
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
-const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 
 async function getAuthenticatedUser(req: NextApiRequest) {
   const authHeader = req.headers.authorization;
@@ -29,30 +28,10 @@ async function getAuthenticatedUser(req: NextApiRequest) {
   return user;
 }
 
-async function checkPlusTier(userId: string): Promise<boolean> {
-  const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
-    auth: { autoRefreshToken: false, persistSession: false },
-  });
-
-  const { data } = await supabase
-    .from('profiles')
-    .select('godaisy_subscription_tier')
-    .eq('id', userId)
-    .single();
-
-  return data?.godaisy_subscription_tier === 'plus';
-}
-
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   const user = await getAuthenticatedUser(req);
   if (!user) {
     return res.status(401).json({ error: 'Unauthorized' });
-  }
-
-  // Verify Plus subscription
-  const isPlus = await checkPlusTier(user.id);
-  if (!isPlus) {
-    return res.status(403).json({ error: 'Go Daisy+ subscription required' });
   }
 
   // Use anon client (RLS handles row-level security)

@@ -156,6 +156,18 @@ const AppHeader: React.FC<AppHeaderProps> = ({
   const effectiveHome = homeLocation ?? inferredHome;
   const effectiveCoast = coastalLocation ?? inferredCoast;
 
+  /*
+   * The Home/Beach swap renders only when there is a coast to swap TO.
+   *
+   * Until Go Daisy+ was removed the handler was passed as
+   * `canUse('coastalLocation') ? fn : undefined`, which was false for every
+   * user, so the toggle never appeared and the missing-coast case was never
+   * reachable. Ungating the handler made it reachable: the header would offer
+   * "Beach", switch to it, and the page would carry on reading home
+   * coordinates. The guard belongs here rather than at each call site, because
+   * this is the component that knows about `inferredCoast`.
+   */
+
   // Defer dynamic labels until after mount to avoid hydration mismatches
   const [mounted, setMounted] = React.useState(false);
   React.useEffect(() => setMounted(true), []);
@@ -442,7 +454,7 @@ const AppHeader: React.FC<AppHeaderProps> = ({
                 </button>
               </li>
               {/* Toggle button for mobile */}
-              {typeof activeLocationType !== 'undefined' && typeof onToggleLocationType === 'function' && (
+              {typeof activeLocationType !== 'undefined' && typeof onToggleLocationType === 'function' && effectiveCoast && (
                 <li className="lg:hidden">
                   <button
                     type="button"
@@ -500,7 +512,7 @@ const AppHeader: React.FC<AppHeaderProps> = ({
             {/* LanguageSelector removed for Go Daisy context */}
 
             {/* DaisyUI swap-text toggle (render only when controlled) */}
-            {typeof activeLocationType !== 'undefined' && typeof onToggleLocationType === 'function' && (
+            {typeof activeLocationType !== 'undefined' && typeof onToggleLocationType === 'function' && effectiveCoast && (
               <button
                 type="button"
                 className={`swap swap-text btn btn-ghost btn-md ${activeLocationType === 'coastal' ? 'swap-active' : ''}`}
