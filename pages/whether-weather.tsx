@@ -1,9 +1,6 @@
-import { motion } from "framer-motion";
+import { DocPage } from '@/components/call/DocPage';
 import { Umbrella, Wind, Cloud, Zap } from "lucide-react";
 import React from 'react';
-import Head from 'next/head';
-import AppHeader from '../components/AppHeader';
-import Footer from "../components/footer";
 
 /**
  * Weather Forecast Explainer Page
@@ -17,31 +14,7 @@ import Footer from "../components/footer";
 export default function WeatherExplainerPage() {
   return (
     <>
-      <Head>
-        <title>Whether Weather - Go Daisy</title>
-      </Head>
-      <AppHeader />
-
-      <main className="min-h-screen bg-base-200">
-        {/* Hero */}
-        <section className="hero bg-base-100/70">
-          <div className="hero-content text-center max-w-5xl">
-            <motion.div
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.4 }}
-              className="w-full"
-            >
-
-              <h1 className="text-3xl sm:text-5xl font-extrabold leading-tight text-base-content">
-                Why the Weather Forecast Sometimes Gets It Wrong
-
-              </h1>
-              
-             
-            </motion.div>
-          </div>
-        </section>
+    <DocPage title="Why forecasts get it wrong" description="What a weather model can and cannot know, and why Go Daisy says what it says.">
 
         {/* Content grid */}
         <section className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 py-8 lg:py-12">
@@ -185,9 +158,7 @@ export default function WeatherExplainerPage() {
                   </article>
                 </div>
               </section>
-            </main>
-
-      <Footer />
+    </DocPage>
     </>
   );
 }

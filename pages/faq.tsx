@@ -1,3 +1,4 @@
+import { DocPage } from '@/components/call/DocPage';
 /**
  * Go Daisy — full FAQ page at /faq (lowercase URL).
  *
@@ -14,13 +15,8 @@
  */
 
 import React from 'react';
-import Head from 'next/head';
 import Link from 'next/link';
-import AppHeader from '../components/AppHeader';
-import dynamic from 'next/dynamic';
 import SEO from '../components/SEO';
-
-const Footer = dynamic(() => import('../components/footer'), { ssr: false });
 
 // ============================================================================
 // FAQ content — grouped so the page is scannable and so JSON-LD can include
@@ -195,27 +191,19 @@ export default function FAQPage() {
         url="https://godaisy.io/faq"
       />
 
-      <Head>
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }}
-        />
-      </Head>
+      {/*
+        * The FAQPage structured data, which the conversion to `DocPage` nearly
+        * lost. It is why this page can win a rich result for "is Go Daisy
+        * free" — the answer appears in the search listing itself — and it is
+        * derived from the same `FAQ_GROUPS` the page renders, so the two can
+        * never drift.
+        */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }}
+      />
 
-      <AppHeader />
-
-      <main className="min-h-screen bg-base-100 text-base-content">
-        <section className="px-4 py-12 md:py-20 bg-gradient-to-b from-base-200 to-base-100">
-          <div className="max-w-3xl mx-auto text-center">
-            <h1 className="text-4xl md:text-5xl font-bold mb-4">
-              Go Daisy — frequently asked questions
-            </h1>
-            <p className="text-lg text-base-content/80">
-              The full answers — to which activities Go Daisy covers, where
-              the data comes from, and what makes a good day for each thing.
-            </p>
-          </div>
-        </section>
+    <DocPage title="Frequently asked questions" description="Which activities Go Daisy covers, where the data comes from, and what makes a good day for each.">
 
         <section className="px-4 py-12">
           <div className="max-w-3xl mx-auto space-y-12">
@@ -262,9 +250,7 @@ export default function FAQPage() {
             </Link>
           </div>
         </section>
-      </main>
-
-      <Footer />
+    </DocPage>
     </>
   );
 }

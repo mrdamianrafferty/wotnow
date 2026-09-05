@@ -1314,6 +1314,44 @@ section.gd-spot-colophon { padding: 28px var(--call-gutter-app) 40px; }
 }
 .gd-acct p a:hover, .gd-cond p a:hover, .gd-spot p a:hover { color: var(--call-ink-1); }
 
+/* Cards and tiles for the support page, which was the last surface still
+   carrying pastel Tailwind — an orange-500 Patreon button, and emerald, pink
+   and orange icon tiles that between them named four palettes. Patreon's own
+   orange is a partner's brand and not ours to use as a primary. */
+.gd-card {
+  background: var(--call-card);
+  border: 1px solid var(--call-border);
+  border-radius: var(--call-r-card);
+  padding: 20px;
+  margin-bottom: 18px;
+}
+.gd-card.is-column { display: flex; flex-direction: column; }
+.gd-card-title { font: 400 var(--call-body-lg)/1.3 var(--call-font-display); color: var(--call-ink-1); margin: 0; }
+.gd-icon-tile {
+  display: grid; place-items: center;
+  width: 34px; height: 34px; flex: 0 0 auto;
+  border-radius: var(--call-r-chip);
+  background: var(--call-panel);
+  color: var(--call-ink-3);
+}
+.gd-btn--wide { width: 100%; }
+/*
+ * A BUTTON INSIDE A DOCUMENT IS A BUTTON, NOT PROSE.
+ *
+ * `.gd-doc a` is (0,1,1) and `.gd-btn` is (0,1,0), so the document's link
+ * colour won and painted moss text on a moss button — 1.00:1, invisible. That
+ * is the same specificity trap this file sets deliberately to restyle the
+ * documents without touching their markup, and it does not know the difference
+ * between a sentence and a call to action. So the buttons say it again, louder.
+ */
+.gd-doc a.gd-btn, .gd-doc a.gd-app-store {
+  text-decoration: none;
+  color: var(--call-page);
+}
+.gd-doc a.gd-btn.gd-btn--quiet { color: var(--call-ink-2); }
+.gd-doc a.gd-btn:hover, .gd-doc a.gd-app-store:hover { color: var(--call-page); }
+.gd-doc a.gd-btn.gd-btn--quiet:hover { color: var(--call-ink-1); }
+
 /* ── Documents ────────────────────────────────────────────────────────────
    The pages that are mostly words: privacy, terms, cookies, support, about,
    how the scoring works, the FAQ.
@@ -1382,6 +1420,15 @@ section.gd-spot-colophon { padding: 28px var(--call-gutter-app) 40px; }
    below zeroes its horizontal padding and leaves its 2rem top and bottom, which
    here stacked 64px of dead air between every numbered clause. */
 .gd-doc section { margin: 0; padding: 0; }
+
+/* The pages nobody means to visit. Centred, because there is nothing else on
+   them, and short — a 404 that explains itself at length is rubbing it in. */
+.gd-oops { display: grid; place-items: center; min-height: 76vh; text-align: center; }
+.gd-oops .gd-doc-inner { max-width: 44ch; }
+.gd-oops-actions {
+  display: flex; flex-wrap: wrap; gap: 10px; justify-content: center;
+  margin: 26px 0 8px;
+}
 
 /* ── Footer ───────────────────────────────────────────────────────────────
    A base, not a card. The page ends on a shift of ground and a hairline —
