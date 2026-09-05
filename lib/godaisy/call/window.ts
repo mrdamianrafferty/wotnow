@@ -26,7 +26,7 @@ import type { Suggestion, WeatherData } from '@/utils/getSuggestionsByDay';
 import type { ActivityType } from '@/data/activities/types';
 import { bandFor, isGood, type CallBand } from './bands';
 
-import { lightTagsFor } from '@/data/activityLight';
+import { lightTagsFor, EVENING } from '@/data/activityLight';
 import SunCalc from 'suncalc';
 
 /** In the order the day happens. Overnight is never offered — see the adapter. */
@@ -111,30 +111,55 @@ const PART_HOUR: Record<PartName, number> = { morning: 9, afternoon: 15, evening
  * and sunset. No twilight allowance — half an hour of afterglow is not an
  * evening's cricket, and a rule with no edge cases is a rule that stays right.
  */
-const AFTER_DARK_DAMPED = 0.7;   // done in the dark routinely, but not as well
+const AFTER_DARK_DAMPED = 0.7;       // done in the dark routinely, but not as well
 const AFTER_DARK_SUPPRESSED = 0.4;   // needs the light it will not have
 
+/*
+ * AND SOME THINGS THE EVENING IS FOR.
+ *
+ * Damping alone only ever says what a part is not. The pub, the cinema, a gig
+ * and a dance floor are evening-shaped, and an app that offers you bowling at
+ * nine in the morning has misread the day exactly as badly as one offering
+ * cricket at nine at night. So `EVENING` activities are shaped across the day
+ * rather than levelled: a quiet morning, an ordinary afternoon, and the evening
+ * they are actually for.
+ *
+ * The lift is small. It is there to order the parts against each other, not to
+ * make the pub outrank a walk on a bright afternoon — and the call's own rule
+ * that an indoor option cannot lead a good day still sits above all of this.
+ */
+const EVENING_THING: Record<PartName, number> = { morning: 0.55, afternoon: 0.85, evening: 1.15 };
+
+/** The scorer's own ceiling. A part should not outscore what a day can reach. */
+const MAX_SCORE = 100;
+
 /**
- * How much of a part's score survives, given where the sun is.
+ * How much of a part's score survives, given the hour it stands for.
  *
  * `suncalc` rather than the forecast's `daily.sunset`, which the adapter only
  * publishes for day zero — this has to answer for all seven.
  */
-function daylight(
+function timeOfDay(
   part: PartName,
   activityId: string,
   activities: ActivityType[],
   date: number,
   coords: Coords | undefined,
 ): number {
+  const activity = activities.find((a) => a.id === activityId);
+  // One we cannot find is not one to start guessing about.
+  if (!activity) return 1;
+
+  // Evening-shaped first, and regardless of position: a gig is a gig in the
+  // dark, and this is a fact about the activity rather than about the sky.
+  if (EVENING.has(activityId)) return EVENING_THING[part];
+
+  // Indoor activities do not care what the sun is doing.
+  if (activity.weatherSensitive === false) return 1;
+
   // Without a position there is no sun to place, and guessing at the season
   // would be a worse answer than not damping at all.
   if (!coords) return 1;
-
-  const activity = activities.find((a) => a.id === activityId);
-  // Indoor activities do not care, and one we cannot find is not one to start
-  // guessing about.
-  if (!activity || activity.weatherSensitive === false) return 1;
 
   /*
    * UTC, because the buckets are.
@@ -200,7 +225,7 @@ export function scoreParts(
     // The band is recomputed from the damped score rather than carried over: a
     // dark evening still reading "prime" under a halved number is the drawer
     // contradicting itself in public, which is how the promotion bug was found.
-    const score = Math.round(s.score * daylight(name, activityId, activities, date, coords));
+    const score = Math.min(MAX_SCORE, Math.round(s.score * timeOfDay(name, activityId, activities, date, coords)));
     return { name, band: bandFor(score, s.vetoed, s.binding?.key), score, key: s.binding?.key };
   });
 }

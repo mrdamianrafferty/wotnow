@@ -52,8 +52,6 @@ export const FLOODLIT: ReadonlySet<string> = new Set([
   'ice_hockey',
   'ice_skating',
   'skateboarding',
-  'outdoor_gym',
-  'outdoor_playground',
 ]);
 
 /**
@@ -78,10 +76,36 @@ export const AFTER_DARK: ReadonlySet<string> = new Set([
   'urban_exploring',
   'camping',
   'bbq',
-  'outdoor_music',
   'sea_fishing_shore',
   'coarse_fishing',
+]);
+
+/**
+ * Things the evening is *for*.
+ *
+ * The other two lists only ever take score away. These give it back: the pub,
+ * the cinema, a gig and a dance floor are not neutral about the hour, they are
+ * evening-shaped, and an app that offers you bowling at nine in the morning has
+ * not understood the question any better than one that offers you cricket at
+ * nine at night.
+ *
+ * Being on this list also means darkness is not a constraint — a gig outdoors
+ * in December is a gig, not a problem — so `outdoor_music` needs no separate
+ * after-dark entry.
+ *
+ * Deliberately short. Almost anything *can* be done in the evening, and a long
+ * list here would flatten back into no preference at all; these are the ones
+ * where the evening is the point rather than an option.
+ */
+export const EVENING: ReadonlySet<string> = new Set([
   'going_to_pub',
+  'cinema',
+  'bowling',
+  'dance',
+  'outdoor_music',
+  'make_music',
+  'playing_records',
+  'watch_a_movie',
 ]);
 
 /**

@@ -19,7 +19,7 @@
  * is not an evening's cricket, and a rule with no edge cases stays right.
  */
 
-import { partBands } from '@/lib/godaisy/call/window';
+import { partBands, bestWindow } from '@/lib/godaisy/call/window';
 import { allSports } from '@/data/activities';
 import type { WeatherData } from '@/utils/getSuggestionsByDay';
 
@@ -79,6 +79,48 @@ describe('a light evening', () => {
     for (const id of ['cricket', 'birdwatching', 'picnicking', 'running']) {
       const b = bars(id, JUNE);
       expect(b.evening).toBe(b.afternoon);
+    }
+  });
+});
+
+describe('the things the evening is for', () => {
+  /*
+   * Damping alone only ever says what a part is not. An app that offers you
+   * bowling at nine in the morning has misread the day exactly as badly as one
+   * offering cricket at nine at night, so these are shaped across the day
+   * rather than levelled.
+   */
+  it('names the evening as the window, in any season', () => {
+    for (const date of [DECEMBER, JUNE]) {
+      for (const id of ['going_to_pub', 'cinema', 'bowling', 'dance']) {
+        const w = bestWindow(id, ALL_DAY, date, ACTIVITIES, NOW, SHEFFIELD);
+        expect(w?.parts).toEqual(['evening']);
+      }
+    }
+  });
+
+  it('is not troubled by the dark — a gig in December is a gig', () => {
+    const b = bars('outdoor_music', DECEMBER);
+
+    expect(b.evening).toBeGreaterThan(b.afternoon);
+  });
+
+  it('does not let a part outscore what a day can reach', () => {
+    // The lift is a multiplier and the scorer's own ceiling is 100; a bar
+    // reading 114 would be the drawer inventing a band the day cannot have.
+    for (const id of ['going_to_pub', 'cinema', 'bowling', 'dance', 'outdoor_music']) {
+      for (const s of Object.values(bars(id, JUNE))) expect(s).toBeLessThanOrEqual(100);
+    }
+  });
+});
+
+describe('the outdoor gym and the playground', () => {
+  // Both were briefly listed as floodlit. Some are; most are a bit of kit in a
+  // park, and the app should not send somebody to a dark one.
+  it('need the daylight, like the rest of the park', () => {
+    for (const id of ['outdoor_gym', 'outdoor_playground']) {
+      expect(bars(id, DECEMBER).evening).toBeLessThan(bars(id, DECEMBER).afternoon);
+      expect(bars(id, JUNE).evening).toBe(bars(id, JUNE).afternoon);
     }
   });
 });
