@@ -79,7 +79,7 @@ const TOP_FAQS: FaqItem[] = [
   },
   {
     q: 'How is Go Daisy different from Windy or the Met Office?',
-    a: 'General weather apps tell you the weather and trust you to interpret it. Go Daisy tells you whether your thing is on. We read the same kinds of data — from OpenWeather, Stormglass and api.met.no — and then apply it to whichever activities you have told us you do, so you do not have to do the mental arithmetic of "is 14 mph from the south-west too much for a paddleboard at my local lake?" every time you open the app.',
+    a: 'General weather apps tell you the weather and trust you to interpret it. Go Daisy tells you whether your thing is on. We read the same kinds of data — from Open-Meteo, Stormglass and api.met.no — and then apply it to whichever activities you have told us you do, so you do not have to do the mental arithmetic of "is 14 mph from the south-west too much for a paddleboard at my local lake?" every time you open the app.',
   },
   {
     q: 'Is Go Daisy on Android?',
@@ -457,6 +457,29 @@ const LandingPage: React.FC = () => {
               waves, tides, UV and sky to tell you exactly when each one is on.
             </p>
 
+            {/*
+              * THE DOOR INTO THE REDESIGN, and it is temporary.
+              *
+              * `/` server-renders this landing page, not the app home screen —
+              * the cookie fork — so this is what a stranger actually sees, and
+              * nothing on it pointed at `/call`. The redesign was reachable
+              * only by typing the URL or following a shared link, which is no
+              * way to dogfood it.
+              *
+              * It sits BESIDE the existing primary CTA rather than replacing
+              * it: which of the two should be primary is a product decision,
+              * not a side effect of adding a link. Phase 7 makes `/call` the
+              * home screen and deletes this file, and this with it.
+              */}
+            <div className="flex justify-center mb-4">
+              <Link href="/call" className="gd-try-call gd-try-call--hero">
+                <span className="gd-try-call-lead">Try the new Go Daisy →</span>
+                <span className="gd-try-call-note">
+                  One sentence telling you what today is good for. No sign-in.
+                </span>
+              </Link>
+            </div>
+
             <div className="flex flex-col sm:flex-row gap-3 justify-center items-center mb-4">
               <Link
                 href={WEB_APP_CTA_URL}
@@ -596,7 +619,7 @@ const LandingPage: React.FC = () => {
               The conditions we watch so you don&rsquo;t have to
             </h2>
             <p className="text-center text-base-content/80 max-w-3xl mx-auto mb-10">
-              Professional-grade forecasts from OpenWeather, Stormglass marine
+              Professional-grade forecasts from Open-Meteo, Stormglass marine
               services and the Norwegian Meteorological Institute (api.met.no),
               plus tide data and astronomy ephemerides. For any hour of any
               day, Go Daisy can tell you:
@@ -786,7 +809,7 @@ const LandingPage: React.FC = () => {
             <p>
               Free for everyone, forever — supported by our specialist sister
               apps, not by ads or by selling your data. Weather data from
-              OpenWeather, Stormglass and api.met.no.
+              Open-Meteo, Stormglass and api.met.no.
             </p>
           </div>
         </section>

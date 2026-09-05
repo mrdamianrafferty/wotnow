@@ -26,7 +26,7 @@ export interface VerdictLockupProps {
 }
 
 export function VerdictLockup({ kicker, leadIn, verdict, reason, facts, cycleKey }: VerdictLockupProps) {
-  const ref = useRef<HTMLParagraphElement>(null);
+  const ref = useRef<HTMLHeadingElement>(null);
 
   /*
    * Re-fit on every verdict change, not just on mount. Alternates swap the whole
@@ -50,7 +50,12 @@ export function VerdictLockup({ kicker, leadIn, verdict, reason, facts, cycleKey
       {kicker ? <p className="call-label call-label--on-dark call-kicker">{kicker}</p> : null}
       <div className="call-body">
         {leadIn ? <span className="call-leadin">{leadIn}</span> : null}
-        <p className="call-verdict" ref={ref}>{verdict}</p>
+        {/* An h1, not a p. It is the page's heading in every sense — the
+            sentence the whole screen exists to say — and the screen had no
+            heading at all, which reads to a screen reader as a page about
+            nothing. The lead-in above is not a heading: it is half of this
+            sentence, split for typography. */}
+        <h1 className="call-verdict" ref={ref}>{verdict}</h1>
         <p className="call-reason">{reason}</p>
         {facts.length > 0 && (
           <div className="call-facts">

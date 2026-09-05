@@ -1,6 +1,5 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { getCachedFullWeather } from '../../lib/services/weatherService';
-import { getOpenWeatherKey } from '../../lib/utils/openWeatherKey';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   // Use the unified weather service directly
@@ -13,10 +12,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       : 'metric';
   const exclude = (req.query.exclude as string) || '';
 
-  const apiKey = getOpenWeatherKey();
-
-  if (!lat || !lon || !apiKey) {
-    return res.status(400).json({ error: 'Missing parameters or API key' });
+  /*
+   * No API key any more. `getCachedFullWeather` reads Open-Meteo underneath, so
+   * requiring a key here would have this endpoint 400 on a request it can
+   * perfectly well serve — which is how a removal like this usually breaks
+   * something days later.
+   */
+  if (!lat || !lon) {
+    return res.status(400).json({ error: 'Missing parameters' });
   }
 
   const latNum = Number(lat);
@@ -32,7 +35,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const weatherData = await getCachedFullWeather({
       lat: latNum,
       lon: lonNum,
-      apiKey,
+      apiKey: '',
       options: { units, exclude }
     });
 

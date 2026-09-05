@@ -10,12 +10,10 @@ export default class MyDocument extends Document {
   <meta name="msvalidate.01" content="7EC292D292011752BACC24475D691844" />
 
   {/* Critical resource hints - preconnect establishes early connections to reduce API latency */}
-  <link rel="preconnect" href="https://api.openweathermap.org" crossOrigin="anonymous" />
   <link rel="preconnect" href="https://maps.googleapis.com" />
   <link rel="preconnect" href="https://api.met.no" crossOrigin="anonymous" />
 
   {/* DNS prefetch as fallback for browsers that don't support preconnect */}
-  <link rel="dns-prefetch" href="https://api.openweathermap.org" />
   <link rel="dns-prefetch" href="https://maps.googleapis.com" />
   <link rel="dns-prefetch" href="https://api.met.no" />
 

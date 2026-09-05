@@ -5,7 +5,6 @@
  * Nominatim usage policy requires a descriptive User-Agent and caps at
  * ~1 req/sec — fine for our traffic, most calls are cached by callers anyway.
  */
-import { getOpenWeatherKey } from './openWeatherKey';
 
 const NOMINATIM_USER_AGENT = 'WotNow-GoDaisy-GrowDaisy/1.0 (contact: damian@flyglobalmusic.com)';
 
@@ -57,75 +56,61 @@ async function fetchNominatimReverse(lat: number, lon: number): Promise<GeocodeR
   return fromNominatimItem(item as NominatimItem);
 }
 
-interface OpenWeatherGeoItem {
-  name: string;
-  lat: number;
-  lon: number;
-  country?: string;
-  state?: string;
-}
 
-function fromOpenWeatherItem(item: OpenWeatherGeoItem): GeocodeResult {
-  return {
-    lat: item.lat,
-    lon: item.lon,
-    name: item.name,
-    displayName: [item.name, item.state, item.country].filter(Boolean).join(', '),
-    country: item.country,
-    state: item.state,
+/**
+ * The second opinion, from Open-Meteo rather than OpenWeather.
+ *
+ * No key, and it is the same geocoder `/start` searches with — so a place the
+ * onboarding flow can name is a place this can resolve, which was not true
+ * before. Open-Meteo publishes no REVERSE geocoder, so there is no second
+ * opinion for coordinates any more: Nominatim answers or nothing does. That is
+ * the one capability lost in dropping OpenWeather, and it is a fallback to a
+ * fallback rather than a feature.
+ */
+async function fetchOpenMeteoForward(query: string, limit: number): Promise<GeocodeResult[]> {
+  const url = `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(query)}` +
+    `&count=${limit}&language=en&format=json`;
+  const res = await fetch(url);
+  if (!res.ok) throw new Error(`Open-Meteo forward geocode failed: ${res.status}`);
+  const data = (await res.json()) as {
+    results?: Array<{ name: string; latitude: number; longitude: number; country?: string; admin1?: string }>;
   };
+  return (data.results ?? []).map((r) => ({
+    name: r.name,
+    // Open-Meteo has no single display string, so it is composed from the parts
+    // it does publish — the same "Town, Region, Country" Nominatim returns.
+    displayName: [r.name, r.admin1, r.country].filter(Boolean).join(', '),
+    lat: r.latitude,
+    lon: r.longitude,
+    country: r.country,
+    state: r.admin1,
+  }));
 }
 
-async function fetchOpenWeatherForward(query: string, limit: number, apiKey: string): Promise<GeocodeResult[]> {
-  const url = `https://api.openweathermap.org/geo/1.0/direct?q=${encodeURIComponent(query)}&limit=${limit}&appid=${apiKey}`;
-  const res = await fetch(url);
-  if (!res.ok) throw new Error(`OpenWeather forward geocode failed: ${res.status}`);
-  const data = (await res.json()) as OpenWeatherGeoItem[];
-  return Array.isArray(data) ? data.map(fromOpenWeatherItem) : [];
-}
-
-async function fetchOpenWeatherReverse(lat: number, lon: number, apiKey: string): Promise<GeocodeResult | null> {
-  const url = `https://api.openweathermap.org/geo/1.0/reverse?lat=${lat}&lon=${lon}&limit=1&appid=${apiKey}`;
-  const res = await fetch(url);
-  if (!res.ok) throw new Error(`OpenWeather reverse geocode failed: ${res.status}`);
-  const data = (await res.json()) as OpenWeatherGeoItem[];
-  return Array.isArray(data) && data.length ? fromOpenWeatherItem(data[0]) : null;
-}
-
-/** Forward geocode: place name -> coordinates. Nominatim primary, OpenWeather fallback. */
+/** Forward geocode: place name -> coordinates. Nominatim primary, Open-Meteo second. */
 export async function geocodeForward(query: string, limit = 5): Promise<GeocodeResult[]> {
   try {
     const results = await fetchNominatimForward(query, limit);
     if (results.length) return results;
   } catch (err) {
-    console.warn('[serverGeocode] Nominatim forward failed, falling back to OpenWeather:', err);
+    console.warn('[serverGeocode] Nominatim forward failed, trying Open-Meteo:', err);
   }
 
-  const apiKey = getOpenWeatherKey();
-  if (!apiKey) return [];
   try {
-    return await fetchOpenWeatherForward(query, limit, apiKey);
+    return await fetchOpenMeteoForward(query, limit);
   } catch (err) {
-    console.warn('[serverGeocode] OpenWeather forward geocode failed:', err);
+    console.warn('[serverGeocode] Open-Meteo forward geocode failed:', err);
     return [];
   }
 }
 
-/** Reverse geocode: coordinates -> place name. Nominatim primary, OpenWeather fallback. */
+/** Reverse geocode: coordinates -> place name. Nominatim only — see `fetchOpenMeteoForward`. */
 export async function geocodeReverse(lat: number, lon: number): Promise<GeocodeResult | null> {
   try {
     const result = await fetchNominatimReverse(lat, lon);
     if (result) return result;
   } catch (err) {
-    console.warn('[serverGeocode] Nominatim reverse failed, falling back to OpenWeather:', err);
+    console.warn('[serverGeocode] Nominatim reverse failed:', err);
   }
-
-  const apiKey = getOpenWeatherKey();
-  if (!apiKey) return null;
-  try {
-    return await fetchOpenWeatherReverse(lat, lon, apiKey);
-  } catch (err) {
-    console.warn('[serverGeocode] OpenWeather reverse geocode failed:', err);
-    return null;
-  }
+  return null;
 }

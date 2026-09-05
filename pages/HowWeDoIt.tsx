@@ -29,7 +29,7 @@ export default function HowWeDoIt() {
           </div>
 
           <p className="mb-6 text-base-content leading-relaxed">
-            At <strong>Go Daisy</strong>, we harness a wealth of data from widely respected APIs like OpenWeather, Open-Meteo, and Stormglass to gather detailed and specialist information about weather, marine conditions, astronomy, and even soil moisture.
+            At <strong>Go Daisy</strong>, we harness a wealth of data from widely respected APIs — Open-Meteo, the Norwegian Meteorological Institute and Stormglass — to gather detailed and specialist information about weather, marine conditions, astronomy, and even soil moisture.
           </p>
 
           <p className="mb-6 text-base-content leading-relaxed">

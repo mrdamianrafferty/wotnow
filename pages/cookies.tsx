@@ -83,7 +83,7 @@ export default function CookiePolicy() {
               <ul className="list-disc pl-6 mt-2 space-y-1">
                 <li><strong>Google Maps</strong> — Location search and map display</li>
                 <li><strong>Supabase</strong> — Authentication and data storage</li>
-                <li><strong>OpenWeather</strong> — Weather data services</li>
+                <li><strong>Open-Meteo</strong> — Weather, air quality and pollen data</li>
                 <li><strong>Vercel Analytics</strong> — Anonymous usage analytics</li>
               </ul>
               <p className="mt-2">

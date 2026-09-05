@@ -8,9 +8,10 @@ import {
   type SignalType,
 } from '../../../../lib/grow/localSignals';
 import { geocodeForward } from '../../../../lib/utils/serverGeocode';
-import { getOpenWeatherKey } from '../../../../lib/utils/openWeatherKey';
 
-const OPENWEATHER_API_KEY = getOpenWeatherKey();
+// OpenWeather is gone; the weather service reads Open-Meteo. The key argument
+// remains in these signatures and is ignored — see fetchOpenWeatherOneCall.
+const OPENWEATHER_API_KEY = '';
 
 interface GeoLocation {
   lat: number;

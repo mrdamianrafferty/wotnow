@@ -1,3 +1,4 @@
+import { fetchOpenMeteoAsOneCallShape } from '../weather/openMeteoOneCallAdapter';
 import { fetchWeatherApi } from 'openmeteo';
 import { monitoredFetch, weatherMetrics } from '../monitoring/weatherMetrics';
 import {
@@ -988,36 +989,23 @@ async function getWeatherData(lat: number, lon: number): Promise<FullWeather> {
     return weatherData;
   }
   
-  // Fall back to OpenWeather (paid)
-  const apiKey = process.env.OPENWEATHER_KEY || process.env.NEXT_PUBLIC_OPENWEATHER_KEY;
-  if (apiKey) {
-    console.log('⚠️  [Weather] Falling back to OpenWeather (PAID)');
-    try {
-      weatherData = await getFullWeather({ 
-        lat, 
-        lon, 
-        apiKey, 
-        options: { units: 'metric' } 
-      }) as FullWeather;
-      
-      weatherData.source = 'openweather';
-      weatherData.airQuality = await getAirQualityWithCache(lat, lon);
-      
-      // Get weather alerts
-      try {
-        const alerts = await getWeatherAlerts({ lat, lon, apiKey });
-        weatherData.alerts = alerts.length > 0 ? alerts : (weatherData.alerts || []);
-      } catch (error) {
-        console.warn('[Weather] Failed to fetch alerts:', error);
-      }
-      
-      return weatherData;
-    } catch (error) {
-      console.error('[Weather] OpenWeather failed:', error);
-    }
-  }
-  
-  // Last resort: throw error
+  /*
+   * OPENWEATHER IS GONE. It sat here as a third fallback behind MET Norway and
+   * Open-Meteo, which is to say it ran only when both free sources had already
+   * failed — rare, and then it answered in a subtly different shape with fewer
+   * fields, which is how the whole /{activity}/{location} surface once 500'd on
+   * a missing `clouds`. Two shapes where one will do, exercised only in the
+   * condition nobody is watching.
+   *
+   * The one thing it supplied that Open-Meteo has no equivalent for is severe
+   * weather ALERTS. Those were fetched and never rendered anywhere in Go Daisy —
+   * checked before removing them — so nothing on screen changes. If alerts are
+   * ever wanted, they need a source chosen on purpose rather than arriving as a
+   * side effect of a fallback.
+   *
+   * Failing here is deliberate: a caller that cannot get weather should say so
+   * rather than be handed something subtly different.
+   */
   throw new Error('No weather data available from any source');
 }
 
@@ -1027,8 +1015,6 @@ async function getWeatherData(lat: number, lon: number): Promise<FullWeather> {
 const airQualityCache = new Map<string, { data: unknown; expires: number }>();
 
 async function getAirQualityWithCache(lat: number, lon: number): Promise<unknown> {
-  const apiKey = process.env.OPENWEATHER_KEY || process.env.NEXT_PUBLIC_OPENWEATHER_KEY;
-  if (!apiKey) return null;
   
   // Use 0dp precision for air quality (changes slowly)
   const roundLat = Math.round(lat);
@@ -1042,14 +1028,37 @@ async function getAirQualityWithCache(lat: number, lon: number): Promise<unknown
     return cached.data;
   }
   
-  // Fetch from OpenWeather
+  /*
+   * From Open-Meteo, in OpenWeather's shape.
+   *
+   * The consumers read `{ aqi, components: { pm2_5, pm10, no2, o3, so2, co } }`
+   * — the drawer, the weather cards and the activity models all do — so the
+   * shape is kept and only the source changes. `european_aqi` is a 1-5-ish band
+   * like OpenWeather's `aqi`, which is what those consumers compare against.
+   */
   try {
-    const data = await getAirPollution({ lat: roundLat, lon: roundLon, apiKey });
-    airQualityCache.set(cacheKey, {
-      data,
-      expires: Date.now() + 24 * 60 * 60 * 1000, // 24 hours
-    });
-    console.log(`📡 Air quality fetched from OpenWeather (0dp: ${roundLat},${roundLon})`);
+    const day = new Date().toISOString().slice(0, 10);
+    const raw = await fetchOpenMeteoAirPollen(roundLat, roundLon, day, day) as {
+      hourly?: Record<string, Array<number | null> | string[] | undefined>;
+    };
+    const at = (key: string): number | undefined => {
+      const series = raw?.hourly?.[key] as Array<number | null> | undefined;
+      const v = Array.isArray(series) ? series.find((x) => typeof x === 'number') : undefined;
+      return typeof v === 'number' && Number.isFinite(v) ? v : undefined;
+    };
+    const data = {
+      aqi: at('european_aqi'),
+      components: {
+        pm2_5: at('pm2_5'),
+        pm10: at('pm10'),
+        no2: at('nitrogen_dioxide'),
+        o3: at('ozone'),
+        so2: at('sulphur_dioxide'),
+        co: at('carbon_monoxide'),
+      },
+    };
+    airQualityCache.set(cacheKey, { data, expires: Date.now() + 24 * 60 * 60 * 1000 });
+    console.log(`📡 Air quality fetched from Open-Meteo (0dp: ${roundLat},${roundLon})`);
     return data;
   } catch (error) {
     console.warn('[Weather] Failed to fetch air quality:', error);
@@ -1798,22 +1807,28 @@ async function getCachedFullWeather({ lat, lon, apiKey, options = {} }: { lat: n
   return fresh;
 }
 
-// OpenWeather One Call 3.0
-async function fetchOpenWeatherOneCall(lat: number, lon: number, apiKey: string, options?: WeatherOptions) {
-  const params = new URLSearchParams({
-    lat: String(lat),
-    lon: String(lon),
-    appid: apiKey,
-    units: options?.units || 'metric',
-    exclude: options?.exclude || '',
-  });
-  const url = `${OPENWEATHER_BASE_3}?${params.toString()}`;
-  const note = options
-    ? JSON.stringify({ units: options.units ?? 'metric', exclude: options.exclude ?? '' })
-    : undefined;
-  const response = await monitoredFetch('openweather', 'onecall3', url, undefined, note);
-  const data = await response.json();
-  if (!response.ok) throw { status: response.status, data };
+/**
+ * The One Call shape, from Open-Meteo.
+ *
+ * THIS WAS THE LAST LIVE OPENWEATHER CALL. `getCachedFullWeather` reaches it
+ * through `fetchFullWeatherOneCallOnly`, and that is what `/api/unified-weather`,
+ * `/api/grow/weather`, `/api/weather-with-pollen` and `/api/owm` all sit on —
+ * so removing the *fallback* further up changed nothing for any of them. This
+ * is where the money was actually being spent.
+ *
+ * Nothing downstream changes shape. `fetchOpenMeteoAsOneCallShape` exists for
+ * exactly this: it adapts Open-Meteo into the One Call 3.0 structure, which is
+ * why `getActivityScore` could switch without touching a single consumer. The
+ * function keeps its callers and its contract; only the source moved.
+ *
+ * `apiKey` stays in the signature and is ignored: it threads through eight call
+ * sites, and a parameter nothing reads is a smaller lie than a half-finished
+ * refactor. `getOpenWeatherKey` itself is deleted.
+ */
+async function fetchOpenWeatherOneCall(lat: number, lon: number, _apiKey: string, options?: WeatherOptions) {
+  void options; // Open-Meteo is requested in metric and returns everything.
+  const data = await fetchOpenMeteoAsOneCallShape(lat, lon);
+  if (!data) throw new Error('Open-Meteo returned no usable data');
   return data;
 }
 

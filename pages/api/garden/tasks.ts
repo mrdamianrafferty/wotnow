@@ -1,10 +1,9 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { createClient } from '@supabase/supabase-js';
 import { SUPABASE_URL, SUPABASE_ANON_KEY } from '../../../lib/supabase/env';
-import { getOpenWeatherKey } from '../../../lib/utils/openWeatherKey';
+import { fetchOpenMeteoAsOneCallShape } from '../../../lib/weather/openMeteoOneCallAdapter';
 import { geocodeForward } from '../../../lib/utils/serverGeocode';
 
-const OPENWEATHER_API_KEY = getOpenWeatherKey();
 
 // In-memory cache to avoid hammering OpenWeather on every request for the
 // same location (this endpoint had no caching at all previously).
@@ -56,12 +55,9 @@ async function geocodeLocation(location: string): Promise<{ lat: number; lon: nu
   return result ? { lat: result.lat, lon: result.lon, displayName: result.displayName } : null;
 }
 
-// Fetch weather data from OpenWeather
+// Fetch weather data from Open-Meteo. No key: the guard that used to sit here
+// would have refused every request the moment the key was removed.
 async function fetchWeatherData(location: string): Promise<{ weather: WeatherData; coords: { lat: number; lon: number }; displayName: string } | null> {
-  if (!OPENWEATHER_API_KEY) {
-    console.warn('No OpenWeather API key configured - using estimated weather');
-    return null;
-  }
 
   try {
     // Geocode location first
@@ -70,24 +66,35 @@ async function fetchWeatherData(location: string): Promise<{ weather: WeatherDat
       return null;
     }
 
-    // Fetch current weather
-    const weatherUrl = `https://api.openweathermap.org/data/2.5/weather?lat=${geoData.lat}&lon=${geoData.lon}&units=metric&appid=${OPENWEATHER_API_KEY}`;
-    const weatherResponse = await fetch(weatherUrl);
-
-    if (!weatherResponse.ok) {
+    /*
+     * Current conditions from Open-Meteo, in the One Call shape.
+     *
+     * This was a direct `data/2.5/weather` call — the last hand-rolled
+     * OpenWeather fetch outside the weather service. The adapter returns the
+     * One Call structure, whose `current` block carries the same fields under
+     * their One Call names: `temp` rather than `main.temp`, `wind_speed` rather
+     * than `wind.speed`.
+     */
+    const oneCall = await fetchOpenMeteoAsOneCallShape(geoData.lat, geoData.lon);
+    if (!oneCall?.current) {
       return null;
     }
 
-    const data = await weatherResponse.json();
+    const data = oneCall as {
+      current: {
+        temp?: number; humidity?: number; wind_speed?: number;
+        rain?: { '1h'?: number }; weather?: Array<{ main?: string; icon?: string }>;
+      };
+    };
 
     return {
       weather: {
-        temperature: Math.round(data.main.temp),
-        conditions: data.weather[0]?.main || 'Clear',
-        humidity: data.main.humidity,
-        windSpeed: data.wind?.speed || 0,
-        precipitation: data.rain?.['1h'] || 0,
-        icon: data.weather[0]?.icon || '01d',
+        temperature: Math.round(data.current.temp ?? 0),
+        conditions: data.current.weather?.[0]?.main || 'Clear',
+        humidity: data.current.humidity ?? 0,
+        windSpeed: data.current.wind_speed || 0,
+        precipitation: data.current.rain?.['1h'] || 0,
+        icon: data.current.weather?.[0]?.icon || '01d',
       },
       coords: {
         lat: geoData.lat,

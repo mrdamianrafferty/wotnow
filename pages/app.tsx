@@ -61,9 +61,9 @@ export default function AppPage() {
       <main className="call-setup">
         <div className="call-setup-inner">
           <p className="call-label">Go Daisy</p>
-          <p className="call-setup-question">
+          <h1 className="call-setup-question">
             {platform === 'ios' ? 'Taking you to the App Store…' : 'Get Go Daisy'}
-          </p>
+          </h1>
 
           {platform === 'android' && (
             <p className="call-setup-help">
