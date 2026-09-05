@@ -1,6 +1,10 @@
 # Go Daisy → The Call · migration plan
 
-**Plan dated:** 5 September 2026 · **Status measured at:** `f8c50598`
+**Plan dated:** 5 September 2026 · **Status measured at:** merge of #127
+
+> **All seven phases have shipped.** The status table below is what actually
+> happened, kept because the reasoning in the rest of the document is still the
+> reasoning the code follows.
 
 The plan below is Damian's, reproduced because it lived only in a chat thread and was
 lost to a context compaction once already. The **Status** column is measured against
@@ -17,13 +21,40 @@ screens. Everything except the verdict is presentation over data that already ex
 |---|-------|--------|-------|
 | 0 | Remove Go Daisy+ | **done** | [#113](https://github.com/mrdamianrafferty/wotnow/pull/113) |
 | 1a | Verdict engine, day-level | **done** | [#114](https://github.com/mrdamianrafferty/wotnow/pull/114) |
-| 1b | **Dayparts** | **not started** | — |
+| 1b | Dayparts | **done** | [#118](https://github.com/mrdamianrafferty/wotnow/pull/118) |
 | 2 | The call, at `/call` | **done** | [#115](https://github.com/mrdamianrafferty/wotnow/pull/115) |
 | 3 | The share renderer | **done** | [#115](https://github.com/mrdamianrafferty/wotnow/pull/115), [#116](https://github.com/mrdamianrafferty/wotnow/pull/116) |
-| 4 | Onboarding, three steps | not started | — |
-| 5 | The evidence drawer | not started | — |
-| 6 | Web: landing, spot pages, editorial | not started | — |
-| 7 | The swap, then the deletions | not started | — |
+| 4 | Onboarding, three steps | **done** | [#119](https://github.com/mrdamianrafferty/wotnow/pull/119) |
+| 5 | The evidence drawer | **done** | [#120](https://github.com/mrdamianrafferty/wotnow/pull/120) |
+| 6 | Web: landing, spot pages | **done** | [#122](https://github.com/mrdamianrafferty/wotnow/pull/122), [#127](https://github.com/mrdamianrafferty/wotnow/pull/127) |
+| 7 | The swap, then the deletions | **done** | [#126](https://github.com/mrdamianrafferty/wotnow/pull/126) |
+
+### What the plan did not anticipate
+
+Four pieces of work that were not phases and turned out to be load-bearing:
+
+- **A day with a good run of parts is not a write-off** ([#121](https://github.com/mrdamianrafferty/wotnow/pull/121)).
+  Found because the evidence drawer put the verdict next to its own bars and
+  made them argue in public. No-days fell from 26 of 84 to 14.
+- **A privacy policy reachable from inside the app** ([#123](https://github.com/mrdamianrafferty/wotnow/pull/123)) —
+  an App Store requirement the new surface did not meet, and the reason the dot
+  finally became a menu.
+- **OpenWeather removed** ([#125](https://github.com/mrdamianrafferty/wotnow/pull/125)).
+  The live path was not the visible fallback.
+- **Sharing rewritten as an invitation** ([#127](https://github.com/mrdamianrafferty/wotnow/pull/127)) —
+  a 413-character token URL, a leaked "also", and a message that read as a
+  weather report rather than an ask.
+
+### Still open
+
+- Whether the landing page's primary CTA should be the redesign rather than
+  `/login`. A conversion decision, deliberately not made as a side effect.
+- `LandingPage` still serves logged-out visitors and Googlebot. Restyled, not
+  replaced — the cookie fork is narrower but not gone.
+- `BottomNav` is imported by nothing since `/activities` was archived.
+- Measurement. Nothing counts a share, and the "before" for anything `/call`
+  changed is unrecoverable. D7 against the old dashboard is also gone now that
+  `/` is the call.
 
 ### Two preconditions the build ran past
 
