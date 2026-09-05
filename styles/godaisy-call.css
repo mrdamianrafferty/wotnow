@@ -773,3 +773,129 @@
 .gd-family-list a:focus-visible, .gd-app-fallback a:focus-visible {
   outline: 2px solid var(--call-moss-ink); outline-offset: 2px;
 }
+
+/* ── Spot pages ───────────────────────────────────────────────────────────
+   Phase 6. ~2,000 indexed pages, restyled and not regenerated: every URL,
+   every heading and every JSON-LD block is untouched, and only the
+   presentation moved. They now read like the app they are advertising —
+   the answer first, in the display face, and the evidence under it.
+
+   Written out rather than composed from DaisyUI, because these pages are
+   the last thing still wearing it and the fork goes away in phase 7.   */
+.gd-spot {
+  min-height: 100vh;
+  background: var(--call-page);
+  color: var(--call-ink-1);
+  font-family: var(--call-font-body);
+}
+.gd-spot-inner { max-width: 760px; margin: 0 auto; }
+.gd-spot-hero { padding: 40px var(--call-gutter-app) 44px; background: var(--call-panel); border-bottom: 1px solid var(--call-border); }
+.gd-spot-section { padding: 36px var(--call-gutter-app); border-bottom: 1px solid var(--call-border); }
+.gd-spot-colophon { padding: 28px var(--call-gutter-app) 40px; color: var(--call-ink-4); font-size: var(--call-caption); text-align: center; }
+.gd-spot-colophon p { margin: 0 0 6px; }
+
+.gd-spot-crumbs { font-size: var(--call-caption); color: var(--call-ink-4); margin-bottom: 14px; }
+.gd-spot-crumbs a { color: var(--call-ink-3); }
+
+/* The h1 stays the literal search query — it is why these pages rank — so it
+   is set QUIETLY, and the answer below it gets the display face. A page that
+   shouts its question and whispers its answer has it backwards.          */
+.gd-spot-q {
+  margin: 0 0 18px; max-width: 34ch;
+  font: 600 var(--call-body-lg)/1.35 var(--call-font-body);
+  color: var(--call-ink-3);
+}
+.gd-spot-answer {
+  margin: 0 0 14px;
+  font-family: var(--call-font-display);
+  font-size: clamp(30px, 7vw, var(--call-page-title));
+  font-weight: 700; line-height: 1.06; letter-spacing: -.02em;
+  text-wrap: balance; color: var(--call-ink-1);
+}
+.gd-spot-reason { margin: 0 0 20px; max-width: 52ch; font-size: var(--call-body); line-height: 1.55; color: var(--call-ink-2); }
+
+/* The band, as a stated fact rather than a traffic light. The score keeps its
+   place because the page is indexed on it, but it is the quiet half.      */
+.gd-spot-band {
+  display: inline-flex; align-items: baseline; gap: 10px; margin: 0;
+  padding: 7px 14px; border-radius: var(--call-r-pill);
+}
+.gd-spot-band-label { font: 600 14px var(--call-font-body); }
+.gd-spot-band-score { font-size: var(--call-caption); font-variant-numeric: tabular-nums; opacity: .8; }
+.gd-spot-band-score span { opacity: .7; }
+.gd-spot-band.is-prime      { background: var(--call-band-prime-bg);     color: var(--call-band-prime-fg); }
+.gd-spot-band.is-worthALook { background: var(--call-band-look-bg);      color: var(--call-band-look-fg); }
+.gd-spot-band.is-marginal   { background: var(--call-band-marginal-bg);  color: var(--call-band-marginal-fg); }
+.gd-spot-band.is-notToday   { background: var(--call-band-not-today-bg); color: var(--call-band-not-today-fg); }
+.gd-spot-band.is-unsafe     { background: var(--call-band-unsafe-bg);    color: var(--call-band-unsafe-fg); }
+
+.gd-spot-h2 {
+  margin: 0 0 14px;
+  font-family: var(--call-font-display);
+  font-size: var(--call-section-title); font-weight: 700;
+  line-height: 1.16; letter-spacing: -.01em; text-wrap: balance;
+}
+.gd-spot-lede { margin: -6px 0 18px; font-size: var(--call-body-sm); color: var(--call-ink-3); }
+.gd-spot-prose { margin: 0 0 12px; max-width: 62ch; font-size: var(--call-body); line-height: 1.6; color: var(--call-ink-2); }
+.gd-spot-note { margin: 18px 0 0; font-size: var(--call-caption); color: var(--call-ink-4); }
+
+.gd-spot-week { display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px; align-items: end; }
+.gd-spot-day { display: flex; flex-direction: column; align-items: center; gap: 5px; }
+.gd-spot-bar-track { height: 116px; width: 100%; display: flex; align-items: flex-end; }
+.gd-spot-bar { width: 100%; border-radius: var(--call-r-chip) var(--call-r-chip) 0 0; }
+.gd-spot-bar.is-prime      { background: var(--call-bar-prime); }
+.gd-spot-bar.is-worthALook { background: var(--call-band-look-fg); }
+.gd-spot-bar.is-marginal   { background: var(--call-bar-marginal); }
+/* Not `--call-border-strong`: a pale grey bar 8% tall on a cream ground is
+   invisible, and an invisible bar reads as missing data rather than as a bad
+   day — which is the exact failure the 8% floor exists to prevent. This is the
+   band's own ink, so the day is plainly recorded and plainly bad. */
+.gd-spot-bar.is-notToday   { background: var(--call-band-not-today-fg); }
+.gd-spot-bar.is-unsafe     { background: var(--call-bar-unsafe); }
+.gd-spot-day-name {
+  font-family: var(--call-font-display); font-style: italic;
+  font-variant-caps: small-caps; font-size: var(--call-label);
+  letter-spacing: .07em; color: var(--call-ink-4);
+}
+.gd-spot-day-score { font: 600 13px var(--call-font-body); font-variant-numeric: tabular-nums; }
+
+.gd-spot-conditions { display: grid; gap: var(--call-grid-gap); grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); }
+.gd-spot-condition {
+  display: flex; flex-direction: column; gap: 3px;
+  padding: 12px 14px; background: var(--call-card);
+  border: 1px solid var(--call-border); border-radius: var(--call-r-card);
+}
+.gd-spot-condition-label {
+  font-family: var(--call-font-display); font-style: italic;
+  font-variant-caps: small-caps; font-size: var(--call-label);
+  letter-spacing: .08em; color: var(--call-ink-4);
+}
+.gd-spot-condition-value { font: 700 var(--call-body-lg) var(--call-font-body); font-variant-numeric: tabular-nums; }
+
+.gd-spot-links { display: grid; gap: var(--call-grid-gap); grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); }
+.gd-spot-link {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  padding: 12px 14px; min-height: var(--call-tap-min);
+  background: var(--call-card); border: 1px solid var(--call-border);
+  border-radius: var(--call-r-card); text-decoration: none; color: inherit;
+}
+.gd-spot-link:hover { border-color: var(--call-border-strong); }
+.gd-spot-link-stack { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+.gd-spot-link-name { font: 600 14px var(--call-font-body); text-transform: capitalize; }
+.gd-spot-link-where { font-size: var(--call-caption); color: var(--call-ink-4); }
+/* A pip, not a 48px disc. The number is a footnote on a link, and at disc size
+   it was the loudest thing in a list of twelve.                           */
+.gd-spot-pip {
+  flex: 0 0 auto; min-width: 34px; padding: 4px 8px; text-align: center;
+  border-radius: var(--call-r-pill);
+  font: 700 13px var(--call-font-body); font-variant-numeric: tabular-nums;
+}
+.gd-spot-pip.is-prime      { background: var(--call-band-prime-bg);     color: var(--call-band-prime-fg); }
+.gd-spot-pip.is-worthALook { background: var(--call-band-look-bg);      color: var(--call-band-look-fg); }
+.gd-spot-pip.is-marginal   { background: var(--call-band-marginal-bg);  color: var(--call-band-marginal-fg); }
+.gd-spot-pip.is-notToday   { background: var(--call-band-not-today-bg); color: var(--call-band-not-today-fg); }
+.gd-spot-pip.is-unsafe     { background: var(--call-band-unsafe-bg);    color: var(--call-band-unsafe-fg); }
+
+.gd-spot-link:focus-visible, .gd-spot-crumbs a:focus-visible {
+  outline: 2px solid var(--call-moss-ink); outline-offset: 2px;
+}

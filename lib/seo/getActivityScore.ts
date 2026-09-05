@@ -30,8 +30,12 @@
 import { getSuggestionsByDay } from '../../utils/getSuggestionsByDay';
 import type { Suggestion, WeatherData } from '../../utils/getSuggestionsByDay';
 import { activityTypes } from '../../data/activityTypes';
+import type { ActivityType } from '../../data/activities/types';
 import type { SeoLocation } from '../../data/seoLocations';
 import { fetchOpenMeteoAsOneCallShape } from '../weather/openMeteoOneCallAdapter';
+import { promote } from '../godaisy/call/promote';
+import { partBands } from '../godaisy/call/window';
+import { bandFor, isSevere } from '../godaisy/call/bands';
 import type { DaypartAggregate, DaypartName } from '../weather/openMeteoOneCallAdapter';
 
 // ============================================================================
@@ -134,11 +138,36 @@ export async function getActivityScoreForLocation(
   const weeklyOutlook: DailyScore[] = dailySuggestions.map(
     (day: { date: number; suggestions: Suggestion[] }, i: number) => {
     const suggestion = day.suggestions?.find?.((s: Suggestion) => s.activityId === activityId);
-    const score = suggestion?.score ?? 0;
+    const dayScore = suggestion?.score ?? 0;
+
+    /*
+     * THE SAME PROMOTION THE APP APPLIES, or the two disagree in public.
+     *
+     * Newquay on 7 September came out "Not today, 14/100" here while `/call`
+     * said "a cycling day, best before six" — same place, same activity, same
+     * day, and this is the version a stranger arrives at from a search result.
+     * A day whose parts hold up is not a write-off, and it cannot be one on the
+     * web and not in the app.
+     *
+     * `promote` is imported rather than reimplemented: a rule with this much
+     * riding on it does not get two copies, and it very nearly had them.
+     */
+    const parts = forecast[i]?.parts;
+    const w = forecast[i]?.weather ?? {};
+    const lift = parts
+      ? promote(
+          bandFor(dayScore, suggestion?.vetoed, suggestion?.binding?.key),
+          partBands(activityId, parts, day.date, [activity], now),
+          parts,
+          isSevere(w.precipitation, w.gustspeed ?? w.windspeed),
+          w.gustspeed ?? w.windspeedMax ?? w.windspeed,
+        )
+      : null;
+
     return {
       date: new Date(day.date * 1000).toISOString().slice(0, 10),
       dayLabel: labelForOffset(i),
-      score,
+      score: lift?.score ?? dayScore,
       evaluation: suggestion?.evaluation ?? 'poor',
       reasoning: suggestion?.reasoning ?? '',
     };
@@ -170,9 +199,13 @@ export async function getActivityScoreForLocation(
     ...maybe('windGustKmh', todayWeather.gustspeed),
     ...maybe('precipitationMm', todayWeather.precipitation),
     ...maybe('cloudCoverPct', todayWeather.clouds),
-    ...maybe('waveHeightM', todayWeather.waveHeight),
-    ...maybe('swellPeriodS', todayWeather.swellPeriod),
-    ...maybe('seaTempC', todayWeather.waterTemperature),
+    // The sea is only reported where the activity's own model reads it — see
+    // `readsTheSea`. A bike page was printing wave height and swell period.
+    ...(readsTheSea(activity) ? {
+      ...maybe('waveHeightM', todayWeather.waveHeight),
+      ...maybe('swellPeriodS', todayWeather.swellPeriod),
+      ...maybe('seaTempC', todayWeather.waterTemperature),
+    } : {}),
   };
 
   return {
@@ -361,6 +394,27 @@ async function withMarine(
   } catch {
     return forecast;
   }
+}
+
+/**
+ * Does this activity's model actually read the sea?
+ *
+ * The conditions block printed whatever the forecast happened to carry, so a
+ * coastal town's CYCLING page showed wave height 2.0 m, swell period 8 s and a
+ * sea temperature — three readings with nothing to do with a bike, under a
+ * heading that says "Why this score?". They were not why the score; they were
+ * just in scope.
+ *
+ * The test is the activity's own condition strings, which is where the model is
+ * defined and the only place that knows. A new marine activity is covered the
+ * day it is written, and nothing has to be remembered.
+ */
+function readsTheSea(activity: ActivityType): boolean {
+  const bands = [
+    ...(activity.poorConditions ?? []), ...(activity.fairConditions ?? []),
+    ...(activity.goodConditions ?? []), ...(activity.perfectConditions ?? []),
+  ].join(' ');
+  return /waveHeight|swell|waterTemperature|seaState|tide/i.test(bands);
 }
 
 export async function fetchForecastForLocation(

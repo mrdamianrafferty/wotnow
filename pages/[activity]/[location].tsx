@@ -36,7 +36,7 @@ import {
 } from '../../lib/seo/getActivityScore';
 import { activityTypes } from '../../data/activityTypes';
 import GetTheApp from '../../components/GetTheApp';
-import { getActivityEmoji } from '../../data/emojiMap';
+import { bandFor, BAND_LABEL, type CallBand } from '../../lib/godaisy/call/bands';
 
 const Footer = dynamic(() => import('../../components/footer'), { ssr: false });
 
@@ -56,13 +56,11 @@ interface PageProps {
   activityId: string;
   activitySlug: string;
   activityName: string;
-  activityEmoji: string;
   location: SeoLocation;
   score: ActivityScorePayload;
   relatedAtLocation: Array<{
     activityId: string;
     name: string;
-    emoji: string;
     score: number;
     url: string;
   }>;
@@ -131,7 +129,6 @@ export const getStaticProps: GetStaticProps<PageProps> = async (ctx) => {
       return {
         activityId: a,
         name: prettyActivityName(a),
-        emoji: getActivityEmoji?.(a) ?? '•',
         score: p?.todayScore ?? 0,
         url: `/${activityIdToSlug(a)}/${location.slug}`,
       };
@@ -167,7 +164,6 @@ export const getStaticProps: GetStaticProps<PageProps> = async (ctx) => {
       activityId,
       activitySlug,
       activityName: prettyActivityName(activityId),
-      activityEmoji: getActivityEmoji?.(activityId) ?? '•',
       location,
       score,
       relatedAtLocation,
@@ -243,14 +239,36 @@ function prettyActivityName(id: string): string {
 }
 
 // ============================================================================
-// Score → traffic-light helper
+// Score → the words the app uses
 // ============================================================================
 
-function scoreColor(score: number): { bg: string; text: string; label: string } {
-  if (score >= 80) return { bg: 'bg-success', text: 'text-success-content', label: 'Excellent' };
-  if (score >= 60) return { bg: 'bg-success/80', text: 'text-success-content', label: 'Good' };
-  if (score >= 40) return { bg: 'bg-warning', text: 'text-warning-content', label: 'Fair' };
-  return { bg: 'bg-error/80', text: 'text-error-content', label: 'Poor' };
+/**
+ * These pages had a FOURTH score vocabulary.
+ *
+ * The app speaks in five bands — Prime, Worth a look, Marginal, Not today,
+ * Unsafe. The old dashboard had ten badge words. These pages had Excellent,
+ * Good, Fair, Poor, on their own thresholds. A stranger arriving from a search
+ * result was told "Excellent" and then, one tap later, "Prime", about the same
+ * afternoon.
+ *
+ * THIS CHANGES WHAT GOOGLE SHOWS. The label goes into the meta description and
+ * into the FAQPage answer, so the snippet under the search result changes with
+ * it. That is the point — the snippet should say what the app says — but it is
+ * the one edit here that is visible outside the site.
+ *
+ * `sentence` is the prose form. "Today is Worth a look for cycling" is not
+ * English, and the badge form cannot simply be lower-cased into a sentence.
+ */
+function bandWords(score: number): { band: CallBand; label: string; sentence: string } {
+  const band = bandFor(score);
+  const sentence: Record<CallBand, string> = {
+    prime: 'a prime day',
+    worthALook: 'a day worth a look',
+    marginal: 'nothing special',
+    notToday: 'not the day',
+    unsafe: 'one to sit out',
+  };
+  return { band, label: BAND_LABEL[band], sentence: sentence[band] };
 }
 
 // ============================================================================
@@ -260,16 +278,15 @@ function scoreColor(score: number): { bg: string; text: string; label: string } 
 export default function ProgrammaticSeoPage({
   activityId,
   activityName,
-  activityEmoji,
   location,
   score,
   relatedAtLocation,
   relatedLocations,
 }: PageProps) {
-  const todayColor = scoreColor(score.todayScore);
+  const today = bandWords(score.todayScore);
   const canonicalUrl = `https://godaisy.io/${activityIdToSlug(activityId)}/${location.slug}`;
   const pageTitle = `Is today a good day for ${activityName} in ${location.name}?`;
-  const pageDescription = `${todayColor.label} day for ${activityName} in ${location.name} — ${score.todayScore}/100. Live weather scoring for ${location.name}, ${location.country}, updated hourly. Free, ad-free.`;
+  const pageDescription = `Today is ${today.sentence} for ${activityName} in ${location.name} — ${score.todayScore}/100. Live weather scoring for ${location.name}, ${location.country}, updated hourly. Free, ad-free.`;
 
   // ----- JSON-LD: FAQPage answers the literal search query -----
   const faqJsonLd = {
@@ -281,7 +298,7 @@ export default function ProgrammaticSeoPage({
         name: pageTitle,
         acceptedAnswer: {
           '@type': 'Answer',
-          text: `Today is a ${todayColor.label.toLowerCase()} day for ${activityName} in ${location.name} — ${score.todayScore} out of 100. ${score.todayReasoning || ''} ${score.bestDay && score.bestDay.dayLabel !== 'Today' ? `The best day in the next week looks like ${score.bestDay.dayLabel} (${score.bestDay.score}/100).` : ''}`.trim(),
+          text: `Today is ${today.sentence} for ${activityName} in ${location.name} — ${score.todayScore} out of 100. ${score.todayReasoning || ''} ${score.bestDay && score.bestDay.dayLabel !== 'Today' ? `The best day in the next week looks like ${score.bestDay.dayLabel} (${score.bestDay.score}/100).` : ''}`.trim(),
         },
       },
     ],
@@ -324,80 +341,75 @@ export default function ProgrammaticSeoPage({
 
       <AppHeader />
 
-      <main className="min-h-screen bg-base-100 text-base-content">
+      <main className="gd-spot">
         {/* ===================================================================
             1. HERO — the literal search query, answered
             =================================================================== */}
-        <section className="px-4 py-10 md:py-16 bg-gradient-to-b from-base-200 to-base-100">
-          <div className="max-w-4xl mx-auto">
-            <div className="text-sm text-base-content/60 mb-2">
-              <Link href="/" className="link">Go Daisy</Link>
+        <section className="gd-spot-hero">
+          <div className="gd-spot-inner">
+            <nav className="gd-spot-crumbs" aria-label="Breadcrumb">
+              <Link href="/">Go Daisy</Link>
               {' › '}
               <span className="capitalize">{activityName}</span>
               {' › '}
               <span>{location.name}, {location.country}</span>
-            </div>
+            </nav>
 
-            <h1 className="text-3xl md:text-5xl font-bold leading-tight mb-6">
-              <span aria-hidden="true">{activityEmoji}</span> Is today a good day
-              for {activityName} in {location.name}?
+            {/*
+              * The h1 stays the literal search query, word for word — it is why
+              * these pages rank, and the redesign has no opinion worth losing
+              * that over. What changes is that the ANSWER now comes first and
+              * reads like the app's: the sentence, then the evidence.
+              */}
+            <h1 className="gd-spot-q">
+              Is today a good day for {activityName} in {location.name}?
             </h1>
 
-            <div
-              className={`inline-flex items-center gap-3 px-5 py-3 rounded-full ${todayColor.bg} ${todayColor.text} mb-6`}
-            >
-              <span className="text-2xl md:text-3xl font-bold">
-                {score.todayScore}<span className="text-base font-normal opacity-80">/100</span>
-              </span>
-              <span className="text-lg font-medium">{todayColor.label}</span>
-            </div>
+            <p className="gd-spot-answer">Today is {today.sentence}.</p>
 
             {score.todayReasoning && (
-              <p className="text-lg md:text-xl text-base-content/80 leading-relaxed max-w-3xl">
-                {score.todayReasoning}
-              </p>
+              <p className="gd-spot-reason">{score.todayReasoning}</p>
             )}
 
-            <div className="mt-6">
-              <Link href="/" className="btn btn-primary">
-                Open Go Daisy for the full forecast
-              </Link>
-            </div>
+            <p className={`gd-spot-band is-${today.band}`}>
+              <span className="gd-spot-band-label">{today.label}</span>
+              <span className="gd-spot-band-score">{score.todayScore}<span>/100</span></span>
+            </p>
           </div>
         </section>
 
         {/* ===================================================================
             2. 7-DAY OUTLOOK CHART (simple bar visualisation)
             =================================================================== */}
-        <section className="px-4 py-10 bg-base-100">
-          <div className="max-w-4xl mx-auto">
-            <h2 className="text-2xl md:text-3xl font-bold mb-2">
+        <section className="gd-spot-section">
+          <div className="gd-spot-inner">
+            <h2 className="gd-spot-h2">
               7-day outlook for {activityName} in {location.name}
             </h2>
             {score.bestDay && (
-              <p className="text-base-content/70 mb-6">
+              <p className="gd-spot-lede">
                 Best day looks like <strong>{score.bestDay.dayLabel}</strong> at{' '}
                 {score.bestDay.score}/100.
               </p>
             )}
 
-            <div className="grid grid-cols-7 gap-2">
+            <div className="gd-spot-week">
               {score.weeklyOutlook.map((d) => {
-                const color = scoreColor(d.score);
+                const b = bandWords(d.score);
+                // A floor of 8%, or a score of 3 draws nothing and the day looks
+                // like missing data rather than a bad day.
                 const height = Math.max(d.score, 8);
                 return (
-                  <div key={d.date} className="flex flex-col items-center">
-                    <div className="h-32 w-full flex flex-col justify-end">
+                  <div key={d.date} className="gd-spot-day">
+                    <div className="gd-spot-bar-track">
                       <div
-                        className={`${color.bg} rounded-t w-full transition-all`}
+                        className={`gd-spot-bar is-${b.band}`}
                         style={{ height: `${height}%` }}
-                        aria-label={`${d.dayLabel}: ${d.score} out of 100`}
+                        aria-label={`${d.dayLabel}: ${b.label}, ${d.score} out of 100`}
                       />
                     </div>
-                    <div className="text-xs mt-2 text-base-content/70 truncate w-full text-center">
-                      {d.dayLabel.slice(0, 3)}
-                    </div>
-                    <div className="text-sm font-semibold">{d.score}</div>
+                    <span className="gd-spot-day-name">{d.dayLabel.slice(0, 3)}</span>
+                    <span className="gd-spot-day-score">{d.score}</span>
                   </div>
                 );
               })}
@@ -408,12 +420,12 @@ export default function ProgrammaticSeoPage({
         {/* ===================================================================
             3. WHY THIS SCORE — conditions table
             =================================================================== */}
-        <section className="px-4 py-10 bg-base-200">
-          <div className="max-w-4xl mx-auto">
-            <h2 className="text-2xl md:text-3xl font-bold mb-6">
+        <section className="gd-spot-section">
+          <div className="gd-spot-inner">
+            <h2 className="gd-spot-h2">
               Why this score?
             </h2>
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+            <div className="gd-spot-conditions">
               {score.conditionsToday.temperatureC !== undefined && (
                 <ConditionCard label="Temperature" value={`${Math.round(score.conditionsToday.temperatureC)}°C`} />
               )}
@@ -445,7 +457,7 @@ export default function ProgrammaticSeoPage({
                 <ConditionCard label="Next low tide" value={score.conditionsToday.nextLowTide} />
               )}
             </div>
-            <p className="mt-6 text-sm text-base-content/60">
+            <p className="gd-spot-note">
               Data from OpenWeather, Stormglass marine services and api.met.no.
               Last updated{' '}
               {new Date(score.lastUpdated).toLocaleTimeString('en-GB', {
@@ -460,17 +472,17 @@ export default function ProgrammaticSeoPage({
         {/* ===================================================================
             4. LOCATION CONTEXT
             =================================================================== */}
-        <section className="px-4 py-10 bg-base-100">
-          <div className="max-w-4xl mx-auto">
-            <h2 className="text-2xl md:text-3xl font-bold mb-4">
+        <section className="gd-spot-section">
+          <div className="gd-spot-inner">
+            <h2 className="gd-spot-h2">
               About {activityName} in {location.name}
             </h2>
             {location.description && (
-              <p className="text-lg text-base-content/80 leading-relaxed mb-4">
+              <p className="gd-spot-prose">
                 {location.description}
               </p>
             )}
-            <p className="text-base-content/70">
+            <p className="gd-spot-prose">
               Go Daisy scores {location.activities.length} activities for{' '}
               {location.name}, including{' '}
               {location.activities
@@ -488,31 +500,18 @@ export default function ProgrammaticSeoPage({
             5. RELATED ACTIVITIES AT THIS LOCATION
             =================================================================== */}
         {relatedAtLocation.length > 0 && (
-          <section className="px-4 py-10 bg-base-200">
-            <div className="max-w-4xl mx-auto">
-              <h2 className="text-2xl md:text-3xl font-bold mb-6">
+          <section className="gd-spot-section">
+            <div className="gd-spot-inner">
+              <h2 className="gd-spot-h2">
                 Also today in {location.name}
               </h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div className="gd-spot-links">
                 {relatedAtLocation.map((r) => {
-                  const c = scoreColor(r.score);
+                  const b = bandWords(r.score);
                   return (
-                    <Link
-                      key={r.activityId}
-                      href={r.url}
-                      className="card bg-base-100 shadow-sm hover:shadow-md transition-shadow"
-                    >
-                      <div className="card-body p-4 flex flex-row items-center justify-between">
-                        <div className="flex items-center gap-3">
-                          <span className="text-2xl" aria-hidden="true">{r.emoji}</span>
-                          <span className="font-medium capitalize">{r.name}</span>
-                        </div>
-                        <span
-                          className={`inline-flex items-center justify-center w-12 h-12 rounded-full ${c.bg} ${c.text} font-bold`}
-                        >
-                          {r.score}
-                        </span>
-                      </div>
+                    <Link key={r.activityId} href={r.url} className="gd-spot-link">
+                      <span className="gd-spot-link-name">{r.name}</span>
+                      <span className={`gd-spot-pip is-${b.band}`}>{r.score}</span>
                     </Link>
                   );
                 })}
@@ -525,33 +524,21 @@ export default function ProgrammaticSeoPage({
             6. RELATED LOCATIONS FOR THIS ACTIVITY
             =================================================================== */}
         {relatedLocations.length > 0 && (
-          <section className="px-4 py-10 bg-base-100">
-            <div className="max-w-4xl mx-auto">
-              <h2 className="text-2xl md:text-3xl font-bold mb-6">
+          <section className="gd-spot-section">
+            <div className="gd-spot-inner">
+              <h2 className="gd-spot-h2">
                 Other good places for {activityName} today
               </h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div className="gd-spot-links">
                 {relatedLocations.map((r) => {
-                  const c = scoreColor(r.score);
+                  const b = bandWords(r.score);
                   return (
-                    <Link
-                      key={r.slug}
-                      href={r.url}
-                      className="card bg-base-200 shadow-sm hover:shadow-md transition-shadow"
-                    >
-                      <div className="card-body p-4 flex flex-row items-center justify-between">
-                        <div>
-                          <div className="font-medium">{r.name}</div>
-                          <div className="text-xs text-base-content/60">
-                            {r.region}, {r.country}
-                          </div>
-                        </div>
-                        <span
-                          className={`inline-flex items-center justify-center w-12 h-12 rounded-full ${c.bg} ${c.text} font-bold`}
-                        >
-                          {r.score}
-                        </span>
-                      </div>
+                    <Link key={r.slug} href={r.url} className="gd-spot-link">
+                      <span className="gd-spot-link-stack">
+                        <span className="gd-spot-link-name">{r.name}</span>
+                        <span className="gd-spot-link-where">{r.region}, {r.country}</span>
+                      </span>
+                      <span className={`gd-spot-pip is-${b.band}`}>{r.score}</span>
                     </Link>
                   );
                 })}
@@ -573,8 +560,8 @@ export default function ProgrammaticSeoPage({
           */}
         <GetTheApp placement="spot_page" place={location.name} />
 
-        <section className="px-4 py-8 bg-base-200 border-t border-base-300">
-          <div className="max-w-4xl mx-auto text-center text-sm text-base-content/70">
+        <section className="gd-spot-colophon">
+          <div className="gd-spot-inner">
             <p className="mb-2">
               Score for {activityName} in {location.name} updated hourly.
               Free, ad-free. Built by independent makers in the UK and Asturias, Spain.
@@ -597,13 +584,9 @@ export default function ProgrammaticSeoPage({
 
 function ConditionCard({ label, value }: { label: string; value: string }) {
   return (
-    <div className="card bg-base-100 shadow-sm">
-      <div className="card-body p-4">
-        <div className="text-xs uppercase tracking-wide text-base-content/60">
-          {label}
-        </div>
-        <div className="text-xl font-semibold mt-1">{value}</div>
-      </div>
+    <div className="gd-spot-condition">
+      <span className="gd-spot-condition-label">{label}</span>
+      <span className="gd-spot-condition-value">{value}</span>
     </div>
   );
 }
