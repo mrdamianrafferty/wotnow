@@ -322,19 +322,18 @@ async function storeDatabaseCache(
   try {
     const supabase = getSupabaseAdminClient();
 
-    // Last line of defence. Even if a caller slips, never persist a row whose
-    // "translation" is just the English back again: 55-64% of this table was
-    // once exactly that, written by a rate-limited backfill. Single tokens are
-    // exempt — proper nouns and sport names legitimately survive translation
-    // unchanged ("Padel" is "Padel" in every language we ship).
-    const isPassthrough =
-      sourceText.trim() === translatedText.trim() && /\s/.test(sourceText.trim());
-    if (isPassthrough) {
-      console.warn(
-        `[translation] refusing to cache passthrough for ${targetLang}: ${sourceText.slice(0, 60)}`
-      );
-      return;
-    }
+    // A translation identical to its source is suspicious but not necessarily
+    // wrong: 55-64% of this table was once the English source, written by a
+    // quota-exhausted backfill, but plenty of strings legitimately survive
+    // translation unchanged — "Padel" everywhere, and multi-word proper nouns
+    // like "New York" in most of our languages.
+    //
+    // Callers no longer pass failures here at all (translateWithDeepL returns
+    // null and is never cached), so anything reaching this point came back from
+    // a SUCCESSFUL DeepL call. Refusing to store it would mean re-requesting the
+    // same string on every view — burning the quota this change exists to
+    // protect. So cache it, and flag it for review instead.
+    const isPassthrough = sourceText.trim() === translatedText.trim();
 
     const hasFishingTerms = hasFishingTerminology(sourceText);
     const contentHash = hashText(sourceText);
@@ -346,8 +345,9 @@ async function storeDatabaseCache(
         translated_text: translatedText,
         translation_source: 'auto',
         source_content_hash: contentHash,
-        needs_review: hasFishingTerms,
+        needs_review: hasFishingTerms || isPassthrough,
         has_fishing_terminology: hasFishingTerms,
+        quality_issues: isPassthrough ? ['identical_to_source'] : null,
         access_count: 1,
         created_at: new Date().toISOString(),
         last_accessed_at: new Date().toISOString(),

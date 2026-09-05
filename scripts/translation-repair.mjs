@@ -37,18 +37,47 @@ import { createClient } from '@supabase/supabase-js';
 
 const ARGS = process.argv.slice(2);
 const APPLY = ARGS.includes('--apply');
+
+/** Read a numeric flag, refusing anything that is not a real number. NaN would
+ *  otherwise flow into the budget, and every `NaN <= 0` / `cost > NaN` guard
+ *  below silently evaluates false — so a typo like --reserve=abc would sail
+ *  past the quota check and start calling DeepL. */
+function numericFlag(name, fallback) {
+  const raw = ARGS.find((a) => a.startsWith(`--${name}=`));
+  if (!raw) return fallback;
+  const value = Number(raw.split('=')[1]);
+  if (!Number.isFinite(value) || value < 0) {
+    console.error(`--${name} must be a non-negative number (got "${raw.split('=')[1]}")`);
+    process.exit(1);
+  }
+  return value;
+}
 // Default is FRENCH ONLY. The cache refill (job 2) is a pre-fill, and Grow Daisy
 // plant descriptions are deliberately translated when called instead — they are
 // already on-demand via getServerSideProps in pages/grow/[lang]/species/[slug].tsx,
 // and the cache now self-heals on a miss. Opt in with --job=cache or --job=both
 // only to warm strings you know people read.
 const JOB = (ARGS.find((a) => a.startsWith('--job=')) || '--job=french').split('=')[1];
+const VALID_JOBS = ['french', 'cache', 'both'];
+if (!VALID_JOBS.includes(JOB)) {
+  console.error(`--job must be one of: ${VALID_JOBS.join(', ')} (got "${JOB}")`);
+  process.exit(1);
+}
 // Characters to leave unspent for the live app, so a repair run never starves it.
-const RESERVE = Number((ARGS.find((a) => a.startsWith('--reserve=')) || '--reserve=25000').split('=')[1]);
+const RESERVE = numericFlag('reserve', 25000);
 const CONCURRENCY = 5;
 
 const FORMAL = /\b(vous|votre|vos)\b/i;
 const BACKUP_DIR = 'scripts/backups';
+
+// Fail loudly and early rather than deep inside a DeepL or PostgREST error.
+const REQUIRED_ENV = ['NEXT_PUBLIC_SUPABASE_URL', 'SUPABASE_SERVICE_ROLE_KEY', 'DEEPL_API_KEY'];
+const missingEnv = REQUIRED_ENV.filter((k) => !process.env[k]);
+if (missingEnv.length) {
+  console.error(`Missing environment variables: ${missingEnv.join(', ')}`);
+  console.error('Run with: node --env-file=.env.local scripts/translation-repair.mjs');
+  process.exit(1);
+}
 
 const sb = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
 const dl = new deepl.Translator(process.env.DEEPL_API_KEY);
@@ -68,7 +97,7 @@ if (ASSUMED && APPLY) {
   process.exit(1);
 }
 let budget = ASSUMED
-  ? Number(ASSUMED.split('=')[1])
+  ? numericFlag('assume-budget', 0)
   : Math.max(0, limit - used - RESERVE);
 
 log(`DeepL quota   ${used.toLocaleString()} / ${limit.toLocaleString()} used`);
@@ -166,9 +195,14 @@ async function jobCache() {
   // Resumable: skip anything already back in the cache.
   const present = new Set();
   for (let from = 0; ; from += 1000) {
+    // .order() is required: PostgREST pagination without an explicit sort has
+    // undefined ordering, so pages can repeat or skip rows — which would make
+    // this job think strings are missing and re-translate them.
     const { data, error } = await sb
       .from('translation_cache')
       .select('source_text, target_language')
+      .order('source_text', { ascending: true })
+      .order('target_language', { ascending: true })
       .range(from, from + 999);
     if (error) throw error;
     data.forEach((r) => present.add(`${r.target_language} ${r.source_text.trim()}`));
