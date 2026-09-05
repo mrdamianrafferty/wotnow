@@ -51,12 +51,25 @@ export const GOOD_BANDS: ReadonlySet<CallBand> = new Set<CallBand>(['prime', 'wo
  * — which is exactly the failure the palette rule warns about: if red means bad
  * tennis weather it cannot also mean do not go in the water.
  *
- * The set is the one `getSuggestionsByDay` already uses for its safety floor,
- * plus wind and snowfall. Everything else that vetoes is Not today: the day is
- * off, and nobody is in danger.
+ * The set is `getSuggestionsByDay`'s own DECIDES_SAFETY — gust, waveHeight,
+ * waterTemperature — plus two it has no reason to carry: `snowfallRateMmH`,
+ * and `visibility`, which is a hazard here because this band drives a sentence
+ * telling someone whether to go out at all.
+ *
+ * `windSpeed` was in this set and has been REMOVED. Sustained wind only ever
+ * vetoes from above — swept across every weather-sensitive activity, the
+ * lowest veto is 25 km/h — so the shortfall worry that keeps it out of
+ * DECIDES_SAFETY (see the note at utils/getSuggestionsByDay.ts:498) does not
+ * apply. It came out for the original reason instead: picnicking, outdoor
+ * reading and outdoor chess veto on windSpeed at 30 km/h, and a breezy
+ * afternoon in a park is not a day anyone should be told to sit out. Wind that
+ * is genuinely dangerous arrives as a gust, which is still here.
+ *
+ * Everything else that vetoes is Not today: the day is off, and nobody is in
+ * danger.
  */
 const DANGEROUS_KEYS: ReadonlySet<string> = new Set([
-  'gust', 'windSpeed', 'waveHeight', 'waterTemperature', 'snowfallRateMmH', 'visibility',
+  'gust', 'waveHeight', 'waterTemperature', 'snowfallRateMmH', 'visibility',
 ]);
 
 export function bandFor(score: number, vetoed?: boolean, hazardKey?: string): CallBand {

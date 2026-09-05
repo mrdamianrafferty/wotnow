@@ -18,7 +18,7 @@
  * @module components/call/IndoorPrompt
  */
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useId, useMemo, useState } from 'react';
 
 export interface IndoorOption {
   id: string;
@@ -88,6 +88,9 @@ export function IndoorPrompt({ options }: IndoorPromptProps) {
   const [chosen, setChosen] = useState<string | null>(null);
   const [ready, setReady] = useState(false);
   const [expanded, setExpanded] = useState(false);
+  // Both controls point at the same region, so a screen reader can tell that
+  // More and Fewer operate one thing rather than two unrelated buttons.
+  const listId = useId();
 
   // Read after mount: localStorage does not exist on the server, and rendering
   // the chosen state on the server would mismatch the hydrated one.
@@ -132,51 +135,58 @@ export function IndoorPrompt({ options }: IndoorPromptProps) {
     );
   }
 
+  /*
+   * BOTH VIEWS ARE ALWAYS RENDERED, and the inactive one is `hidden`.
+   *
+   * The disclosure buttons carry `aria-controls`, which has to name an element
+   * that exists. Unmounting the expanded list while collapsed — the obvious way
+   * to write this — leaves More pointing at nothing, which is the same bug as
+   * having no wiring at all, only harder to see. `hidden` takes the inactive
+   * view out of the tab order and off the screen, and the reference stays good.
+   */
+  const chip = (o: IndoorOption) => (
+    <button key={o.id} type="button" className="call-indoor-chip" onClick={() => choose(o.id)}>
+      {o.label}
+    </button>
+  );
+
   return (
     <div className="call-indoor">
       <p className="call-label call-label--on-dark">Instead</p>
       <p className="call-indoor-line">Pick something indoors and we will remember it.</p>
-      {expanded ? (
-        <div className="call-indoor-all">
-          {grouped.map(([category, items]) => (
-            <div key={category} className="call-indoor-group">
-              <p className="call-label call-label--on-dark call-indoor-group-name">{category}</p>
-              <div className="call-indoor-row">
-                {items.map((o) => (
-                  <button key={o.id} type="button" className="call-indoor-chip" onClick={() => choose(o.id)}>
-                    {o.label}
-                  </button>
-                ))}
-              </div>
-            </div>
-          ))}
+
+      <div className="call-indoor-row" hidden={expanded}>
+        {three.map(chip)}
+        {options.length > three.length && (
           <button
             type="button"
-            className="call-indoor-change"
-            onClick={() => setExpanded(false)}
+            className="call-indoor-chip call-indoor-chip--more"
+            onClick={() => setExpanded(true)}
+            aria-controls={listId}
+            aria-expanded={expanded}
           >
-            Fewer
+            More
           </button>
-        </div>
-      ) : (
-        <div className="call-indoor-row">
-          {three.map((o) => (
-            <button key={o.id} type="button" className="call-indoor-chip" onClick={() => choose(o.id)}>
-              {o.label}
-            </button>
-          ))}
-          {options.length > three.length && (
-            <button
-              type="button"
-              className="call-indoor-chip call-indoor-chip--more"
-              onClick={() => setExpanded(true)}
-              aria-expanded={false}
-            >
-              More
-            </button>
-          )}
-        </div>
-      )}
+        )}
+      </div>
+
+      <div className="call-indoor-all" id={listId} hidden={!expanded}>
+        {grouped.map(([category, items]) => (
+          <div key={category} className="call-indoor-group">
+            <p className="call-label call-label--on-dark call-indoor-group-name">{category}</p>
+            <div className="call-indoor-row">{items.map(chip)}</div>
+          </div>
+        ))}
+        <button
+          type="button"
+          className="call-indoor-change"
+          onClick={() => setExpanded(false)}
+          aria-controls={listId}
+          aria-expanded={expanded}
+        >
+          Fewer
+        </button>
+      </div>
     </div>
   );
 }

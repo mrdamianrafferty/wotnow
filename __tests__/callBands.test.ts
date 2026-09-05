@@ -27,6 +27,18 @@ describe('call bands', () => {
     expect(bandFor(30, true, undefined)).toBe('notToday');
   });
 
+  /*
+   * `windSpeed` was in the danger set. Sustained wind only ever vetoes from
+   * above, so it was not the shortfall risk that keeps it out of
+   * `getSuggestionsByDay`'s DECIDES_SAFETY — but picnicking, outdoor reading
+   * and outdoor chess veto on it at 30 km/h, and a breezy afternoon in a park
+   * is not a day to tell someone to sit out. Dangerous wind arrives as a gust.
+   */
+  it('does not call sustained wind dangerous — that is what gust is for', () => {
+    expect(bandFor(30, true, 'windSpeed')).toBe('notToday');
+    expect(bandFor(30, true, 'gust')).toBe('unsafe');
+  });
+
   it('keeps marginal out of the good set — it is not a day to promise anyone', () => {
     expect(isGood('prime')).toBe(true);
     expect(isGood('worthALook')).toBe(true);
