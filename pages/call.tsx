@@ -21,15 +21,15 @@ import { getSuggestionsByDay, type Suggestion } from '@/utils/getSuggestionsByDa
 import { allSports } from '@/data/activities';
 import { makeCall, type Call } from '@/lib/godaisy/call/makeCall';
 import { isGood } from '@/lib/godaisy/call/bands';
-import { setupFromCookieHeader, type CallSetup } from '@/lib/godaisy/call/setup';
+import { setupFromCookieHeader } from '@/lib/godaisy/call/setup';
 import { SEO_LOCATIONS } from '@/data/seoLocations';
 import type { SeoLocation } from '@/data/seoLocations';
+import { locationFromSetup, locationFromShare } from '@/lib/godaisy/call/location';
 import bgMap from '@/data/bgMap';
 import { VerdictLockup } from '@/components/call/VerdictLockup';
 import { ScreenChrome } from '@/components/call/ScreenChrome';
 import { AlternatesControl } from '@/components/call/AlternatesControl';
 import { IndoorPrompt, type IndoorOption } from '@/components/call/IndoorPrompt';
-import { generateShareToken, getShareUrl, type GoDaisyShareData } from '@/lib/share/shareToken';
 import { EvidenceDrawer } from '@/components/call/EvidenceDrawer';
 import { MenuSheet } from '@/components/call/MenuSheet';
 import { LocationSheet } from '@/components/call/LocationSheet';
@@ -158,49 +158,37 @@ export default function CallPage({ slug, place, days, photos, indoor, coords, co
     const qs = `place=${encodeURIComponent(slug)}&day=${dayIndex}&alt=${altIndex}&date=${iso}`;
 
     /*
-     * The link is an existing Go Daisy share token, not a /call query.
-     *
-     * `lib/share/shareToken` already encodes the payload INTO the token, so
-     * there is no table to add and nothing to expire by hand, and /share/[token]
-     * already renders a landing page for someone who has never heard of the app
-     * — which is exactly what the growth model needs the link to do. The share
-     * renderer's card is what appears in the message; this is where tapping it
-     * lands.
-     */
-    /*
-     * THE LINK IS THE SPOT PAGE, NOT THE TOKEN.
+     * A SHORT LINK FOR ANY PLACE, NOT JUST THE SEEDED ONES.
      *
      * A real share went out reading `godaisy.io/share/eyJ2IjoxLCJkIjp7ImFwc…`
      * — 413 characters of base64 that filled an iMessage bubble and looked like
-     * something you would not tap. The spot page is 51, and it is not a
-     * compromise: `/{activity}/{location}` is a real page that answers the same
-     * question, already ranks, and is the URL the card itself prints along its
-     * footer. The message and the card now say the same thing.
+     * something you would not tap. The first fix pointed the link at the spot
+     * page, which is 51 characters and a page that already ranks — but only for
+     * the seeded towns. Everybody who typed their own town in onboarding, which
+     * is everybody who onboards, kept getting the token.
      *
-     * The token stays for places that have no spot page — anywhere someone
-     * named in onboarding, whose synthetic `setup:lat,lon` slug is not a route.
-     * There the long URL is still better than no link.
+     * So the fallback is a query on the call itself: about sixty characters,
+     * legible, and it opens the same screen the sender was looking at rather
+     * than a landing page describing it.
      */
     const spotSlug = SEO_LOCATIONS.some((l: SeoLocation) => l.slug === slug) ? slug : null;
     const link = spotSlug
       ? `${origin}/${option.activityId.replace(/_/g, '-')}/${spotSlug}?from=share`
-      : getShareUrl(
-        generateShareToken({
-          // Typed to the Go Daisy variant: `Omit` over the ShareData union does
-          // not narrow, so an untyped literal is checked against all three apps.
-          app: 'godaisy',
-          activityId: option.activityId,
-          activityName: option.activityName ?? option.activityId,
-          score: option.score,
-          date: iso,
-          location: place,
-          weatherSummary: option.verdict.reason,
-          slug,
-          dayIndex,
-        } as Omit<GoDaisyShareData, 'createdAt' | 'expiresAt'>),
-      );
+      : `${origin}/call?place=${encodeURIComponent(slug)}&a=${encodeURIComponent(option.activityId)}`
+        + `&n=${encodeURIComponent(place)}&d=${dayIndex}&from=share`;
     try {
-      const text = await fetch(`/api/call/share?${qs}&crop=text`).then((r) => r.text());
+      /*
+       * `res.ok`, because a 404 has a body too.
+       *
+       * `.text()` and `.blob()` both resolve happily on an error response, so a
+       * broken renderer did not throw — it returned `{"error":"Unknown place…"}`
+       * and that string became the message, while the same 46 bytes became
+       * `the-call.png`. A share that cannot be built has to fail loudly enough
+       * to fall through to the link on its own.
+       */
+      const textRes = await fetch(`/api/call/share?${qs}&crop=text`);
+      if (!textRes.ok) throw new Error(`share text ${textRes.status}`);
+      const text = await textRes.text();
       const payload: ShareData = { title: 'Go Daisy', text, url: link };
       // The clipboard has one field, so the link has to be IN the sentence. The
       // share sheet has two, and every target composes them itself.
@@ -208,7 +196,12 @@ export default function CallPage({ slug, place, days, photos, indoor, coords, co
 
       if (navigator.canShare) {
         try {
-          const blob = await fetch(`/api/call/share?${qs}&crop=card`).then((r) => r.blob());
+          const cardRes = await fetch(`/api/call/share?${qs}&crop=card`);
+          if (!cardRes.ok) throw new Error(`share card ${cardRes.status}`);
+          const blob = await cardRes.blob();
+          // And that what came back is an image, so an error page served as 200
+          // by a proxy cannot become a PNG either.
+          if (!blob.type.startsWith('image/')) throw new Error(`share card ${blob.type}`);
           const file = new File([blob], 'the-call.png', { type: 'image/png' });
           if (navigator.canShare({ files: [file] })) payload.files = [file];
         } catch {
@@ -343,40 +336,6 @@ function Shell({ title, children }: { title: string; children: React.ReactNode }
   );
 }
 
-/**
- * A place somebody chose, as the forecast pipeline expects one.
- *
- * The pipeline is built around `SeoLocation` — twelve hand-written towns with
- * curated activity lists — because until now those were the only places `/call`
- * could serve. Onboarding lets a person name anywhere, so their choice is
- * dressed as one.
- *
- * `activities` is THEIR list, not a curated one, which is the point: a curated
- * list is a guess about a town, and this is not a guess. `slug` is synthetic and
- * never routed to; the kicker prints `name`.
- */
-function locationFromSetup(setup: CallSetup): SeoLocation {
-  return {
-    slug: `setup:${setup.place.lat.toFixed(3)},${setup.place.lon.toFixed(3)}`,
-    name: setup.place.name,
-    region: '',
-    country: '',
-    lat: setup.place.lat,
-    lon: setup.place.lon,
-    // A place they named, in a timezone we have not asked for. The forecast is
-    // fetched in UTC and the dayparts are cut on those stamps, so this is only
-    // ever a label — but it is a real limitation, and the reason a call at a
-    // long way east or west can put "morning" an hour out.
-    timezone: 'UTC',
-    activities: setup.sports,
-    // Water sports need somewhere to do them. A coastal spot marks the setup as
-    // coastal without claiming to know which way the beach faces — a wrong
-    // facing is worse than none, because the wind-relative criteria would score
-    // an offshore day as onshore.
-    beachFacingDeg: null,
-    ...(setup.coastal ? { coastal: true } : {}),
-  };
-}
 
 /**
  * Also used by `/`, which is the home screen now — see `pages/index.tsx`.
@@ -415,8 +374,17 @@ export const getServerSideProps: GetServerSideProps<CallPageProps> = async (ctx)
    * forecast rather than a bad URL. A visitor with no query and no setup still
    * gets a default, because a stranger arriving cold should see a working call.
    */
+  /*
+   * A shared link names a place that may never have been seeded.
+   *
+   * `?place=setup:43.514,-5.270&a=cycling&n=Lastres` is what Send now puts in
+   * the message for anyone whose town is not one of the seeded spot pages —
+   * which is anyone who typed their own. Without this branch the recipient got
+   * a 404 for a link the app itself had just written.
+   */
   const location: SeoLocation | undefined = asked
-    ? SEO_LOCATIONS.find((l: SeoLocation) => l.slug === asked)
+    ? (SEO_LOCATIONS.find((l: SeoLocation) => l.slug === asked)
+       ?? locationFromShare(asked, String(ctx.query.n ?? ''), String(ctx.query.a ?? '')) ?? undefined)
     : setup
       ? locationFromSetup(setup)
       : (SEO_LOCATIONS.find((l: SeoLocation) => l.slug === DEFAULT_PLACE) ?? SEO_LOCATIONS[0]);
