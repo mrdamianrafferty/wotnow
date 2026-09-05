@@ -78,6 +78,17 @@ export interface Suggestion {
   outOfSeason?: boolean;
   eveningReasons?: EveningBonusResult['reasons'];
   snow?: { level: SnowRecommendationLevel; message: string };
+  /**
+   * The criterion that decided the score, and whether a hazard fired.
+   *
+   * Both were already computed for the reasoning string and then discarded.
+   * The Call needs them directly: its three facts are "whichever inputs decided
+   * the verdict", and the evidence drawer orders its sections the same way. So
+   * they are carried out rather than recomputed — this is the attribution layer
+   * the redesign asked for, and it already existed.
+   */
+  binding?: CriterionScore;
+  vetoed?: boolean;
 }
 
 // Removed unused imports to satisfy linter
@@ -1013,6 +1024,8 @@ export function getSuggestionsByDay({
             evaluation: getScoreEvaluation(score),
             reasoning: getReasoningForScore(score, activity, day.weather, { binding, vetoed, outOfSeason }),
             outOfSeason,
+            binding,
+            vetoed,
             snow: snow ? { level: snow.level, message: snow.message } : undefined,
           };
         }
