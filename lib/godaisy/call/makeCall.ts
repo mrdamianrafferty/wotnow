@@ -11,7 +11,7 @@
 import type { Suggestion, WeatherData } from '@/utils/getSuggestionsByDay';
 import type { SupportedLanguageCode } from '@/lib/i18n/translate';
 import { bandFor, isGood, isSevere, type CallBand } from './bands';
-import { bestWindow, type ForecastParts } from './window';
+import { bestWindow, partBands, type ForecastParts, type PartName } from './window';
 import type { ActivityType } from '@/data/activities/types';
 import { factsFor, nextYesFact, type CallFact } from './facts';
 import { makeVerdict, type Verdict } from './verdict';
@@ -23,6 +23,23 @@ export interface CallOption {
   band: CallBand;
   verdict: Verdict;
   facts: CallFact[];
+  /**
+   * What the scorer weighed, most limiting first — for the evidence drawer,
+   * which orders its sections by it.
+   *
+   * Trimmed to the fields the drawer reads, and capped, because this crosses
+   * getServerSideProps for every option on every one of seven days. The band
+   * strings are not carried: "windSpeed=5..12" is the model's language, and the
+   * drawer is written in the reader's.
+   */
+  weighed?: Array<{ key: string; score: number; value?: number }>;
+  /**
+   * How each part of the day scored — the drawer's bars.
+   *
+   * Three, not twenty-four: the same resolution decision the window is built on.
+   * Absent where the source published no usable hourly series.
+   */
+  parts?: Array<{ name: PartName; band: CallBand }>;
 }
 
 export interface Call {
@@ -112,11 +129,27 @@ export function makeCall(input: MakeCallInput): Call {
       ? bestWindow(s.activityId, parts, date, activities, now)
       : undefined;
 
+    /*
+     * The bars are computed for EVERY band, unlike the window.
+     *
+     * A window on a write-off is a contradiction, so it is not asked for. Bars
+     * on a write-off are the opposite — three red parts are the evidence that
+     * the day really is off, which is exactly what someone opening the drawer
+     * on a no-day came to check.
+     */
+    const bars = partBands(s.activityId, parts, date, activities, now);
+
+    const weighed = (s.criteria ?? [])
+      .slice(0, 10)
+      .map((c) => ({ key: c.key, score: c.score, ...(c.value === undefined ? {} : { value: c.value }) }));
+
     return {
       activityId: s.activityId,
       ...(activityName ? { activityName } : {}),
       score: s.score,
       band,
+      ...(weighed.length ? { weighed } : {}),
+      ...(bars.length ? { parts: bars } : {}),
       verdict: makeVerdict({
         suggestion: s,
         activityName,

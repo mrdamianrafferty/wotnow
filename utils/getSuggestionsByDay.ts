@@ -88,6 +88,15 @@ export interface Suggestion {
    * the redesign asked for, and it already existed.
    */
   binding?: CriterionScore;
+  /**
+   * Every criterion the scorer weighed, most influential first.
+   *
+   * `binding` is `criteria[0]`. The drawer needs the rest: a section about wind
+   * belongs above one about cloud when wind is what decided the day, and the
+   * binding criterion alone cannot say that. On a day that was demoted or
+   * vetoed this collapses to one entry, which is correct — one thing decided it.
+   */
+  criteria?: CriterionScore[];
   vetoed?: boolean;
 }
 
@@ -172,6 +181,14 @@ function calculateActivityScoreWithSnow(
   score: number;
   /** The criterion that decided the score. Absent for indoor activities. */
   binding?: CriterionScore;
+  /**
+   * Every criterion that was evaluated, most influential first.
+   *
+   * `binding` is `criteria[0]`. The drawer needs the rest: a section about wind
+   * belongs above a section about cloud when wind is what decided the day, and
+   * there is no way to know that from the binding criterion alone.
+   */
+  criteria?: CriterionScore[];
   /** True when a hazard fired hard enough to short-circuit the scoring. */
   vetoed?: boolean;
   snow?: { level: SnowRecommendationLevel; message: string };
@@ -313,9 +330,13 @@ function calculateActivityScoreWithSnow(
      * once", which is the distinction a reader can act on.
      */
     const byCount = [14, 10, 6, 3][Math.min(3, poor.hazards.length - 1)];
+    const ranked = poor.hazards.slice().sort((a, b) => b.score - a.score);
     return {
       score: byCount,
-      binding: poor.hazards.slice().sort((a, b) => b.score - a.score)[0],
+      binding: ranked[0],
+      /* Worst hazard first. The evidence drawer orders its sections by this, so
+         the reason a day is off is the first thing open when you go looking. */
+      criteria: ranked,
       vetoed: true,
     };
   }
@@ -833,11 +854,17 @@ function calculateActivityScoreWithSnow(
   /* Floor is 16, not 5: below that belongs to the hazard veto alone, so a
      vetoed day always sorts under an un-vetoed one. See the veto above. */
   score = Math.max(16, Math.min(98, score));
+  const ranked = band.criteria.slice().sort((a, b) => a.score - b.score);
   return {
     score: Math.round(score),
     /* The criterion that held the day back — the weakest one in whichever band
        decided the score. This is what the sentence is written from. */
-    binding: band.criteria.slice().sort((a, b) => a.score - b.score)[0],
+    binding: ranked[0],
+    /* And the rest of them, weakest first, which is most-limiting first.
+       Carried rather than recomputed: the drawer orders its sections by which
+       inputs moved the verdict, and this is that list. It was already computed
+       here and thrown away. */
+    criteria: ranked,
     snow: snowAdjusted.snow ? { level: snowAdjusted.snow.level, message: snowAdjusted.snow.message } : undefined,
   };
 }
@@ -1007,7 +1034,7 @@ export function getSuggestionsByDay({
 
         debug(`🏷️ Using context tags:`, contextTags);
 
-        const { score, snow, binding, vetoed } = calculateActivityScoreWithSnow(
+        const { score, snow, binding, criteria, vetoed } = calculateActivityScoreWithSnow(
           activity,
           day.weather,
           (day.weather.precipitation ?? 0) < 5, // isWeatherGood
@@ -1025,6 +1052,7 @@ export function getSuggestionsByDay({
             reasoning: getReasoningForScore(score, activity, day.weather, { binding, vetoed, outOfSeason }),
             outOfSeason,
             binding,
+            criteria,
             vetoed,
             snow: snow ? { level: snow.level, message: snow.message } : undefined,
           };
