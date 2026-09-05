@@ -52,8 +52,6 @@ import { useUIText } from '../hooks/useUIText';
 
 
 import SimplifiedShareModal from '../components/sharing/SimplifiedShareModal';
-import { useGoDaisySubscription } from '../hooks/useGoDaisySubscription';
-import { GoDaisyUpgradePrompt } from '../components/GoDaisyUpgradePrompt';
 import NearbyFisheryCard from '../components/cross-promo/NearbyFisheryCard';
 import NearbySpeciesCard from '../components/cross-promo/NearbySpeciesCard';
 
@@ -691,7 +689,6 @@ export default function ActivitiesPage() {
   const hasMounted = useHasMounted();
   const { isHydrating } = useProfileHydration();
   const { preferences } = useUserPreferences();
-  const { tier, limits } = useGoDaisySubscription();
   const homeLocation = preferences.locations?.find((loc) => loc.type === 'home');
   const coastalLocation = preferences.locations?.find((loc) => loc.type === 'coastal');
   const interests = preferences.interests ?? [];
@@ -1169,25 +1166,13 @@ export default function ActivitiesPage() {
               </div>
             ) : (
               <>
-                {/* Day Navigation Tabs — limit to forecastDays for free tier */}
-                {(() => {
-                  const maxDays = limits.forecastDays === -1 ? forecastByDay.length : limits.forecastDays;
-                  const visibleDays = forecastByDay.slice(0, maxDays);
-                  const hasLockedDays = forecastByDay.length > maxDays;
-                  return (
-                    <>
-                      <DayTabs
-                        days={visibleDays}
-                        activeDay={activeDay}
-                        onDayChange={setActiveDay}
-                        serverTime={timeInfo?.serverTime}
-                      />
-                      {hasLockedDays && (
-                        <GoDaisyUpgradePrompt feature="forecast" variant="inline" className="mt-2 mb-4" />
-                      )}
-                    </>
-                  );
-                })()}
+                {/* Day Navigation Tabs — every day the forecast has */}
+                <DayTabs
+                  days={forecastByDay}
+                  activeDay={activeDay}
+                  onDayChange={setActiveDay}
+                  serverTime={timeInfo?.serverTime}
+                />
 
                 {/* Activity Cards Grid */}
                 <main
@@ -1205,14 +1190,7 @@ export default function ActivitiesPage() {
                     </div>
                   ) : (
                     (() => {
-                      // Separate indoor (always shown) from outdoor (limited for free)
-                      const validActivities = sortedActivities.filter((activity) => activity && activity.activityId);
-                      const indoorActivities = validActivities.filter(a => !isOutdoor(a.activityId));
-                      const outdoorActivities = validActivities.filter(a => isOutdoor(a.activityId));
-                      const maxOutdoor = tier === 'free' ? 6 : outdoorActivities.length;
-                      const visibleOutdoor = outdoorActivities.slice(0, maxOutdoor);
-                      const hasHiddenOutdoor = outdoorActivities.length > maxOutdoor;
-                      const visibleActivities = [...visibleOutdoor, ...indoorActivities];
+                      const visibleActivities = sortedActivities.filter((activity) => activity && activity.activityId);
 
                       return (
                         <>
@@ -1230,11 +1208,6 @@ export default function ActivitiesPage() {
                               snow={activity.snow}
                             />
                           ))}
-                          {hasHiddenOutdoor && (
-                            <div className="col-span-full">
-                              <GoDaisyUpgradePrompt feature="activities" variant="inline" />
-                            </div>
-                          )}
                         </>
                       );
                     })()

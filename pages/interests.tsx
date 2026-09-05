@@ -9,8 +9,6 @@ import { supabase } from '../lib/supabase/client';
 import { getActivityEmoji } from '../data/emojiMap';
 import { useUIText } from '../hooks/useUIText';
 import { useTranslationMap } from '../lib/translation/useTranslationMap';
-import { useGoDaisySubscription } from '../hooks/useGoDaisySubscription';
-import { isOutdoor } from '../utils/activityHelpers';
 
 // The full set of activity IDs for each grouping
 const mainCategories = [
@@ -629,7 +627,6 @@ function SubcategorySection({ subcategory, selectedIds, onToggle, getTranslatedN
 // Main page component
 const InterestsTest: React.FC = () => {
   const { preferences, setPreferences } = useUserPreferences();
-  const { isAtLimit } = useGoDaisySubscription();
   const [expandedCategories, setExpandedCategories] = useState<string[]>([]);
   const [dismissedRecos, setDismissedRecos] = useState<Record<string, number>>({});
   const [showToast, setShowToast] = useState(false);
@@ -769,15 +766,6 @@ const InterestsTest: React.FC = () => {
     setPreferences(prev => {
       const chosen = prev.interests ?? [];
       const isRemoving = chosen.includes(id);
-
-      // When adding an outdoor activity, enforce limit for free tier
-      if (!isRemoving && isOutdoor(id)) {
-        const currentOutdoorCount = chosen.filter(i => isOutdoor(i)).length;
-        if (isAtLimit('maxOutdoorActivities', currentOutdoorCount)) {
-          showSuccessToast('Upgrade to Go Daisy+ for unlimited outdoor activities');
-          return prev; // Don't add — at limit
-        }
-      }
 
       const newList = isRemoving
         ? chosen.filter((i) => i !== id)
