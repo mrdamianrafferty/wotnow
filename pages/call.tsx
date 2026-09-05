@@ -32,6 +32,7 @@ import { IndoorPrompt, type IndoorOption } from '@/components/call/IndoorPrompt'
 import { generateShareToken, getShareUrl, type GoDaisyShareData } from '@/lib/share/shareToken';
 import { EvidenceDrawer } from '@/components/call/EvidenceDrawer';
 import { MenuSheet } from '@/components/call/MenuSheet';
+import { LocationSheet } from '@/components/call/LocationSheet';
 import { asSentence } from '@/lib/godaisy/call/verdict';
 
 const DAYS = 7;
@@ -91,6 +92,7 @@ export default function CallPage({ slug, place, days, photos, indoor, coords, co
   const [sendState, setSendState] = useState<'idle' | 'working' | 'sent' | 'copied'>('idle');
   const [drawer, setDrawer] = useState(false);
   const [menu, setMenu] = useState(false);
+  const [placePicker, setPlacePicker] = useState(false);
 
   // altIndex is a view state, not a preference: the daily call stays
   // deterministic, so turning the day resets which alternate is showing.
@@ -251,7 +253,19 @@ export default function CallPage({ slug, place, days, photos, indoor, coords, co
 
         <div className="call-content">
           <div className="call-chrome">
-            <p className="call-label call-label--on-dark">{kicker}</p>
+            {/*
+              * The kicker is a button. The moment you notice the place is wrong
+              * is the moment you are looking at it, so changing it belongs here
+              * rather than three steps into onboarding behind the menu.
+              */}
+            <button
+              type="button"
+              className="call-label call-label--on-dark call-kicker-btn"
+              onClick={() => setPlacePicker(true)}
+              aria-label={`${place} — change location`}
+            >
+              {kicker}
+            </button>
             {/*
               * The dot is the MENU, which is what ScreenChrome always said it
               * was — "everything else lives behind the dot". It briefly opened
@@ -272,6 +286,7 @@ export default function CallPage({ slug, place, days, photos, indoor, coords, co
             reason={option.verdict.reason}
             facts={option.facts}
             cycleKey={`${dayIndex}-${altIndex}`}
+            onWhy={() => setDrawer(true)}
           />
 
           {day.isNoDay && <IndoorPrompt options={indoor} />}
@@ -279,9 +294,6 @@ export default function CallPage({ slug, place, days, photos, indoor, coords, co
           <div className="call-actions">
             <button type="button" className="call-btn" onClick={send} disabled={sendState === 'working'}>
               {sendState === 'sent' ? 'Sent' : sendState === 'copied' ? 'Copied' : 'Send out the call'}
-            </button>
-            <button type="button" className="call-why" onClick={() => setDrawer(true)}>
-              Why?
             </button>
             {hasAlternates && (
               <AlternatesControl
@@ -300,6 +312,7 @@ export default function CallPage({ slug, place, days, photos, indoor, coords, co
         </div>
 
         {menu && <MenuSheet onClose={() => setMenu(false)} />}
+        {placePicker && <LocationSheet current={place} onClose={() => setPlacePicker(false)} />}
 
         {drawer && (
           <EvidenceDrawer

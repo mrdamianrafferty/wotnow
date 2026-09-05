@@ -4,7 +4,7 @@ import Head from 'next/head';
 import CoastalLocationDialog from '@/components/CoastalLocationDialog';
 import Script from 'next/script';
 import Link from 'next/link';
-import AppHeader from '../components/AppHeader';
+import { PageHeader } from '../components/call/PageHeader';
 import Footer from '../components/footer';
 import { supabase } from '@/lib/supabase/client';
 import { useUserPreferences } from '@/context/UserPreferencesContext';
@@ -65,6 +65,28 @@ export default function AccountPage() {
   const [displayName, setDisplayName] = useState('');
   const [nameSaving, setNameSaving] = useState(false);
   const [nameSaved, setNameSaved] = useState(false);
+  /*
+   * PREFERENCE TEXT NEVER RENDERS ON THE SERVER.
+   *
+   * The locations come from `UserPreferencesContext`, which has no localStorage
+   * to read during SSR and falls back to its default — London. The client then
+   * hydrates with the real place and React reports a mismatch: "Server: London,
+   * UK. Client: Colunga." A visible, logged hydration error on the account page,
+   * and it predates this redesign.
+   *
+   * Held back one frame rather than fixed in the context, because the default
+   * is right for everything else that reads it — it is only wrong to PRINT one
+   * before the stored value has been read.
+   *
+   * EVERY branch on a stored spot has to wait, not only the name. Gating the
+   * place text alone left the button beneath it flipping "Set location" →
+   * "Change", which is the same mismatch one element further down — and it was
+   * reported by a user, not by me, because I fixed the symptom I could see
+   * rather than every read of the value behind it.
+   */
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => { setMounted(true); }, []);
+
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [deleteConfirmText, setDeleteConfirmText] = useState('');
   const [deleting, setDeleting] = useState(false);
@@ -346,29 +368,23 @@ export default function AccountPage() {
         onError={() => console.warn('Google Maps failed to load')}
       />
 
-      <AppHeader
-        homeLocation={homeSpot ? { name: homeSpot.name, lat: homeSpot.lat, lon: homeSpot.lon, type: 'home' } : undefined}
-        coastalLocation={coastalSpot ? { name: coastalSpot.name, lat: coastalSpot.lat, lon: coastalSpot.lon, type: 'coastal' } : undefined}
-        onOpenHomeDialog={() => setOpenHome(true)}
-        onOpenCoastDialog={() => setOpenMarine(true)}
-      />
+      {/* The slim header, not AppHeader: this page is one of the ordinary ones
+          now, and the wordmark plus the menu is the whole of the navigation
+          the redesign has. */}
+      <PageHeader title="Account" />
 
-      {/* Main content - flex-1 pushes footer to bottom */}
-      <main className="flex-1 bg-gray-50 pt-4 pb-12">
-        <div className="max-w-2xl mx-auto px-4">
-          <header className="flex items-center justify-between mb-6">
-            <h1 className="text-2xl font-bold text-gray-900">Your account</h1>
-            <div className="flex items-center gap-2">
-              <Link href="/" className="btn btn-ghost btn-sm text-gray-700">Home</Link>
-              <button className="btn btn-error btn-outline btn-sm" onClick={signOut}>Sign out</button>
-            </div>
+      <main className="gd-acct">
+        <div className="gd-acct-inner">
+          <header className="gd-acct-top">
+            <h1 className="gd-acct-h1">Your account</h1>
+            <button className="gd-acct-signout" onClick={signOut}>Sign out</button>
           </header>
 
           {/* Profile */}
           {isSignedIn && (
-            <section className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 mb-4">
-              <h2 className="text-lg font-semibold text-gray-900 mb-3">Profile</h2>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+            <section className="gd-acct-block">
+              <h2 className="gd-acct-h2">Profile</h2>
+              <label className="gd-acct-label">
                 How should we call you?
               </label>
               <div className="flex gap-2">
@@ -389,7 +405,7 @@ export default function AccountPage() {
                 </button>
               </div>
               {userEmail && (
-                <p className="text-xs text-gray-500 mt-2">Signed in as {userEmail}</p>
+                <p className="gd-acct-note">Signed in as {userEmail}</p>
               )}
             </section>
           )}
@@ -406,11 +422,11 @@ export default function AccountPage() {
 
 
           {/* Language */}
-          <section className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 mb-4">
-            <h2 className="text-lg font-semibold text-gray-900 mb-1">
+          <section className="gd-acct-block">
+            <h2 className="gd-acct-h2">
               Language
             </h2>
-            <p className="text-sm text-gray-600 mb-3">Choose your preferred language for Go Daisy.</p>
+            <p className="gd-acct-note">Choose your preferred language for Go Daisy.</p>
 
             <div className="relative">
               <button
@@ -448,7 +464,7 @@ export default function AccountPage() {
                         )}
                         <div>
                           <div className="font-medium text-gray-900">{lang.nativeName}</div>
-                          <div className="text-xs text-gray-500">{lang.name}</div>
+                          <div className="gd-acct-note">{lang.name}</div>
                         </div>
                       </button>
                     ))}
@@ -459,52 +475,62 @@ export default function AccountPage() {
           </section>
 
           {/* Locations */}
-          <section className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 mb-4">
-            <h2 className="text-lg font-semibold text-gray-900 mb-3">Locations</h2>
+          <section className="gd-acct-block">
+            <h2 className="gd-acct-h2">Locations</h2>
             <div className="grid sm:grid-cols-2 gap-4">
-              <div className="border border-gray-200 rounded-lg p-3">
-                <div className="font-medium text-gray-900 mb-2">Home</div>
-                {homeSpot ? (
-                  <div className="bg-blue-50 text-blue-800 px-3 py-2 rounded-lg text-sm mb-2">
-                    📍 {homeSpot.name}
-                  </div>
+              <div className="gd-acct-card">
+                <div className="gd-acct-card-title">Home</div>
+                {!mounted ? (
+                  <p className="gd-acct-note">…</p>
+                ) : homeSpot ? (
+                  <p className="gd-acct-place">{homeSpot.name}</p>
                 ) : (
-                  <p className="text-sm text-gray-500 mb-2">No home location set</p>
+                  <p className="gd-acct-note">No home location set</p>
                 )}
                 <button
-                  className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
+                  className="gd-acct-btn"
                   onClick={() => mapsReady ? setOpenHome(true) : alert('Loading map…')}
                 >
-                  {homeSpot ? 'Change' : 'Set location'}
+                  {!mounted ? 'Change' : homeSpot ? 'Change' : 'Set location'}
                 </button>
               </div>
 
-              <div className="border border-gray-200 rounded-lg p-3">
-                <div className="font-medium text-gray-900 mb-2">Coastal spot</div>
-                {coastalSpot ? (
-                  <div className="bg-cyan-50 text-cyan-800 px-3 py-2 rounded-lg text-sm mb-2">
-                    🌊 {coastalSpot.name}
-                  </div>
+              <div className="gd-acct-card">
+                <div className="gd-acct-card-title">Coastal spot</div>
+                {!mounted ? (
+                  <p className="gd-acct-note">…</p>
+                ) : coastalSpot ? (
+                  <p className="gd-acct-place">{coastalSpot.name}</p>
                 ) : (
-                  <p className="text-sm text-gray-500 mb-2">No coastal location set</p>
+                  <p className="gd-acct-note">No coastal location set</p>
                 )}
                 <button
-                  className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
+                  className="gd-acct-btn"
                   onClick={() => mapsReady ? setOpenMarine(true) : alert('Loading map…')}
                 >
-                  {coastalSpot ? 'Change' : 'Set location'}
+                  {!mounted ? 'Change' : coastalSpot ? 'Change' : 'Set location'}
                 </button>
-                {!isMarineUser && (
-                  <p className="text-xs text-gray-500 mt-2">Tip: add sea activities for tide/swell suggestions.</p>
+                {/* Gated on `mounted` for the same reason the place name is:
+                    `preferences.interests` is empty on the server and full on the
+                    client's first render, so an ungated tip is in the server HTML
+                    and absent from the client's — which is a hydration mismatch,
+                    not a cosmetic one. */}
+                {mounted && !isMarineUser && (
+                  <p className="gd-acct-note">Tip: add sea activities for tide/swell suggestions.</p>
                 )}
               </div>
             </div>
           </section>
 
           {/* Activities */}
-          <section className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 mb-4">
-            <h2 className="text-lg font-semibold text-gray-900 mb-3">Activities</h2>
-            {selectedActivities.length ? (
+          <section className="gd-acct-block">
+            <h2 className="gd-acct-h2">Activities</h2>
+            {/* Same hydration rule as the locations block: the saved interests
+                are not known on the server, so the choice between the chip list
+                and the empty line has to wait for the client. */}
+            {!mounted ? (
+              <p className="gd-acct-note">…</p>
+            ) : selectedActivities.length ? (
               <div className="flex flex-wrap gap-2 mb-3">
                 {selectedActivities.map(a => (
                   <span key={a} className="inline-flex items-center gap-1 px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm">
@@ -519,7 +545,7 @@ export default function AccountPage() {
                 ))}
               </div>
             ) : (
-              <p className="text-sm text-gray-500 mb-3">No activities saved yet.</p>
+              <p className="gd-acct-note">No activities saved yet.</p>
             )}
             <div className="flex gap-2">
               <Link href="/interests" className="px-4 py-2 bg-gray-900 text-white rounded-lg hover:bg-gray-800">
@@ -533,9 +559,9 @@ export default function AccountPage() {
 
           {/* Notifications — hidden on iOS native (use device settings instead) */}
           {isSignedIn && !isIOSNative && (
-            <section className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 mb-4">
-              <h2 className="text-lg font-semibold text-gray-900 mb-1">Notifications</h2>
-              <p className="text-sm text-gray-600 mb-3">
+            <section className="gd-acct-block">
+              <h2 className="gd-acct-h2">Notifications</h2>
+              <p className="gd-acct-note">
                 Get alerts for weather, activity recommendations, and more.
               </p>
 
@@ -556,7 +582,7 @@ export default function AccountPage() {
                       <div className="font-medium text-gray-900">
                         {pushSubscribed ? 'Notifications enabled' : 'Enable notifications'}
                       </div>
-                      <div className="text-sm text-gray-500">
+                      <div className="gd-acct-note">
                         {pushSubscribed
                           ? 'Receiving alerts on this device'
                           : 'Turn on to receive weather alerts and activity tips'}
@@ -650,7 +676,7 @@ export default function AccountPage() {
                             ))}
                           </select>
                         </div>
-                        <p className="text-xs text-gray-500 mt-1">No notifications during these hours</p>
+                        <p className="gd-acct-note">No notifications during these hours</p>
                       </div>
                     </div>
                   )}
@@ -661,9 +687,9 @@ export default function AccountPage() {
 
           {/* Tip Jar — iOS native only */}
           {isIOSNative && (
-            <section className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 mb-4">
-              <h2 className="text-lg font-semibold text-gray-900 mb-1">Tip Jar</h2>
-              <p className="text-sm text-gray-600 mb-3">
+            <section className="gd-acct-block">
+              <h2 className="gd-acct-h2">Tip Jar</h2>
+              <p className="gd-acct-note">
                 Love Go Daisy? Leave a one-off tip to help keep things running.
               </p>
 
@@ -713,7 +739,7 @@ export default function AccountPage() {
                           <div className="font-semibold text-gray-900">
                             {product?.label ?? pkg.title}
                           </div>
-                          <div className="text-xs text-gray-500">One-off tip</div>
+                          <div className="gd-acct-note">One-off tip</div>
                         </div>
                         <span className={`font-bold text-base ${style?.accent ?? 'text-gray-700'}`}>
                           {pkg.priceString}
@@ -743,45 +769,60 @@ export default function AccountPage() {
           )}
 
           {/* Delete Account */}
+          {/*
+              * DELETING AN ACCOUNT IS A REAL OPTION, NOT A DARE.
+              *
+              * It was headed "Danger Zone" in red at the bottom of an
+              * 872-line page — the language of a place you should not be
+              * rather than of a thing you are entitled to do. Apple requires
+              * this to exist and to be findable, and a person closing an
+              * account is usually already unhappy; making it feel like a trap
+              * is the last impression the product leaves.
+              *
+              * So: a plain heading, plain language about what goes, and the
+              * same typed confirmation — that stays, because it is genuinely
+              * irreversible and a stray tap should not do it.
+              */}
           {isSignedIn && (
-            <section className="bg-white rounded-xl shadow-sm border border-red-200 p-4">
-              <h2 className="text-lg font-semibold text-red-600 mb-2">Danger Zone</h2>
-              <p className="text-sm text-gray-600 mb-3">
-                Deleting your account permanently removes all your data. This cannot be undone.
+            <section className="gd-acct-block is-danger">
+              <h2 className="gd-acct-h2">Delete your account</h2>
+              <p className="gd-acct-note">
+                This removes your account and everything stored against it — your places,
+                your activities, your notification settings. It happens immediately and it
+                cannot be undone.
               </p>
 
               {!showDeleteConfirm ? (
-                <button
-                  className="px-4 py-2 border border-red-300 text-red-600 rounded-lg hover:bg-red-50"
-                  onClick={() => setShowDeleteConfirm(true)}
-                >
+                <button className="gd-acct-danger-btn" onClick={() => setShowDeleteConfirm(true)}>
                   Delete my account
                 </button>
               ) : (
-                <div className="space-y-3">
-                  <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 text-yellow-800 text-sm">
-                    Type <b>DELETE</b> to confirm:
-                  </div>
+                <div className="gd-acct-danger-confirm">
+                  <label className="gd-acct-label" htmlFor="delete-confirm">
+                    Type DELETE to confirm
+                  </label>
                   <input
+                    id="delete-confirm"
                     type="text"
-                    placeholder="Type DELETE"
-                    className="w-full max-w-xs px-3 py-2 border border-gray-300 rounded-lg bg-white text-gray-900"
+                    placeholder="DELETE"
+                    className="gd-acct-input"
                     value={deleteConfirmText}
                     onChange={(e) => setDeleteConfirmText(e.target.value)}
+                    autoComplete="off"
                   />
-                  <div className="flex gap-2">
+                  <div className="gd-acct-danger-row">
                     <button
-                      className="px-4 py-2 bg-red-600 text-white rounded-lg disabled:opacity-50"
+                      className="gd-acct-danger-btn is-armed"
                       disabled={deleteConfirmText !== 'DELETE' || deleting}
                       onClick={handleDeleteAccount}
                     >
-                      {deleting ? 'Deleting...' : 'Permanently delete'}
+                      {deleting ? 'Deleting…' : 'Delete it'}
                     </button>
                     <button
-                      className="px-4 py-2 text-gray-600"
+                      className="gd-acct-signout"
                       onClick={() => { setShowDeleteConfirm(false); setDeleteConfirmText(''); }}
                     >
-                      Cancel
+                      Keep my account
                     </button>
                   </div>
                 </div>
@@ -850,7 +891,7 @@ function NotifToggle({
             <span className="text-[10px] font-medium bg-cyan-100 text-cyan-700 px-1.5 py-0.5 rounded-full">Plus</span>
           )}
         </div>
-        <div className="text-xs text-gray-500">{desc}</div>
+        <div className="gd-acct-note">{desc}</div>
       </div>
       <div
         className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${

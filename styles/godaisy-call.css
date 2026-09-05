@@ -249,16 +249,31 @@
   touch-action: pan-y;
 }
 
+/*
+ * FIXED, NOT ABSOLUTE — and that fixes two things at once.
+ *
+ * Absolutely positioned, the photograph was anchored to `.call-screen`, which
+ * is `min-height: 100dvh` and grows past the viewport as soon as the content
+ * does. So it scrolled with the page, and its top edge sat wherever the screen
+ * element began rather than at the top of the display — which is the dark band
+ * above the image, behind the status bar.
+ *
+ * Fixed to the viewport, it reaches the true top, goes under the status bar,
+ * and stays put while the words move over it. That is also the right behaviour
+ * for what it is: the image is the weather you are standing in, not a thing on
+ * the page.
+ */
 .call-photo {
-  position: absolute;
+  position: fixed;
   inset: 0;
   width: 100%;
   height: 100%;
   object-fit: cover;
   filter: var(--call-photo-filter);
+  z-index: 0;
 }
 
-.call-scrim { position: absolute; inset: 0; background: var(--call-scrim-call); }
+.call-scrim { position: fixed; inset: 0; background: var(--call-scrim-call); z-index: 0; }
 /* A no-day pushes the photograph further down. A white screen at six in the
    morning in the dark is a flashbang, so it keeps the image rather than
    dropping it — the light variant is for the share card and the web. */
@@ -271,6 +286,8 @@
 
 .call-content {
   position: relative;
+  /* Above the fixed photograph and scrim, both of which are z-index 0. */
+  z-index: 1;
   flex: 1;
   display: flex;
   flex-direction: column;
@@ -284,23 +301,43 @@
 .call-chrome { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
 
 /* The single navigation control, and the alternates control, are one variant. */
+/*
+ * NO BOX, ON EITHER OF THEM.
+ *
+ * This carried a 1px ring and filled to .12 on hover, which over a photograph
+ * drew a pale square that read as a button edge aligned to nothing — the same
+ * thing the alternates control had. Both are single icons on an image; the
+ * icon is the control, and a container around it is a box asking what it is
+ * for. Feedback is the icon dimming.
+ *
+ * Bigger, too: 26px was small for the one navigation control the whole app has.
+ * The button is now the full 44px tap minimum, so the hit area is the element
+ * rather than an invisible `::after` reaching past its edges.
+ */
 .call-icon-btn {
-  width: 26px; height: 26px; flex: 0 0 auto;
+  width: var(--call-tap-min); height: var(--call-tap-min); flex: 0 0 auto;
   border-radius: var(--call-r-pill);
-  border: 1px solid rgba(250, 248, 245, .35);
+  border: 0;
   background: none; color: var(--call-on-dark);
   display: grid; place-items: center; cursor: pointer;
   position: relative;
-  transition: background var(--call-t-press) var(--call-ease-out),
+  transition: opacity var(--call-t-press) var(--call-ease-out),
               transform var(--call-t-press) var(--call-ease-out);
 }
-/* The drawn size is 26px; the hit area must still reach the 44px minimum. */
-.call-icon-btn::after { content: ""; position: absolute; inset: -9px; }
-.call-icon-btn:hover { background: rgba(250, 248, 245, .12); }
-.call-icon-btn:active { transform: scale(.98); }
+.call-icon-btn:hover { background: none; opacity: .72; }
+.call-icon-btn:active { transform: scale(.96); }
 .call-icon-btn:focus-visible { outline: 2px solid var(--call-on-dark); outline-offset: 3px; }
-.call-icon-btn--lg { width: var(--call-tap-min); height: var(--call-tap-min); border-color: rgba(250,248,245,.28); }
-.call-icon-btn--lg::after { inset: 0; }
+/* The large variant carries NO box. A bordered square under a lone icon read as
+   a button someone had forgotten to finish, and it was the heaviest thing in
+   the bottom third of a screen whose only loud element should be the verdict.
+   The tap target is still 44px — it is the ::after, not the border, that has
+   ever been doing that work. */
+.call-icon-btn--lg { width: var(--call-tap-min); height: var(--call-tap-min); }
+/* No fill on hover either. At .12 over a photograph it drew a pale square that
+   read as a button edge nobody had aligned to anything — which is what it was.
+   The icon dimming is the whole feedback. */
+.call-icon-btn--lg:hover { background: none; opacity: .72; }
+.call-icon-btn--lg:active { background: none; }
 
 .call-lockup { margin-top: auto; }
 .call-body { display: flex; flex-direction: column; gap: 14px; }
@@ -925,12 +962,20 @@ h1.call-setup-question, h1.call-verdict { margin-block: 0; }
 /* The evidence used to open from the dot. It belongs to the verdict, not to
    navigation, so it sits under the facts where someone doubting the sentence
    is already looking.                                                     */
+/* Inline, at the end of the sentence it is asking about. Under the send button
+   it read as "why send this?"; after the full stop it can only be about the
+   claim. Sized to a footnote — it must not compete with 62px display type — and
+   nudged up so it rides the cap height rather than the baseline of a much
+   larger line. */
 .call-why {
-  align-self: flex-start;
+  display: inline-block;
   background: none; border: 0; cursor: pointer;
-  padding: 6px 2px; margin: 2px 0 0;
+  padding: 4px 6px; margin-left: 6px;
+  vertical-align: 0.45em;
   font-family: var(--call-font-display); font-style: italic;
-  font-size: var(--call-body-sm); color: var(--call-on-dark-quiet);
+  font-size: var(--call-body-sm); font-weight: 400;
+  letter-spacing: 0; line-height: 1;
+  color: var(--call-on-dark-quiet);
   text-decoration: underline; text-underline-offset: 3px;
 }
 .call-why:hover { color: var(--call-on-dark); }
@@ -1053,6 +1098,24 @@ h1.call-setup-question, h1.call-verdict { margin-block: 0; }
    Reset here rather than changed there, because the old pages are built
    on that rule and phase 7 deletes them. Scoped to the new namespaces so
    nothing else moves.                                                    */
+/* `index.css` styles the bare `header` element too — white ground, 1rem of
+   padding, centred text — so every <header> in the redesign was inheriting a
+   card and a centre-align it never asked for. Same fix, same reason as the
+   `section` rule below it. */
+.gd-head,
+.gd-acct header,
+.gd-cond header,
+.gd-spot header,
+.gd-land header,
+.call-drawer header {
+  background: none;
+  padding: 0;
+  text-align: left;
+  color: inherit;
+}
+.gd-head { background: var(--call-page); padding-top: env(safe-area-inset-top); }
+
+.gd-acct section,
 .gd-cond section,
 .gd-spot section,
 .gd-share section,
@@ -1060,6 +1123,7 @@ h1.call-setup-question, h1.call-verdict { margin-block: 0; }
 .call-setup section,
 section.gd-app,
 section.gd-cond-block,
+section.gd-acct-block,
 section.gd-spot-section,
 section.gd-spot-hero,
 section.gd-spot-colophon {
@@ -1172,3 +1236,176 @@ section.gd-spot-colophon { padding: 28px var(--call-gutter-app) 40px; }
   background: var(--call-card); margin-bottom: 8px;
 }
 .gd-land-alt:focus-visible { outline: 2px solid var(--call-moss-ink); outline-offset: 2px; }
+
+/* ── Changing where you are ───────────────────────────────────────────────
+   The kicker is a button now. It has to still look like the kicker — a
+   control that announces itself would compete with the verdict, which is
+   the only thing on that screen meant to be loud — so the only tell is a
+   dotted underline and a bigger tap target than the text.            */
+/* It looks exactly like the label it replaced — no underline, no chrome. The
+   dotted underline the first version had was louder than the kicker itself and
+   turned a quiet line into a control asking to be noticed. The affordance is
+   the tap target and the hover, and on a phone the tap target is the whole of
+   it. */
+.call-kicker-btn {
+  background: none; border: 0; cursor: pointer;
+  padding: 6px 0; margin: -6px 0;
+  color: inherit; font: inherit; letter-spacing: inherit;
+  text-decoration: none;
+  text-align: left;
+  transition: opacity var(--call-t-press) var(--call-ease-out);
+}
+.call-kicker-btn:hover { opacity: .72; }
+.call-kicker-btn:focus-visible { outline: 2px solid var(--call-on-dark); outline-offset: 3px; }
+
+.call-place-results { margin-top: 4px; }
+.call-place-gps { margin-top: 16px; display: flex; flex-direction: column; gap: 10px; align-items: flex-start; }
+.call-place-gps-btn { border-color: var(--call-border-strong); color: var(--call-ink-1); }
+.call-place-gps-btn:hover { background: var(--call-panel); }
+.call-place-gps-btn:disabled { opacity: .6; cursor: default; }
+/* The picker is paper, like the drawer — it is a form, not part of the call. */
+.call-place .call-setup-input { background: var(--call-card); }
+.call-place .call-setup-result { color: var(--call-ink-1); }
+.call-drawer-more { display: inline-block; margin-top: 6px; color: var(--call-moss-ink); }
+
+/* ── The slim header ──────────────────────────────────────────────────────
+   For every page that is not the call. A wordmark, an optional title and
+   the same menu — on a hairline, and nothing else. Anything more would be
+   the fifth navigation system this redesign exists to have removed.     */
+.gd-head {
+  position: sticky; top: 0; z-index: 20;
+  background: var(--call-page);
+  border-bottom: 1px solid var(--call-border);
+  padding-top: env(safe-area-inset-top);
+}
+.gd-head-inner {
+  max-width: 760px; margin: 0 auto;
+  display: flex; align-items: center; gap: 12px;
+  padding: 10px var(--call-gutter-app);
+  min-height: var(--call-tap-min);
+}
+.gd-head-mark {
+  font-family: var(--call-font-display);
+  font-size: var(--call-body); font-weight: 700;
+  letter-spacing: -.01em; color: var(--call-ink-1); text-decoration: none;
+}
+.gd-head-mark:hover { color: var(--call-moss-ink); }
+.gd-head-title {
+  flex: 1 1 auto;
+  font-family: var(--call-font-display); font-style: italic;
+  font-variant-caps: small-caps; font-size: var(--call-label);
+  letter-spacing: .09em; color: var(--call-ink-4);
+}
+.gd-head-menu {
+  margin-left: auto; flex: 0 0 auto;
+  width: var(--call-tap-min); height: var(--call-tap-min);
+  display: grid; place-items: center;
+  background: none; border: 0; cursor: pointer; color: var(--call-ink-2);
+}
+.gd-head-menu:hover { color: var(--call-ink-1); }
+.gd-head-mark:focus-visible, .gd-head-menu:focus-visible {
+  outline: 2px solid var(--call-moss-ink); outline-offset: 2px;
+}
+
+/* ── Account ──────────────────────────────────────────────────────────────
+   Restyled with everything it did intact — profile, locations,
+   activities, notifications, the tip jar and account deletion. It was
+   fourteen white cards on grey; it is one column of blocks on paper.  */
+.gd-acct { min-height: 100vh; background: var(--call-page); color: var(--call-ink-1); font-family: var(--call-font-body); }
+.gd-acct-inner { max-width: 620px; margin: 0 auto; padding: 28px var(--call-gutter-app) 56px; }
+.gd-acct-top { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; margin-bottom: var(--call-block); }
+.gd-acct-h1 {
+  margin: 0; font-family: var(--call-font-display);
+  font-size: var(--call-page-title); font-weight: 700;
+  line-height: 1.05; letter-spacing: -.02em;
+}
+.gd-acct-signout {
+  background: none; border: 0; cursor: pointer; padding: 6px 2px;
+  font: 400 14px var(--call-font-body); color: var(--call-ink-3);
+  text-decoration: underline; text-underline-offset: 3px;
+}
+.gd-acct-signout:hover { color: var(--call-ink-1); }
+
+.gd-acct-block { border-top: 1px solid var(--call-border); padding: 20px 0; }
+.gd-acct-h2 {
+  margin: 0 0 8px; font-family: var(--call-font-display);
+  font-size: var(--call-screen-title); font-weight: 700; letter-spacing: -.01em;
+}
+.gd-acct-label { display: block; margin: 0 0 5px; font-size: var(--call-body-sm); color: var(--call-ink-3); }
+.gd-acct-note { margin: 0 0 12px; max-width: 58ch; font-size: var(--call-body-sm); line-height: 1.55; color: var(--call-ink-3); }
+.gd-acct-input {
+  width: 100%; max-width: 20rem; box-sizing: border-box;
+  font: 400 var(--call-body) var(--call-font-body);
+  padding: 11px 13px; min-height: var(--call-tap-min);
+  border: 1px solid var(--call-border-strong); border-radius: var(--call-r-input);
+  background: var(--call-card); color: var(--call-ink-1);
+}
+
+/* Deleting an account is a real option, not a dare. Red on the ACTION, never
+   on the heading — a section headed in red reads as a place you should not be,
+   and this is a thing people are entitled to do. */
+.gd-acct-block.is-danger { border-top-color: var(--call-border-strong); margin-top: 8px; }
+.gd-acct-danger-btn {
+  min-height: var(--call-tap-min); padding: 11px 18px; cursor: pointer;
+  border: 1px solid var(--call-poor-ink); border-radius: var(--call-r-button);
+  background: none; color: var(--call-poor-ink);
+  font: 500 15px var(--call-font-body);
+}
+.gd-acct-danger-btn:hover { background: var(--call-band-unsafe-bg); }
+.gd-acct-danger-btn.is-armed { background: var(--call-poor-ink); color: var(--call-page); border-color: var(--call-poor-ink); }
+.gd-acct-danger-btn:disabled { opacity: .45; cursor: default; }
+.gd-acct-danger-confirm { display: flex; flex-direction: column; gap: 10px; align-items: flex-start; }
+.gd-acct-danger-row { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+.gd-acct-signout:focus-visible, .gd-acct-danger-btn:focus-visible, .gd-acct-input:focus-visible {
+  outline: 2px solid var(--call-moss-ink); outline-offset: 2px;
+}
+.gd-acct-card { border: 1px solid var(--call-border); border-radius: var(--call-r-card); padding: 14px; background: var(--call-card); }
+.gd-acct-card-title { font: 600 14px var(--call-font-body); margin-bottom: 8px; }
+.gd-acct-place {
+  margin: 0 0 10px; font: 600 var(--call-body) var(--call-font-body);
+  color: var(--call-moss-ink);
+}
+.gd-acct-btn {
+  min-height: var(--call-tap-min); padding: 10px 16px; cursor: pointer;
+  border: 1px solid var(--call-border-strong); border-radius: var(--call-r-button);
+  background: none; color: var(--call-ink-1); font: 500 14px var(--call-font-body);
+}
+.gd-acct-btn:hover { background: var(--call-panel); }
+.gd-acct-btn:focus-visible { outline: 2px solid var(--call-moss-ink); outline-offset: 2px; }
+
+/* The FAQ. `<details>`, so the behaviour lives in the element rather than in a
+   class that a restyle can remove — which is exactly how it broke.        */
+.gd-land-faqs { display: flex; flex-direction: column; gap: 8px; text-align: left; }
+.gd-land-faq {
+  border: 1px solid var(--call-border); border-radius: var(--call-r-card);
+  background: var(--call-card); overflow: hidden;
+}
+.gd-land-faq-q {
+  display: flex; align-items: center; gap: 12px;
+  padding: 14px 18px; cursor: pointer;
+  min-height: var(--call-tap-min);
+  list-style: none; /* Safari draws its own marker without this. */
+}
+.gd-land-faq-q::-webkit-details-marker { display: none; }
+.gd-land-faq-q h3 {
+  margin: 0; flex: 1 1 auto;
+  font: 600 var(--call-body) var(--call-font-body);
+  color: var(--call-ink-1);
+}
+/* The marker is drawn rather than a glyph, so it can rotate. */
+.gd-land-faq-q::after {
+  content: ""; flex: 0 0 auto;
+  width: 9px; height: 9px;
+  border-right: 1.5px solid var(--call-ink-4);
+  border-bottom: 1.5px solid var(--call-ink-4);
+  transform: rotate(45deg) translate(-2px, -2px);
+  transition: transform var(--call-t-press) var(--call-ease-out);
+}
+.gd-land-faq[open] .gd-land-faq-q::after { transform: rotate(-135deg) translate(-2px, -2px); }
+.gd-land-faq-q:hover h3 { color: var(--call-moss-ink); }
+.gd-land-faq-q:focus-visible { outline: 2px solid var(--call-moss-ink); outline-offset: -2px; }
+.gd-land-faq-a {
+  margin: 0; padding: 0 18px 16px;
+  font-size: var(--call-body-sm); line-height: 1.6; color: var(--call-ink-2);
+}
+@media (prefers-reduced-motion: reduce) { .gd-land-faq-q::after { transition: none; } }

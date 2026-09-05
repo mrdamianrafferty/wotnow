@@ -255,7 +255,9 @@ export default function FAQPage() {
               answers it gives you for the next seven days will tell you more
               than any FAQ can.
             </p>
-            <Link href="/" className="btn btn-primary btn-lg">
+            {/* `/start` rather than `/`: a logged-out visitor gets the
+                marketing page at `/`, and onboarding needs no account. */}
+            <Link href="/start" className="btn btn-primary btn-lg">
               Try the web app — free
             </Link>
           </div>

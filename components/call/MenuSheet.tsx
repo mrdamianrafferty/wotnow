@@ -43,6 +43,14 @@ const GROUPS: ReadonlyArray<{ title: string; items: readonly Item[] }> = [
   {
     title: 'Yours',
     items: [
+      /*
+       * `/weather` had no way in. The old bottom nav and header linked to it,
+       * and the swap replaced both — so the conditions page became reachable
+       * only by typing the URL, which is the same way `/call` was orphaned
+       * before phase 7. It goes first because it is a destination, not a
+       * setting.
+       */
+      { href: '/weather', label: 'Conditions', note: 'Every reading for where you are' },
       { href: '/start', label: 'Sports and spots', note: 'Change what Go Daisy tells you about' },
       { href: '/account', label: 'Account' },
     ],
