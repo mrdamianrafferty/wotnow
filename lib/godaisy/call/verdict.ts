@@ -50,11 +50,28 @@ const VERDICT_NOUN: Record<string, string> = {
   gardening: 'gardening', picnicking: 'picnic', camping: 'camping',
 };
 
-/** "a surf day." / "a day for paddleboarding." — always one clause, always a full stop. */
+/**
+ * "a surf day." / "a day for paddleboarding." — one clause, always a full stop.
+ *
+ * `phraseFor` names an activity for a clause, and eight of them come back
+ * already carrying a preposition or an article: "Go for a Walk" becomes "for a
+ * walk", which the frame turned into "a day for for a walk." Those get a frame
+ * that fits what they already are rather than one forced on top.
+ */
 function verdictNoun(activityId: string, name?: string): string {
   const noun = VERDICT_NOUN[activityId];
   if (noun) return `a ${noun} day.`;
-  return `a day for ${phraseFor(activityId, name)}.`;
+
+  const phrase = phraseFor(activityId, name);
+  // "for a walk" → "a day for a walk."
+  if (/^for\s/.test(phrase)) return `a day ${phrase}.`;
+  // "to the pub" → "a day for the pub." — "a day to the pub" is not English.
+  if (/^to\s/.test(phrase)) return `a day for ${phrase.replace(/^to\s/, '')}.`;
+  // "a picnic" / "the playground" → "a day for a picnic."
+  if (/^(a|an|the)\s/.test(phrase)) return `a day for ${phrase}.`;
+  // "a day at the beach" already IS the frame.
+  if (/^a day\b/.test(phrase)) return `${phrase}.`;
+  return `a day for ${phrase}.`;
 }
 
 export interface VerdictInput {
