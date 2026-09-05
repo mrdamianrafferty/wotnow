@@ -1,19 +1,10 @@
+import { DocPage } from '@/components/call/DocPage';
 import Image from "next/image";
-import Head from "next/head";
-import AppHeader from "../components/AppHeader"; // adjust path if your header lives elsewhere
-import Footer from "../components/footer";       // matches usage in pages/index.tsx
 
 export default function AboutUs() {
   return (
     <>
-      <Head>
-        <title>About Us - Go Daisy</title>
-      </Head>
-      <AppHeader />
-
-      <main className="min-h-screen bg-base-100 text-base-content p-6 md:p-12">
-        <div className="max-w-4xl mx-auto bg-base-200 p-8 rounded-lg shadow-lg">
-          <h1 className="text-4xl font-bold mb-6">About Us</h1>
+    <DocPage title="About us" description="One man, one dog, and an app about getting outside.">
 
           <div className="mb-8 flex flex-col items-center">
             <Image
@@ -64,10 +55,7 @@ export default function AboutUs() {
           <p className="mt-8 text-sm text-secondary">
             — The man, Bruno, and the Go Daisy team
           </p>
-        </div>
-      </main>
-
-      <Footer />
+    </DocPage>
     </>
   );
 }

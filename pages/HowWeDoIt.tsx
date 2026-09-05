@@ -1,20 +1,11 @@
+import { DocPage } from '@/components/call/DocPage';
 import React from "react";
 import Image from "next/image";
-import Head from "next/head";
-import AppHeader from "../components/AppHeader";
-import Footer from "../components/footer";
 
 export default function HowWeDoIt() {
   return (
     <>
-      <Head>
-        <title>How We Do It - Go Daisy</title>
-      </Head>
-      <AppHeader />
-
-      <main className="min-h-screen bg-base-100 text-base-content p-6 md:p-12" data-theme="corporate">
-        <div className="max-w-4xl mx-auto bg-base-200 p-8 rounded-lg shadow-lg">
-          <h1 className="text-4xl font-bold mb-6 text-primary">How do we do what we do?</h1>
+    <DocPage title="How we do it" description="Where Go Daisy gets its forecasts, and how it turns them into an answer.">
 
           {/* Placeholder for custom illustration */}
           <div className="w-full h-64 bg-base-300 rounded-lg mb-8 flex items-center justify-center">
@@ -55,10 +46,7 @@ export default function HowWeDoIt() {
           <p className="text-base-content italic">
             It’s data made truly useful so you can get outside, enjoy life, and spend time doing what matters most.
           </p>
-        </div>
-      </main>
-
-      <Footer />
+    </DocPage>
     </>
   );
 }

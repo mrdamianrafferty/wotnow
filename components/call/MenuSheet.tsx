@@ -67,8 +67,8 @@ const GROUPS: ReadonlyArray<{ title: string; items: readonly Item[] }> = [
     title: 'Go Daisy',
     items: [
       { href: '/whether-weather', label: 'How the scoring works' },
-      { href: '/support', label: 'Support' },
-      { href: '/app', label: 'Get it on iPhone' },
+      { href: '/support', label: 'Support Go Daisy' },
+      { href: '/app', label: 'Get it on your iPhone' },
     ],
   },
 ];

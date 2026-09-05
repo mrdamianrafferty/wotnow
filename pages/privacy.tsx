@@ -1,29 +1,16 @@
+import { DocPage } from '@/components/call/DocPage';
 import React from 'react';
-import Head from 'next/head';
-import Link from 'next/link';
-import { ArrowLeft } from 'lucide-react';
 
 export default function PrivacyPolicy() {
   const lastUpdated = 'January 1, 2026';
 
   return (
     <>
-      <Head>
-        <title>Privacy Policy</title>
-        <meta name="description" content="Privacy Policy for Findr, Go Daisy, and Grow Daisy apps" />
-      </Head>
-
-      <main className="min-h-screen bg-base-100">
-        <div className="container mx-auto px-4 py-8 max-w-3xl">
-          <Link href="/" className="inline-flex items-center gap-2 text-primary mb-6 hover:underline">
-            <ArrowLeft size={20} />
-            Back to Home
-          </Link>
-
-          <h1 className="text-3xl font-bold mb-2">Privacy Policy</h1>
-          <p className="text-base-content/60 mb-8">Last updated: {lastUpdated}</p>
-
-          <div className="prose prose-lg max-w-none">
+    <DocPage
+      title="Privacy policy"
+      description="How Go Daisy, Grow Daisy and Findr collect, use and protect your information."
+      updated={`Last updated: ${lastUpdated}`}
+    >
             <section className="mb-8">
               <h2 className="text-xl font-semibold mb-4">1. Introduction</h2>
               <p>
@@ -148,9 +135,7 @@ export default function PrivacyPolicy() {
                 <li>Email: privacy@godaisy.io</li>
               </ul>
             </section>
-          </div>
-        </div>
-      </main>
+    </DocPage>
     </>
   );
 }

@@ -1135,6 +1135,7 @@ h1.call-setup-question, h1.call-verdict { margin-block: 0; }
 }
 .gd-head { background: var(--call-page); padding-top: env(safe-area-inset-top); }
 
+.gd-doc section,
 .gd-acct section,
 .gd-cond section,
 .gd-spot section,
@@ -1158,6 +1159,229 @@ section.gd-app { padding: 44px var(--call-gutter-app); }
 section.gd-spot-section { padding: 36px var(--call-gutter-app); }
 section.gd-spot-hero { padding: 40px var(--call-gutter-app) 44px; }
 section.gd-spot-colophon { padding: 28px var(--call-gutter-app) 40px; }
+
+.gd-acct-row-actions { display: flex; flex-wrap: wrap; gap: 10px; }
+
+/* ── Account chrome ───────────────────────────────────────────────────────
+   The pieces the account page still carried in raw Tailwind after the
+   redesign: a violet-blue primary button, blue-100 chips and four coloured
+   notice boxes, none of which answered to a token. On a cream page under a
+   serif wordmark, `bg-blue-600` is not a brand colour, it is a default — and
+   white on blue-600 sits at about 4.5:1, which passes for large text and not
+   for the 14px label it was actually carrying. */
+.gd-btn {
+  display: inline-flex; align-items: center; justify-content: center;
+  min-height: var(--call-tap-min);
+  padding: 10px 18px;
+  border: 1px solid var(--call-moss);
+  border-radius: var(--call-r-button);
+  background: var(--call-moss);
+  color: var(--call-page);
+  font: 600 var(--call-body-sm)/1 var(--call-font-body);
+  text-decoration: none; cursor: pointer;
+  transition: opacity var(--call-t-press) var(--call-ease-out);
+}
+.gd-btn:hover { opacity: .88; background: var(--call-moss); color: var(--call-page); }
+.gd-btn:disabled { opacity: .45; cursor: not-allowed; }
+.gd-btn:focus-visible { outline: 2px solid var(--call-ink-1); outline-offset: 2px; }
+
+/* The quiet twin, for the second action in a pair. */
+.gd-btn--quiet {
+  background: transparent; color: var(--call-ink-2); border-color: var(--call-border-strong);
+}
+.gd-btn--quiet:hover { background: var(--call-panel); color: var(--call-ink-1); }
+
+.gd-chip {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 5px 12px; border-radius: var(--call-r-pill);
+  background: var(--call-band-prime-bg); color: var(--call-band-prime-fg);
+  font-size: var(--call-body-sm);
+}
+.gd-chip button {
+  background: none; border: 0; padding: 0 2px; cursor: pointer;
+  color: inherit; opacity: .7; font-size: 1em; line-height: 1;
+}
+.gd-chip button:hover { opacity: 1; background: none; }
+
+/* Notices. The bands already carry a considered pairing of ground and ink at
+   a contrast that was checked, so they are reused rather than re-picked. */
+.gd-note {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  flex-wrap: wrap;
+  padding: 14px 16px; margin-bottom: 16px;
+  border: 1px solid var(--call-border);
+  border-radius: var(--call-r-card);
+  background: var(--call-panel);
+  color: var(--call-ink-2);
+  font-size: var(--call-body-sm);
+}
+.gd-note--good { background: var(--call-band-prime-bg); border-color: transparent; color: var(--call-band-prime-fg); }
+.gd-note--bad  { background: var(--call-band-unsafe-bg); border-color: transparent; color: var(--call-band-unsafe-fg); }
+
+/* Fields, selects and the language dropdown — the rest of the account page's
+   raw Tailwind. `focus:ring-blue-500` on a cream page is a browser default
+   wearing a utility class. */
+.gd-field {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--call-border-strong);
+  border-radius: var(--call-r-input);
+  background: var(--call-card);
+  color: var(--call-ink-1);
+  font: 400 var(--call-body)/1.4 var(--call-font-body);
+}
+.gd-field::placeholder { color: var(--call-ink-4); }
+.gd-field:focus-visible, .gd-select:focus-visible {
+  outline: 2px solid var(--call-moss); outline-offset: 1px; border-color: var(--call-moss);
+}
+.gd-select {
+  padding: 7px 10px;
+  border: 1px solid var(--call-border-strong);
+  border-radius: var(--call-r-input);
+  background: var(--call-card);
+  color: var(--call-ink-1);
+  font: 400 var(--call-body-sm)/1.3 var(--call-font-body);
+}
+.gd-picker {
+  width: 100%; max-width: 22rem;
+  display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  min-height: var(--call-tap-min);
+  padding: 10px 14px;
+  border: 1px solid var(--call-border-strong);
+  border-radius: var(--call-r-input);
+  background: var(--call-card);
+  color: var(--call-ink-1);
+  font: 400 var(--call-body)/1.3 var(--call-font-body);
+  cursor: pointer;
+}
+.gd-picker:hover { background: var(--call-panel); border-color: var(--call-ink-4); }
+.gd-picker:focus-visible { outline: 2px solid var(--call-moss); outline-offset: 1px; }
+.gd-picker-menu {
+  position: absolute; top: 100%; left: 0; margin-top: 4px; z-index: 50;
+  width: 100%; max-width: 22rem; overflow: hidden;
+  background: var(--call-card);
+  border: 1px solid var(--call-border);
+  border-radius: var(--call-r-input);
+  box-shadow: var(--call-shadow-card);
+}
+.gd-picker-item {
+  width: 100%; display: flex; align-items: center; gap: 12px;
+  padding: 11px 14px; text-align: left;
+  background: none; border: 0; cursor: pointer;
+  color: var(--call-ink-2); font: 400 var(--call-body-sm)/1.3 var(--call-font-body);
+}
+.gd-picker-item:hover { background: var(--call-panel); }
+.gd-picker-item.is-on { background: var(--call-band-prime-bg); color: var(--call-band-prime-fg); }
+
+.gd-acct-quiet-row { display: flex; align-items: center; gap: 8px; font-size: var(--call-body-sm); color: var(--call-ink-3); }
+.gd-acct-subblock { margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--call-border); }
+
+/* The notification toggles. `bg-blue-600` on the tick and `bg-blue-50` on the
+   row were the last two blues on the page. */
+.gd-toggle {
+  width: 100%; display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  padding: 12px; border: 0; border-radius: var(--call-r-button);
+  background: transparent; text-align: left; cursor: pointer;
+  transition: background var(--call-t-press) var(--call-ease-out);
+}
+.gd-toggle:hover:not(:disabled) { background: var(--call-panel); }
+.gd-toggle.is-on { background: var(--call-band-prime-bg); }
+.gd-toggle:disabled { opacity: .5; cursor: not-allowed; }
+.gd-toggle:focus-visible { outline: 2px solid var(--call-moss); outline-offset: 2px; }
+.gd-toggle-label { font: 600 var(--call-body-sm)/1.3 var(--call-font-body); color: var(--call-ink-1); }
+.gd-toggle-box {
+  width: 22px; height: 22px; flex: 0 0 auto;
+  border: 2px solid var(--call-border-strong); border-radius: var(--call-r-pill);
+  display: grid; place-items: center; color: var(--call-page);
+}
+.gd-toggle.is-on .gd-toggle-box { background: var(--call-moss); border-color: var(--call-moss); }
+
+/* A button that has to read as part of a sentence. */
+.gd-linkish {
+  background: none; border: 0; padding: 0; cursor: pointer;
+  font: inherit; color: var(--call-moss-ink);
+  text-decoration: underline; text-underline-offset: 2px;
+}
+.gd-linkish:hover { background: none; color: var(--call-ink-1); }
+
+/* A bare `a { color: #4a90e2 }` in index.css reaches every link the redesign
+   does not name — a browser-era blue on a cream page. Prose links inside the
+   redesigned surfaces take the moss ink the rest of the system uses. */
+.gd-acct p a, .gd-acct li a, .gd-cond p a, .gd-spot p a, .call-drawer p a {
+  color: var(--call-moss-ink);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.gd-acct p a:hover, .gd-cond p a:hover, .gd-spot p a:hover { color: var(--call-ink-1); }
+
+/* ── Documents ────────────────────────────────────────────────────────────
+   The pages that are mostly words: privacy, terms, cookies, support, about,
+   how the scoring works, the FAQ.
+
+   These rules are ELEMENT-SCOPED on purpose. Each of those pages carries
+   hundreds of Tailwind utilities — `text-xl font-semibold mb-4` on every
+   heading — and `.gd-doc h2` at (0,1,1) beats `.text-xl` at (0,1,0), so the
+   content needs no editing at all. Rewriting a legal document's markup to
+   restyle it is a day of work and a day of chances to change what it says. */
+.gd-doc {
+  background: var(--call-page);
+  color: var(--call-ink-2);
+  font-family: var(--call-font-body);
+  min-height: 70vh;
+}
+.gd-doc-inner {
+  max-width: 68ch;
+  margin: 0 auto;
+  padding: 40px var(--call-gutter-app) 64px;
+}
+@media (min-width: 700px) { .gd-doc-inner { padding: 56px var(--call-gutter-web) 80px; } }
+
+.gd-doc-kicker { color: var(--call-ink-4); margin: 0 0 10px; }
+.gd-doc-title {
+  margin: 0 0 6px;
+  font: 400 var(--call-page-title)/1.08 var(--call-font-display);
+  color: var(--call-ink-1);
+  text-wrap: balance;
+}
+.gd-doc-updated { margin: 0 0 32px; font-size: var(--call-caption); color: var(--call-ink-4); }
+
+/* The content itself. */
+.gd-doc h2 {
+  margin: 40px 0 12px;
+  font: 400 var(--call-section-title)/1.2 var(--call-font-display);
+  color: var(--call-ink-1);
+  text-wrap: balance;
+}
+.gd-doc h3 {
+  margin: 26px 0 8px;
+  font: 600 var(--call-body-lg)/1.35 var(--call-font-body);
+  color: var(--call-ink-1);
+}
+.gd-doc h4 { margin: 20px 0 6px; font: 600 var(--call-body)/1.4 var(--call-font-body); color: var(--call-ink-2); }
+.gd-doc p, .gd-doc li { font-size: var(--call-body); line-height: 1.62; color: var(--call-ink-2); }
+.gd-doc p { margin: 0 0 16px; }
+.gd-doc ul, .gd-doc ol { margin: 0 0 18px; padding-left: 1.35em; }
+.gd-doc li { margin-bottom: 7px; }
+.gd-doc ul { list-style: disc; }
+.gd-doc ol { list-style: decimal; }
+.gd-doc a { color: var(--call-moss-ink); text-decoration: underline; text-underline-offset: 2px; }
+.gd-doc a:hover { color: var(--call-ink-1); }
+.gd-doc strong, .gd-doc b { font-weight: 650; color: var(--call-ink-1); }
+.gd-doc hr { border: 0; border-top: 1px solid var(--call-border); margin: 36px 0; }
+.gd-doc code {
+  font-size: 0.92em; background: var(--call-panel);
+  padding: 1px 5px; border-radius: 4px; color: var(--call-ink-1);
+}
+/* A table that is wider than the phone scrolls itself rather than the page. */
+.gd-doc .gd-doc-scroll, .gd-doc table { display: block; overflow-x: auto; max-width: 100%; }
+.gd-doc table { border-collapse: collapse; margin: 0 0 20px; font-size: var(--call-body-sm); }
+.gd-doc th, .gd-doc td { border-bottom: 1px solid var(--call-border); padding: 8px 14px 8px 0; text-align: left; }
+.gd-doc th { font-weight: 650; color: var(--call-ink-1); }
+
+/* The global bare-element `section` rule reaches in here too. The shared reset
+   below zeroes its horizontal padding and leaves its 2rem top and bottom, which
+   here stacked 64px of dead air between every numbered clause. */
+.gd-doc section { margin: 0; padding: 0; }
 
 /* ── Footer ───────────────────────────────────────────────────────────────
    A base, not a card. The page ends on a shift of ground and a hairline —
@@ -1334,6 +1558,18 @@ section.gd-spot-colophon { padding: 28px var(--call-gutter-app) 40px; }
   font: 500 15px var(--call-font-body); text-decoration: none;
 }
 .gd-land-alt:hover { border-color: var(--call-ink-4); }
+
+/* One button, and the App Store as a quiet line under it — not two equal
+   buttons reading as two products. */
+.gd-land-cta { display: flex; flex-direction: column; align-items: center; gap: 10px; margin-bottom: 18px; }
+.gd-land-cta-alt { margin: 0; }
+
+.gd-land-card-title {
+  display: flex; align-items: center; gap: 10px;
+  margin: 0 0 8px;
+  font: 400 var(--call-section-title)/1.2 var(--call-font-display);
+  color: var(--call-ink-1);
+}
 
 .gd-land-card {
   background: var(--call-card); border: 1px solid var(--call-border);

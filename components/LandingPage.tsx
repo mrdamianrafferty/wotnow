@@ -25,7 +25,7 @@
 import React from 'react';
 import Link from 'next/link';
 import Head from 'next/head';
-import AppHeader from './AppHeader';
+import { PageHeader } from './call/PageHeader';
 import dynamic from 'next/dynamic';
 import SEO from './SEO';
 
@@ -407,7 +407,16 @@ const LandingPage: React.FC = () => {
         />
       </Head>
 
-      <AppHeader />
+      {/*
+        * `PageHeader`, not `AppHeader`.
+        *
+        * This is the first thing a stranger sees, and it was still the old
+        * DaisyUI navbar — `data-theme="light"`, `bg-base-100`, and a violet
+        * shadcn "Log in" button that belongs to no palette this app uses. A
+        * cream page with a serif wordmark under a grey navbar with a violet
+        * button is two designs arguing above the fold.
+        */}
+      <PageHeader />
 
       <main className="gd-land">
         {/* =================================================================
@@ -425,43 +434,31 @@ const LandingPage: React.FC = () => {
             </p>
 
             {/*
-              * THE DOOR INTO THE REDESIGN, and it is temporary.
+              * ONE GO DAISY, ONE WAY IN.
               *
-              * `/` server-renders this landing page, not the app home screen —
-              * the cookie fork — so this is what a stranger actually sees, and
-              * nothing on it pointed at `/call`. The redesign was reachable
-              * only by typing the URL or following a shared link, which is no
-              * way to dogfood it.
+              * There were three calls to action here: "Try the new Go Daisy",
+              * "Try the web app — free" and "Download for iPhone". The first
+              * was a temporary door into the redesign from before phase 7 made
+              * it the home screen, and by the time it shipped it was telling
+              * strangers there was an old Go Daisy and a new one. The other two
+              * sat side by side as equals, which reads as two products rather
+              * than one product and a phone.
               *
-              * It sits BESIDE the existing primary CTA rather than replacing
-              * it: which of the two should be primary is a product decision,
-              * not a side effect of adding a link. Phase 7 makes `/call` the
-              * home screen and deletes this file, and this with it.
+              * So: one button, and the App Store as a quiet line under it. The
+              * iPhone app loads the same web layer anyway — they were never two
+              * versions, and the page should not have implied they were.
               */}
-            <div className="flex justify-center mb-4">
-              <Link href="/call" className="gd-try-call gd-try-call--hero">
-                <span className="gd-try-call-lead">Try the new Go Daisy →</span>
-                <span className="gd-try-call-note">
-                  One sentence telling you what today is good for. No sign-in.
-                </span>
+            <div className="gd-land-cta">
+              <Link href={WEB_APP_CTA_URL} className="gd-app-store">
+                Start Go Daisy — free
               </Link>
-            </div>
-
-            <div className="flex flex-col sm:flex-row gap-3 justify-center items-center mb-4">
-              <Link
-                href={WEB_APP_CTA_URL}
-                className="gd-app-store"
-              >
-                Try the web app — free
-              </Link>
-              <a
-                href={APP_STORE_URL}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="gd-land-alt"
-              >
-                Download for iPhone
-              </a>
+              <p className="gd-land-small gd-land-cta-alt">
+                Or{' '}
+                <a href={APP_STORE_URL} target="_blank" rel="noopener noreferrer" className="gd-land-link">
+                  get it on your iPhone
+                </a>
+                .
+              </p>
             </div>
 
             <p className="gd-land-small">
@@ -548,9 +545,9 @@ const LandingPage: React.FC = () => {
 
             <div className="space-y-10">
               {ACTIVITY_CATEGORIES.map((category) => (
-                <div key={category.name} className="card bg-base-100 shadow-lg">
+                <div key={category.name} className="gd-land-card">
                   <div className="gd-land-card-body">
-                    <h3 className="card-title text-2xl mb-2">
+                    <h3 className="gd-land-card-title">
                       <span className="text-3xl mr-2" aria-hidden="true">
                         {category.icon}
                       </span>
@@ -646,25 +643,20 @@ const LandingPage: React.FC = () => {
               Get out there. Or in. Whichever today asks for.
             </h2>
             <p className="gd-land-copy">
-              Download Go Daisy for iPhone, or open the web app and tell us
-              what you love. The forecast looks a lot more interesting when
-              it&rsquo;s pointed at the things you actually do.
+              Tell Go Daisy what you love. The forecast looks a lot more
+              interesting when it&rsquo;s pointed at the things you actually do.
             </p>
-            <div className="flex flex-col sm:flex-row gap-3 justify-center">
-              <Link
-                href={WEB_APP_CTA_URL}
-                className="gd-app-store"
-              >
-                Try the web app — free
+            <div className="gd-land-cta">
+              <Link href={WEB_APP_CTA_URL} className="gd-app-store">
+                Start Go Daisy — free
               </Link>
-              <a
-                href={APP_STORE_URL}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="gd-land-alt"
-              >
-                Download for iPhone
-              </a>
+              <p className="gd-land-small gd-land-cta-alt">
+                Or{' '}
+                <a href={APP_STORE_URL} target="_blank" rel="noopener noreferrer" className="gd-land-link">
+                  get it on your iPhone
+                </a>
+                .
+              </p>
             </div>
           </div>
         </section>
