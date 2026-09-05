@@ -1,0 +1,215 @@
+/* ════════════════════════════════════════════════════════════════════
+   Go Daisy — "The Call" design system
+   Tokens namespaced --call-* because --gd-* is ALREADY OWNED by Grow
+   Daisy in styles/index.css (--gd-moss #64725a, --gd-peat #1a221d,
+   --gd-font-display Playfair). Both apps ship from this codebase and
+   share one cascade, so the handoff's --gd- prefix would collide.
+
+   Contrast: every text pairing below is measured at >= 4.5:1.
+   ════════════════════════════════════════════════════════════════════ */
+
+/* ── Daisy Serif · replaces Georgia ───────────────────────────────────
+   Georgia is absent on Android (falls to Noto Serif, ~17% narrower) and
+   cannot be shipped to the share renderer — it is not redistributable.
+   Daisy Serif is a subset of Charis SIL: metrically near-identical to
+   Georgia (lowercase advance +0.3% at regular), OFL-licensed, and it
+   carries TRUE small-caps, which Georgia does not have at all.
+   Renamed because the OFL reserves "Charis" and "SIL" and a subset is a
+   Modified Version — see public/fonts/daisy-serif/README.md.
+   3 faces, ~57 KB, subset to the ten shipped locales.                */
+@font-face {
+  font-family: 'Daisy Serif';
+  src: url('/fonts/daisy-serif/DaisySerif-Regular.woff2') format('woff2');
+  font-weight: 400; font-style: normal; font-display: swap;
+}
+@font-face {
+  font-family: 'Daisy Serif';
+  src: url('/fonts/daisy-serif/DaisySerif-Bold.woff2') format('woff2');
+  font-weight: 700; font-style: normal; font-display: swap;
+}
+@font-face {
+  font-family: 'Daisy Serif';
+  src: url('/fonts/daisy-serif/DaisySerif-Italic.woff2') format('woff2');
+  font-weight: 400; font-style: italic; font-display: swap;
+}
+
+:root {
+  /* ── brand ─────────────────────────────────────────────────────────
+     RULE: --call-moss means "you can act on this" and nothing else.
+     Not selection, not a positive data value.                        */
+  --call-moss:            #3d6b4f;
+  --call-amber:           #b8860b;   /* FILL ONLY on light — see below */
+  --call-river-blue:      #1e3a5f;
+  --call-peat:            #1c1917;
+  --call-poor:            #dc2626;
+
+  /* Amber fails as ink on light (3.07 on page, 3.25 for white-on-amber).
+     It is legal as a bar fill, chip tint or border. For amber-coloured
+     TEXT on a light ground, use this instead — 6.9 on page.          */
+  --call-amber-ink:       #6f5207;
+
+  /* Ink aliases: these are what components reference for accent TEXT,
+     borders and icons. The dark-mode block below re-points them. */
+  --call-moss-ink:        var(--call-moss);
+  --call-river-blue-ink:  var(--call-river-blue);
+  --call-poor-ink:        var(--call-poor);
+
+  /* ── surface ──────────────────────────────────────────────────── */
+  --call-page:            #faf8f5;
+  --call-card:            #ffffff;
+  --call-panel:           #f5f0e8;
+  --call-border:          #e8dfd3;
+  --call-border-strong:   #d6d3d1;
+  --call-inert:           #e7e5e4;
+
+  /* ── text ─────────────────────────────────────────────────────── */
+  --call-ink-1:           #1c1917;
+  --call-ink-2:           #44403c;
+  --call-ink-3:           #57534e;
+  --call-ink-4:           #736c67;   /* was #78716c: failed on cream
+                                        (4.23). This clears 4.5 on every
+                                        light ground, at any size.    */
+  --call-on-dark:         #faf8f5;
+  --call-on-dark-body:    rgba(250, 248, 245, 0.92);
+  --call-on-dark-label:   rgba(250, 248, 245, 0.82);
+  --call-on-dark-quiet:   rgba(250, 248, 245, 0.70);
+
+  /* ── confidence bands · ink on own tint ───────────────────────── */
+  --call-band-prime-bg:     #e8f0eb;  --call-band-prime-fg:     #2f5540;
+  --call-band-look-bg:      #e4eaf2;  --call-band-look-fg:      #1e3a5f;
+  --call-band-marginal-bg:  #f5efd8;  --call-band-marginal-fg:  #6f5207;
+  --call-band-not-today-bg: #f5f5f4;  --call-band-not-today-fg: #57534e;
+  --call-band-unsafe-bg:    #fee2e2;  --call-band-unsafe-fg:    #b91c1c;
+
+  /* solid bar fills — carry no text, so the raw hues are fine */
+  --call-bar-prime:       #3d6b4f;
+  --call-bar-marginal:    #b8860b;
+  --call-bar-not-today:   #e7e5e4;
+  --call-bar-unsafe:      #dc2626;
+
+  --call-glass-fill:      rgba(250, 248, 245, 0.10);
+  --call-glass-border:    rgba(250, 248, 245, 0.18);
+
+  /* ── type ─────────────────────────────────────────────────────── */
+  --call-font-display:    'Daisy Serif', Georgia, 'Times New Roman', serif;
+  --call-font-body:       -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+
+  --call-verdict-max:     62px;   /* a ceiling, not a size — see .call-verdict */
+  --call-verdict-min:     44px;
+  --call-verdict-web:     44px;
+  --call-verdict-card:    34px;
+  --call-page-title:      38px;
+  --call-section-title:   26px;
+  --call-screen-title:    23px;
+  --call-body-lg:         17px;
+  --call-body:            16px;
+  --call-body-sm:         15px;
+  --call-caption:         13px;
+  --call-label:           11px;
+
+  /* ── space · radii · shadow ───────────────────────────────────── */
+  --call-gutter-app:      24px;   --call-gutter-web:     32px;
+  --call-card-pad:        16px;   --call-block:          24px;
+  --call-grid-gap:        12px;   --call-chip-gap:        7px;
+  --call-tap-min:         44px;   --call-measure:       640px;
+
+  --call-r-chip: 6px;  --call-r-input: 8px;   --call-r-button: 10px;
+  --call-r-card: 12px; --call-r-share: 14px;  --call-r-panel:  16px;
+  --call-r-pill: 9999px;
+
+  --call-shadow-card:   0 1px 3px rgba(28, 25, 23, 0.05);
+  --call-shadow-lift:   0 18px 40px rgba(28, 25, 23, 0.24);
+  --call-shadow-drawer: 0 -12px 40px rgba(0, 0, 0, 0.35);
+  --call-shadow-share:  0 8px 22px rgba(28, 25, 23, 0.14);
+
+  /* ── imagery ──────────────────────────────────────────────────────
+     Applied to the per-activity image set (data/bgMap.ts). Pre-baked
+     with sharp for the share renderer, which cannot run CSS filters. */
+  --call-photo-filter: saturate(0.85) brightness(0.62);
+  --call-scrim-up:     linear-gradient(to top, rgba(28,25,23,0.86), rgba(28,25,23,0.10));
+  --call-scrim-call:   linear-gradient(to bottom,
+                         rgba(28,25,23,0.55) 0%, rgba(28,25,23,0.15) 30%,
+                         rgba(28,25,23,0.86) 78%, rgba(28,25,23,0.96) 100%);
+
+  /* ── motion · four movements, no more ─────────────────────────── */
+  --call-ease-out:  cubic-bezier(0.16, 1, 0.3, 1);
+  --call-t-verdict: 600ms;
+  --call-t-drawer:  320ms;
+  --call-t-press:   150ms;
+}
+
+/* ── the signature label ──────────────────────────────────────────────
+   Real small-caps now: Daisy Serif carries the smcp feature, so this is
+   drawn glyphs rather than the browser mechanically shrinking capitals
+   (which is what Georgia has always done — Georgia has no smcp).     */
+.call-label {
+  font-family: var(--call-font-display);
+  font-style: italic;
+  font-variant-caps: small-caps;
+  font-feature-settings: 'smcp' 1;
+  letter-spacing: 0.09em;
+  font-size: var(--call-label);
+  color: var(--call-ink-3);
+}
+.call-label--on-dark { color: var(--call-on-dark-label); }
+
+.call-num { font-variant-numeric: tabular-nums; }
+
+/* ── the verdict fits its box; it is not a fixed size ─────────────────
+   Measured across 39 realistic verdicts in the ten shipped locales:
+   12 do not fit at 62px in three lines, and four have a single word
+   wider than the 338px column ("Aujourd'hui," is 408px).            */
+.call-verdict {
+  font-family: var(--call-font-display);
+  font-weight: 700;
+  line-height: 0.96;
+  letter-spacing: -0.02em;
+  text-wrap: balance;
+  hyphens: auto;             /* requires lang= on <html> */
+  overflow-wrap: break-word; /* guard for the long-word case */
+
+  /* The clamp is only a floor and a ceiling. It CANNOT know the string
+     length, so it does not by itself keep the verdict to three lines —
+     "Get the bike out before eleven." is four lines at 62px. The real
+     fit is done by fitVerdict() (lib/godaisy/fitVerdict.ts), which sets
+     --call-verdict-size on the element. This value is the
+     pre-measurement paint, so a slow hydrate never shows a broken one. */
+  font-size: var(--call-verdict-size,
+                 clamp(var(--call-verdict-min), 12vw, var(--call-verdict-max)));
+}
+
+/* ════════════════════════════════════════════════════════════════════
+   DARK MODE — a different time of day, not an inversion.
+   Accents get paired values: moss measured 2.84 on the dark page and
+   river blue 1.52, so both the action colour and the link colour were
+   invisible. Fills keep the light hue (white-on-moss is 6.15 either
+   way); only ink, borders and icons switch.
+   ════════════════════════════════════════════════════════════════════ */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --call-page:   #1c1917;
+    --call-card:   #292524;
+    --call-panel:  #292524;
+    --call-border: #44403c;
+    --call-ink-1:  #faf8f5;
+    --call-ink-2:  #e7e5e4;
+    --call-ink-3:  #a8a29e;
+    --call-ink-4:  #a8a29e;
+
+    --call-moss-ink:       #589a72;  /* page 5.23 · card 4.54 */
+    --call-amber-ink:      #b8860b;  /* page 5.37 · card 4.66 — amber is
+                                        the one hue that survives intact */
+    --call-river-blue-ink: #608fcd;  /* page 5.25 · card 4.56 */
+    --call-poor-ink:       #e66262;  /* page 5.24 · card 4.54 */
+
+    --call-band-prime-bg:     #1c3325;  --call-band-prime-fg:     #40a868;
+    --call-band-look-bg:      #1a2635;  --call-band-look-fg:      #608ecb;
+    --call-band-marginal-bg:  #362e19;  --call-band-marginal-fg:  #b59136;
+    --call-band-not-today-bg: #292826;  --call-band-not-today-fg: #948e86;
+    --call-band-unsafe-bg:    #371919;  --call-band-unsafe-fg:    #d56666;
+  }
+}
+
+/* No prefers-reduced-motion block here on purpose. styles/index.css already
+   carries the global `*, *::before, *::after` override and owns that
+   behaviour; a second copy would only drift from it. */
