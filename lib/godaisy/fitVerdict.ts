@@ -18,6 +18,8 @@
 const MIN = 44;
 const MAX = 62;
 const MAX_LINES = 3;
+/** Slack, as a fraction of one line, to absorb subpixel layout noise. */
+const LINE_TOLERANCE = 0.25;
 
 export interface FitOptions {
   min?: number;
@@ -38,8 +40,17 @@ export function fitVerdict(el: HTMLElement, opts: FitOptions = {}): number {
     el.style.setProperty('--call-verdict-size', `${px}px`);
     // A word wider than the box overflows horizontally; wrapping cannot help.
     if (el.scrollWidth > el.clientWidth + 1) return false;
-    const lines = Math.round(el.getBoundingClientRect().height / (px * lineHeightRatio));
-    return lines <= maxLines;
+
+    // Compare height against a threshold rather than rounding to a line count.
+    // Math.round() on `height / lineHeight` can undercount: a box that renders
+    // maxLines + 1 lines but sits just below the .5 boundary — because of
+    // subpixel layout, or a lineHeightRatio that drifts from the rendered
+    // leading — rounds down and is wrongly accepted. The tolerance is a
+    // fraction of one line, so it absorbs subpixel noise without ever
+    // admitting a whole extra line.
+    const lineHeight = px * lineHeightRatio;
+    const maxHeight = lineHeight * maxLines + lineHeight * LINE_TOLERANCE;
+    return el.getBoundingClientRect().height <= maxHeight;
   };
 
   let lo = min;
