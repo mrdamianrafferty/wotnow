@@ -99,3 +99,6 @@ supabase/.temp/
 
 # Local translation backups — recovery data, not source (see scripts/backups/README.md)
 scripts/backups/*.json
+
+# Baked share photography — regenerate with scripts/prebake-call-images.ts
+public/call-photos/

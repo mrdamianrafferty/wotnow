@@ -127,9 +127,24 @@
      with sharp for the share renderer, which cannot run CSS filters. */
   --call-photo-filter: saturate(0.85) brightness(0.62);
   --call-scrim-up:     linear-gradient(to top, rgba(28,25,23,0.86), rgba(28,25,23,0.10));
+  /*
+   * Re-cut for illustration, 5 September 2026.
+   *
+   * The four stops were tuned against the dark surf PHOTOGRAPH in the mocks. The
+   * imagery decision settled on the existing per-activity artwork instead, and
+   * that artwork is flat vector colour: measured across 38 of them, the band the
+   * verdict occupies sits at luminance 28-107 after brightness(.62), median 60.
+   * Bright, and — worse for type — detailed, so it competes rather than recedes.
+   *
+   * The old curve gave 0.52 alpha there, which held contrast (11.8:1) but not
+   * calm. 0.77 puts even the brightest illustration under luminance 45. The top
+   * still opens up, because the content is bottom-pinned and the image has that
+   * half to itself.
+   */
   --call-scrim-call:   linear-gradient(to bottom,
-                         rgba(28,25,23,0.55) 0%, rgba(28,25,23,0.15) 30%,
-                         rgba(28,25,23,0.86) 78%, rgba(28,25,23,0.96) 100%);
+                         rgba(28,25,23,0.55) 0%, rgba(28,25,23,0.18) 25%,
+                         rgba(28,25,23,0.70) 50%, rgba(28,25,23,0.90) 78%,
+                         rgba(28,25,23,0.96) 100%);
 
   /* ── motion · four movements, no more ─────────────────────────── */
   --call-ease-out:  cubic-bezier(0.16, 1, 0.3, 1);
@@ -213,3 +228,150 @@
 /* No prefers-reduced-motion block here on purpose. styles/index.css already
    carries the global `*, *::before, *::after` override and owns that
    behaviour; a second copy would only drift from it. */
+
+/* ════════════════════════════════════════════════════════════════════
+   The Call — screen styles (phase 2)
+   Colour, type, spacing, radii and motion come from the tokens above.
+   Screen-specific geometry does not, and should not be read as tokenisable:
+   the phone's own measurements — safe-area padding, the 430px content cap, the
+   scrim's gradient stops — belong to this one layout and would be noise in a
+   token set that other surfaces share.
+   ════════════════════════════════════════════════════════════════════ */
+
+.call-screen {
+  position: relative;
+  min-height: 100dvh;
+  background: var(--call-peat);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  color: var(--call-on-dark);
+  touch-action: pan-y;
+}
+
+.call-photo {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  filter: var(--call-photo-filter);
+}
+
+.call-scrim { position: absolute; inset: 0; background: var(--call-scrim-call); }
+/* A no-day pushes the photograph further down. A white screen at six in the
+   morning in the dark is a flashbang, so it keeps the image rather than
+   dropping it — the light variant is for the share card and the web. */
+.call-scrim--no {
+  background: linear-gradient(to bottom,
+    rgba(28,25,23,.72) 0%, rgba(28,25,23,.55) 25%,
+    rgba(28,25,23,.86) 50%, rgba(28,25,23,.94) 78%,
+    rgba(28,25,23,.97) 100%);
+}
+
+.call-content {
+  position: relative;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: max(52px, env(safe-area-inset-top)) var(--call-gutter-app)
+           max(34px, env(safe-area-inset-bottom));
+  max-width: 430px;
+  width: 100%;
+  margin: 0 auto;
+}
+
+.call-chrome { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+
+/* The single navigation control, and the alternates control, are one variant. */
+.call-icon-btn {
+  width: 26px; height: 26px; flex: 0 0 auto;
+  border-radius: var(--call-r-pill);
+  border: 1px solid rgba(250, 248, 245, .35);
+  background: none; color: var(--call-on-dark);
+  display: grid; place-items: center; cursor: pointer;
+  position: relative;
+  transition: background var(--call-t-press) var(--call-ease-out),
+              transform var(--call-t-press) var(--call-ease-out);
+}
+/* The drawn size is 26px; the hit area must still reach the 44px minimum. */
+.call-icon-btn::after { content: ""; position: absolute; inset: -9px; }
+.call-icon-btn:hover { background: rgba(250, 248, 245, .12); }
+.call-icon-btn:active { transform: scale(.98); }
+.call-icon-btn:focus-visible { outline: 2px solid var(--call-on-dark); outline-offset: 3px; }
+.call-icon-btn--lg { width: var(--call-tap-min); height: var(--call-tap-min); border-color: rgba(250,248,245,.28); }
+.call-icon-btn--lg::after { inset: 0; }
+
+.call-lockup { margin-top: auto; }
+.call-body { display: flex; flex-direction: column; gap: 14px; }
+
+.call-leadin {
+  font-family: var(--call-font-display);
+  font-size: 19px;
+  color: rgba(250, 248, 245, .8);
+}
+
+/* .call-verdict itself is defined with the tokens above; only the colour and
+   the arrival motion belong to the screen. */
+.call-verdict {
+  color: var(--call-on-dark);
+  margin: 0;
+  animation: call-arrive var(--call-t-verdict) var(--call-ease-out) both;
+}
+.call-verdict--quiet { color: rgba(250, 248, 245, .82); font-size: 34px; }
+
+.call-reason {
+  font-size: var(--call-body);
+  line-height: 1.55;
+  color: var(--call-on-dark-body);
+  margin: 0;
+  animation: call-arrive 500ms var(--call-ease-out) both;
+  animation-delay: 80ms;
+}
+.call-reason--dark { color: rgba(250, 248, 245, .7); }
+
+.call-facts { display: flex; gap: 8px; }
+.call-fact {
+  flex: 1; min-width: 0;
+  background: var(--call-glass-fill);
+  border: 1px solid var(--call-glass-border);
+  border-radius: var(--call-r-input);
+  padding: 9px 10px;
+  display: flex; flex-direction: column; gap: 3px;
+}
+.call-fact b {
+  font-size: var(--call-body-sm); font-weight: 600;
+  color: var(--call-on-dark);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+
+.call-actions { display: flex; flex-direction: column; gap: 9px; margin-top: var(--call-block); }
+.call-btn {
+  height: 52px; width: 100%;
+  border: 0; border-radius: var(--call-r-button);
+  background: var(--call-moss); color: var(--call-on-dark);
+  font: 600 var(--call-body) var(--call-font-body);
+  cursor: pointer;
+  transition: transform var(--call-t-press) var(--call-ease-out);
+}
+.call-btn:active { transform: scale(.98); }
+.call-btn:focus-visible { outline: 2px solid var(--call-on-dark); outline-offset: 2px; }
+
+.call-altrow { height: var(--call-tap-min); display: flex; align-items: center; justify-content: center; }
+
+.call-dots { display: flex; align-items: center; justify-content: center; gap: 7px; padding-top: 14px; }
+.call-dots i { width: 5px; height: 5px; border-radius: var(--call-r-pill); background: rgba(250,248,245,.35); display: block; }
+.call-dots i.on { width: 18px; background: rgba(250,248,245,.9); }
+.call-dots span { font-size: var(--call-label); color: var(--call-on-dark-quiet); margin-left: 8px; }
+
+.call-screen--empty {
+  justify-content: center;
+  padding: var(--call-gutter-app);
+  gap: 12px;
+}
+
+@keyframes call-arrive {
+  from { opacity: 0; transform: translateY(20px); }
+  to   { opacity: 1; transform: none; }
+}
