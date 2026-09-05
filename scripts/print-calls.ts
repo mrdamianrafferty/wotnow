@@ -16,6 +16,7 @@
 
 import { getSuggestionsByDay, type WeatherData } from '../utils/getSuggestionsByDay';
 import { allSports } from '../data/activities';
+import { aggregateDayparts, PART_ORDER, type DaypartName } from '../lib/weather/dayparts';
 import { makeCall, type Call } from '../lib/godaisy/call/makeCall';
 import { asSentence } from '../lib/godaisy/call/verdict';
 import { BAND_LABEL } from '../lib/godaisy/call/bands';
@@ -50,18 +51,35 @@ const NAMES: Record<string, string> = Object.fromEntries(
 );
 
 /** Open-Meteo, because it needs no key and carries everything the scorer reads. */
-async function fetchForecast(lat: number, lon: number): Promise<Array<{ date: number; weather: WeatherData }>> {
+type PrintDay = { date: number; weather: WeatherData; parts?: Partial<Record<DaypartName, WeatherData>> };
+
+/**
+ * The hourly series is requested HERE TOO — phase 1b.
+ *
+ * This script is the only test of whether the sentences are any good, so it has
+ * to see what the app sees. Reading a week of window-free verdicts and calling
+ * them fine, while the app renders windows nobody has read, is exactly the
+ * failure the script exists to prevent.
+ *
+ * Bucketing comes from `lib/weather/dayparts`, shared with the adapter. The
+ * timezone is Europe/London in both the daily and hourly halves of this request,
+ * so the stamps the bucketing reads are local — which is what "morning" means.
+ */
+async function fetchForecast(lat: number, lon: number): Promise<PrintDay[]> {
   const url =
     `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}` +
     `&daily=temperature_2m_max,temperature_2m_min,precipitation_sum,precipitation_hours,` +
     `wind_speed_10m_max,wind_gusts_10m_max,wind_direction_10m_dominant,cloud_cover_mean,` +
     `relative_humidity_2m_mean,visibility_mean,shortwave_radiation_sum` +
+    `&hourly=temperature_2m,precipitation,wind_speed_10m,wind_gusts_10m,wind_direction_10m,` +
+    `relative_humidity_2m,cloud_cover,visibility` +
     `&timezone=Europe%2FLondon&forecast_days=${DAYS}&wind_speed_unit=kmh`;
 
   const res = await fetch(url);
   if (!res.ok) throw new Error(`Open-Meteo ${res.status} for ${lat},${lon}`);
-  const j = (await res.json()) as { daily: Record<string, unknown[]> };
+  const j = (await res.json()) as { daily: Record<string, unknown[]>; hourly?: Record<string, unknown[]> };
   const d = j.daily;
+  const byDate = aggregateDayparts(j.hourly as never, { windUnit: 'kmh' });
   const num = (k: string, i: number): number | undefined => {
     const v = d[k]?.[i];
     return typeof v === 'number' && Number.isFinite(v) ? v : undefined;
@@ -87,6 +105,37 @@ async function fetchForecast(lat: number, lon: number): Promise<Array<{ date: nu
         visibility: num('visibility_mean', i),
       } as WeatherData,
     };
+  }).map((day) => {
+    // Same floor as the app: below three samples a part's mean, max and rain
+    // total say nothing, and a partial first or last day is exactly that case.
+    const iso = new Date(day.date * 1000).toISOString().slice(0, 10);
+    const raw = byDate[iso];
+    if (!raw) return day;
+    const parts: Partial<Record<DaypartName, WeatherData>> = {};
+    for (const name of PART_ORDER) {
+      const p = raw[name];
+      if (!p || p.hours < 3) continue;
+      const set = <T,>(k: string, v: T | undefined) => (v === undefined ? {} : { [k]: v });
+      // A part starts as a COPY OF THE DAY, so nothing the hourly feed lacks
+      // goes missing — an absent criterion scores neutral, so a part built from
+      // scratch would out-score the day it belongs to by knowing less.
+      parts[name] = {
+        ...day.weather,
+        ...set('temperature', p.temperature),
+        ...set('temperatureMin', p.temperatureMin),
+        ...set('temperatureMax', p.temperatureMax),
+        ...set('precipitation', p.precipitation),
+        ...set('precipitationHours', p.precipitationHours),
+        ...set('windspeed', p.windspeed),
+        ...set('windspeedMax', p.windspeedMax),
+        ...set('gustspeed', p.gustspeed),
+        ...set('winddirection', p.windDirection),
+        ...set('clouds', p.cloudCover),
+        ...set('humidity', p.humidity),
+        ...set('visibility', p.visibility),
+      } as WeatherData;
+    }
+    return Object.keys(parts).length ? { ...day, parts } : day;
   });
 }
 
@@ -159,7 +208,17 @@ async function main(): Promise<void> {
     const forecast = await fetchForecast(p.lat, p.lon);
     if ((p as { coastal?: boolean }).coastal) {
       const marine = await fetchMarine(p.lat, p.lon);
-      marine.forEach((m, i) => { if (forecast[i]) Object.assign(forecast[i].weather, m); });
+      marine.forEach((m, i) => {
+        const day = forecast[i];
+        if (!day) return;
+        Object.assign(day.weather, m);
+        /* The PARTS get it too. They are built before this, so without the loop
+           a surf morning carries no swell, no wave height and no sea temperature
+           — the three criteria surfing's model is mostly made of — and an absent
+           criterion scores neutral, so every part would out-score its own day
+           and the window would always be "all day" at a break. */
+        for (const w of Object.values(day.parts ?? {})) Object.assign(w, m);
+      });
     }
     const byDay = getSuggestionsByDay({
       forecast,
@@ -181,6 +240,8 @@ async function main(): Promise<void> {
         nextYes: undefined,
         dayIndex: i,
         weekday: WEEKDAY(day.date),
+        parts: forecast[i].parts,
+        activities: allSports as never,
       });
       render(call, i);
       total++;

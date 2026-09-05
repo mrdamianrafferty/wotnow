@@ -339,6 +339,8 @@ export const getServerSideProps: GetServerSideProps<CallPageProps> = async (ctx)
         nextYes,
         dayIndex: i,
         weekday: weekday(d.date),
+        parts: forecast[i].parts,
+        activities: allSports as never,
       });
     });
 

@@ -104,7 +104,7 @@ export interface VerdictInput {
    * The daypart the good run falls in, once scoring is finer than the day.
    * Undefined until then, and every sentence below reads correctly without it.
    */
-  window?: 'morning' | 'afternoon' | 'evening';
+  window?: { parts: readonly string[]; ends?: string };
   /** For a no-day: the next day that is a yes, already formatted ("Tuesday"). */
   nextYes?: string;
   /** Seeds the phrasing so the same day at the same place always reads the same. */
@@ -124,11 +124,67 @@ export interface Verdict {
   reason: string;
 }
 
-const WINDOW_CLAUSE: Record<NonNullable<VerdictInput['window']>, string> = {
+/**
+ * The window, as a person would say it — phase 1b.
+ *
+ * Keyed on the run rather than on a single part, because "best in the morning
+ * and the afternoon" is not a sentence anybody says. The five runs a three-part
+ * day can produce are enumerated: there are only five, and writing them out
+ * gets idiomatic English where a join would get a list.
+ *
+ * No entry for all three parts. A day that holds all day has no window, and
+ * `bestWindow` returns undefined for it rather than reaching this table.
+ *
+ * "Before six" and "from midday" are the six-hour boundaries the parts are cut
+ * on, said the way a person says them — NOT a precision claim. The one thing
+ * this must never do is name a clock time the forecast cannot support, which is
+ * why "before eleven" is not here: eleven is inside the morning part, and the
+ * scoring has nothing to say about which side of it the wind turns.
+ */
+const WINDOW_CLAUSE: Record<string, string> = {
   morning: 'Best in the morning',
   afternoon: 'Best in the afternoon',
   evening: 'Best in the evening',
+  'morning,afternoon': 'Best before six',
+  'afternoon,evening': 'Best from midday on',
 };
+
+/**
+ * What closes the window, named by the criterion that closes it.
+ *
+ * "The wind gets up after that" is the difference between a restriction and an
+ * explanation, and the reader can act on the second one.
+ *
+ * THE TEST IS WHETHER IT IS NEWS. `temperature` and `uvIndex` were in this table
+ * and produced "Best in the morning, and it cools off after that." on a dry 19°
+ * Sunday — which is true, and is true of every day there has ever been. Evenings
+ * are cooler than afternoons and the sun is strongest at midday; naming the
+ * diurnal cycle as though it were a forecast makes the app sound like it has
+ * noticed something when it has not. What is left changes from day to day:
+ * whether the wind gets up, whether the rain arrives, whether it closes in.
+ *
+ * Anything not here drops the half-sentence rather than reaching for a vague
+ * one — the window still says when, it just does not claim to know why.
+ */
+const WINDOW_ENDS: Record<string, string> = {
+  gust: 'the wind gets up after that',
+  windSpeed: 'the wind gets up after that',
+  windRelative: 'the wind gets up after that',
+  precipitation: 'the rain comes in after that',
+  rain: 'the rain comes in after that',
+  visibility: 'it closes in after that',
+  cloudCover: 'it clouds over after that',
+  waveHeight: 'the sea gets up after that',
+  swellPeriod: 'the swell goes off after that',
+};
+
+/** "Best in the morning, and the wind gets up after that." */
+function windowSentence(parts: readonly string[], ends?: string): string {
+  const clause = WINDOW_CLAUSE[parts.join(',')];
+  if (!clause) return '';
+  const why = ends ? WINDOW_ENDS[ends] : undefined;
+  return why ? `${clause}, and ${why}.` : `${clause}.`;
+}
 
 /**
  * A short, true clause about the input that decided it.
@@ -254,7 +310,7 @@ const LIMITING_BELOW = 0.5;
 export function makeVerdict(input: VerdictInput): Verdict {
   const { suggestion, activityName, weather, band, isFirst, window, nextYes, place = '', dayIndex = 0, weekday = '' } = input;
   const when = (text: string) => fillWhen(text, weekday, dayIndex === 0);
-  const windowClause = window ? `${WINDOW_CLAUSE[window]}.` : '';
+  const windowClause = window ? windowSentence(window.parts, window.ends) : '';
 
   if (band === 'unsafe') {
     const gust = weather.gustspeed ?? weather.windspeedMax ?? weather.windspeed;
