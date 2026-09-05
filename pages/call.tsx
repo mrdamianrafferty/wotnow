@@ -21,6 +21,7 @@ import { getSuggestionsByDay, type Suggestion } from '@/utils/getSuggestionsByDa
 import { allSports } from '@/data/activities';
 import { makeCall, type Call } from '@/lib/godaisy/call/makeCall';
 import { isGood } from '@/lib/godaisy/call/bands';
+import { setupFromCookieHeader, type CallSetup } from '@/lib/godaisy/call/setup';
 import { SEO_LOCATIONS } from '@/data/seoLocations';
 import type { SeoLocation } from '@/data/seoLocations';
 import bgMap from '@/data/bgMap';
@@ -273,6 +274,41 @@ function Shell({ title, children }: { title: string; children: React.ReactNode }
   );
 }
 
+/**
+ * A place somebody chose, as the forecast pipeline expects one.
+ *
+ * The pipeline is built around `SeoLocation` — twelve hand-written towns with
+ * curated activity lists — because until now those were the only places `/call`
+ * could serve. Onboarding lets a person name anywhere, so their choice is
+ * dressed as one.
+ *
+ * `activities` is THEIR list, not a curated one, which is the point: a curated
+ * list is a guess about a town, and this is not a guess. `slug` is synthetic and
+ * never routed to; the kicker prints `name`.
+ */
+function locationFromSetup(setup: CallSetup): SeoLocation {
+  return {
+    slug: `setup:${setup.place.lat.toFixed(3)},${setup.place.lon.toFixed(3)}`,
+    name: setup.place.name,
+    region: '',
+    country: '',
+    lat: setup.place.lat,
+    lon: setup.place.lon,
+    // A place they named, in a timezone we have not asked for. The forecast is
+    // fetched in UTC and the dayparts are cut on those stamps, so this is only
+    // ever a label — but it is a real limitation, and the reason a call at a
+    // long way east or west can put "morning" an hour out.
+    timezone: 'UTC',
+    activities: setup.sports,
+    // Water sports need somewhere to do them. A coastal spot marks the setup as
+    // coastal without claiming to know which way the beach faces — a wrong
+    // facing is worse than none, because the wind-relative criteria would score
+    // an offshore day as onshore.
+    beachFacingDeg: null,
+    ...(setup.coastal ? { coastal: true } : {}),
+  };
+}
+
 export const getServerSideProps: GetServerSideProps<CallPageProps> = async (ctx) => {
   /*
    * A place that was ASKED FOR and does not exist must 404, not quietly become
@@ -282,18 +318,42 @@ export const getServerSideProps: GetServerSideProps<CallPageProps> = async (ctx)
    * because a stranger arriving cold should see a working call.
    */
   const asked = ctx.query.place ? String(ctx.query.place) : null;
-  const location = asked
+
+  /*
+   * THE URL OUTRANKS THE COOKIE, and that is not an implementation detail.
+   *
+   * Every share carries a link to somebody else's call, and the whole growth
+   * model is that a stranger opens it. If the cookie won, a returning user
+   * following a friend's link would be shown their own forecast instead — the
+   * shared object would silently fail for exactly the audience it exists for.
+   * So: an explicit ?place= is honoured, and the setup fills the silence.
+   */
+  const setup = ctx.query.place || ctx.query.sports
+    ? null
+    : setupFromCookieHeader(ctx.req.headers.cookie);
+
+  /*
+   * A place that was ASKED FOR and does not exist must 404, not quietly become
+   * another one. Requesting ?place=croyde-bay served Llanes — the first row in
+   * the data file — under a kicker naming Llanes, which reads as a bug in the
+   * forecast rather than a bad URL. A visitor with no query and no setup still
+   * gets a default, because a stranger arriving cold should see a working call.
+   */
+  const location: SeoLocation | undefined = asked
     ? SEO_LOCATIONS.find((l: SeoLocation) => l.slug === asked)
-    : (SEO_LOCATIONS.find((l: SeoLocation) => l.slug === DEFAULT_PLACE) ?? SEO_LOCATIONS[0]);
+    : setup
+      ? locationFromSetup(setup)
+      : (SEO_LOCATIONS.find((l: SeoLocation) => l.slug === DEFAULT_PLACE) ?? SEO_LOCATIONS[0]);
   if (!location) return { notFound: true };
 
   const sports = String(ctx.query.sports ?? '')
     .split(',')
     .map((s) => s.trim())
     .filter(Boolean);
-  // Falls back to the location's own curated activities, which is what a
-  // stranger arriving without preferences should see.
-  const chosen = sports.length ? sports : seedSports(location);
+  // The setup's sports are the point of asking for them. Falls back to the
+  // location's own curated activities, which is what a stranger without either
+  // should see.
+  const chosen = sports.length ? sports : setup ? setup.sports : seedSports(location);
 
   try {
     const forecast = (await fetchForecastForLocation(location)).slice(0, DAYS);

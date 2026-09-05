@@ -274,6 +274,16 @@ export interface SeoLocation {
   timezone: string;
   activities: string[];
   beachFacingDeg?: number | null;
+  /**
+   * On the coast, where the facing is not known.
+   *
+   * The seeded towns all carry `beachFacingDeg`, and marine data used to be
+   * gated on it — reasonably, since a facing is what the wind-relative criteria
+   * need. A place somebody names in onboarding has no facing, and guessing one
+   * is worse than having none: a wrong facing scores an offshore day as
+   * onshore. This says "fetch the swell, and leave the facing absent".
+   */
+  coastal?: boolean;
   description?: string;
 }
 

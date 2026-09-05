@@ -436,3 +436,134 @@
   color: var(--call-on-dark-quiet); text-decoration: underline;
   text-underline-offset: 2px; padding: 4px; flex: 0 0 auto;
 }
+
+/* ── Onboarding · sports, spots, hour ─────────────────────────────────────
+   Phase 4. Paper, not photography: the call is the thing with an image
+   behind it, and giving the form one too would make the two screens
+   compete. This one is a conversation — three questions on a page that
+   gets out of the way.                                                   */
+.call-setup {
+  min-height: 100dvh;
+  background: var(--call-page);
+  color: var(--call-ink-1);
+  display: flex; justify-content: center;
+  padding: 28px var(--call-gutter-app) calc(28px + env(safe-area-inset-bottom));
+}
+.call-setup-inner {
+  width: 100%; max-width: 420px;
+  display: flex; flex-direction: column; gap: var(--call-block);
+}
+
+/* The rail names the three questions rather than counting them: "Spots" tells
+   you what is coming, "2 of 3" only tells you how long it is.             */
+.call-setup-rail { display: flex; gap: 18px; }
+.call-setup-tick {
+  font-family: var(--call-font-display);
+  font-style: italic; font-variant-caps: small-caps;
+  font-size: var(--call-label); letter-spacing: .09em;
+  color: var(--call-ink-4);
+  padding-bottom: 6px; border-bottom: 2px solid var(--call-border);
+  flex: 1 1 0;
+}
+.call-setup-tick.is-now  { color: var(--call-ink-1); border-bottom-color: var(--call-moss-ink); }
+.call-setup-tick.is-done { color: var(--call-ink-3); border-bottom-color: var(--call-moss-ink); }
+
+.call-setup-body { display: flex; flex-direction: column; gap: 14px; }
+
+/* The question is set in the display face because it IS the sentence on this
+   screen — the same role the verdict plays on the call.                   */
+.call-setup-question {
+  font-family: var(--call-font-display);
+  font-size: var(--call-section-title);
+  font-weight: 700; line-height: 1.12;
+  letter-spacing: -.01em; text-wrap: balance;
+  margin: 0; color: var(--call-ink-1);
+}
+.call-setup-help { margin: 0; font-size: var(--call-body-sm); color: var(--call-ink-3); }
+.call-setup-note { margin: 0; font-size: var(--call-caption); color: var(--call-ink-4); text-align: center; }
+
+.call-setup-chips { display: flex; flex-wrap: wrap; gap: var(--call-chip-gap); }
+.call-setup-chip {
+  font: 500 14px var(--call-font-body);
+  padding: 10px 15px; border-radius: var(--call-r-pill);
+  border: 1px solid var(--call-border-strong);
+  background: var(--call-card); color: var(--call-ink-2);
+  cursor: pointer; min-height: var(--call-tap-min);
+  transition: background var(--call-t-press), border-color var(--call-t-press);
+}
+.call-setup-chip:hover { border-color: var(--call-ink-4); }
+/* Moss means "you can act on this", and a chosen sport is the one thing on this
+   screen that has been acted on. */
+.call-setup-chip.is-on {
+  background: var(--call-moss-ink); border-color: var(--call-moss-ink);
+  color: var(--call-page); font-weight: 600;
+}
+.call-setup-more, .call-setup-link, .call-setup-second, .call-setup-back {
+  font: 400 14px var(--call-font-body);
+  background: none; border: 0; padding: 6px 2px; cursor: pointer;
+  color: var(--call-ink-3); text-decoration: underline; text-underline-offset: 3px;
+  align-self: flex-start;
+}
+.call-setup-second { color: var(--call-moss-ink); }
+
+.call-setup-input {
+  width: 100%; box-sizing: border-box;
+  font: 400 var(--call-body) var(--call-font-body);
+  padding: 13px 15px; min-height: var(--call-tap-min);
+  border: 1px solid var(--call-border-strong); border-radius: var(--call-r-input);
+  background: var(--call-card); color: var(--call-ink-1);
+}
+.call-setup-input:focus-visible { outline: 2px solid var(--call-moss-ink); outline-offset: 1px; }
+
+.call-setup-chosen { margin: 0; font-size: var(--call-body); color: var(--call-ink-2); display: flex; gap: 12px; align-items: baseline; }
+.call-setup-chosen strong { color: var(--call-ink-1); }
+
+.call-setup-results { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
+.call-setup-result {
+  width: 100%; text-align: left; cursor: pointer;
+  display: flex; flex-direction: column; gap: 2px;
+  padding: 11px 4px; min-height: var(--call-tap-min);
+  background: none; border: 0; border-bottom: 1px solid var(--call-border);
+  font: 400 var(--call-body-sm) var(--call-font-body); color: var(--call-ink-1);
+}
+.call-setup-result:hover { background: var(--call-panel); }
+.call-setup-result.is-quiet { color: var(--call-ink-4); cursor: default; }
+.call-setup-result-name { font-weight: 600; }
+.call-setup-result-detail { color: var(--call-ink-4); font-size: var(--call-caption); }
+
+/* Two across: four options read as a choice, where a column of four reads as a
+   list to get through.                                                     */
+.call-setup-hours { display: grid; grid-template-columns: 1fr 1fr; gap: var(--call-grid-gap); }
+.call-setup-hour {
+  display: flex; flex-direction: column; gap: 3px; text-align: left;
+  padding: 13px 14px; min-height: 64px; cursor: pointer;
+  border: 1px solid var(--call-border-strong); border-radius: var(--call-r-card);
+  background: var(--call-card); color: var(--call-ink-2);
+}
+.call-setup-hour.is-on { border-color: var(--call-moss-ink); background: var(--call-band-prime-bg); }
+.call-setup-hour-label { font: 600 14px var(--call-font-body); color: var(--call-ink-1); }
+.call-setup-hour-when {
+  font-family: var(--call-font-display); font-style: italic;
+  font-size: var(--call-caption); color: var(--call-ink-3);
+  font-variant-numeric: tabular-nums;
+}
+
+.call-setup-push { margin-top: 4px; }
+.call-setup-push-btn {
+  font: 600 15px var(--call-font-body);
+  padding: 12px 18px; min-height: var(--call-tap-min); cursor: pointer;
+  border: 1px solid var(--call-moss-ink); border-radius: var(--call-r-button);
+  background: none; color: var(--call-moss-ink);
+}
+.call-setup-push-btn:disabled { opacity: .6; cursor: default; }
+
+.call-setup-actions { display: flex; align-items: center; gap: 14px; margin-top: auto; }
+.call-setup-next { flex: 1 1 auto; }
+.call-setup-next:disabled { opacity: .45; cursor: default; }
+
+.call-setup-chip:focus-visible, .call-setup-hour:focus-visible,
+.call-setup-result:focus-visible, .call-setup-more:focus-visible,
+.call-setup-back:focus-visible, .call-setup-second:focus-visible,
+.call-setup-link:focus-visible, .call-setup-push-btn:focus-visible {
+  outline: 2px solid var(--call-moss-ink); outline-offset: 2px;
+}
