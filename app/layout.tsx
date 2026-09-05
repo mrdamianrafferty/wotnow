@@ -9,6 +9,13 @@ import { AuthProvider } from '../context/AuthContext';
 import { UnifiedLocationProvider } from '../context/UnifiedLocationContext';
 // Load Tailwind + DaisyUI globals so utilities and tokens are available in App Router pages
 import '../styles/index.css';
+/*
+ * And the redesign's own tokens, which `pages/_app.tsx` has always imported and
+ * this layout never did. `app/not-found.tsx` is the 404 the whole site actually
+ * serves — it takes precedence over `pages/404.tsx` — so every `gd-*` class on
+ * it resolved to nothing until this line existed.
+ */
+import '../styles/godaisy-call.css';
 
 // Lazy load devtools only in development - completely excluded from production bundle
 const ReactQueryDevtools = dynamic(

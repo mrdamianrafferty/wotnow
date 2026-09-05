@@ -1,29 +1,16 @@
-import React from 'react';
-import Head from 'next/head';
+import { DocPage } from '@/components/call/DocPage';
 import Link from 'next/link';
-import { ArrowLeft } from 'lucide-react';
+import React from 'react';
 
 export default function CookiePolicy() {
   const lastUpdated = 'February 2026';
 
   return (
     <>
-      <Head>
-        <title>Cookie Policy - Go Daisy</title>
-        <meta name="description" content="Cookie Policy for Go Daisy - Weather-Informed Outdoor Activity Recommendations" />
-      </Head>
-
-      <main className="min-h-screen bg-base-100">
-        <div className="container mx-auto px-4 py-8 max-w-3xl">
-          <Link href="/" className="inline-flex items-center gap-2 text-primary mb-6 hover:underline">
-            <ArrowLeft size={20} />
-            Back to Home
-          </Link>
-
-          <h1 className="text-3xl font-bold mb-2">Go Daisy Cookie Policy</h1>
-          <p className="text-base-content/60 mb-8">Last updated: {lastUpdated}</p>
-
-          <div className="prose prose-lg max-w-none">
+    <DocPage
+      title="Cookie policy"
+      description="What Go Daisy stores in your browser, and why."
+    >
             <section className="mb-8">
               <h2 className="text-xl font-semibold mb-4">1. What Are Cookies?</h2>
               <p>
@@ -118,9 +105,7 @@ export default function CookiePolicy() {
                 </a>
               </p>
             </div>
-          </div>
-        </div>
-      </main>
+    </DocPage>
     </>
   );
 }

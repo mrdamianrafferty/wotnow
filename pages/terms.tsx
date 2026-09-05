@@ -1,29 +1,16 @@
-import React from 'react';
-import Head from 'next/head';
+import { DocPage } from '@/components/call/DocPage';
 import Link from 'next/link';
-import { ArrowLeft } from 'lucide-react';
+import React from 'react';
 
 export default function TermsOfService() {
   const lastUpdated = 'February 2026';
 
   return (
     <>
-      <Head>
-        <title>Terms of Service - Go Daisy</title>
-        <meta name="description" content="Terms of Service for Go Daisy - Weather-Informed Outdoor Activity Recommendations" />
-      </Head>
-
-      <main className="min-h-screen bg-base-100">
-        <div className="container mx-auto px-4 py-8 max-w-3xl">
-          <Link href="/" className="inline-flex items-center gap-2 text-primary mb-6 hover:underline">
-            <ArrowLeft size={20} />
-            Back to Home
-          </Link>
-
-          <h1 className="text-3xl font-bold mb-2">Go Daisy Terms of Service</h1>
-          <p className="text-base-content/60 mb-8">Last updated: {lastUpdated}</p>
-
-          <div className="prose prose-lg max-w-none">
+    <DocPage
+      title="Terms of use"
+      description="The terms you agree to when you use Go Daisy."
+    >
             <section className="mb-8">
               <h2 className="text-xl font-semibold mb-4">1. About Go Daisy</h2>
               <p>
@@ -136,9 +123,7 @@ export default function TermsOfService() {
                 </a>
               </p>
             </div>
-          </div>
-        </div>
-      </main>
+    </DocPage>
     </>
   );
 }

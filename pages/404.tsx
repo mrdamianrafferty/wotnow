@@ -92,35 +92,33 @@ export default function Custom404() {
           </div>
         </div>
       ) : (
-        <div className="min-h-screen bg-gradient-to-b from-base-200 to-base-100 flex items-center justify-center px-4">
-          <div className="text-center max-w-lg">
-            <h1 className="text-9xl font-bold text-primary mb-4">404</h1>
-            <h2 className="text-3xl md:text-4xl font-bold mb-4">Page Not Found</h2>
-            <p className="text-lg text-base-content/70 mb-8">
-              Sorry, we couldn&apos;t find the page you&apos;re looking for. It might have been moved or doesn&apos;t exist.
+        /*
+         * THE GO DAISY 404, IN THE NEW DESIGN.
+         *
+         * A giant "404" in the DaisyUI primary over a `base-200` gradient, with
+         * "Go Home" and a house icon. The number is the least useful thing on
+         * the page — nobody arrives here wanting a status code — so the
+         * sentence leads and the number is a quiet label above it, the same
+         * shape as the kicker on the call.
+         */
+        <main className="gd-doc gd-oops">
+          <div className="gd-doc-inner">
+            <p className="call-label gd-doc-kicker">404</p>
+            <h1 className="gd-doc-title">There is nothing here.</h1>
+            <p>
+              That page has either moved or never existed. Neither is your
+              fault, and the forecast is still fine.
             </p>
-
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Link href="/" className="btn btn-primary btn-lg">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
-                </svg>
-                Go Home
-              </Link>
-
-              <Link href="/weather" className="btn btn-outline btn-lg">
-                Today&rsquo;s conditions
-              </Link>
+            <div className="gd-oops-actions">
+              <Link href="/" className="gd-btn">Today&rsquo;s call</Link>
+              <Link href="/weather" className="gd-btn gd-btn--quiet">The conditions</Link>
             </div>
-
-            <p className="mt-8 text-sm text-base-content/60">
-              Need help?{' '}
-              <a href="mailto:hello@godaisy.io" className="link link-primary">
-                Contact us
-              </a>
+            <p className="gd-doc-updated">
+              Something we broke?{' '}
+              <a href="mailto:hello@godaisy.io">Tell us</a>.
             </p>
           </div>
-        </div>
+        </main>
       )}
     </>
   );

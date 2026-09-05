@@ -19,7 +19,9 @@ import { getSuggestionsByDay, type Suggestion } from '@/utils/getSuggestionsByDa
 import { allSports } from '@/data/activities';
 import { makeCall } from '@/lib/godaisy/call/makeCall';
 import { asSharedSentence } from '@/lib/godaisy/call/verdict';
+import { PNG } from 'pngjs';
 import { SEO_LOCATIONS, type SeoLocation } from '@/data/seoLocations';
+import { locationFromShare, coordsFromSlug } from '@/lib/godaisy/call/location';
 import { renderShare } from '@/lib/godaisy/share/render';
 import { shareText, type ShareCrop } from '@/lib/godaisy/share/template';
 import { bakedDataUri } from '@/lib/godaisy/share/photos';
@@ -33,6 +35,35 @@ function todayISO(): string {
   return new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/London' }).format(new Date());
 }
 
+/**
+ * The card's alpha channel is a quarter of the file and every pixel of it is
+ * opaque.
+ *
+ * `ImageResponse` renders RGBA whatever it draws, and a share card is a
+ * photograph with a cream panel under it — there is nothing to see through. A
+ * real send measured 996 KB, which is a second of somebody's mobile data for a
+ * message attachment.
+ *
+ * Re-encoding to RGB costs about 120 ms and takes it to 635 KB, once, behind
+ * the same CDN cache the render already sits behind.
+ *
+ * NOT SHARP, AND NOT A QUANTISER. Sharp would do better — 240 KB as a
+ * 256-colour palette, 116 KB as JPEG — but bundling it took this function to
+ * 361 MB against Vercel's 250 MB limit, which is why the photographs are baked
+ * at build time in the first place. `pngjs` is pure JavaScript and was already
+ * in the tree; it is a direct dependency now because this line depends on it.
+ */
+function withoutAlpha(buf: Buffer): Buffer {
+  try {
+    const src = PNG.sync.read(buf);
+    return PNG.sync.write(src, { colorType: 2, inputColorType: 6, deflateLevel: 9 });
+  } catch {
+    // A card that is 360 KB heavier is a card. A card that failed to re-encode
+    // is not one, so the original goes out.
+    return buf;
+  }
+}
+
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   const slug = String(req.query.place ?? '');
   const cropParam = String(req.query.crop ?? 'card');
@@ -41,7 +72,22 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   // No fallback to SEO_LOCATIONS[0]: that made "Unknown place" unreachable, hid
   // broken share links behind a plausible-looking card, and left the response
   // depending on the order of rows in a data file.
-  const location: SeoLocation | undefined = SEO_LOCATIONS.find((l: SeoLocation) => l.slug === slug);
+  /*
+   * A SEEDED TOWN OR A PLACE SOMEBODY NAMED — BOTH, NOW.
+   *
+   * This looked only in `SEO_LOCATIONS`, so every share from a place typed in
+   * onboarding 404'd. The client never checked the status, so the 404's JSON
+   * body was attached to the message as `the-call.png` and read out as the
+   * message text: a real send went out carrying a 46-byte "image" that was the
+   * string `{"error":"Unknown place: setup:43.514,-5.270"}`.
+   *
+   * There is still no fallback to `SEO_LOCATIONS[0]`: that made "Unknown place"
+   * unreachable, hid broken links behind a plausible-looking card, and left the
+   * response depending on the order of rows in a data file.
+   */
+  const location: SeoLocation | undefined =
+    SEO_LOCATIONS.find((l: SeoLocation) => l.slug === slug)
+    ?? locationFromShare(slug, String(req.query.n ?? ''), String(req.query.a ?? '')) ?? undefined;
   if (!location) return res.status(404).json({ error: `Unknown place: ${slug || '(none)'}` });
 
   /*
@@ -123,7 +169,18 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
        * across a footer. Underscores to hyphens is the mapping that route
        * already uses.
        */
-      url: `godaisy.io/${option.activityId.replace(/_/g, '-')}/${location.slug}`,
+      /*
+       * The card must print a URL that EXISTS.
+       *
+       * A synthetic `setup:43.514,-5.270` slug is not a route, so this read
+       * `godaisy.io/cycling/setup:43.514,-5.270` along the footer of every card
+       * shared from a place somebody named — a line that looks like a link,
+       * cannot be typed in, and goes nowhere if it is. The spot pages have a
+       * real one; everyone else gets the bare host, which is true.
+       */
+      url: coordsFromSlug(location.slug)
+        ? 'godaisy.io'
+        : `godaisy.io/${option.activityId.replace(/_/g, '-')}/${location.slug}`,
       photo: '',
     };
 
@@ -152,7 +209,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const image = await renderShare(data, crop);
     const buf = Buffer.from(await image.arrayBuffer());
     res.setHeader('Content-Type', 'image/png');
-    return res.status(200).send(buf);
+    return res.status(200).send(withoutAlpha(buf));
   } catch (e) {
     // The verdict is withheld rather than guessed.
     return res.status(503).json({ error: e instanceof Error ? e.message : 'Unavailable' });

@@ -1,9 +1,7 @@
+import { DocPage } from '@/components/call/DocPage';
 // pages/support.tsx
 
-import Head from "next/head";
 import { useEffect, useState } from "react";
-import AppHeader from "../components/AppHeader";
-import Footer from "../components/footer";
 import { useUIText } from "../hooks/useUIText";
 import { GODAISY_TIP_PRODUCTS } from "../lib/godaisy/tipProducts";
 import type { TipPackage } from "../lib/grow/revenueCat";
@@ -13,8 +11,6 @@ import {
   Beer,
   Flower2,
   Eye,
-  EyeOff,
-  Users,
   ShieldCheck,
   HelpCircle,
   ChevronDown,
@@ -100,15 +96,6 @@ export default function SupportPage() {
   };
 
   // Translation hooks
-  const pageTitle = useUIText('support.label.support_go_daisy_14', 'Support Go Daisy');
-  const metaDescription = useUIText('support.paragraph.join_the_go_daisy_community_on_15',
-    isIOSNative
-      ? 'Support Go Daisy with a tip. Help cover weather data, hosting, and keep Damian — and Bruno — in biscuits.'
-      : 'Join the Go Daisy community on Patreon or tip via Apple. Help cover weather data, hosting, and keep Damian — and Bruno — in biscuits.');
-
-  const heroHeading = useUIText('support.heading.keep_go_daisy_blooming_21', 'Keep Go Daisy Blooming');
-  const heroText = useUIText('support.paragraph.hero_description',
-    'Go Daisy isn\'t just an app — it\'s a small, friendly community of people who prefer doing to doom-scrolling. If our forecasts and nudges helped you rally mates, discover a cracking day out, or dodge a downpour, you can support the project and keep it blooming.');
 
   const patreonHeading = useUIText('support.heading.join_us_on_patreon_30', 'Join us on Patreon');
   const patreonText = useUIText('support.paragraph.patreon_description',
@@ -146,60 +133,22 @@ export default function SupportPage() {
     'Tell a friend, start a plan, or share your favourite Go Daisy moment. Word of mouth is golden.');
 
   return (
-    <>
-      <Head>
-        <title>{pageTitle}</title>
-        <meta name="description" content={metaDescription} />
-        <meta property="og:title" content={pageTitle} />
-        <meta property="og:description" content={metaDescription} />
-        <meta property="og:image" content="/doggy.jpg" />
-        <meta property="og:type" content="website" />
-        <meta name="twitter:card" content="summary_large_image" />
-        <meta name="twitter:title" content={pageTitle} />
-        <meta name="twitter:description" content={metaDescription} />
-        <meta name="twitter:image" content="/doggy.jpg" />
-      </Head>
-
-      <div data-theme="light" className="min-h-screen bg-gray-50">
-        <AppHeader onOpenHomeDialog={() => {}} onOpenCoastDialog={() => {}} />
-
-        <main className="max-w-2xl mx-auto px-4 py-8 space-y-8">
-          {/* Hero */}
-          <section className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
-            <div className="bg-gradient-to-br from-sky-500 to-blue-600 px-6 py-8 text-white">
-              <div className="flex items-center gap-3 mb-3">
-                <Heart className="h-7 w-7 shrink-0" />
-                <h1 className="text-2xl font-bold">{heroHeading}</h1>
-              </div>
-              <p className="text-blue-100 leading-relaxed text-[15px]">{heroText}</p>
-            </div>
-            <div className="flex gap-2 px-6 py-3 bg-gray-50 border-t border-gray-100">
-              <span className="inline-flex items-center gap-1.5 text-xs font-medium text-gray-600 bg-white border border-gray-200 rounded-full px-3 py-1">
-                <Users className="h-3.5 w-3.5" /> Community-first
-              </span>
-              <span className="inline-flex items-center gap-1.5 text-xs font-medium text-gray-600 bg-white border border-gray-200 rounded-full px-3 py-1">
-                <EyeOff className="h-3.5 w-3.5" /> No paywalls
-              </span>
-              <span className="inline-flex items-center gap-1.5 text-xs font-medium text-gray-600 bg-white border border-gray-200 rounded-full px-3 py-1">
-                <Heart className="h-3.5 w-3.5" /> Indie &amp; friendly
-              </span>
-            </div>
-          </section>
+    <DocPage title="Support Go Daisy" description="Go Daisy is free and ad-free. Here is how to keep it that way.">
 
           {/* Support options */}
           <div className={`grid gap-6 ${platformResolved && !isIOSNative ? 'sm:grid-cols-2' : ''}`}>
             {/* Patreon card — web only (hidden until platform resolved) */}
             {platformResolved && !isIOSNative && (
-              <section className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 flex flex-col">
+              <section className="gd-card is-column">
                 <div className="flex items-center gap-2.5 mb-3">
-                  <div className="p-2 bg-orange-100 rounded-lg">
-                    <ExternalLink className="h-5 w-5 text-orange-600" />
+                  <div className="gd-icon-tile">
+                    <ExternalLink className="h-5 w-5" />
                   </div>
-                  <h2 className="text-lg font-semibold text-gray-900">{patreonHeading}</h2>
+                  <h2 className="gd-card-title">{patreonHeading}</h2>
                 </div>
                 <p className="text-sm text-gray-600 leading-relaxed mb-4 flex-1">{patreonText}</p>
                 <a
-                  className="inline-flex items-center justify-center gap-2 w-full px-4 py-3 bg-orange-500 hover:bg-orange-600 text-white font-medium rounded-xl transition-colors"
+                  className="gd-btn gd-btn--wide"
                   href="https://patreon.com/GoDaisy?utm_medium=unknown&utm_source=join_link&utm_campaign=creatorshare_creator&utm_content=copyLink"
                   target="_blank"
                   rel="noopener noreferrer"
@@ -211,12 +160,12 @@ export default function SupportPage() {
             )}
 
             {/* Tip Jar card */}
-            <section className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
+            <section className="gd-card">
               <div className="flex items-center gap-2.5 mb-2">
-                <div className="p-2 bg-pink-100 rounded-lg">
-                  <Heart className="h-5 w-5 text-pink-600" />
+                <div className="gd-icon-tile">
+                  <Heart className="h-5 w-5" />
                 </div>
-                <h2 className="text-lg font-semibold text-gray-900">{appleTipHeading}</h2>
+                <h2 className="gd-card-title">{appleTipHeading}</h2>
               </div>
               <p className="text-sm text-gray-600 leading-relaxed mb-4">{appleTipText}</p>
 
@@ -224,8 +173,8 @@ export default function SupportPage() {
               {isIOSNative ? (
                 <div className="space-y-3">
                   {tipSuccess && (
-                    <div className="flex items-center gap-2 p-3 bg-green-50 border border-green-200 rounded-xl">
-                      <PartyPopper className="h-5 w-5 text-green-600 shrink-0" />
+                    <div className="gd-note gd-note--good">
+                      <PartyPopper className="h-5 w-5 shrink-0" />
                       <p className="text-sm font-medium text-green-800">
                         Thank you for the tip! You&apos;re a legend.
                       </p>
@@ -285,8 +234,8 @@ export default function SupportPage() {
                 </div>
               ) : (
                 /* Web: show message + App Store link */
-                <div className="flex items-center gap-3 p-4 bg-blue-50 border border-blue-200 rounded-xl">
-                  <Smartphone className="h-5 w-5 text-blue-600 shrink-0" />
+                <div className="gd-note">
+                  <Smartphone className="h-5 w-5 shrink-0" />
                   <div className="flex-1">
                     <p className="text-sm font-medium text-blue-900">
                       Tips are available in the Go Daisy iOS app.
@@ -306,12 +255,12 @@ export default function SupportPage() {
           </div>
 
           {/* Transparency */}
-          <section className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
+          <section className="gd-card">
             <div className="flex items-center gap-2.5 mb-4">
-              <div className="p-2 bg-emerald-100 rounded-lg">
-                <ShieldCheck className="h-5 w-5 text-emerald-600" />
+              <div className="gd-icon-tile">
+                <ShieldCheck className="h-5 w-5" />
               </div>
-              <h2 className="text-lg font-semibold text-gray-900">{transparencyHeading}</h2>
+              <h2 className="gd-card-title">{transparencyHeading}</h2>
             </div>
             <ul className="space-y-3">
               <li className="flex items-start gap-3">
@@ -335,7 +284,7 @@ export default function SupportPage() {
               <div className="p-2 bg-violet-100 rounded-lg">
                 <HelpCircle className="h-5 w-5 text-violet-600" />
               </div>
-              <h2 className="text-lg font-semibold text-gray-900">{faqHeading}</h2>
+              <h2 className="gd-card-title">{faqHeading}</h2>
             </div>
 
             <div className="space-y-2">
@@ -360,10 +309,6 @@ export default function SupportPage() {
               ))}
             </div>
           </section>
-        </main>
-
-        <Footer />
-      </div>
-    </>
+    </DocPage>
   );
 }

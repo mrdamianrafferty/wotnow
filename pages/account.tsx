@@ -377,7 +377,22 @@ export default function AccountPage() {
         <div className="gd-acct-inner">
           <header className="gd-acct-top">
             <h1 className="gd-acct-h1">Your account</h1>
-            <button className="gd-acct-signout" onClick={signOut}>Sign out</button>
+            {/*
+              * GATED, LIKE EVERYTHING ELSE ON THE PAGE.
+              *
+              * This one button was not. So a signed-out visitor got "Sign out"
+              * at the top — which does nothing they need — while the sign-in
+              * prompt sat further down and the whole signed-in half of the
+              * page, delete-your-account included, was correctly hidden. The
+              * page looked like it offered nothing but signing out.
+              *
+              * `mounted` as well as `isSignedIn`: the answer comes from an
+              * async `getUser`, so the server renders neither state and the
+              * client must not render a different one on its first pass.
+              */}
+            {mounted && isSignedIn && (
+              <button className="gd-acct-signout" onClick={signOut}>Sign out</button>
+            )}
           </header>
 
           {/* Profile */}
@@ -391,13 +406,13 @@ export default function AccountPage() {
                 <input
                   type="text"
                   placeholder="Your name"
-                  className="flex-1 px-3 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="gd-field"
                   value={displayName}
                   onChange={(e) => setDisplayName(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && saveDisplayName()}
                 />
                 <button
-                  className="px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 disabled:opacity-50"
+                  className="gd-btn"
                   onClick={saveDisplayName}
                   disabled={nameSaving || !displayName.trim()}
                 >
@@ -431,17 +446,17 @@ export default function AccountPage() {
             <div className="relative">
               <button
                 onClick={() => setLangDropdownOpen(!langDropdownOpen)}
-                className="w-full max-w-xs flex items-center justify-between px-4 py-3 bg-white border border-gray-300 rounded-lg text-gray-900 hover:border-gray-400 focus:ring-2 focus:ring-blue-500"
+                className="gd-picker"
               >
                 <div className="flex items-center gap-2">
                   {language === 'en' ? (
-                    <Globe className="w-5 h-5 text-gray-600" />
+                    <Globe className="w-5 h-5" />
                   ) : (
                     <span className="text-lg">{LANGUAGE_FLAGS[language] || '🌐'}</span>
                   )}
                   <span className="font-medium">{currentLang.nativeName}</span>
                 </div>
-                <ChevronDown className={`w-5 h-5 text-gray-400 transition-transform ${langDropdownOpen ? 'rotate-180' : ''}`} />
+                <ChevronDown className={`w-5 h-5 transition-transform ${langDropdownOpen ? 'rotate-180' : ''}`} />
               </button>
 
               {langDropdownOpen && (
@@ -450,20 +465,20 @@ export default function AccountPage() {
                   <div className="fixed inset-0 z-40" onClick={() => setLangDropdownOpen(false)} />
 
                   {/* Dropdown menu */}
-                  <div className="absolute top-full left-0 mt-1 w-full max-w-xs bg-white border border-gray-200 rounded-lg shadow-lg z-50 overflow-hidden">
+                  <div className="gd-picker-menu">
                     {supportedLanguages.map((lang) => (
                       <button
                         key={lang.code}
                         onClick={() => handleLanguageSelect(lang.code)}
-                        className={`w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-gray-50 ${language === lang.code ? 'bg-blue-50' : ''}`}
+                        className={`gd-picker-item${language === lang.code ? ' is-on' : ''}`}
                       >
                         {lang.code === 'en' ? (
-                          <Globe className="w-5 h-5 text-gray-600" />
+                          <Globe className="w-5 h-5" />
                         ) : (
                           <span className="text-lg">{LANGUAGE_FLAGS[lang.code] || '🌐'}</span>
                         )}
                         <div>
-                          <div className="font-medium text-gray-900">{lang.nativeName}</div>
+                          <div className="gd-acct-card-title">{lang.nativeName}</div>
                           <div className="gd-acct-note">{lang.name}</div>
                         </div>
                       </button>
@@ -533,10 +548,10 @@ export default function AccountPage() {
             ) : selectedActivities.length ? (
               <div className="flex flex-wrap gap-2 mb-3">
                 {selectedActivities.map(a => (
-                  <span key={a} className="inline-flex items-center gap-1 px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm">
+                  <span key={a} className="gd-chip">
                     {a.replaceAll('_',' ')}
                     <button
-                      className="ml-1 hover:text-blue-600"
+                      aria-label="Remove"
                       onClick={() => removeActivity(a)}
                     >
                       ✕
@@ -547,13 +562,13 @@ export default function AccountPage() {
             ) : (
               <p className="gd-acct-note">No activities saved yet.</p>
             )}
-            <div className="flex gap-2">
-              <Link href="/interests" className="px-4 py-2 bg-gray-900 text-white rounded-lg hover:bg-gray-800">
-                Edit interests
-              </Link>
-              <button className="px-4 py-2 text-gray-600 hover:text-gray-800" onClick={clearLocal}>
-                Clear all
-              </button>
+            {/* `/start`, not `/interests`. They do the same job and `/start`
+                does it better — grouped, ordered by what people recognise, and
+                in this design. The old picker was the last thing in the
+                redesigned app still opening a screen from the previous one. */}
+            <div className="gd-acct-row-actions">
+              <Link href="/start" className="gd-acct-btn">Edit activities</Link>
+              <button className="gd-acct-btn" onClick={clearLocal}>Clear all</button>
             </div>
           </section>
 
@@ -571,15 +586,15 @@ export default function AccountPage() {
                   Try Chrome, Firefox, or Edge.
                 </div>
               ) : pushPermission === 'denied' ? (
-                <div className="bg-red-50 border border-red-200 rounded-lg p-3 text-red-800 text-sm">
+                <div className="gd-note gd-note--bad">
                   Notification permission was denied. Update your browser settings to allow notifications.
                 </div>
               ) : (
                 <>
                   {/* Enable/Disable toggle */}
-                  <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg mb-3">
+                  <div className="gd-note">
                     <div>
-                      <div className="font-medium text-gray-900">
+                      <div className="gd-acct-card-title">
                         {pushSubscribed ? 'Notifications enabled' : 'Enable notifications'}
                       </div>
                       <div className="gd-acct-note">
@@ -591,8 +606,8 @@ export default function AccountPage() {
                     <button
                       className={`px-4 py-2 rounded-lg font-medium ${
                         pushSubscribed
-                          ? 'border border-gray-300 text-gray-700 hover:bg-gray-50'
-                          : 'bg-blue-600 text-white hover:bg-blue-700'
+                          ? 'gd-btn gd-btn--quiet'
+                          : 'gd-btn'
                       } disabled:opacity-50`}
                       disabled={pushLoading || notifPrefsLoading}
                       onClick={async () => {
@@ -650,12 +665,12 @@ export default function AccountPage() {
                       )}
 
                       {/* Quiet hours */}
-                      <div className="pt-2 border-t border-gray-100 mt-2">
-                        <div className="text-sm font-medium text-gray-700 mb-2">Quiet hours</div>
-                        <div className="flex items-center gap-2 text-sm text-gray-600">
+                      <div className="gd-acct-subblock">
+                        <div className="call-label gd-acct-label">Quiet hours</div>
+                        <div className="gd-acct-quiet-row">
                           <span>From</span>
                           <select
-                            className="px-2 py-1 border border-gray-300 rounded bg-white text-gray-900"
+                            className="gd-select"
                             value={notifPrefs.quietStartHour}
                             onChange={(e) => saveNotifPref('quietStartHour', parseInt(e.target.value))}
                             disabled={notifSaving}
@@ -666,7 +681,7 @@ export default function AccountPage() {
                           </select>
                           <span>to</span>
                           <select
-                            className="px-2 py-1 border border-gray-300 rounded bg-white text-gray-900"
+                            className="gd-select"
                             value={notifPrefs.quietEndHour}
                             onChange={(e) => saveNotifPref('quietEndHour', parseInt(e.target.value))}
                             disabled={notifSaving}
@@ -694,17 +709,17 @@ export default function AccountPage() {
               </p>
 
               {tipSuccess && (
-                <div className="flex items-center gap-2 p-3 bg-green-50 border border-green-200 rounded-xl mb-3">
-                  <PartyPopper className="h-5 w-5 text-green-600 shrink-0" />
-                  <p className="text-sm font-medium text-green-800">
+                <div className="gd-note gd-note--good">
+                  <PartyPopper className="h-5 w-5 shrink-0" />
+                  <p className="">
                     Thank you for the tip! You&apos;re a legend.
                   </p>
                 </div>
               )}
               {tipError && (
-                <div className="flex items-center gap-2 p-3 bg-red-50 border border-red-200 rounded-xl mb-3">
-                  <AlertCircle className="h-5 w-5 text-red-600 shrink-0" />
-                  <p className="text-sm text-red-800">{tipError}</p>
+                <div className="gd-note gd-note--bad">
+                  <AlertCircle className="h-5 w-5 shrink-0" />
+                  <p className="">{tipError}</p>
                 </div>
               )}
 
@@ -736,7 +751,7 @@ export default function AccountPage() {
                           )}
                         </div>
                         <div className="flex-1 text-left">
-                          <div className="font-semibold text-gray-900">
+                          <div className="gd-acct-card-title">
                             {product?.label ?? pkg.title}
                           </div>
                           <div className="gd-acct-note">One-off tip</div>
@@ -748,7 +763,7 @@ export default function AccountPage() {
                     );
                   })
                 ) : (
-                  <div className="bg-gray-50 border border-gray-200 rounded-lg p-3 text-gray-600 text-sm">
+                  <div className="gd-note">
                     Tip jar is loading. If this persists, try restarting the app.
                   </div>
                 )}
@@ -758,13 +773,13 @@ export default function AccountPage() {
 
           {/* Sync status */}
           {!isSignedIn ? (
-            <div className="bg-gray-100 border border-gray-200 rounded-lg p-4 mb-4 flex items-center justify-between">
-              <span className="text-gray-700">Your changes are saved on this device only.</span>
-              <Link href="/login" className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm">Log in</Link>
+            <div className="gd-note">
+              <span>Your changes are saved on this device only.</span>
+              <Link href="/login" className="gd-btn">Log in</Link>
             </div>
           ) : (
-            <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-4">
-              <span className="text-green-800">✓ Signed in - preferences sync across devices.</span>
+            <div className="gd-note gd-note--good">
+              <span>Signed in — your preferences sync across devices.</span>
             </div>
           )}
 
@@ -783,7 +798,20 @@ export default function AccountPage() {
               * same typed confirmation — that stays, because it is genuinely
               * irreversible and a stray tap should not do it.
               */}
-          {isSignedIn && (
+          {/*
+              * ALWAYS RENDERED, EVEN SIGNED OUT.
+              *
+              * It used to be gated on `isSignedIn`, so a signed-out visitor —
+              * and an App Store reviewer, who arrives signed out — found no
+              * mention of account deletion anywhere in the app. Apple requires
+              * the path to exist AND to be findable, and "it appears once you
+              * are logged in" is not findable by anyone looking for it.
+              *
+              * Signed out, it says what it is and where to sign in. The
+              * destructive control itself still needs a session, because
+              * deleting an account requires knowing whose.
+              */}
+          {mounted && (
             <section className="gd-acct-block is-danger">
               <h2 className="gd-acct-h2">Delete your account</h2>
               <p className="gd-acct-note">
@@ -792,7 +820,14 @@ export default function AccountPage() {
                 cannot be undone.
               </p>
 
-              {!showDeleteConfirm ? (
+              {!isSignedIn ? (
+                <p className="gd-acct-note">
+                  <Link href="/login">Sign in</Link> to delete your account. If you have
+                  never signed in there is no account to delete — nothing is stored
+                  against you beyond this browser, and <button type="button" className="gd-linkish" onClick={clearLocal}>clearing
+                  what is saved here</button> removes it.
+                </p>
+              ) : !showDeleteConfirm ? (
                 <button className="gd-acct-danger-btn" onClick={() => setShowDeleteConfirm(true)}>
                   Delete my account
                 </button>
@@ -880,13 +915,11 @@ function NotifToggle({
       type="button"
       onClick={() => !disabled && onChange(!checked)}
       disabled={disabled}
-      className={`w-full flex items-center justify-between p-3 rounded-lg text-left transition-colors ${
-        disabled ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-50 cursor-pointer'
-      } ${checked ? 'bg-blue-50' : ''}`}
+      className={`gd-toggle${checked ? ' is-on' : ''}`}
     >
       <div>
         <div className="flex items-center gap-1.5">
-          <span className="text-sm font-medium text-gray-900">{label}</span>
+          <span className="gd-toggle-label">{label}</span>
           {plusRequired && (
             <span className="text-[10px] font-medium bg-cyan-100 text-cyan-700 px-1.5 py-0.5 rounded-full">Plus</span>
           )}
@@ -894,12 +927,10 @@ function NotifToggle({
         <div className="gd-acct-note">{desc}</div>
       </div>
       <div
-        className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
-          checked ? 'bg-blue-600 border-blue-600' : 'border-gray-300'
-        }`}
+        className="gd-toggle-box"
       >
         {checked && (
-          <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+          <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
           </svg>
         )}
