@@ -1,0 +1,189 @@
+Copilot Instructions – WotNow
+
+WotNow is a weather-aware activity companion. It recommends safe, fun, practical activities based on weather, sea state, location, astronomy/ISS, and personal interests. These rules apply to all Copilot Chat, code suggestions, and reviews in this repository.
+
+🔑 Quick Rules (read me first)
+	•	Stack: React + TypeScript + Vite + Tailwind + shadcn/ui.
+	•	Primary data sources:
+	•	OpenWeather (weather + moon phase)
+	•	Stormglass (marine: waves/swell/wind)
+	•	Open-Meteo (UV, soil)
+	•	Google Maps API (places, geocoding, autocomplete)
+	•	ISS + meteor shower sources (document in code when used)
+	•	Units: Always state and normalise units in code comments and when computing scores.
+	•	Activities: Every outdoor activity must define poor / fair / good / perfect thresholds.
+	•	Tone: Friendly, practical, non-corporate. British English spellings.
+	•	Documentation: For any calculation/score, explain the method and inputs (with units + sources) in comments and/or /docs.
+	•	Reuse: Prefer existing hooks/utils/types; do not duplicate logic.
+
+
+ 
+
+⸻
+
+API Capability & Field/Units Matrix
+
+Copilot: do not guess. If a field isn’t listed here, check the provider docs or the local types before using it.
+
+Weather & Environment
+
+Provider	What we rely on	Example fields (exact names)	Units (normalise to)	Notes / Gaps
+OpenWeather	Air temp, wind, gusts, precip, clouds, visibility, sunrise/sunset, moon phase	temp, feels_like, wind_speed, wind_gust, rain.1h, snow.1h, clouds, visibility, sunrise, sunset, moon_phase	Metric (°C, m/s, mm/hr, %, km, ISO8601)	Moon phase value 0..1 (0/1 New, 0.5 Full). Visibility often metres → convert to km.
+Stormglass	Marine wind/wave/swell for coastal points	windSpeed, gust, waveHeight, swellHeight, swellPeriod, swellDirection, waterTemperature	⚠️ See note below	Coastal only (many inland points return null).
+Open-Meteo	UV index, soil moisture/temp (hourly)	uv_index, soil_moisture, soil_temperature	UV: index 0–11+, soil: provider’s units → document	Use for comfort/safety modifiers.
+
+Critical units warning (real-world bug we hit):
+OpenWeather’s wind_speed is m/s.
+Stormglass windSpeed may be returned in knots depending on endpoint/params. Always confirm and normalise to m/s. This mismatch has previously caused incorrect scores.
+Policy: Treat all internal wind speeds as m/s and document any conversion.
+
+Location & Orientation
+
+Provider	What	Fields	Units	Notes
+Google Maps API	Places autocomplete, geocoding	place_id, formatted_address, lat/lon	Decimal degrees	Cache place_id→lat/lon. Respect quotas. Bias results to user region.
+
+Night Sky (Astronomy, ISS, Meteors)
+
+Topic	Source	Fields	Units	Notes
+Sun & Moon	OpenWeather	sunrise, sunset, moon_phase	ISO8601 UTC (+ local offset in UI), 0..1 phase	OW is our primary moon phase.
+ISS passes	(Document in code)	pass window, azimuth, elevation, magnitude	UTC times, °, mag	Mark provider in hook header. Explain visibility rule.
+Meteor showers	(Catalogue documented in code)	peak date/time, ZHR, radiant	UTC, meteors/hour	Use friendly explanations; consider moon/cloud penalties.
+
+
+⸻
+
+Unit Normalisation Policy
+	•	Internal standards:
+	•	Temperature °C
+	•	Wind/Gust m/s
+	•	Wave/Swell height m
+	•	Swell period s
+	•	Precipitation mm/hr
+	•	Cloud %
+	•	Visibility km
+	•	Bearings/azimuth/elevation degrees
+	•	Never mix units inside calculations. Convert before scoring.
+	•	Always annotate conversions in comments (from → to; factor used).
+
+Mini helper pattern:
+
+// utils/units.ts
+export const KNOTS_TO_MS = 0.514444;
+export const MS_TO_KNOTS = 1 / KNOTS_TO_MS;
+export const M_TO_FT = 3.28084;
+
+export function knotsToMs(knots: number): number { return knots * KNOTS_TO_MS; }
+export function metresToKm(m: number): number { return m / 1000; }
+
+
+⸻
+
+Commenting Templates (must use)
+
+Copilot: insert these headers for any non-trivial function/hook/component and fill every field.
+
+Utility / Calculation
+
+/**
+ * Purpose: <what/why, in plain English>
+ * Inputs:  <name>: <type> — <units, valid range, SOURCE: Provider.field>
+ * Output:  <type> — <units/scale and meaning>
+ * Method:  <formula/weights/thresholds, with rationale>
+ * Assumptions & Caveats: <fallbacks, known gaps>
+ * Units & Sources: <explicit list of fields and conversions used>
+ * Example: <input -> output>
+ */
+
+React Hook
+
+/**
+ * Purpose: <what it fetches/computes and how UI uses it>
+ * Params:  <name>: <type> — <units/source/expectations>
+ * Returns: data, loading, error, meta? (timestamps/units/provenance)
+ * Data Flow & Sources: <APIs used + field names + units>
+ * Error & Retry: <strategy/backoff/fallbacks>
+ * Notes: <memoisation, deps, perf>
+ */
+
+UI Component
+
+/**
+ * Purpose: <what the user sees and why>
+ * Props:   <name>: <type> — <units/defaults>
+ * Data:    <hooks/context used; units>
+ * Accessibility: <ARIA roles/labels, keyboard>
+ * States:  <loading/empty/error handling>
+ */
+
+
+⸻
+
+Human-Readable Explanations (how we write them)
+	•	One-line verdict (“Good for sea fishing”).
+	•	One-sentence why (mention 2–3 strongest factors with units + sources).
+	•	2–4 bullet reasons (short, factual, unit-labelled).
+	•	Link an “How we decided this” panel with inputs, thresholds, and score breakdown.
+
+(See /docs/scoring.md, /docs/astronomy.md, /docs/locations.md for templates and examples.)
+
+⸻
+
+Common Mistakes & Guardrails (bake these in)
+
+Copilot: Use this as a pre-commit checklist.
+
+	1.	Define state and hooks at the top of React components. Check that everything that needs to be there is there and in the right place.
+	2.	Check variable scope in effects/JSX (homeLocation, hasMounted, API responses) before use.
+	3.	Do not render a component inside its own file (no self-render except explicit demos).
+	4.	Pass full data objects to children when they need more than a summary.
+	5.	Consistent naming (fullOpenWeatherResponse, weatherData)—don’t mix synonyms.
+	6.	Graceful loading/error states—never assume data is present.
+	7.	Centralise API fetch logic in hooks/utilities; never duplicate endpoints.
+	8.	Type API responses with TS interfaces; avoid any and optional-chain defensively.
+	9.	Log API responses in development to verify shape before wiring to UI.
+	10.	Document component props and data shapes (JSDoc or comments).
+	11.	Units normalisation is mandatory—especially OpenWeather m/s vs Stormglass potential knots. Convert first, then compute.
+	12.	Know provider coverage limits—Stormglass is coastal; don’t query it with inland lat/lon.
+	13.	Visibility units—OpenWeather visibility may be metres; convert to km before display/logic.
+	14.	Timezones—store as UTC, display with local offset in UI.
+	15.	Activity thresholds live in /src/data—extend there, not ad-hoc inside components.
+  16.  Never delete code that is not related to what you are directly working on. If any functionality has to be removed, always ask first.
+  17. If you ever have to add placeholder content, check that you have reverted to full code afterwards.
+
+⸻
+
+Build & Run
+
+npm install
+npm run dev        # http://localhost:3000
+npm run build
+
+
+⸻
+
+Repository Structure (orientation)
+	•	src/components – UI building blocks
+	•	src/data – Activities, thresholds, messages (single source of truth)
+	•	src/hooks – Weather, marine, maps, astronomy/ISS
+	•	src/utils – Units, scoring, formatting, explanations
+	•	public – Static assets (icons, manifest)
+	•	docs – Human-readable explanations and calculation notes
+
+⸻
+
+Documentation Expectations
+	•	Scoring changes → /docs/scoring.md (date, rationale, examples).
+	•	Astronomy/ISS logic → /docs/astronomy.md (inputs, visibility rules, examples).
+	•	Location/orientation → /docs/locations.md (bearing logic, wind classification, caveats).
+	•	Big changes: add screenshots/snippets for clarity.
+
+⸻
+
+Examples & Starters
+	•	Unit conversions: src/utils/units.ts (see pattern above).
+	•	Explanations builder: src/utils/explanations.ts (produce verdict + sentence + bullets; include units + sources).
+	•	Types: Define OpenWeatherTypes.ts, StormglassTypes.ts etc. with exact field names and units noted in comments.
+
+⸻
+
+✅ Remember: WotNow exists to make decisions simple, safe, and enjoyable. Be transparent about what we used, how we calculated it, and why we said what we said—in code comments and in the UI.
