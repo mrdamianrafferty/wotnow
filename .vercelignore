@@ -68,7 +68,14 @@ tmp
 temp
 
 # --- Scripts/docs not needed in production upload ---
-scripts/
+# `scripts/*`, not `scripts/`, because gitignore semantics will not re-include a
+# file whose PARENT DIRECTORY is excluded — the negation below is silently dead
+# under `scripts/`, and the failure looks identical to having no negation at all.
+scripts/*
+# The one script the BUILD runs. `prebuild` bakes the share photography, and an
+# ignored script is not a script: the deploy failed with ERR_MODULE_NOT_FOUND on
+# a file that exists in the repo and had simply never been uploaded.
+!scripts/prebake-call-images.ts
 docs/
 examples/
 archive/

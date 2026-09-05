@@ -36,6 +36,18 @@ if [ -z "$NEXT_PUBLIC_OPENWEATHER_KEY" ]; then
   echo "⚠️  Warning: NEXT_PUBLIC_OPENWEATHER_KEY not set"
 fi
 
+# Bake the share photography.
+#
+# satori cannot decode WebP and applies CSS filters to TEXT, so the photo
+# treatment the app does in CSS has to be burnt into the pixels before an image
+# reaches the renderer. Without this the share endpoint 503s on every activity
+# that has not been baked — and the share IS the growth model, so a deploy that
+# cannot render a card is not a deploy worth shipping. Failing here is deliberate.
+#
+# ~20 s cold; near-zero afterwards, because it skips crops already on disk.
+echo "🎞️  Baking share photography..."
+npx tsx scripts/prebake-call-images.ts
+
 # Run the Next.js build
 echo "🚀 Running Next.js build..."
 npx next build

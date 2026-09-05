@@ -108,9 +108,20 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       verdict: asSentence({ ...option.verdict, reason: '' }).trim(),
       reason: option.verdict.reason,
       facts: option.facts,
-      // Short on the card, because it is typography there and a scheme is noise.
-      // The plain-text render substitutes an absolute one — see shareText.
-      url: `godaisy.io/${location.slug}`,
+      /*
+       * The card's URL has to be a page, not a decoration.
+       *
+       * It printed `godaisy.io/{slug}` — no scheme, because a bare host is
+       * typography where a scheme is noise. True, and it 404s: there is no
+       * route at the root. Anyone who READ the card rather than tapping the
+       * link got an error from the app's most-distributed surface.
+       *
+       * `/{activity}/{location}` is the existing programmatic-SEO page, which
+       * answers the card's own question for that pair, and reads as naturally
+       * across a footer. Underscores to hyphens is the mapping that route
+       * already uses.
+       */
+      url: `godaisy.io/${option.activityId.replace(/_/g, '-')}/${location.slug}`,
       photo: '',
     };
 

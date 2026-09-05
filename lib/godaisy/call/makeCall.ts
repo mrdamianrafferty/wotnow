@@ -10,7 +10,7 @@
 
 import type { Suggestion, WeatherData } from '@/utils/getSuggestionsByDay';
 import type { SupportedLanguageCode } from '@/lib/i18n/translate';
-import { bandFor, isGood, type CallBand } from './bands';
+import { bandFor, isGood, isSevere, type CallBand } from './bands';
 import { factsFor, nextYesFact, type CallFact } from './facts';
 import { makeVerdict, type Verdict } from './verdict';
 
@@ -75,16 +75,24 @@ export function makeCall(input: MakeCallInput): Call {
     return a.activityId.localeCompare(b.activityId);
   });
 
+  const severe = isSevere(weather.precipitation, weather.gustspeed ?? weather.windspeed);
+
   const build = (s: Suggestion, isFirst: boolean): CallOption => {
-    const band = bandFor(s.score, s.vetoed);
+    // Marginal means dull. On a severe day it is demoted, so the shrug and the
+    // numbers under it never contradict each other — see `isSevere`.
+    const scored = bandFor(s.score, s.vetoed, s.binding?.key);
+    const band: CallBand = scored === 'marginal' && severe ? 'notToday' : scored;
+    const activityName = names[s.activityId];
+    // Omitted, not `undefined` — this object crosses getServerSideProps, where an
+    // explicit undefined is a serialization error rather than an absent field.
     return {
       activityId: s.activityId,
-      activityName: names[s.activityId],
+      ...(activityName ? { activityName } : {}),
       score: s.score,
       band,
       verdict: makeVerdict({
         suggestion: s,
-        activityName: names[s.activityId],
+        activityName,
         weather,
         band,
         isFirst,
@@ -97,17 +105,24 @@ export function makeCall(input: MakeCallInput): Call {
     };
   };
 
-  const good = ranked.filter((s) => isGood(bandFor(s.score, s.vetoed)));
+  const good = ranked.filter((s) => isGood(bandFor(s.score, s.vetoed, s.binding?.key)));
 
   if (!good.length) {
-    // A no-day. The verdict is built from the best of a bad set, because the
-    // reason should describe the day that actually happened rather than an
-    // activity nobody asked about.
+    // Nothing worth putting on the call screen. The verdict is built from the
+    // best of a bad set, because the reason should describe the day that
+    // actually happened rather than an activity nobody asked about.
     const best = ranked[0];
     if (!best) return { date, place, call: null, alternates: [], isNoDay: true };
     const option = build(best, true);
     if (nextYes) option.facts = [...option.facts.slice(0, 2), nextYesFact(nextYes, lang)];
-    return { date, place, call: option, alternates: [], isNoDay: true };
+    /*
+     * MARGINAL IS NOT A WRITE-OFF. "Friday is a write-off. 1.0 mm of rain."
+     * scored 46 — a dull day, not a cancelled one, and calling it off sends
+     * someone indoors who would have had a perfectly ordinary run. Only the two
+     * bands that mean the day is genuinely off set `isNoDay`, which is what
+     * darkens the screen and offers the indoor alternative.
+     */
+    return { date, place, call: option, alternates: [], isNoDay: option.band !== 'marginal' };
   }
 
   const alternates = good.map((s, i) => build(s, i === 0));

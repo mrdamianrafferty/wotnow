@@ -20,17 +20,42 @@ import { fetchForecastForLocation } from '@/lib/seo/getActivityScore';
 import { getSuggestionsByDay, type Suggestion } from '@/utils/getSuggestionsByDay';
 import { allSports } from '@/data/activities';
 import { makeCall, type Call } from '@/lib/godaisy/call/makeCall';
+import { isGood } from '@/lib/godaisy/call/bands';
 import { SEO_LOCATIONS } from '@/data/seoLocations';
 import type { SeoLocation } from '@/data/seoLocations';
 import bgMap from '@/data/bgMap';
 import { VerdictLockup } from '@/components/call/VerdictLockup';
 import { ScreenChrome } from '@/components/call/ScreenChrome';
 import { AlternatesControl } from '@/components/call/AlternatesControl';
+import { IndoorPrompt, type IndoorOption } from '@/components/call/IndoorPrompt';
+import { generateShareToken, getShareUrl, type GoDaisyShareData } from '@/lib/share/shareToken';
 
 const DAYS = 7;
 
 /** Where a visitor with no query lands. A real place with several sports. */
 const DEFAULT_PLACE = 'newquay-cornwall';
+
+/** Sports that only a coastal place can offer, in the order they characterise one. */
+const WATER = ['surfing', 'sea_swimming', 'sea_kayaking', 'stand_up_paddleboarding',
+               'windsurfing', 'kitesurfing', 'sailing'];
+
+/**
+ * The three sports a place is seeded with, when the visitor has not chosen.
+ *
+ * NOT the first three in the list. Those sort generically — Newquay's are
+ * running, cycling and urban exploring — so a surf town produced "a good day to
+ * get the bike out" all week and surfing never entered the ranking at all. The
+ * data was never the problem: Newquay lists surfing, it was just fourth.
+ *
+ * A coastal place leads with what makes it coastal, then fills from the rest.
+ */
+function seedSports(location: SeoLocation): string[] {
+  const water = location.beachFacingDeg != null
+    ? WATER.filter((w) => location.activities.includes(w)).slice(0, 1)
+    : [];
+  const land = location.activities.filter((a) => !WATER.includes(a));
+  return [...water, ...land].slice(0, 3);
+}
 
 interface CallPageProps {
   /** The location's slug, so the share endpoint can be addressed. */
@@ -40,6 +65,8 @@ interface CallPageProps {
   days: Call[];
   /** Activity id → photograph, so the hero changes with the alternate. */
   photos: Record<string, string>;
+  /** Offered on a write-off. Weather-insensitive, so the day cannot spoil them. */
+  indoor: IndoorOption[];
   error?: string;
 }
 
@@ -49,7 +76,7 @@ const SWIPE_MIN = 48;
 /** What `navigator.share` takes. Typed here because the DOM lib's version omits files. */
 interface ShareData { title?: string; text?: string; url?: string; files?: File[] }
 
-export default function CallPage({ slug, place, days, photos, error }: CallPageProps) {
+export default function CallPage({ slug, place, days, photos, indoor, error }: CallPageProps) {
   const [dayIndex, setDayIndex] = useState(0);
   const [altIndex, setAltIndex] = useState(0);
   const [touchX, setTouchX] = useState<number | null>(null);
@@ -116,10 +143,36 @@ export default function CallPage({ slug, place, days, photos, error }: CallPageP
     setSendState('working');
     const iso = new Date(day.date * 1000).toISOString().slice(0, 10);
     const qs = `place=${encodeURIComponent(slug)}&day=${dayIndex}&alt=${altIndex}&date=${iso}`;
-    const link = `${window.location.origin}/call?${qs}`;
+
+    /*
+     * The link is an existing Go Daisy share token, not a /call query.
+     *
+     * `lib/share/shareToken` already encodes the payload INTO the token, so
+     * there is no table to add and nothing to expire by hand, and /share/[token]
+     * already renders a landing page for someone who has never heard of the app
+     * — which is exactly what the growth model needs the link to do. The share
+     * renderer's card is what appears in the message; this is where tapping it
+     * lands.
+     */
+    const link = getShareUrl(
+      generateShareToken({
+        // Typed to the Go Daisy variant: `Omit` over the ShareData union does not
+        // narrow, so an untyped literal is checked against all three apps at once.
+        app: 'godaisy',
+        activityId: option.activityId,
+        activityName: option.activityName ?? option.activityId,
+        score: option.score,
+        date: iso,
+        location: place,
+        weatherSummary: option.verdict.reason,
+      } as Omit<GoDaisyShareData, 'createdAt' | 'expiresAt'>),
+    );
     try {
       const text = await fetch(`/api/call/share?${qs}&crop=text`).then((r) => r.text());
       const payload: ShareData = { title: 'Go Daisy', text, url: link };
+      // The clipboard has one field, so the link has to be IN the sentence. The
+      // share sheet has two, and every target composes them itself.
+      const flat = `${text}\n${link}`;
 
       if (navigator.canShare) {
         try {
@@ -135,7 +188,7 @@ export default function CallPage({ slug, place, days, photos, error }: CallPageP
         await navigator.share(payload);
         setSendState('sent');
       } else {
-        await navigator.clipboard.writeText(`${text}`);
+        await navigator.clipboard.writeText(flat);
         setSendState('copied');
       }
     } catch {
@@ -181,9 +234,11 @@ export default function CallPage({ slug, place, days, photos, error }: CallPageP
             cycleKey={`${dayIndex}-${altIndex}`}
           />
 
+          {day.isNoDay && <IndoorPrompt options={indoor} />}
+
           <div className="call-actions">
             <button type="button" className="call-btn" onClick={send} disabled={sendState === 'working'}>
-              {sendState === 'sent' ? 'Sent' : sendState === 'copied' ? 'Copied' : 'Send the call'}
+              {sendState === 'sent' ? 'Sent' : sendState === 'copied' ? 'Copied' : 'Send out the call'}
             </button>
             {hasAlternates && (
               <AlternatesControl
@@ -238,7 +293,7 @@ export const getServerSideProps: GetServerSideProps<CallPageProps> = async (ctx)
     .filter(Boolean);
   // Falls back to the location's own curated activities, which is what a
   // stranger arriving without preferences should see.
-  const chosen = sports.length ? sports : location.activities.slice(0, 3);
+  const chosen = sports.length ? sports : seedSports(location);
 
   try {
     const forecast = (await fetchForecastForLocation(location)).slice(0, DAYS);
@@ -253,13 +308,20 @@ export const getServerSideProps: GetServerSideProps<CallPageProps> = async (ctx)
     const weekday = (ts: number) =>
       new Intl.DateTimeFormat('en-GB', { weekday: 'long' }).format(new Date(ts * 1000));
 
-    // A no-day must name the next yes, so the good days are found first.
+    /*
+     * A no-day must name the next yes, so the good days are found first.
+     *
+     * The test is the BAND, not `isNoDay`. A marginal day is not a no-day — you
+     * can go out on it — but it is not the day to promise someone either, and
+     * "Thursday is the one" over a score of 46 is a promise the forecast does
+     * not keep.
+     */
     const goodDayLabels = byDay.map((d, i) => {
       const c = makeCall({
         date: d.date, place: location.name, weather: forecast[i].weather,
         suggestions: d.suggestions, sports: chosen, seeded: chosen, dayIndex: i,
       });
-      return c.isNoDay ? null : weekday(d.date);
+      return c.call && isGood(c.call.band) ? weekday(d.date) : null;
     });
 
     const days: Call[] = byDay.map((d, i) => {
@@ -287,7 +349,27 @@ export const getServerSideProps: GetServerSideProps<CallPageProps> = async (ctx)
       }
     }
 
-    return { props: { slug: location.slug, place: location.name, days, photos } };
+    /*
+     * Indoor options come from the activity library's own `weatherSensitive:
+     * false` flag rather than a hand-kept list, so a new indoor activity appears
+     * here without anyone remembering to add it. All 37 are sent; the prompt
+     * leads with three and keeps the rest behind More, because the first ask is
+     * a decision and the second is a menu.
+     *
+     * The prefix strip turns a library name into something that finishes the
+     * sentence "… instead": "Go to the Cinema" is a thing you do, "the cinema"
+     * is a thing you say. Longest alternative first, or "Do" would eat the
+     * "Do Some" case and leave "some crafts".
+     */
+    const indoor: IndoorOption[] = (allSports as Array<{ id: string; name: string; category: string; weatherSensitive: boolean }>)
+      .filter((a) => !a.weatherSensitive)
+      .map((a) => ({
+        id: a.id,
+        category: a.category,
+        label: a.name.replace(/^(?:Go to|Do Some|Go|Play|Do|Have|Take|Try|Hit|Visit)\s+/i, '').toLowerCase(),
+      }));
+
+    return { props: { slug: location.slug, place: location.name, days, photos, indoor } };
   } catch (e) {
     // The verdict is withheld rather than guessed. Never a confident sentence
     // over incomplete data.
@@ -297,6 +379,7 @@ export const getServerSideProps: GetServerSideProps<CallPageProps> = async (ctx)
         place: location.name,
         days: [],
         photos: {},
+        indoor: [],
         error: e instanceof Error ? e.message : 'The forecast is unavailable.',
       },
     };
