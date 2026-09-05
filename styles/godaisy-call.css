@@ -249,16 +249,31 @@
   touch-action: pan-y;
 }
 
+/*
+ * FIXED, NOT ABSOLUTE — and that fixes two things at once.
+ *
+ * Absolutely positioned, the photograph was anchored to `.call-screen`, which
+ * is `min-height: 100dvh` and grows past the viewport as soon as the content
+ * does. So it scrolled with the page, and its top edge sat wherever the screen
+ * element began rather than at the top of the display — which is the dark band
+ * above the image, behind the status bar.
+ *
+ * Fixed to the viewport, it reaches the true top, goes under the status bar,
+ * and stays put while the words move over it. That is also the right behaviour
+ * for what it is: the image is the weather you are standing in, not a thing on
+ * the page.
+ */
 .call-photo {
-  position: absolute;
+  position: fixed;
   inset: 0;
   width: 100%;
   height: 100%;
   object-fit: cover;
   filter: var(--call-photo-filter);
+  z-index: 0;
 }
 
-.call-scrim { position: absolute; inset: 0; background: var(--call-scrim-call); }
+.call-scrim { position: fixed; inset: 0; background: var(--call-scrim-call); z-index: 0; }
 /* A no-day pushes the photograph further down. A white screen at six in the
    morning in the dark is a flashbang, so it keeps the image rather than
    dropping it — the light variant is for the share card and the web. */
@@ -271,6 +286,8 @@
 
 .call-content {
   position: relative;
+  /* Above the fixed photograph and scrim, both of which are z-index 0. */
+  z-index: 1;
   flex: 1;
   display: flex;
   flex-direction: column;
@@ -1172,3 +1189,29 @@ section.gd-spot-colophon { padding: 28px var(--call-gutter-app) 40px; }
   background: var(--call-card); margin-bottom: 8px;
 }
 .gd-land-alt:focus-visible { outline: 2px solid var(--call-moss-ink); outline-offset: 2px; }
+
+/* ── Changing where you are ───────────────────────────────────────────────
+   The kicker is a button now. It has to still look like the kicker — a
+   control that announces itself would compete with the verdict, which is
+   the only thing on that screen meant to be loud — so the only tell is a
+   dotted underline and a bigger tap target than the text.            */
+.call-kicker-btn {
+  background: none; border: 0; cursor: pointer;
+  padding: 6px 0; margin: -6px 0;
+  color: inherit; font: inherit; letter-spacing: inherit;
+  text-decoration: underline dotted;
+  text-underline-offset: 4px;
+  text-decoration-color: var(--call-on-dark-quiet);
+  text-align: left;
+}
+.call-kicker-btn:hover { text-decoration-color: var(--call-on-dark); }
+.call-kicker-btn:focus-visible { outline: 2px solid var(--call-on-dark); outline-offset: 3px; }
+
+.call-place-results { margin-top: 4px; }
+.call-place-gps { margin-top: 16px; display: flex; flex-direction: column; gap: 10px; align-items: flex-start; }
+.call-place-gps-btn { border-color: var(--call-border-strong); color: var(--call-ink-1); }
+.call-place-gps-btn:hover { background: var(--call-panel); }
+.call-place-gps-btn:disabled { opacity: .6; cursor: default; }
+/* The picker is paper, like the drawer — it is a form, not part of the call. */
+.call-place .call-setup-input { background: var(--call-card); }
+.call-place .call-setup-result { color: var(--call-ink-1); }
