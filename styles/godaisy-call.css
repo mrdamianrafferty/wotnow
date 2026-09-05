@@ -993,3 +993,84 @@ h1.call-setup-question, h1.call-verdict { margin-block: 0; }
 /* On the landing hero the strip is centred and can breathe; on the app home it
    is a quiet line above the cards. Same component, two rooms. */
 .gd-try-call--hero { align-items: center; text-align: center; max-width: 30rem; margin-inline: auto; }
+
+/* ── Conditions ───────────────────────────────────────────────────────────
+   Phase 6. The page this replaces was 1,603 lines and eight always-open
+   sections shown to everybody — a cyclist in Sheffield got wave height
+   and tide times, and somebody after the temperature scrolled past four
+   cards to find it. Definition lists rather than cards: these are
+   label-and-value pairs, and a card around each one was four borders
+   saying "separate object" about a number.                              */
+.gd-cond {
+  min-height: 100vh;
+  background: var(--call-page);
+  color: var(--call-ink-1);
+  font-family: var(--call-font-body);
+}
+.gd-cond-inner { max-width: 560px; margin: 0 auto; padding: 40px var(--call-gutter-app) 48px; }
+.gd-cond-kicker { margin: 0 0 4px; color: var(--call-ink-4); }
+.gd-cond-title {
+  margin: 0 0 12px;
+  font-family: var(--call-font-display);
+  font-size: var(--call-page-title); font-weight: 700;
+  line-height: 1.05; letter-spacing: -.02em;
+}
+/* The answer before the table. */
+.gd-cond-now {
+  margin: 0 0 var(--call-block); max-width: 40ch;
+  font-family: var(--call-font-display);
+  font-size: var(--call-body-lg); line-height: 1.45;
+  color: var(--call-ink-2);
+}
+.gd-cond-quiet { margin: 0 0 18px; font-size: var(--call-body-sm); color: var(--call-ink-4); }
+.gd-cond-quiet a { color: var(--call-ink-3); }
+
+.gd-cond-block { border-top: 1px solid var(--call-border); padding: 16px 0; }
+.gd-cond-block-title { margin: 0 0 8px; color: var(--call-ink-4); }
+.gd-cond-rows { margin: 0; display: flex; flex-direction: column; gap: 7px; }
+.gd-cond-row { display: flex; justify-content: space-between; gap: 16px; align-items: baseline; }
+.gd-cond-row dt { color: var(--call-ink-3); font-size: var(--call-body-sm); margin: 0; }
+.gd-cond-row dd {
+  margin: 0; font-weight: 600; font-size: var(--call-body);
+  font-variant-numeric: tabular-nums; color: var(--call-ink-1);
+}
+.gd-cond-foot {
+  margin: var(--call-block) 0 0; padding-top: 16px;
+  border-top: 1px solid var(--call-border);
+  font-size: var(--call-caption); color: var(--call-ink-4);
+}
+.gd-cond-foot a { color: var(--call-moss-ink); }
+
+/* ── Undoing a global that predates all of this ───────────────────────────
+   `styles/index.css` styles the bare `section` element — 2.5rem margin,
+   2rem padding, a 14px radius and a shadow — so every <section> anywhere
+   on the site is a card whether it wants to be or not. It was written for
+   the old home screen and it reaches into all of this: the conditions
+   page rendered nine shadowed boxes, and the drawer, the spot pages and
+   the app strip were all quietly carrying a radius and a shadow nobody
+   asked for.
+
+   Reset here rather than changed there, because the old pages are built
+   on that rule and phase 7 deletes them. Scoped to the new namespaces so
+   nothing else moves.                                                    */
+.gd-cond section,
+.gd-spot section,
+.gd-share section,
+.call-drawer section,
+.call-setup section,
+section.gd-app,
+section.gd-cond-block,
+section.gd-spot-section,
+section.gd-spot-hero,
+section.gd-spot-colophon {
+  margin-bottom: 0;
+  padding-left: 0;
+  padding-right: 0;
+  border-radius: 0;
+  box-shadow: none;
+}
+/* …except the ones that set their own gutters, which need them back. */
+section.gd-app { padding: 44px var(--call-gutter-app); }
+section.gd-spot-section { padding: 36px var(--call-gutter-app); }
+section.gd-spot-hero { padding: 40px var(--call-gutter-app) 44px; }
+section.gd-spot-colophon { padding: 28px var(--call-gutter-app) 40px; }
