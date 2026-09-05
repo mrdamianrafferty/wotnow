@@ -358,7 +358,19 @@
 .call-btn:active { transform: scale(.98); }
 .call-btn:focus-visible { outline: 2px solid var(--call-on-dark); outline-offset: 2px; }
 
-.call-altrow { height: var(--call-tap-min); display: flex; align-items: center; justify-content: center; }
+/*
+ * The alternates control sits in the secondary button's slot, so it needs that
+ * slot's rhythm rather than an icon's. Measured on the screen it had 9px above
+ * and NOTHING below, landing hard against the page dots and reading as an
+ * orphan between two things rather than a control of its own.
+ *
+ * Equal air above and below, and it is centred on the primary's axis.
+ */
+.call-altrow {
+  height: var(--call-tap-min);
+  display: flex; align-items: center; justify-content: center;
+  margin: 5px 0 0;            /* 9px flex gap + 5px = 14px, matching the dots below */
+}
 
 .call-dots { display: flex; align-items: center; justify-content: center; gap: 7px; padding-top: 14px; }
 .call-dots i { width: 5px; height: 5px; border-radius: var(--call-r-pill); background: rgba(250,248,245,.35); display: block; }
@@ -374,4 +386,53 @@
 @keyframes call-arrive {
   from { opacity: 0; transform: translateY(20px); }
   to   { opacity: 1; transform: none; }
+}
+
+/* ── The write-off's other answer ─────────────────────────────────────
+   A no names the next yes, which is a reason to come back. This is the
+   reason to stay: something the weather cannot spoil. Asked once, then
+   remembered — being asked again every wet Tuesday is the opposite of a
+   product that has already decided.                                    */
+.call-indoor {
+  margin-top: var(--call-block);
+  padding: 14px 16px;
+  border: 1px solid var(--call-glass-border);
+  background: var(--call-glass-fill);
+  border-radius: var(--call-r-card);
+  display: flex; flex-direction: column; gap: 9px;
+}
+.call-indoor--settled { flex-direction: row; align-items: center; justify-content: space-between; gap: 12px; }
+.call-indoor-line { font-size: var(--call-body-sm); color: var(--call-on-dark-body); margin: 0; }
+.call-indoor-line strong { color: var(--call-on-dark); font-weight: 600; }
+.call-indoor-row { display: flex; gap: var(--call-chip-gap); flex-wrap: wrap; }
+.call-indoor-chip {
+  font: 600 13px var(--call-font-body);
+  padding: 9px 14px; border-radius: var(--call-r-pill);
+  border: 1px solid rgba(250, 248, 245, .28);
+  background: none; color: var(--call-on-dark); cursor: pointer;
+  min-height: 38px;
+}
+.call-indoor-chip:hover { background: rgba(250, 248, 245, .12); }
+/* More: the same pill, weighted as an opener rather than an answer, so the eye
+   reads the three real choices first and finds the door afterwards.           */
+.call-indoor-chip--more { border-style: dashed; color: var(--call-on-dark-body); }
+
+/* The expanded list is the only part of the call screen that scrolls inside
+   itself. Thirty-seven chips would push the verdict off a phone, and the
+   verdict is the product.                                                     */
+.call-indoor-all {
+  display: flex; flex-direction: column; gap: 14px;
+  max-height: 46vh; overflow-y: auto;
+  margin: 2px -4px -2px; padding: 2px 4px;
+  overscroll-behavior: contain;
+}
+.call-indoor-group { display: flex; flex-direction: column; gap: 7px; }
+.call-indoor-group-name { margin: 0; opacity: .72; }
+.call-indoor-chip:focus-visible,
+.call-indoor-change:focus-visible { outline: 2px solid var(--call-on-dark); outline-offset: 2px; }
+.call-indoor-change {
+  font: 400 13px var(--call-font-body);
+  background: none; border: 0; cursor: pointer;
+  color: var(--call-on-dark-quiet); text-decoration: underline;
+  text-underline-offset: 2px; padding: 4px; flex: 0 0 auto;
 }

@@ -144,15 +144,28 @@ export async function getActivityScoreForLocation(
 
   // 5. Pull today's headline conditions for the "Why this score?" section
   const todayWeather = forecast[0]?.weather ?? {};
+  /*
+   * ABSENT KEYS ARE OMITTED, NOT SET TO `undefined`.
+   *
+   * Every one of these is optional, and this object is returned straight out of
+   * `getStaticProps` on /{activity}/{location} — where Next rejects an explicit
+   * `undefined` with "cannot be serialized as JSON" and the page 500s. It was
+   * surviving only because Open-Meteo happens to publish all eight; the day
+   * Open-Meteo rate-limited and the OpenWeather fallback ran, `clouds` was
+   * missing and the whole SEO surface went down. A field the source did not
+   * publish should make the page render without that number, not fail.
+   */
+  const maybe = <T,>(key: string, v: T | undefined) =>
+    (v === undefined ? {} : { [key]: v });
   const conditionsToday: ActivityScorePayload['conditionsToday'] = {
-    temperatureC: todayWeather.temperature,
-    windSpeedKmh: todayWeather.windspeed,
-    windGustKmh: todayWeather.gustspeed,
-    precipitationMm: todayWeather.precipitation,
-    cloudCoverPct: todayWeather.clouds,
-    waveHeightM: todayWeather.waveHeight,
-    swellPeriodS: todayWeather.swellPeriod,
-    seaTempC: todayWeather.waterTemperature,
+    ...maybe('temperatureC', todayWeather.temperature),
+    ...maybe('windSpeedKmh', todayWeather.windspeed),
+    ...maybe('windGustKmh', todayWeather.gustspeed),
+    ...maybe('precipitationMm', todayWeather.precipitation),
+    ...maybe('cloudCoverPct', todayWeather.clouds),
+    ...maybe('waveHeightM', todayWeather.waveHeight),
+    ...maybe('swellPeriodS', todayWeather.swellPeriod),
+    ...maybe('seaTempC', todayWeather.waterTemperature),
   };
 
   return {
@@ -199,6 +212,76 @@ export type LocationForecast = Array<{ date: number; weather: WeatherData }>;
  * chances to straddle a forecast run — which is how one board came to show
  * sailing at Force 3 beside dog walking at Force 4, same water, same hour.
  */
+/**
+ * Wave, swell and sea temperature, for places on the coast.
+ *
+ * Without these a surf score is not a surf score. Surfing's model tests
+ * waterTemperature, waveHeight and swellPeriod across all four bands, and the
+ * general forecast carries none of them — so every one was skipped and surfing
+ * was ranked as a generic outdoor activity on air temperature and wind. It is
+ * why "a walking day" kept winning at surf breaks.
+ *
+ * Only fetched where a beach orientation says the place is coastal, and a
+ * failure returns the forecast untouched: a fabricated swell is worse than no
+ * swell, because the models trust what they are given.
+ */
+async function withMarine(
+  location: SeoLocation,
+  forecast: LocationForecast,
+): Promise<LocationForecast> {
+  if (location.beachFacingDeg === null || location.beachFacingDeg === undefined) return forecast;
+  try {
+    const url =
+      `https://marine-api.open-meteo.com/v1/marine?latitude=${location.lat}&longitude=${location.lon}` +
+      '&daily=wave_height_max,swell_wave_height_max,swell_wave_period_max' +
+      '&hourly=sea_surface_temperature&timezone=UTC&forecast_days=7';
+    const res = await fetch(url);
+    if (!res.ok) return forecast;
+    const j = (await res.json()) as {
+      daily?: Record<string, Array<number | null> | string[] | undefined>;
+      hourly?: { time?: string[]; sea_surface_temperature?: Array<number | null> };
+    };
+    const times = j.daily?.time as string[] | undefined;
+    if (!times?.length) return forecast;
+
+    const num = (key: string, i: number): number | undefined => {
+      const v = (j.daily?.[key] as Array<number | null> | undefined)?.[i];
+      return typeof v === 'number' && Number.isFinite(v) ? v : undefined;
+    };
+
+    // Sea temperature is published hourly only; midday is the honest daily stand-in.
+    const seaByDay = new Map<string, number>();
+    const ht = j.hourly?.time ?? [];
+    for (let i = 0; i < ht.length; i++) {
+      if (!ht[i].endsWith('T12:00')) continue;
+      const v = j.hourly?.sea_surface_temperature?.[i];
+      if (typeof v === 'number' && Number.isFinite(v)) seaByDay.set(ht[i].slice(0, 10), v);
+    }
+
+    const byDate = new Map(times.map((t, i) => [t, i]));
+    return forecast.map((day) => {
+      const iso = new Date(day.date * 1000).toISOString().slice(0, 10);
+      const i = byDate.get(iso);
+      if (i === undefined) return day;
+      // Same rule as `conditionsToday`: a reading the marine API did not publish
+      // leaves the key alone rather than writing `undefined` over it.
+      const set = <T,>(key: string, v: T | undefined) => (v === undefined ? {} : { [key]: v });
+      return {
+        ...day,
+        weather: {
+          ...day.weather,
+          ...set('waveHeight', num('wave_height_max', i)),
+          ...set('swellHeight', num('swell_wave_height_max', i)),
+          ...set('swellPeriod', num('swell_wave_period_max', i)),
+          ...set('waterTemperature', seaByDay.get(iso)),
+        },
+      };
+    });
+  } catch {
+    return forecast;
+  }
+}
+
 export async function fetchForecastForLocation(
   location: SeoLocation
 ): Promise<LocationForecast> {
@@ -280,7 +363,7 @@ export async function fetchForecastForLocation(
   try {
     const data = await fetchOpenMeteoAsOneCallShape(location.lat, location.lon);
     const mapped = mapOneCallShape(data);
-    if (mapped.length) return mapped;
+    if (mapped.length) return withMarine(location, mapped);
   } catch (err) {
     console.warn(`[getActivityScore] Open-Meteo failed for ${location.slug}, falling back to OpenWeather:`, err);
   }

@@ -248,6 +248,18 @@ export function makeVerdict(input: VerdictInput): Verdict {
     };
   }
 
+  /*
+   * MARGINAL AND NOT-TODAY SHARE THE EVIDENCE, NOT THE SENTENCE.
+   *
+   * They were one branch, and it read "Friday is a write-off. 1.0 mm of rain."
+   * over a score of 46. A write-off is a day you cancel; 1 mm of rain at 18° is
+   * a day you go out in anyway and think nothing of. Saying the strong word for
+   * the weak case spends it: after a week of write-offs over drizzle, the one
+   * that means it reads like the others.
+   *
+   * So the reason — which is only ever the numbers — is built once, and the
+   * verdict picks its own words.
+   */
   if (band === 'marginal' || band === 'notToday') {
     const rain = weather.precipitation ?? 0;
     const gust = weather.gustspeed ?? weather.windspeed;
@@ -255,9 +267,12 @@ export function makeVerdict(input: VerdictInput): Verdict {
     if (gust !== undefined && gust >= 35) bits.push(`gusting to ${Math.round(gust)} km/h`);
     if (rain >= 1) bits.push(`${rain.toFixed(1)} mm of rain`);
     if (!bits.length && weather.temperature !== undefined) bits.push(`${Math.round(weather.temperature)}° and little else going for it`);
-    const first = bits.length ? `${bits.join(' with ')}.` : 'Nothing you have picked would be any fun.';
+    const fallback = band === 'marginal'
+      ? 'Nothing you have picked is at its best.'
+      : 'Nothing you have picked would be any fun.';
+    const first = bits.length ? `${bits.join(' with ')}.` : fallback;
     return {
-      verdict: when('{When} is a write-off.'),
+      verdict: when(band === 'marginal' ? '{When} is nothing special.' : '{When} is a write-off.'),
       // A no ALWAYS names the next yes. Without it the app has told you to close
       // it and given you no reason to come back.
       reason: `${first[0].toUpperCase()}${first.slice(1)}${nextYes ? ` ${nextYes} is the one.` : ''}`,
@@ -280,8 +295,14 @@ export function makeVerdict(input: VerdictInput): Verdict {
     verdictNoun(suggestion.activityId, activityName),
   );
 
+  /*
+   * The key is OMITTED when there is no lead-in, not set to `undefined`.
+   * A sentence-shaped phrase carries its own subject and needs none, and this
+   * object crosses getServerSideProps — where an explicit `undefined` is a build
+   * error ("cannot be serialized as JSON"), not a missing value.
+   */
   return {
-    leadIn: phrase.leadIn ? when(phrase.leadIn) : undefined,
+    ...(phrase.leadIn ? { leadIn: when(phrase.leadIn) } : {}),
     verdict: when(phrase.verdict),
     reason: reason || 'Conditions hold all day.',
   };

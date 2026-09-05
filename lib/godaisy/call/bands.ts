@@ -41,12 +41,28 @@ export const BAND_LABEL: Record<CallBand, string> = {
  */
 export const GOOD_BANDS: ReadonlySet<CallBand> = new Set<CallBand>(['prime', 'worthALook']);
 
-export function bandFor(score: number, vetoed?: boolean): CallBand {
-  // A hazard that fired short-circuits the score. It is not a low number, it is
-  // a different kind of answer — and the one case where red is allowed to mean
-  // red, because if red means "bad tennis weather" it cannot also mean "do not
-  // go in the water".
-  if (vetoed) return 'unsafe';
+/**
+ * The keys on which a fired hazard means DANGER rather than disappointment.
+ *
+ * `vetoed` only means "some poor condition matched", and most poor conditions
+ * are about comfort: cycling vetoes above 3 mm of rain. Mapping every veto to
+ * Unsafe put 12 of 84 days in the danger band and produced "Tuesday is one to
+ * sit out. Conditions are past the safe limit for cycling." over 4.3 mm of rain
+ * — which is exactly the failure the palette rule warns about: if red means bad
+ * tennis weather it cannot also mean do not go in the water.
+ *
+ * The set is the one `getSuggestionsByDay` already uses for its safety floor,
+ * plus wind and snowfall. Everything else that vetoes is Not today: the day is
+ * off, and nobody is in danger.
+ */
+const DANGEROUS_KEYS: ReadonlySet<string> = new Set([
+  'gust', 'windSpeed', 'waveHeight', 'waterTemperature', 'snowfallRateMmH', 'visibility',
+]);
+
+export function bandFor(score: number, vetoed?: boolean, hazardKey?: string): CallBand {
+  // A hazard that fired short-circuits the score, but only a DANGEROUS one earns
+  // the red band. The rest are simply a no.
+  if (vetoed) return hazardKey && DANGEROUS_KEYS.has(hazardKey) ? 'unsafe' : 'notToday';
   if (score >= BAND_FLOOR.prime) return 'prime';
   if (score >= BAND_FLOOR.worthALook) return 'worthALook';
   if (score >= BAND_FLOOR.marginal) return 'marginal';
@@ -55,4 +71,22 @@ export function bandFor(score: number, vetoed?: boolean): CallBand {
 
 export function isGood(band: CallBand): boolean {
   return GOOD_BANDS.has(band);
+}
+
+/**
+ * Weather severe enough that "nothing special" would be a lie.
+ *
+ * The scorer put Croyde Bay at 41 — one point inside Marginal — on a day gusting
+ * to 52 km/h with 5 mm of rain, and the marginal sentence read "Tuesday is
+ * nothing special." It is not nothing special. It is horrible.
+ *
+ * Rather than re-tune a scorer that several other screens depend on, the band
+ * takes a second opinion from the two numbers the reason is about to print.
+ * They must agree: a verdict that shrugs above evidence that does not is worse
+ * than either alone. 45 km/h sits a clear step above the 35 at which the reason
+ * starts mentioning gusts at all; 4 mm is the point past which every outdoor
+ * activity in the library has already vetoed.
+ */
+export function isSevere(rainMm?: number, gustKmh?: number): boolean {
+  return (rainMm ?? 0) >= 4 || (gustKmh ?? 0) >= 45;
 }

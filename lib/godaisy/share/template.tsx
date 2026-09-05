@@ -147,11 +147,14 @@ export function shareTemplate(d: ShareData, crop: ShareCrop): unknown {
 /**
  * The fourth render. No layout, same data — for people who hate images.
  *
- * The URL is made ABSOLUTE here even though the card prints it short. On the
- * card a bare host is typography and a scheme would be noise; in a message it is
- * a link someone taps, and clients treat a scheme-less host as relative.
+ * NO URL. It used to promote `d.url` — the short host the card prints — into an
+ * absolute link, on the reasoning that a bare host is typography on a card and a
+ * tappable link in a message. Both halves were right; the conclusion was not.
+ * `d.url` names a place, and the link a share has to carry names a CALL: the day,
+ * the sport, the numbers, wrapped in a token that renders a landing page to
+ * someone who has never heard of the app. Composing the sentence and the link is
+ * the sender's job, because only the sender has the token.
  */
 export function shareText(d: ShareData): string {
-  const href = /^https?:\/\//.test(d.url) ? d.url : `https://${d.url}`;
-  return `${d.verdict} ${d.place}, ${d.reason.toLowerCase()}\n${href}`;
+  return `${d.verdict} ${d.place}, ${d.reason.toLowerCase()}`;
 }
