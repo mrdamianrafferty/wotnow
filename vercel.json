@@ -33,8 +33,18 @@
     }
   },
   "rewrites": [
-    { "source": "/api/python/(.*)", "destination": "/api/python/$1" },
-    { "source": "/sitemap.xml", "destination": "/api/sitemap.xml" }
+    {
+      "source": "/api/python/(.*)",
+      "destination": "/api/python/$1"
+    },
+    {
+      "source": "/sitemap.xml",
+      "destination": "/api/sitemap.xml"
+    },
+    {
+      "source": "/sitemap-:set.xml",
+      "destination": "/api/sitemap.xml?set=:set"
+    }
   ],
   "crons": [
     {
@@ -70,152 +80,245 @@
     {
       "source": "/auth/callback",
       "headers": [
-        { "key": "Cache-Control", "value": "no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0" },
-        { "key": "Pragma", "value": "no-cache" },
-        { "key": "Expires", "value": "0" }
+        {
+          "key": "Cache-Control",
+          "value": "no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0"
+        },
+        {
+          "key": "Pragma",
+          "value": "no-cache"
+        },
+        {
+          "key": "Expires",
+          "value": "0"
+        }
       ]
     },
     {
       "source": "/_next/static/chunks/pages/auth/(.*)",
       "headers": [
-        { "key": "Cache-Control", "value": "no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0" }
+        {
+          "key": "Cache-Control",
+          "value": "no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0"
+        }
       ]
     },
     {
       "source": "/(.*)",
       "headers": [
-        { "key": "X-Content-Type-Options", "value": "nosniff" },
-        { "key": "Referrer-Policy", "value": "strict-origin-when-cross-origin" },
-        { "key": "X-Frame-Options", "value": "SAMEORIGIN" },
-        { "key": "Strict-Transport-Security", "value": "max-age=31536000; includeSubDomains; preload" },
-        { "key": "Permissions-Policy", "value": "camera=(self), microphone=(), geolocation=(self), interest-cohort=()" },
-        { "key": "Content-Security-Policy", "value": "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.cookie-script.com https://cdn.vercel-insights.com https://*.sentry.io https://va.vercel-scripts.com https://maps.googleapis.com https://js.stripe.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https: http:; worker-src 'self' blob:; connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.openweathermap.org https://api.stormglass.io https://api.met.no https://nrt.cmems-du.eu https://my.cmems-du.eu https://maps.googleapis.com https://places.googleapis.com https://*.sentry.io https://va.vercel-scripts.com https://vitals.vercel-insights.com https://cdn.cookie-script.com https://api-free.deepl.com https://api.resend.com https://api.stripe.com https://grewp.org; frame-src 'self' https://accounts.google.com https://appleid.apple.com https://js.stripe.com; frame-ancestors 'self'; base-uri 'self'; form-action 'self'" }
+        {
+          "key": "X-Content-Type-Options",
+          "value": "nosniff"
+        },
+        {
+          "key": "Referrer-Policy",
+          "value": "strict-origin-when-cross-origin"
+        },
+        {
+          "key": "X-Frame-Options",
+          "value": "SAMEORIGIN"
+        },
+        {
+          "key": "Strict-Transport-Security",
+          "value": "max-age=31536000; includeSubDomains; preload"
+        },
+        {
+          "key": "Permissions-Policy",
+          "value": "camera=(self), microphone=(), geolocation=(self), interest-cohort=()"
+        },
+        {
+          "key": "Content-Security-Policy",
+          "value": "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.cookie-script.com https://cdn.vercel-insights.com https://*.sentry.io https://va.vercel-scripts.com https://maps.googleapis.com https://js.stripe.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https: http:; worker-src 'self' blob:; connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.openweathermap.org https://api.stormglass.io https://api.met.no https://nrt.cmems-du.eu https://my.cmems-du.eu https://maps.googleapis.com https://places.googleapis.com https://*.sentry.io https://va.vercel-scripts.com https://vitals.vercel-insights.com https://cdn.cookie-script.com https://api-free.deepl.com https://api.resend.com https://api.stripe.com https://grewp.org; frame-src 'self' https://accounts.google.com https://appleid.apple.com https://js.stripe.com; frame-ancestors 'self'; base-uri 'self'; form-action 'self'"
+        }
       ]
     },
     {
       "source": "/api/findr/predictions",
       "headers": [
-        { "key": "Cache-Control", "value": "public, max-age=900, s-maxage=1800, stale-while-revalidate=3600" }
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=900, s-maxage=1800, stale-while-revalidate=3600"
+        }
       ]
     },
     {
       "source": "/api/findr/conditions",
       "headers": [
-        { "key": "Cache-Control", "value": "public, max-age=1800, s-maxage=3600, stale-while-revalidate=7200" }
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=1800, s-maxage=3600, stale-while-revalidate=7200"
+        }
       ]
     },
     {
       "source": "/api/findr/rectangles",
       "headers": [
-        { "key": "Cache-Control", "value": "public, max-age=86400, s-maxage=604800, immutable" }
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=86400, s-maxage=604800, immutable"
+        }
       ]
     },
     {
       "source": "/api/weather",
       "headers": [
-        { "key": "Cache-Control", "value": "public, max-age=600, s-maxage=900, stale-while-revalidate=1800" }
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=600, s-maxage=900, stale-while-revalidate=1800"
+        }
       ]
     },
     {
       "source": "/api/moon",
       "headers": [
-        { "key": "Cache-Control", "value": "public, max-age=3600, s-maxage=7200, stale-while-revalidate=14400" }
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=3600, s-maxage=7200, stale-while-revalidate=14400"
+        }
       ]
     },
     {
       "source": "/api/(.*)",
       "headers": [
-        { "key": "Cache-Control", "value": "public, max-age=60, s-maxage=300, stale-while-revalidate=600" }
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=60, s-maxage=300, stale-while-revalidate=600"
+        }
       ]
     },
     {
       "source": "/_next/image(.*)",
       "headers": [
-        { "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
       ]
     },
     {
       "source": "/weather-icons/(.*)",
       "headers": [
-        { "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
       ]
     },
     {
       "source": "/skies/(.*)",
       "headers": [
-        { "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
       ]
     },
     {
       "source": "/waves/(.*)",
       "headers": [
-        { "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
       ]
     },
     {
       "source": "/webp/(.*)",
       "headers": [
-        { "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
       ]
     },
     {
       "source": "/PNGS/(.*)",
       "headers": [
-        { "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
       ]
     },
     {
       "source": "/images/(.*)",
       "headers": [
-        { "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
       ]
     },
     {
       "source": "/(.*)\\.webp",
       "headers": [
-        { "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
       ]
     },
     {
       "source": "/(.*)\\.png",
       "headers": [
-        { "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
       ]
     },
     {
       "source": "/(.*)\\.jpg",
       "headers": [
-        { "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
       ]
     },
     {
       "source": "/(.*)\\.jpeg",
       "headers": [
-        { "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
       ]
     },
     {
       "source": "/(.*)\\.svg",
       "headers": [
-        { "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
       ]
     },
     {
       "source": "/(.*)\\.ico",
       "headers": [
-        { "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
       ]
     },
     {
       "source": "/(.*)\\.woff2",
       "headers": [
-        { "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
       ]
     },
     {
       "source": "/(.*)\\.woff",
       "headers": [
-        { "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
       ]
     }
   ]

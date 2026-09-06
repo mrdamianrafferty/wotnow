@@ -187,9 +187,35 @@ async function loadSpecies() {
  */
 async function cachedFor(lang, texts) {
   const have = new Set();
-  const CHUNK = 40;
-  for (let i = 0; i < texts.length; i += CHUNK) {
-    const slice = texts.slice(i, i + CHUNK);
+  /*
+   * BATCHED BY LENGTH, NOT BY COUNT.
+   *
+   * This was forty strings a batch, and forty species descriptions at about 690
+   * characters each makes a 27,000 character query URL. PostgREST answers a
+   * truncated filter without complaining, so the batch silently reports fewer
+   * cache hits than exist — and the consequence here is worse than a short
+   * sitemap: this function decides what to translate, so an under-report means
+   * paying DeepL again for text already bought. The same bug cost the sitemap
+   * 155 hreflang alternates before anyone counted.
+   *
+   * 6,000 characters sits comfortably inside the usual 8k request-line limit.
+   */
+  const BUDGET = 6000;
+  const batches = [];
+  let batch = [];
+  let size = 0;
+  for (const t of texts) {
+    if (batch.length && size + t.length > BUDGET) {
+      batches.push(batch);
+      batch = [];
+      size = 0;
+    }
+    batch.push(t);
+    size += t.length;
+  }
+  if (batch.length) batches.push(batch);
+
+  for (const slice of batches) {
     const { data, error } = await sb
       .from('translation_cache')
       .select('source_text')
