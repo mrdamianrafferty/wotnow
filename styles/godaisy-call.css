@@ -1385,6 +1385,10 @@ section.gd-spot-colophon { padding: 28px var(--call-gutter-app) 40px; }
 .gd-doc a.gd-btn:hover, .gd-doc a.gd-app-store:hover { color: var(--call-page); }
 .gd-doc a.gd-btn.gd-btn--quiet:hover { color: var(--call-ink-1); }
 
+.gd-acct-pw { display: flex; flex-direction: column; gap: 8px; max-width: 22rem; }
+.gd-acct-pw .gd-btn { align-self: flex-start; margin-top: 6px; }
+.gd-acct-pw .gd-note { margin: 8px 0 0; }
+
 /* ── Documents ────────────────────────────────────────────────────────────
    The pages that are mostly words: privacy, terms, cookies, support, about,
    how the scoring works, the FAQ.

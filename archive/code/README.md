@@ -15,6 +15,7 @@ remember it becomes a route again the moment it lands back in `pages/`.
 | `pages/interests.tsx` | `/interests` — the activity picker | `/start` step 1, grouped and ordered by what people recognise | 6 Sep 2026 |
 | `pages/onboarding.tsx` | `/onboarding` — the old three-screen first run | `/start` | 6 Sep 2026 |
 | `components/BottomNav.tsx` | The Go Daisy tab bar | Nothing. The call has no tab bar; the menu is behind the hamburger | 6 Sep 2026 |
+| `app/settings/` | `/settings` — a 1,097-line form | `/account`, which already did four of its six sections. `/settings` now 301s there | 6 Sep 2026 |
 
 `pages/index.tsx`'s previous contents — `HomeApp`, ~1,300 lines — are not here.
 That one is in git history rather than in the tree, because it was the page
@@ -32,7 +33,10 @@ only page still mounting `AppHeader` was `/interests` itself.
 `BottomNav` was imported by one page nobody links to, `app/settings`. Grow
 Daisy has its own `GrowBottomNav` and is unaffected.
 
-`app/settings` is NOT here. It is unlinked and mostly duplicates `/account`,
-but it is the only place a signed-in person can change their password — and
-password auth is live (`signInWithPassword`, `signUp`) — so archiving it would
-remove a capability rather than a duplicate.
+`app/settings` came here in the end, but only after the capability it alone
+carried had somewhere else to live. It duplicated `/account` on name,
+locations, interests and deletion; the one thing it could do that `/account`
+could not was change a password, and password auth is live
+(`signInWithPassword`, `signUp`). So the password section moved to `/account`
+first — timeouts and all, because those were load-bearing — and `/settings`
+became a permanent redirect rather than a second page to keep in step.

@@ -180,6 +180,21 @@ const nextConfig = {
   },
   async redirects() {
     return [
+      /*
+       * `/settings` is `/account` now.
+       *
+       * It duplicated the account page on four of its six sections — name,
+       * locations, interests and deletion — and the one thing it alone could
+       * do, changing a password, moved there. Rather than keep a second page
+       * editing the same things in the old design, it was archived.
+       *
+       * Permanent, and a redirect rather than a deletion: the route was linked
+       * from nothing in the app, but a bookmark or an old email is not nothing,
+       * and a 404 at a URL somebody saved is a worse answer than the page that
+       * replaced it.
+       */
+      { source: '/settings', destination: '/account', permanent: true },
+
       // grow.godaisy.io root → /grow
       {
         source: '/',

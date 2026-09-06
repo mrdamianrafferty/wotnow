@@ -39,6 +39,22 @@ const LANGUAGE_FLAGS: Record<string, string> = {
   sv: '🇸🇪',
 };
 
+/**
+ * A promise that cannot hang forever.
+ *
+ * Supabase's auth calls do not always reject on a dead connection — they sit
+ * there — and a button stuck in "Updating…" tells the person nothing about
+ * whether their password changed.
+ */
+async function withTimeout<T>(p: Promise<T>, ms = 15000): Promise<T> {
+  return await Promise.race([
+    p,
+    new Promise<never>((_, reject) =>
+      setTimeout(() => reject(new Error(`Timed out after ${ms}ms`)), ms),
+    ),
+  ]);
+}
+
 export default function AccountPage() {
   const router = useRouter();
   const { preferences, setPreferences } = useUserPreferences();
@@ -90,6 +106,11 @@ export default function AccountPage() {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [deleteConfirmText, setDeleteConfirmText] = useState('');
   const [deleting, setDeleting] = useState(false);
+  const [newPw, setNewPw] = useState('');
+  const [newPw2, setNewPw2] = useState('');
+  const [pwBusy, setPwBusy] = useState(false);
+  const [pwMsg, setPwMsg] = useState<string | null>(null);
+  const [pwErr, setPwErr] = useState<string | null>(null);
   const [langDropdownOpen, setLangDropdownOpen] = useState(false);
 
   // Platform detection + Tip Jar
@@ -235,6 +256,64 @@ export default function AccountPage() {
       console.error('Error saving name:', err);
     } finally {
       setNameSaving(false);
+    }
+  };
+
+  /**
+   * Changing a password, moved here from `/settings`.
+   *
+   * `/settings` was unlinked and duplicated this page on four of its six
+   * sections — name, locations, interests and deletion — and the password was
+   * the one thing it alone could do. Rather than restyle a 1,097-line form to
+   * keep a second page that edits the same things, the one unique part came
+   * here and the page went.
+   *
+   * THE TIMEOUTS ARE KEPT. They came with it, and they were not decoration:
+   * `updateUser` on a flaky connection hangs rather than rejecting, so the
+   * button sat in "Updating…" for as long as the person was willing to watch
+   * it. A race against a timer is the difference between a failure and a
+   * mystery.
+   */
+  const changePassword = async () => {
+    setPwErr(null);
+    setPwMsg(null);
+
+    if (!newPw) { setPwErr('Enter a new password.'); return; }
+    if (newPw.length < 8) { setPwErr('Passwords need at least 8 characters.'); return; }
+    if (newPw !== newPw2) { setPwErr('Those two do not match.'); return; }
+    if (typeof navigator !== 'undefined' && navigator.onLine === false) {
+      setPwErr('You appear to be offline. Reconnect and try again.');
+      return;
+    }
+
+    setPwBusy(true);
+    try {
+      const { data: sessionData, error: sessErr } = await withTimeout(supabase.auth.getSession(), 8000);
+      if (sessErr) { setPwErr(sessErr.message || 'Could not read your session.'); return; }
+      if (!sessionData?.session) { setPwErr('Sign in again to change your password.'); return; }
+
+      const { error } = await withTimeout(supabase.auth.updateUser({ password: newPw }), 15000);
+      if (error) {
+        setPwErr(
+          /rate/i.test(error.message)
+            ? 'Too many attempts. Wait a minute and try again.'
+            : error.message || 'Could not update your password.',
+        );
+        return;
+      }
+
+      setPwMsg('Password updated.');
+      setNewPw('');
+      setNewPw2('');
+    } catch (e) {
+      const err = e instanceof Error ? e : new Error('Unknown error');
+      setPwErr(
+        /Timed out/.test(err.message)
+          ? 'That took longer than expected and may have timed out. Check your connection and try again.'
+          : err.message || 'Could not update your password.',
+      );
+    } finally {
+      setPwBusy(false);
     }
   };
 
@@ -808,6 +887,62 @@ export default function AccountPage() {
           )}
 
           {/* Delete Account */}
+          {/*
+            * SECURITY — the one thing `/settings` could do that this page
+            * could not, which is why that page could not simply be archived.
+            *
+            * Signed in only, and genuinely so: `updateUser` needs a session,
+            * and there is no honest version of this for somebody without an
+            * account. Anyone who has forgotten their password is not signed in
+            * to begin with, and `/auth/reset` is their route.
+            */}
+          {mounted && isSignedIn && (
+            <section className="gd-acct-block">
+              <h2 className="gd-acct-h2">Password</h2>
+              <p className="gd-acct-note">
+                Change the password you sign in with. At least eight characters.
+              </p>
+
+              <div className="gd-acct-pw">
+                <label className="call-label gd-acct-label" htmlFor="new-password">
+                  New password
+                </label>
+                <input
+                  id="new-password"
+                  className="gd-field"
+                  type="password"
+                  autoComplete="new-password"
+                  value={newPw}
+                  onChange={(e) => { setNewPw(e.target.value); setPwErr(null); setPwMsg(null); }}
+                />
+
+                <label className="call-label gd-acct-label" htmlFor="new-password-confirm">
+                  And again
+                </label>
+                <input
+                  id="new-password-confirm"
+                  className="gd-field"
+                  type="password"
+                  autoComplete="new-password"
+                  value={newPw2}
+                  onChange={(e) => { setNewPw2(e.target.value); setPwErr(null); setPwMsg(null); }}
+                />
+
+                <button
+                  type="button"
+                  className="gd-btn"
+                  onClick={changePassword}
+                  disabled={pwBusy || !newPw || !newPw2}
+                >
+                  {pwBusy ? 'Updating…' : 'Update password'}
+                </button>
+
+                {pwErr && <p className="gd-note gd-note--bad" role="alert">{pwErr}</p>}
+                {pwMsg && <p className="gd-note gd-note--good" role="status">{pwMsg}</p>}
+              </div>
+            </section>
+          )}
+
           {/*
               * DELETING AN ACCOUNT IS A REAL OPTION, NOT A DARE.
               *
