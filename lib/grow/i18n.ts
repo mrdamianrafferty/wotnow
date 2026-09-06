@@ -58,13 +58,40 @@ export interface HreflangEntry {
   href: string;
 }
 
-// Build the full set of hreflang alternates for a given canonical English path.
-// Returns objects ready to render as <link rel="alternate" hreflang="..." href="..." />
-export function buildHreflangLinks(enPath: string): HreflangEntry[] {
-  const links: HreflangEntry[] = GROW_LANGUAGES.map(({ pathCode, hreflang }) => ({
-    hreflang,
-    href: buildGrowUrl(pathCode, enPath),
-  }));
+/**
+ * Hreflang alternates for a canonical English path.
+ *
+ * ONLY ADVERTISE A LANGUAGE THAT EXISTS. This used to emit all seven
+ * unconditionally, and that is how a crawler found 3,150 species pages nobody
+ * had translated: the sitemap lists 450 English URLs, each carrying alternates
+ * to every language, and Google follows alternates. Those pages translate on
+ * demand, so the crawl spent the whole month's DeepL allowance in two days.
+ *
+ * Passing `available` narrows the set to the languages whose translation is
+ * already cached. A page Google is told about is then warm by definition, and
+ * the 503 guard in `pages/grow/[lang]/species/[slug].tsx` goes back to being a
+ * safety net rather than the front line.
+ *
+ * BOTH CALL SITES MUST PASS THE SAME SET. The sitemap and the page's own
+ * `<HreflangLinks>` both call this, and hreflang has to be reciprocal — if the
+ * sitemap advertises fewer languages than the page does, Google discounts the
+ * annotation entirely and neither claim is believed.
+ *
+ * Omitting `available` keeps the old behaviour, which is correct for paths that
+ * are not translated on demand: the static Grow pages exist in every language
+ * whether or not anybody has visited them.
+ */
+export function buildHreflangLinks(
+  enPath: string,
+  available?: readonly GrowPathCode[],
+): HreflangEntry[] {
+  const allow = available ? new Set(available) : null;
+  const links: HreflangEntry[] = GROW_LANGUAGES
+    .filter(({ pathCode }) => !allow || pathCode === 'en' || allow.has(pathCode))
+    .map(({ pathCode, hreflang }) => ({
+      hreflang,
+      href: buildGrowUrl(pathCode, enPath),
+    }));
   // x-default points to the English (canonical) URL
   links.push({ hreflang: 'x-default', href: `${GROW_BASE_URL}${enPath}` });
   return links;

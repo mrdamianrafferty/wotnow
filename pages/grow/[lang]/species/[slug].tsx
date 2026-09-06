@@ -26,6 +26,7 @@ import {
 } from '@/components/JsonLd';
 import { isValidGrowLang, type GrowPathCode } from '@/lib/grow/i18n';
 import { isBotRequest } from '@/lib/http/is-bot';
+import { translatedLanguagesFor, cacheKey } from '@/lib/grow/translatedLanguages';
 import { getSupabaseServerClient } from '@/lib/supabase/serverClient';
 import { serializePlantSpecies, PLANT_SPECIES_LANGUAGE_FIELDS, type PlantSpeciesRow } from '@/lib/grow/species';
 import type { PlantSpecies } from '@/lib/grow/species';
@@ -58,6 +59,15 @@ type LocalisedSpeciesProps =
       translatedDescription: string | null;
       translatedAdvice: string | null;
       relatedSpecies: RelatedSpeciesEntry[];
+      /**
+       * The languages this species is readable in, for hreflang.
+       *
+       * Computed here rather than in the component because hreflang has to be
+       * reciprocal with the sitemap, and both now derive it from
+       * `translatedLanguagesFor`. Advertising a language whose text does not
+       * exist is what let a crawler spend a month of DeepL in two days.
+       */
+      availableLangs: GrowPathCode[];
       unavailable?: false;
     }
   /*
@@ -225,6 +235,34 @@ export const getServerSideProps: GetServerSideProps<LocalisedSpeciesProps> = asy
     }));
   }
 
+  /*
+   * Which languages this species is readable in, for hreflang.
+   *
+   * The same function the sitemap uses, against the same cache, so the two
+   * cannot disagree — hreflang is reciprocal, and a page claiming seven
+   * alternates while the sitemap claims two is an annotation Google discards
+   * entirely.
+   *
+   * The current language is always included: whatever the cache says, this
+   * request has just produced a page in it.
+   */
+  const availableLangs = await translatedLanguagesFor(
+    [{ slug: species.slug, description: species.description, advice: species.advice }],
+    async (texts) => {
+      const have = new Set<string>();
+      const { data: rows } = await supabase
+        .from('translation_cache')
+        .select('source_text, target_language')
+        .in('source_text', texts);
+      for (const row of rows ?? []) have.add(cacheKey(row.source_text, row.target_language));
+      return have;
+    },
+  ).then((m) => {
+    const langs = m.get(species.slug) ?? [];
+    const here = lang as GrowPathCode;
+    return langs.includes(here) ? langs : [...langs, here];
+  });
+
   return {
     props: {
       species,
@@ -233,6 +271,7 @@ export const getServerSideProps: GetServerSideProps<LocalisedSpeciesProps> = asy
       translatedDescription: translatedDescription,
       translatedAdvice: translatedAdvice,
       relatedSpecies,
+      availableLangs,
     },
   };
 };
@@ -275,6 +314,7 @@ function SpeciesPage(props: Extract<LocalisedSpeciesProps, { unavailable?: false
     translatedName,
     translatedDescription,
     relatedSpecies,
+    availableLangs,
   } = props;
   const router = useRouter();
   const enPath = `/grow/species/${species.slug}`;
@@ -299,7 +339,7 @@ function SpeciesPage(props: Extract<LocalisedSpeciesProps, { unavailable?: false
         <meta httpEquiv="content-language" content={lang} />
       </Head>
 
-      <HreflangLinks enPath={enPath} />
+      <HreflangLinks enPath={enPath} available={availableLangs} />
 
       {/* JSON-LD — same schema as English page */}
       <BreadcrumbJsonLd

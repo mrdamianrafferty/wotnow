@@ -9,7 +9,8 @@
 
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { createClient } from '@supabase/supabase-js';
-import { buildHreflangLinks, GROW_TRANSLATED_PATH_CODES } from '../../lib/grow/i18n';
+import { buildHreflangLinks, GROW_TRANSLATED_PATH_CODES, type GrowPathCode } from '../../lib/grow/i18n';
+import { translatedLanguagesFor, cacheKey } from '../../lib/grow/translatedLanguages';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -142,13 +143,33 @@ async function getFindrUrls(baseUrl: string): Promise<SitemapUrl[]> {
 /**
  * Generate Grow Daisy sitemap URLs
  */
-async function getGrowDaisyUrls(baseUrl: string): Promise<SitemapUrl[]> {
+/**
+ * `set` selects which document this is:
+ *   undefined  everything, as before — used when no index is requested
+ *   'core'     the English canonicals and static pages, with hreflang alternates
+ *   a lang     that language's species URLs as their own `<loc>` entries
+ *
+ * A translated URL therefore appears twice across the set: as an alternate on
+ * the English entry, and as a `<loc>` in its own language's child. That is the
+ * ordinary shape for hreflang — the alternate declares the relationship, the
+ * `<loc>` gets it crawled and counted.
+ */
+async function getGrowDaisyUrls(baseUrl: string, set?: string): Promise<SitemapUrl[]> {
   const today = new Date().toISOString().split('T')[0];
 
   // Helper to attach hreflang alternates to a Grow page URL
-  const withAlternates = (path: string, url: SitemapUrl): SitemapUrl => ({
+  /*
+   * `available` is omitted for the static Grow pages on purpose: those exist in
+   * every language whether or not anybody has visited them — it is only the
+   * species prose that is translated on demand and can therefore be missing.
+   */
+  const withAlternates = (
+    path: string,
+    url: SitemapUrl,
+    available?: readonly GrowPathCode[],
+  ): SitemapUrl => ({
     ...url,
-    alternates: buildHreflangLinks(path),
+    alternates: buildHreflangLinks(path, available),
   });
 
   const staticUrls: SitemapUrl[] = [
@@ -179,13 +200,62 @@ async function getGrowDaisyUrls(baseUrl: string): Promise<SitemapUrl[]> {
       });
       const { data, error } = await client
         .from('plant_species')
-        .select('slug, date_modified')
+        .select('slug, date_modified, description, advice')
         .order('slug', { ascending: true })
         .limit(5000);
 
       if (error) {
         console.error('[Sitemap] Supabase species query error:', error);
       } else if (data) {
+        /*
+         * ADVERTISE ONLY THE LANGUAGES THAT EXIST.
+         *
+         * This used to attach alternates for all seven regardless. Google
+         * follows hreflang alternates, those pages translate on demand, and a
+         * crawl of the full set costs about 1.03 million DeepL characters
+         * against a 500,000 a month allowance — which is how September was
+         * spent in two days.
+         *
+         * Narrowing to what is cached means a page Google is told about is warm
+         * by definition, and the set grows a language at a time as
+         * `scripts/species-backfill.mjs` completes one. That is the batching:
+         * the unit is the language, and it arrives finished.
+         */
+        const translated = await translatedLanguagesFor(
+          data as Array<{ slug: string; description: string | null; advice: string | null }>,
+          async () => {
+            /*
+             * READ THE WHOLE CACHE, DO NOT ASK ABOUT EACH STRING.
+             *
+             * The first version filtered by `source_text` in batches. Forty
+             * descriptions at ~690 characters makes a 27,000 character query
+             * URL and PostgREST answers a truncated filter without complaining;
+             * shrinking the batch just traded that for ~90 sequential round
+             * trips, of which some quietly failed and the counts moved between
+             * runs. Both failures look identical from outside — fewer hreflang
+             * alternates — and neither logs anything.
+             *
+             * The whole table is a few thousand rows. Paging through it is two
+             * or three queries with no filter to truncate and nothing to drop.
+             */
+            const have = new Set<string>();
+            const PAGE = 1000;
+            for (let from = 0; ; from += PAGE) {
+              const { data: rows, error: cacheError } = await client
+                .from('translation_cache')
+                .select('source_text, target_language')
+                .range(from, from + PAGE - 1);
+              if (cacheError) {
+                console.error('[Sitemap] translation_cache query error:', cacheError);
+                break;
+              }
+              for (const row of rows ?? []) have.add(cacheKey(row.source_text, row.target_language));
+              if (!rows || rows.length < PAGE) break;
+            }
+            return have;
+          },
+        );
+
         speciesUrls = data.map((row: { slug: string; date_modified: string | null }) => {
           const enPath = `/grow/species/${row.slug}`;
           return withAlternates(enPath, {
@@ -202,7 +272,7 @@ async function getGrowDaisyUrls(baseUrl: string): Promise<SitemapUrl[]> {
             // lastmod already tells crawlers when one actually did.
             changefreq: 'monthly',
             priority: 0.8,
-          });
+          }, translated.get(row.slug) ?? []);
         });
       }
     }
@@ -210,7 +280,56 @@ async function getGrowDaisyUrls(baseUrl: string): Promise<SitemapUrl[]> {
     console.error('[Sitemap] Species query threw:', e);
   }
 
+  if (set && set !== 'core') {
+    /*
+     * One language's own URLs. Only the species it is actually readable in —
+     * the same `translated` map the alternates come from, so a URL is never
+     * listed here without its alternate existing on the English entry, and
+     * never advertised at all before its text is cached.
+     */
+    return speciesUrls
+      .filter((u) => u.alternates?.some((a) => a.hreflang === set))
+      .map((u) => {
+        const alt = u.alternates?.find((a) => a.hreflang === set);
+        return {
+          loc: alt?.href ?? u.loc,
+          ...(u.lastmod ? { lastmod: u.lastmod } : {}),
+          changefreq: u.changefreq,
+          priority: u.priority,
+          // No alternates on the child entries: the relationship is declared
+          // once, on the English canonical, and repeating it here is noise.
+        };
+      });
+  }
+
   return [...staticUrls, ...speciesUrls];
+}
+
+/**
+ * The sitemap index, and one child per language.
+ *
+ * WHY SPLIT IT. Search Console reports coverage per submitted sitemap, so a
+ * single document of everything answers "are the pages indexed" and never "is
+ * French working". Splitting by language is the only way to see whether the
+ * translated pages earn anything — which is the evidence needed before paying
+ * for more translation, or before building the same thing for another app.
+ *
+ * It also makes the batching visible. `scripts/species-backfill.mjs` completes
+ * one language at a time, so a language's child sitemap goes from a hundred
+ * URLs to four hundred and fifty in one step, with a fresh `lastmod`. That is a
+ * clean signal to a crawler, and a clean line on a graph.
+ */
+function generateIndexXml(baseUrl: string, langs: readonly string[], lastmod: string): string {
+  const entries = ['core', ...langs]
+    .map((set) => `  <sitemap>
+    <loc>${baseUrl}/sitemap-${set}.xml</loc>
+    <lastmod>${lastmod}</lastmod>
+  </sitemap>`)
+    .join('\n');
+  return `<?xml version="1.0" encoding="UTF-8"?>
+<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+${entries}
+</sitemapindex>`;
 }
 
 /**
@@ -250,6 +369,24 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const baseUrl = getBaseUrl(req);
     const appType = getAppType(host);
 
+    /*
+     * `?set=` names one document within the index. Grow only: the other two
+     * apps have no language variants to separate, so an index would be a level
+     * of indirection with one child.
+     */
+    const set = typeof req.query.set === 'string' ? req.query.set : undefined;
+
+    if (appType === 'grow' && !set) {
+      const xml = generateIndexXml(
+        baseUrl,
+        GROW_TRANSLATED_PATH_CODES,
+        new Date().toISOString().split('T')[0],
+      );
+      res.setHeader('Cache-Control', 'public, max-age=3600, stale-while-revalidate=86400');
+      res.setHeader('Content-Type', 'application/xml');
+      return res.status(200).send(xml);
+    }
+
     let urls: SitemapUrl[];
 
     switch (appType) {
@@ -257,7 +394,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         urls = await getFindrUrls(baseUrl);
         break;
       case 'grow':
-        urls = await getGrowDaisyUrls(baseUrl);
+        urls = await getGrowDaisyUrls(baseUrl, set);
         break;
       default:
         urls = getGoDaisyUrls(baseUrl);
