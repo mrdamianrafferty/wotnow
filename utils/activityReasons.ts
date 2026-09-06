@@ -89,7 +89,7 @@ function degrees(c: number): string {
 
 /** A bearing as a point of the compass. Nobody says "the wind is 247 degrees". */
 const POINTS = ['north', 'north-east', 'east', 'south-east', 'south', 'south-west', 'west', 'north-west'];
-function compass(deg: number): string {
+export function compass(deg: number): string {
   return POINTS[Math.round(((deg % 360) + 360) % 360 / 45) % 8];
 }
 
