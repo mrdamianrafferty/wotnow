@@ -1730,10 +1730,19 @@ section.gd-spot-colophon { padding: 28px var(--call-gutter-app) 40px; }
   min-height: var(--call-tap-min);
 }
 .gd-head-mark {
+  display: inline-flex; align-items: center; gap: 2px;
+  /* The tap target is the whole thing, not the four characters of "Go". */
+  margin-left: -4px; padding: 4px 4px 4px 0;
   font-family: var(--call-font-display);
   font-size: var(--call-body); font-weight: 700;
   letter-spacing: -.01em; color: var(--call-ink-1); text-decoration: none;
 }
+/*
+ * Subordinate to the wordmark it precedes: this has to say "tappable" without
+ * turning the brand into a button. Slightly lighter than the text, and it
+ * inherits colour so the hover state still moves both together.
+ */
+.gd-head-back { opacity: .55; margin-top: 1px; flex: 0 0 auto; }
 .gd-head-mark:hover { color: var(--call-moss-ink); }
 .gd-head-title {
   flex: 1 1 auto;

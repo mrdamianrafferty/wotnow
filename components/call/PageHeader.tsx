@@ -35,9 +35,26 @@ export function PageHeader({ title }: { title?: string }) {
     <>
       <header className="gd-head">
         <div className="gd-head-inner">
-          {/* Home is the call. The wordmark is the way back to it, which is the
-              one navigation every page needs and the only one this has. */}
-          <Link href="/" className="gd-head-mark">Go Daisy</Link>
+          {/*
+            * Home is the call. The wordmark is the way back to it, which is the
+            * one navigation every page needs and the only one this has.
+            *
+            * THE CHEVRON IS NOT DECORATION. Without it this is a bold display-
+            * font wordmark with no underline, in the same ink as body text,
+            * whose only interactive signal was `:hover` — and touch has no
+            * hover. In the iOS app there is no browser back button and no
+            * swipe-back, so this was the only way off `/account` and it did not
+            * look like a control. One glyph is the smallest thing that fixes
+            * that without becoming the second navigation system.
+            */}
+          <Link href="/" className="gd-head-mark">
+            <svg className="gd-head-back" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                 stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+                 aria-hidden="true">
+              <path d="M15 18l-6-6 6-6" />
+            </svg>
+            Go Daisy
+          </Link>
           {title && <span className="gd-head-title">{title}</span>}
           <button
             type="button"
