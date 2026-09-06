@@ -21,7 +21,7 @@
  */
 
 import { supabase } from '@/lib/supabase/client';
-import { readSetup, writeSetup, type CallSetup } from './setup';
+import { readSetup, writeSetup, DEFAULT_SPORTS, type CallSetup, type SetupPlace } from './setup';
 
 /**
  * Mirror the setup into Supabase. Never throws.
@@ -146,51 +146,110 @@ export async function loadCallHour(): Promise<number | undefined> {
  */
 export type SaveHourResult = 'saved' | 'local-only' | 'no-setup';
 
-export async function saveCallHour(hour: number): Promise<SaveHourResult> {
-  let setup: CallSetup | null = null;
-
+/**
+ * The setup as it currently stands, from whichever store has it.
+ *
+ * Cookie first — it is the system of record and answers instantly. The server
+ * is the fallback for a device that has never been through onboarding (a second
+ * phone, a reinstall), so a change made there does not silently start from
+ * nothing and throw away sports and a place chosen months ago.
+ */
+async function currentSetup(): Promise<CallSetup | null> {
   const cookie = readSetup();
-  if (cookie) {
-    setup = { ...cookie, hour };
-  } else {
-    // No cookie on this device. Rebuild one from the server's copy rather than
-    // sending somebody back through onboarding to change a single number.
-    const server = await fetchServerSetup();
-    if (
-      !server ||
-      server.call_place_lat === null ||
-      server.call_place_lon === null ||
-      !server.call_sports?.length
-    ) {
-      return 'no-setup';
-    }
-    setup = {
-      v: 1,
-      sports: server.call_sports,
-      place: {
-        name: server.call_place_name ?? 'Your place',
-        lat: server.call_place_lat,
-        lon: server.call_place_lon,
-      },
-      ...(server.call_coastal_lat !== null && server.call_coastal_lon !== null
-        ? {
-            coastal: {
-              name: server.call_coastal_name ?? 'The coast',
-              lat: server.call_coastal_lat,
-              lon: server.call_coastal_lon,
-            },
-          }
-        : {}),
-      hour,
-    };
+  if (cookie) return cookie;
+
+  const server = await fetchServerSetup();
+  if (
+    !server ||
+    server.call_place_lat === null ||
+    server.call_place_lon === null ||
+    !server.call_sports?.length
+  ) {
+    return null;
   }
+  return {
+    v: 1,
+    sports: server.call_sports,
+    place: {
+      name: server.call_place_name ?? 'Your place',
+      lat: server.call_place_lat,
+      lon: server.call_place_lon,
+    },
+    ...(server.call_coastal_lat !== null && server.call_coastal_lon !== null
+      ? {
+          coastal: {
+            name: server.call_coastal_name ?? 'The coast',
+            lat: server.call_coastal_lat,
+            lon: server.call_coastal_lon,
+          },
+        }
+      : {}),
+    ...(server.call_hour !== null ? { hour: server.call_hour } : {}),
+  };
+}
 
-  // The cookie first, and unconditionally — it is what `/call` renders from,
-  // and it must not be the half that fails.
+/**
+ * Write a setup to both stores.
+ *
+ * The cookie goes first, and unconditionally — it is what `/call` renders from
+ * and what `AuthContext` mirrors, so it must not be the half that fails.
+ */
+async function persist(setup: CallSetup): Promise<SaveHourResult> {
   writeSetup(setup);
-
   const { data: { session } } = await supabase.auth.getSession().catch(() => ({ data: { session: null } }));
   if (!session?.access_token) return 'saved';
-
   return (await syncSetupToServer(setup)) ? 'saved' : 'local-only';
+}
+
+export async function saveCallHour(hour: number): Promise<SaveHourResult> {
+  const setup = await currentSetup();
+  if (!setup) return 'no-setup';
+  return persist({ ...setup, hour });
+}
+
+/**
+ * Point the call at a new place — the account page's home location.
+ *
+ * ─── Why this exists ─────────────────────────────────────────────────────
+ *
+ * `/account`'s location control wrote `preferences.locations` in localStorage
+ * and nothing else. That store is read by `/weather`, `/activities` and the
+ * account page itself; the CALL reads the setup cookie. So changing your home
+ * location moved every screen except the one that gets sent to your phone, and
+ * the daily call carried on naming a place you had just told the app you had
+ * left — silently, with the two stores disagreeing and nothing to reconcile
+ * them.
+ *
+ * `mirrorToPreferences` in `setup.ts` already pushes the setup INTO
+ * preferences when onboarding finishes. This is the missing return leg.
+ *
+ * ─── Why it will create a setup rather than refuse ───────────────────────
+ *
+ * Unlike the hour, a place is enough to build a call around: `DEFAULT_SPORTS`
+ * is what onboarding itself starts everybody with, and its comment explains why
+ * those five are safe for someone who has said nothing about themselves. So
+ * setting a location on `/account` and then an hour is a complete setup without
+ * ever visiting `/start` — which is the behaviour the two controls sitting on
+ * one page implies, and refusing here would strand somebody between them.
+ */
+export async function saveCallPlace(place: SetupPlace): Promise<SaveHourResult> {
+  const setup = await currentSetup();
+  return persist(
+    setup
+      ? { ...setup, place }
+      : { v: 1, sports: [...DEFAULT_SPORTS], place },
+  );
+}
+
+/**
+ * The water spot, when it is somewhere other than home.
+ *
+ * Only ever an edit to an existing setup: a coastal spot on its own has no
+ * place to be the alternative TO, and inventing a home from it would put the
+ * call somewhere nobody chose.
+ */
+export async function saveCallCoastal(coastal: SetupPlace): Promise<SaveHourResult> {
+  const setup = await currentSetup();
+  if (!setup) return 'no-setup';
+  return persist({ ...setup, coastal });
 }
