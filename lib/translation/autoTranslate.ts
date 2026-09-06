@@ -413,6 +413,43 @@ async function translateWithDeepL(
  * @param targetLang - Target language code (es, fr, pt, de, it, etc.)
  * @returns Translated text, or original text if translation is not possible
  */
+/**
+ * A translation, but only if it is already paid for.
+ *
+ * Returns `null` on a cache miss instead of calling DeepL. It exists because
+ * `grow.godaisy.io/sitemap.xml` lists 3,150 translated species pages — 450
+ * species across seven languages — and each one translates on demand on first
+ * visit. The full matrix is roughly a million characters against a 500,000 a
+ * month allowance, so a crawler working through the sitemap exhausts the month
+ * in about two days. It did: 553,000 characters between the 1st and the 5th of
+ * September, 88% of it on two days, spread evenly across all seven languages,
+ * which is not how people browse.
+ *
+ * The caller decides what a miss means. For a person it means translate; for a
+ * crawler it means come back later.
+ */
+export async function translateFromCacheOnly(
+  text: string,
+  targetLang: string,
+): Promise<string | null> {
+  if (!text || !text.trim() || targetLang.toLowerCase() === 'en') return text;
+
+  const manualOverride = await checkManualOverride(text, targetLang);
+  if (manualOverride) return manualOverride;
+
+  const cacheKey = getCacheKey(text, targetLang);
+  const memoryCached = memoryCache.get(cacheKey);
+  if (memoryCached) return memoryCached;
+
+  const dbCached = await checkDatabaseCache(text, targetLang);
+  if (dbCached) {
+    memoryCache.set(cacheKey, dbCached.translation);
+    return dbCached.translation;
+  }
+
+  return null;
+}
+
 export async function autoTranslate(
   text: string,
   targetLang: string
