@@ -133,9 +133,20 @@ export async function loadCallHour(): Promise<number | undefined> {
  * The cookie goes first for the same reason it does in onboarding: it is what
  * `/call` renders from, and it must not be the half that fails.
  *
- * @returns false when there is nothing to attach an hour to, or the save failed.
+ * Three outcomes, because two would have to lie about one of them:
+ *
+ *   'saved'      the cookie is written and the server agrees (or there is no
+ *                account to agree with, which is fine — the cookie is the
+ *                system of record and `AuthContext` will mirror it on sign-in).
+ *   'local-only' the cookie is written but the signed-in mirror failed. The
+ *                choice is not lost; the next session restore syncs it.
+ *   'no-setup'   there is no place to attach an hour to, on this device or on
+ *                the server. NOTHING was written, and saying "stored on this
+ *                device" here would be false.
  */
-export async function saveCallHour(hour: number): Promise<boolean> {
+export type SaveHourResult = 'saved' | 'local-only' | 'no-setup';
+
+export async function saveCallHour(hour: number): Promise<SaveHourResult> {
   let setup: CallSetup | null = null;
 
   const cookie = readSetup();
@@ -151,7 +162,7 @@ export async function saveCallHour(hour: number): Promise<boolean> {
       server.call_place_lon === null ||
       !server.call_sports?.length
     ) {
-      return false;
+      return 'no-setup';
     }
     setup = {
       v: 1,
@@ -174,6 +185,12 @@ export async function saveCallHour(hour: number): Promise<boolean> {
     };
   }
 
+  // The cookie first, and unconditionally — it is what `/call` renders from,
+  // and it must not be the half that fails.
   writeSetup(setup);
-  return syncSetupToServer(setup);
+
+  const { data: { session } } = await supabase.auth.getSession().catch(() => ({ data: { session: null } }));
+  if (!session?.access_token) return 'saved';
+
+  return (await syncSetupToServer(setup)) ? 'saved' : 'local-only';
 }

@@ -34,7 +34,7 @@ import Link from 'next/link';
 import { HOUR_OPTIONS } from './SetupSteps';
 import { loadCallHour, saveCallHour } from '@/lib/godaisy/call/sync';
 
-type Status = 'loading' | 'ready' | 'saving' | 'saved' | 'nothing-to-attach' | 'failed';
+type Status = 'loading' | 'ready' | 'saving' | 'saved' | 'local-only' | 'no-setup';
 
 export function CallHourCard({ isSignedIn }: { isSignedIn: boolean }) {
   const [hour, setHour] = useState<number | undefined>(undefined);
@@ -54,9 +54,8 @@ export function CallHourCard({ isSignedIn }: { isSignedIn: boolean }) {
   const pick = useCallback(async (h: number) => {
     setHour(h);
     setStatus('saving');
-    const ok = await saveCallHour(h);
-    setStatus(ok ? 'saved' : isSignedIn ? 'nothing-to-attach' : 'failed');
-  }, [isSignedIn]);
+    setStatus(await saveCallHour(h));
+  }, []);
 
   return (
     <section className="gd-acct-block">
@@ -97,7 +96,13 @@ export function CallHourCard({ isSignedIn }: { isSignedIn: boolean }) {
         </p>
       )}
 
-      {!isSignedIn && (
+      {/*
+        * Suppressed while there is no setup, because the two messages disagree:
+        * "remembered on this device" is only true once there is a place to
+        * remember it against, and `no-setup` is precisely the case where
+        * nothing was written.
+        */}
+      {!isSignedIn && status !== 'no-setup' && (
         <div className="gd-note">
           <Link href="/login">Sign in</Link> to get the call on your phone. Your
           choice is remembered on this device either way.
@@ -117,7 +122,7 @@ export function CallHourCard({ isSignedIn }: { isSignedIn: boolean }) {
         * This is reachable: a new device, signed in, with no cookie and no
         * setup ever mirrored.
         */}
-      {status === 'nothing-to-attach' && (
+      {status === 'no-setup' && (
         <div className="gd-note gd-note--bad">
           Go Daisy does not know where you are yet.{' '}
           <Link href="/start">Set your sports and spots</Link> and the hour will
@@ -125,10 +130,15 @@ export function CallHourCard({ isSignedIn }: { isSignedIn: boolean }) {
         </div>
       )}
 
-      {status === 'failed' && (
-        <div className="gd-note gd-note--bad">
-          That did not save. It is stored on this device, so try again in a
-          moment.
+      {/*
+        * The cookie IS written in this case, so the message must not imply the
+        * choice was lost. `AuthContext` mirrors it on the next session restore,
+        * which for the app is the next launch.
+        */}
+      {status === 'local-only' && (
+        <div className="gd-note">
+          Saved on this device. It will reach your other devices the next time
+          Go Daisy opens.
         </div>
       )}
     </section>
