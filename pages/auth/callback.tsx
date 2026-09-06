@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 import Link from 'next/link';
 import { supabase } from '../../lib/supabase/client';
+import { readSetup } from '@/lib/godaisy/call/setup';
 
 // Unified authentication callback handler for Go Daisy and Findr
 // Supports:
@@ -131,7 +132,22 @@ function getDestination(params: {
     return 'growdaisy://auth/callback';
   }
 
-  const destination = isFindrFlow ? '/findr' : isGrowDaisyFlow ? '/grow' : '/';
+  /*
+   * A GO DAISY SIGN-IN WITH NO SETUP COOKIE IS A FIRST VISIT, NOT A RETURN ONE.
+   *
+   * `/` skips onboarding for anyone with a Supabase session, seeding a default
+   * three sports and a default place instead — right for a returning user on
+   * a new device who already told the old app what they do, wrong for someone
+   * who just signed up from the landing page's "Sign in" link and has never
+   * set anything. Send that person through `/start` once; from then on the
+   * cookie it writes means every future sign-in lands here and goes straight
+   * through.
+   */
+  const destination = isFindrFlow
+    ? '/findr'
+    : isGrowDaisyFlow
+      ? '/grow'
+      : (readSetup() ? '/' : '/start');
   console.log('[OAuth Debug] getDestination result:', { destination, isFindrFlow, isGrowDaisyFlow, app, hostname, origin });
   return destination;
 }
