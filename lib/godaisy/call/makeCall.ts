@@ -12,6 +12,7 @@ import type { Suggestion, WeatherData } from '@/utils/getSuggestionsByDay';
 import type { SupportedLanguageCode } from '@/lib/i18n/translate';
 import { bandFor, isGood, isSevere, type CallBand } from './bands';
 import { bestWindow, partBands, type ForecastParts, type PartName } from './window';
+import { EVENING } from '@/data/activityLight';
 import { promote } from './promote';
 import type { ActivityType } from '@/data/activities/types';
 import { factsFor, nextYesFact, type CallFact } from './facts';
@@ -51,8 +52,13 @@ export interface CallOption {
  * identical pills and an "it holds all day" note are not evidence for
  * reading; they are the shape of a question that was never asked. The
  * bars still exist (`promote` needs them), they are just not shown.
+ *
+ * `EVENING` activities are the exception: `scoreParts` deliberately does NOT
+ * flatten them, because the pub, the cinema and a dance floor really are
+ * shaped across the day, and their bars are the evidence for that shape.
  */
 function isIndoor(activityId: string, activities: ActivityType[]): boolean {
+  if (EVENING.has(activityId)) return false;
   return activities.find((a) => a.id === activityId)?.weatherSensitive === false;
 }
 

@@ -209,7 +209,8 @@ export function scoreParts(
   if (!present.length) return [];
 
   /*
-   * INDOOR ACTIVITIES DO NOT HAVE A BEST TIME OF DAY.
+   * INDOOR ACTIVITIES DO NOT HAVE A BEST TIME OF DAY — UNLESS THE EVENING IS
+   * WHAT THEY ARE FOR.
    *
    * `getSuggestionsByDay`'s indoor branch (`!activity.weatherSensitive`) is a
    * synthetic heuristic built to rank a café or a book against the outdoor
@@ -220,9 +221,14 @@ export function scoreParts(
    * that needs no more light than a lamp. One score, held across every part,
    * so `bestWindow`'s "every part came out the same" rule takes over and no
    * window is ever offered for something that was never weather-bound.
+   *
+   * `EVENING` activities (the pub, the cinema, bowling, a dance floor) are
+   * also `weatherSensitive: false` and must NOT take this shortcut — they are
+   * shaped across the day on purpose (see `EVENING_THING` in `timeOfDay`
+   * below), and flattening them here silently undid that shaping.
    */
   const activity = activities.find((a) => a.id === activityId);
-  if (activity?.weatherSensitive === false) {
+  if (activity?.weatherSensitive === false && !EVENING.has(activityId)) {
     const only = getSuggestionsByDay({
       forecast: [{ date, weather: parts[present[0]] as WeatherData }],
       activities,
