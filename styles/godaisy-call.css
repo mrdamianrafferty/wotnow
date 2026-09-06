@@ -1224,6 +1224,22 @@ section.gd-spot-colophon { padding: 28px var(--call-gutter-app) 40px; }
 }
 .gd-btn--quiet:hover { background: var(--call-panel); color: var(--call-ink-1); }
 
+/*
+ * The four hours, on `/account`.
+ *
+ * Wraps rather than scrolls: there are four and they are short, and a row that
+ * scrolls sideways on a phone hides the last option behind an edge — which for
+ * this control means hiding "the night before", the one that behaves
+ * differently from the other three.
+ */
+.gd-hour-row {
+  display: flex; flex-wrap: wrap; gap: 8px;
+  margin: 12px 0 4px;
+}
+.gd-hour-row .gd-btn { flex: 1 1 auto; }
+/* The clock time, subordinate to the label it explains. */
+.gd-hour-when { opacity: .7; font-weight: 500; }
+
 .gd-chip {
   display: inline-flex; align-items: center; gap: 6px;
   padding: 5px 12px; border-radius: var(--call-r-pill);
