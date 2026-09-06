@@ -27,6 +27,7 @@ import type { SeoLocation } from '@/data/seoLocations';
 import { locationFromSetup, locationFromShare } from '@/lib/godaisy/call/location';
 import bgMap from '@/data/bgMap';
 import { trackEvent } from '@/lib/analytics/events';
+import { shareCall } from '@/lib/godaisy/call/share';
 import { VerdictLockup } from '@/components/call/VerdictLockup';
 import { ScreenChrome } from '@/components/call/ScreenChrome';
 import { AlternatesControl } from '@/components/call/AlternatesControl';
@@ -82,9 +83,6 @@ export interface CallPageProps {
 
 /** Swipe threshold in px. Below this a drag is a tap, not a day turn. */
 const SWIPE_MIN = 48;
-
-/** What `navigator.share` takes. Typed here because the DOM lib's version omits files. */
-interface ShareData { title?: string; text?: string; url?: string; files?: File[] }
 
 export default function CallPage({ slug, place, days, photos, indoor, coords, coastal, error }: CallPageProps) {
   const [dayIndex, setDayIndex] = useState(0);
@@ -156,7 +154,22 @@ export default function CallPage({ slug, place, days, photos, indoor, coords, co
     setSendState('working');
     const origin = typeof window !== 'undefined' ? window.location.origin : 'https://godaisy.io';
     const iso = new Date(day.date * 1000).toISOString().slice(0, 10);
-    const qs = `place=${encodeURIComponent(slug)}&day=${dayIndex}&alt=${altIndex}&date=${iso}`;
+    /*
+     * `a` AND `n` ARE WHAT LET THE RENDERER DRAW A PLACE NOBODY SEEDED.
+     *
+     * The slug carries the coordinates; the activity and the name are the rest
+     * of what a card needs. Passing the activity explicitly also makes the card
+     * agree with the screen by construction, rather than by re-deriving a
+     * ranking from a sports list the URL does not carry.
+     *
+     * These went missing between being written and being committed — #131 added
+     * them to `/api/call/share` and shipped a client that never sent them, so
+     * every share from a place somebody named 404'd exactly as it had before.
+     * The `call_share_failed` event added in #134 is what caught it, on its
+     * first real run, which is the entire argument for having it.
+     */
+    const qs = `place=${encodeURIComponent(slug)}&day=${dayIndex}&alt=${altIndex}&date=${iso}`
+      + `&a=${encodeURIComponent(option.activityId)}&n=${encodeURIComponent(place)}`;
 
     /*
      * A SHORT LINK FOR ANY PLACE, NOT JUST THE SEEDED ONES.
@@ -177,94 +190,118 @@ export default function CallPage({ slug, place, days, photos, indoor, coords, co
       ? `${origin}/${option.activityId.replace(/_/g, '-')}/${spotSlug}?from=share`
       : `${origin}/call?place=${encodeURIComponent(slug)}&a=${encodeURIComponent(option.activityId)}`
         + `&n=${encodeURIComponent(place)}&d=${dayIndex}&from=share`;
-    /** Whether the card made it into the payload. Reported with the send. */
-    let card = false;
+    /*
+     * THE CARD, FETCHED BEFORE ANY SHEET OPENS.
+     *
+     * `res.ok`, because a 404 has a body too: `.text()` and `.blob()` both
+     * resolve happily on an error response, so a broken renderer did not throw
+     * — it returned `{"error":"Unknown place…"}` and that string became the
+     * message, while the same 46 bytes became `the-call.png`.
+     */
+    let card: Blob | undefined;
+    let text: string;
     try {
-      /*
-       * `res.ok`, because a 404 has a body too.
-       *
-       * `.text()` and `.blob()` both resolve happily on an error response, so a
-       * broken renderer did not throw — it returned `{"error":"Unknown place…"}`
-       * and that string became the message, while the same 46 bytes became
-       * `the-call.png`. A share that cannot be built has to fail loudly enough
-       * to fall through to the link on its own.
-       */
       const textRes = await fetch(`/api/call/share?${qs}&crop=text`);
       if (!textRes.ok) throw new Error(`share text ${textRes.status}`);
-      const text = await textRes.text();
-      const payload: ShareData = { title: 'Go Daisy', text, url: link };
-      // The clipboard has one field, so the link has to be IN the sentence. The
-      // share sheet has two, and every target composes them itself.
-      const flat = `${text}\n${link}`;
-
-      if (navigator.canShare) {
-        try {
-          const cardRes = await fetch(`/api/call/share?${qs}&crop=card`);
-          if (!cardRes.ok) throw new Error(`share card ${cardRes.status}`);
-          const blob = await cardRes.blob();
-          // And that what came back is an image, so an error page served as 200
-          // by a proxy cannot become a PNG either.
-          if (!blob.type.startsWith('image/')) throw new Error(`share card ${blob.type}`);
-          const file = new File([blob], 'the-call.png', { type: 'image/png' });
-          if (navigator.canShare({ files: [file] })) payload.files = [file];
-          card = true;
-        } catch (e) {
-          // No card is a reason to send words, not a reason to send nothing —
-          // but it IS worth counting. A 404 from the renderer is exactly what
-          // shipped for months, and a number would have found it long before a
-          // screenshot did.
-          trackEvent('call_share_failed', {
-            activity_id: option.activityId,
-            stage: 'card',
-            reason: e instanceof Error ? e.message : 'unknown',
-          });
-        }
-      }
-
-      let method: 'share_sheet' | 'clipboard';
-      if (typeof navigator.share === 'function') {
-        await navigator.share(payload);
-        setSendState('sent');
-        method = 'share_sheet';
-      } else {
-        await navigator.clipboard.writeText(flat);
-        setSendState('copied');
-        method = 'clipboard';
-      }
-      /*
-       * THE ONE NUMBER THE REDESIGN IS ABOUT.
-       *
-       * "Phases 0-3 exist to find out whether people send these cards", and
-       * nothing counted one — the migration plan carried "nothing counts a
-       * share" as open for the life of the project, so the central bet had no
-       * evidence either way.
-       *
-       * Counted after the await, so a share sheet the person opened and then
-       * dismissed does not count as a send: `navigator.share` rejects on
-       * cancel and that lands in the catch below.
-       */
-      trackEvent('call_shared', {
+      text = await textRes.text();
+    } catch (e) {
+      trackEvent('call_share_failed', {
         activity_id: option.activityId,
-        day_index: dayIndex,
-        band: option.band,
-        // Whether the card made it in, which is the difference between a
-        // message somebody looks at and a line of text.
-        with_card: card,
-        method,
-        // A seeded town or a place they named — the two have very different
-        // link shapes, and only one of them was ever tested.
-        place_kind: spotSlug ? 'spot_page' : 'own_place',
+        stage: 'text',
+        reason: e instanceof Error ? e.message : 'unknown',
       });
-    } catch {
-      // A cancelled share sheet lands here too, which is not a failure.
       setSendState('idle');
       return;
     }
+
+    try {
+      const cardRes = await fetch(`/api/call/share?${qs}&crop=card`);
+      if (!cardRes.ok) throw new Error(`share card ${cardRes.status}`);
+      const blob = await cardRes.blob();
+      // And that what came back is an image, so an error page served as 200 by
+      // a proxy cannot become a PNG either.
+      if (!blob.type.startsWith('image/')) throw new Error(`share card ${blob.type}`);
+      card = blob;
+    } catch (e) {
+      // No card is a reason to send words, not a reason to send nothing — but
+      // it IS worth counting. A 404 from the renderer is exactly what shipped
+      // for months, and a number would have found it before a screenshot did.
+      trackEvent('call_share_failed', {
+        activity_id: option.activityId,
+        stage: 'card',
+        reason: e instanceof Error ? e.message : 'unknown',
+      });
+    }
+
+    /*
+     * ONE CALL, FOUR PLATFORMS.
+     *
+     * `shareCall` picks the native sheet inside the app and the Web Share API
+     * outside it, and falls to the clipboard where neither exists. This used to
+     * call `navigator.share` directly, which does not exist in a Capacitor
+     * WebView — so on iOS and Android, the two places Go Daisy ships, the one
+     * button the redesign is about silently copied a link instead.
+     */
+    const result = await shareCall({
+      text,
+      url: link,
+      ...(card ? { card } : {}),
+      title: 'Go Daisy',
+    });
+
+    if (result.outcome === 'cancelled') {
+      // A sheet somebody closed is a decision, not an error. No label, no count.
+      setSendState('idle');
+      return;
+    }
+
+    if (result.outcome === 'failed') {
+      trackEvent('call_share_failed', {
+        activity_id: option.activityId,
+        stage: 'send',
+        reason: result.reason ?? 'unknown',
+      });
+      setSendState('idle');
+      return;
+    }
+
+    setSendState(result.outcome === 'shared' ? 'sent' : 'copied');
+
+    /*
+     * THE ONE NUMBER THE REDESIGN IS ABOUT.
+     *
+     * "Phases 0-3 exist to find out whether people send these cards", and
+     * nothing counted one for the life of the project, so the central bet had
+     * no evidence either way.
+     */
+    trackEvent('call_shared', {
+      activity_id: option.activityId,
+      day_index: dayIndex,
+      band: option.band,
+      with_card: result.withCard,
+      method: result.method,
+      // A seeded town or a place they named — the two have very different link
+      // shapes, and only one of them was ever tested.
+      place_kind: spotSlug ? 'spot_page' : 'own_place',
+    });
+
     setTimeout(() => setSendState('idle'), 2400);
   };
 
   return (
-    <Shell title={`${option.verdict.verdict.replace(/\.$/, '')} — Go Daisy`}>
+    <Shell
+      title={`${option.verdict.verdict.replace(/\.$/, '')} — Go Daisy`}
+      preview={{
+        slug,
+        place,
+        activityId: option.activityId,
+        verdict: option.verdict.verdict,
+        reason: option.verdict.reason ?? '',
+        date: day.date,
+        dayIndex,
+        altIndex,
+      }}
+    >
       <main
         className="call-screen"
         onTouchStart={(e) => setTouchX(e.touches[0]?.clientX ?? null)}
@@ -324,8 +361,24 @@ export default function CallPage({ slug, place, days, photos, indoor, coords, co
           {day.isNoDay && <IndoorPrompt options={indoor} />}
 
           <div className="call-actions">
-            <button type="button" className="call-btn" onClick={send} disabled={sendState === 'working'}>
-              {sendState === 'sent' ? 'Sent' : sendState === 'copied' ? 'Copied' : 'Send out the call'}
+            {/* `aria-live` because the label is the only confirmation there is.
+                "Copied" replaces "Send out the call" silently otherwise, and a
+                screen reader user is left not knowing whether anything
+                happened — on the one button the app exists for. */}
+            <button
+              type="button"
+              className="call-btn"
+              onClick={send}
+              disabled={sendState === 'working'}
+              aria-live="polite"
+            >
+              {sendState === 'working'
+                ? 'Sending…'
+                : sendState === 'sent'
+                  ? 'Sent'
+                  : sendState === 'copied'
+                    ? 'Copied'
+                    : 'Send out the call'}
             </button>
             {hasAlternates && (
               <AlternatesControl
@@ -374,13 +427,83 @@ export default function CallPage({ slug, place, days, photos, indoor, coords, co
   );
 }
 
-function Shell({ title, children }: { title: string; children: React.ReactNode }) {
+/**
+ * A shared call needs to unfurl.
+ *
+ * The spot pages have carried og tags since phase 6, and this page had none —
+ * title, `noindex`, viewport, nothing else. That was fine while the shared link
+ * WAS a spot page. It stopped being fine when the link became
+ * `/call?place=setup:…` for everybody who typed their own town in onboarding,
+ * which is everybody who onboards: the most common share in the product pasted
+ * into WhatsApp, iMessage or Slack as a bare blue URL with no picture, no
+ * headline and nothing to tap for.
+ *
+ * `noindex` stays and does not conflict. Indexing is what a crawler stores;
+ * unfurling is what a messenger draws. A personal forecast should not be in
+ * Google and should absolutely have a preview.
+ *
+ * The image is the same renderer the share sheet attaches, at the `og` crop —
+ * so the card in the message and the card behind the link are the same picture
+ * of the same day, rather than two things that agree by coincidence.
+ */
+interface ShellPreview {
+  slug: string;
+  place: string;
+  activityId: string;
+  verdict: string;
+  reason: string;
+  date: number;
+  dayIndex: number;
+  altIndex: number;
+}
+
+function Shell({
+  title, preview, children,
+}: {
+  title: string;
+  preview?: ShellPreview;
+  children: React.ReactNode;
+}) {
+  const origin = 'https://godaisy.io';
+  let og: { url: string; image: string; description: string } | null = null;
+  if (preview) {
+    const iso = new Date(preview.date * 1000).toISOString().slice(0, 10);
+    const q = `place=${encodeURIComponent(preview.slug)}&day=${preview.dayIndex}`
+      + `&alt=${preview.altIndex}&date=${iso}`
+      + `&a=${encodeURIComponent(preview.activityId)}&n=${encodeURIComponent(preview.place)}`;
+    og = {
+      url: `${origin}/call?${q}&from=share`,
+      image: `${origin}/api/call/share?${q}&crop=og`,
+      // The verdict already ends in a full stop and already names the day.
+      description: [preview.verdict, preview.reason].filter(Boolean).join(' '),
+    };
+  }
+
   return (
     <>
       <Head>
         <title>{title}</title>
         <meta name="robots" content="noindex" />
         <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+        {og && (
+          <>
+            <meta property="og:type" content="website" />
+            <meta property="og:site_name" content="Go Daisy" />
+            <meta property="og:title" content={`${title.replace(' — Go Daisy', '')} in ${preview!.place}`} />
+            <meta property="og:description" content={og.description} />
+            <meta property="og:url" content={og.url} />
+            <meta property="og:image" content={og.image} />
+            <meta property="og:image:width" content="1200" />
+            <meta property="og:image:height" content="630" />
+            <meta property="og:image:alt" content={og.description} />
+            {/* `summary_large_image` is what turns a thumbnail into the card.
+                Without it the picture is a 120px square beside the text. */}
+            <meta name="twitter:card" content="summary_large_image" />
+            <meta name="twitter:title" content={`${title.replace(' — Go Daisy', '')} in ${preview!.place}`} />
+            <meta name="twitter:description" content={og.description} />
+            <meta name="twitter:image" content={og.image} />
+          </>
+        )}
       </Head>
       {children}
     </>
