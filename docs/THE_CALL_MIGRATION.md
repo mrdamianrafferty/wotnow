@@ -1,6 +1,6 @@
 # Go Daisy → The Call · migration plan
 
-**Plan dated:** 5 September 2026 · **Status measured at:** merge of #134
+**Plan dated:** 5 September 2026 · **Status measured at:** merge of #135
 
 > **All seven phases have shipped.** The status table below is what actually
 > happened, kept because the reasoning in the rest of the document is still the
@@ -66,13 +66,19 @@ Four pieces of work that were not phases and turned out to be load-bearing:
   weather, astronomy, tides — are a different case and may want one. The app
   icon badge was removed on the same reasoning
   ([#133](https://github.com/mrdamianrafferty/wotnow/pull/133)).
-- `app/settings` — unlinked, mostly a duplicate of `/account`, and still in the
-  old design inside a 1,097-line form. It cannot simply be archived: it is the
-  only place a signed-in person can change their password, and password auth is
-  live. Its chrome is the new one; the form is not.
 - The "before". Nothing counted a share until #134, so the bet has no history —
   only a future. D7 against the old dashboard is gone too, now that `/` is the
   call.
+
+### Closed in #135
+
+- **`app/settings`.** The plan was to redesign it; reading it changed the job.
+  Four of its six sections already existed on `/account` — name, locations,
+  interests, deletion — so restyling 1,097 lines would have left two pages
+  editing the same four things. The password section, the one part `/account`
+  lacked, moved there instead (timeouts included, because `updateUser` hangs
+  rather than rejecting on a dead connection). `/settings` is a 308 to
+  `/account` and the form is archived.
 
 ### Closed in #134
 
