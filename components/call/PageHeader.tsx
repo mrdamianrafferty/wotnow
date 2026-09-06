@@ -1,3 +1,13 @@
+/*
+ * `'use client'` because `app/settings` is a React Server Component.
+ *
+ * This lives in `components/`, which both routers import from, and the Pages
+ * Router does not need the directive — it is a no-op there. The App Router
+ * does: this holds `useState` for the menu, and importing it into a server
+ * component without the directive is a build error rather than a warning.
+ */
+'use client';
+
 /**
  * The slim header for every page that is not the call.
  *

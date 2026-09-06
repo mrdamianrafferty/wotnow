@@ -1,6 +1,6 @@
 # Go Daisy → The Call · migration plan
 
-**Plan dated:** 5 September 2026 · **Status measured at:** merge of #133
+**Plan dated:** 5 September 2026 · **Status measured at:** merge of #134
 
 > **All seven phases have shipped.** The status table below is what actually
 > happened, kept because the reasoning in the rest of the document is still the
@@ -61,21 +61,33 @@ Four pieces of work that were not phases and turned out to be load-bearing:
 
 ### Still open
 
-- `LandingPage` still serves logged-out visitors and Googlebot. Restyled, not
-  replaced — the cookie fork is narrower but not gone.
-- `BottomNav` is imported by nothing since `/activities` was archived.
-- `/interests` and `/onboarding` are now orphaned and can be archived. Not done
-  here: deleting two live-looking screens is its own change.
-- Measurement. Nothing counts a share, and the "before" for anything `/call`
-  changed is unrecoverable. D7 against the old dashboard is also gone now that
-  `/` is the call.
 - A notification history. Deliberately not built: the daily call's notification
   IS the message, and tapping it opens the call. The event alerts — extreme
   weather, astronomy, tides — are a different case and may want one. The app
   icon badge was removed on the same reasoning
   ([#133](https://github.com/mrdamianrafferty/wotnow/pull/133)).
-- The spot pages hold a 740px measure for body text where the documents hold
-  68ch. Wide for reading, and worth a decision rather than a drift.
+- `app/settings` — unlinked, mostly a duplicate of `/account`, and still in the
+  old design inside a 1,097-line form. It cannot simply be archived: it is the
+  only place a signed-in person can change their password, and password auth is
+  live. Its chrome is the new one; the form is not.
+- The "before". Nothing counted a share until #134, so the bet has no history —
+  only a future. D7 against the old dashboard is gone too, now that `/` is the
+  call.
+
+### Closed in #134
+
+- **`LandingPage`'s fork.** It keyed on a Supabase session, which predated
+  onboarding being account-free — so somebody who picked their sports, named
+  their town and set their hour came back to `/` and was pitched at a product
+  they had already set up. It now asks about the setup cookie too. A stranger
+  still gets the landing page, which is correct: it is the indexed homepage.
+- **`BottomNav`, `/interests`, `/onboarding`** — archived under `archive/code/`.
+- **Share measurement** — `call_shared`, `call_share_failed` and
+  `call_alternate_viewed`. The failure event is the one that matters most: a
+  404 from the share renderer shipped for months and a number would have found
+  it long before a screenshot did.
+- **The spot pages' measure** — 68ch, matching the documents. 760px is about 95
+  characters a line where comfortable reading tops out near 75.
 
 ### Two preconditions the build ran past
 

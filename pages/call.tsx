@@ -26,6 +26,7 @@ import { SEO_LOCATIONS } from '@/data/seoLocations';
 import type { SeoLocation } from '@/data/seoLocations';
 import { locationFromSetup, locationFromShare } from '@/lib/godaisy/call/location';
 import bgMap from '@/data/bgMap';
+import { trackEvent } from '@/lib/analytics/events';
 import { VerdictLockup } from '@/components/call/VerdictLockup';
 import { ScreenChrome } from '@/components/call/ScreenChrome';
 import { AlternatesControl } from '@/components/call/AlternatesControl';
@@ -176,6 +177,8 @@ export default function CallPage({ slug, place, days, photos, indoor, coords, co
       ? `${origin}/${option.activityId.replace(/_/g, '-')}/${spotSlug}?from=share`
       : `${origin}/call?place=${encodeURIComponent(slug)}&a=${encodeURIComponent(option.activityId)}`
         + `&n=${encodeURIComponent(place)}&d=${dayIndex}&from=share`;
+    /** Whether the card made it into the payload. Reported with the send. */
+    let card = false;
     try {
       /*
        * `res.ok`, because a 404 has a body too.
@@ -204,18 +207,54 @@ export default function CallPage({ slug, place, days, photos, indoor, coords, co
           if (!blob.type.startsWith('image/')) throw new Error(`share card ${blob.type}`);
           const file = new File([blob], 'the-call.png', { type: 'image/png' });
           if (navigator.canShare({ files: [file] })) payload.files = [file];
-        } catch {
-          // No card is a reason to send words, not a reason to send nothing.
+          card = true;
+        } catch (e) {
+          // No card is a reason to send words, not a reason to send nothing —
+          // but it IS worth counting. A 404 from the renderer is exactly what
+          // shipped for months, and a number would have found it long before a
+          // screenshot did.
+          trackEvent('call_share_failed', {
+            activity_id: option.activityId,
+            stage: 'card',
+            reason: e instanceof Error ? e.message : 'unknown',
+          });
         }
       }
 
-      if (navigator.share) {
+      let method: 'share_sheet' | 'clipboard';
+      if (typeof navigator.share === 'function') {
         await navigator.share(payload);
         setSendState('sent');
+        method = 'share_sheet';
       } else {
         await navigator.clipboard.writeText(flat);
         setSendState('copied');
+        method = 'clipboard';
       }
+      /*
+       * THE ONE NUMBER THE REDESIGN IS ABOUT.
+       *
+       * "Phases 0-3 exist to find out whether people send these cards", and
+       * nothing counted one — the migration plan carried "nothing counts a
+       * share" as open for the life of the project, so the central bet had no
+       * evidence either way.
+       *
+       * Counted after the await, so a share sheet the person opened and then
+       * dismissed does not count as a send: `navigator.share` rejects on
+       * cancel and that lands in the catch below.
+       */
+      trackEvent('call_shared', {
+        activity_id: option.activityId,
+        day_index: dayIndex,
+        band: option.band,
+        // Whether the card made it in, which is the difference between a
+        // message somebody looks at and a line of text.
+        with_card: card,
+        method,
+        // A seeded town or a place they named — the two have very different
+        // link shapes, and only one of them was ever tested.
+        place_kind: spotSlug ? 'spot_page' : 'own_place',
+      });
     } catch {
       // A cancelled share sheet lands here too, which is not a failure.
       setSendState('idle');
@@ -290,7 +329,19 @@ export default function CallPage({ slug, place, days, photos, indoor, coords, co
             </button>
             {hasAlternates && (
               <AlternatesControl
-                onCycle={() => setAltIndex((i) => (i + 1) % options.length)}
+                onCycle={() => setAltIndex((i) => {
+                  const next = (i + 1) % options.length;
+                  // Whether the second answer gets looked at is the other half
+                  // of the sharing bet: a day with two good things on it is
+                  // worth more than a day with one, and nothing measured it.
+                  trackEvent('call_alternate_viewed', {
+                    activity_id: options[next]?.activityId ?? '',
+                    position: next,
+                    of: options.length,
+                    day_index: dayIndex,
+                  });
+                  return next;
+                })}
                 index={altIndex}
                 total={options.length}
                 label="Another option for today"

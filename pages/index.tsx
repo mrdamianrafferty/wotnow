@@ -7,8 +7,9 @@
  * it is in git, one `git show` from this commit's parent away, and keeping a
  * dead copy in the tree is how a migration stays half-done for a year.
  *
- * WHAT IS NOT SWAPPED, AND WHY. Unauthenticated web visitors and Googlebot
- * still get `LandingPage`. That page is the indexed homepage and carries the
+ * WHAT IS NOT SWAPPED, AND WHY. A web visitor with no account AND no setup —
+ * a stranger, and Googlebot — still gets `LandingPage`. That page is the
+ * indexed homepage and carries the
  * marketing copy; replacing it with a personal forecast is a decision about
  * search and conversion, not a side effect of finishing a migration — and the
  * redesign has no marketing landing built to replace it with yet. The door to
@@ -24,6 +25,7 @@
 
 import type { GetServerSideProps, GetServerSidePropsContext } from 'next';
 import LandingPage from '../components/LandingPage';
+import { setupFromCookieHeader } from '@/lib/godaisy/call/setup';
 import CallPage, {
   getServerSideProps as callServerSideProps,
   type CallPageProps,
@@ -72,7 +74,22 @@ export const getServerSideProps: GetServerSideProps = async (ctx: GetServerSideP
   const cookieHeader = (req.headers.cookie || '').toString();
   const hasSupabaseSession = /sb-[^=]+-auth-token(\.\d+)?=/i.test(cookieHeader);
 
-  const showLanding = !isCapacitor && !hasSupabaseSession;
+  /*
+   * A SETUP COUNTS AS MUCH AS AN ACCOUNT.
+   *
+   * This asked two questions — native shell, Supabase session — and both
+   * predate onboarding being account-free. `/start` writes
+   * `godaisy.call.setup` and no session, so somebody who picked their sports,
+   * named their town and set their hour came back to `/` and was shown the
+   * marketing page again, pitched at a product they had already set up. The
+   * call was still at `/call`, which is not a URL anyone types.
+   *
+   * The cookie is the same one `/call` reads to decide what to show, so the
+   * home page and the call now agree about who has arrived.
+   */
+  const hasSetup = Boolean(setupFromCookieHeader(cookieHeader));
+
+  const showLanding = !isCapacitor && !hasSupabaseSession && !hasSetup;
 
   // The homepage varies by auth state (marketing landing for anonymous visitors,
   // the app for signed-in / native users), but Vercel's CDN keys `/` by path
