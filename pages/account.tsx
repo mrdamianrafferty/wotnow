@@ -13,6 +13,7 @@ import { useLanguage } from '@/context/LanguageContext';
 import { getSupportedLanguages } from '@/lib/user/language';
 import { useGoDaisyPushNotifications } from '@/hooks/useGoDaisyPushNotifications';
 import { CallHourCard } from '@/components/call/CallHourCard';
+import { saveCallPlace, saveCallCoastal } from '@/lib/godaisy/call/sync';
 import { GODAISY_TIP_PRODUCTS } from '@/lib/godaisy/tipProducts';
 import type { TipPackage } from '@/lib/grow/revenueCat';
 
@@ -219,11 +220,31 @@ export default function AccountPage() {
     }));
   };
 
+  /*
+   * TWO STORES, AND UNTIL NOW ONLY ONE OF THEM MOVED.
+   *
+   * `preferences.locations` is what `/weather`, `/activities` and this page
+   * read. The daily call reads the setup cookie, mirrored to Supabase. Writing
+   * only the first meant changing your home location moved every screen except
+   * the one that arrives on your phone: the call kept naming the place you had
+   * just told the app you had left, with nothing on screen to explain the
+   * disagreement.
+   *
+   * `mirrorToPreferences` in `lib/godaisy/call/setup.ts` already pushes the
+   * setup INTO preferences when onboarding finishes. These are the return leg.
+   *
+   * Not awaited, and failures are not surfaced: the location has already been
+   * saved where this page displays it from, and `saveCallPlace` writes the
+   * cookie before it ever touches the network, so the call is corrected on this
+   * device even if the mirror does not land. `AuthContext` retries it on the
+   * next session restore.
+   */
   const updateHomeLocation = (loc: { name: string; lat: number; lon: number }) => {
     setPreferences(prev => {
       const otherLocations = prev.locations.filter(l => l.type !== 'home');
       return { ...prev, locations: [...otherLocations, { ...loc, type: 'home' as const }] };
     });
+    void saveCallPlace(loc);
   };
 
   const updateCoastalLocation = (loc: { name: string; lat: number; lon: number }) => {
@@ -231,6 +252,7 @@ export default function AccountPage() {
       const otherLocations = prev.locations.filter(l => l.type !== 'coastal');
       return { ...prev, locations: [...otherLocations, { ...loc, type: 'coastal' as const }] };
     });
+    void saveCallCoastal(loc);
   };
 
   const saveDisplayName = async () => {
