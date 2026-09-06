@@ -43,6 +43,19 @@ export interface CallOption {
   parts?: Array<{ name: PartName; band: CallBand }>;
 }
 
+/**
+ * Was this always going to read the same in every part?
+ *
+ * `scoreParts` now holds a non-weather-sensitive activity's band uniform
+ * across morning/afternoon/evening on purpose — see the comment there. Three
+ * identical pills and an "it holds all day" note are not evidence for
+ * reading; they are the shape of a question that was never asked. The
+ * bars still exist (`promote` needs them), they are just not shown.
+ */
+function isIndoor(activityId: string, activities: ActivityType[]): boolean {
+  return activities.find((a) => a.id === activityId)?.weatherSensitive === false;
+}
+
 export interface Call {
   /** UNIX seconds, as the forecast carries it. */
   date: number;
@@ -192,7 +205,7 @@ export function makeCall(input: MakeCallInput): Call {
       score: lift?.score ?? s.score,
       band,
       ...(weighed.length ? { weighed } : {}),
-      ...(bars.length ? { parts: bars } : {}),
+      ...(bars.length && !isIndoor(s.activityId, activities) ? { parts: bars } : {}),
       verdict: makeVerdict({
         suggestion: lift ? { ...s, score: lift.score, vetoed: false } : s,
         activityName,

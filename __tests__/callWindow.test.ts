@@ -59,6 +59,19 @@ describe('the window', () => {
     // to go and a person can still act on the earlier one.
     expect(w?.parts).toEqual(['morning']);
   });
+
+  /*
+   * `reading` is `weatherSensitive: false` and is scored by a synthetic
+   * heuristic built to rank it against outdoor alternatives, not a real
+   * claim about when in the day it suits — it produced "Best before six."
+   * on live because the heuristic reacts to each part's own weather. Reading
+   * is not limited to one time of day, in fine weather or in foul.
+   */
+  it('never gives an indoor, non-weather-sensitive activity a window', () => {
+    expect(bestWindow('reading', { morning: fine, afternoon: fine, evening: foul }, DATE, ACTIVITIES, NOW)).toBeUndefined();
+    expect(bestWindow('reading', { morning: foul, afternoon: fine, evening: fine }, DATE, ACTIVITIES, NOW)).toBeUndefined();
+    expect(bestWindow('reading', { morning: foul, afternoon: foul, evening: fine }, DATE, ACTIVITIES, NOW)).toBeUndefined();
+  });
 });
 
 describe('the window, as a sentence', () => {
