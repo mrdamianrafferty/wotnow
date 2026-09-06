@@ -218,12 +218,29 @@ async function sendToNativeTokens(
   const errors: string[] = [];
 
   try {
-    // Filter to Go Daisy tokens or legacy tokens (null bundle_id)
+    /*
+     * Go Daisy tokens ONLY — a null bundle_id is not a Go Daisy token.
+     *
+     * This used to claim `bundle_id IS NULL` as well, on the reasoning that
+     * such rows are legacy. They are legacy, but they are legacy from ALL
+     * THREE apps: the column was added by
+     * `20260226000001_add_bundle_id_to_push_tokens.sql`, whose own header
+     * records that before it, `UNIQUE(user_id, platform)` let a user hold only
+     * one iOS token across Go Daisy, Findr and Grow Daisy — and that the
+     * symptom was `DeviceTokenNotForTopic`. Pushing those same rows with topic
+     * `io.godaisy.app` reintroduces exactly that error, and because
+     * `sendPushNotification.ts` deletes a token whose send fails, a Findr user's
+     * working registration would be destroyed by a Go Daisy send.
+     *
+     * There is one such row in production, last seen 2026-02-18. Unclaimed is
+     * the correct treatment: it will be replaced the next time that device
+     * opens whichever app it belongs to.
+     */
     const { data: tokens } = await supabase
       .from('user_push_tokens')
       .select('token, platform')
       .eq('user_id', targetUserId)
-      .or('bundle_id.eq.io.godaisy.app,bundle_id.is.null');
+      .eq('bundle_id', 'io.godaisy.app');
 
     if (!tokens || tokens.length === 0) {
       return { sent: 0, failed: 0, errors: [] };

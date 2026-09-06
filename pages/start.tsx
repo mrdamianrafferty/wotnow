@@ -31,6 +31,7 @@ import {
   writeSetup, readSetup, mirrorToPreferences, DEFAULT_SPORTS,
   type CallSetup, type SetupPlace,
 } from '@/lib/godaisy/call/setup';
+import { syncSetupToServer } from '@/lib/godaisy/call/sync';
 import {
   SportsStep, SpotsStep, HourStep, SEED_TARGET,
   type SportOption, type PlaceSuggestion,
@@ -217,16 +218,59 @@ export default function StartPage() {
     };
     writeSetup(setup);
     mirrorToPreferences(setup);
+    /*
+     * And, for anyone signed in, to the server — the only copy the daily call's
+     * cron can read. Deliberately NOT awaited: the cookie is what `/call`
+     * renders from and it is already written, so making somebody wait on a
+     * network round-trip before they see the screen they just built would be
+     * paying for a store that screen does not read. `syncSetupToServer` never
+     * throws, and no-ops when signed out.
+     */
+    void syncSetupToServer(setup);
     // `replace`, not `push`: the back button from the call should not land on
     // the last screen of a flow that is already finished.
     router.replace('/call');
   }, [place, sports, coastal, hour, router]);
 
+  /*
+   * ON A NATIVE BUILD THE ANSWER IS ALREADY YES, AND THE SCREEN SHOULD SAY SO.
+   *
+   * `useGoDaisyPushNotifications` gates on `serviceWorker` and `PushManager`,
+   * which WKWebView does not have — so inside the iOS app `isSupported` is
+   * false, `pushState` is `unsupported`, and the confirmation block never
+   * renders. That was harmless while nothing sent the call. Now that the cron
+   * does, it means the one audience whose notification definitely works is the
+   * only audience never told it is set.
+   *
+   * The native app does not need the web path at all: `AppDelegate.swift`
+   * requests permission and registers for remote notifications at launch, and
+   * `lib/capacitor/pushNotifications.ts` stores the resulting APNs token. The
+   * presence of that token is not a proxy for permission — it IS the thing that
+   * decides whether we can reach this phone, which is what the sentence claims.
+   */
+  const [nativePushReady, setNativePushReady] = useState(false);
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const { Capacitor } = await import('@capacitor/core');
+        if (!Capacitor.isNativePlatform()) return;
+        const { getPushToken } = await import('@/lib/capacitor/pushNotifications');
+        if (!cancelled) setNativePushReady(Boolean(getPushToken()));
+      } catch {
+        // Web, or the plugin is absent. The web path below is the right answer.
+      }
+    })();
+    return () => { cancelled = true; };
+  }, []);
+
   const pushState = pushWorking
     ? 'working'
-    : !push.isSupported
-      ? 'unsupported'
-      : push.permission;
+    : nativePushReady
+      ? 'granted'
+      : !push.isSupported
+        ? 'unsupported'
+        : push.permission;
 
   return (
     <>
