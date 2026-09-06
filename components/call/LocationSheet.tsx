@@ -46,21 +46,22 @@ export function LocationSheet({ current, onClose }: { current: string; onClose: 
     setSearching(true);
     const t = setTimeout(async () => {
       try {
-        const res = await fetch(
-          `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(q)}&count=8&language=en&format=json`,
-        );
-        const j = (await res.json()) as {
-          results?: Array<{ name: string; latitude: number; longitude: number; country?: string; admin1?: string }>;
-        };
+        // `/api/geocode` — a same-origin server proxy, not the geocoder
+        // itself. The CSP's `connect-src` has never allowed the browser to
+        // reach `geocoding-api.open-meteo.com` directly, so calling it from
+        // here silently failed every search and always fell through to
+        // "Nothing by that name." — for every query, not just obscure ones.
+        const res = await fetch(`/api/geocode?q=${encodeURIComponent(q)}&limit=8`);
+        const j = (await res.json()) as Array<{ name: string; lat: number; lon: number; country?: string; state?: string }>;
         // Dropped if a newer keystroke has been typed since: a slow answer for
         // "lon" landing after a fast one for "london" flips the list back, and
         // that reads as broken rather than slow.
         if (mine !== seq.current) return;
-        setResults((j.results ?? []).map((r) => ({
+        setResults((Array.isArray(j) ? j : []).map((r) => ({
           name: r.name,
-          lat: r.latitude,
-          lon: r.longitude,
-          detail: [r.admin1, r.country].filter(Boolean).join(', '),
+          lat: r.lat,
+          lon: r.lon,
+          detail: [r.state, r.country].filter(Boolean).join(', '),
         })));
       } catch {
         if (mine === seq.current) setResults([]);

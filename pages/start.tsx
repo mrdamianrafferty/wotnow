@@ -52,10 +52,10 @@ const chipLabel = (name: string) =>
 
 interface GeoResult {
   name: string;
-  latitude: number;
-  longitude: number;
+  lat: number;
+  lon: number;
   country?: string;
-  admin1?: string;
+  state?: string;
 }
 
 export default function StartPage() {
@@ -148,17 +148,20 @@ export default function StartPage() {
     setSearching(true);
     const t = setTimeout(async () => {
       try {
-        const res = await fetch(
-          `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(q)}&count=8&language=en&format=json`,
-        );
-        const j = (await res.json()) as { results?: GeoResult[] };
+        // `/api/geocode` — a same-origin server proxy. The CSP's
+        // `connect-src` has never allowed the browser to reach
+        // `geocoding-api.open-meteo.com` directly, so calling it from here
+        // silently failed every search, for every query, not just obscure
+        // ones — the onboarding "Spots" step could never find anywhere.
+        const res = await fetch(`/api/geocode?q=${encodeURIComponent(q)}&limit=8`);
+        const j = (await res.json()) as GeoResult[];
         if (mine !== seq.current) return;
         setSuggestions(
-          (j.results ?? []).map((r) => ({
+          (Array.isArray(j) ? j : []).map((r) => ({
             name: r.name,
-            lat: r.latitude,
-            lon: r.longitude,
-            detail: [r.admin1, r.country].filter(Boolean).join(', '),
+            lat: r.lat,
+            lon: r.lon,
+            detail: [r.state, r.country].filter(Boolean).join(', '),
           })),
         );
       } catch {
