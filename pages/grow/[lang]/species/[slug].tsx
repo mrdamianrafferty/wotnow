@@ -25,6 +25,7 @@ import {
   PlantJsonLd,
 } from '@/components/JsonLd';
 import { isValidGrowLang, type GrowPathCode } from '@/lib/grow/i18n';
+import { isBotRequest } from '@/lib/http/is-bot';
 import { getSupabaseServerClient } from '@/lib/supabase/serverClient';
 import { serializePlantSpecies, PLANT_SPECIES_LANGUAGE_FIELDS, type PlantSpeciesRow } from '@/lib/grow/species';
 import type { PlantSpecies } from '@/lib/grow/species';
@@ -32,6 +33,13 @@ import { RelatedSpeciesCard, type RelatedSpeciesEntry } from '@/components/grow/
 
 // We import autoTranslate dynamically so Next.js doesn't bundle it on the client.
 // It throws if called client-side, so we keep it behind a server-side guard.
+/** Cache-only sibling of `translateText`, for requests that are not people. */
+async function translateFromCacheOnly(text: string, lang: string): Promise<string | null> {
+  if (!text) return null;
+  const mod = await import('@/lib/translation/autoTranslate');
+  return await mod.translateFromCacheOnly(text, lang);
+}
+
 async function translateText(text: string | null, lang: string): Promise<string | null> {
   if (!text || lang === 'en') return text;
   try {
@@ -42,14 +50,24 @@ async function translateText(text: string | null, lang: string): Promise<string 
   }
 }
 
-type LocalisedSpeciesProps = {
-  species: PlantSpecies;
-  lang: GrowPathCode;
-  translatedName: string;
-  translatedDescription: string | null;
-  translatedAdvice: string | null;
-  relatedSpecies: RelatedSpeciesEntry[];
-};
+type LocalisedSpeciesProps =
+  | {
+      species: PlantSpecies;
+      lang: GrowPathCode;
+      translatedName: string;
+      translatedDescription: string | null;
+      translatedAdvice: string | null;
+      relatedSpecies: RelatedSpeciesEntry[];
+      unavailable?: false;
+    }
+  /*
+   * The 503 shape. A page still has to render — `getServerSideProps` sets the
+   * status, but Next renders the component regardless, and one that throws on
+   * missing props turns the 503 into a 500. A 500 tells a crawler the site is
+   * broken; a 503 with `Retry-After` tells it to come back, which is the whole
+   * point.
+   */
+  | { unavailable: true; lang: GrowPathCode };
 
 const LANG_TO_NAME_COLUMN: Partial<Record<GrowPathCode, string>> = Object.fromEntries(
   Object.entries(PLANT_SPECIES_LANGUAGE_FIELDS).map(([column, lang]) => [lang, column])
@@ -125,11 +143,67 @@ export const getServerSideProps: GetServerSideProps<LocalisedSpeciesProps> = asy
   // Many plants already have curated translations in the table.
   const dbName = species.translations[lang as keyof typeof species.translations] ?? null;
 
-  const [translatedName, translatedDescription, translatedAdvice] = await Promise.all([
-    dbName ? Promise.resolve(dbName) : translateText(species.name, lang),
-    translateText(species.description, lang),
-    translateText(species.advice, lang),
-  ]);
+  /*
+   * A CRAWLER DOES NOT GET TO SPEND THE TRANSLATION BUDGET.
+   *
+   * The sitemap lists 3,150 of these pages — 450 species across seven
+   * languages — and each one translated on demand on first visit. The full
+   * matrix is roughly a million characters against a 500,000 a month DeepL
+   * allowance, so working through the sitemap exhausts the month in about two
+   * days. It did: 553,000 characters between the 1st and the 5th of September,
+   * 88% of it on two days, spread evenly across all seven languages, which is
+   * not how people browse.
+   *
+   * So a bot gets the cache and nothing else. On a miss it gets a 503 with
+   * `Retry-After` rather than a page.
+   *
+   * WHY 503 AND NOT ENGLISH. Serving the English text under a `/fr/` URL is
+   * how the wrong language gets indexed on seven URLs at once, and that sticks
+   * long after the cache is warm. 503 is the documented way to say "this exists
+   * and is temporarily unavailable" — Google holds off and comes back, the URL
+   * stays in the sitemap, stays allowed in robots.txt, and gets indexed
+   * properly once the translation exists.
+   *
+   * Not 404: that says the page is not there, which is false and costs the
+   * indexing outright.
+   *
+   * A person is unaffected. They still translate on demand, which means the
+   * budget now goes to pages somebody actually asked for — and the cache warms
+   * from real traffic rather than from a crawl.
+   */
+  const isBot = isBotRequest(ctx.req.headers['user-agent']);
+
+  const [translatedName, translatedDescription, translatedAdvice] = isBot
+    ? await Promise.all([
+        dbName ? Promise.resolve(dbName) : translateFromCacheOnly(species.name, lang),
+        translateFromCacheOnly(species.description ?? '', lang),
+        translateFromCacheOnly(species.advice ?? '', lang),
+      ])
+    : await Promise.all([
+        dbName ? Promise.resolve(dbName) : translateText(species.name, lang),
+        translateText(species.description, lang),
+        translateText(species.advice, lang),
+      ]);
+
+  /*
+   * A miss is only a miss where there was something to translate. A species
+   * with no `advice` is not waiting on DeepL, and must not 503 forever.
+   */
+  if (isBot) {
+    const missing =
+      (!dbName && species.name && translatedName === null)
+      || (species.description && translatedDescription === null)
+      || (species.advice && translatedAdvice === null);
+
+    if (missing) {
+      ctx.res.statusCode = 503;
+      // Long enough that a crawler does not hammer it, short enough that the
+      // page is picked up in the same crawl cycle once somebody warms it.
+      ctx.res.setHeader('Retry-After', '86400');
+      ctx.res.setHeader('Cache-Control', 'no-store');
+      return { props: { unavailable: true as const, lang: lang as GrowPathCode } };
+    }
+  }
 
   let relatedSpecies: RelatedSpeciesEntry[] = [];
   if (species.category) {
@@ -163,13 +237,45 @@ export const getServerSideProps: GetServerSideProps<LocalisedSpeciesProps> = asy
   };
 };
 
-export default function LocalisedSpeciesPage({
-  species,
-  lang,
-  translatedName,
-  translatedDescription,
-  relatedSpecies,
-}: LocalisedSpeciesProps) {
+/*
+ * The 503 body, as its OWN component.
+ *
+ * Deliberately plain and deliberately `noindex`: nobody should land here and
+ * Google should not keep it — it is what a crawler gets while the translation
+ * it asked for does not exist yet.
+ *
+ * Separate rather than an early return, because the page below calls
+ * `useRouter` and an early return above a hook makes that hook conditional.
+ * React's rules are not advisory: the render order has to be identical every
+ * time, and lint caught this before it could be a crash.
+ */
+function TranslationPending({ lang }: { lang: GrowPathCode }) {
+  return (
+    <>
+      <Head>
+        <title>Temporarily unavailable</title>
+        <meta name="robots" content="noindex" />
+      </Head>
+      <main style={{ padding: '4rem 1.5rem', textAlign: 'center', fontFamily: 'system-ui, sans-serif' }}>
+        <p>This page is not ready in {lang.toUpperCase()} yet. Please try again shortly.</p>
+      </main>
+    </>
+  );
+}
+
+export default function LocalisedSpeciesPage(props: LocalisedSpeciesProps) {
+  if (props.unavailable) return <TranslationPending lang={props.lang} />;
+  return <SpeciesPage {...props} />;
+}
+
+function SpeciesPage(props: Extract<LocalisedSpeciesProps, { unavailable?: false }>) {
+  const {
+    species,
+    lang,
+    translatedName,
+    translatedDescription,
+    relatedSpecies,
+  } = props;
   const router = useRouter();
   const enPath = `/grow/species/${species.slug}`;
   const canonicalUrl = `https://grow.godaisy.io${enPath}`;
