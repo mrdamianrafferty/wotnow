@@ -78,6 +78,20 @@ export type AnalyticsEvent =
   // Cross-promo events (Daisy app family footer links)
   | 'cross_promo_click'
 
+  /*
+   * The call, and the bet the redesign was built on.
+   *
+   * Phases 0-3 exist to find out whether people send these cards, and nothing
+   * counted one — the migration plan listed "nothing counts a share" as open
+   * for the life of the project. `call_shared` fires when the platform reports
+   * a completed share or a copied link; `call_share_failed` when the card or
+   * the text could not be built, which is how the 46-byte error would have
+   * been noticed months earlier than a screenshot.
+   */
+  | 'call_shared'
+  | 'call_share_failed'
+  | 'call_alternate_viewed'
+
   // Auth events
   | 'sign_in'
   | 'sign_out'

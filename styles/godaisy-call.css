@@ -873,7 +873,13 @@ h1.call-setup-question, h1.call-verdict { margin-block: 0; }
   color: var(--call-ink-1);
   font-family: var(--call-font-body);
 }
-.gd-spot-inner { max-width: 760px; margin: 0 auto; }
+/* 68ch, matching the documents. It was 760px, which at this body size is about
+   95 characters a line — comfortable reading tops out around 75, and these
+   pages are mostly prose that a stranger from Google has to get through. The
+   tables and the 7-day chart opt back out below. */
+.gd-spot-inner { max-width: 68ch; margin: 0 auto; }
+/* …except the things that are not prose and want the room. */
+.gd-spot-bars, .gd-spot-wide { max-width: none; }
 .gd-spot-hero { padding: 40px var(--call-gutter-app) 44px; background: var(--call-panel); border-bottom: 1px solid var(--call-border); }
 .gd-spot-section { padding: 36px var(--call-gutter-app); border-bottom: 1px solid var(--call-border); }
 .gd-spot-colophon { padding: 28px var(--call-gutter-app) 40px; color: var(--call-ink-4); font-size: var(--call-caption); text-align: center; }
