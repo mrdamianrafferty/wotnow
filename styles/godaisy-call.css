@@ -247,6 +247,10 @@
   flex-direction: column;
   color: var(--call-on-dark);
   touch-action: pan-y;
+  /* Horizontal is the app's gesture now, on a trackpad as well as a finger.
+     Without this the browser reads a two-finger push as history-back and
+     leaves the app mid-turn. */
+  overscroll-behavior-x: none;
 }
 
 /*
@@ -432,10 +436,69 @@
   margin: 5px 0 0;            /* 9px flex gap + 5px = 14px, matching the dots below */
 }
 
+/* ── The day pager ───────────────────────────────────────────────────
+   Seven dots and the words "swipe for tomorrow". True on a phone, false
+   in every desktop browser: there are no touch events behind a mouse, so
+   the sentence named the one gesture that could not be performed, and the
+   dots were `aria-hidden` decoration that could not be clicked instead.
+
+   Swipe stays where swipe works. What changes is what else is offered:
+   the dots are buttons on every device, and a POINTING DEVICE also gets
+   ‹ ›. The discriminator is the pointer, not the width, because the
+   missing capability is touch — a 1280px window on a touchscreen laptop
+   is not the problem, a mouse is.                                      */
 .call-dots { display: flex; align-items: center; justify-content: center; gap: 7px; padding-top: 14px; }
-.call-dots i { width: 5px; height: 5px; border-radius: var(--call-r-pill); background: rgba(250,248,245,.35); display: block; }
-.call-dots i.on { width: 18px; background: rgba(250,248,245,.9); }
-.call-dots span { font-size: var(--call-label); color: var(--call-on-dark-quiet); margin-left: 8px; }
+.call-dots__row { display: flex; align-items: center; gap: 7px; }
+
+.call-dots__dot {
+  width: 5px; height: 5px; border-radius: var(--call-r-pill);
+  background: rgba(250,248,245,.35);
+  display: block; padding: 0; border: 0; cursor: pointer;
+  position: relative;
+  transition: width var(--call-t-press) var(--call-ease-out),
+              background var(--call-t-press) var(--call-ease-out);
+}
+.call-dots__dot[aria-current='true'] { width: 18px; background: rgba(250,248,245,.9); }
+/* The tap target, as everywhere else on this screen, is the ::after and not
+   the box. 24px and not the usual 44: a 44px strip centred on a 5px dot
+   reaches up over the Send button and would swallow taps meant for it. */
+.call-dots__dot::after {
+  content: ''; position: absolute; top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  width: 100%; min-width: 14px; height: 24px;
+}
+
+.call-dots__arrow {
+  display: none;                    /* shown to a pointing device, below */
+  width: 32px; height: 32px; flex: 0 0 auto;
+  padding: 0; border: 0; background: none;
+  color: var(--call-on-dark); opacity: .75;
+  place-items: center; cursor: pointer;
+  border-radius: var(--call-r-pill);
+  transition: opacity var(--call-t-press) var(--call-ease-out),
+              transform var(--call-t-press) var(--call-ease-out);
+}
+.call-dots__arrow:hover { opacity: 1; }
+.call-dots__arrow:active { transform: scale(.94); }
+/* Disabled at the ends of the week rather than hidden: a control that
+   vanishes moves the dots sideways under the cursor that was aiming at it. */
+.call-dots__arrow:disabled { opacity: .22; cursor: default; }
+
+.call-dots__arrow:focus-visible,
+.call-dots__dot:focus-visible { outline: 2px solid var(--call-on-dark); outline-offset: 3px; }
+
+.call-dots__hint { font-size: var(--call-label); color: var(--call-on-dark-quiet); margin-left: 8px; }
+
+/* A mouse cannot swipe: give it the arrows and stop telling it to swipe. */
+@media (pointer: fine) {
+  .call-dots__arrow { display: grid; }
+  .call-dots__hint { display: none; }
+}
+/* A tablet can do both. It keeps the sentence, because there the sentence
+   is true, and gains the arrows because at that size they fit. */
+@media (pointer: coarse) and (min-width: 700px) {
+  .call-dots__arrow { display: grid; }
+}
 
 .call-screen--empty {
   justify-content: center;

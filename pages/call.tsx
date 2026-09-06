@@ -12,7 +12,7 @@
  * @module pages/call
  */
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Head from 'next/head';
 import type { GetServerSideProps } from 'next';
 
@@ -35,6 +35,7 @@ import { IndoorPrompt, type IndoorOption } from '@/components/call/IndoorPrompt'
 import { EvidenceDrawer } from '@/components/call/EvidenceDrawer';
 import { MenuSheet } from '@/components/call/MenuSheet';
 import { LocationSheet } from '@/components/call/LocationSheet';
+import { DayPager } from '@/components/call/DayPager';
 import { asSentence } from '@/lib/godaisy/call/verdict';
 
 const DAYS = 7;
@@ -84,10 +85,24 @@ export interface CallPageProps {
 /** Swipe threshold in px. Below this a drag is a tap, not a day turn. */
 const SWIPE_MIN = 48;
 
+/*
+ * The same threshold for a trackpad, in wheel units rather than pixels, plus
+ * the pause that ends a gesture.
+ *
+ * A two-finger horizontal push is the only swipe a laptop has, and macOS
+ * keeps sending it for half a second after the fingers have lifted — the
+ * momentum tail. Turning a day per event would flick past the whole week on
+ * one flick, so a turn locks the gesture until the wheel has been quiet for
+ * WHEEL_REST, which is how a gesture ends when nothing tells you it has.
+ */
+const WHEEL_MIN = 60;
+const WHEEL_REST = 220;
+
 export default function CallPage({ slug, place, days, photos, indoor, coords, coastal, error }: CallPageProps) {
   const [dayIndex, setDayIndex] = useState(0);
   const [altIndex, setAltIndex] = useState(0);
   const [touchX, setTouchX] = useState<number | null>(null);
+  const screenRef = useRef<HTMLElement>(null);
   const [sendState, setSendState] = useState<'idle' | 'working' | 'sent' | 'copied'>('idle');
   const [drawer, setDrawer] = useState(false);
   const [menu, setMenu] = useState(false);
@@ -114,6 +129,45 @@ export default function CallPage({ slug, place, days, photos, indoor, coords, co
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
   }, [turn]);
+
+  /*
+   * TRACKPAD SWIPE. Bound by hand, because React cannot.
+   *
+   * React registers `onWheel` as a passive listener on the root, so a handler
+   * written as a prop is forbidden from calling preventDefault — and without
+   * that, Chrome and Safari read the same gesture as history-back and leave
+   * the app while it is turning the day. Hence the ref and the effect.
+   *
+   * Vertical dominance passes straight through untouched: the evidence drawer
+   * scrolls, and stealing its wheel would be a worse bug than the one being
+   * fixed. Overlays bail out entirely.
+   */
+  const overlayOpen = drawer || menu || placePicker;
+  useEffect(() => {
+    const el = screenRef.current;
+    if (!el || overlayOpen) return;
+
+    let travelled = 0;
+    let spent = false;
+    let rest: ReturnType<typeof setTimeout>;
+
+    const onWheel = (e: WheelEvent) => {
+      if (Math.abs(e.deltaX) <= Math.abs(e.deltaY)) return;
+      e.preventDefault();
+      clearTimeout(rest);
+      rest = setTimeout(() => { travelled = 0; spent = false; }, WHEEL_REST);
+      if (spent) return;
+      travelled += e.deltaX;
+      if (Math.abs(travelled) > WHEEL_MIN) {
+        turn(travelled > 0 ? 1 : -1);
+        spent = true;
+        travelled = 0;
+      }
+    };
+
+    el.addEventListener('wheel', onWheel, { passive: false });
+    return () => { el.removeEventListener('wheel', onWheel); clearTimeout(rest); };
+  }, [turn, overlayOpen]);
 
   const kicker = useMemo(() => {
     if (!day) return place;
@@ -303,6 +357,7 @@ export default function CallPage({ slug, place, days, photos, indoor, coords, co
       }}
     >
       <main
+        ref={screenRef}
         className="call-screen"
         onTouchStart={(e) => setTouchX(e.touches[0]?.clientX ?? null)}
         onTouchEnd={(e) => {
@@ -402,10 +457,11 @@ export default function CallPage({ slug, place, days, photos, indoor, coords, co
             )}
           </div>
 
-          <div className="call-dots" aria-hidden="true">
-            {days.map((_, i) => <i key={i} className={i === dayIndex ? 'on' : ''} />)}
-            <span>swipe for tomorrow</span>
-          </div>
+          <DayPager
+            dates={days.map((d) => d.date)}
+            index={dayIndex}
+            onSelect={setDayIndex}
+          />
         </div>
 
         {menu && <MenuSheet onClose={() => setMenu(false)} />}
