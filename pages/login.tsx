@@ -7,6 +7,7 @@ import Head from 'next/head';
 import { Cloud, Sun, Waves, Leaf, Droplets, AlertCircle, RefreshCw } from 'lucide-react';
 import { signInWithApple, APPLE_NATIVE_ERRORS } from '../lib/auth/appleSignIn';
 import { signInWithGoogleNative, resetGoogleNative, GOOGLE_NATIVE_ERRORS } from '../lib/auth/googleNative';
+import { readSetup } from '@/lib/godaisy/call/setup';
 
 export default function GoDaisyLogin() {
   const router = useRouter();
@@ -37,7 +38,16 @@ export default function GoDaisyLogin() {
 
   // Get returnTo parameter for redirect after login
   const returnTo = router.query.returnTo as string | undefined;
-  const destination = returnTo && returnTo.startsWith('/') && !returnTo.startsWith('/findr') ? returnTo : '/';
+  /*
+   * No explicit returnTo and no setup cookie means this is a first visit that
+   * happened to arrive via "Sign in" rather than "Start Go Daisy" — send it
+   * through onboarding once rather than straight to a call seeded with
+   * default sports and a default place. Anyone with the cookie already
+   * skips straight to `/`, same as before.
+   */
+  const destination = returnTo && returnTo.startsWith('/') && !returnTo.startsWith('/findr')
+    ? returnTo
+    : (readSetup() ? '/' : '/start');
   const isGrowContext = returnTo?.startsWith('/grow');
 
   useEffect(() => {
@@ -146,9 +156,9 @@ export default function GoDaisyLogin() {
 
         if (error) throw error;
 
-        // Redirect to returnTo or default to home
-        const dest = returnTo && returnTo.startsWith('/') && !returnTo.startsWith('/findr') ? returnTo : '/';
-        router.push(dest);
+        // Same choice as `destination` above: onboarding once for a first
+        // sign-in with no setup cookie, straight through for a returning one.
+        router.push(destination);
       }
     } catch (err) {
       setError(mapAuthError(err));

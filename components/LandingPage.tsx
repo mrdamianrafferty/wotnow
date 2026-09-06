@@ -674,6 +674,21 @@ const LandingPage: React.FC = () => {
               apps, not by ads or by selling your data. Weather data from
               Open-Meteo, Stormglass and api.met.no.
             </p>
+            {/*
+              * A narrow escape hatch, not a second CTA. `/` only ever renders
+              * this page for someone with neither a Supabase session nor a
+              * setup cookie — which includes the person who already has an
+              * account and set it up, just on a fresh browser or a cleared
+              * one. "Start Go Daisy — free" would walk them through onboarding
+              * a second time; this gets them back to what they already built.
+              */}
+            <p className="mt-2">
+              Already have an account?{' '}
+              <Link href="/login" className="gd-land-link">
+                Sign in
+              </Link>
+              .
+            </p>
           </div>
         </section>
       </main>
