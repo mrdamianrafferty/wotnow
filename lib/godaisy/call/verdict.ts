@@ -25,7 +25,7 @@
  * @module lib/godaisy/call/verdict
  */
 
-import { familyFor, forceFromMs, forceName, phraseFor } from '@/utils/activityReasons';
+import { compass, familyFor, forceFromMs, forceName, phraseFor } from '@/utils/activityReasons';
 import type { WeatherData, Suggestion } from '@/utils/getSuggestionsByDay';
 import type { CallBand } from './bands';
 import { choosePhrase, fillWhen } from './phrasebook';
@@ -194,6 +194,18 @@ function windowSentence(parts: readonly string[], ends?: string): string {
 }
 
 /**
+ * Humidity, in the register `getHumidityDescription` (utils/weatherLabels)
+ * argued for: the number alone says nothing about what it will feel like,
+ * and cold-and-clammy is a different complaint from hot-and-sticky at the
+ * same percentage. Kept to plain English rather than that function's
+ * exclamation marks and emoji, which the verdict's voice rules forbid.
+ */
+function humidClause(humidity: number, temperature?: number): string {
+  const cold = typeof temperature === 'number' && temperature < 10;
+  return cold ? `damp and clammy at ${Math.round(humidity)}%` : `close and sticky at ${Math.round(humidity)}%`;
+}
+
+/**
  * A short, true clause about the input that decided it.
  *
  * Keyed on the BINDING criterion first, not on the family. Reading the first
@@ -242,6 +254,42 @@ function bindingClause(w: WeatherData, activityId: string, bindingKey?: string):
       break;
     case 'soilMoisture':
       if (w.soilMoisture !== undefined) return w.soilMoisture < 30 ? 'dry ground' : 'soft ground';
+      break;
+    /*
+     * Humidity, visibility, wind direction and snow were all handled by the
+     * old SEO-page reasoning (`describeConditions` in utils/activityReasons)
+     * but were never ported when this binding switch was built for the Call
+     * screen — so a muggy write-off or a foggy morning read here with no
+     * mention of why. Same clauses that page already uses, kept lowercase
+     * (the caller title-cases) and lowercase-clause style consistent with the
+     * rest of this switch.
+     */
+    /*
+     * Humid is temperature-aware, in the same spirit as utils/weatherLabels'
+     * `getHumidityDescription` — the same 93% reads as sticky heat on a warm
+     * day and as a damp chill on a cold one, and saying which is the whole
+     * point of naming it at all.
+     */
+    case 'humidity':
+      if (w.humidity !== undefined) return humidClause(w.humidity, w.temperature);
+      break;
+    case 'visibility': {
+      const km = typeof w.visibility === 'number' ? w.visibility / 1000 : undefined;
+      if (km !== undefined) {
+        if (km < 1) return 'thick fog, under a kilometre of visibility';
+        if (km < 4) return `murky, losing detail past ${Math.round(km)} km`;
+        return `hazy, thinning out past ${Math.round(km)} km`;
+      }
+      break;
+    }
+    case 'windDirection':
+      if (w.winddirection !== undefined) return `wind out of the ${compass(w.winddirection)}`;
+      break;
+    case 'snowDepthCm':
+      if (w.snowDepthCm !== undefined && w.snowDepthCm > 0) return `${Math.round(w.snowDepthCm)} cm of snow underfoot`;
+      break;
+    case 'snowfallRateMmH':
+      if (w.snowfallRateMmH !== undefined && w.snowfallRateMmH > 0) return 'snow coming down';
       break;
   }
 
@@ -348,6 +396,15 @@ export function makeVerdict(input: VerdictInput): Verdict {
     const bits: string[] = [];
     if (gust !== undefined && gust >= 35) bits.push(`gusting to ${Math.round(gust)} km/h`);
     if (rain >= 1) bits.push(`${rain.toFixed(1)} mm of rain`);
+    /*
+     * Ported from the old SEO-page reasoning: humid air is what makes a
+     * marginal or write-off day feel worse than its score alone suggests,
+     * and the old copy said so regardless of whether humidity was the
+     * criterion that actually decided the score.
+     */
+    if (suggestion.binding?.key !== 'humidity' && typeof weather.humidity === 'number' && weather.humidity >= 90) {
+      bits.push(humidClause(weather.humidity, weather.temperature));
+    }
     if (!bits.length && weather.temperature !== undefined) bits.push(`${Math.round(weather.temperature)}° and little else going for it`);
     const fallback = band === 'marginal'
       ? 'Nothing you have picked is at its best.'

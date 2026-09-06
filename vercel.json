@@ -36,14 +36,6 @@
     {
       "source": "/api/python/(.*)",
       "destination": "/api/python/$1"
-    },
-    {
-      "source": "/sitemap.xml",
-      "destination": "/api/sitemap.xml"
-    },
-    {
-      "source": "/sitemap-:set.xml",
-      "destination": "/api/sitemap.xml?set=:set"
     }
   ],
   "crons": [

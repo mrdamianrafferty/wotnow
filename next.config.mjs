@@ -178,6 +178,27 @@ const nextConfig = {
     NEXT_PUBLIC_FREE_PROVIDERS_ENABLED: process.env.NEXT_PUBLIC_FREE_PROVIDERS_ENABLED ?? process.env.FREE_PROVIDERS_ENABLED ?? '1',
     NEXT_PUBLIC_FREE_PROVIDER_ORDER: process.env.NEXT_PUBLIC_FREE_PROVIDER_ORDER ?? process.env.FREE_PROVIDER_ORDER ?? 'auto',
   },
+  /*
+   * Sitemap children live here, not in `vercel.json`.
+   *
+   * The first version put `/sitemap-:set.xml` in vercel.json and it never
+   * matched: path-to-regexp lets `:set` swallow `core.xml`, leaving nothing for
+   * the literal `.xml`, so every child fell through to the catch-all and 307'd
+   * to /grow. The sitemap index pointed at eight broken URLs.
+   *
+   * It went unnoticed because `vercel.json` rewrites do not apply to `next
+   * dev` — the local check hit `/api/sitemap.xml?set=fr` directly and passed,
+   * which tested the handler and not the URL Google is given. Here it is
+   * exercised in development too, and the pattern is constrained so `:set`
+   * cannot eat the extension.
+   */
+  async rewrites() {
+    return [
+      { source: '/sitemap.xml', destination: '/api/sitemap.xml' },
+      { source: '/sitemap-:set([a-z-]+).xml', destination: '/api/sitemap.xml?set=:set' },
+    ];
+  },
+
   async redirects() {
     return [
       /*

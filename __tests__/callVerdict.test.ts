@@ -85,3 +85,63 @@ describe('generated call verdicts', () => {
     }
   });
 });
+
+/**
+ * The reason ported from the old SEO-page copy (utils/getSuggestionsByDay's
+ * `getReasoningForScore`), which this drawer's `bindingClause` never covered:
+ * humidity, visibility, wind direction and snow could decide a score and the
+ * "Why" sentence would say nothing about any of them.
+ */
+describe('binding clauses this drawer used to drop', () => {
+  const goodDay = (weather: WeatherData, bindingKey: string) => makeVerdict({
+    suggestion: {
+      activityId: 'road_cycling',
+      score: 55,
+      binding: { key: bindingKey, score: 0.2, condition: '', value: 0 },
+    },
+    activityName: 'Go Cycling',
+    weather,
+    band: 'worthALook',
+    isFirst: true,
+    weekday: 'Wednesday',
+    dayIndex: 3,
+  });
+
+  it('names humidity on a warm day as sticky heat, not just a number', () => {
+    const v = goodDay({ temperature: 22, humidity: 93 }, 'humidity');
+    expect(v.reason).toMatch(/close and sticky at 93%/i);
+  });
+
+  it('names the same humidity on a cold day as damp chill instead', () => {
+    const v = goodDay({ temperature: 4, humidity: 93 }, 'humidity');
+    expect(v.reason).toMatch(/damp and clammy at 93%/i);
+  });
+
+  it('names fog when visibility is the binding criterion', () => {
+    const v = goodDay({ temperature: 12, visibility: 600 }, 'visibility');
+    expect(v.reason).toMatch(/thick fog/i);
+  });
+
+  it('names the wind direction when it is the binding criterion', () => {
+    const v = goodDay({ temperature: 12, winddirection: 90 }, 'windDirection');
+    expect(v.reason).toMatch(/out of the east/i);
+  });
+
+  it('names snow underfoot when it is the binding criterion', () => {
+    const v = goodDay({ temperature: 1, snowDepthCm: 4 }, 'snowDepthCm');
+    expect(v.reason).toMatch(/4 cm of snow underfoot/i);
+  });
+
+  it('still warns about humidity on a write-off day, even when something else binds', () => {
+    const v = makeVerdict({
+      suggestion: { activityId: 'road_cycling', score: 20, binding: { key: 'precipitation', score: 0, condition: '', value: 8 } },
+      activityName: 'Go Cycling',
+      weather: { ...WET, humidity: 95 },
+      band: 'notToday',
+      isFirst: true,
+      weekday: 'Wednesday',
+      dayIndex: 3,
+    });
+    expect(v.reason).toMatch(/close and sticky at 95%/i);
+  });
+});

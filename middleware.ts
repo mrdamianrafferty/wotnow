@@ -64,8 +64,21 @@ export async function middleware(req: NextRequest) {
                     url.pathname.startsWith('/fallback-') ||
                     url.pathname.match(/^\/sw\.js/);
   const isSEOFile = url.pathname === '/robots.txt' ||
-                    url.pathname === '/sitemap.xml' ||
-                    url.pathname === '/sitemap-0.xml' ||
+                    /*
+                     * Any `/sitemap*.xml`, not two names.
+                     *
+                     * This listed `/sitemap.xml` and `/sitemap-0.xml`
+                     * literally, so when the Grow sitemap became an index with
+                     * per-language children every child — `/sitemap-fr.xml`,
+                     * `/sitemap-core.xml` — missed the allowlist, fell through
+                     * to the grow.godaisy.io catch-all and 307'd to /grow. The
+                     * index pointed at eight redirects.
+                     *
+                     * A pattern rather than a list, because the next sitemap
+                     * added will have the same problem and nobody will think to
+                     * come back here.
+                     */
+                    url.pathname.match(/^\/sitemap[a-z0-9-]*\.xml$/) !== null ||
                     url.pathname === '/llms.txt' ||
                     url.pathname === '/BingSiteAuth.xml' ||
                     url.pathname.match(/^\/google[a-z0-9]+\.html$/) !== null ||
