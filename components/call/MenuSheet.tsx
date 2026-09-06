@@ -44,6 +44,21 @@ const GROUPS: ReadonlyArray<{ title: string; items: readonly Item[] }> = [
     title: 'Yours',
     items: [
       /*
+       * THE CALL ITSELF WAS MISSING FROM A LIST HEADED "YOURS".
+       *
+       * Every other route out of `/account` had been removed by the redesign,
+       * leaving exactly one: the wordmark in `PageHeader`. That is a bold
+       * display-font logo with no underline and no chevron, whose only
+       * interactive signal was a `:hover` colour — and touch has no hover. So
+       * in the iOS app, where there is no browser back button, the only way off
+       * the account screen was an element that does not look like a control.
+       *
+       * This is the cheapest of the three fixes and the one that adds no new
+       * navigation: the menu already exists, and the app's main screen being
+       * absent from it reads as an oversight rather than a decision.
+       */
+      { href: '/', label: 'The call', note: "Back to today's answer" },
+      /*
        * `/weather` had no way in. The old bottom nav and header linked to it,
        * and the swap replaced both — so the conditions page became reachable
        * only by typing the URL, which is the same way `/call` was orphaned

@@ -13,6 +13,19 @@ class GoDaisyViewController: CAPBridgeViewController {
         super.capacitorDidLoad()
         tipHandler.webView = webView
         webView?.configuration.userContentController.add(tipHandler, name: "GoDaisyTips")
+
+        // Swipe from the left edge to go back.
+        //
+        // There is no browser chrome in the app, so every secondary screen —
+        // /account, /weather, the legal pages — depended entirely on the
+        // wordmark in PageHeader to get out of. This restores the gesture iOS
+        // users already expect, and costs no screen space to do it.
+        //
+        // Set here rather than in capacitor.config: Capacitor's iOS config
+        // exposes `scrollEnabled` and `allowsLinkPreview` but has no option for
+        // this, so the WKWebView property is the only route. `capacitorDidLoad`
+        // is the first point at which `webView` is non-nil.
+        webView?.allowsBackForwardNavigationGestures = true
     }
 }
 

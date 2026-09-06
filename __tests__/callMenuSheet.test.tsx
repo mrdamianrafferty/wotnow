@@ -17,7 +17,7 @@ import { render, screen } from '@testing-library/react';
 import { MenuSheet } from '@/components/call/MenuSheet';
 
 /** The routes the sheet is allowed to offer, all verified to resolve. */
-const CANONICAL = ['/weather', '/start', '/account', '/privacy', '/terms', '/cookies', '/whether-weather', '/support', '/app'];
+const CANONICAL = ['/', '/weather', '/start', '/account', '/privacy', '/terms', '/cookies', '/whether-weather', '/support', '/app'];
 
 describe('the menu behind the dot', () => {
   beforeEach(() => { render(<MenuSheet onClose={() => {}} />); });
@@ -45,6 +45,17 @@ describe('the menu behind the dot', () => {
    */
   it('offers the conditions page, which nothing else links to', () => {
     expect(screen.getByRole('link', { name: /conditions/i })).toHaveAttribute('href', '/weather');
+  });
+
+  /*
+   * The only other way off `/account` is the wordmark in `PageHeader`, which
+   * on touch has no affordance at all — no underline, no chevron until now,
+   * and a `:hover` state a finger never triggers. In the iOS app there is no
+   * browser back button either, so if this entry is ever removed the account
+   * screen becomes a place you can enter and not leave.
+   */
+  it('offers the call itself, which on iOS is the only signposted way out', () => {
+    expect(screen.getByRole('link', { name: /the call/i })).toHaveAttribute('href', '/');
   });
 
   it('offers a way back to onboarding, so the call can be changed', () => {
