@@ -450,7 +450,7 @@ setBeaufortResolver(getBeaufortNumber);
 >
   <div className="p-4">
     <h1 className="text-3xl font-semibold">Today in {locationName}</h1>
-    <p className="opacity-70">{Math.round(weather.temperatureC)}°, {(weather.condition as string).replace('_',' ')}</p>
+    <p className="opacity-70">{Math.round(weather.temperatureC)}°C, {(weather.condition as string).replace('_',' ')}</p>
   </div>
 </WeatherAnimationLayer>
 

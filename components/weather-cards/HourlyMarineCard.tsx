@@ -216,7 +216,7 @@ export const HourlyMarineCard: React.FC<HourlyMarineCardProps> = ({
                             />
                           );
                         })()}
-                        <div className="text-3xl font-bold leading-none">{it.hour.temp}°</div>
+                        <div className="text-3xl font-bold leading-none">{it.hour.temp}°C</div>
                         <div className="mt-1">
                           <div className="relative flex items-center justify-center">
                             <Image 

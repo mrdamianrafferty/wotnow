@@ -201,9 +201,9 @@ export default function WeatherPage({ place, lat, lon, coastal }: WeatherPagePro
 function headline(r: Readings | null): string | null {
   if (!r) return null;
   const bits: string[] = [];
-  if (typeof r.temperatureC === 'number') bits.push(`${Math.round(r.temperatureC)}°`);
+  if (typeof r.temperatureC === 'number') bits.push(`${Math.round(r.temperatureC)}°C`);
   if (typeof r.feelsLikeC === 'number' && Math.abs(r.feelsLikeC - (r.temperatureC ?? 0)) >= 2) {
-    bits.push(`feels like ${Math.round(r.feelsLikeC)}°`);
+    bits.push(`feels like ${Math.round(r.feelsLikeC)}°C`);
   }
   const rain = r.hourly?.[0]?.precipMM;
   if (typeof rain === 'number') bits.push(rain > 0.1 ? `${rain.toFixed(1)} mm falling` : 'dry');

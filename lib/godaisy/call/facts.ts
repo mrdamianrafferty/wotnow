@@ -47,9 +47,9 @@ function format(key: string, w: WeatherData): string | null {
 
   switch (key) {
     case 'temperature':
-    case 'airTemperature':   { const v = n(w.temperature); return v && `${v}°`; }
-    case 'temperatureMin':   { const v = n(w.temperatureMin); return v && `${v}°`; }
-    case 'waterTemperature': { const v = n(w.waterTemperature); return v && `${v}°`; }
+    case 'airTemperature':   { const v = n(w.temperature); return v && `${v}°C`; }
+    case 'temperatureMin':   { const v = n(w.temperatureMin); return v && `${v}°C`; }
+    case 'waterTemperature': { const v = n(w.waterTemperature); return v && `${v}°C`; }
     case 'windSpeed':        { const v = n(w.windspeed); return v && `${v} km/h`; }
     case 'gust':             { const v = n(w.gustspeed); return v && `${v} km/h`; }
     case 'precipitation':    { const v = n(w.precipitation, 1); return v && `${v} mm`; }

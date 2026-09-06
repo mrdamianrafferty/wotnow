@@ -79,4 +79,31 @@ describe('the call, with indoor activities in the mix', () => {
     const said = `${lead?.verdict.leadIn ?? ''} ${lead?.verdict.verdict ?? ''}`;
     expect(said).not.toMatch(/\b(visit|do|read|paint|cook|hit)\s/i);
   });
+
+  /*
+   * An indoor option's bars are now uniform by construction (see window.ts) —
+   * three identical pills and an "it holds all day" note that were never
+   * evidence for anything. Rather than show that, the drawer gets no bars at
+   * all for an indoor activity; the outdoor one beside it still does.
+   */
+  it('gives no daypart bars to an indoor option, even when the day is cut into parts', () => {
+    const { alternates } = makeCall({
+      date: DATE,
+      place: 'Sheffield',
+      weather: FINE,
+      suggestions: [
+        { activityId: 'urban_exploring', score: 84, evaluation: 'good' } as unknown as Suggestion,
+        { activityId: 'reading', score: 95, evaluation: 'good' } as unknown as Suggestion,
+      ],
+      sports: ['urban_exploring', 'reading'],
+      activities: ACTIVITIES,
+      now: NOW,
+      parts: { morning: FINE, afternoon: FINE, evening: FINE },
+    });
+
+    const outdoor = alternates.find((a) => a.activityId === 'urban_exploring');
+    const indoor = alternates.find((a) => a.activityId === 'reading');
+    expect(outdoor?.parts?.length).toBeGreaterThan(0);
+    expect(indoor?.parts).toBeUndefined();
+  });
 });

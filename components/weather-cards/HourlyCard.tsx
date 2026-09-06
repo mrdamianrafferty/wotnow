@@ -204,7 +204,7 @@ export const HourlyCard: React.FC<HourlyCardProps> = ({
                           className="w-10 h-10 mx-auto my-1" 
                           unoptimized 
                         />
-                        <div className="text-3xl font-bold leading-none">{it.hour.temp}°</div>
+                        <div className="text-3xl font-bold leading-none">{it.hour.temp}°C</div>
                         <div className="mt-1">
                           <div className="relative flex items-center justify-center">
                             <Image 

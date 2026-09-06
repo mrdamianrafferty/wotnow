@@ -53,7 +53,7 @@ export interface WeatherData {
   clouds?: number;                    // %
   humidity?: number;                  // %
   visibility?: number;                // m
-  waterTemperature?: number;          // °
+  waterTemperature?: number;          // °C
   waveHeight?: number;                // m
   swellHeight?: number;               // m
   swellPeriod?: number;               // s

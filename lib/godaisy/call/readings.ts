@@ -97,17 +97,17 @@ export function rowsFor(section: RankedSection, r: Readings | null): Row[] {
       ];
     case 'temperature':
       return [
-        ...keep('Now', n(r.temperatureC, '°')),
-        ...keep('Feels like', n(r.feelsLikeC, '°')),
-        ...keep('High', n(today?.maxC, '°')),
-        ...keep('Low', n(today?.minC, '°')),
+        ...keep('Now', n(r.temperatureC, '°C')),
+        ...keep('Feels like', n(r.feelsLikeC, '°C')),
+        ...keep('High', n(today?.maxC, '°C')),
+        ...keep('Low', n(today?.minC, '°C')),
       ];
     case 'sea':
       return [
         ...keep('Wave height', n(r.marine?.waveHeight, ' m', 1)),
         ...keep('Swell', n(r.marine?.swellHeight, ' m', 1)),
         ...keep('Swell period', n(r.marine?.swellPeriod ?? r.marine?.wavePeriod, ' s')),
-        ...keep('Sea temperature', n(r.marineHourly?.[0]?.waterTempC, '°', 1)),
+        ...keep('Sea temperature', n(r.marineHourly?.[0]?.waterTempC, '°C', 1)),
       ];
     case 'tide':
       // Two extremes is a tide; six is a timetable, and this is a drawer.
@@ -138,8 +138,8 @@ export function rowsFor(section: RankedSection, r: Readings | null): Row[] {
     }
     case 'ground':
       return [
-        ...keep('Soil at the surface', n(r.soil?.temp0cm, '°')),
-        ...keep('Soil at 6 cm', n(r.soil?.temp6cm, '°')),
+        ...keep('Soil at the surface', n(r.soil?.temp0cm, '°C')),
+        ...keep('Soil at 6 cm', n(r.soil?.temp6cm, '°C')),
         ...keep('Moisture, top layer', n(
           typeof r.soil?.moisture0to1 === 'number' ? r.soil.moisture0to1 * 100 : undefined, '%')),
       ];

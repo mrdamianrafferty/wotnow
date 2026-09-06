@@ -138,7 +138,7 @@ const SoilConditionsPanel: React.FC<{
         <div className="flex justify-between">
           <span className="text-white text-xl font-medium flex items-center">
             <span className="mr-1">🌡️</span>
-            {t != null ? `${Math.round(t)}°` : '—'}
+            {t != null ? `${Math.round(t)}°C` : '—'}
           </span>
           <span className="text-white text-xl font-medium flex items-center">
             <span className="mr-1">💧</span>
@@ -275,7 +275,7 @@ export const SoilCard: React.FC<SoilCardProps> = ({
             <div className="flex justify-between">
               <span className="text-white text-xl font-medium flex items-center">
                 <span className="mr-1">🌡️</span>
-                {temp != null ? `${Math.round(temp)}°` : '—'}
+                {temp != null ? `${Math.round(temp)}°C` : '—'}
               </span>
               <span className="text-white text-xl font-medium flex items-center">
                 <span className="mr-1">💧</span>

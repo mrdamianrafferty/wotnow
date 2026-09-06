@@ -122,10 +122,10 @@ export const InlandLayout: React.FC<InlandLayoutProps> = ({
               <div className="stat">
                 <div className="stat-title">Now</div>
                 <div className="stat-value text-2xl">
-                  {typeof feelsLikeNow === 'number' ? `${Math.round(feelsLikeNow)}°` : '—'}
+                  {typeof feelsLikeNow === 'number' ? `${Math.round(feelsLikeNow)}°C` : '—'}
                 </div>
                 <div className="stat-desc">
-                  Actual {typeof tempNow === 'number' ? `${Math.round(tempNow)}°` : '—'}
+                  Actual {typeof tempNow === 'number' ? `${Math.round(tempNow)}°C` : '—'}
                 </div>
               </div>
             </div>

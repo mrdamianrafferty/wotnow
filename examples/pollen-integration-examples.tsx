@@ -36,7 +36,7 @@ function ForecastGrid({ forecast }: { forecast: any[] }) {
           
           {/* Weather basics */}
           <div className="weather-basics">
-            <span>{day.temperature}°</span>
+            <span>{day.temperature}°C</span>
             <span>{day.description}</span>
           </div>
           

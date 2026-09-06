@@ -205,7 +205,7 @@ export const HumidityCard: React.FC<HumidityCardProps> = ({ weather, humidity })
   const badgeColour = badgeClasses(comfort.tone);
 
   const rhDisplay = rh != null ? `${Math.round(rh)}%` : '—';
-  const dpDisplay = dp != null ? `${Math.round(dp)}°` : '—';
+  const dpDisplay = dp != null ? `${Math.round(dp)}°C` : '—';
   const title = rh != null ? `Relative humidity ${rhDisplay}` : 'Relative humidity unavailable';
 
   return (

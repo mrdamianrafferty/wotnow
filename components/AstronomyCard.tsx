@@ -683,7 +683,7 @@ const AstronomyCard: React.FC<AstronomyCardProps> = ({ className = '', style = {
             {/* Astronomy header details: temp, condition, wind - styled as in day cards */}
             <div className="astro-header-details card__header-details">
 <span className="temperature-label">
-  &nbsp;{typeof nightTemp === 'number' ? Math.round(nightTemp) : '--'}°
+  &nbsp;{typeof nightTemp === 'number' ? Math.round(nightTemp) : '--'}°C
   {nightDescription ? ` ${nightDescription}` : ''}
   <WindIcon windMs={
     typeof weatherData?.wind_speed === 'number'

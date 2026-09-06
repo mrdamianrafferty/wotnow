@@ -20,7 +20,7 @@ export default function ForecastCards({ slots }: { slots: OWMForecastSlot[] }) {
                 height={64}
                 alt={s.weather[0].description}
               />
-              <span className="temperature">{Math.round(s.main.temp)}°</span>
+              <span className="temperature">{Math.round(s.main.temp)}°C</span>
               <span>{s.weather[0].description}</span>
             </div>
             <div className="weather-stats">

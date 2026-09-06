@@ -208,6 +208,40 @@ export function scoreParts(
   const present = PART_ORDER.filter((p): p is PartName => Boolean(parts[p]) && usable.has(p));
   if (!present.length) return [];
 
+  /*
+   * INDOOR ACTIVITIES DO NOT HAVE A BEST TIME OF DAY — UNLESS THE EVENING IS
+   * WHAT THEY ARE FOR.
+   *
+   * `getSuggestionsByDay`'s indoor branch (`!activity.weatherSensitive`) is a
+   * synthetic heuristic built to rank a café or a book against the outdoor
+   * options it is standing in for — it opens at 65 and climbs in bad weather —
+   * and it is not a claim about when reading is good. Scored once per part
+   * against that part's own weather anyway, it produced "Today is also a day
+   * for reading. Best before six." — a time limit invented for an activity
+   * that needs no more light than a lamp. One score, held across every part,
+   * so `bestWindow`'s "every part came out the same" rule takes over and no
+   * window is ever offered for something that was never weather-bound.
+   *
+   * `EVENING` activities (the pub, the cinema, bowling, a dance floor) are
+   * also `weatherSensitive: false` and must NOT take this shortcut — they are
+   * shaped across the day on purpose (see `EVENING_THING` in `timeOfDay`
+   * below), and flattening them here silently undid that shaping.
+   */
+  const activity = activities.find((a) => a.id === activityId);
+  if (activity?.weatherSensitive === false && !EVENING.has(activityId)) {
+    const only = getSuggestionsByDay({
+      forecast: [{ date, weather: parts[present[0]] as WeatherData }],
+      activities,
+      interests: [activityId],
+      now,
+      includeAllActivities: true,
+    }) as Array<{ suggestions: Suggestion[] }>;
+    const s = only[0]?.suggestions.find((x) => x.activityId === activityId);
+    const score = s ? Math.round(s.score) : 0;
+    const band = s ? bandFor(score, s.vetoed, s.binding?.key) : ('notToday' as CallBand);
+    return present.map((name) => ({ name, band, score, key: s?.binding?.key }));
+  }
+
   const scored = getSuggestionsByDay({
     // Every entry carries the SAME date on purpose: season, day-of-week and the
     // context tags must be identical across parts, or a morning and an evening
