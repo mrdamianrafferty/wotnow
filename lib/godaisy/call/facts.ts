@@ -17,6 +17,7 @@ import { familyFor, type ActivityFamily } from '@/utils/activityReasons';
 import type { WeatherData, Suggestion } from '@/utils/getSuggestionsByDay';
 import { factLabel, DERIVED_FACT_LABELS } from '@/data/activities/factLabels';
 import type { SupportedLanguageCode } from '@/lib/i18n/translate';
+import { LIMITING_BELOW } from './bands';
 
 export interface CallFact {
   /** The condition key, so the label can be translated at render. */
@@ -83,12 +84,14 @@ export function factsFor(
 ): CallFact[] {
   /*
    * The decisive criterion leads ONLY when it is genuinely limiting — the same
-   * test the reason sentence uses. Leading with it unconditionally put "Cloud
+   * test the reason sentence uses, off the same constant. It was the same
+   * NUMBER in two files for a while, which is a coherence bug waiting for
+   * somebody to tune one of them. Leading with it unconditionally put "Cloud
    * 52%" in the first tile of a day whose sentence read "Dry, 16°": the facts
    * and the reason describing two different things, one tile apart. On a day
    * where nothing is limiting, the family order is the better answer.
    */
-  const limiting = (suggestion.binding?.score ?? 1) < 0.5;
+  const limiting = (suggestion.binding?.score ?? 1) < LIMITING_BELOW;
   const out: CallFact[] = [];
   const used = new Set<string>();
 

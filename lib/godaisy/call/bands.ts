@@ -103,3 +103,20 @@ export function isGood(band: CallBand): boolean {
 export function isSevere(rainMm?: number, gustKmh?: number): boolean {
   return (rainMm ?? 0) >= 4 || (gustKmh ?? 0) >= 45;
 }
+
+/**
+ * When a criterion is worth naming as a LIMITATION.
+ *
+ * The binding criterion is the weakest link, which on a good day is just
+ * whichever number happened to score lowest — naming it there produced "a
+ * walking day. 52% cloud." Below this it is a real constraint and worth the
+ * sentence; above it, saying so contradicts the verdict beside it.
+ *
+ * It lives here, with the other tunable thresholds, because BOTH the reason
+ * sentence (`makeVerdict`) and the fact order (`factsFor`) test against it and
+ * they have to agree. They were two separate `0.5` literals, one per file, and
+ * tuning either alone would have put the decisive criterion in the first fact
+ * tile of a day whose sentence was about something else — the exact incoherence
+ * both call sites were written to fix.
+ */
+export const LIMITING_BELOW = 0.5;

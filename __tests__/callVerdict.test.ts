@@ -132,6 +132,56 @@ describe('binding clauses this drawer used to drop', () => {
     expect(v.reason).toMatch(/4 cm of snow underfoot/i);
   });
 
+  /*
+   * A FORECAST THAT DOES NOT CARRY RAIN IS NOT A DRY DAY.
+   *
+   * `w.precipitation ?? 0` made a missing field indistinguishable from zero, so
+   * the sentence asserted "Dry through." over data it never had. The fact grid
+   * beside it drops the tile on the same input, which is what made the two
+   * halves of the lockup contradict each other.
+   */
+  describe('precipitation the forecast never carried', () => {
+    it('does not call the day dry when precipitation binds but is missing', () => {
+      const v = goodDay({ temperature: 16 }, 'precipitation');
+      expect(v.reason).not.toMatch(/dry/i);
+    });
+
+    it('says the temperature alone rather than "dry, 16°C"', () => {
+      const v = goodDay({ temperature: 16 }, 'temperature');
+      expect(v.reason).not.toMatch(/dry/i);
+      expect(v.reason).toMatch(/16°C/);
+    });
+
+    it('still says dry when the forecast actually says zero', () => {
+      const v = goodDay({ temperature: 16, precipitation: 0 }, 'precipitation');
+      expect(v.reason).toMatch(/dry through/i);
+    });
+
+    it('still names the rain when there is some', () => {
+      const v = goodDay({ temperature: 16, precipitation: 3.4 }, 'precipitation');
+      expect(v.reason).toMatch(/3\.4 mm of rain/i);
+    });
+  });
+
+  /*
+   * The unsafe branch read `gustspeed ?? windspeedMax ?? windspeed` and the
+   * write-off branch read `gustspeed ?? windspeed`, so on a source with a peak
+   * sustained wind but no gust the two disagreed about the same day — and the
+   * write-off took the mean, dropping under its own 35 km/h naming threshold.
+   */
+  it('names the peak wind on a write-off day when no gust is published', () => {
+    const v = makeVerdict({
+      suggestion: { activityId: 'road_cycling', score: 20 },
+      activityName: 'Go Cycling',
+      weather: { temperature: 9, windspeed: 24, windspeedMax: 48 },
+      band: 'notToday',
+      isFirst: true,
+      weekday: 'Wednesday',
+      dayIndex: 3,
+    });
+    expect(v.reason).toMatch(/gusting to 48 km\/h/i);
+  });
+
   it('still warns about humidity on a write-off day, even when something else binds', () => {
     const v = makeVerdict({
       suggestion: { activityId: 'road_cycling', score: 20, binding: { key: 'precipitation', score: 0, condition: '', value: 8 } },

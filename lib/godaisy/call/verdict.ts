@@ -27,7 +27,7 @@
 
 import { compass, familyFor, forceFromMs, forceName, phraseFor } from '@/utils/activityReasons';
 import type { WeatherData, Suggestion } from '@/utils/getSuggestionsByDay';
-import type { CallBand } from './bands';
+import { LIMITING_BELOW, type CallBand } from './bands';
 import { choosePhrase, fillWhen } from './phrasebook';
 
 /**
@@ -216,7 +216,21 @@ function humidClause(humidity: number, temperature?: number): string {
  * score is what the sentence is about.
  */
 function bindingClause(w: WeatherData, activityId: string, bindingKey?: string): string | null {
-  const rain = w.precipitation ?? 0;
+  /*
+   * Rain is left NULLABLE, and every dryness claim below tests for the number
+   * rather than coalescing it to zero.
+   *
+   * `?? 0` made a missing forecast field indistinguishable from a dry day, and
+   * the sentence then asserted the dryness: "Dry through." over a source that
+   * simply does not publish precipitation. The fact grid beside it already
+   * declines to speak on the same input — `factsFor` drops the tile when the
+   * value is absent — so the two halves of the lockup contradicted each other,
+   * one claiming to know what the other had just said it did not.
+   *
+   * Not knowing whether it will rain is a fine thing to be silent about. It is
+   * not a fine thing to call dry.
+   */
+  const rain = w.precipitation;
   const gust = w.gustspeed;
   const windKmh = w.windspeed;
 
@@ -233,6 +247,7 @@ function bindingClause(w: WeatherData, activityId: string, bindingKey?: string):
       if (gust !== undefined) return `gusting to ${Math.round(gust)} km/h`;
       break;
     case 'precipitation':
+      if (rain === undefined) break;
       if (rain >= 0.2) return `${rain.toFixed(1)} mm of rain`;
       return 'dry through';
     case 'waterTemperature':
@@ -300,8 +315,14 @@ function bindingClause(w: WeatherData, activityId: string, bindingKey?: string):
 
   // A strong gust is never "dry and mild", whatever the family thinks.
   if (gust !== undefined && gust >= 45) return `gusting to ${Math.round(gust)} km/h`;
-  if (rain >= 1) return `${rain.toFixed(1)} mm of rain`;
-  if (w.temperature !== undefined) return `${rain < 0.2 ? 'dry' : 'mostly dry'}, ${Math.round(w.temperature)}°C`;
+  if (rain !== undefined && rain >= 1) return `${rain.toFixed(1)} mm of rain`;
+  // The temperature is still worth saying on its own; the dryness half is only
+  // added where the forecast actually carried a number to say it from.
+  if (w.temperature !== undefined) {
+    const degrees = `${Math.round(w.temperature)}°C`;
+    if (rain === undefined) return degrees;
+    return `${rain < 0.2 ? 'dry' : 'mostly dry'}, ${degrees}`;
+  }
   return null;
 }
 
@@ -317,8 +338,11 @@ function bindingClause(w: WeatherData, activityId: string, bindingKey?: string):
  */
 function goodClause(w: WeatherData, activityId: string): string | null {
   const family = familyFor(activityId);
-  const rain = w.precipitation ?? 0;
-  const dry = rain < 0.2;
+  // Nullable for the same reason as in `bindingClause`: a day whose forecast
+  // carries no precipitation is a day this cannot call dry. `dry` is false when
+  // the number is missing, which drops the word rather than inverting it.
+  const rain = w.precipitation;
+  const dry = rain !== undefined && rain < 0.2;
   const t = w.temperature !== undefined ? `${Math.round(w.temperature)}°C` : null;
 
   const force = (kmh: number) => {
@@ -342,19 +366,15 @@ function goodClause(w: WeatherData, activityId: string): string | null {
       ? `${swell.toFixed(1)} m at ${Math.round(w.swellPeriod)} seconds`
       : `${swell.toFixed(1)} m of swell`;
   }
-  if (t) return `${dry ? 'dry' : 'mostly dry'}, ${t}`;
+  // `dry` is false both for a wet day and for one with no precipitation at all,
+  // and "mostly dry" is a claim rather than a shrug — so the missing case falls
+  // back to the temperature alone.
+  if (t) return rain === undefined ? t : `${dry ? 'dry' : 'mostly dry'}, ${t}`;
   return null;
 }
 
 /** Sentences start with a capital. The clauses above are written mid-sentence. */
 const upperFirst = (t: string) => (t ? t[0].toUpperCase() + t.slice(1) : t);
-
-/**
- * A criterion is worth naming as a limitation only when it actually scored
- * badly. Below this it is a real constraint; above it, it is just the softest
- * link in a good chain and saying so contradicts the verdict beside it.
- */
-const LIMITING_BELOW = 0.5;
 
 /**
  * Build the verdict and its reason.
@@ -392,7 +412,17 @@ export function makeVerdict(input: VerdictInput): Verdict {
    */
   if (band === 'marginal' || band === 'notToday') {
     const rain = weather.precipitation ?? 0;
-    const gust = weather.gustspeed ?? weather.windspeed;
+    /*
+     * Same reading as the unsafe branch above, `windspeedMax` included.
+     *
+     * This was `gustspeed ?? windspeed` while the branch twenty lines up read
+     * `gustspeed ?? windspeedMax ?? windspeed`, so on a source that publishes a
+     * peak sustained wind but no gust the two disagreed about how windy the same
+     * day was — and this one took the day's MEAN. A 38 km/h peak came through as
+     * 24 and fell under the 35 threshold below, so the write-off never mentioned
+     * the wind at all and explained itself with the temperature instead.
+     */
+    const gust = weather.gustspeed ?? weather.windspeedMax ?? weather.windspeed;
     const bits: string[] = [];
     if (gust !== undefined && gust >= 35) bits.push(`gusting to ${Math.round(gust)} km/h`);
     if (rain >= 1) bits.push(`${rain.toFixed(1)} mm of rain`);
