@@ -62,6 +62,32 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             } catch (e) {
               console.error('[Auth] Push sync failed:', e);
             }
+
+            /*
+             * And the call setup, for the same reason and at the same moment.
+             *
+             * A token without a setup is a device the sender knows about and
+             * has nothing to say to. Onboarding writes the setup on the way
+             * through, but the people who matter most here went through it
+             * BEFORE the server ever stored one — six months of Go Daisy users
+             * whose hour and place exist only in a cookie on their phone. This
+             * is the point where that cookie and an access token are both in
+             * hand, so it is the point where the two can be joined.
+             *
+             * Every platform, not just native: signing in on the web is just as
+             * good a moment to mirror it, and the sender does not care which
+             * browser the setup was typed into.
+             */
+            try {
+              const { readSetup } = await import('@/lib/godaisy/call/setup');
+              const existing = readSetup();
+              if (existing) {
+                const { syncSetupToServer } = await import('@/lib/godaisy/call/sync');
+                void syncSetupToServer(existing);
+              }
+            } catch (e) {
+              console.error('[Auth] Call setup sync failed:', e);
+            }
           } else {
             localStorage.removeItem('supabase.auth.session');
           }
