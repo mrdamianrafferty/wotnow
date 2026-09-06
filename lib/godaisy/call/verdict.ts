@@ -236,7 +236,7 @@ function bindingClause(w: WeatherData, activityId: string, bindingKey?: string):
       if (rain >= 0.2) return `${rain.toFixed(1)} mm of rain`;
       return 'dry through';
     case 'waterTemperature':
-      if (w.waterTemperature !== undefined) return `${Math.round(w.waterTemperature)}° in the water`;
+      if (w.waterTemperature !== undefined) return `${Math.round(w.waterTemperature)}°C in the water`;
       break;
     case 'waveHeight':
     case 'swellPeriod': {
@@ -296,12 +296,12 @@ function bindingClause(w: WeatherData, activityId: string, bindingKey?: string):
   // No usable binding: fall back to what the family cares about most.
   const family = familyFor(activityId);
   if ((family === 'wind_powered' || family === 'paddle') && windKmh !== undefined) return force(windKmh);
-  if (family === 'immersion' && w.waterTemperature !== undefined) return `${Math.round(w.waterTemperature)}° in the water`;
+  if (family === 'immersion' && w.waterTemperature !== undefined) return `${Math.round(w.waterTemperature)}°C in the water`;
 
   // A strong gust is never "dry and mild", whatever the family thinks.
   if (gust !== undefined && gust >= 45) return `gusting to ${Math.round(gust)} km/h`;
   if (rain >= 1) return `${rain.toFixed(1)} mm of rain`;
-  if (w.temperature !== undefined) return `${rain < 0.2 ? 'dry' : 'mostly dry'}, ${Math.round(w.temperature)}°`;
+  if (w.temperature !== undefined) return `${rain < 0.2 ? 'dry' : 'mostly dry'}, ${Math.round(w.temperature)}°C`;
   return null;
 }
 
@@ -319,7 +319,7 @@ function goodClause(w: WeatherData, activityId: string): string | null {
   const family = familyFor(activityId);
   const rain = w.precipitation ?? 0;
   const dry = rain < 0.2;
-  const t = w.temperature !== undefined ? `${Math.round(w.temperature)}°` : null;
+  const t = w.temperature !== undefined ? `${Math.round(w.temperature)}°C` : null;
 
   const force = (kmh: number) => {
     const f = forceFromMs(kmh / 3.6);
@@ -333,7 +333,7 @@ function goodClause(w: WeatherData, activityId: string): string | null {
     return `${force(w.windspeed)}${dry ? ', dry' : ''}`;
   }
   if (family === 'immersion') {
-    const sea = w.waterTemperature !== undefined ? `${Math.round(w.waterTemperature)}° in the water` : null;
+    const sea = w.waterTemperature !== undefined ? `${Math.round(w.waterTemperature)}°C in the water` : null;
     if (sea) return `${sea}${w.windspeed !== undefined && w.windspeed < 20 ? ' and little wind' : ''}`;
   }
   const swell = w.swellHeight ?? w.waveHeight;
@@ -405,7 +405,7 @@ export function makeVerdict(input: VerdictInput): Verdict {
     if (suggestion.binding?.key !== 'humidity' && typeof weather.humidity === 'number' && weather.humidity >= 90) {
       bits.push(humidClause(weather.humidity, weather.temperature));
     }
-    if (!bits.length && weather.temperature !== undefined) bits.push(`${Math.round(weather.temperature)}° and little else going for it`);
+    if (!bits.length && weather.temperature !== undefined) bits.push(`${Math.round(weather.temperature)}°C and little else going for it`);
     const fallback = band === 'marginal'
       ? 'Nothing you have picked is at its best.'
       : 'Nothing you have picked would be any fun.';

@@ -44,13 +44,13 @@ const bandFor = (c: number) => BANDS.find(b => c >= b.min && c < b.max) ?? BANDS
 
 // Order of bands for display (hot → cold) with matching range labels
 const BAND_DISPLAY: Array<{ band: BandId; label: string }> = [
-  { band: "hot",       label: "25°+ — " },
-  { band: "warm",      label: "21–25° — " },
-  { band: "mild",      label: "18–21° — " },
-  { band: "cool",      label: "15–18° — " },
-  { band: "chilly",    label: "12–15° — " },
-  { band: "very_cold", label: "8–12° — " },
-  { band: "freezing",  label: "Below 8° — " },
+  { band: "hot",       label: "25°C+ — " },
+  { band: "warm",      label: "21–25°C — " },
+  { band: "mild",      label: "18–21°C — " },
+  { band: "cool",      label: "15–18°C — " },
+  { band: "chilly",    label: "12–15°C — " },
+  { band: "very_cold", label: "8–12°C — " },
+  { band: "freezing",  label: "Below 8°C — " },
 ];
 
 // Default (generic) text for each band if an activity doesn't specify one
@@ -135,23 +135,23 @@ type Variant = {
 
 
 const SHORE_FISH_LINES: string[] = [
-  "25°+ — Bite can be quiet; fish dawn/dusk or in shade and deeper gullies",
-  "21–25° — Mixed; best early and late, watch for baitfish in the wash",
-  "18–21° — Very good; active fish, use natural baits and keep moving",
-  "15–18° — Good; steady bites, try headlands and channels",
-  "12–15° — Fair; target deeper holes and sun-warmed pockets",
-  "8–12° — Slow; scale down baits and fish deeper water",
-  "Below 8° — Unlikely; short windows only in deeper, sheltered marks",
+  "25°C+ — Bite can be quiet; fish dawn/dusk or in shade and deeper gullies",
+  "21–25°C — Mixed; best early and late, watch for baitfish in the wash",
+  "18–21°C — Very good; active fish, use natural baits and keep moving",
+  "15–18°C — Good; steady bites, try headlands and channels",
+  "12–15°C — Fair; target deeper holes and sun-warmed pockets",
+  "8–12°C — Slow; scale down baits and fish deeper water",
+  "Below 8°C — Unlikely; short windows only in deeper, sheltered marks",
 ];
 
 const BOAT_FISH_LINES: string[] = [
-  "25°+ — Quiet mid‑day; best at dawn/dusk, try deeper, cooler water",
-  "21–25° — Mixed; follow birds and bait, vary depth",
-  "18–21° — Very good; active predators, steady drifts",
-  "15–18° — Good; work drop‑offs, reefs and contours",
-  "12–15° — Fair; find warmer patches or current lines",
-  "8–12° — Slow; small baits and slow drifts in deeper areas",
-  "Below 8° — Very slow; short feeding spells, think deep and slow",
+  "25°C+ — Quiet mid‑day; best at dawn/dusk, try deeper, cooler water",
+  "21–25°C — Mixed; follow birds and bait, vary depth",
+  "18–21°C — Very good; active predators, steady drifts",
+  "15–18°C — Good; work drop‑offs, reefs and contours",
+  "12–15°C — Fair; find warmer patches or current lines",
+  "8–12°C — Slow; small baits and slow drifts in deeper areas",
+  "Below 8°C — Very slow; short feeding spells, think deep and slow",
 ];
 
 const VARIANTS: Record<ActivityKey, Variant> = {

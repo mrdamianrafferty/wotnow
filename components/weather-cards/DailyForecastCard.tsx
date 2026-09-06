@@ -59,8 +59,8 @@ export const DailyForecastCard: React.FC<DailyForecastCardProps> = ({
                     </td>
                     <td className="px-2 py-2 text-sm">
                       <div className="flex items-center gap-2">
-                        <span className="text-info">Low {d.minC != null ? Math.round(d.minC) : '—'}°</span>
-                        <span className="text-warning">High {d.maxC != null ? Math.round(d.maxC) : '—'}°</span>
+                        <span className="text-info">Low {d.minC != null ? Math.round(d.minC) : '—'}°C</span>
+                        <span className="text-warning">High {d.maxC != null ? Math.round(d.maxC) : '—'}°C</span>
                         <span className="badge badge-outline badge-xs">
                           {d.pop != null ? Math.round((d.pop || 0) * 100) : 0}%
                         </span>

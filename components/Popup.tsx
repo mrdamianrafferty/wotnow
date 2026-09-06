@@ -522,13 +522,13 @@ const Popup: React.FC<PopupProps> = ({
                     {typeof weatherData?.temperature === 'number' && (
                       <li>
                         <OptimizedImage src="/weather-icons/design/fill/final/thermometer-celsius.svg" alt="Air temperature" width={24} height={24} style={{ verticalAlign: 'middle' }} />{' '}
-                        <strong>{weatherData.temperature.toFixed(1)}°</strong>
+                        <strong>{weatherData.temperature.toFixed(1)}°C</strong>
                       </li>
                     )}
                     {typeof marineData.waterTemperature === 'number' && (
                       <li>
                         <OptimizedImage src="/weather-icons/design/fill/final/thermometer-water.svg" alt="Water temperature" width={24} height={24} style={{ verticalAlign: 'middle' }} />{' '}
-                        <strong>{marineData.waterTemperature.toFixed(1)}°</strong>
+                        <strong>{marineData.waterTemperature.toFixed(1)}°C</strong>
                       </li>
                     )}
                     {weatherData?.icon && (
@@ -676,13 +676,13 @@ const Popup: React.FC<PopupProps> = ({
                     {typeof weatherData?.tempMax === 'number' && (
                       <li>
                         <OptimizedImage src="/weather-icons/design/fill/final/thermometer-celsius.svg" alt="High Temperature" width={24} height={24} style={{ verticalAlign: 'middle' }} />{' '}
-                        <strong>H: {weatherData.tempMax}°</strong>
+                        <strong>H: {weatherData.tempMax}°C</strong>
                       </li>
                     )}
                     {typeof weatherData?.tempMin === 'number' && (
                       <li>
                         <OptimizedImage src="/weather-icons/design/fill/final/thermometer-colder.svg" alt="Low Temperature" width={24} height={24} style={{ verticalAlign: 'middle' }} />{' '}
-                        <strong>L: {weatherData.tempMin}°</strong>
+                        <strong>L: {weatherData.tempMin}°C</strong>
                       </li>
                     )}
                     {typeof weatherData?.temperature === 'number' &&
@@ -690,7 +690,7 @@ const Popup: React.FC<PopupProps> = ({
                      typeof weatherData?.tempMax === 'undefined' && (
                       <li>
                         <OptimizedImage src="/weather-icons/design/fill/final/thermometer-celsius.svg" alt="Temperature" width={24} height={24} style={{ verticalAlign: 'middle' }} />{' '}
-                        <strong>{weatherData.temperature}°</strong>
+                        <strong>{weatherData.temperature}°C</strong>
                       </li>
                     )}
                     {weatherData?.icon && (

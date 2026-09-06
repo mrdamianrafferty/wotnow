@@ -223,7 +223,7 @@ const NextFewDaysCard: React.FC<NextFewDaysCardProps> = ({
                       <div className={`grid items-center whitespace-nowrap ${isMarine ? 'gap-x-0.5 sm:gap-x-1 grid-cols-5' : 'gap-x-0.5 sm:gap-x-1 grid-cols-3'}`}>
                         {/* Min–Max temperature (col 1) */}
                         <span className="opacity-90">
-                          {d.minC != null ? Math.round(d.minC) : '—'}°–{d.maxC != null ? Math.round(d.maxC) : '—'}°
+                          {d.minC != null ? Math.round(d.minC) : '—'}–{d.maxC != null ? Math.round(d.maxC) : '—'}°C
                         </span>
 
                         {isMarine ? (
