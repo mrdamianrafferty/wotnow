@@ -12,6 +12,7 @@ import { Globe, ChevronDown, Coffee, Beer, Flower2, Loader2, PartyPopper, AlertC
 import { useLanguage } from '@/context/LanguageContext';
 import { getSupportedLanguages } from '@/lib/user/language';
 import { useGoDaisyPushNotifications } from '@/hooks/useGoDaisyPushNotifications';
+import { CallHourCard } from '@/components/call/CallHourCard';
 import { GODAISY_TIP_PRODUCTS } from '@/lib/godaisy/tipProducts';
 import type { TipPackage } from '@/lib/grow/revenueCat';
 
@@ -669,6 +670,19 @@ export default function AccountPage() {
             * Still hidden on iOS native: there the notifications are the
             * system's, and iOS Settings is where they are managed.
             */}
+          {/*
+            * OUTSIDE the `!isIOSNative` gate below, deliberately.
+            *
+            * That gate is right about the system permission — on iOS that is
+            * granted at launch and revoked in iOS Settings, and duplicating it
+            * here would be a switch that lies. It is wrong about the HOUR,
+            * which is our decision, stored on our server, and until now had no
+            * control anywhere in the app: the only way to change it was to walk
+            * the whole of `/start` again, a flow advertised as being about
+            * sports and spots.
+            */}
+          {mounted && <CallHourCard isSignedIn={isSignedIn} />}
+
           {mounted && !isIOSNative && (
             <section className="gd-acct-block">
               <h2 className="gd-acct-h2">Notifications</h2>

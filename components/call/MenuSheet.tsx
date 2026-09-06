@@ -52,7 +52,16 @@ const GROUPS: ReadonlyArray<{ title: string; items: readonly Item[] }> = [
        */
       { href: '/weather', label: 'Conditions', note: 'Every reading for where you are' },
       { href: '/start', label: 'Sports and spots', note: 'Change what Go Daisy tells you about' },
-      { href: '/account', label: 'Account' },
+      /*
+       * "Account" alone hid the one setting people go looking for.
+       *
+       * The hour the call arrives lives on `/account`, and the two routes to it
+       * — this item and "Sports and spots" — between them said nothing about
+       * timing or notifications. Someone wanting to change WHEN they are called
+       * had no word to follow, which is a good working definition of a setting
+       * that does not exist.
+       */
+      { href: '/account', label: 'Account', note: 'When Go Daisy calls, and everything else' },
     ],
   },
   {

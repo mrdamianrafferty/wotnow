@@ -21,7 +21,7 @@
  */
 
 import { supabase } from '@/lib/supabase/client';
-import type { CallSetup } from './setup';
+import { readSetup, writeSetup, type CallSetup } from './setup';
 
 /**
  * Mirror the setup into Supabase. Never throws.
@@ -74,4 +74,123 @@ export async function syncSetupToServer(setup: CallSetup): Promise<boolean> {
     console.warn('[CallSync] Could not mirror setup to the server:', err);
     return false;
   }
+}
+
+/** The server's copy, for a device that has no cookie yet. */
+interface ServerCallSetup {
+  call_hour: number | null;
+  call_place_name: string | null;
+  call_place_lat: number | null;
+  call_place_lon: number | null;
+  call_coastal_name: string | null;
+  call_coastal_lat: number | null;
+  call_coastal_lon: number | null;
+  call_sports: string[] | null;
+}
+
+async function fetchServerSetup(): Promise<ServerCallSetup | null> {
+  try {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session?.access_token) return null;
+    const res = await fetch('/api/godaisy/call-setup', {
+      headers: { Authorization: `Bearer ${session.access_token}` },
+    });
+    if (!res.ok) return null;
+    const json = await res.json() as { setup: ServerCallSetup | null };
+    return json.setup;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * The hour this person has chosen, from whichever store knows.
+ *
+ * Cookie first, because it is the system of record and the only one that
+ * answers instantly. The server is the fallback for a device that has never
+ * been through onboarding — a second phone, or a reinstall — where the cookie
+ * is gone but the choice was made months ago and should not have to be made
+ * again.
+ */
+export async function loadCallHour(): Promise<number | undefined> {
+  const cookie = readSetup();
+  if (cookie?.hour !== undefined) return cookie.hour;
+  const server = await fetchServerSetup();
+  return server?.call_hour ?? undefined;
+}
+
+/**
+ * Change when the call arrives.
+ *
+ * WRITES THE COOKIE AS WELL AS THE SERVER, and that is not belt-and-braces —
+ * it is the whole correctness of the operation. `AuthContext` mirrors the
+ * cookie to the server on every sign-in and every session restore, and the
+ * server route stores `hour` as whatever arrived, including absent. So an hour
+ * saved to the server alone survives exactly until the next app launch, when a
+ * cookie that never learned about it overwrites the column with null. The
+ * person would set their hour, see it accepted, and silently stop being called.
+ *
+ * The cookie goes first for the same reason it does in onboarding: it is what
+ * `/call` renders from, and it must not be the half that fails.
+ *
+ * Three outcomes, because two would have to lie about one of them:
+ *
+ *   'saved'      the cookie is written and the server agrees (or there is no
+ *                account to agree with, which is fine — the cookie is the
+ *                system of record and `AuthContext` will mirror it on sign-in).
+ *   'local-only' the cookie is written but the signed-in mirror failed. The
+ *                choice is not lost; the next session restore syncs it.
+ *   'no-setup'   there is no place to attach an hour to, on this device or on
+ *                the server. NOTHING was written, and saying "stored on this
+ *                device" here would be false.
+ */
+export type SaveHourResult = 'saved' | 'local-only' | 'no-setup';
+
+export async function saveCallHour(hour: number): Promise<SaveHourResult> {
+  let setup: CallSetup | null = null;
+
+  const cookie = readSetup();
+  if (cookie) {
+    setup = { ...cookie, hour };
+  } else {
+    // No cookie on this device. Rebuild one from the server's copy rather than
+    // sending somebody back through onboarding to change a single number.
+    const server = await fetchServerSetup();
+    if (
+      !server ||
+      server.call_place_lat === null ||
+      server.call_place_lon === null ||
+      !server.call_sports?.length
+    ) {
+      return 'no-setup';
+    }
+    setup = {
+      v: 1,
+      sports: server.call_sports,
+      place: {
+        name: server.call_place_name ?? 'Your place',
+        lat: server.call_place_lat,
+        lon: server.call_place_lon,
+      },
+      ...(server.call_coastal_lat !== null && server.call_coastal_lon !== null
+        ? {
+            coastal: {
+              name: server.call_coastal_name ?? 'The coast',
+              lat: server.call_coastal_lat,
+              lon: server.call_coastal_lon,
+            },
+          }
+        : {}),
+      hour,
+    };
+  }
+
+  // The cookie first, and unconditionally — it is what `/call` renders from,
+  // and it must not be the half that fails.
+  writeSetup(setup);
+
+  const { data: { session } } = await supabase.auth.getSession().catch(() => ({ data: { session: null } }));
+  if (!session?.access_token) return 'saved';
+
+  return (await syncSetupToServer(setup)) ? 'saved' : 'local-only';
 }
