@@ -362,6 +362,11 @@ export const lifestyleActivities: ActivityType[] = [
       'visibility<2',               // gloomy or foggy
       'snowfallRateMmH>0.5',        // snow wets pages and reduces visibility
       'snowDepthCm>0.5',             // benches covered or icy
+      /* A rug on the grass as often as a bench, so the ground counts — the
+         same ladder picnicking and outdoor_meditation use. Yoga, a barbecue
+         and an outdoor gig deliberately do not read it: standing, shod, or
+         on a mat. See __tests__/rainMonotonic.test.ts. */
+      'soilMoisture>50',
       'gust>11'
     ],
 
@@ -372,6 +377,7 @@ export const lifestyleActivities: ActivityType[] = [
       'cloudCover=80..100',            // heavy overcast
       'visibility=2..5',               // dull light but readable
       'precipitation=0.1..1',               // drizzle, not rain
+      'soilMoisture=45..50',
       'gust=8.8..11'
     ],
 
@@ -382,6 +388,7 @@ export const lifestyleActivities: ActivityType[] = [
       'humidity<75',                  // not too muggy
       'visibility>5',
       'precipitation=0..0.1',               // a trace at most
+      'soilMoisture=15..45',
       'gust<8.8'
     ],
 
@@ -391,7 +398,8 @@ export const lifestyleActivities: ActivityType[] = [
       'cloudCover=20..50',             // some sun for light               // pleasant
       'visibility>10',
       'precipitation=0',               // no Rain
-      'gust<6.1'
+      'gust<6.1',
+      'soilMoisture=18..35'
     ],
 
     indoorAlternative: 'Curl up with your book at home or in a cosy café'

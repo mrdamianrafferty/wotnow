@@ -540,9 +540,39 @@ function calculateActivityScoreWithSnow(
    */
   const rainRate = rainHours ? rainMm / rainHours : 0;
   const durationWeight = 0.5 + 0.5 * Math.min(1, rainRate / 0.5);
+  /**
+   * A day cannot get DRIER by raining for longer.
+   *
+   * The two limbs used to be `rainRate / 4` and the duration term, and for a
+   * fixed total those run in opposite directions: spread the same rain over
+   * more hours and the rate falls while the duration rises. `Math.max` of a
+   * falling and a rising line has a trough where they cross — at about two
+   * hours — so the same millimetre of rain scored:
+   *
+   *     1 mm over 1 h   picnicking 43        1 mm over 4 h   43
+   *     1 mm over 2 h   picnicking 68  <--   1 mm over 6 h   41
+   *     1 mm over 3 h   picnicking 44        1 mm over 12 h  34
+   *
+   * Twenty-five points and a band change for one hour's difference, and worse,
+   * a day that improved by raining LONGER. Nothing defends that to a reader
+   * comparing two similar days.
+   *
+   * The intensity limb is the one that goes, because it is the one already
+   * priced elsewhere: `rainRateMmH >= 4` — the Met Office's heavy-rain
+   * boundary — caps the score at 39 further down, and it is a hard cap rather
+   * than a contribution. Keeping a second copy inside `wetness` was the
+   * "charged three times for the same rain" problem this file already names.
+   *
+   * What replaces it is the reading the no-hours branch below has always used,
+   * so the two now say the same thing: how wet the day is, is the worse of the
+   * daily total and how long it went on. Both limbs rise with rain and neither
+   * falls with duration, so `wetness` is monotonic in both — which is the
+   * property that was actually missing.
+   */
+  const dailyReading = Math.min(1, rainMm / 10);
   const wetness = rainHours
-    ? Math.min(1, Math.max(rainRate / 4, (rainHours / 12) * durationWeight))
-    : Math.min(1, rainMm / 10);
+    ? Math.min(1, Math.max(dailyReading, (rainHours / 12) * durationWeight))
+    : dailyReading;
   const rainRateMmH = rainHours ? rainMm / rainHours : null;
 
   /**
