@@ -74,9 +74,32 @@ All engineers should reference this section when working on mobile features so G
 
 **Goal:** Make the existing PWA feel more "app-like" and encourage installation.
 
-#### 1.1 Install Prompt Component ⬜
+#### 1.1 Install Prompt Component ✅ — done, but not as planned below
 
-**File:** `components/InstallPrompt.tsx`
+**Built as:** `components/call/CallDeliveryNotice.tsx`, mounted in
+`pages/start.tsx` and `pages/account.tsx`, on top of `hooks/useInstallPrompt.ts`.
+
+`components/InstallPrompt.tsx` — the file this section named — was written, was
+mounted nowhere, and has been deleted. It was a Findr artifact: it said "Install
+Findr App" and its sibling `AppCTA.tsx` linked to an App Store search for findr.
+Only the hook was reusable.
+
+Two things the plan below did not know, both of which changed the shape of it:
+
+- **Signing in outranks installing.** The daily call is sent by a cron that
+  reads `godaisy_notification_preferences`, and a row only exists for a
+  signed-in user. An install with no account still delivers nothing, so there
+  is no point explaining Add to Home Screen to someone with the other gate
+  closed. The notice shows one line, for whichever gate is actually shut.
+- **A Capacitor shell is not a home-screen web app.** `display-mode:
+  standalone` and `navigator.standalone` both read false inside it, so the
+  original detection would have told someone holding the native app to install
+  it. `useInstallPrompt` carries an explicit `Capacitor.isNativePlatform()`
+  guard for that.
+
+The success criteria below are kept as written, for the record.
+
+**Original plan — File:** ~~`components/InstallPrompt.tsx`~~
 
 **Features:**
 - Detect `BeforeInstallPromptEvent`
