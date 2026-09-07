@@ -1,5 +1,42 @@
 import type { ActivityType } from './types';
 
+/**
+ * ─── The wind scale these on-foot models use, and where it comes from ────
+ *
+ * Mountaineering Scotland — Wind Speeds (safety-and-skills/essential-skills/
+ * weather-conditions/wind-speeds). The national body for hillwalkers and
+ * climbers in Scotland, and the only UK source that states the effect on a
+ * person rather than on a tree:
+ *
+ *     under 20 mph   negligible
+ *     20-30 mph      unlikely to affect balance; wind chill is the factor
+ *     30-40 mph      "starts affecting balance of fit adults; foot placement
+ *                    becomes uncertain. Ridge lines and exposed edges should
+ *                    be avoided"
+ *     40-50 mph      "walking will be arduous" — leaning into it, blown
+ *                    sideways, navigation becomes difficult
+ *     50-60 mph      "VERY challenging and exhausting"; descend
+ *     60-70 mph      dangerous, high risk of being blown over
+ *     70+ mph        abandon the hill
+ *
+ * `hiking`, `orienteering` and `running` already stopped at 13 m/s mean and
+ * 17 m/s gust — 29 and 38 mph, so at the foot of the band where balance starts
+ * to go and just under the 40 where walking turns arduous. That is a good fit
+ * and it is why those three were not touched.
+ *
+ * `trail_running` and `rock_hopping` stopped at 15 and 20 m/s — 34 and 45 mph
+ * — and were therefore offering, as workable, conditions in which this scale
+ * says foot placement is uncertain and gusts will blow a walker sideways. Both
+ * are on foot on rough ground; rock hopping in particular fails exactly the way
+ * "foot placement becomes uncertain" describes. Both now match hiking.
+ *
+ * NOT CHANGED, deliberately: `rock_climbing` still stops at 34/45 mph. The BMC
+ * publishes no wind threshold for climbing — this was searched for, and the
+ * absence is the finding — and a walking scale is not evidence about a roped
+ * climber, who is frequently at a crag chosen for its shelter. Changing it
+ * would have been consistency dressed up as evidence.
+ */
+
 export const outdoorRecreation: ActivityType[] = [
   {
     id: 'hiking',
@@ -101,20 +138,20 @@ export const outdoorRecreation: ActivityType[] = [
       'temperature<5',
       'temperature>28',
       'precipitation>1',
-      'windSpeed>15',
+      'windSpeed>13',       // 29 mph: Mountaineering Scotland put foot placement at risk from 30
       'visibility<2',
       'snowfallRateMmH>0.5',
       'snowDepthCm>0.5',
-      'gust>20'
+      'gust>17'          // 38 mph, just under the 40 where walking turns arduous
     ],
     fairConditions: [
       'temperature=5..10',
       'temperature=22..28',            // reaches the >28 veto; no degree sits outside every rung
-      'windSpeed=11..15',
+      'windSpeed=11..13',
       'cloudCover=60..90',
       'visibility=2..5',
       'precipitation=0.1..1',
-      'gust=16..20'
+      'gust=16..17'
     ],
     goodConditions: [
       'temperature=10..22',
@@ -671,10 +708,10 @@ export const outdoorRecreation: ActivityType[] = [
   // the veto only fires INSIDE it: trail running was "not today" at 22°C and
   // fine again at 35°C, poor at 3°C and fine at −10°C. Poor is one-sided now,
   // and fair carries the shoulder. See the ceiling audit in `team.ts`.
-  fairConditions: ['temperature=2..5 or 20..26','windSpeed=11..15','humidity<=90','precipitation=2..4','soilMoisture=45..50','visibility=1..2',
-      'gust=16..20'],
-  poorConditions: ['temperature<2 or temperature>26','windSpeed>15','precipitation>4','humidity>90','soilMoisture>50','visibility<1','snowfallRateMmH>1','snowDepthCm>4',
-      'gust>20'],
+  fairConditions: ['temperature=2..5 or 20..26','windSpeed=11..13','humidity<=90','precipitation=2..4','soilMoisture=45..50','visibility=1..2',
+      'gust=16..17'],
+  poorConditions: ['temperature<2 or temperature>26','windSpeed>13','precipitation>4','humidity>90','soilMoisture>50','visibility<1','snowfallRateMmH>1','snowDepthCm>4',
+      'gust>17'],
   },
   {
     id: 'camping',
