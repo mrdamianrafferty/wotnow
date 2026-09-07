@@ -1,5 +1,61 @@
 import type { ActivityType } from './types';
 
+/**
+ * ─── Checked against the governing bodies, 2026-09 ───────────────────────
+ *
+ * The watersports ladders were held against the RYA, British Canoeing and the
+ * Met Office; this is the same pass for cycling. Cycling has less to work with
+ * — British Cycling publishes no wind or temperature thresholds at all, and it
+ * is worth knowing that before someone goes looking for them again.
+ *
+ * WHAT DOES EXIST:
+ *
+ *   UCI — Extreme Weather Protocol (2015, extended to heat in 2024). Names six
+ *   extreme conditions (freezing rain, snow on the road, strong wind, extreme
+ *   temperature, poor visibility, pollution) but sets NO numeric wind or rain
+ *   threshold: they are triggers for a meeting, not limits. Heat is the
+ *   exception and is measured in WBGT, not air temperature — red zone above
+ *   28 °C WBGT, which can mean neutralising or cancelling. WBGT is not
+ *   comparable to the air temperature these models score, so it cannot be
+ *   copied across; it is recorded here so nobody tries.
+ *
+ *   AusCycling — Extreme Weather Policy, Aug 2025. A national federation, and
+ *   the only one with an actual table. Wind, by forecast mean: 20-38 km/h
+ *   review participants' ability; 39-61 km/h "should the forecast be for winds
+ *   likely to exceed 40 km/h" officials are notified and BMX is cancelled;
+ *   62-88 km/h (gale) cancels all silver and bronze junior and open racing,
+ *   and all track, BMX and MTB. Heat, by air temperature: caution from 30 °C,
+ *   endurance events may be cancelled 35-40 °C, all competition postponed
+ *   above 40 °C. Cold: "under 5 degrees" — and the action is caution, warmer
+ *   clothing, and scheduling for the warmer part of the day. NOT cancellation.
+ *
+ * ─── What moved ──────────────────────────────────────────────────────────
+ *
+ * `road_cycling` vetoed below 5 °C. That number is AusCycling's, but it is
+ * their CAUTION threshold, and this file was using it as a stop — so a dry,
+ * calm 4 °C January morning, which is an ordinary British club-run day, read
+ * 14: "not today". The veto is now below 2 °C, where the hazard stops being
+ * cold and starts being ice, and 2-5 °C reads "workable" instead. See also
+ * `cycling` in wellness.ts, which was worse: it vetoed below 8 °C.
+ *
+ * ─── Checked and left ────────────────────────────────────────────────────
+ *
+ *   mean wind veto >13 m/s = 29 mph = 47 km/h, inside AusCycling's "exceed
+ *   40 km/h" notification band and well below their 62 km/h cancellation.
+ *   Conservative for a rider with no commissaire, which is the right way round.
+ *
+ *   heat veto >32 °C, between AusCycling's "may be cancelled" (35-40) and
+ *   their caution (30+). Conservative, and not touched, because the honest
+ *   comparator is WBGT and we do not compute it.
+ *
+ *   `mountain_biking` keeps a higher wind veto (15 m/s) than road, on the
+ *   ground that its trails are in trees. Note this cuts both ways: AusCycling's
+ *   MTB column is the one that says "remove any low hanging branches or dead
+ *   wood on course trail pre event", so wind in woodland is a deadfall hazard
+ *   rather than a handling one. Left as it is, flagged as the weakest number
+ *   in this file.
+ */
+
 export const cyclingSports: ActivityType[] = [
   {
     id: 'road_cycling',
@@ -44,7 +100,7 @@ export const cyclingSports: ActivityType[] = [
       'visibility>5'
     ],
     fairConditions: [
-      'temperature=5..10 or 28..32',
+      'temperature=2..10 or 28..32',
       'windSpeed=9..13',           // Force 6 — a genuinely hard ride
       'gust=13..17',
       /* 75..90, not 80..90: the old pair left 75-80 in neither band, and
@@ -55,7 +111,7 @@ export const cyclingSports: ActivityType[] = [
       'visibility=2..5'
     ],
     poorConditions: [
-      'temperature<5 or temperature>32',
+      'temperature<2 or temperature>32',   // ice, not cold: below 5 °C is a caution in AusCycling's policy, not a stop
       'windSpeed>13',
       'gust>17',                   // Force 8 in the gusts — blown off line
       'precipitation>3',

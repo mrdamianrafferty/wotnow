@@ -29,9 +29,13 @@ export const wellnessSports: ActivityType[] = [
       'gust<9.4'],
     goodConditions: ['temperature=14..28','windSpeed<9','clouds=0..80','humidity<75','precipitation=0..1','visibility>5',
       'gust<13.6'],
-    fairConditions: ['temperature=8..14 or 28..30','windSpeed=9..13','humidity=75..85','precipitation=1..2','visibility=2..5',
+    fairConditions: ['temperature=2..14 or 28..30','windSpeed=9..13','humidity=75..85','precipitation=1..2','visibility=2..5',
       'gust=13.6..17'],
-    poorConditions: ['temperature<8 or temperature>30','windSpeed>13','precipitation>2','humidity>85','visibility<2','snowfallRateMmH>1','snowDepthCm>2',
+    /* Vetoed below 8 °C until 2026-09, which is most of a British winter and six
+       degrees stricter than gravel_biking — the same activity on wider tyres.
+       AusCycling's Extreme Weather Policy treats under 5 °C as a caution, not a
+       stop. Now below 2, where the hazard is ice. See cycling.ts for the sources. */
+    poorConditions: ['temperature<2 or temperature>30','windSpeed>13','precipitation>2','humidity>85','visibility<2','snowfallRateMmH>1','snowDepthCm>2',
       'gust>17']
   },
   {
