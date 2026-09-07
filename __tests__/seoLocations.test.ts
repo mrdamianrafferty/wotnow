@@ -22,6 +22,7 @@
 
 import {
   SEO_LOCATIONS,
+  ACTIVITIES_NEEDING_BEACH,
   WEATHER_INDEPENDENT,
   RETIRED_ACTIVITY_IDS,
   NOT_A_PAGE,
@@ -65,6 +66,40 @@ describe('every published activity is a real activity', () => {
   it('keeps retired ids out of the estate even if an archetype still names one', () => {
     const leaked = [...RETIRED_ACTIVITY_IDS].filter((id) => publishedIds.has(id));
     expect(leaked).toEqual([]);
+  });
+});
+
+describe('a sea sport needs a beach to be scored as one', () => {
+  it('names exactly the activities the requiresBeachOrientation flag names', () => {
+    const flagged = activityTypes
+      .filter((a) => (a as { requiresBeachOrientation?: boolean }).requiresBeachOrientation)
+      .map((a) => a.id)
+      .sort();
+    expect([...ACTIVITIES_NEEDING_BEACH].sort()).toEqual(flagged);
+  });
+
+  it('publishes no sea-sport page at a location with no beach orientation', () => {
+    /*
+     * `withMarine()` only fetches swell, period and sea temperature where the
+     * location declares which way its beach faces. Without them the models skip
+     * every criterion that makes the activity what it is, and an absent
+     * criterion scores NEUTRAL rather than bad — so the fake coasts beat the
+     * real ones. The surfing hub's first render opened on New York, above
+     * Newquay and all of Asturias, on a Force 2 wind reading.
+     */
+    const bad = getAllSeoPagePaths().filter(({ activity, location }) => {
+      if (!ACTIVITIES_NEEDING_BEACH.has(activity)) return false;
+      const l = SEO_LOCATIONS.find((x) => x.slug === location);
+      return l != null && (l.beachFacingDeg === undefined || l.beachFacingDeg === null);
+    });
+    expect(bad).toEqual([]);
+  });
+
+  it('keeps the sea sports at the coasts that do declare one', () => {
+    const newquay = SEO_LOCATIONS.find((l) => l.slug === 'newquay-cornwall')!;
+    expect(newquay.beachFacingDeg).toBeDefined();
+    expect(newquay.activities).toContain('surfing');
+    expect(newquay.activities).toContain('sea_swimming');
   });
 });
 

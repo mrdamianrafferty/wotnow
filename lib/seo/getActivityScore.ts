@@ -169,7 +169,33 @@ export async function getActivityScoreForLocation(
       dayLabel: labelForOffset(i),
       score: lift?.score ?? dayScore,
       evaluation: suggestion?.evaluation ?? 'poor',
-      reasoning: suggestion?.reasoning ?? '',
+      /*
+       * A PROMOTED DAY'S REASONING IS ABOUT THE DAY IT IS NO LONGER.
+       *
+       * `score` takes the lift and these two did not, so a day the parts
+       * rescued kept the sentence the day-level scorer wrote for it. Rendered
+       * together, as they are on every spot page and on the hub's hero:
+       *
+       *   Today is a day worth a look.
+       *   Not a day for surfing. Light breeze, Force 2, gusting Force 4.
+       *
+       * Two sentences, one paragraph, flatly contradicting each other — over a
+       * number that says 76. The verdict is the correct one: `promote` only
+       * fires when a real part of the day holds up, and the whole point of it
+       * is that a day whose parts hold up is not a write-off.
+       *
+       * So the stale sentence goes rather than the score. It is not replaced
+       * with a generated one: `promote` returns a band, a score and the winning
+       * part's weather, but no prose, and inventing a reason here would put a
+       * fourth voice on a page that already had three. The page renders the
+       * verdict, the band and the week, all of which agree.
+       *
+       * The better fix is upstream — carry the winning part through so the
+       * reason can become the window clause the app itself would use ("Best
+       * before six"). That is a change to `promote`'s return type and to every
+       * caller, and it is not this file's to make.
+       */
+      reasoning: lift ? '' : (suggestion?.reasoning ?? ''),
     };
   });
 
