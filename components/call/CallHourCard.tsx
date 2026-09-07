@@ -36,7 +36,7 @@ import { loadCallHour, saveCallHour } from '@/lib/godaisy/call/sync';
 
 type Status = 'loading' | 'ready' | 'saving' | 'saved' | 'local-only' | 'no-setup';
 
-export function CallHourCard({ isSignedIn }: { isSignedIn: boolean }) {
+export function CallHourCard() {
   const [hour, setHour] = useState<number | undefined>(undefined);
   const [status, setStatus] = useState<Status>('loading');
 
@@ -97,17 +97,17 @@ export function CallHourCard({ isSignedIn }: { isSignedIn: boolean }) {
       )}
 
       {/*
-        * Suppressed while there is no setup, because the two messages disagree:
-        * "remembered on this device" is only true once there is a place to
-        * remember it against, and `no-setup` is precisely the case where
-        * nothing was written.
+        * The sign-in prompt used to live here and now belongs to
+        * `CallDeliveryNotice`, which is rendered directly beneath this card.
+        *
+        * Two of them appeared back to back on /account — "Sign in to get the
+        * call on your phone" immediately above "Go Daisy can only send the
+        * call to an account" — which is the doubling this component's own
+        * restraint was supposed to prevent. The notice keeps it because it
+        * says what actually happens rather than only what to press, and
+        * because it is the one place that also knows about the iOS
+        * home-screen gate.
         */}
-      {!isSignedIn && status !== 'no-setup' && (
-        <div className="gd-note">
-          <Link href="/login">Sign in</Link> to get the call on your phone. Your
-          choice is remembered on this device either way.
-        </div>
-      )}
 
       {status === 'saved' && hour !== undefined && (
         <p className="gd-acct-note">

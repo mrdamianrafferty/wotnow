@@ -13,6 +13,7 @@ import { useLanguage } from '@/context/LanguageContext';
 import { getSupportedLanguages } from '@/lib/user/language';
 import { useGoDaisyPushNotifications } from '@/hooks/useGoDaisyPushNotifications';
 import { CallHourCard } from '@/components/call/CallHourCard';
+import { CallDeliveryNotice } from '@/components/call/CallDeliveryNotice';
 import { saveCallPlace, saveCallCoastal } from '@/lib/godaisy/call/sync';
 import { GODAISY_TIP_PRODUCTS } from '@/lib/godaisy/tipProducts';
 import type { TipPackage } from '@/lib/grow/revenueCat';
@@ -703,7 +704,13 @@ export default function AccountPage() {
             * the whole of `/start` again, a flow advertised as being about
             * sports and spots.
             */}
-          {mounted && <CallHourCard isSignedIn={isSignedIn} />}
+          {mounted && (
+            <>
+              <CallHourCard />
+              {/* Same notice, same reason: the hour is chosen here too. */}
+              <CallDeliveryNotice />
+            </>
+          )}
 
           {mounted && !isIOSNative && (
             <section className="gd-acct-block">

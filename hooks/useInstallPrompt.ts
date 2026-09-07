@@ -86,6 +86,31 @@ export const useInstallPrompt = () => {
       return;
     }
 
+    /*
+     * NOR INSIDE THE NATIVE APP, which the standalone check above cannot see.
+     *
+     * `display-mode: standalone` and `navigator.standalone` both describe a
+     * home-screen WEB app. A Capacitor shell is neither: navigator.standalone
+     * is undefined (it is Safari-only) and display-mode is `browser`, because
+     * a WKWebView host is not a PWA. So both read "not installed" inside the
+     * app, and any UI built on this hook would tell people to install the app
+     * they are currently holding.
+     *
+     * Asynchronous, so the prompt can appear for one frame on a slow native
+     * launch before being withdrawn. That is the right trade: the alternative
+     * is importing Capacitor statically into every web bundle to answer a
+     * question only native users ask.
+     */
+    let cancelled = false;
+    (async () => {
+      try {
+        const { Capacitor } = await import('@capacitor/core');
+        if (!cancelled && Capacitor.isNativePlatform()) setShowPrompt(false);
+      } catch {
+        // Web, or the package is absent. Nothing to suppress.
+      }
+    })();
+
     // Check if user previously dismissed the prompt
     const dismissed = localStorage.getItem('pwa-install-dismissed');
     if (dismissed) {
@@ -124,6 +149,7 @@ export const useInstallPrompt = () => {
     window.addEventListener('appinstalled', handleAppInstalled);
 
     return () => {
+      cancelled = true;
       window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
       window.removeEventListener('appinstalled', handleAppInstalled);
     };
