@@ -278,7 +278,13 @@ export function phraseFor(activityId: string, name?: string): string {
     /* "Visit", "Hit" and a bare "Do" arrived with the indoor activities, which
        the setup screen used to filter out — "a day for visit a café" and "a day
        for do yoga" were both live the moment it stopped. */
-    .replace(/^(?:Go|Play|Watch(?: for)?|Make|Take|Have|Try|Visit|Hit|Do(?: Some)?)\s+/i, '')
+    /* The trailing `(?:for )?` is for "Go for a Walk", the one name in the
+       library shaped that way. Stripping only the verb left "for a walk",
+       and the sentence templates supply their own preposition — so every
+       verdict on the most ordinary activity there is read "Not a day for for
+       a walk". Surfaced by the freezing-rain work giving it a new sentence;
+       it was live on every veto and demotion before that. */
+    .replace(/^(?:Go|Play|Watch(?: for)?|Make|Take|Have|Try|Visit|Hit|Do(?: Some)?)\s+(?:for\s+)?/i, '')
     .replace(/\s*\((?:Inland|Coastal)\)\s*$/i, '')
     /* "(Indoor)" is not a qualifier to drop — indoor tennis and tennis are two
        different afternoons — so it moves to the front where English puts it,
@@ -404,6 +410,14 @@ const DEFAULTS: Record<string, Partial<Record<Direction, Phrasing>>> = {
     high: (v) => v >= 2
       ? `Thunderstorms forecast — ${Math.round(v)} hours of them.`
       : 'Thunderstorms forecast. Nothing outdoors is worth a lightning strike.',
+  },
+  /* Named as ICE rather than as rain, because the number a reader has already
+     seen is the millimetres, and the point is that these particular
+     millimetres are freezing where they land. */
+  freezingRainHours: {
+    high: (v) => v >= 2
+      ? `Freezing rain — ${Math.round(v)} hours of it. Paths and roads will be glazed.`
+      : 'Freezing rain forecast. It turns to ice where it lands.',
   },
 };
 

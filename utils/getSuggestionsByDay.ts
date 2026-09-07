@@ -28,6 +28,13 @@ export interface WeatherData {
    */
   thunderstormHours?: number;
   /**
+   * Hours to 18:00 with freezing rain or freezing drizzle — WMO 56, 57, 66, 67.
+   *
+   * Not daytime-only, where thunder is: ice laid down before dawn is still on
+   * the pavement at ten. Absent, not zero, when the source publishes no codes.
+   */
+  freezingRainHours?: number;
+  /**
    * WHEN the rain falls, where the source publishes it hour by hour.
    *
    * "Rain for 10 hours of it, 2.3 mm in total" is two numbers and no picture.
@@ -415,6 +422,7 @@ function calculateActivityScoreWithSnow(
     precipitation: weather.precipitation,
     precipitationHours: weather.precipitationHours,
     thunderstormHours: weather.thunderstormHours,
+    freezingRainHours: weather.freezingRainHours,
     windSpeed: windMeanMs,
     windSpeedMax: typeof weather.windspeedMax === 'number' ? weather.windspeedMax / 3.6 : undefined,
     gust: typeof weather.gustspeed === 'number' ? weather.gustspeed / 3.6 : undefined,
@@ -508,7 +516,34 @@ function calculateActivityScoreWithSnow(
   const lightning: CriterionScore | null = thunderHours !== null && thunderHours > 0
     ? { condition: 'thunderstormHours=0', key: 'thunderstormHours', score: 0, value: thunderHours }
     : null;
-  const hazards = lightning ? [lightning, ...poor.hazards] : poor.hazards;
+
+  /**
+   * FREEZING RAIN, for the same reason and with a nastier property.
+   *
+   * It glazes every surface within minutes, and it is what the Met Office
+   * issues ice warnings for. The nasty part is that it does not need a cold
+   * day: the classic setup is rain falling through a warm layer onto sub-zero
+   * ground, so the AIR is above freezing and every cold veto in this library
+   * misses it. Measured at 2 °C with 1 mm of rain, before this:
+   *
+   *     dog_walking 49    urban_exploring 44    golf 45
+   *
+   * "Workable", in the weather people break wrists in — and dog walking is the
+   * most-used model in the library.
+   *
+   * Nothing else could see it. `precipitation` says a millimetre fell and
+   * `temperature` says it was two degrees, and neither of those is the fact
+   * that it froze on contact. The WMO code is the only thing that knows, and
+   * the adapter was already fetching it.
+   */
+  const icyHours = typeof w.freezingRainHours === 'number' ? w.freezingRainHours : null;
+  const freezingRain: CriterionScore | null = icyHours !== null && icyHours > 0
+    ? { condition: 'freezingRainHours=0', key: 'freezingRainHours', score: 0, value: icyHours }
+    : null;
+
+  const hazards = [lightning, freezingRain, ...poor.hazards].filter(
+    (h): h is CriterionScore => h !== null,
+  );
 
   if (hazards.length) {
     /**
@@ -521,11 +556,16 @@ function calculateActivityScoreWithSnow(
      * once", which is the distinction a reader can act on.
      */
     const byCount = [14, 10, 6, 3][Math.min(3, hazards.length - 1)];
-    /* Lightning sorts first whatever else fired: it is the one hazard here that
-       is a danger to the person rather than to the outing, so it is the
-       sentence a reader should get. */
-    const ranked = hazards.slice().sort((a, b) =>
-      (a.key === 'thunderstormHours' ? -1 : b.key === 'thunderstormHours' ? 1 : b.score - a.score));
+    /* Lightning first, then ice, whatever else fired. These two are dangers to
+       the PERSON rather than to the outing, so one of them is the sentence a
+       reader should get — a gale and a thunderstorm together should say
+       lightning, and a wet day that is freezing on contact should say ice. */
+    const RANK: Record<string, number> = { thunderstormHours: 0, freezingRainHours: 1 };
+    const ranked = hazards.slice().sort((a, b) => {
+      const ra = RANK[a.key] ?? 9;
+      const rb = RANK[b.key] ?? 9;
+      return ra !== rb ? ra - rb : b.score - a.score;
+    });
     return {
       score: byCount,
       binding: ranked[0],
@@ -1226,6 +1266,7 @@ function getReasoningForScore(
     precipitation: weather.precipitation,
     precipitationHours: weather.precipitationHours,
     thunderstormHours: weather.thunderstormHours,
+    freezingRainHours: weather.freezingRainHours,
     windSpeed: typeof weather.windspeed === 'number' ? weather.windspeed / 3.6 : undefined,
     gust: typeof weather.gustspeed === 'number' ? weather.gustspeed / 3.6 : undefined,
     windDirection: weather.winddirection,
