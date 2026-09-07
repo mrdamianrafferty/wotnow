@@ -137,6 +137,11 @@ export const wellnessSports: ActivityType[] = [
       'temperature>32',          // increased from 30 - hot but not dangerous
       'snowfallRateMmH>0.5',     // active snow breaks focus and soaks mats
       'snowDepthCm>1',            // even shallow snow makes sitting grounds unusable
+      /* You sit on the ground to do this, so the ground is a criterion — the
+         same ladder picnicking, camping and hiking already use. Yoga, a
+         barbecue and an outdoor gig deliberately do NOT read it: you are
+         standing, or shod, or on a mat, and damp grass does not reach you. */
+      'soilMoisture>50',
       'gust>16'
     ],
 
@@ -147,6 +152,7 @@ export const wellnessSports: ActivityType[] = [
       'humidity=85..95',              // moved humidity threshold up - 84% should be fine
       'visibility=2..5',               // hazy or misty, calming to some
       'precipitation=0.1..1',               // drizzle, not rain
+      'soilMoisture=45..50',
       'gust=12.8..16'
     ],
 
@@ -157,6 +163,7 @@ export const wellnessSports: ActivityType[] = [
       'cloudCover=0..80',              // clear to partly cloudy
       'visibility>5',                 // clear enough to see surroundings
       'precipitation=0..0.1',               // a trace at most
+      'soilMoisture=15..45',
       'gust<12.8'
     ],
 
@@ -167,7 +174,8 @@ export const wellnessSports: ActivityType[] = [
       'cloudCover=20..50',             // some sun for warmth
       'visibility>10',                 // clear and bright
       'precipitation=0',                // no Rain
-      'gust<8.8'
+      'gust<8.8',
+      'soilMoisture=18..35'
     ],
   },
   {
