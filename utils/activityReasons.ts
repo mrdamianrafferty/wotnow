@@ -398,6 +398,13 @@ const DEFAULTS: Record<string, Partial<Record<Direction, Phrasing>>> = {
   },
   snowDepthCm: { high: (v) => `${Math.round(v)} cm of lying snow.` },
   snowfallRateMmH: { high: () => 'Snow falling.' },
+  /* Named plainly, because this one is a safety sentence and not a comment on
+     the outing. The count is the daytime hours carrying WMO 95/96/99. */
+  thunderstormHours: {
+    high: (v) => v >= 2
+      ? `Thunderstorms forecast — ${Math.round(v)} hours of them.`
+      : 'Thunderstorms forecast. Nothing outdoors is worth a lightning strike.',
+  },
 };
 
 /**

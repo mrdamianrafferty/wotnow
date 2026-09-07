@@ -20,6 +20,14 @@ export interface WeatherData {
    */
   precipitationHours?: number;
   /**
+   * Daytime hours with thunder in them — WMO weather codes 95, 96 and 99.
+   *
+   * Absent, not zero, when the source publishes no hourly codes: "we do not
+   * know" and "there is no thunder" are different statements and only one of
+   * them may keep somebody outdoors.
+   */
+  thunderstormHours?: number;
+  /**
    * WHEN the rain falls, where the source publishes it hour by hour.
    *
    * "Rain for 10 hours of it, 2.3 mm in total" is two numbers and no picture.
@@ -406,6 +414,7 @@ function calculateActivityScoreWithSnow(
     temperatureMin: weather.temperatureMin,
     precipitation: weather.precipitation,
     precipitationHours: weather.precipitationHours,
+    thunderstormHours: weather.thunderstormHours,
     windSpeed: windMeanMs,
     windSpeedMax: typeof weather.windspeedMax === 'number' ? weather.windspeedMax / 3.6 : undefined,
     gust: typeof weather.gustspeed === 'number' ? weather.gustspeed / 3.6 : undefined,
@@ -469,7 +478,39 @@ function calculateActivityScoreWithSnow(
    */
   const poor = scorePoorConditions(activity.poorConditions ?? [], w);
   const penalty = poor.penalty;
-  if (poor.hazards.length) {
+
+  /**
+   * THUNDER ENDS AN OUTDOOR ACTIVITY, and it is the one thing every governing
+   * body agrees on.
+   *
+   * The ECB's guidance is "30 minutes after the last thunder it should be safe
+   * to go out"; golf suspends immediately under Rule 5.7b, one prolonged note;
+   * the RFU, England Hockey and the FA all give the match official the same
+   * power. It is the 30-30 rule and it is universal.
+   *
+   * Nothing in this library scored it. A thunderstorm reached a reader only
+   * through whatever rain happened to come with it, so a warm, still, DRY
+   * afternoon with an electrical storm in it read as prime for cricket, golf,
+   * sailing and swimming alike. That is the one gap in these models where being
+   * wrong is a safety story rather than a comfort one.
+   *
+   * No activity declares it, because a criterion 118 models would each have to
+   * opt into is a criterion most of them will miss. It is applied here instead,
+   * to every weather-sensitive activity — the indoor branch has already
+   * returned above, so this cannot reach a reader who is not going outside.
+   *
+   * Injected as a HAZARD rather than a cap so it flows through machinery that
+   * already exists: the veto floor, the binding criterion, the evidence drawer,
+   * the sentence, and `promote`, which will still lift a day whose other parts
+   * are clear — a storm at four is not a write-off at eleven.
+   */
+  const thunderHours = typeof w.thunderstormHours === 'number' ? w.thunderstormHours : null;
+  const lightning: CriterionScore | null = thunderHours !== null && thunderHours > 0
+    ? { condition: 'thunderstormHours=0', key: 'thunderstormHours', score: 0, value: thunderHours }
+    : null;
+  const hazards = lightning ? [lightning, ...poor.hazards] : poor.hazards;
+
+  if (hazards.length) {
     /**
      * Graded by how many hazards fired, not by the penalty figure.
      *
@@ -479,8 +520,12 @@ function calculateActivityScoreWithSnow(
      * Counting them separates "over the limit" from "several things wrong at
      * once", which is the distinction a reader can act on.
      */
-    const byCount = [14, 10, 6, 3][Math.min(3, poor.hazards.length - 1)];
-    const ranked = poor.hazards.slice().sort((a, b) => b.score - a.score);
+    const byCount = [14, 10, 6, 3][Math.min(3, hazards.length - 1)];
+    /* Lightning sorts first whatever else fired: it is the one hazard here that
+       is a danger to the person rather than to the outing, so it is the
+       sentence a reader should get. */
+    const ranked = hazards.slice().sort((a, b) =>
+      (a.key === 'thunderstormHours' ? -1 : b.key === 'thunderstormHours' ? 1 : b.score - a.score));
     return {
       score: byCount,
       binding: ranked[0],
@@ -1180,6 +1225,7 @@ function getReasoningForScore(
     temperatureMin: weather.temperatureMin,
     precipitation: weather.precipitation,
     precipitationHours: weather.precipitationHours,
+    thunderstormHours: weather.thunderstormHours,
     windSpeed: typeof weather.windspeed === 'number' ? weather.windspeed / 3.6 : undefined,
     gust: typeof weather.gustspeed === 'number' ? weather.gustspeed / 3.6 : undefined,
     windDirection: weather.winddirection,

@@ -156,6 +156,35 @@ export async function fetchOpenMeteoAsOneCallShape(lat: number, lon: number): Pr
   const daytimeMean = (dateStr: string) => daytimeMeanOf(hourly.temperature_2m, dateStr);
 
   /**
+   * Hours of thunder in the DAYTIME, counted — WMO 95, 96 and 99.
+   *
+   * Counted rather than meaned because a weather code is a nominal scale: the
+   * average of 95 and 0 is 47.5, which is not a weather. What the scorer needs
+   * is whether there was thunder in the hours somebody would be out in.
+   *
+   * Daytime only, matching every other aggregate here. A storm that crosses at
+   * three in the morning is not a reason to keep anybody indoors, and the
+   * dayparts beside this carry their own count for finer questions than a day.
+   */
+  const daytimeThunderHours = (dateStr: string): number | undefined => {
+    const codes = hourly.weather_code as (number | null)[] | undefined;
+    if (!Array.isArray(codes)) return undefined;
+    let n = 0;
+    let seen = 0;
+    for (let h = 0; h < (hourly.time?.length ?? 0); h++) {
+      const t = hourly.time[h] as string;
+      if (!t.startsWith(dateStr)) continue;
+      const hour = Number(t.slice(11, 13));
+      if (hour < 9 || hour >= 18) continue;
+      const c = codes[h];
+      if (typeof c !== 'number') continue;
+      seen++;
+      if (c >= 95) n++;
+    }
+    return seen ? n : undefined;
+  };
+
+  /**
    * Daytime mean visibility, in metres.
    *
    * Open-Meteo publishes visibility hourly and not daily, and this adapter has
@@ -283,6 +312,9 @@ export async function fetchOpenMeteoAsOneCallShape(lat: number, lon: number): Pr
       pop: (daily.precipitation_probability_max?.[i] ?? 0) / 100,
       rain: daily.rain_sum?.[i],
       precipitation_hours: daily.precipitation_hours?.[i],
+      /* Not an OpenWeather field. Absent when the backstop provider is used,
+         which the scorer treats as "unknown" rather than as "no thunder". */
+      thunder_hours: daytimeThunderHours(dateStr),
       /* Metres, matching `current.visibility` and what the scorer expects
          before it converts to kilometres. */
       visibility: daytimeVisibility(dateStr),
