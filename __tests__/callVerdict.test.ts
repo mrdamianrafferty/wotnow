@@ -195,3 +195,51 @@ describe('binding clauses this drawer used to drop', () => {
     expect(v.reason).toMatch(/close and sticky at 95%/i);
   });
 });
+
+/*
+ * The reason clause on a GOOD day, which is built by a different function from
+ * the ones above and had the same class of bug one branch over.
+ *
+ * `goodClause` decided dryness from a single boolean with nothing above it, so
+ * ten millimetres of rain took the same branch as a third of one and the day
+ * was called "mostly dry". Caught on a real card in the simulator: Croyde,
+ * 8 September — "Tuesday is a day for a café. Mostly dry, 16°C." — printed
+ * directly above its own RAIN tile reading 10.6 mm.
+ *
+ * A café is the right ANSWER on a wet day; that part was never wrong. The
+ * sentence explaining it just must not contradict the number beside it.
+ */
+describe('the reason clause on a good day', () => {
+  const goodDay = (precipitation: number | undefined) =>
+    makeVerdict({
+      suggestion: { activityId: 'cafe', score: 80 },
+      activityName: 'Visit a Café',
+      weather: { temperature: 16, precipitation, windspeed: 22 } as WeatherData,
+      band: 'prime',
+      isFirst: true,
+      weekday: 'Tuesday',
+      dayIndex: 1,
+    }).reason;
+
+  it('does not call 10.6 mm of rain "mostly dry"', () => {
+    expect(goodDay(10.6)).not.toMatch(/dry/i);
+  });
+
+  it('still says the temperature on a wet day', () => {
+    expect(goodDay(10.6)).toMatch(/16°C/);
+  });
+
+  it('keeps "mostly dry" for the drizzle it was written for', () => {
+    expect(goodDay(0.4)).toMatch(/mostly dry/i);
+  });
+
+  it('keeps "dry" for a genuinely dry day', () => {
+    expect(goodDay(0)).toMatch(/\bdry\b/i);
+    expect(goodDay(0)).not.toMatch(/mostly/i);
+  });
+
+  /* Absent is not dry — the pre-existing rule this fix had to leave alone. */
+  it('claims nothing about dryness when the forecast carried no rain figure', () => {
+    expect(goodDay(undefined)).not.toMatch(/dry/i);
+  });
+});
