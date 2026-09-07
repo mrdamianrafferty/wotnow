@@ -63,7 +63,24 @@ function getGoDaisyUrls(baseUrl: string): SitemapUrl[] {
 
     // App pages — keep in the sitemap but ensure each has proper SEO meta
     { loc: `${baseUrl}/weather`, lastmod: today, changefreq: 'hourly', priority: 0.8 },
-    { loc: `${baseUrl}/activities`, lastmod: today, changefreq: 'daily', priority: 0.8 },
+
+    /*
+     * The editorial pages, which were missing entirely.
+     *
+     * These are the only prose on the site that is not generated: 633 words on
+     * why forecasts get it wrong, and the three about who makes this. They were
+     * submitted nowhere while `/activities` — a 404 in production, since
+     * `pages/[activity]/` holds only `[location].tsx` — was submitted at
+     * priority 0.8. Exactly backwards.
+     *
+     * `/activities` goes back in when the hub is built at that URL, alongside
+     * the per-activity hubs at `/[activity]`. Listing a page before it exists
+     * is how a crawler learns to discount the document.
+     */
+    { loc: `${baseUrl}/whether-weather`, lastmod: today, changefreq: 'monthly', priority: 0.7 },
+    { loc: `${baseUrl}/HowWeDoIt`, lastmod: today, changefreq: 'monthly', priority: 0.6 },
+    { loc: `${baseUrl}/AboutUs`, lastmod: today, changefreq: 'monthly', priority: 0.5 },
+    { loc: `${baseUrl}/support`, lastmod: today, changefreq: 'monthly', priority: 0.4 },
 
     // Android tester recruitment landing page
     { loc: `${baseUrl}/android-testers`, lastmod: today, changefreq: 'weekly', priority: 0.6 },

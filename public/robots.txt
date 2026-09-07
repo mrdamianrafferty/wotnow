@@ -1,9 +1,20 @@
 # robots.txt for Go Daisy, Findr, and Grow Daisy
-# Updated: December 2024
+# Updated: September 2026
 
 # Allow all search engines
 User-agent: *
 Allow: /
+
+# The share card renderer, which lives under /api but is not an API route in
+# any sense a crawler cares about.
+#
+# Every spot page sets og:image to /api/call/share?…&crop=og — today's real
+# verdict for that place, rendered live, and the best-looking thing the product
+# makes. Facebook's and X's crawlers honour robots.txt, so the blanket
+# Disallow: /api/ below meant the one page type with a true, current preview
+# card was the one page type that could not show it. Allow must precede the
+# Disallow it narrows.
+Allow: /api/call/share
 
 # Disallow admin and API routes
 Disallow: /api/

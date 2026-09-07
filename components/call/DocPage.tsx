@@ -20,6 +20,7 @@
  */
 
 import Head from 'next/head';
+import { useRouter } from 'next/router';
 import type { ReactNode } from 'react';
 import { PageHeader } from './PageHeader';
 import Footer from '@/components/footer';
@@ -35,11 +36,39 @@ export function DocPage({
   kicker?: string;
   children: ReactNode;
 }) {
+  /*
+   * A canonical and a share card, which these pages had neither of.
+   *
+   * `/whether-weather` is 633 words on why forecasts get it wrong — the only
+   * prose on the site nobody generated — and it went out with a title, a
+   * description and nothing else. No canonical, so a query string made a
+   * duplicate; no og:image, so a link to it in a message rendered as grey text.
+   * The four of these are in the sitemap now, which makes both worth having.
+   *
+   * `asPath` minus its query: these are static documents, and every parameter
+   * that reaches them is a campaign tag or a tracker, never a different page.
+   */
+  const { asPath } = useRouter();
+  const canonical = `https://godaisy.io${asPath.split(/[?#]/)[0]}`;
+
   return (
     <>
       <Head>
         <title>{`${title} | Go Daisy`}</title>
         {description && <meta name="description" content={description} />}
+        <link rel="canonical" href={canonical} />
+        <meta property="og:type" content="article" />
+        <meta property="og:url" content={canonical} />
+        <meta property="og:title" content={`${title} | Go Daisy`} />
+        {description && <meta property="og:description" content={description} />}
+        <meta property="og:image" content="https://godaisy.io/og-image.png" />
+        <meta property="og:image:width" content="1200" />
+        <meta property="og:image:height" content="630" />
+        <meta property="og:site_name" content="Go Daisy" />
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content={`${title} | Go Daisy`} />
+        {description && <meta name="twitter:description" content={description} />}
+        <meta name="twitter:image" content="https://godaisy.io/og-image.png" />
       </Head>
 
       <PageHeader />

@@ -7,12 +7,28 @@
  *   - Top 50 North American cities by population (US, Canada, Mexico mixed)
  *   - Hand-picked Asturias, UK surf and mountain locations
  *
- * Page count: ~100 locations × curated activities per location = ~2,000 pages.
+ * Page count: 106 locations × curated activities per location. Check it with
+ * `getSeoPageCount()` rather than trusting a number written in a comment —
+ * this one said "~2,000" for months while the file was generating 8,413.
  *
  * Activities per location are curated by archetype below. A "surf city" gets
  * surfing in its list; Madrid does not. This is the single most important
  * lever for keeping these pages high-quality — generating "/surfing/madrid"
  * because we *could* would invite a doorway-page penalty.
+ *
+ * THE SECOND LEVER IS `WEATHER_INDEPENDENT`, and it was missing.
+ *
+ * The warning above was written and then ignored by the archetypes themselves.
+ * An `INDOOR_ALWAYS` block seeded knitting, gaming, DIY, cooking and fifteen
+ * more at all 106 locations, and `UNIVERSAL` carried another eighteen indoor
+ * ones — 3,854 pages telling a stranger that Reykjavík is "a day worth a look
+ * for knitting" because the wind is Force 4. That is the doorway page this
+ * comment was warning about, generated four thousand times, and the risk it
+ * carries is not confined to itself: a site-level thin-content assessment
+ * takes the surf pages down with the knitting ones.
+ *
+ * A page here has to be able to answer its own H1. "Is today a good day for X
+ * in Y?" is only a question when the weather decides it.
  *
  * To add a location: append to the cities array at the bottom of this file.
  * To change which activities a city covers: edit its `activities` array
@@ -20,9 +36,38 @@
  */
 
 // ============================================================================
+// Activities that do not get a page, at any location
+// ============================================================================
+
+/*
+ * The three sets live in `data/seoRetiredActivities.ts`, not here.
+ *
+ * `middleware.ts` needs them to serve 410 on the retired URLs and runs on every
+ * request to the site; this module is forty kilobytes of city records. They are
+ * re-exported so nothing else has to know about the split.
+ *
+ * `WEATHER_INDEPENDENT` is the lever this file's header warns about and did not
+ * have: an activity whose score the weather does not decide cannot carry a page
+ * whose entire title is a weather question.
+ */
+export {
+  WEATHER_INDEPENDENT,
+  RETIRED_ACTIVITY_IDS,
+  NOT_A_PAGE,
+  NOT_A_PAGE_SLUGS,
+} from './seoRetiredActivities';
+
+import { NOT_A_PAGE } from './seoRetiredActivities';
+
+// ============================================================================
 // Activity archetypes — sets of activity IDs grouped by what kind of place
 // would plausibly do them. A city composes its activity list from one or
 // more of these, plus any explicit additions/removals.
+//
+// Archetypes may still name an indoor activity — several read more naturally
+// with it there — because `dedupe()` drops anything in NOT_A_PAGE on the way
+// out. The filter is at composition, not at each mention, so a list added
+// later cannot miss it.
 // ============================================================================
 
 /** Things you can do in any walkable city, anywhere with weather. */
@@ -124,7 +169,16 @@ const WINTER_SPORTS = [
   'ice_fishing',
 ];
 
-/** Indoor / weather-bad-day fallbacks (always include — every city has these). */
+/**
+ * Indoor / weather-bad-day fallbacks.
+ *
+ * "Always include — every city has these" is what this said, and it is why the
+ * estate carried `/knitting/reykjavik`. Almost all of it is now dropped by
+ * `dedupe()`; the list is kept whole rather than gutted because it is a true
+ * statement about what a city offers, and the two entries that survive —
+ * archery, and indoor climbing's outdoor cousins where a city adds them — are
+ * the ones the weather still has a say in.
+ */
 const INDOOR_ALWAYS = [
   'crafts',
   'knitting',
@@ -170,9 +224,16 @@ const TEAM_SPORTS_US = [
 /** Team sports for Ireland. */
 const TEAM_SPORTS_IRELAND = ['hurling_camogie', 'gaelic_football'];
 
-/** Convenience to dedupe an activity list while preserving order. */
+/**
+ * Dedupe an activity list, preserving order, and drop everything that does not
+ * get a page.
+ *
+ * The filter lives here rather than in each archetype because every archetype
+ * and every per-city override funnels through this one function. A list edited
+ * later — or a city with an explicit `activities` array — cannot forget it.
+ */
 function dedupe(arr: string[]): string[] {
-  return Array.from(new Set(arr));
+  return Array.from(new Set(arr)).filter((id) => !NOT_A_PAGE.has(id));
 }
 
 /** Archetype: inland European city — no surfing, no winter sports. */
@@ -562,6 +623,25 @@ export function getSeoPageCount(): { locations: number; pages: number } {
     locations: SEO_LOCATIONS.length,
     pages: SEO_LOCATIONS.reduce((acc, loc) => acc + loc.activities.length, 0),
   };
+}
+
+/**
+ * Great-circle distance between two locations, in kilometres.
+ *
+ * Here rather than in a page because "which of these places is near that one"
+ * is a question the estate keeps asking: the related-locations block on a spot
+ * page uses it now, and the by-coast grouping on the activity hub will want it
+ * next. A second copy in a component is how the two would come to disagree.
+ */
+export function distanceKm(a: Pick<SeoLocation, 'lat' | 'lon'>, b: Pick<SeoLocation, 'lat' | 'lon'>): number {
+  const toRad = (deg: number) => (deg * Math.PI) / 180;
+  const R = 6371;
+  const dLat = toRad(b.lat - a.lat);
+  const dLon = toRad(b.lon - a.lon);
+  const h =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos(toRad(a.lat)) * Math.cos(toRad(b.lat)) * Math.sin(dLon / 2) ** 2;
+  return 2 * R * Math.asin(Math.min(1, Math.sqrt(h)));
 }
 
 /**
