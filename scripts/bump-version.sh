@@ -2,7 +2,12 @@
 # Bump version for a specific app
 # Usage: ./scripts/bump-version.sh <app> <type>
 # Example: ./scripts/bump-version.sh findr patch
-# Types: major, minor, patch
+# Types: major, minor, patch, build
+#
+# `build` raises only the build number, leaving the version string alone —
+# what you want for a second upload of the SAME version, which is most of
+# them. TestFlight requires a unique build per version train; it does not
+# require a new version each time you archive.
 
 set -e
 
@@ -12,7 +17,8 @@ TYPE=$2
 if [ -z "$APP" ] || [ -z "$TYPE" ]; then
   echo "Usage: ./scripts/bump-version.sh <app> <type>"
   echo "  app: findr, godaisy, growdaisy"
-  echo "  type: major, minor, patch"
+  echo "  type: major, minor, patch, build"
+  echo "        build = build number only, version string unchanged"
   exit 1
 fi
 
@@ -21,8 +27,8 @@ if [ "$APP" != "findr" ] && [ "$APP" != "godaisy" ] && [ "$APP" != "growdaisy" ]
   exit 1
 fi
 
-if [ "$TYPE" != "major" ] && [ "$TYPE" != "minor" ] && [ "$TYPE" != "patch" ]; then
-  echo "Error: type must be one of: major, minor, patch"
+if [ "$TYPE" != "major" ] && [ "$TYPE" != "minor" ] && [ "$TYPE" != "patch" ] && [ "$TYPE" != "build" ]; then
+  echo "Error: type must be one of: major, minor, patch, build"
   exit 1
 fi
 
@@ -56,12 +62,19 @@ case $TYPE in
   patch)
     PATCH=$((PATCH + 1))
     ;;
+  build)
+    # Version string untouched. Only NEW_CODE moves, below.
+    ;;
 esac
 
 NEW_VERSION="$MAJOR.$MINOR.$PATCH"
 NEW_CODE=$((CURRENT_CODE + 1))
 
-echo "New version: $NEW_VERSION (code: $NEW_CODE)"
+if [ "$TYPE" = "build" ]; then
+  echo "Version unchanged: $NEW_VERSION — build $CURRENT_CODE -> $NEW_CODE"
+else
+  echo "New version: $NEW_VERSION (code: $NEW_CODE)"
+fi
 
 # ---------------------------------------------------------------------------
 # Everything that can refuse, BEFORE anything that writes.
@@ -152,12 +165,21 @@ project = Xcodeproj::Project.open(ARGV[0])
 target  = project.targets.find { |t| t.name == ARGV[1] }
 
 target.build_configurations.each do |config|
-  config.build_settings['MARKETING_VERSION']       = ARGV[2]
+  # ARGV[4] == 'build' means: touch the build number and NOTHING else.
+  #
+  # Writing MARKETING_VERSION unconditionally was a bug with teeth. The JSON
+  # says 4.0.0 and the Go Daisy project says 4 - they were only ever aligned
+  # in the JSON - so a 'build' bump rewrote the project's version string and
+  # silently created a NEW App Store version train, which is the one thing
+  # build-only mode exists to avoid. 'Unchanged' has to mean unchanged in the
+  # file being written, not in the file being read.
+  config.build_settings['MARKETING_VERSION'] = ARGV[2] unless ARGV[4] == 'build'
   config.build_settings['CURRENT_PROJECT_VERSION'] = ARGV[3]
 end
 project.save
-puts \"Updated #{ARGV[0]} (target #{ARGV[1]}): MARKETING_VERSION=#{ARGV[2]} CURRENT_PROJECT_VERSION=#{ARGV[3]}\"
-" "$IOS_PROJECT" "$IOS_TARGET" "$NEW_VERSION" "$NEW_CODE"
+marketing = ARGV[4] == 'build' ? '(unchanged)' : ARGV[2]
+puts \"Updated #{ARGV[0]} (target #{ARGV[1]}): MARKETING_VERSION=#{marketing} CURRENT_PROJECT_VERSION=#{ARGV[3]}\"
+" "$IOS_PROJECT" "$IOS_TARGET" "$NEW_VERSION" "$NEW_CODE" "$TYPE"
 
 # ---------------------------------------------------------------------------
 # Export compliance
@@ -187,10 +209,22 @@ git add "$VERSION_FILE" "$IOS_PROJECT/project.pbxproj" "$IOS_PLIST"
 git commit -m "chore($APP): bump version to $NEW_VERSION ($NEW_CODE)"
 
 # Create tag
-TAG="${APP}-v${NEW_VERSION}"
-git tag "$TAG"
+#
+# Not for a build bump: the version string has not moved, so the tag would
+# either collide with the one already pointing at this version or silently
+# claim that a different commit is that release. A build is an upload, not a
+# release.
+if [ "$TYPE" = "build" ]; then
+  echo "Created commit (no tag — the version string did not change)"
+  echo ""
+  echo "To push:"
+  echo "  git push"
+else
+  TAG="${APP}-v${NEW_VERSION}"
+  git tag "$TAG"
 
-echo "Created commit and tag: $TAG"
-echo ""
-echo "To push:"
-echo "  git push && git push origin $TAG"
+  echo "Created commit and tag: $TAG"
+  echo ""
+  echo "To push:"
+  echo "  git push && git push origin $TAG"
+fi
