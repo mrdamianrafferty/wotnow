@@ -105,6 +105,33 @@ describe('evening keeps the weather ordering', () => {
   });
 });
 
+describe('an indoor activity does not ring the phone', () => {
+  /*
+   * The scoring fix alone did not close this. Moving cafe from 89 to 65 took
+   * it out of Prime and left it in "worth a look" — which is exactly what
+   * `daily-call.ts` sends on. A user whose only sport is a cafe cleared that
+   * gate at seven every evening, in any weather, and got "Today is a day for a
+   * café" pushed to them forever.
+   *
+   * `daily-call.ts` now also requires the called activity to be
+   * weather-sensitive. This asserts the condition that gate reads, rather than
+   * importing a cron handler that wants Supabase and APNs to exist.
+   */
+  const isGoodBand = (n: number) => n >= BAND_FLOOR.worthALook;
+
+  it('would otherwise clear the send bar on any evening', () => {
+    // The thing the extra gate exists for: score alone does not save us.
+    expect(isGoodBand(cafeOn(PLEASANT, EVENING))).toBe(true);
+    expect(isGoodBand(cafeOn(GREY, EVENING))).toBe(true);
+  });
+
+  it('is marked weather-insensitive, which is what the gate reads', () => {
+    const cafe = (allSports as Array<{ id: string; weatherSensitive?: boolean }>)
+      .find((a) => a.id === 'cafe');
+    expect(cafe?.weatherSensitive).toBe(false);
+  });
+});
+
 describe('outdoor still wins a day that is good for going out', () => {
   it.each([['gorgeous', GORGEOUS], ['pleasant', PLEASANT], ['breezy', BREEZY]])(
     'ranks a real outdoor activity above cafe on a %s evening',

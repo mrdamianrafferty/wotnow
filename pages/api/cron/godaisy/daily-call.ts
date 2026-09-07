@@ -256,6 +256,37 @@ async function callOne(row: PrefRow, tz: string, localDate: string): Promise<Out
     return { userId: row.user_id, status: 'suppressed', detail: call.call?.band ?? 'no call' };
   }
 
+  /*
+   * AND THE WEATHER HAS TO BE WHY.
+   *
+   * `isGood` alone was not enough, because an indoor activity's score is
+   * assigned rather than measured — `cafe` defines no conditions at all — and
+   * it is tagged 'evening'. A user whose only sport is a café therefore
+   * cleared this gate at seven o'clock every single evening, in any weather,
+   * and got "Today is a day for a café" pushed to them forever. Verified
+   * against a pleasant evening and a dull one: both sent, identically.
+   *
+   * Scoring the indoor branch down fixed the ranking on the screen and did not
+   * fix this: the number moved from prime to worth-a-look, and worth-a-look
+   * still sends.
+   *
+   * The screen may absolutely say "a café day" — on a washed-out Tuesday that
+   * is the indoor promotion doing its job, and it is there when you open it.
+   * A notification is different. It interrupts, and the thing it claims is
+   * that the weather made today worth telling you about. An activity the
+   * weather has no opinion on cannot make that claim, so it does not get to
+   * ring the phone.
+   *
+   * The consequence, stated plainly: somebody whose interests are all indoor
+   * receives no daily call. That is correct. The app has nothing
+   * weather-driven to tell them, and the honest version of "one message a day"
+   * is no message rather than the same message every day.
+   */
+  const calledActivity = allSports.find((a) => a.id === call.call!.activityId);
+  if (calledActivity?.weatherSensitive === false) {
+    return { userId: row.user_id, status: 'suppressed', detail: `indoor: ${call.call.activityId}` };
+  }
+
   const title = dayIndex === 0
     ? `Today at ${location.name}`
     : `Tomorrow at ${location.name}`;
