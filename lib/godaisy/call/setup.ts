@@ -198,10 +198,31 @@ export function mirrorToPreferences(setup: CallSetup): void {
         ? [{ name: setup.coastal.name, lat: setup.coastal.lat, lon: setup.coastal.lon, type: 'coastal' }]
         : []),
     ];
-    window.localStorage.setItem(
-      'preferences',
-      JSON.stringify({ ...prefs, locations, interests: setup.sports }),
-    );
+    const next = JSON.stringify({ ...prefs, locations, interests: setup.sports });
+    window.localStorage.setItem('preferences', next);
+
+    /*
+     * TELL THIS TAB. `storage` only fires in the OTHER ones.
+     *
+     * `UserPreferencesContext` already listens for `storage` and re-reads on
+     * it, which covers a second window but never the document that did the
+     * writing — the spec deliberately excludes it. So a mounted consumer kept
+     * whatever it had, and since onboarding ends in `router.replace('/call')`
+     * rather than a page load, nothing ever re-read.
+     *
+     * Seen in the simulator: onboarding set the call to Croyde, and `/account`
+     * went on showing Home as Madrid — the context's own default — because the
+     * context had mounted before this line ran and heard nothing after it.
+     *
+     * A synthetic StorageEvent is the smallest thing the existing listener
+     * already understands; it checks `key` and then re-reads localStorage
+     * itself, so no new channel and no change at the other end.
+     */
+    window.dispatchEvent(new StorageEvent('storage', {
+      key: 'preferences',
+      newValue: next,
+      storageArea: window.localStorage,
+    }));
   } catch {
     // A private window, or storage that is full. The cookie is the one that
     // decides what the call says; this is only so the older screens agree.

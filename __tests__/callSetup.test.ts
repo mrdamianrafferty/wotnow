@@ -8,7 +8,8 @@
  */
 
 import {
-  parseSetup, encodeSetup, setupFromCookieHeader, SETUP_COOKIE, type CallSetup,
+  parseSetup, encodeSetup, setupFromCookieHeader, mirrorToPreferences,
+  SETUP_COOKIE, type CallSetup,
 } from '@/lib/godaisy/call/setup';
 
 const GOOD: CallSetup = {
@@ -124,5 +125,61 @@ describe('the setup cookie', () => {
     const many = Array.from({ length: 40 }, () => 'running');
     const s = parseSetup(encodeSetup({ ...GOOD, sports: many } as CallSetup));
     expect(s?.sports.length).toBeLessThanOrEqual(12);
+  });
+});
+
+
+/*
+ * The mirror has to announce itself.
+ *
+ * `UserPreferencesContext` re-reads localStorage when it hears a `storage`
+ * event — but the spec fires that event in every document EXCEPT the one that
+ * wrote. Onboarding ends in `router.replace('/call')` rather than a page load,
+ * so a context mounted before the write heard nothing and kept its default.
+ *
+ * Seen in the simulator: onboarding set the call to Croyde and `/account` went
+ * on showing Home as Madrid.
+ */
+describe('mirroring the setup into preferences', () => {
+  const setup: CallSetup = {
+    v: 1,
+    sports: ['hiking', 'cycling'],
+    place: { name: 'Croyde', lat: 51.1281, lon: -4.2264 },
+    hour: 19,
+  };
+
+  beforeEach(() => window.localStorage.clear());
+
+  it('writes the place into preferences', () => {
+    mirrorToPreferences(setup);
+    const stored = JSON.parse(window.localStorage.getItem('preferences') || '{}');
+    expect(stored.locations[0]).toMatchObject({ name: 'Croyde', type: 'home' });
+    expect(stored.interests).toEqual(['hiking', 'cycling']);
+  });
+
+  it('tells its own tab, which the storage event never does', () => {
+    const heard: Array<string | null> = [];
+    const listener = (e: Event) => heard.push((e as StorageEvent).key);
+    window.addEventListener('storage', listener);
+    try {
+      mirrorToPreferences(setup);
+    } finally {
+      window.removeEventListener('storage', listener);
+    }
+    expect(heard).toContain('preferences');
+  });
+
+  /* The listener re-reads storage, so the event must arrive AFTER the write. */
+  it('has already written by the time the event fires', () => {
+    let atFire: string | null = null;
+    const listener = () => { atFire = window.localStorage.getItem('preferences'); };
+    window.addEventListener('storage', listener);
+    try {
+      mirrorToPreferences(setup);
+    } finally {
+      window.removeEventListener('storage', listener);
+    }
+    expect(atFire).not.toBeNull();
+    expect(JSON.parse(atFire as unknown as string).locations[0].name).toBe('Croyde');
   });
 });
