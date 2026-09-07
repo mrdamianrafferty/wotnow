@@ -474,6 +474,52 @@ function firedLow(condition: string, value: number | undefined): boolean {
   return nums.length > 0 && value < Math.min(...nums);
 }
 
+/**
+ * Which vetoes an activity actually states, per weather key.
+ *
+ * `{ temperature: { low: true, high: true }, gust: { low: false, high: true } }`
+ * for a model carrying `temperature<-3 or temperature>24` and `gust>20`.
+ *
+ * This exists so a caller can ask "is this quantity already priced as a hazard
+ * by this activity's own model?" rather than assuming from a hardcoded list.
+ * Vetoes are one-sided in practice — `windSpeed>15` says nothing about a flat
+ * calm — so the two directions are tracked separately and never conflated.
+ */
+export function statedVetoes(
+  poorConditions: string[],
+): Map<string, { low: boolean; high: boolean }> {
+  const out = new Map<string, { low: boolean; high: boolean }>();
+  for (const cond of poorConditions) {
+    for (const m of cond.matchAll(/([a-zA-Z_]+)\s*(<=?|>=?)\s*-?\d/g)) {
+      const entry = out.get(m[1]) ?? { low: false, high: false };
+      if (m[2].startsWith('<')) entry.low = true;
+      else entry.high = true;
+      out.set(m[1], entry);
+    }
+  }
+  return out;
+}
+
+/**
+ * Which side of a criterion's range a value fell off, if it fell off at all.
+ *
+ * Deliberately conservative about `A..B or C..D`: a value in the dead space
+ * BETWEEN two branches is outside both, but it is not above or below the
+ * expression as a whole, so this returns undefined and the caller treats it as
+ * binding. Guessing there would be guessing.
+ */
+export function overflowDirection(
+  condition: string,
+  value: number | undefined,
+): 'low' | 'high' | undefined {
+  if (typeof value !== 'number') return undefined;
+  const nums = (condition.match(/-?\d+(?:\.\d+)?/g) ?? []).map(Number);
+  if (!nums.length) return undefined;
+  if (value < Math.min(...nums)) return 'low';
+  if (value > Math.max(...nums)) return 'high';
+  return undefined;
+}
+
 export function scorePoorConditions(
   conditions: string[],
   weather: WeatherData

@@ -106,7 +106,9 @@ import { scoreConditions,
          scorePoorConditions,
          applySnowRecommendationScoring,
          applyWindRecommendationScoring,
-         adjustScoreForMud } from './activitySuitability';
+         adjustScoreForMud,
+         statedVetoes,
+         overflowDirection } from './activitySuitability';
 import type { WeatherData as SuitabilityWeather, MinimalActivity, CriterionScore } from './activitySuitability';
 import { applyEveningBonus } from './eveningScoring';
 import { describeConditions, phraseFor, type RainWindow } from './activityReasons';
@@ -589,6 +591,71 @@ function calculateActivityScoreWithSnow(
   };
 
   /**
+   * A veto is not the only ceiling an activity had, and the other one was
+   * invisible.
+   *
+   * The floor above disqualifies the good band outright, and an out-of-range
+   * value decays as `0.5 * (1 - overflow/span)` — so a good band written
+   * `temperature=12..20` dies at 22.4 °C, whatever its poor band says. For
+   * seventeen activities that hidden ceiling, not the stated veto, was the
+   * binding one:
+   *
+   *     foraging        veto >30, died at 22.4    urban_exploring >35, at 30.7
+   *     gaelic_football veto >28, died at 23.9    mushroom_huntin >25, at 21.0
+   *
+   * Measured on foraging: `good.mean` holds at 0.86-0.90 from 20 °C to 25 °C
+   * while the score falls 78 -> 39 at 23 °C, purely on this floor, and the tile
+   * flips to "Not a day for foraging" on a 23 °C afternoon. The fair band cannot
+   * catch it — fair lists MARGINAL values, so a pleasant day scores near zero
+   * against it, which is the same reason rain had to be exempted above.
+   *
+   * THE RULE, and why it is not a list. The floor asks whether a criterion is
+   * missed so badly the activity stops being possible. An activity already
+   * answers that question itself, in its poor band: `temperature>30` IS the
+   * statement "past here, foraging stops". Between the good band and that veto
+   * the day is merely warm, and warm is what `good.mean`, the fair band and the
+   * penalty are for. So a criterion is exempt exactly when the activity states
+   * a veto on that key in the direction the value actually strayed.
+   *
+   * Direction matters and is the whole reason this is not `new Set([...])`.
+   * `windSpeed>15` prices a gale; it says nothing about a flat calm, and no
+   * amount of sunshine makes a windless day windsurfable. A shortfall on a key
+   * whose veto only guards the other end stays binding, exactly as before.
+   *
+   * WHAT STILL DISQUALIFIES. A handful of models score on a key in their good
+   * band without stating the matching veto — stargazing has no heat limit,
+   * which is correct, and `birdwatching_passage` no gust limit, which is the
+   * point of it. They are not exempted: the rule reads each model rather than
+   * trusting a global list, so a missing veto costs nothing and hides nothing.
+   *
+   * Camping looked like a third and is not. Its cold veto is written on
+   * `temperatureMin`, because the number that decides a night under canvas is
+   * the overnight low rather than the afternoon high — see its own docblock in
+   * `data/activities/outdoor.ts`. An audit that greps for `temperature` alone
+   * reports it as missing; `temperatureMin`, `temperatureMax` and
+   * `airTemperature` are all the same limit for this purpose.
+   * `__tests__/bandFloor.test.ts` pins the rest.
+   */
+  const vetoed = statedVetoes(activity.poorConditions ?? []);
+  const pricedByVeto = (c: CriterionScore) => {
+    if (PRICED_ELSEWHERE.has(c.key)) return true;
+    const dir = overflowDirection(c.condition, c.value);
+    return dir ? vetoed.get(c.key)?.[dir] === true : false;
+  };
+  /**
+   * The floor as the GOOD band sees it.
+   *
+   * `worst` stays as it was for the perfect band. Perfect describes the ideal,
+   * and an activity that misses one of its own ideal conditions badly is not
+   * having an ideal day, however well the veto prices it. Good describes the
+   * acceptable, which is a different claim and takes the looser test.
+   */
+  const worstUnpriced = (b: { criteria: CriterionScore[] }) => {
+    const scored = b.criteria.filter((c) => !pricedByVeto(c));
+    return scored.length ? Math.min(...scored.map((c) => c.score)) : 1;
+  };
+
+  /**
    * WHAT pushed the day out of its band, not merely THAT something did.
    *
    * This was a boolean called `rainDemotedBand`, which was true and honest
@@ -603,7 +670,7 @@ function calculateActivityScoreWithSnow(
    * cause makes the sentence say the true thing rather than merely stop
    * saying the false one.
    */
-  let demotedBy: 'rain' | 'safety' | null = null;
+  let demotedBy: 'rain' | 'safety' | 'shoulder' | null = null;
 
   /**
    * Rain DEMOTES a band. It does not disqualify one.
@@ -661,7 +728,27 @@ function calculateActivityScoreWithSnow(
     return scored.length ? Math.min(...scored.map((c) => c.score)) : 1;
   };
 
-  const goodQualifies = good.criteria.length > 0 && good.mean > 0.5 && worst(good) >= 0.35;
+  const goodShaped = good.criteria.length > 0 && good.mean > 0.5;
+  const goodQualifies = goodShaped && worst(good) >= 0.35;
+  /**
+   * The good band missed the floor, but only on criteria its own veto prices.
+   *
+   * DEMOTE, DO NOT DISQUALIFY — the same correction rain got above, and the
+   * safety floor after it. A day that fails the floor on a criterion nothing
+   * else covers really does resemble nothing the activity describes, and
+   * belongs in the sub-40 bucket. A day that fails it only on the warm shoulder
+   * of a band whose veto sits eight degrees further on resembles the activity
+   * quite well. It is simply not a good example of it.
+   *
+   * The first attempt at this exempted those criteria from the floor outright,
+   * and was too generous by exactly the width of the fair band. Measured:
+   * `beach` read PRIME (78) at 14 °C — which is where its own veto starts, with
+   * `airTemperature=14..20` sitting unused in its fair band — and stargazing
+   * read 74 under 50% cloud, with `clouds=20..50` likewise unused. Demoting
+   * instead lands both in the forties, which is where the activity's own model
+   * puts them.
+   */
+  const goodDemoted = goodShaped && !goodQualifies && worstUnpriced(good) >= 0.35;
   const rainBlocksGood = !rainExempt && wetness >= 0.2;
   /**
    * ...and only where the gust is a safety question rather than a comfort one.
@@ -683,8 +770,9 @@ function calculateActivityScoreWithSnow(
   } else if (goodQualifies && !rainBlocksGood && !safetyBlocksGood) {
     score = span(good.mean, 0.5, 1, 60, 87);
     band = good;
-  } else if (goodQualifies) {
-    /* Rain or a missed safety criterion refused the good band — neither
+  } else if (goodQualifies || goodDemoted) {
+    /* Rain, a missed safety criterion, or a shoulder the veto already prices
+       refused the good band — neither
        disqualifies it. Land in the fair range, positioned by how good the day
        otherwise is, and take the ordinary fair reading if it is the kinder of
        the two.
@@ -699,7 +787,7 @@ function calculateActivityScoreWithSnow(
     band = good;
     /* Rain first where both apply: it is the more legible complaint, and it is
        the one a reader can see out of the window. */
-    demotedBy = rainBlocksGood ? 'rain' : 'safety';
+    demotedBy = rainBlocksGood ? 'rain' : goodDemoted ? 'shoulder' : 'safety';
   /* No `worst()` floor on the fair band, deliberately. Perfect and good list
      DESIRABLE values, so failing one badly should disqualify the band. Fair
      lists MARGINAL ones — "temperature=5..10 or 26..30" is the chilly-or-hot
@@ -905,6 +993,16 @@ function calculateActivityScoreWithSnow(
       .slice().sort((a, b) => a.score - b.score)[0]
     : undefined;
 
+  /* A shoulder demotion names its criterion for the same reason, and with the
+     same certainty: `goodDemoted` is true only because these criteria fell
+     below the floor, so there is nothing to guess at. Rain keeps its own branch
+     below and its own sentence, so it is excluded here. */
+  const shoulderBinding = demotedBy === 'shoulder'
+    ? good.criteria
+      .filter((c) => c.score < 0.35 && pricedByVeto(c) && !PRICED_ELSEWHERE.has(c.key))
+      .slice().sort((a, b) => a.score - b.score)[0]
+    : undefined;
+
   if (safetyBinding) {
     /**
      * Marked decisive, and NOT told which way it failed.
@@ -922,6 +1020,14 @@ function calculateActivityScoreWithSnow(
      * of me was a gust.
      */
     band = { mean: band.mean, criteria: [{ ...safetyBinding, decisive: true }] };
+  } else if (shoulderBinding) {
+    /* Left to the fallback below, geocaching at 2 °C read "Workable for
+       geocaching. Light breeze, Force 2, 2 °C." — a pleasant sentence under a
+       demoted score, with the cause unmentioned, because its cold veto sits at
+       −2 and had not fired for the guess to find. `clauseFor` infers the
+       direction from the condition and the value, which is why this passes no
+       `direction` of its own. */
+    band = { mean: band.mean, criteria: [{ ...shoulderBinding, decisive: true }] };
   } else if ((wetness > 0.35 || demotedBy === 'rain') && !wantsRain) {
     band = {
       mean: band.mean,
