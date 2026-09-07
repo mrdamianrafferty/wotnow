@@ -65,17 +65,22 @@ function getGoDaisyUrls(baseUrl: string): SitemapUrl[] {
     { loc: `${baseUrl}/weather`, lastmod: today, changefreq: 'hourly', priority: 0.8 },
 
     /*
+     * The top of the estate, which now exists.
+     *
+     * `/activities` was submitted at priority 0.8 for months while returning
+     * 404, because `pages/[activity]/` held only `[location].tsx`. It was
+     * removed until the page was real; it is real now, and it is what every
+     * hub and every spot page breadcrumbs up to. Priority above the hubs
+     * because it is the one URL that reaches all of them.
+     */
+    { loc: `${baseUrl}/activities`, lastmod: today, changefreq: 'weekly', priority: 0.9 },
+
+    /*
      * The editorial pages, which were missing entirely.
      *
      * These are the only prose on the site that is not generated: 633 words on
      * why forecasts get it wrong, and the three about who makes this. They were
-     * submitted nowhere while `/activities` — a 404 in production, since
-     * `pages/[activity]/` holds only `[location].tsx` — was submitted at
-     * priority 0.8. Exactly backwards.
-     *
-     * `/activities` goes back in when the hub is built at that URL, alongside
-     * the per-activity hubs at `/[activity]`. Listing a page before it exists
-     * is how a crawler learns to discount the document.
+     * submitted nowhere while a 404 was submitted at 0.8. Exactly backwards.
      */
     { loc: `${baseUrl}/whether-weather`, lastmod: today, changefreq: 'monthly', priority: 0.7 },
     { loc: `${baseUrl}/HowWeDoIt`, lastmod: today, changefreq: 'monthly', priority: 0.6 },
@@ -96,8 +101,32 @@ function getGoDaisyUrls(baseUrl: string): SitemapUrl[] {
   try {
     // eslint-disable-next-line @typescript-eslint/no-require-imports
     const { getAllSeoPagePaths } = require('../../data/seoLocations');
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const { activitiesWithHubs } = require('../[activity]/index');
     const slugifyActivity = (id: string) => id.replace(/_/g, '-');
-    programmaticUrls = getAllSeoPagePaths().map(
+
+    /*
+     * The hubs come FIRST, and at a higher priority than the leaves.
+     *
+     * `/surfing` is the head term; `/surfing/newquay-cornwall` is the long
+     * tail. Until the hub existed the sitemap was a flat list of 4,559 leaves
+     * with no parent, which is a directory with the index torn out — a crawler
+     * had no way to learn that the estate has a shape, and every page competed
+     * with its own siblings for the same attention.
+     *
+     * An activity needs `HUB_MIN_SPOTS` places to earn one, so the two that
+     * exist at a single location have no hub and are reached from
+     * `/activities` instead. Listing a hub that returns 404 is what this file
+     * spent months doing with `/activities`; not repeating it.
+     */
+    const hubUrls: SitemapUrl[] = activitiesWithHubs().map((activity: string) => ({
+      loc: `${baseUrl}/${slugifyActivity(activity)}`,
+      lastmod: today,
+      changefreq: 'daily' as const,
+      priority: 0.8,
+    }));
+
+    const leafUrls: SitemapUrl[] = getAllSeoPagePaths().map(
       ({ activity, location }: { activity: string; location: string }) => ({
         loc: `${baseUrl}/${slugifyActivity(activity)}/${location}`,
         lastmod: today,
@@ -105,6 +134,8 @@ function getGoDaisyUrls(baseUrl: string): SitemapUrl[] {
         priority: 0.7,
       })
     );
+
+    programmaticUrls = [...hubUrls, ...leafUrls];
   } catch (err) {
     // Programmatic SEO data not present — fine, just skip these URLs.
     console.warn('Programmatic SEO paths unavailable for sitemap:', err);

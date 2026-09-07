@@ -1926,3 +1926,177 @@ section.gd-spot-colophon { padding: 28px var(--call-gutter-app) 40px; }
   font-size: var(--call-body-sm); line-height: 1.6; color: var(--call-ink-2);
 }
 @media (prefers-reduced-motion: reduce) { .gd-land-faq-q::after { transition: none; } }
+
+/* ════════════════════════════════════════════════════════════════════
+   ACTIVITY HUB — /[activity] and /activities
+
+   The rung above the spot pages. It borrows the whole `gd-spot-*` system
+   for chrome, type and bands, because a hub and a spot page are the same
+   document at two zoom levels and a second palette would say otherwise.
+   Only what has no equivalent lives here: the ranked table, the
+   by-region index, the chip row and the FAQ.
+
+   Every measurement is `border-box`, which Tailwind preflight gives us.
+   ════════════════════════════════════════════════════════════════════ */
+
+/* ── The best spot today, in the hero ──────────────────────────────── */
+.gd-hub-best {
+  margin-top: 22px;
+  padding: 20px;
+  background: var(--call-card);
+  border: 1px solid var(--call-border);
+  border-radius: var(--call-r-card);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+}
+.gd-hub-best-kicker {
+  margin: 0;
+  font-family: var(--call-font-display);
+  font-style: italic;
+  font-size: var(--call-caption);
+  letter-spacing: .09em;
+  text-transform: uppercase;
+  color: var(--call-ink-4);
+}
+.gd-hub-best .gd-spot-answer,
+.gd-hub-best .gd-spot-reason { margin: 0; }
+.gd-hub-best-link { font-size: var(--call-body-sm); color: var(--call-moss-ink); }
+
+/* ── The anywhere panel — what keeps this off doorway-page ground ──── */
+.gd-hub-anywhere {
+  padding: 20px;
+  background: var(--call-panel);
+  border: 1px solid var(--call-border);
+  border-radius: var(--call-r-card);
+}
+.gd-hub-anywhere .gd-spot-h2 { font-size: var(--call-body-lg); }
+.gd-hub-anywhere .gd-spot-note { margin-top: 14px; }
+.gd-hub-cta {
+  display: inline-flex; align-items: center;
+  min-height: var(--call-tap-min);
+  padding: 10px 18px;
+  border-radius: var(--call-r-pill);
+  background: var(--call-moss);
+  color: #fff;
+  font: 600 15px var(--call-font-body);
+  text-decoration: none;
+}
+.gd-hub-cta:hover { filter: brightness(1.08); }
+
+/* ── The ranking ──────────────────────────────────────────────────────
+   A list, not a <table>. The rows are links first and data second — the
+   whole point of the page is that every one is a crawlable route — and a
+   table cell containing a block-level anchor is markup nobody enjoys.
+   The grid gives it the columns a table would have.                   */
+.gd-hub-rank { list-style: none; margin: 0; padding: 0; }
+.gd-hub-row + .gd-hub-row { border-top: 1px solid var(--call-border); }
+.gd-hub-row-link {
+  display: grid;
+  grid-template-columns: 2.2rem minmax(8rem, 1.1fr) minmax(0, 1.6fr) auto 2.6rem;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 8px;
+  min-height: var(--call-tap-min);
+  text-decoration: none;
+  color: inherit;
+  border-radius: var(--call-r-chip);
+}
+.gd-hub-row-link:hover { background: var(--call-panel); }
+.gd-hub-row-n {
+  font-variant-numeric: tabular-nums;
+  font-size: var(--call-caption);
+  color: var(--call-ink-4);
+}
+.gd-hub-row-place { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+.gd-hub-row-name { font: 600 15px var(--call-font-body); }
+.gd-hub-row-where { font-size: var(--call-caption); color: var(--call-ink-4); }
+.gd-hub-row-note {
+  font-size: var(--call-caption);
+  color: var(--call-ink-3);
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.gd-hub-row-band { padding: 4px 10px; }
+.gd-hub-row-band .gd-spot-band-label { font-size: 12px; }
+.gd-hub-row-score {
+  font-family: var(--call-font-display);
+  font-weight: 700;
+  font-size: 19px;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+/* Below the fold of a phone the note and the band are the first to go —
+   the place and its score are what the row is for.                    */
+@media (max-width: 720px) {
+  .gd-hub-row-link { grid-template-columns: 1.9rem 1fr auto; gap: 10px; }
+  .gd-hub-row-note, .gd-hub-row-band { display: none; }
+}
+
+.gd-hub-more { margin-top: 6px; }
+.gd-hub-more > summary {
+  cursor: pointer;
+  padding: 12px 8px;
+  min-height: var(--call-tap-min);
+  display: flex;
+  align-items: center;
+  font: 600 14px var(--call-font-body);
+  color: var(--call-moss-ink);
+}
+.gd-hub-more[open] > summary { color: var(--call-ink-3); }
+
+/* ── By region ────────────────────────────────────────────────────── */
+.gd-hub-regions {
+  display: grid;
+  gap: var(--call-grid-gap);
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+}
+.gd-hub-region-title {
+  margin: 0 0 8px;
+  font: 600 13px var(--call-font-body);
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  color: var(--call-ink-4);
+}
+.gd-hub-region-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 2px; }
+.gd-hub-region-list a {
+  display: flex; flex-direction: column; gap: 0;
+  padding: 7px 0;
+  min-height: var(--call-tap-min);
+  justify-content: center;
+  font-size: var(--call-body-sm);
+  color: var(--call-ink-2);
+  text-decoration: none;
+}
+.gd-hub-region-list a:hover { color: var(--call-moss-ink); }
+.gd-hub-region-where { font-size: var(--call-caption); color: var(--call-ink-4); }
+
+/* ── Chips: sibling activities, and the /activities index ─────────── */
+.gd-hub-chips { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 8px; }
+.gd-hub-chip {
+  display: inline-flex; align-items: center; gap: 8px;
+  min-height: var(--call-tap-min);
+  padding: 8px 14px;
+  border: 1px solid var(--call-border);
+  border-radius: var(--call-r-pill);
+  background: var(--call-card);
+  font-size: var(--call-body-sm);
+  color: inherit;
+  text-decoration: none;
+}
+.gd-hub-chip:hover { border-color: var(--call-border-strong); background: var(--call-panel); }
+.gd-hub-chip-count {
+  font-size: var(--call-caption);
+  font-variant-numeric: tabular-nums;
+  color: var(--call-ink-4);
+}
+.gd-hub-chip.is-all { border-style: dashed; }
+
+/* ── FAQ ──────────────────────────────────────────────────────────── */
+.gd-hub-faq { display: flex; flex-direction: column; gap: 18px; }
+.gd-hub-faq-q { margin: 0 0 5px; font: 600 15px var(--call-font-body); }
+.gd-hub-faq-a { margin: 0; max-width: 68ch; font-size: var(--call-body-sm); line-height: 1.6; color: var(--call-ink-3); }

@@ -48,16 +48,19 @@ import { useRouter } from 'next/router';
 import { activityTypes } from '../../data/activityTypes';
 import GetTheApp from '../../components/GetTheApp';
 import { bandFor, BAND_LABEL, type CallBand } from '../../lib/godaisy/call/bands';
+/*
+ * Shared with the hub at `/[activity]` and the index at `/activities`, which
+ * have to name and address an activity exactly as this page does or their links
+ * 404. They were private functions here until the hub needed them.
+ */
+import {
+  activityIdToSlug,
+  slugToActivityId,
+  prettyActivityName,
+} from '../../lib/seo/activityNames';
 
 const Footer = dynamic(() => import('../../components/footer'), { ssr: false });
 
-// ============================================================================
-// Slug conversion: activity IDs use snake_case in the data layer, but URLs
-// use kebab-case for SEO and readability.
-// ============================================================================
-
-const activityIdToSlug = (id: string): string => id.replace(/_/g, '-');
-const slugToActivityId = (slug: string): string => slug.replace(/-/g, '_');
 
 // ============================================================================
 // Politeness towards the forecast API
@@ -336,71 +339,6 @@ export const getStaticProps: GetStaticProps<PageProps> = async (ctx) => {
 };
 
 // ============================================================================
-// Display name helper (snake_case → human)
-// ============================================================================
-
-function prettyActivityName(id: string): string {
-  const overrides: Record<string, string> = {
-    football_soccer: 'football',
-    sea_kayaking: 'sea kayaking',
-    stand_up_paddleboarding: 'stand-up paddleboarding',
-    sup_sea: 'sea SUP',
-    sea_swimming: 'sea swimming',
-    wild_swimming: 'wild swimming',
-    rock_climbing: 'rock climbing',
-    indoor_climbing: 'indoor climbing',
-    mountain_biking: 'mountain biking',
-    road_cycling: 'road cycling',
-    gravel_biking: 'gravel cycling',
-    trail_running: 'trail running',
-    fly_fishing_freshwater: 'fly fishing',
-    sea_fishing_shore: 'shore sea fishing',
-    sea_fishing_boat: 'boat sea fishing',
-    coarse_fishing: 'coarse fishing',
-    ice_fishing: 'ice fishing',
-    cross_country_skiing: 'cross-country skiing',
-    ice_skating: 'ice skating',
-    ice_hockey: 'ice hockey',
-    ice_hockey_indoor: 'indoor ice hockey',
-    ice_hockey_us: 'ice hockey',
-    gaelic_football: 'Gaelic football',
-    hurling_camogie: 'hurling and camogie',
-    american_football: 'American football',
-    beach_volleyball: 'beach volleyball',
-    basketball_outdoor: 'outdoor basketball',
-    volleyball_indoor: 'indoor volleyball',
-    tennis_indoor: 'indoor tennis',
-    indoor_swimming: 'indoor swimming',
-    outdoor_yoga: 'outdoor yoga',
-    outdoor_meditation: 'outdoor meditation',
-    outdoor_painting: 'outdoor painting',
-    outdoor_music: 'outdoor music',
-    outdoor_chess: 'outdoor chess',
-    outdoor_reading: 'outdoor reading',
-    outdoor_gardening: 'gardening',
-    outdoor_playground: 'outdoor play',
-    outdoor_gym: 'outdoor gym',
-    urban_exploring: 'urban exploring',
-    going_to_pub: 'going to the pub',
-    table_tennis: 'table tennis',
-    playing_cards: 'card games',
-    watch_a_movie: 'film at home',
-    playing_records: 'listening to records',
-    make_music: 'making music',
-    jet_skiing: 'jet skiing',
-    rock_hopping: 'rock hopping',
-    martial_arts: 'martial arts',
-    tai_chi: 'tai chi',
-    mushroom_hunting: 'mushroom hunting',
-    sailing_inland: 'inland sailing',
-    windsurfing_inland: 'inland windsurfing',
-    riding_motorbike: 'motorbike riding',
-    gym_workout: 'gym workouts',
-  };
-  return overrides[id] ?? id.replace(/_/g, ' ');
-}
-
-// ============================================================================
 // Score → the words the app uses
 // ============================================================================
 
@@ -439,6 +377,7 @@ function bandWords(score: number): { band: CallBand; label: string; sentence: st
 
 export default function ProgrammaticSeoPage({
   activityId,
+  activitySlug,
   activityName,
   location,
   score,
@@ -542,9 +481,20 @@ export default function ProgrammaticSeoPage({
         <section className="gd-spot-hero">
           <div className="gd-spot-inner">
             <nav className="gd-spot-crumbs" aria-label="Breadcrumb">
+              {/*
+                * THE RUNG UP, WHICH DID NOT EXIST.
+                *
+                * This segment was a `<span>`, so `/surfing/newquay-cornwall`
+                * named surfing and offered no way to reach it — and until the
+                * hub was built there was nowhere for it to go: `/surfing` 404'd
+                * while its own children rendered. Every spot page sat two
+                * segments deep with link equity arriving only from siblings.
+                */}
               <Link href="/">Go Daisy</Link>
               {' › '}
-              <span className="capitalize">{activityName}</span>
+              <Link href="/activities">Activities</Link>
+              {' › '}
+              <Link href={`/${activitySlug}`} className="capitalize">{activityName}</Link>
               {' › '}
               <span>{location.name}, {location.country}</span>
             </nav>

@@ -352,7 +352,7 @@ export interface SeoLocation {
 // The cities
 // ============================================================================
 
-export const SEO_LOCATIONS: SeoLocation[] = [
+const SEO_LOCATIONS_RAW: SeoLocation[] = [
   // ===========================================================================
   // ASTURIAS, SPAIN — local market, low competition
   // ===========================================================================
@@ -597,6 +597,75 @@ export const SEO_LOCATIONS: SeoLocation[] = [
 /**
  * Lookup helper — returns the location for a given slug, or undefined.
  */
+/**
+ * A sea sport at a place with no beach is not a sea sport.
+ *
+ * Nine activities carry `requiresBeachOrientation` — surfing, sea swimming,
+ * kitesurfing, windsurfing, sea kayaking, sea SUP, snorkelling, jet skiing and
+ * shore sea fishing — and `withMarine()` in `lib/seo/getActivityScore.ts` only
+ * fetches swell, period and sea temperature for a location that declares which
+ * way its beach faces. Without them the scoring models skip every criterion
+ * that makes the activity what it is, and an absent criterion reads as NEUTRAL
+ * rather than as bad. That file says so in its own words: "It is why 'a walking
+ * day' kept winning at surf breaks."
+ *
+ * It was doing it in public. Twenty-three locations had no orientation and 163
+ * pages between them, scoring a sea sport on air temperature and wind — and
+ * because the resulting numbers are middling rather than low, they beat the
+ * real coasts. The first render of the surfing hub opened with:
+ *
+ *   BEST TODAY · NEW YORK, NEW YORK
+ *   Today is a day worth a look for surfing.
+ *   Light breeze, Force 2, gusting Force 4, 19 °C.
+ *
+ * New York, above Newquay and the whole Asturian coast, on a wind reading. A
+ * leaf page could hide that; a hub whose entire job is to rank cannot, which is
+ * why building the rung above the estate is what found it.
+ *
+ * Removing the page is the right fix rather than guessing an orientation.
+ * Which way the beach faces at Jacksonville is a fact about Jacksonville, and
+ * inventing one to keep a page is how the estate filled up with pages that
+ * could not answer their own headline in the first place. Add the bearing to
+ * the location and the pages come back on their own.
+ */
+function canScoreHere(location: SeoLocation, activityId: string): boolean {
+  if (!ACTIVITIES_NEEDING_BEACH.has(activityId)) return true;
+  return location.beachFacingDeg !== undefined && location.beachFacingDeg !== null;
+}
+
+/**
+ * The activities whose models are decided by measurements only a beach-facing
+ * coordinate can fetch.
+ *
+ * A literal set for the same reason `WEATHER_INDEPENDENT` is one: this module
+ * is imported by pages that have no need of every activity definition.
+ * `__tests__/seoLocations.test.ts` asserts it against the
+ * `requiresBeachOrientation` flag in both directions.
+ */
+export const ACTIVITIES_NEEDING_BEACH: ReadonlySet<string> = new Set([
+  'jet_skiing',
+  'kitesurfing',
+  'sea_fishing_shore',
+  'sea_kayaking',
+  'sea_swimming',
+  'snorkeling',
+  'sup_sea',
+  'surfing',
+  'windsurfing',
+]);
+
+/**
+ * The dataset as everything else sees it, with the per-location filter applied.
+ *
+ * `dedupe()` handles the filters that are true everywhere — an activity the
+ * weather does not decide is not a page anywhere. This one depends on the
+ * location, so it cannot live there and runs once here instead.
+ */
+export const SEO_LOCATIONS: SeoLocation[] = SEO_LOCATIONS_RAW.map((l) => ({
+  ...l,
+  activities: l.activities.filter((a) => canScoreHere(l, a)),
+}));
+
 export function getLocationBySlug(slug: string): SeoLocation | undefined {
   return SEO_LOCATIONS.find((l) => l.slug === slug);
 }
