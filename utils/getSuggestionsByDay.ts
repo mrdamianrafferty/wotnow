@@ -111,11 +111,82 @@ import type { WeatherData as SuitabilityWeather, MinimalActivity, CriterionScore
 import { applyEveningBonus } from './eveningScoring';
 import { describeConditions, phraseFor, type RainWindow } from './activityReasons';
 import { assessSoilCondition, isMudSensitive, getMudMessage } from './soilMoistureUtils';
+import { BAND_FLOOR } from '../lib/godaisy/call/bands';
 // import { activityTypes } from '../data/activityTypes';
 // import { getActivityMessage } from '../data/activityMessages';
 
 // Minimum score threshold for activity suggestions (unless includeAllActivities is true)
 const MINIMUM_ACCEPTABLE_SCORE = 40; // Matches your 'fair' threshold in toLevel()
+
+// ============================================================================
+// Indoor activities
+// ============================================================================
+
+/**
+ * What an indoor activity is worth before the weather says anything.
+ *
+ * Assigned, not measured. `cafe` defines no conditions at all — there is no
+ * such thing as perfect weather for being inside — so this number expresses
+ * only "a reasonable option", and everything below moves it by how hard the
+ * sky is pushing you indoors.
+ */
+const INDOOR_BASE = 65;
+
+/**
+ * The most an indoor activity can score, one below the Prime floor.
+ *
+ * An activity with no criteria cannot have a prime day, because there is
+ * nothing to be prime about. Before this, `cafe` reached 89 — the top band —
+ * by being tagged 'evening' and multiplied past it after six o'clock.
+ *
+ * Derived from `BAND_FLOOR` rather than written as 77, so that retuning the
+ * bands moves this with them instead of silently letting indoor back into
+ * Prime.
+ */
+const INDOOR_CEILING = BAND_FLOOR.prime - 1;
+
+/** How much a perfect day outside is allowed to mark an indoor option down. */
+const INDOOR_NICE_DAY_DISCOUNT = 10;
+
+/**
+ * How good the day is for being outside, from 0 to 1.
+ *
+ * The four terms are the same ones the old all-or-nothing condition tested —
+ * rain, cloud, temperature, wind — and the values are the same edges. What
+ * changes is that each falls off over a range instead of switching at a
+ * threshold, and they multiply, so one genuinely bad term is enough to say
+ * "stay in" while a merely imperfect one is not.
+ *
+ * Multiplying rather than averaging is deliberate. Rain at 5 mm should not be
+ * offset by a pleasant temperature: the day is wet, and the average would call
+ * it half-nice.
+ */
+function outdoorPleasantness(
+  precip: number,
+  clouds: number,
+  temp: number | undefined,
+  wind: number,
+): number {
+  /** 1 at `good`, 0 at `bad`, straight line between. */
+  const ramp = (v: number, good: number, bad: number) =>
+    Math.max(0, Math.min(1, (bad - v) / (bad - good)));
+
+  const dry = ramp(precip, 0, 2);        // bone dry -> 2 mm is a wet day
+  const bright = ramp(clouds, 25, 85);   // was a cliff at 30% cloud
+  const calm = ramp(wind, 12, 38);       // was a cliff at 20 km/h
+
+  /*
+   * Temperature is the one term with a comfortable middle rather than a
+   * direction, so it ramps from both ends of the old 15-25 window: still 1
+   * across it, and falling away to nothing at 4°C and at 32°C rather than
+   * vanishing the moment it reads 26.
+   */
+  const warm = temp === undefined
+    ? 0.5
+    : Math.min(ramp(15 - temp, 0, 11), ramp(temp - 25, 0, 7));
+
+  return dry * bright * calm * warm;
+}
 
 /**
  * Scoring traces, off unless asked for.
@@ -194,9 +265,20 @@ function calculateActivityScoreWithSnow(
   snow?: { level: SnowRecommendationLevel; message: string };
 } {
 
-  // Indoor activities: weather-reactive scoring
+  /*
+   * INDOOR ACTIVITIES — weather-reactive, but never the best thing about a day.
+   *
+   * These have no criteria of their own. `cafe` defines none at all: no
+   * perfect, good, fair or poor conditions, because none exist. So the score
+   * is not measured, it is assigned, and the only honest thing it can express
+   * is how much the weather is pushing you indoors.
+   *
+   * Two faults were making it express the opposite, and both are fixed below.
+   * Reported as "a lot of cafe days even though the weather is pleasant", and
+   * reproduced exactly.
+   */
   if (!activity.weatherSensitive) {
-    let score = 65;
+    let score = INDOOR_BASE;
     const precip = weather.precipitation ?? 0;
     const temp = weather.temperature;
     const wind = weather.windspeed ?? 0;
@@ -210,17 +292,67 @@ function calculateActivityScoreWithSnow(
     if (wind >= 50) score += 5;             // very windy (km/h)
     if (typeof temp === 'number' && (temp <= 2 || temp >= 35)) score += 5; // extreme temps
 
-    // Slightly reduce on beautiful days so outdoor activities rise above
-    if (precip === 0 && clouds < 30 && typeof temp === 'number' && temp >= 15 && temp <= 25 && wind < 20) {
-      score -= 10; // gorgeous day — mild deprioritisation
-    }
+    /*
+     * FAULT ONE: the discount for a nice day was a cliff, and it almost never
+     * fired.
+     *
+     * It read `precip === 0 && clouds < 30 && temp >= 15 && temp <= 25 &&
+     * wind < 20` — four conditions, all required, all or nothing. Miss any one
+     * and indoor kept its full base. Measured on one 18°C dry day with light
+     * wind, changing nothing but the cloud:
+     *
+     *     10% cloud  ->  cafe 76
+     *     45% cloud  ->  cafe 89
+     *
+     * Thirteen points at a hard edge, and the wrong side of it is the ordinary
+     * case. A dry, still, 18°C afternoon under half cloud is a good day out by
+     * any reasonable reading, and it got no discount whatever. Nor did 26°C.
+     * Nor did a 21 km/h breeze.
+     *
+     * `outdoorPleasantness` is the same judgement as a gradient: each term
+     * falls off over a range instead of switching at a threshold, and the
+     * discount scales with the product. A perfect day still gets the full 10;
+     * a decent one now gets most of it; a grey one gets none.
+     */
+    score -= INDOOR_NICE_DAY_DISCOUNT * outdoorPleasantness(precip, clouds, temp, wind);
 
-    // Evening bonus still applies
+    /*
+     * FAULT TWO: the evening multiplier could carry a flat base into Prime.
+     *
+     * `cafe` is tagged 'evening', so after six its assigned 65 was multiplied
+     * to 89 — the top band, on a screen whose whole vocabulary is five bands
+     * earned from measurements. The same café at nine in the morning scored
+     * 65. Nothing about the weather changed; the clock did.
+     *
+     * An activity with no criteria cannot have a prime day, because there is
+     * nothing to be prime about. `INDOOR_CEILING` is one below
+     * `BAND_FLOOR.prime` and derived from it, so the two move together if the
+     * bands are ever retuned.
+     *
+     * THE BONUS SCALES INTO THE HEADROOM, IT DOES NOT MULTIPLY PAST IT.
+     *
+     * Clamping a multiplied score was the first attempt and it was worse than
+     * the bug. With a ~1.37 evening multiplier, everything above 56 landed on
+     * the ceiling, so café read 77 at seven in the evening whether it was
+     * eighteen degrees and clear or four millimetres of rain — the weather
+     * signal survived the morning and was erased at night.
+     *
+     * Moving it a proportion of the way to the ceiling keeps the ordering the
+     * weather just established: a wet evening still outranks a fine one, and
+     * the gap between them narrows rather than collapsing.
+     */
+    const weatherScore = Math.max(40, Math.min(INDOOR_CEILING, score));
+
     const hour = new Date(opts.nowTs).getHours();
     const eveningResult = applyEveningBonus(activity as unknown as ActivityType, hour, contextTags, opts);
-    score *= eveningResult.multiplier;
+    const lift = Math.max(0, eveningResult.multiplier - 1);
+    const withEvening = weatherScore + (INDOOR_CEILING - weatherScore) * lift;
 
-    return { score: Math.max(40, Math.min(95, Math.round(score))) };
+    /*
+     * The floor stays at 40. Indoor is never a write-off: the roof is on
+     * whatever the sky is doing.
+     */
+    return { score: Math.max(40, Math.min(INDOOR_CEILING, Math.round(withEvening))) };
   }
 
   /**
