@@ -43,6 +43,66 @@
 
 import type { ActivityType } from './types';
 
+/**
+ * ─── What the team sports' governing bodies actually publish, 2026-09 ────
+ *
+ * The watersports ladders could be held against the RYA, British Canoeing and
+ * the Met Office, and cycling against AusCycling. This is the same exercise for
+ * the team sports, and the headline is a negative result worth writing down so
+ * nobody spends another afternoon looking:
+ *
+ *   THEY MOSTLY DO NOT PUBLISH NUMBERS. A team sport is called off by a person
+ *   standing on the pitch, not by a threshold. The FA's own test for a frozen
+ *   pitch is physical — "if you cannot push your thumb into the pitch surface
+ *   to a depth of at least 1cm, the ground is too hard to play safely" — and
+ *   for waterlogging it is whether surface water drains within 30 minutes.
+ *   The RFU, the ECB and England Hockey all put the decision with the match
+ *   official. None of them names an air temperature.
+ *
+ *   WHERE THERE IS A NUMBER, IT IS USUALLY NOT AIR TEMPERATURE. World Rugby's
+ *   2025 heat guideline runs on a Heat Stress Index of 0-250 built from air
+ *   temperature, humidity, wind and ground radiation, measured on the ground
+ *   with EMU devices — postponement above 250. The UCI uses WBGT. Neither is
+ *   comparable to the air temperature these models score, and copying the
+ *   figure across would be a unit error wearing a citation.
+ *
+ *   THE EXCEPTION IS COLD, AND IT IS FAR BELOW US. World Rugby's Cold Weather
+ *   Guideline postpones "when air temperature falls below -15°C", with a
+ *   wind-chill ladder at -1 (raise awareness), -4 (more layers), -9 (shorten
+ *   matches) and -18 °C (consider cancelling), and recommends scheduling above
+ *   -10 °C with wind below 25 km/h.
+ *
+ *   Every cold veto in this file is far stricter than that, and deliberately
+ *   stays so: the reason a British match is off in January is the STATE OF THE
+ *   GROUND, not cold injury to the player. A sub-zero air temperature is our
+ *   only proxy for a pitch that will not take a stud. That is a different
+ *   hazard from the one World Rugby is legislating for, and the numbers here
+ *   should not be relaxed towards theirs on the strength of the citation.
+ *
+ *   ECB, England Hockey and the FA all defer heat decisions to the Met Office
+ *   and UKHSA heat-health alerts rather than setting their own figure.
+ *
+ * ─── The one number everybody agrees on, which we do not model ───────────
+ *
+ * Lightning. The ECB's guidance is "30 minutes after the last thunder it
+ * should be safe to go out", which is the 30-30 rule every other body also
+ * uses. Nothing in this library scores lightning at all, so a thunderstorm
+ * reaches a reader only through whatever rain comes with it. That is the
+ * largest real gap in the team-sport models and it is a data-source problem,
+ * not a threshold one.
+ *
+ * ─── What this pass actually fixed: seasons, not thresholds ─────────────
+ *
+ * Checking the call-off guidance turned up three `seasonalMonths` that were
+ * simply wrong, which is a bigger user-facing error than any threshold here:
+ * an out-of-season activity is penalised into the "not today" bucket whatever
+ * the weather is doing. See the comments at each.
+ *
+ *     hockey    was Mar-Oct, which is very nearly the inverse of the truth
+ *     cricket   was May-Sep, missing the whole of April
+ *     rugby     was Sep-Mar, cutting off a real month at the end
+ */
+
 export const teamSports: ActivityType[] = [
   {
     id: 'football_soccer',
@@ -350,7 +410,12 @@ export const teamSports: ActivityType[] = [
       'visibility>10',
       'gust<9.4'
     ],
-    seasonalMonths: [3, 4, 5, 6, 7, 8, 9, 10],
+    /* England Hockey is a WINTER sport and this was very nearly inverted:
+       March-October marked it in season through a summer in which no hockey is
+       played, and OUT of season from November to February, which is the middle
+       of it. The 2025-26 league season ran 20 September to 29 March; 2026-27
+       starts 12 September to finish before Easter. */
+    seasonalMonths: [9, 10, 11, 12, 1, 2, 3, 4],
     indoorAlternative: 'Practise skills at an indoor hall or watch match replays'
   },
 
@@ -549,7 +614,10 @@ export const teamSports: ActivityType[] = [
       'gust<6.1'
     ],
 
-    seasonalMonths: [5, 6, 7, 8, 9],
+    /* ECB: the County Championship ran 3 April - 27 September in 2026, and the
+       National Club Championship "begins in April". May-September marked the
+       whole of April out of season — the month people most want to know. */
+    seasonalMonths: [4, 5, 6, 7, 8, 9],
 
     indoorAlternative: 'Watch match highlights, practise batting drills, or read cricket biographies'
   },
@@ -600,7 +668,10 @@ export const teamSports: ActivityType[] = [
       'gust<11'
     ],
 
-    seasonalMonths: [9, 10, 11, 12, 1, 2, 3],
+    /* April added: the community game runs to late April, and the RFU
+       Championship above it ran 20 September 2024 to 31 May 2025. Ending at
+       March cut off a real month of rugby. */
+    seasonalMonths: [9, 10, 11, 12, 1, 2, 3, 4],
 
     indoorAlternative: 'Hit the gym, practise drills indoors, or watch match footage'
   },
