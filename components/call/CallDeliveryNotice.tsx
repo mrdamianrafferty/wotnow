@@ -20,13 +20,18 @@
  *
  * ─── Why it is not `InstallPrompt` ───────────────────────────────────────
  *
- * `components/InstallPrompt.tsx` already contains an iOS walkthrough and is
- * mounted nowhere, so reusing it looks like the obvious move. It is not: it
- * is a Findr artifact. It hardcodes "Install Findr App", renders as a fixed
+ * `components/InstallPrompt.tsx` already contained an iOS walkthrough and was
+ * mounted nowhere, so reusing it looked like the obvious move. It was not: it
+ * was a Findr artifact. It hardcoded "Install Findr App", rendered as a fixed
  * bottom banner meant for `_app.tsx` rather than an inline answer at the
- * point of the question, and is written in DaisyUI classes while this surface
- * is the hand-rolled `gd-`/`call-setup-` system. `components/AppCTA.tsx` is
- * worse — its store links point at an App Store SEARCH for Findr.
+ * point of the question, and was written in DaisyUI classes while this surface
+ * is the hand-rolled `gd-`/`call-setup-` system. `components/AppCTA.tsx` was
+ * worse — its store links pointed at an App Store SEARCH for Findr.
+ *
+ * Both are deleted now. They were unreferenced once this component existed,
+ * and a dead component that names another product is not inert: it is the
+ * thing the next person reaches for. Past tense above because the files are
+ * gone, not because the reasoning is — it is why this one is hand-written.
  *
  * What was reusable is `useInstallPrompt`, which is app-agnostic and now
  * carries the Capacitor guard. This is the Go Daisy face for it.
