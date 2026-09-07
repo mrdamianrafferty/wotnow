@@ -30,7 +30,7 @@ import GetTheApp from '../components/GetTheApp';
 import { getAllSeoPagePaths, getLocationsForActivity } from '../data/seoLocations';
 import { activityTypes } from '../data/activityTypes';
 import { activityIdToSlug, prettyActivityName } from '../lib/seo/activityNames';
-import { activitiesWithHubs } from './[activity]/index';
+import { activitiesWithHubs } from '../lib/seo/hubs';
 
 const Footer = dynamic(() => import('../components/footer'), { ssr: false });
 
