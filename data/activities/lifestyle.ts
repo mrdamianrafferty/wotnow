@@ -66,11 +66,58 @@ export const lifestyleActivities: ActivityType[] = [
      * dog on a lead: fine to a stiff breeze, hard work in a Force 6, and no
      * pleasure at all above it.
      */
+    /**
+     * ─── The heat ladder was written for the walker, not the dog ──────────
+     *
+     * Measured on an otherwise ideal day — dry, calm, clear — sweeping only
+     * the temperature:
+     *
+     *     26°C   running Not today   ·   dog walking 83 PRIME
+     *     30°C   running Not today   ·   dog walking 82 PRIME
+     *     32°C   running Not today   ·   dog walking 81 PRIME
+     *     33°C                           dog walking 14 Not today
+     *
+     * A runner was sent indoors at 26° and a dog was walked at 32° on a day
+     * the app called prime. The runner can sweat. The dog is wearing a coat it
+     * cannot take off, and the pavement it is walking on is hotter than the
+     * air.
+     *
+     * It came from `good` spanning `5..30`, which made 29° an ordinary good
+     * day, and from the average: dry, calm and clear are three perfect
+     * criteria against one merely fair temperature, so the heat was voted
+     * down. Then 81 to 14 in a single degree, which is a cliff rather than a
+     * warning.
+     *
+     * The rungs below follow the UK heatstroke guidance vets actually publish
+     * — comfortable below about 20°, caution from the low twenties, real risk
+     * from the mid twenties, and by the thirties an emergency. `perfect` moves
+     * down with it: a dog in a fur coat is happiest well below the
+     * temperature a person would choose for standing about outside.
+     *
+     * The day-level verdict is not the last word. `promote()` can still lift a
+     * hot day whose morning or evening holds up, which is exactly the advice —
+     * walk it early, walk it late — and it can only do that if the day itself
+     * stops claiming to be prime.
+     *
+     * ─── What this does NOT fix, and cannot from here ─────────────────────
+     *
+     * Between 20° and 24° the day can still read prime on an otherwise
+     * flawless afternoon. `poorConditions` are hazards — one fires and vetoes
+     * the day undiluted — but `fair` has no such power: it lowers a mean that
+     * five perfect criteria are holding up. A single fair temperature against
+     * perfect wind, gust, rain, ground and visibility moves the score about
+     * fourteen points, which is not enough to leave the top band.
+     *
+     * Fixing that needs a way to mark one criterion as binding for an activity
+     * without making it a hazard, and `utils/activitySuitability.ts` has no
+     * per-criterion weighting to hang it on. That is an engine change touching
+     * every model in the library, not a number in this file.
+     */
     poorConditions: [
       'precipitation>5',               // heavy rain
       'windSpeed>13',                  // Force 7 — leads, litter and no conversation
       'gust>18',
-      'temperature<-2 or temperature>32', // icy paws or heatstroke risk
+      'temperature<-3 or temperature>24', // frozen paws, or heatstroke weather
       'soilMoisture>50', // icy pavements or boggy fields
       'snowfallRateMmH>1',             // active snowfall reduces visibility & paw grip
       'snowDepthCm>4'                  // deeper snow becomes exhausting & icy
@@ -78,7 +125,7 @@ export const lifestyleActivities: ActivityType[] = [
 
     // Chilly, warm, or damp — not ideal, but you go anyway
     fairConditions: [
-      'temperature=-2..5 or 30..32',   // cold or hot but brief walks doable
+      'temperature=-3..1 or 20..24',   // brief walks, early or late, shade and water
       'windSpeed=9..13',               // Force 5–6, blustery on an open bank
       'gust=13..18',
       'precipitation=1..5',            // drizzle or showery
@@ -88,7 +135,7 @@ export const lifestyleActivities: ActivityType[] = [
 
     // The usual “it’ll do” kind of weather
     goodConditions: [
-      'temperature=5..30',             // tolerable range even if not ideal
+      'temperature=1..20',             // comfortable for a dog, which is cooler than for you
       'windSpeed<9',                   // to about 17 kn — manageable on a lead
       'gust<13',
       'precipitation=0..1',            // light or no rain
@@ -98,7 +145,7 @@ export const lifestyleActivities: ActivityType[] = [
 
     // Your dog stops every five steps to sniff the flowers — it’s that nice
     perfectConditions: [
-      'temperature=16..22',
+      'temperature=6..16',             // a fur coat's idea of perfect, not yours
       'windSpeed<5',                   // to about 10 kn — still enough to be pleasant
       'gust<8',
       'precipitation=0',
