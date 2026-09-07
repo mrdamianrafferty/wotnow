@@ -32,6 +32,7 @@ import {
   type CallSetup, type SetupPlace,
 } from '@/lib/godaisy/call/setup';
 import { syncSetupToServer } from '@/lib/godaisy/call/sync';
+import { CallDeliveryNotice } from '@/components/call/CallDeliveryNotice';
 import {
   SportsStep, SpotsStep, HourStep, SEED_TARGET,
   type SportOption, type PlaceSuggestion,
@@ -312,7 +313,16 @@ export default function StartPage() {
               />
             )}
             {step === 2 && (
-              <HourStep hour={hour} onPick={setHour} pushState={pushState} onEnablePush={enablePush} />
+              <>
+                <HourStep hour={hour} onPick={setHour} pushState={pushState} onEnablePush={enablePush} />
+                {/*
+                  * Under the hour, because that is the question it answers.
+                  * Someone has just said WHEN they want the call; this is the
+                  * only place that says what still has to be true for it to
+                  * turn up. Renders nothing when nothing is missing.
+                  */}
+                {hour !== undefined && <CallDeliveryNotice />}
+              </>
             )}
           </div>
 
