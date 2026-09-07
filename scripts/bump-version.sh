@@ -77,9 +77,9 @@ echo "New version: $NEW_VERSION (code: $NEW_CODE)"
 # ---------------------------------------------------------------------------
 
 case $APP in
-  findr)     IOS_PROJECT="ios/App/App.xcodeproj" ;;
-  godaisy)   IOS_PROJECT="ios-godaisy/App/Go Daisy.xcodeproj" ;;
-  growdaisy) IOS_PROJECT="ios-growdaisy/App/Grow Daisy.xcodeproj" ;;
+  findr)     IOS_PROJECT="ios/App/App.xcodeproj";              IOS_PLIST="ios/App/App/Info.plist" ;;
+  godaisy)   IOS_PROJECT="ios-godaisy/App/Go Daisy.xcodeproj"; IOS_PLIST="ios-godaisy/App/App/Info.plist" ;;
+  growdaisy) IOS_PROJECT="ios-growdaisy/App/Grow Daisy.xcodeproj"; IOS_PLIST="ios-growdaisy/App/App/Info.plist" ;;
 esac
 
 # The target Capacitor generates and the one every scheme here builds.
@@ -93,6 +93,11 @@ IOS_TARGET="App"
 
 if [ ! -d "$IOS_PROJECT" ]; then
   echo "Error: iOS project not found at $IOS_PROJECT" >&2
+  exit 1
+fi
+
+if [ ! -f "$IOS_PLIST" ]; then
+  echo "Error: Info.plist not found at $IOS_PLIST" >&2
   exit 1
 fi
 
@@ -154,8 +159,31 @@ project.save
 puts \"Updated #{ARGV[0]} (target #{ARGV[1]}): MARKETING_VERSION=#{ARGV[2]} CURRENT_PROJECT_VERSION=#{ARGV[3]}\"
 " "$IOS_PROJECT" "$IOS_TARGET" "$NEW_VERSION" "$NEW_CODE"
 
+# ---------------------------------------------------------------------------
+# Export compliance
+#
+# Without ITSAppUsesNonExemptEncryption in Info.plist, App Store Connect asks
+# the export-compliance question on EVERY upload and holds the build out of
+# TestFlight until somebody answers it by hand. Declaring it in the binary
+# answers it once, for every build that follows.
+#
+# false = the app uses no encryption beyond what Apple exempts. These apps talk
+# to their own HTTPS backends and nothing else; standard TLS is exempt. If one
+# of them ever ships its own crypto, this is the line that has to change, and
+# it is a legal declaration rather than a build setting — so it lives here,
+# asserted on every bump, instead of being left to whoever regenerates a
+# Capacitor project next.
+#
+# Set-then-Add so it is idempotent: Set fails on a key that is absent, Add
+# fails on one that is present.
+# ---------------------------------------------------------------------------
+
+/usr/libexec/PlistBuddy -c "Set :ITSAppUsesNonExemptEncryption false" "$IOS_PLIST" 2>/dev/null \
+  || /usr/libexec/PlistBuddy -c "Add :ITSAppUsesNonExemptEncryption bool false" "$IOS_PLIST"
+echo "Declared ITSAppUsesNonExemptEncryption=false in $IOS_PLIST"
+
 # Git operations
-git add "$VERSION_FILE" "$IOS_PROJECT/project.pbxproj"
+git add "$VERSION_FILE" "$IOS_PROJECT/project.pbxproj" "$IOS_PLIST"
 git commit -m "chore($APP): bump version to $NEW_VERSION ($NEW_CODE)"
 
 # Create tag

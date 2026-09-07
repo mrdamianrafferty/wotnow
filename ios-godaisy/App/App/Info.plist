@@ -2,12 +2,10 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-	<!-- Disable Firebase method swizzling to work with Capacitor -->
-	<key>FirebaseAppDelegateProxyEnabled</key>
-	<false/>
-	<key>FirebaseMessagingAutoInitEnabled</key>
-	<false/>
-
+	<key>BGTaskSchedulerPermittedIdentifiers</key>
+	<array>
+		<string>io.godaisy.app.refresh</string>
+	</array>
 	<key>CFBundleDevelopmentRegion</key>
 	<string>en</string>
 	<key>CFBundleDisplayName</key>
@@ -24,10 +22,73 @@
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>
 	<string>$(MARKETING_VERSION)</string>
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleURLName</key>
+			<string>io.godaisy.app</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>godaisy</string>
+			</array>
+		</dict>
+		<dict>
+			<key>CFBundleURLName</key>
+			<string>Google OAuth</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>com.googleusercontent.apps.666271903016-7mqeehtbrl2osvk3i2fg3320t2au1kps</string>
+			</array>
+		</dict>
+	</array>
 	<key>CFBundleVersion</key>
 	<string>$(CURRENT_PROJECT_VERSION)</string>
+	<key>FirebaseAppDelegateProxyEnabled</key>
+	<false/>
+	<key>FirebaseMessagingAutoInitEnabled</key>
+	<false/>
+	<key>GIDClientID</key>
+	<string>666271903016-7mqeehtbrl2osvk3i2fg3320t2au1kps.apps.googleusercontent.com</string>
+	<key>ITSAppUsesNonExemptEncryption</key>
+	<false/>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
+	<key>NSCameraUsageDescription</key>
+	<string>Go Daisy needs camera access so you can capture field notes and share local insights.</string>
+	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+	<string>Go Daisy needs your location to show outdoor windows for your area and recommend the safest spots nearby.</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>Go Daisy needs your location to show outdoor windows for your area and recommend the safest spots nearby.</string>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>Go Daisy needs permission to save exported field notes to your library.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Go Daisy needs photo library access so you can attach existing pictures to your logs.</string>
+	<key>NSUserNotificationsUsageDescription</key>
+	<string>Go Daisy can send you notifications about upcoming activity windows and reminders for scheduled plans.</string>
+	<key>UIApplicationSceneManifest</key>
+	<dict>
+		<key>UIApplicationSupportsMultipleScenes</key>
+		<false/>
+		<key>UISceneConfigurations</key>
+		<dict>
+			<key>UIWindowSceneSessionRoleApplication</key>
+			<array>
+				<dict>
+					<key>UISceneConfigurationName</key>
+					<string>Default Configuration</string>
+					<key>UISceneDelegateClassName</key>
+					<string>$(PRODUCT_MODULE_NAME).SceneDelegate</string>
+					<key>UISceneStoryboardFile</key>
+					<string>Main</string>
+				</dict>
+			</array>
+		</dict>
+	</dict>
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>remote-notification</string>
+		<string>processing</string>
+	</array>
 	<key>UILaunchStoryboardName</key>
 	<string>LaunchScreen</string>
 	<key>UIMainStoryboardFile</key>
@@ -51,85 +112,5 @@
 	</array>
 	<key>UIViewControllerBasedStatusBarAppearance</key>
 	<true/>
-
-	<!-- Scene Configuration -->
-	<key>UIApplicationSceneManifest</key>
-	<dict>
-		<key>UIApplicationSupportsMultipleScenes</key>
-		<false/>
-		<key>UISceneConfigurations</key>
-		<dict>
-			<key>UIWindowSceneSessionRoleApplication</key>
-			<array>
-				<dict>
-					<key>UISceneConfigurationName</key>
-					<string>Default Configuration</string>
-					<key>UISceneDelegateClassName</key>
-					<string>$(PRODUCT_MODULE_NAME).SceneDelegate</string>
-					<key>UISceneStoryboardFile</key>
-					<string>Main</string>
-				</dict>
-			</array>
-		</dict>
-	</dict>
-
-	<!-- PERMISSIONS -->
-
-	<!-- Location Permissions -->
-	<key>NSLocationWhenInUseUsageDescription</key>
-	<string>Go Daisy needs your location to show outdoor windows for your area and recommend the safest spots nearby.</string>
-	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
-	<string>Go Daisy needs your location to show outdoor windows for your area and recommend the safest spots nearby.</string>
-
-	<!-- Camera Permission -->
-	<key>NSCameraUsageDescription</key>
-	<string>Go Daisy needs camera access so you can capture field notes and share local insights.</string>
-
-	<!-- Photo Library Permissions -->
-	<key>NSPhotoLibraryUsageDescription</key>
-	<string>Go Daisy needs photo library access so you can attach existing pictures to your logs.</string>
-
-	<key>NSPhotoLibraryAddUsageDescription</key>
-	<string>Go Daisy needs permission to save exported field notes to your library.</string>
-
-	<!-- Notifications Permission -->
-	<key>NSUserNotificationsUsageDescription</key>
-	<string>Go Daisy can send you notifications about upcoming activity windows and reminders for scheduled plans.</string>
-
-	<!-- Google Sign-In Configuration -->
-	<key>GIDClientID</key>
-	<string>666271903016-7mqeehtbrl2osvk3i2fg3320t2au1kps.apps.googleusercontent.com</string>
-
-	<!-- URL Schemes for Deep Linking (OAuth callbacks) -->
-	<key>CFBundleURLTypes</key>
-	<array>
-		<dict>
-			<key>CFBundleURLName</key>
-			<string>io.godaisy.app</string>
-			<key>CFBundleURLSchemes</key>
-			<array>
-				<string>godaisy</string>
-			</array>
-		</dict>
-		<dict>
-			<key>CFBundleURLName</key>
-			<string>Google OAuth</string>
-			<key>CFBundleURLSchemes</key>
-			<array>
-				<string>com.googleusercontent.apps.666271903016-7mqeehtbrl2osvk3i2fg3320t2au1kps</string>
-			</array>
-		</dict>
-	</array>
-	<key>UIBackgroundModes</key>
-	<array>
-		<string>remote-notification</string>
-		<string>processing</string>
-	</array>
-
-	<!-- Background Task Identifiers (iOS 17+) -->
-	<key>BGTaskSchedulerPermittedIdentifiers</key>
-	<array>
-		<string>io.godaisy.app.refresh</string>
-	</array>
 </dict>
 </plist>

@@ -55,7 +55,19 @@ def fix_gtm_session_fetcher_includes!(base_dir)
   end
 end
 
-target 'App copy' do
+# 'App', not 'App copy'.
+#
+# This project carried an accidental duplicate target called "App copy", and
+# CocoaPods had been pointed at it — so every pod, including Capacitor's own,
+# was integrated into the duplicate while the SCHEME built "App". That left the
+# real target with three build phases (Sources, Frameworks, Resources) and none
+# of CocoaPods', which is not a buildable state.
+#
+# The duplicate is now deleted, so this has to name the target that survives.
+# Run `pod install` in this directory afterwards to put the [CP] phases back on
+# the real target — until that runs, the phases are absent here in a way they
+# are not in ios/ or ios-godaisy/, both of which were always wired to 'App'.
+target 'App' do
   capacitor_pods
   # Firebase for push notifications (FCM)
   pod 'FirebaseMessaging'
