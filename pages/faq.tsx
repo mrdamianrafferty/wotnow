@@ -16,7 +16,6 @@ import { DocPage } from '@/components/call/DocPage';
 
 import React from 'react';
 import Link from 'next/link';
-import SEO from '../components/SEO';
 
 // ============================================================================
 // FAQ content — grouped so the page is scannable and so JSON-LD can include
@@ -185,11 +184,16 @@ const faqJsonLd = {
 export default function FAQPage() {
   return (
     <>
-      <SEO
-        title="Frequently asked questions"
-        description="Everything about Go Daisy — what activities we cover (surf, hiking, padel, cricket, stargazing, fishing, gardening and 100+ more), where the data comes from, and how the scoring works. Free, ad-free, UK and Europe."
-        url="https://godaisy.io/faq"
-      />
+      {/*
+        * The `<SEO>` block that used to sit here was dead.
+        *
+        * `DocPage` writes into `next/head` after this component does, and
+        * `next/head` dedupes by meta name — so its shorter description won every
+        * time and the long one below never left the building. Live HTML
+        * confirmed it. Now `DocPage` carries the canonical and the card for all
+        * eight documents, and this page hands it the description it wanted
+        * rather than declaring a second one that loses.
+        */}
 
       {/*
         * The FAQPage structured data, which the conversion to `DocPage` nearly
@@ -203,7 +207,10 @@ export default function FAQPage() {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }}
       />
 
-    <DocPage title="Frequently asked questions" description="Which activities Go Daisy covers, where the data comes from, and what makes a good day for each.">
+    <DocPage
+        title="Frequently asked questions"
+        description="Everything about Go Daisy — which activities it covers (surf, hiking, padel, cricket, stargazing, fishing, gardening and 100+ more), where the data comes from, and how the scoring works. Free, ad-free, UK and Europe."
+      >
 
         <section className="px-4 py-12">
           <div className="max-w-3xl mx-auto space-y-12">

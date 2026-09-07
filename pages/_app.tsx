@@ -209,11 +209,27 @@ export default function App({ Component, pageProps }: AppProps<PagePropsWithThem
                 <link rel="icon" type="image/png" sizes="96x96" href={isFindr ? "/findr-favicon-v2/favicon-96x96.png" : isGrow ? "/growdaisy-favicon/favicon-96x96.png" : "/godaisy-favicon/favicon-96x96.png"} />
                 <link rel="icon" type="image/x-icon" href={isFindr ? "/findr-favicon-v2/favicon.ico" : isGrow ? "/growdaisy-favicon/favicon.ico" : "/godaisy-favicon/favicon.ico"} />
 
-                {/* Smart App Banner — shows "Open in App Store" on iOS Safari when app not installed. */}
+                {/*
+                  * Smart App Banner — "Open in App Store" on iOS Safari when the
+                  * app is not installed.
+                  *
+                  * This was Grow-only, which was backwards. Go Daisy is the app
+                  * with 4,559 indexed spot pages under it, and a spot page is
+                  * read on a phone — someone standing somewhere, wondering
+                  * whether today is the day. That is the moment an install
+                  * prompt is worth having, and the banner is the only free one
+                  * Apple gives you.
+                  */}
                 {isGrow && (
                   <meta
                     name="apple-itunes-app"
                     content={`app-id=6756812661, app-argument=${typeof window !== 'undefined' ? window.location.href : 'https://grow.godaisy.io/grow'}`}
+                  />
+                )}
+                {appContext === 'godaisy' && (
+                  <meta
+                    name="apple-itunes-app"
+                    content={`app-id=6755695873, app-argument=${typeof window !== 'undefined' ? window.location.href : 'https://godaisy.io'}`}
                   />
                 )}
                 </Head>

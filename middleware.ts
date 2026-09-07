@@ -1,10 +1,49 @@
 import { createServerClient } from '@supabase/ssr';
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
+import { NOT_A_PAGE_SLUGS } from '@/data/seoRetiredActivities';
+
+/**
+ * The retired half of the programmatic estate, answered 410 Gone.
+ *
+ * 3,854 of the 8,413 `/{activity}/{location}` pages were a weather question
+ * about something the weather does not decide — knitting, gaming, shopping,
+ * watching a film — plus 106 for an `online` activity that never existed.
+ * `data/seoLocations.ts` no longer generates any of them, so they leave the
+ * sitemap and every internal link on their own.
+ *
+ * That is not enough by itself. Google holds URLs it has already crawled for a
+ * long time after they stop being linked, and re-requests them; without an
+ * answer here they would fall through to `[activity]/[location].tsx`, whose
+ * `getStaticProps` rejects the activity and returns 404 — correct, but only
+ * after ISR has spun up a render to say so. 410 is the accurate answer anyway:
+ * these are not missing, they were withdrawn, and a crawler drops a 410 sooner
+ * than a 404.
+ *
+ * Deliberately narrow: two path segments only, and only where the first is a
+ * retired activity slug. `/yoga` on its own is left to the router, because the
+ * activity hub is being built at exactly that URL.
+ */
+function isRetiredSpotPage(pathname: string): boolean {
+  const parts = pathname.split('/').filter(Boolean);
+  return parts.length === 2 && NOT_A_PAGE_SLUGS.has(parts[0]);
+}
 
 export async function middleware(req: NextRequest) {
   const url = req.nextUrl;
   const hostname = req.headers.get('host') || '';
+
+  // Before anything else, and before touching Supabase: a withdrawn URL needs
+  // no session refreshed to be told it is gone.
+  if (isRetiredSpotPage(url.pathname)) {
+    return new NextResponse(null, {
+      status: 410,
+      headers: {
+        'X-Robots-Tag': 'noindex',
+        'Cache-Control': 'public, max-age=3600, s-maxage=86400',
+      },
+    });
+  }
 
   // Check for auth callback early to avoid duplicate declarations
   const hasCode = url.searchParams.has('code');

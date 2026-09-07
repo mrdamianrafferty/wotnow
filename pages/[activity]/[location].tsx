@@ -7,12 +7,20 @@
  *        /stargazing/snowdonia-eryri
  *
  * ISR with fallback: 'blocking' — pages are generated on-demand on first
- * request, cached at the edge, and rebuilt every hour. At ~2,500 pages this
+ * request, cached at the edge, and rebuilt every hour. At 4,559 pages this
  * scales well without overloading deploy builds.
  *
  * Each page targets a real long-tail search query. The combination of fresh
  * scoring data, location-specific copy, internal cross-links, and FAQPage +
  * Place JSON-LD is what keeps these out of "doorway page" territory.
+ *
+ * NONE OF THAT HELD WHILE THE ESTATE INCLUDED `/knitting/reykjavik`. It was
+ * 8,413 pages, 3,854 of them a weather question about something the weather
+ * does not decide, and the cross-links were an illusion: both related blocks
+ * truncated their candidate set before scoring it, so every page in the site
+ * linked to the same handful of generic activities and the first ten cities in
+ * the array. See `WEATHER_INDEPENDENT` in data/seoRetiredActivities.ts and
+ * steps 5 and 6 below.
  *
  * Source of activity/location data: data/seoLocations.ts
  * Source of scoring: lib/seo/getActivityScore.ts → utils/getSuggestionsByDay
@@ -26,11 +34,13 @@ import type { GetStaticPaths, GetStaticProps } from 'next';
 import SEO from '../../components/SEO';
 import { PageHeader } from '../../components/call/PageHeader';
 import {
+  distanceKm,
   getLocationBySlug,
   getLocationsForActivity,
   type SeoLocation,
 } from '../../data/seoLocations';
 import {
+  fetchForecastForLocation,
   getActivityScoreForLocation,
   type ActivityScorePayload,
 } from '../../lib/seo/getActivityScore';
@@ -48,6 +58,46 @@ const Footer = dynamic(() => import('../../components/footer'), { ssr: false });
 
 const activityIdToSlug = (id: string): string => id.replace(/_/g, '-');
 const slugToActivityId = (slug: string): string => slug.replace(/-/g, '_');
+
+// ============================================================================
+// Politeness towards the forecast API
+// ============================================================================
+
+/**
+ * `Promise.all` over a list, but only `limit` in flight at once.
+ *
+ * The related-locations block fetches a forecast per candidate place, and
+ * `Promise.all` issued all twelve simultaneously. One page doing that is fine;
+ * a crawler walking the estate is a dozen pages doing it at once, and
+ * Open-Meteo answers 429. That was reproduced on the preview deployment — five
+ * page requests in ten seconds rate-limited the whole deployment, and because
+ * the failure used to become a cached 404, the pages stayed broken after the
+ * limit lifted.
+ *
+ * Four at a time turns a twelve-wide burst into three short waves. The page is
+ * built behind ISR with `revalidate: 3600`, so a little more latency once an
+ * hour costs nothing that anyone experiences, and the pages come back.
+ */
+async function mapWithConcurrency<T, R>(
+  items: readonly T[],
+  limit: number,
+  fn: (item: T) => Promise<R>,
+): Promise<R[]> {
+  const results: R[] = new Array(items.length);
+  let next = 0;
+  const workers = Array.from({ length: Math.min(limit, items.length) }, async () => {
+    for (;;) {
+      const i = next++;
+      if (i >= items.length) return;
+      results[i] = await fn(items[i]);
+    }
+  });
+  await Promise.all(workers);
+  return results;
+}
+
+/** In flight at once when fetching other locations' forecasts. */
+const FORECAST_CONCURRENCY = 4;
 
 // ============================================================================
 // Page props
@@ -113,50 +163,161 @@ export const getStaticProps: GetStaticProps<PageProps> = async (ctx) => {
   const activity = activityTypes.find((a) => a.id === activityId);
   if (!activity) return { notFound: true, revalidate: 3600 };
 
-  // 4. Fetch the score payload
-  const score = await getActivityScoreForLocation(activityId, location);
-  if (!score) {
-    // Don't bake a broken page — let ISR retry on the next request
-    return { notFound: true, revalidate: 60 };
+  /*
+   * 4. The forecast for this place, fetched ONCE.
+   *
+   * This page used to make nineteen `getActivityScoreForLocation` calls and let
+   * every one of them fetch its own forecast — one for the page, eight for the
+   * related activities AT THIS SAME LOCATION, ten for other locations. Nine of
+   * the nineteen were the identical request. Measured cold TTFB was 3.6s, which
+   * across the estate is the crawl budget as much as the API bill.
+   *
+   * `getActivityScoreForLocation` has taken a `prefetched` forecast since it was
+   * written, and says in its own docblock that this is what it is for. It was
+   * simply never passed. Beyond the cost, N fetches are N chances to straddle a
+   * forecast run, which is how one page can rank sailing at Force 3 beside dog
+   * walking at Force 4 on the same water in the same hour.
+   */
+  /*
+   * A FAILED FETCH IS NOT A MISSING PAGE.
+   *
+   * This returned `notFound` when the forecast came back empty, which turns a
+   * busy weather API into 404 — for a URL that exists, is in the sitemap, and
+   * was rendering a minute earlier. Measured on the preview deployment: a cold
+   * cache generated several pages at once, Open-Meteo answered 429, and every
+   * one of them became a cached 404. Worse, Vercel then served that 404 stale
+   * while revalidating behind it, so it survived the next request too.
+   *
+   * Google reads 404 as "gone" and 5xx as "come back". Throwing gets the second
+   * one: `getStaticProps` raising during on-demand generation returns 500 and
+   * caches nothing, and during background revalidation it leaves the previously
+   * generated page in place rather than replacing a working page with a 404.
+   * That is the behaviour we want in both cases, and it is Next's default —
+   * this code was overriding it.
+   *
+   * The three checks above stay `notFound`, because they are the real thing:
+   * that URL is not a page and no retry will change it.
+   */
+  const forecast = await fetchForecastForLocation(location);
+  if (!forecast.length) {
+    throw new Error(
+      `No forecast for ${location.slug} — refusing to cache a 404 for a page that exists.`
+    );
   }
 
-  // 5. Build the "related activities at this location" list (top 5 today)
-  const otherActivitiesHere = location.activities.filter(
-    (a) => a !== activityId
-  );
+  const score = await getActivityScoreForLocation(activityId, location, undefined, forecast);
+  if (!score) {
+    throw new Error(
+      `No score for ${activityId} at ${location.slug} — refusing to cache a 404 for a page that exists.`
+    );
+  }
+
+  /*
+   * 5. "Also today here" — the top five of EVERYTHING this place does.
+   *
+   * This scored `otherActivitiesHere.slice(0, 8)`: it truncated before scoring,
+   * so the candidate set was always the first eight entries of `UNIVERSAL`, in
+   * array order. Live, `/surfing/newquay-cornwall` recommended photography,
+   * outdoor yoga, outdoor meditation, urban exploring and yoga. Not sea
+   * swimming, not SUP, not kitesurfing.
+   *
+   * Two things followed. The module was useless to a reader — a surf town's own
+   * page, silent about the sea. And because these are the only internal links a
+   * spot page carries, every distinctive URL on the site was an orphan
+   * reachable from the sitemap and nowhere else.
+   *
+   * Now every activity here is scored and the top five win it. This costs
+   * nothing extra in requests: they all read `forecast` above.
+   */
   const otherScoresHere = await Promise.all(
-    otherActivitiesHere.slice(0, 8).map(async (a) => {
-      const p = await getActivityScoreForLocation(a, location);
-      return {
-        activityId: a,
-        name: prettyActivityName(a),
-        score: p?.todayScore ?? 0,
-        url: `/${activityIdToSlug(a)}/${location.slug}`,
-      };
-    })
+    location.activities
+      .filter((a) => a !== activityId)
+      .map(async (a) => {
+        const p = await getActivityScoreForLocation(a, location, undefined, forecast);
+        return {
+          activityId: a,
+          name: prettyActivityName(a),
+          score: p?.todayScore ?? 0,
+          url: `/${activityIdToSlug(a)}/${location.slug}`,
+        };
+      })
   );
   const relatedAtLocation = otherScoresHere
     .sort((a, b) => b.score - a.score)
     .slice(0, 5);
 
-  // 6. Build the "other good locations for this activity today" list (top 5)
-  const otherLocations = getLocationsForActivity(activityId).filter(
-    (l) => l.slug !== location.slug
-  );
-  const otherLocScores = await Promise.all(
-    otherLocations.slice(0, 10).map(async (l) => {
+  /*
+   * 6. "Other good places for this today" — the top five of the NEAREST twelve.
+   *
+   * Same truncate-before-scoring bug, and one more besides: `slice(0, 10)` took
+   * the first ten in file order, so Newquay's surfing page offered New York and
+   * Reykjavík. Distance is the fix for both halves — it is a better answer to
+   * the reader's actual question ("where else could I go today"), and it builds
+   * a regional link graph instead of pointing the whole estate at whichever
+   * cities happen to sit at the top of the array.
+   *
+   * Unlike step 5 these cannot share a forecast — a different place is a
+   * different request — so the candidate set stays capped. Twelve nearest, top
+   * five shown.
+   */
+  const NEARBY_CANDIDATES = 12;
+  /** A day trip, generously drawn. Beyond it, "also good today" is trivia. */
+  const NEARBY_KM = 1500;
+  /** Below this, a sparse activity shows distant places rather than nothing. */
+  const MIN_CANDIDATES = 3;
+
+  const byDistance = getLocationsForActivity(activityId)
+    .filter((l) => l.slug !== location.slug)
+    .map((l) => ({ location: l, km: distanceKm(location, l) }))
+    .sort((a, b) => a.km - b.km)
+    .slice(0, NEARBY_CANDIDATES);
+
+  /*
+   * The distance cap, and the escape hatch under it.
+   *
+   * Twenty-one places have a surfing page and twelve of them are North
+   * American, so a count-only cap still offered Jacksonville and Baltimore to
+   * someone reading about Newquay — scored honestly, and still trivia. Within
+   * 1,500 km Newquay has seven real answers: Dublin, Tynemouth, the three
+   * Asturian towns, Biarritz, Lisbon.
+   *
+   * The fallback matters for the thin ones. Curling has few pages and they are
+   * far apart; an empty block there is worse than a distant one, so a sparse
+   * activity keeps its nearest five whatever the distance.
+   */
+  const withinRange = byDistance.filter((c) => c.km <= NEARBY_KM);
+  const otherLocations = (withinRange.length >= MIN_CANDIDATES
+    ? withinRange
+    : byDistance.slice(0, 5)
+  ).map((c) => c.location);
+
+  const otherLocScores = await mapWithConcurrency(
+    otherLocations,
+    FORECAST_CONCURRENCY,
+    async (l) => {
       const p = await getActivityScoreForLocation(activityId, l);
+      /*
+       * A place we could not price is not a place scoring nought.
+       *
+       * `?? 0` put every failed fetch at the bottom of the ranking rather than
+       * out of it — so when Open-Meteo rate-limits, which it does under a burst
+       * of ISR builds, the block fills up with towns labelled 0/100 that the
+       * forecast never had an opinion about. Silence is not a bad day. Return
+       * null and let them fall out; the block simply gets shorter.
+       */
+      if (!p) return null;
       return {
         slug: l.slug,
         name: l.name,
         region: l.region,
         country: l.country,
-        score: p?.todayScore ?? 0,
+        score: p.todayScore,
         url: `/${activitySlug}/${l.slug}`,
       };
-    })
+    },
   );
   const relatedLocations = otherLocScores
+    .filter((l): l is NonNullable<typeof l> => l !== null)
     .sort((a, b) => b.score - a.score)
     .slice(0, 5);
 
@@ -344,7 +505,13 @@ export default function ProgrammaticSeoPage({
          * first, which would have been the logo. The duplicate looked right in
          * the source and did nothing.
          */
-        image={`https://godaisy.io/api/call/share?place=${location.slug}&day=0&alt=0&date=${score.weeklyOutlook[0]?.date ?? ''}&crop=og`}
+        /*
+          * `sport` so the card is about the page. Without it the renderer falls
+          * back to the first three activities of the archetype — running,
+          * cycling, urban exploring at every seeded place — so this page's one
+          * social preview said nothing about surfing.
+          */
+        image={`https://godaisy.io/api/call/share?place=${location.slug}&sport=${activityIdToSlug(activityId)}&day=0&alt=0&date=${score.weeklyOutlook[0]?.date ?? ''}&crop=og`}
       />
       <Head>
         <script

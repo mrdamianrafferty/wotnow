@@ -117,7 +117,27 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const forecast = (await fetchForecastForLocation(location)).slice(0, 7);
     if (!forecast[dayIndex]) return res.status(404).json({ error: 'No forecast for that day' });
 
-    const chosen = location.activities.slice(0, 3);
+    /*
+     * WHICH SPORTS THE CARD IS ALLOWED TO CALL.
+     *
+     * `location.activities.slice(0, 3)` — the first three in the archetype,
+     * which is running, cycling and urban exploring at every seeded place. Fine
+     * for a share from `/call`, where the sender has no sports of their own on
+     * this URL and the point is a plausible read of the day.
+     *
+     * Not fine as the `og:image` of a spot page. `/surfing/newquay-cornwall`
+     * carried a card about running: the one social preview the estate has, on
+     * the one page type that ranks, silent about the thing the page is for.
+     *
+     * `sport` names the activity the card is being made for. Accepted in either
+     * spelling — the URL uses hyphens, the data layer underscores — and ignored
+     * unless the place actually does it, so a hand-edited link cannot make the
+     * card assert surfing in Madrid.
+     */
+    const requested = String(req.query.sport ?? '').replace(/-/g, '_');
+    const chosen = requested && location.activities.includes(requested)
+      ? [requested]
+      : location.activities.slice(0, 3);
     const byDay = getSuggestionsByDay({
       forecast, activities: allSports, interests: chosen,
       now: new Date(), includeAllActivities: true,
