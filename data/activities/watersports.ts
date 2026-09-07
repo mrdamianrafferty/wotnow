@@ -1,6 +1,73 @@
 import type { ActivityType } from './types';
 
 /**
+ * ─── Checked against the governing bodies, 2026-09 ───────────────────────
+ *
+ * These ladders were written from judgement. This is the pass that went and
+ * read what the authorities actually publish, and moved three numbers that
+ * disagreed with them. Sources, with the figures they give:
+ *
+ *   RYA — Cold Water Shock. Cold water shock occurs "in water below 15°C";
+ *   the average sea temperature around the UK and Ireland is 12°C, so British
+ *   water sits in that band most of the year. RNLI say the same: "anything
+ *   below 15°C is defined as cold water".
+ *   rya.org.uk/on-water-safety/cold-water-shock-safety/cold-water-shock/
+ *
+ *   British Triathlon — Competition Rules. Below 11°C an open-water
+ *   competition swim "cannot take place" at any distance; at 12°C a 1500 m
+ *   swim is cut to 1000 m; a wetsuit is MANDATORY below 14°C for swims of
+ *   1500 m or less, and below 16°C for longer.
+ *
+ *   British Canoeing Awarding Body — Environmental Definitions and Deployment
+ *   Guidance, V2-4Jan23. Inland, sheltered water is where "the wind strength
+ *   does not exceed Beaufort force 3"; moderate water is "wind strengths that
+ *   do not exceed Beaufort force 4"; and ADVANCED water is open water which
+ *   has "winds in excess of Beaufort force 4". Its own Beaufort table puts
+ *   F3 at 7-10 kn (4-5 m/s), F4 at 11-16 kn (6-8 m/s), F5 at 17-21 kn (9-11).
+ *
+ *   Met Office — inshore waters forecasts warn of strong winds at Beaufort
+ *   force 6 (22-27 kn), the UK equivalent of a small craft advisory.
+ *
+ * ─── The three that moved ────────────────────────────────────────────────
+ *
+ *   sea_swimming's GOOD band began at 14°C. That is inside the RYA and RNLI
+ *   definition of cold water, and it is the exact temperature at which
+ *   British Triathlon stops letting anyone race without a wetsuit. Measured,
+ *   14°C water read 78 — "good" — on a calm summer day. Now 15°C, which is
+ *   where wild_swimming already, correctly, started.
+ *
+ *   wild_swimming vetoed below 10°C. British Triathlon's floor is 11, below
+ *   which no competition swim happens at any distance, in wetsuits, with
+ *   safety cover. An unsupervised swimmer picking a day off a weather app
+ *   should not be told 10°C is workable when that is true of nobody.
+ *
+ *   kayaking called Force 5 "fair" — its mean-wind veto was above 10 m/s,
+ *   which is 19 kn, most of the way through F5. British Canoeing put winds
+ *   above force 4 in Advanced Water. On a GUSTY day the gust veto hid this
+ *   (a 1.5x gust factor trips `gust>12` first), but on a steady F5 the tile
+ *   read 46, "workable". The mean-wind veto is now above force 4, as
+ *   canoeing's and paddleboarding's already were.
+ *
+ * ─── What was checked and left alone, so it is not re-litigated ──────────
+ *
+ *   canoeing        poor above 8 m/s   = exactly BCAB's "in excess of F4"
+ *   paddleboarding  poor above 7 m/s   = inside F4, conservative for a board
+ *   sailing_inland  poor above 10.8    = 21 kn, stopping as the Met Office's
+ *                                        force 6 strong-wind warning begins
+ *
+ * The kayak/canoe difference the library deliberately draws now lives where
+ * it belongs — in the GUST ladder (kayak 12 m/s, canoe 10) rather than in the
+ * mean, because a kayak sits low and an open canoe catches wind. Both share
+ * the mean-wind boundary, because both take it from the same governing body.
+ *
+ * ⚠️ The RYA publishes NO universal wind limit for dinghy sailing — it is a
+ * race officer's or centre's decision on the day, and their water-safety page
+ * offers only "if it's blowing 16+ knots with a 1m swell it's probably not
+ * going to be an enjoyable family day out". So the sailing threshold above is
+ * backed by the Met Office, not by the RYA. Do not cite the RYA for it.
+ */
+
+/**
  * ─── The marine wind ladders, re-cut 2026-09 ─────────────────────────────
  *
  * The coastal models in this file were left alone during the inland pass, on
@@ -173,7 +240,7 @@ export const waterSports: ActivityType[] = [
     ],
     fairConditions: [
       'temperature=5..10 or 24..28',
-      'windSpeed=7..10',           // Force 5 — hard work back upwind
+      'windSpeed=7..8',            // to 16 kn, the top of Force 4 — hard work back upwind
       'gust=9..12',
       'precipitation=2..10',
       'visibility=2..5'
@@ -181,7 +248,7 @@ export const waterSports: ActivityType[] = [
 
     poorConditions: [
       'temperature<5 or temperature>28',
-      'windSpeed>10',              // Force 5 and above
+      'windSpeed>8',               // above Force 4: British Canoeing's Advanced Water
       'gust>12',
       'precipitation>10',
       'visibility<2',
@@ -649,14 +716,14 @@ export const waterSports: ActivityType[] = [
       'precipitation=0..2'
     ],
     fairConditions: [
-      'waterTemperature=10..15 or 24..26',
+      'waterTemperature=11..15 or 24..26',  // RYA/RNLI cold water; British Triathlon wetsuit-mandatory
       'airTemperature=11..15 or 28..30',
       'windSpeed=6..8', 'gust=8..11',
       'visibility=2..5',
       'precipitation=2..5'
     ],
     poorConditions: [
-      'waterTemperature<10',       // cold-water shock territory
+      'waterTemperature<11',       // British Triathlon permits no competition swim at all below 11 °C
       'airTemperature<11 or airTemperature>30',
       'windSpeed>8', 'gust>11',
       'visibility<2',
@@ -686,7 +753,7 @@ export const waterSports: ActivityType[] = [
       'windRelative=onshore & windSpeed<6 or windRelative=cross-shore & windSpeed<8'
     ],
     goodConditions: [
-      'waterTemperature=14..24',
+      'waterTemperature=15..24',   // 15 °C is the RYA/RNLI cold-water line
       'airTemperature=14..28',
       'windSpeed=0..6',
       'gust<8',
@@ -696,7 +763,7 @@ export const waterSports: ActivityType[] = [
       'windRelative=onshore & windSpeed<=8 or windRelative=cross-shore & windSpeed<=12 or windRelative=side-onshore & windSpeed<=10'
     ],
     fairConditions: [
-      'waterTemperature=12..14 or 24..28',
+      'waterTemperature=12..15 or 24..28',
       'airTemperature=10..14 or 28..30',
       'windSpeed=6..8',
       'gust=8..11',
