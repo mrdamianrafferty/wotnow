@@ -88,6 +88,27 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             } catch (e) {
               console.error('[Auth] Call setup sync failed:', e);
             }
+
+            /*
+             * And the web push subscription, which is the other half of the
+             * same problem.
+             *
+             * `/start` asks for notification permission at the moment it is
+             * obviously worth granting, then tries to subscribe — and
+             * subscribing needs an account, so signed out it 401s and the
+             * `.catch` swallows it. A browser gives that prompt once. Without
+             * this, a person who said yes before signing in is left with
+             * permission granted, no subscription, and no way to produce one.
+             *
+             * Never prompts; only acts on a permission already granted. See
+             * `ensureWebPushSubscription`.
+             */
+            try {
+              const { ensureWebPushSubscription } = await import('@/lib/godaisy/push/ensureWebSubscription');
+              void ensureWebPushSubscription(session.access_token);
+            } catch (e) {
+              console.error('[Auth] Web push subscription repair failed:', e);
+            }
           } else {
             localStorage.removeItem('supabase.auth.session');
           }

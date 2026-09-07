@@ -62,6 +62,7 @@ import { locationFromSetup } from '@/lib/godaisy/call/location';
 import type { CallSetup } from '@/lib/godaisy/call/setup';
 import { sendGoDaisyApnsPushNotification } from '@/lib/godaisy/apnsClient';
 import { sendFcmPushNotification } from '@/lib/notifications/fcmClient';
+import { sendGoDaisyPushNotification } from '@/lib/godaisy/notifications';
 
 const SUPABASE_URL = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
 const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -182,15 +183,34 @@ async function callOne(row: PrefRow, tz: string, localDate: string): Promise<Out
   const setup = setupFromRow(row);
   if (!setup) return { userId: row.user_id, status: 'error', detail: 'incomplete setup' };
 
-  // Devices first. There is no point buying a forecast for someone with no
-  // phone attached to the account.
-  const { data: tokens } = await supabase
-    .from('user_push_tokens')
-    .select('token, platform')
-    .eq('user_id', row.user_id)
-    .eq('bundle_id', GODAISY_BUNDLE_ID);
+  /*
+   * SOMEWHERE TO SEND IT, BEFORE BUYING A FORECAST — and "somewhere" is two
+   * places, not one.
+   *
+   * This originally read `user_push_tokens` alone and dispatched via APNs/FCM,
+   * which made the daily call native-only: a browser that had subscribed to
+   * web push was in `godaisy_push_subscriptions`, a table the sender never
+   * looked at, and got nothing. The app's one message a day was deliverable
+   * only to people who had installed it.
+   */
+  const [{ data: tokens }, { data: webSubs }] = await Promise.all([
+    supabase
+      .from('user_push_tokens')
+      .select('token, platform')
+      .eq('user_id', row.user_id)
+      .eq('bundle_id', GODAISY_BUNDLE_ID),
+    supabase
+      .from('godaisy_push_subscriptions')
+      .select('id')
+      .eq('user_id', row.user_id)
+      .eq('is_active', true),
+  ]);
 
-  if (!tokens?.length) return { userId: row.user_id, status: 'no_device' };
+  const deviceCount = tokens?.length ?? 0;
+  const webCount = webSubs?.length ?? 0;
+  if (deviceCount === 0 && webCount === 0) {
+    return { userId: row.user_id, status: 'no_device' };
+  }
 
   const location = locationFromSetup(setup);
   const forecast = (await fetchForecastForLocation(location)).slice(0, 7);
@@ -243,7 +263,7 @@ async function callOne(row: PrefRow, tz: string, localDate: string): Promise<Out
 
   let sent = 0;
   const failures: string[] = [];
-  for (const t of tokens) {
+  for (const t of tokens ?? []) {
     try {
       const ok = t.platform === 'ios'
         ? await sendGoDaisyApnsPushNotification(t.token, {
@@ -262,12 +282,51 @@ async function callOne(row: PrefRow, tz: string, localDate: string): Promise<Out
     }
   }
 
+  /*
+   * And the browsers.
+   *
+   * `respectPreferences` stays on so `call_enabled` is honoured a second time
+   * (the row query already filters on it), but `respectQuietHours` is OFF and
+   * that is deliberate: the default quiet window is 22:00–07:00, and two of
+   * the four hours the UI offers — "First thing" at 6am and "The night
+   * before" at 7pm — sit inside it. Quiet hours exist to stop the CATEGORY
+   * alerts arriving at a bad moment. An hour the person chose for this
+   * message is not a bad moment, and letting the window veto it would silently
+   * delete the call for anyone who picked the earliest option.
+   */
+  let webSent = 0;
+  if (webCount > 0) {
+    try {
+      const web = await sendGoDaisyPushNotification({
+        userId: row.user_id,
+        notificationType: 'daily_call',
+        payload: { title, body, data: { type: 'daily_call', url: '/call' } },
+        respectPreferences: true,
+        respectQuietHours: false,
+      });
+      webSent = web.sent;
+      if (web.errors.length) failures.push(...web.errors);
+    } catch (err) {
+      failures.push(`web push: ${err instanceof Error ? err.message : 'unknown'}`);
+    }
+  }
+  sent += webSent;
+
   await supabase.from('godaisy_notification_log').insert({
     user_id: row.user_id,
     notification_type: 'daily_call',
     title,
     body,
-    data: { activityId: call.call.activityId, band: call.call.band, dayIndex },
+    data: {
+      activityId: call.call.activityId,
+      band: call.call.band,
+      dayIndex,
+      // The summary row for the whole call. sendGoDaisyPushNotification writes
+      // its own per-subscription delivery rows alongside this one.
+      devices: deviceCount,
+      webSubscriptions: webCount,
+      webSent,
+    },
     status: sent > 0 ? 'sent' : 'failed',
     error_message: sent > 0 ? null : failures.join('; ').slice(0, 500),
     sent_at: sent > 0 ? new Date().toISOString() : null,
