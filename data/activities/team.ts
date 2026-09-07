@@ -1,3 +1,46 @@
+/**
+ * Heat ceilings, audited against running.
+ *
+ * `running` vetoes above 25°C. Every other exertion activity in the library was
+ * written independently, and they had drifted apart by ten degrees:
+ *
+ *     cricket           PRIME at 35°C          rugby   PRIME at 34°C
+ *     gaelic_football   no upper limit at all  hurling no upper limit at all
+ *
+ * A ninety-minute full-field game is not less demanding than a run. The
+ * ceilings here are now pitched by exertion — contact and sustained-effort
+ * sports (rugby, gaelic, hurling, american football) at 28°C, stop-start ones
+ * (cricket, hockey, outdoor basketball) at 30°C, and the two where standing in
+ * the sun IS the activity (baseball, beach volleyball) at 32°C.
+ *
+ * WHAT THIS DOES NOT FIX, ONE. `fairConditions` cannot demote a day; only a
+ * `poorCondition` can, and it does so by veto. So a ceiling is simultaneously
+ * "the temperature this becomes unsafe" and "the last temperature this can
+ * still read Prime" — rugby reads Prime at 28°C and drops to 14 at 29°C. The
+ * cliff is the scorer's, not the data's: `activitySuitability.ts` has no
+ * per-criterion weighting, so there is no way to say "hot enough to matter,
+ * not hot enough to cancel". Same limitation recorded on dog_walking in
+ * `lifestyle.ts`.
+ *
+ * WHAT THIS DOES NOT FIX, TWO — and it is the larger one. A veto is not the
+ * only ceiling an activity has. `getSuggestionsByDay` disqualifies the good
+ * band when its WORST criterion falls below 0.35, and an out-of-range value
+ * decays as `0.5 * (1 - overflow/span)`, so the good band dies at
+ * `hi + 0.3 * span` whatever the veto says. That hidden ceiling is the binding
+ * one for seventeen activities:
+ *
+ *     foraging         veto >30, dies at 22.4       urban_exploring  >35, dies at 30.7
+ *     gaelic_football  veto >28, dies at 23.9       mushroom_hunting >25, dies at 21.0
+ *
+ * Measured on foraging: `good.mean` holds at 0.86-0.90 from 20°C to 25°C while
+ * the score drops 78 -> 39 at 23°C, purely on that floor. Fair cannot catch it,
+ * by design — fair lists MARGINAL values, so a pleasant day scores near zero
+ * against it (see the comment at the `worst()` floor). Closing it means either
+ * widening every good band to `(veto + 0.3*lo)/1.3`, or exempting comfort
+ * criteria from the floor the way `DECIDES_SAFETY` already exempts the rest.
+ * Neither is in this change.
+ */
+
 import type { ActivityType } from './types';
 
 export const teamSports: ActivityType[] = [
@@ -90,7 +133,7 @@ export const teamSports: ActivityType[] = [
       'precipitation>15',       // very heavy rain, waterlogged
       'windSpeed>15',           // gusty, dangerous
       'temperature<0',          // freezing
-      'temperature>30',         // oppressive heat
+      'temperature>28',         // oppressive heat
       'soilMoisture>50', // frozen/dusty or boggy turf
       'snowfallRateMmH>1',      // sustained snow makes footing unsafe
       'snowDepthCm>1',           // shallow accumulation already obscures lines
@@ -98,7 +141,7 @@ export const teamSports: ActivityType[] = [
     ],
 
     fairConditions: [
-      'temperature=0..5 or 25..30',     // cold warmups or heat-adapted sessions
+      'temperature=0..5 or 22..28',     // cold warmups or heat-adapted sessions
       'windSpeed=11..15',               // strong winds affect play
       'precipitation=5..15',            // wet but not yet unplayable
       'soilMoisture=45..50', // hard spots or muddy sections
@@ -107,7 +150,7 @@ export const teamSports: ActivityType[] = [
     ],
 
     goodConditions: [
-      'temperature=5..25',              // acceptable for most
+      'temperature=5..22',              // acceptable for most
       'windSpeed<11',
       'precipitation=0..5',
       'soilMoisture=15..45',             // resilient turf
@@ -138,7 +181,7 @@ export const teamSports: ActivityType[] = [
       'precipitation>2',      // steady rain cancels play
       'windSpeed>13',          // gusty, dangerous for fly balls
       'temperature<5',         // freezing & unpleasant
-      'temperature>35',        // oppressive heat
+      'temperature>32',        // oppressive heat
       'soilMoisture>50', // baked infield or waterlogged outfield
       'snowfallRateMmH>1',     // flurries quickly reduce visibility & grip
       'snowDepthCm>1',          // light settling snow already impacts bases
@@ -146,7 +189,7 @@ export const teamSports: ActivityType[] = [
     ],
 
     fairConditions: [
-      'temperature=5..10 or 30..35',   // chilly or hot, not ideal
+      'temperature=5..10 or 28..32',   // chilly or hot, not ideal
       'windSpeed=9..13',              // breezy affects ball flight
       'precipitation=0.5..2',           // showers or on/off rain
       'soilMoisture=45..50', // dusty basepaths or muddy turf
@@ -155,7 +198,7 @@ export const teamSports: ActivityType[] = [
     ],
 
     goodConditions: [
-      'temperature=10..30',            // wide range tolerated
+      'temperature=10..28',            // wide range tolerated
       'windSpeed<9',
       'precipitation=0..0.5',               // a passing shower at most
       'soilMoisture=15..45',           // playable field conditions
@@ -187,7 +230,7 @@ export const teamSports: ActivityType[] = [
     poorConditions: [
       'precipitation>15',           // heavy rain, waterlogged pitch
       'windSpeed>13',               // dangerously gusty
-      'temperature<2',              // freezing, hard ground
+      'temperature<2 or temperature>28', // freezing ground, or heat a full-field game cannot carry
       'soilMoisture>50', // baked or boggy surface
       'visibility<2',               // fog, unsafe
       'snowfallRateMmH>1',          // stick-and-ball play suffers in active snow
@@ -195,7 +238,7 @@ export const teamSports: ActivityType[] = [
       'gust>17'
     ],
     fairConditions: [
-      'temperature=2..7',           // chilly but playable
+      'temperature=2..7 or 20..28',           // chilly but playable
       'windSpeed=9..13',           // blustery, requires skill
       'precipitation=5..15',        // moderate rain, still playable in tradition
       'soilMoisture=45..50', // hard patches or soft sod
@@ -231,7 +274,7 @@ export const teamSports: ActivityType[] = [
     poorConditions: [
       'precipitation>15',           // heavy rain, waterlogged pitch
       'windSpeed>13',               // dangerously gusty
-      'temperature<2',              // freezing, hard ground
+      'temperature<2 or temperature>28', // freezing ground, or heat a full-field game cannot carry
       'soilMoisture>50', // baked or waterlogged pitch
       'visibility<2',               // fog, unsafe
       'snowfallRateMmH>1',          // active snowfall makes handling difficult
@@ -239,7 +282,7 @@ export const teamSports: ActivityType[] = [
       'gust>17'
     ],
     fairConditions: [
-      'temperature=2..7',           // chilly but playable
+      'temperature=2..7 or 20..28',           // chilly but playable
       'windSpeed=9..13',           // gusty, but games often proceed
       'precipitation=5..15',        // steady rain, less pleasant but traditional
       'soilMoisture=45..50', // hard or boggy sections
@@ -276,7 +319,7 @@ export const teamSports: ActivityType[] = [
       'precipitation>8',             // heavy rain makes surface unplayable
       'windSpeed>13',                // gusty, uncomfortable
       'temperature<2',               // freezing, unsafe
-      'temperature>32',              // oppressive heat
+      'temperature>30',              // oppressive heat
       'soilMoisture>50', // dusty or saturated pitch
       'visibility<2',                // fog or poor light
       'snowfallRateMmH>1',           // stick-and-ball precision fails in snow
@@ -284,7 +327,7 @@ export const teamSports: ActivityType[] = [
       'gust>17'
     ],
     fairConditions: [
-      'temperature=2..8 or 28..32',  // chilly or hot but tolerable
+      'temperature=2..8 or 26..30',  // chilly or hot but tolerable
       'windSpeed=9..13',            // breezy, not ideal
       'precipitation=3..8',          // showers likely but manageable
       'soilMoisture=45..50', // hard spots or soggy turf
@@ -292,7 +335,7 @@ export const teamSports: ActivityType[] = [
       'gust=13.6..17'
     ],
     goodConditions: [
-      'temperature=8..28',           // broad range tolerated
+      'temperature=8..26',           // broad range tolerated
       'windSpeed<9',
       'precipitation=0..3',
       'soilMoisture=15..45',         // consistent surface
@@ -372,7 +415,7 @@ export const teamSports: ActivityType[] = [
       'precipitation>1',      // slippery & unsafe
       'windSpeed>13',         // very disruptive to play (was 20)
       'temperature<5',        // too cold for comfort
-      'temperature>35',       // risk of heat stress
+      'temperature>30',       // risk of heat stress
       'visibility<2',         // fog/darkness
       'snowfallRateMmH>0.5',  // court surface turns slick fast
       'snowDepthCm>0.5',       // even light settling snow is unsafe underfoot
@@ -382,7 +425,7 @@ export const teamSports: ActivityType[] = [
     fairConditions: [
       'precipitation=0.1..1',
 
-      'temperature=5..12 or temperature=28..35',  // cool or hot but tolerable
+      'temperature=5..12 or temperature=26..30',  // cool or hot but tolerable
       'windSpeed=9..13',                         // breezy but still playable (expanded range)
       'visibility=2..5',                          // hazy or low light conditions
       'clouds=70..100',                            // overcast but dry (fixed from cloudCover)
@@ -390,7 +433,7 @@ export const teamSports: ActivityType[] = [
     ],
 
     goodConditions: [
-      'temperature=12..28',   // comfortable for most
+      'temperature=12..26',   // comfortable for most
       'windSpeed<9',         // less windy (increased from 18)
       'visibility>5',
       'precipitation=0..0.1',      // a trace at most
@@ -427,7 +470,7 @@ export const teamSports: ActivityType[] = [
     ],
 
     goodConditions: [
-      'temperature=18..30',         // solid beach weather
+      'temperature=18..28',         // solid beach weather
       'windSpeed<5.5',               // light breeze is fine
       'cloudCover=0..60',            // sun or mild overcast
       'precipitation=0',            // still dry enough
@@ -437,7 +480,7 @@ export const teamSports: ActivityType[] = [
     ],
 
     fairConditions: [
-      'temperature=12..18 or 30..35', // chilly or very hot, playable but not comfy
+      'temperature=12..18 or 28..32', // chilly or very hot, playable but not comfy
       'windSpeed=5.5..8',             // ball may drift, sand may blow
       'cloudCover=60..100',            // overcast or flat light
       'precipitation=0..5',           // light rain might dampen enthusiasm
@@ -447,7 +490,7 @@ export const teamSports: ActivityType[] = [
     ],
 
     poorConditions: [
-      'temperature<12 or temperature>35', // unsafe or deeply unpleasant
+      'temperature<12 or temperature>32', // unsafe or deeply unpleasant
       'windSpeed>8',                     // play becomes chaotic
       'precipitation>5',                  // wet sand & discomfort
       'visibility<2',                     // fog = no-go
@@ -471,7 +514,7 @@ export const teamSports: ActivityType[] = [
       'precipitation>1',       // light drizzle tolerated
       'windSpeed>8',          // too gusty
       'temperature<8',         // uncomfortably cold
-      'temperature>35',        // oppressive heat
+      'temperature>30',        // oppressive heat
       'soilMoisture>50', // baked wicket or waterlogged outfield
       'visibility<2',          // bad light
       'snowfallRateMmH>1',     // snow showers kill visibility
@@ -480,7 +523,7 @@ export const teamSports: ActivityType[] = [
     ],
 
     fairConditions: [
-      'temperature=8..12 or 30..35',      // brisk morning matches
+      'temperature=8..12 or 26..30',      // brisk morning matches
       'windSpeed=5.5..8',       // slightly gusty but playable
       'precipitation=0.5..1',   // occasional drizzle
       'soilMoisture=45..50', // dry wickets or soft patches
@@ -489,7 +532,7 @@ export const teamSports: ActivityType[] = [
     ],
 
     goodConditions: [
-      'temperature=12..30',     // broad comfortable range
+      'temperature=12..26',     // broad comfortable range
       'windSpeed<5.5',
       'precipitation=0..0.5',
       'soilMoisture=15..45',    // well-drained outfield
@@ -522,7 +565,7 @@ export const teamSports: ActivityType[] = [
       'precipitation>15',     // waterlogged pitch
       'windSpeed>15',         // dangerously gusty
       'temperature<0',        // freezing, icy
-      'temperature>35',       // oppressive heat
+      'temperature>28',       // oppressive heat
       'soilMoisture>50', // rock-hard or boggy pitch
       'visibility<2',         // fog, unsafe
       'snowfallRateMmH>1',    // sustained snow kills visibility & ball handling
@@ -531,7 +574,7 @@ export const teamSports: ActivityType[] = [
     ],
 
     fairConditions: [
-      'temperature=0..5 or 28..35',       // cold but common in winter leagues
+      'temperature=0..5 or 24..28',       // cold but common in winter leagues
       'windSpeed=11..15',       // gusty but playable
       'precipitation=5..15',    // moderate rain, slippery pitch
       'soilMoisture=45..50', // baked patches or soft turf
@@ -540,7 +583,7 @@ export const teamSports: ActivityType[] = [
     ],
 
     goodConditions: [
-      'temperature=5..28',      // tolerable range for most
+      'temperature=5..24',      // tolerable range for most
       'windSpeed<11',
       'precipitation=0..5',
       'soilMoisture=15..45',    // firm footing with give

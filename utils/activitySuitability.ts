@@ -488,13 +488,39 @@ export function scorePoorConditions(
     const key = extractWeatherKey(cond.split(OR_SPLIT_RE)[0].split(AND_SPLIT_RE)[0].trim());
     const raw = weather[key];
     const value = typeof raw === 'number' ? raw : undefined;
-    /* `>` fires from above and `<` from below. A range in a poor band is
-       ambiguous and is left for the numbers to decide. */
+    /*
+     * WHICH END FIRED — read from the value, not from the first operator.
+     *
+     * This was `/^[a-zA-Z_]+\s*(>=?|<=?)/`, anchored, so on a two-sided
+     * condition it always matched the LEFT one. Forty conditions in the
+     * library have that shape, and every one of them reported `low` whichever
+     * end actually fired:
+     *
+     *     temperature<-3 or temperature>24   at 32°C  ->  "Cold for it — 32 °C."
+     *     temperature<5 or temperature>32    at 35°C  ->  "Cold for it — 35 °C."
+     *     waveHeight<0.25 or waveHeight>2.5  at 3 m   ->  "not enough to work with"
+     *
+     * Football, golf, tennis, beach volleyball and surfing all carry it. The
+     * sentence is the most-read thing the scorer produces — it is the reason
+     * under the verdict and the body of the push — and it was saying the
+     * opposite of the truth on exactly the days a reader would check it.
+     *
+     * ONLY FOR TWO-SIDED CONDITIONS. `firedLow` compares the value against the
+     * smallest number in the condition, which answers "which end" correctly
+     * when there are two ends and misleadingly when there is one. These entries
+     * include conditions that did NOT fire, and for a single-sided `windSpeed>8`
+     * a value of 7.2 is below 8 precisely because it did not fire — reading
+     * that as `low` put "Very little wind — Force 4" on a wild swimming tile
+     * approaching its upper wind limit. A single-sided condition has exactly
+     * one end it can ever mean, and its operator names it.
+     */
     const op = /^[a-zA-Z_]+\s*(>=?|<=?)/.exec(cond.trim())?.[1];
-    const entry: CriterionScore = {
-      condition: cond, key, score, value,
-      direction: op?.startsWith('>') ? 'high' : op?.startsWith('<') ? 'low' : undefined,
-    };
+    const twoSided = /<=?/.test(cond) && />=?/.test(cond);
+    const direction: 'low' | 'high' | undefined =
+      twoSided && typeof value === 'number'
+        ? (firedLow(cond, value) ? 'low' : 'high')
+        : op?.startsWith('>') ? 'high' : op?.startsWith('<') ? 'low' : undefined;
+    const entry: CriterionScore = { condition: cond, key, score, value, direction };
     all.push(entry);
     if (score <= 0.7) continue;
     triggered.push(entry);

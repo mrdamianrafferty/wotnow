@@ -109,7 +109,7 @@ export const outdoorRecreation: ActivityType[] = [
     ],
     fairConditions: [
       'temperature=5..10',
-      'temperature=22..26',
+      'temperature=22..28',            // reaches the >28 veto; no degree sits outside every rung
       'windSpeed=11..15',
       'cloudCover=60..90',
       'visibility=2..5',
@@ -157,7 +157,7 @@ export const outdoorRecreation: ActivityType[] = [
     fairConditions: [
       'precipitation=0.1..1',
 
-      'temperature=5..10 or 25..30',
+      'temperature=5..15 or 25..30',   // good starts at 15; 11-14°C used to sit in no rung
       'windSpeed=5.5..8',
       'cloudCover=70..100',
       'humidity=70..85',
@@ -246,6 +246,7 @@ export const outdoorRecreation: ActivityType[] = [
     ],
     fairConditions: [
       'temperature=12..15',           // cooler, bees less active
+      'temperature=28..32',           // good tops at 28, veto is >32; fair bridges the two
       'windSpeed=5.5..8',             // light breeze, not ideal
       'cloudCover=60..80',             // duller conditions
       'humidity=75..85',              // borderline sticky
@@ -288,7 +289,7 @@ export const outdoorRecreation: ActivityType[] = [
       'gust>16'
     ],
     fairConditions: [
-      'temperature=6..12',
+      'temperature=5..12 or 20..30',   // meets the <5 veto below and the >30 veto above
       'windSpeed=8..12',
       'precipitation=2..10',            // light to moderate rain
       'cloudCover=30..100',
@@ -386,7 +387,7 @@ export const outdoorRecreation: ActivityType[] = [
 
     fairConditions: [
       'temperature=0..8',            // chilly but manageable
-      'temperature=26..32',          // a bit hot for walking, but fine in short bursts
+      'temperature=26..34',          // a bit hot for walking, but fine in short bursts; reaches the >34 veto
       'windSpeed=8..12',            // gusty but not extreme
       'precipitation=2..10',          // light to moderate rain, may affect enjoyment
       'visibility=2..5',             // limited visibility but not unsafe
@@ -489,7 +490,7 @@ export const outdoorRecreation: ActivityType[] = [
     fairConditions: [
       'precipitation=0.1..1',
 
-      'temperature=5..10 or 28..30', // brisk or slightly hot
+      'temperature=5..10 or 28..32', // brisk or slightly hot; reaches the >32 veto
       'windSpeed=9..13',            // breezy, may affect balance
       'cloudCover=80..100',           // overcast skies
       'visibility=2..5',              // misty or hazy
@@ -629,7 +630,7 @@ export const outdoorRecreation: ActivityType[] = [
     ],
     fairConditions: [
       'temperature=-5..5',            // cold but tolerable
-      'temperature=25..30',           // warm for brisk walking
+      'temperature=25..35',           // warm for brisk walking, up to the >35 veto
       'windSpeed=8..12',             // breezy but manageable
       'precipitation=0..3',          // light to moderate rain
       'visibility=2..5',               // reduced visibility but acceptable
@@ -665,9 +666,14 @@ export const outdoorRecreation: ActivityType[] = [
       'gust<11'],
   goodConditions: ['temperature=5..20','windSpeed<11','clouds=0..80','humidity<80','soilMoisture=15..45','visibility>2','precipitation=0..2',
       'gust<16'],
-  fairConditions: ['temperature=2..5 or 20..25','windSpeed=11..15','humidity<=90','precipitation=2..4','soilMoisture=45..50','visibility=1..2',
+  // Its fair and poor temperature rungs were byte-identical
+  // ('temperature=2..5 or 20..25'), and a BOUNDED range in the poor rung means
+  // the veto only fires INSIDE it: trail running was "not today" at 22°C and
+  // fine again at 35°C, poor at 3°C and fine at −10°C. Poor is one-sided now,
+  // and fair carries the shoulder. See the ceiling audit in `team.ts`.
+  fairConditions: ['temperature=2..5 or 20..26','windSpeed=11..15','humidity<=90','precipitation=2..4','soilMoisture=45..50','visibility=1..2',
       'gust=16..20'],
-  poorConditions: ['temperature=2..5 or 20..25','windSpeed>15','precipitation>4','humidity>90','soilMoisture>50','visibility<1','snowfallRateMmH>1','snowDepthCm>4',
+  poorConditions: ['temperature<2 or temperature>26','windSpeed>15','precipitation>4','humidity>90','soilMoisture>50','visibility<1','snowfallRateMmH>1','snowDepthCm>4',
       'gust>20'],
   },
   {

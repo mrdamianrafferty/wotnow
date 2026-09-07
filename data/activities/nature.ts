@@ -264,7 +264,7 @@ export const natureActivities: ActivityType[] = [
     ],
     fairConditions: [
       'temperature=0..8',             // cool but possible
-      'temperature=18..22',           // a bit warm, but shaded forests may be fine
+      'temperature=18..25',           // a bit warm, but shaded forests may be fine; reaches the >25 veto
       'windSpeed=8..12',             // breezy but manageable
       'precipitation=2..10',           // not ideal but damp enough
       'visibility=2..5',              // dim light may still be safe
