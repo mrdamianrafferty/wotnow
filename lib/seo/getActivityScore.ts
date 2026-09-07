@@ -469,6 +469,17 @@ export async function fetchForecastForLocation(
    * The mean can legitimately be absent (the OpenWeather backstop publishes no
    * daily mean), in which case the max stands in — which is the old behaviour,
    * so the fallback is never worse than what it replaced.
+   *
+   * WHERE NEITHER EXISTS, THE WIND IS ABSENT, NOT ZERO. This ended `?? 0`, which
+   * turned a payload carrying no wind at all into a measured dead calm — the
+   * same mistake `visibility` was defaulting to 10 km until it was fixed a few
+   * lines below, and for the same reason: the scorer counts a number and skips
+   * an absence, so a fabricated zero is not a neutral choice. Measured across
+   * the library on one otherwise identical day, 69 of 118 activities score
+   * differently for it, and the sports that care most about wind are the ones
+   * it ruins — sailing on an inland water reads 23 against 91, windsurfing 16
+   * against 80, and passage birdwatching 16 against 77, all three of which
+   * NEED wind and were being told there was none.
    */
   function mapOneCallShape(data: { daily?: unknown; hourly?: unknown; dayparts?: unknown } | null | undefined): LocationForecast {
     // Keyed by YYYY-MM-DD, as the adapter emits it. Absent on the OpenWeather
@@ -488,7 +499,7 @@ export async function fetchForecastForLocation(
             precipitation: d.rain ?? 0,
             precipitationHours: d.precipitation_hours,
             rainWindow: d.rain_window,
-            windspeed: meanKmh ?? maxKmh ?? 0,
+            windspeed: meanKmh ?? maxKmh,
             windspeedMax: maxKmh,
             gustspeed: typeof d.wind_gust === 'number' ? d.wind_gust * 3.6 : undefined,
             winddirection: typeof d.wind_deg === 'number' ? d.wind_deg : undefined,

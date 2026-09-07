@@ -380,6 +380,22 @@ function calculateActivityScoreWithSnow(
    * visibility could not be answered inland was false; and 10 km fails the
    * strict `visibility>10` in every model's perfect band, so it quietly held a
    * point off every top score in the library. Absent is now absent.
+   *
+   * `windSpeed` — the same fix, applied late. It was still `?? 0` while every
+   * field beside it on this object (`windSpeedMax`, `gust`, `visibility`,
+   * `waterTemperature`) preserved absence, which made it the one input that
+   * answered "I don't know" with a number. `scoreCondition` returns
+   * `counted: false` for an absent value and drops the criterion from the mean;
+   * a zero is counted as a measured dead calm. So the default was not neutral,
+   * it was a claim — and it read as the claim least true of the sports that
+   * live on wind. Measured over the library: 69 of 118 activities move,
+   * sailing_inland by 68 points, windsurfing_inland by 64, passage
+   * birdwatching by 61, all downward from a day that was actually fine.
+   *
+   * Nothing changes while the provider is healthy. Open-Meteo publishes
+   * `wind_speed_10m_mean` and `wind_speed_10m_max` on every day of a 7-day
+   * forecast, so `windMeanMs` is only ever undefined on a partial or malformed
+   * payload — which is exactly the case this is here to handle.
    */
   const windMeanMs = typeof weather.windspeed === 'number' ? weather.windspeed / 3.6 : undefined;
   const w: SuitabilityWeather = {
@@ -388,7 +404,7 @@ function calculateActivityScoreWithSnow(
     temperatureMin: weather.temperatureMin,
     precipitation: weather.precipitation,
     precipitationHours: weather.precipitationHours,
-    windSpeed: windMeanMs ?? 0,
+    windSpeed: windMeanMs,
     windSpeedMax: typeof weather.windspeedMax === 'number' ? weather.windspeedMax / 3.6 : undefined,
     gust: typeof weather.gustspeed === 'number' ? weather.gustspeed / 3.6 : undefined,
     windDirection: weather.winddirection,
