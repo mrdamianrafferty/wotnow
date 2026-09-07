@@ -31,6 +31,9 @@
  * after heavy rain it read 95 — prime — on ground picnicking scored 16 for.
  * You sit on the grass to meditate; the ground is a criterion.
  *
+ * `outdoor_reading` joins them for the same reason: as often a rug on the
+ * grass as a bench.
+ *
  * Yoga, a barbecue and an outdoor gig deliberately still do NOT read it. You
  * are standing, or shod, or on a mat, and damp grass does not reach you. That
  * is a judgement, it is the product owner's, and it is recorded here so it is
@@ -84,7 +87,7 @@ describe('the same rain, spread thinner, never scores better', () => {
 describe('sitting on the ground is a criterion; standing on it is not', () => {
   const WATERLOGGED = { soilMoisture: 55 };
 
-  it.each(['picnicking', 'outdoor_meditation'])(
+  it.each(['picnicking', 'outdoor_meditation', 'outdoor_reading'])(
     '%s declines a dry sunny day on a waterlogged field', (id) => {
       expect(score(id, WATERLOGGED)).toBeLessThan(BAND_FLOOR.marginal);
       // ...and is still happy on the same day with the ground dry.
