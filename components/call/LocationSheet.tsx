@@ -61,6 +61,10 @@ export function LocationSheet({ current, onClose }: { current: string; onClose: 
           name: r.name,
           lat: r.lat,
           lon: r.lon,
+          /* Kept, not just printed. It gates the activities that need reliable
+             natural ice — see canScoreHere in data/seoLocations. It was already
+             being fetched for the line under the name and then dropped. */
+          country: r.country,
           detail: [r.state, r.country].filter(Boolean).join(', '),
         })));
       } catch {
@@ -99,6 +103,7 @@ export function LocationSheet({ current, onClose }: { current: string; onClose: 
       async ({ coords }) => {
         const { latitude: lat, longitude: lon } = coords;
         let name = 'Here';
+        let country: string | undefined;
         try {
           // A coordinate is not a place name, and the kicker prints one. The
           // reverse lookup is best-effort: a fix without a name is still a fix,
@@ -108,11 +113,12 @@ export function LocationSheet({ current, onClose }: { current: string; onClose: 
           // reverse endpoint that would drift from the first.
           const res = await fetch(`/api/geocode?lat=${lat}&lon=${lon}`);
           if (res.ok) {
-            const j = (await res.json()) as Array<{ name?: string }>;
+            const j = (await res.json()) as Array<{ name?: string; country?: string }>;
             if (Array.isArray(j) && j[0]?.name) name = j[0].name;
+            if (Array.isArray(j) && j[0]?.country) country = j[0].country;
           }
         } catch { /* keep "Here" */ }
-        choose({ name, lat, lon });
+        choose({ name, lat, lon, country });
       },
       (err) => setGps(err.code === err.PERMISSION_DENIED ? 'denied' : 'failed'),
       { enableHighAccuracy: false, timeout: 10000, maximumAge: 5 * 60 * 1000 },
