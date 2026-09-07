@@ -708,7 +708,7 @@ export default function AccountPage() {
             <>
               <CallHourCard />
               {/* Same notice, same reason: the hour is chosen here too. */}
-              <CallDeliveryNotice />
+              <CallDeliveryNotice activities={selectedActivities} />
             </>
           )}
 
