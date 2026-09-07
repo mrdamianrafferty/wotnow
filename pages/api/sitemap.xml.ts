@@ -10,6 +10,8 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { createClient } from '@supabase/supabase-js';
 import { buildHreflangLinks, GROW_TRANSLATED_PATH_CODES, type GrowPathCode } from '../../lib/grow/i18n';
+import { getAllSeoPagePaths } from '../../data/seoLocations';
+import { activitiesWithHubs } from '../../lib/seo/hubs';
 import { translatedLanguagesFor, cacheKey } from '../../lib/grow/translatedLanguages';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -93,16 +95,32 @@ function getGoDaisyUrls(baseUrl: string): SitemapUrl[] {
     // NOTE: /settings and /login deliberately omitted (have noindex meta)
   ];
 
-  // Programmatic SEO pages — one per (activity, location) combo from the
-  // curated SEO dataset. See data/seoLocations.ts.
-  // We import lazily to avoid pulling activity data into the sitemap build
-  // for the other apps (Findr, Grow Daisy) which share this sitemap endpoint.
-  let programmaticUrls: SitemapUrl[] = [];
-  try {
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const { getAllSeoPagePaths } = require('../../data/seoLocations');
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const { activitiesWithHubs } = require('../[activity]/index');
+  /*
+   * Programmatic SEO pages — the hubs, then one per (activity, location).
+   *
+   * STATIC IMPORTS, AND NO `try`. Both used to be `require()` inside a
+   * try/catch whose comment read "Programmatic SEO data not present — fine,
+   * just skip these URLs". It was not fine.
+   *
+   * `activitiesWithHubs` moved from `pages/[activity]/index` to
+   * `lib/seo/hubs` and this require was not updated with it. The destructure
+   * yielded `undefined`, calling it threw, the catch logged a `console.warn`
+   * nobody reads, and the endpoint answered 200 with the nine static pages —
+   * having silently dropped 4,460 URLs. Google read it in that state and
+   * recorded "Discovered pages: 9".
+   *
+   * A sitemap that loses the site is not a degraded sitemap, it is a
+   * retraction. Static imports mean the same mistake is a build error rather
+   * than a runtime shrug, and `assertGoDaisyEstate` below refuses to serve a
+   * document that has lost its estate: a 500 makes Google keep the last good
+   * copy and come back, where a cheerful 200 tells it the pages are gone.
+   *
+   * The lazy require was there to keep activity data out of the other apps'
+   * sitemaps. It never did — `require` at call time still bundles the module
+   * into this serverless function, and Findr and Grow simply never reach this
+   * branch.
+   */
+  const programmaticUrls: SitemapUrl[] = (() => {
     const slugifyActivity = (id: string) => id.replace(/_/g, '-');
 
     /*
@@ -135,13 +153,38 @@ function getGoDaisyUrls(baseUrl: string): SitemapUrl[] {
       })
     );
 
-    programmaticUrls = [...hubUrls, ...leafUrls];
-  } catch (err) {
-    // Programmatic SEO data not present — fine, just skip these URLs.
-    console.warn('Programmatic SEO paths unavailable for sitemap:', err);
-  }
+    return [...hubUrls, ...leafUrls];
+  })();
 
   return [...staticUrls, ...programmaticUrls];
+}
+
+/**
+ * Refuse to serve a Go Daisy sitemap that has lost its estate.
+ *
+ * The failure this exists for answered 200 with nine static URLs while the
+ * programmatic half silently vanished, and Google recorded "Discovered pages:
+ * 9" against a site with four and a half thousand of them. Nothing alerted;
+ * the endpoint looked healthy from every angle except the only one that
+ * mattered.
+ *
+ * A floor, not an exact count — the estate changes with the dataset and this
+ * must not need editing every time a location is added. It is set well below
+ * the real figure and well above anything a partial build could plausibly
+ * produce, so it fires on catastrophe and never on ordinary drift.
+ *
+ * Throwing turns it into a 500. That is the point: a crawler keeps the last
+ * good copy and retries a 500, where it believes a 200.
+ */
+function assertGoDaisyEstate(urls: SitemapUrl[]): void {
+  const MINIMUM_EXPECTED = 500;
+  if (urls.length < MINIMUM_EXPECTED) {
+    throw new Error(
+      `Go Daisy sitemap has ${urls.length} URLs, expected at least ${MINIMUM_EXPECTED}. ` +
+      'Refusing to publish a sitemap that has lost the estate — serving 500 so the ' +
+      'previous document stands.',
+    );
+  }
 }
 
 /**
@@ -446,6 +489,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         break;
       default:
         urls = getGoDaisyUrls(baseUrl);
+        assertGoDaisyEstate(urls);
     }
 
     const xml = generateXml(urls);
