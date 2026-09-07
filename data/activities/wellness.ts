@@ -79,7 +79,7 @@ export const wellnessSports: ActivityType[] = [
       'precipitation>5',           // heavy rain makes it unpleasant
       'windSpeed>12',              // strong wind, especially risky for elderly
       'temperature<2',             // too cold, risk of stiffness or slips
-      'temperature>35',            // excessive heat, unsafe for older users
+      'temperature>30',            // was >35, with fair ending at 32: 32-35°C sat in no rung at all
       'visibility<2',              // foggy, unsafe
       'snowfallRateMmH>0.5',       // snow turns equipment slick
       'snowDepthCm>1',              // settled snow hides trip hazards
@@ -87,7 +87,7 @@ export const wellnessSports: ActivityType[] = [
     ],
 
     fairConditions: [
-      'temperature=2..8 or temperature=28..32', // cool or warm but manageable
+      'temperature=2..8 or temperature=26..30', // cool or warm but manageable
       'windSpeed=8..12',                       // breezy but not unsafe
       'cloudCover=80..100',                      // overcast or dull light
       'humidity=80..90',                        // muggy but tolerable
@@ -96,7 +96,7 @@ export const wellnessSports: ActivityType[] = [
     ],
 
     goodConditions: [
-      'temperature=8..28',         // broad acceptable range
+      'temperature=8..26',         // broad acceptable range
       'windSpeed<8',
       'cloudCover=0..80',
       'humidity<80',
@@ -137,7 +137,7 @@ export const wellnessSports: ActivityType[] = [
     ],
 
     fairConditions: [
-      'temperature=2..8 or 28..32',   // wider acceptable range
+      'temperature=2..12 or 28..32',  // good starts at 12; 9-11°C used to sit in no rung
       'windSpeed=8..12',             // moved threshold up
       'cloudCover=80..100',            // dull, but not oppressive
       'humidity=85..95',              // moved humidity threshold up - 84% should be fine
