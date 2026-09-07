@@ -42,7 +42,6 @@ import GetTheApp from '../../components/GetTheApp';
 import {
   SEO_LOCATIONS,
   getLocationsForActivity,
-  getAllSeoPagePaths,
   type SeoLocation,
 } from '../../data/seoLocations';
 import { groupByRegion } from '../../data/seoRegions';
@@ -54,35 +53,9 @@ import {
   prettyActivityName,
 } from '../../lib/seo/activityNames';
 import { bandFor, BAND_LABEL, type CallBand } from '../../lib/godaisy/call/bands';
+import { HUB_MIN_SPOTS, activitiesWithHubs } from '../../lib/seo/hubs';
 
 const Footer = dynamic(() => import('../../components/footer'), { ssr: false });
-
-// ============================================================================
-// What earns a hub
-// ============================================================================
-
-/**
- * The fewest spots a hub can rank and still be a page rather than a redirect.
- *
- * Two activities — hurling and Gaelic football — exist at exactly one location.
- * A page headed "Where is good for hurling today?" that answers with Dublin and
- * only Dublin is the thin content this whole exercise removed 3,854 pages to
- * get away from. They keep their spot page and are reached from `/activities`
- * directly.
- */
-export const HUB_MIN_SPOTS = 3;
-
-/** Every activity with enough spots to rank. Shared with `/activities`. */
-export function activitiesWithHubs(): string[] {
-  const counts = new Map<string, number>();
-  for (const { activity } of getAllSeoPagePaths()) {
-    counts.set(activity, (counts.get(activity) ?? 0) + 1);
-  }
-  return [...counts.entries()]
-    .filter(([, n]) => n >= HUB_MIN_SPOTS)
-    .map(([id]) => id)
-    .sort();
-}
 
 // ============================================================================
 // Page props

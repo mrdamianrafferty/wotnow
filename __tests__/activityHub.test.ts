@@ -24,7 +24,8 @@ jest.mock('../lib/seo/getActivityScore', () => ({
 
 jest.mock('next/dynamic', () => () => () => null);
 
-import { getStaticProps, activitiesWithHubs, HUB_MIN_SPOTS } from '../pages/[activity]/index';
+import { getStaticProps } from '../pages/[activity]/index';
+import { activitiesWithHubs, HUB_MIN_SPOTS } from '../lib/seo/hubs';
 import { getLocationsForActivity, getAllSeoPagePaths } from '../data/seoLocations';
 
 const ctx = (activity: string) =>

@@ -24,7 +24,7 @@
  */
 
 import type { GetServerSideProps, GetServerSidePropsContext } from 'next';
-import LandingPage from '../components/LandingPage';
+import LandingPage, { landingChips, type LandingPageProps } from '../components/LandingPage';
 import { setupFromCookieHeader } from '@/lib/godaisy/call/setup';
 import CallPage, {
   getServerSideProps as callServerSideProps,
@@ -32,7 +32,7 @@ import CallPage, {
 } from './call';
 
 type HomeProps =
-  | { showLanding: true }
+  | { showLanding: true; landing: LandingPageProps }
   | { showLanding: false; call: CallPageProps };
 
 export const getServerSideProps: GetServerSideProps = async (ctx: GetServerSidePropsContext) => {
@@ -102,7 +102,41 @@ export const getServerSideProps: GetServerSideProps = async (ctx: GetServerSideP
   res.setHeader('Cache-Control', 'private, no-cache, no-store, max-age=0, must-revalidate');
 
   if (showLanding) {
-    return { props: { showLanding: true as const } };
+    /*
+     * The chip row's data, read here rather than in the component.
+     *
+     * It is the estate's own index — which activities have a hub, and how many
+     * places each one ranks — and it is what finally links the front door to
+     * the 4,396 pages beneath it. Reading it in `getServerSideProps` keeps
+     * `data/seoLocations` out of the landing page's client bundle; the page
+     * receives a finished list of names and hrefs.
+     *
+     * Required, not lazily imported: this is the anonymous visitor's first
+     * request, and a dynamic import here would put a round trip in front of
+     * the only page Googlebot sees.
+     */
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const { activitiesWithHubs } = require('../lib/seo/hubs');
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const { getAllSeoPagePaths } = require('../data/seoLocations');
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const { activityTypes } = require('../data/activityTypes');
+
+    const counts = new Map<string, number>();
+    for (const { activity } of getAllSeoPagePaths() as Array<{ activity: string }>) {
+      counts.set(activity, (counts.get(activity) ?? 0) + 1);
+    }
+
+    return {
+      props: {
+        showLanding: true as const,
+        landing: {
+          chips: landingChips(activitiesWithHubs(), counts),
+          totalActivities: (activityTypes as unknown[]).length,
+          totalSpotPages: (getAllSeoPagePaths() as unknown[]).length,
+        },
+      },
+    };
   }
 
   /*
@@ -119,6 +153,6 @@ export const getServerSideProps: GetServerSideProps = async (ctx: GetServerSideP
 };
 
 export default function HomePage(props: HomeProps) {
-  if (props.showLanding) return <LandingPage />;
+  if (props.showLanding) return <LandingPage {...props.landing} />;
   return <CallPage {...props.call} />;
 }
