@@ -44,7 +44,16 @@ export type GoDaisyNotificationType =
   | 'extreme_weather'
   | 'activity_recommendation'
   | 'astronomy_alert'
-  | 'tide_alert';
+  | 'tide_alert'
+  /**
+   * The daily call — one message a day at an hour the person chose.
+   *
+   * Not one of the category alerts above, and it does not belong to them: it
+   * has its own switch (`call_enabled`) and its own schedule, and it is the
+   * thing the app is for. It is in this union so the web-push sender can carry
+   * it, which until now it could not — the cron reached native tokens only.
+   */
+  | 'daily_call';
 
 export interface PushNotificationPayload {
   title: string;
@@ -250,12 +259,17 @@ function checkNotificationTypeEnabled(
   type: GoDaisyNotificationType,
   prefs: Record<string, boolean | number | string | null>
 ): boolean {
+  // Record<GoDaisyNotificationType, string>, so adding a type to the union
+  // without answering "which preference governs it" is a compile error.
   const typeMap: Record<GoDaisyNotificationType, string> = {
     weather_alert: 'weather_alerts',
     extreme_weather: 'extreme_weather',
     activity_recommendation: 'activity_recommendations',
     astronomy_alert: 'astronomy_alerts',
     tide_alert: 'tide_alerts',
+    // The daily call's own switch, set from /account rather than the
+    // category toggles.
+    daily_call: 'call_enabled',
   };
 
   const prefKey = typeMap[type];
