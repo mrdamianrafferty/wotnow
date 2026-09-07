@@ -60,6 +60,46 @@ const activityIdToSlug = (id: string): string => id.replace(/_/g, '-');
 const slugToActivityId = (slug: string): string => slug.replace(/-/g, '_');
 
 // ============================================================================
+// Politeness towards the forecast API
+// ============================================================================
+
+/**
+ * `Promise.all` over a list, but only `limit` in flight at once.
+ *
+ * The related-locations block fetches a forecast per candidate place, and
+ * `Promise.all` issued all twelve simultaneously. One page doing that is fine;
+ * a crawler walking the estate is a dozen pages doing it at once, and
+ * Open-Meteo answers 429. That was reproduced on the preview deployment — five
+ * page requests in ten seconds rate-limited the whole deployment, and because
+ * the failure used to become a cached 404, the pages stayed broken after the
+ * limit lifted.
+ *
+ * Four at a time turns a twelve-wide burst into three short waves. The page is
+ * built behind ISR with `revalidate: 3600`, so a little more latency once an
+ * hour costs nothing that anyone experiences, and the pages come back.
+ */
+async function mapWithConcurrency<T, R>(
+  items: readonly T[],
+  limit: number,
+  fn: (item: T) => Promise<R>,
+): Promise<R[]> {
+  const results: R[] = new Array(items.length);
+  let next = 0;
+  const workers = Array.from({ length: Math.min(limit, items.length) }, async () => {
+    for (;;) {
+      const i = next++;
+      if (i >= items.length) return;
+      results[i] = await fn(items[i]);
+    }
+  });
+  await Promise.all(workers);
+  return results;
+}
+
+/** In flight at once when fetching other locations' forecasts. */
+const FORECAST_CONCURRENCY = 4;
+
+// ============================================================================
 // Page props
 // ============================================================================
 
@@ -138,13 +178,38 @@ export const getStaticProps: GetStaticProps<PageProps> = async (ctx) => {
    * forecast run, which is how one page can rank sailing at Force 3 beside dog
    * walking at Force 4 on the same water in the same hour.
    */
+  /*
+   * A FAILED FETCH IS NOT A MISSING PAGE.
+   *
+   * This returned `notFound` when the forecast came back empty, which turns a
+   * busy weather API into 404 — for a URL that exists, is in the sitemap, and
+   * was rendering a minute earlier. Measured on the preview deployment: a cold
+   * cache generated several pages at once, Open-Meteo answered 429, and every
+   * one of them became a cached 404. Worse, Vercel then served that 404 stale
+   * while revalidating behind it, so it survived the next request too.
+   *
+   * Google reads 404 as "gone" and 5xx as "come back". Throwing gets the second
+   * one: `getStaticProps` raising during on-demand generation returns 500 and
+   * caches nothing, and during background revalidation it leaves the previously
+   * generated page in place rather than replacing a working page with a 404.
+   * That is the behaviour we want in both cases, and it is Next's default —
+   * this code was overriding it.
+   *
+   * The three checks above stay `notFound`, because they are the real thing:
+   * that URL is not a page and no retry will change it.
+   */
   const forecast = await fetchForecastForLocation(location);
-  if (!forecast.length) return { notFound: true, revalidate: 60 };
+  if (!forecast.length) {
+    throw new Error(
+      `No forecast for ${location.slug} — refusing to cache a 404 for a page that exists.`
+    );
+  }
 
   const score = await getActivityScoreForLocation(activityId, location, undefined, forecast);
   if (!score) {
-    // Don't bake a broken page — let ISR retry on the next request
-    return { notFound: true, revalidate: 60 };
+    throw new Error(
+      `No score for ${activityId} at ${location.slug} — refusing to cache a 404 for a page that exists.`
+    );
   }
 
   /*
@@ -226,8 +291,10 @@ export const getStaticProps: GetStaticProps<PageProps> = async (ctx) => {
     : byDistance.slice(0, 5)
   ).map((c) => c.location);
 
-  const otherLocScores = await Promise.all(
-    otherLocations.map(async (l) => {
+  const otherLocScores = await mapWithConcurrency(
+    otherLocations,
+    FORECAST_CONCURRENCY,
+    async (l) => {
       const p = await getActivityScoreForLocation(activityId, l);
       /*
        * A place we could not price is not a place scoring nought.
@@ -247,7 +314,7 @@ export const getStaticProps: GetStaticProps<PageProps> = async (ctx) => {
         score: p.todayScore,
         url: `/${activitySlug}/${l.slug}`,
       };
-    })
+    },
   );
   const relatedLocations = otherLocScores
     .filter((l): l is NonNullable<typeof l> => l !== null)
