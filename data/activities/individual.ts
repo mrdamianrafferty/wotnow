@@ -1,5 +1,48 @@
 import type { ActivityType } from './types';
 
+/**
+ * ─── Held against the individual sports' own bodies, 2026-09 ─────────────
+ *
+ * The same pass the watersports, cycling and team ladders got. The result for
+ * this file is mostly a negative one, recorded so it is not searched for twice:
+ *
+ *   THE LTA SETS NO NUMBER. Affiliated clubs' policies say play goes ahead
+ *   "unless persistent heavy rain makes the courts unplayable", and note that
+ *   the surface decides — grass is discouraged when damp, astroturf is playable
+ *   almost as soon as the rain stops, clay wants to be slightly wet. There is
+ *   no millimetre figure to hold `tennis` against, and its ladder is left alone.
+ *
+ *   ARCHERY, PADEL AND PICKLEBALL likewise. Wind ruins the scoring rather than
+ *   the safety, and nobody publishes a limit. They share golf's old 18 mph /
+ *   25 mph ladder, which is a copy rather than a finding — a padel court has
+ *   glass walls and a pickleball is nearly weightless, so they cannot really
+ *   have the same answer. Left as they are, because retuning them on judgement
+ *   alone is exactly what this exercise exists to stop.
+ *
+ * ─── Golf had two numbers that its own rules contradict ──────────────────
+ *
+ *   COLD. It vetoed below 5 °C. A course closes for FROST, and frost forms when
+ *   the air is at 0 °C — or a little above it, because the ground is colder
+ *   than the air. That is the whole basis of the frost delay: ice crystals in
+ *   the leaf are punctured underfoot and a green carries the footprints for
+ *   months. Five degrees is not that; it is an ordinary British winter round.
+ *   Now below 2, with 2-10 °C reading as workable.
+ *
+ *   WIND. It vetoed above 8 m/s — 18 mph, a Force 5 — which is a normal
+ *   afternoon on a links and a stricter limit than this library puts on
+ *   HIKING. The R&A's actual test has no speed in it: under Rule 5.7b the
+ *   Committee should consider suspending "if several balls are moved by wind on
+ *   different parts of the course within a relatively short period of time",
+ *   which is a question about balls at rest on fast greens and happens around
+ *   30 mph. Now 13 m/s mean and 17 m/s gust — 29 and 38 mph — the same pair
+ *   `hiking` and `road_cycling` use.
+ *
+ * ⚠️ Golf's real suspensions are lightning (Rule 5.7b, immediate, one prolonged
+ * note) and an unplayable course. Neither is modelled: nothing here scores
+ * lightning, and standing water reaches the score only through `soilMoisture`.
+ * Do not read the wind and temperature numbers above as covering them.
+ */
+
 export const individualSports: ActivityType[] = [
   {
     id: 'golf',
@@ -27,22 +70,22 @@ export const individualSports: ActivityType[] = [
       'visibility>5',
       'gust<8.8'],
     fairConditions: [
-      'temperature=5..10 or 25..32',
-      'windSpeed=5.5..8',
+      'temperature=2..10 or 25..32',
+      'windSpeed=5.5..13',        // to 29 mph — links golf is played in a Force 6
       'precipitation=3..10',
       'cloudCover=90..100',
       'visibility=2..5',
       'soilMoisture=45..50',
-      'gust=8.8..11'],
+      'gust=8.8..17'],       // to 38 mph
     poorConditions: [
-      'temperature<5 or temperature>32',
-      'windSpeed>8',
+      'temperature<2 or temperature>32',   // frost, not cold: a course closes for frost, which forms at or just above 0 °C
+      'windSpeed>13',        // R&A 5.7b suspends when balls will not stay at rest, not at a Force 5
       'precipitation>10',
       'visibility<2',
       'soilMoisture>50',
       'snowfallRateMmH>1',
       'snowDepthCm>1',
-      'gust>11'],
+      'gust>17'],
 
     indoorAlternative: 'Practise your swing at the driving range or putting indoors with a mat'
   },
