@@ -166,6 +166,39 @@ export async function fetchOpenMeteoAsOneCallShape(lat: number, lon: number): Pr
    * three in the morning is not a reason to keep anybody indoors, and the
    * dayparts beside this carry their own count for finer questions than a day.
    */
+  /**
+   * Hours of freezing rain or freezing drizzle — WMO 56, 57, 66, 67.
+   *
+   * ─── Why this one is NOT daytime-only, where thunder is ──────────────────
+   *
+   * Thunder is dangerous while it is happening and harmless twenty minutes
+   * after it stops, so counting the hours somebody would be out in is the right
+   * question. ICE IS NOT LIKE THAT. Rain that froze at six in the morning is
+   * still on the pavement at ten, and the classic event is exactly that: it
+   * falls overnight and the danger is there for whoever leaves the house first.
+   *
+   * So this counts every hour from midnight up to the end of the daytime
+   * window. Evening ice is left out because it cannot have affected a morning
+   * that has already happened, and the dayparts beside this carry their own
+   * per-part counts for finer questions than a day.
+   */
+  const dayFreezingRainHours = (dateStr: string): number | undefined => {
+    const codes = hourly.weather_code as (number | null)[] | undefined;
+    if (!Array.isArray(codes)) return undefined;
+    let n = 0;
+    let seen = 0;
+    for (let h = 0; h < (hourly.time?.length ?? 0); h++) {
+      const t = hourly.time[h] as string;
+      if (!t.startsWith(dateStr)) continue;
+      if (Number(t.slice(11, 13)) >= 18) continue;
+      const c = codes[h];
+      if (typeof c !== 'number') continue;
+      seen++;
+      if (c === 56 || c === 57 || c === 66 || c === 67) n++;
+    }
+    return seen ? n : undefined;
+  };
+
   const daytimeThunderHours = (dateStr: string): number | undefined => {
     const codes = hourly.weather_code as (number | null)[] | undefined;
     if (!Array.isArray(codes)) return undefined;
@@ -315,6 +348,7 @@ export async function fetchOpenMeteoAsOneCallShape(lat: number, lon: number): Pr
       /* Not an OpenWeather field. Absent when the backstop provider is used,
          which the scorer treats as "unknown" rather than as "no thunder". */
       thunder_hours: daytimeThunderHours(dateStr),
+      freezing_rain_hours: dayFreezingRainHours(dateStr),
       /* Metres, matching `current.visibility` and what the scorer expects
          before it converts to kilometres. */
       visibility: daytimeVisibility(dateStr),

@@ -74,6 +74,8 @@ const DANGEROUS_KEYS: ReadonlySet<string> = new Set([
      suspends play for it immediately and waits 30 minutes after the last
      thunder; none of them treats it as a question of comfort. */
   'thunderstormHours',
+  /* And freezing rain, which the Met Office issues ice warnings for. */
+  'freezingRainHours',
 ]);
 
 export function bandFor(score: number, vetoed?: boolean, hazardKey?: string): CallBand {

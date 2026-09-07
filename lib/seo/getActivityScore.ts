@@ -308,6 +308,7 @@ function partWeather(day: WeatherData, p: DaypartAggregate): WeatherData {
     ...set('precipitation', p.precipitation),
     ...set('precipitationHours', p.precipitationHours),
     ...set('thunderstormHours', p.thunderHours),
+    ...set('freezingRainHours', p.freezingRainHours),
     ...set('windspeed', p.windspeed),
     ...set('windspeedMax', p.windspeedMax),
     ...set('gustspeed', p.gustspeed),
@@ -453,7 +454,9 @@ export async function fetchForecastForLocation(
     wind_speed?: number; wind_gust?: number; wind_speed_mean?: number; wind_deg?: number;
     precipitation_hours?: number;
     /** Daytime hours with thunder in them. Absent when the source has no hourly codes. */
-    thunder_hours?: number; visibility?: number; soil_moisture?: number;
+    thunder_hours?: number;
+    /** Hours to 18:00 with freezing rain or drizzle. Ice outlasts the shower. */
+    freezing_rain_hours?: number; visibility?: number; soil_moisture?: number;
     rain_window?: 'overnight' | 'morning' | 'afternoon' | 'evening' | 'spread';
     clouds?: number; humidity?: number;
   };
@@ -502,6 +505,7 @@ export async function fetchForecastForLocation(
             precipitation: d.rain ?? 0,
             precipitationHours: d.precipitation_hours,
             thunderstormHours: d.thunder_hours,
+            freezingRainHours: d.freezing_rain_hours,
             rainWindow: d.rain_window,
             windspeed: meanKmh ?? maxKmh,
             windspeedMax: maxKmh,

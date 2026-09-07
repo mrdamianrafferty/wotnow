@@ -20,6 +20,8 @@ export interface WeatherData {
   precipitationHours?: number;
   /** Daytime hours carrying WMO 95/96/99. Absent means unknown, never zero. */
   thunderstormHours?: number;
+  /** Hours to 18:00 carrying WMO 56/57/66/67. Absent means unknown, never zero. */
+  freezingRainHours?: number;
 
   /** Mean wind over the period, m/s. What a day feels like. */
   windSpeed?: number;

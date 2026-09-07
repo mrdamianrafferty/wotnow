@@ -57,6 +57,16 @@ export interface DaypartAggregate {
    * it. What a reader needs is whether there was thunder in these hours at all.
    */
   thunderHours?: number;
+  /**
+   * Hours of this part with freezing rain or freezing drizzle — WMO 56, 57,
+   * 66, 67. Counted, for the same reason `thunderHours` is.
+   *
+   * NOT rime fog (48). That deposits ice too, by a different mechanism and far
+   * more slowly, and the fog half of it is already visible to the scorer as
+   * `visibility`. Lumping the two under one name would make the sentence lie
+   * about which weather was outside.
+   */
+  freezingRainHours?: number;
 }
 
 /** The three parts a call can name. */
@@ -189,6 +199,11 @@ export function aggregateDayparts(
            95 is a thunderstorm, so a single `>= 95` is the whole test. */
         thunderHours: bag.weatherCode
           ? bag.weatherCode.filter((c) => c >= 95).length
+          : undefined,
+        /* 56 and 57 freezing drizzle, 66 and 67 freezing rain. A short explicit
+           set rather than a range: 58-65 in between are ordinary rain. */
+        freezingRainHours: bag.weatherCode
+          ? bag.weatherCode.filter((c) => c === 56 || c === 57 || c === 66 || c === 67).length
           : undefined,
       };
     }
