@@ -18,6 +18,13 @@
  *   Add to Home Screen is not a nicety, it is the whole capability. Without
  *   it the browser cannot receive a push at all, whatever permission says.
  *
+ *   WITH NOTHING OUTDOORS CHOSEN. The sender requires the called activity to
+ *   be weather-sensitive, because a notification claims the weather made today
+ *   worth telling you about and an activity the weather has no opinion on
+ *   cannot make that claim. Thirty-seven of the library's activities are
+ *   indoor, so a setup of yoga, reading and the cinema is an ordinary thing to
+ *   arrive at — and it receives nothing, in any weather, for ever.
+ *
  * ─── Why it is not `InstallPrompt` ───────────────────────────────────────
  *
  * `components/InstallPrompt.tsx` already contained an iOS walkthrough and was
@@ -38,11 +45,22 @@
  *
  * ─── Restraint ───────────────────────────────────────────────────────────
  *
- * Only ever ONE line, and only when something is actually missing. Signing in
- * outranks installing: an install with no account still delivers nothing, so
- * there is no point explaining Add to Home Screen to someone who has the
- * other gate closed. Silent when neither applies, which is the case for
- * everyone already in the native app.
+ * Only ever ONE line, and only when something is actually missing.
+ *
+ * THE ORDER IS BY WHAT THE LINE WOULD PROMISE. Signing in outranks
+ * installing: an install with no account still delivers nothing, so there is
+ * no point explaining Add to Home Screen to someone who has the other gate
+ * closed.
+ *
+ * The outdoor gate outranks both, and for a stronger reason than priority.
+ * Each of the other two lines ends by promising the call arrives at the hour
+ * you picked. For somebody with nothing outdoors chosen that sentence is
+ * false — signing in does not make it true, and nor does installing — so
+ * showing either of them would be telling them something untrue about their
+ * own setup. It is checked first, and before the auth and platform guards,
+ * because unlike the other two it depends on neither: it is equally true
+ * signed out, and equally true inside the native app, which is the one place
+ * this component is otherwise silent.
  *
  * @module components/call/CallDeliveryNotice
  */
@@ -51,8 +69,22 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useInstallPrompt } from '@/hooks/useInstallPrompt';
 import { useAuth } from '@/context/AuthContext';
+import { isOutdoor } from '@/utils/activityHelpers';
 
-export function CallDeliveryNotice() {
+interface CallDeliveryNoticeProps {
+  /**
+   * The activity ids currently chosen, live rather than re-read.
+   *
+   * Passed in because both call sites already hold this in state and can
+   * change it on the page the notice is rendered on — `/start` while the
+   * chooser is open, `/account` where an interest can be removed. Reading the
+   * cookie here instead would show an answer that was true when the component
+   * mounted.
+   */
+  activities: readonly string[];
+}
+
+export function CallDeliveryNotice({ activities }: CallDeliveryNoticeProps) {
   const { user, loading } = useAuth();
   const { platform } = useInstallPrompt();
 
@@ -77,6 +109,28 @@ export function CallDeliveryNotice() {
     })();
     return () => { cancelled = true; };
   }, []);
+
+  /*
+   * Nothing outdoors chosen.
+   *
+   * `isOutdoor` is the same `weatherSensitive` flag the sender gates on, read
+   * through the helper that already exists, so the two cannot drift into
+   * disagreeing about what indoor means. It answers true for an id it does not
+   * recognise, which is the right way round: an unknown activity leaves this
+   * silent rather than telling somebody their setup is broken when it is the
+   * library that is out of date.
+   *
+   * The length check is not redundant. An empty list is a different state —
+   * somebody who has chosen nothing at all — and `[].some()` is false, so
+   * without it this would answer a question nobody had asked yet.
+   */
+  if (activities.length > 0 && !activities.some(isOutdoor)) {
+    return (
+      <div className="gd-note">
+        Pick an outdoor activity and we&rsquo;ll tell you when you are good to go.
+      </div>
+    );
+  }
 
   // Don't flash "sign in to get this" at someone whose session is still loading.
   if (loading || isNative) return null;

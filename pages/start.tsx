@@ -321,7 +321,7 @@ export default function StartPage() {
                   * only place that says what still has to be true for it to
                   * turn up. Renders nothing when nothing is missing.
                   */}
-                {hour !== undefined && <CallDeliveryNotice />}
+                {hour !== undefined && <CallDeliveryNotice activities={sports} />}
               </>
             )}
           </div>
