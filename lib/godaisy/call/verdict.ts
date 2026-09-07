@@ -366,10 +366,28 @@ function goodClause(w: WeatherData, activityId: string): string | null {
       ? `${swell.toFixed(1)} m at ${Math.round(w.swellPeriod)} seconds`
       : `${swell.toFixed(1)} m of swell`;
   }
-  // `dry` is false both for a wet day and for one with no precipitation at all,
-  // and "mostly dry" is a claim rather than a shrug — so the missing case falls
-  // back to the temperature alone.
-  if (t) return rain === undefined ? t : `${dry ? 'dry' : 'mostly dry'}, ${t}`;
+  /*
+   * `dry` is false both for a wet day and for one with no precipitation at all,
+   * and "mostly dry" is a claim rather than a shrug — so the missing case falls
+   * back to the temperature alone.
+   *
+   * AND SO DOES A GENUINELY WET ONE, which this used to get wrong. `dry` is a
+   * single boolean with nothing above it, so 10 mm of rain took the same branch
+   * as 0.3 mm and the day was called "mostly dry". Caught on a real card:
+   * Croyde, 8 September, "Tuesday is a day for a café. Mostly dry, 16°C." —
+   * printed directly above its own RAIN tile reading 10.6 mm.
+   *
+   * `bindingClause` already had the guard, returning "10.6 mm of rain" once the
+   * number reaches 1; this function never got it. A card that contradicts the
+   * figure beside it costs more than a card that says less, so above the same
+   * threshold the dryness half is simply dropped — the temperature alone is
+   * still true, and the tile carries the rain.
+   */
+  const CLAIMABLY_DRY_MM = 1;
+  if (t) {
+    if (rain === undefined || rain >= CLAIMABLY_DRY_MM) return t;
+    return `${dry ? 'dry' : 'mostly dry'}, ${t}`;
+  }
   return null;
 }
 
