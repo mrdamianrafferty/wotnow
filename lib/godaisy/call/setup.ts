@@ -34,6 +34,16 @@ export interface SetupPlace {
   name: string;
   lat: number;
   lon: number;
+  /**
+   * The country, as `/api/geocode` spells it — "Canada", "United Kingdom".
+   *
+   * Optional, and absent on every cookie written before September 2026. It
+   * gates the activities that need reliable natural ice, and an unknown country
+   * fails that gate: three rare activities disappear until the next time
+   * somebody picks a place, which is the right price. Not worth a version bump
+   * on its own — an old cookie is READ correctly, it just knows less.
+   */
+  country?: string;
 }
 
 export interface CallSetup {

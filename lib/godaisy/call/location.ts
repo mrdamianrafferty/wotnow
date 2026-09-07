@@ -19,6 +19,7 @@
 
 import type { SeoLocation } from '@/data/seoLocations';
 import type { CallSetup } from './setup';
+import { ACTIVITIES_NEEDING_RELIABLE_ICE, COUNTRIES_WITH_RELIABLE_ICE } from '@/data/seoLocations';
 
 /** How a chosen place is named in a URL. Parsed back by `coordsFromSlug`. */
 export function setupSlug(lat: number, lon: number): string {
@@ -43,17 +44,21 @@ interface SyntheticInput {
   lat: number;
   lon: number;
   name: string;
+  country?: string;
   /** Their sports, not a curated list — that is the point. */
   activities: string[];
   coastal?: boolean;
 }
 
-function synthesise({ lat, lon, name, activities, coastal }: SyntheticInput): SeoLocation {
+function synthesise({ lat, lon, name, country, activities, coastal }: SyntheticInput): SeoLocation {
   return {
     slug: setupSlug(lat, lon),
     name,
     region: '',
-    country: '',
+    /* Empty when the setup predates the country being captured. `canScoreHere`
+       reads it as "not somewhere with reliable ice", which is the safe way to
+       be ignorant. */
+    country: country ?? '',
     lat,
     lon,
     // A place they named, in a timezone we have not asked for. The forecast is
@@ -61,7 +66,24 @@ function synthesise({ lat, lon, name, activities, coastal }: SyntheticInput): Se
     // ever a label — but it is a real limitation, and the reason a call a long
     // way east or west can put "morning" an hour out.
     timezone: 'UTC',
-    activities,
+    /**
+     * Their sports, less the ones this country cannot safely offer.
+     *
+     * ONLY the ice rule is applied here, not the whole of `canScoreHere`. That
+     * function also withholds the beach activities from a location with no
+     * facing, and a synthesised setup never has one — running it whole would
+     * silently drop surfing and sea swimming from every coastal setup, which is
+     * the opposite of what `coastal` below exists to allow.
+     *
+     * An unknown country withholds the ice activities, which is the safe way to
+     * be ignorant: the cost is three rare activities until the next time
+     * somebody picks a place, and the alternative is telling a stranger in
+     * Cornwall that today is perfect for standing on a lake.
+     */
+    activities: activities.filter(
+      (a) => !ACTIVITIES_NEEDING_RELIABLE_ICE.has(a)
+        || COUNTRIES_WITH_RELIABLE_ICE.has(country ?? ''),
+    ),
     // Water sports need somewhere to do them. A coastal spot marks the setup as
     // coastal without claiming to know which way the beach faces — a wrong
     // facing is worse than none, because the wind-relative criteria would score
@@ -77,6 +99,7 @@ export function locationFromSetup(setup: CallSetup): SeoLocation {
     lat: setup.place.lat,
     lon: setup.place.lon,
     name: setup.place.name,
+    country: setup.place.country,
     activities: setup.sports,
     ...(setup.coastal ? { coastal: true } : {}),
   });

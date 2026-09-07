@@ -629,9 +629,72 @@ const SEO_LOCATIONS_RAW: SeoLocation[] = [
  * the location and the pages come back on their own.
  */
 function canScoreHere(location: SeoLocation, activityId: string): boolean {
+  if (ACTIVITIES_NEEDING_RELIABLE_ICE.has(activityId)) {
+    return COUNTRIES_WITH_RELIABLE_ICE.has(location.country);
+  }
   if (!ACTIVITIES_NEEDING_BEACH.has(activityId)) return true;
   return location.beachFacingDeg !== undefined && location.beachFacingDeg !== null;
 }
+
+/**
+ * Standing on frozen water, which no forecast we have can tell you is safe.
+ *
+ * These three are scored on TODAY'S AIR TEMPERATURE and nothing else. Ice
+ * skating's perfect band is -5..-1 °C and ice fishing vetoes above zero — both
+ * plainly written for natural ice, because a refrigerated rink does not care
+ * what the air is doing. But ice thickness is a function of how many
+ * consecutive freezing days there have been, not of today: a -3 °C morning
+ * after a mild week has an inch of ice on it and will drown you, and the model
+ * calls it perfect.
+ *
+ * There is no fix inside the weather. Thickness needs a history the forecast
+ * does not carry and an observation nobody publishes, so the honest options
+ * were to model something we cannot measure or to stop offering the activity
+ * where it is not a real activity.
+ *
+ * ─── Why country, and not latitude ───────────────────────────────────────
+ *
+ * Latitude is the obvious axis and it is the wrong one. Maritime Britain and
+ * Ireland sit at 51-58°N and have no reliable natural ice at all; continental
+ * Europe and Canada have it a long way further south. The Gulf Stream is the
+ * whole story and it does not follow a parallel, so the coarse political
+ * boundary is genuinely the better proxy here.
+ *
+ * The list is an ALLOW-list and deliberately conservative: somewhere missing
+ * costs a rare page, somewhere wrongly present costs somebody walking onto
+ * thin water. It is coarse at the edges of the big countries — the United
+ * States contains Florida — and the right refinement when someone wants one is
+ * a region test inside these, not a longer list.
+ *
+ * An UNKNOWN country fails the test, which is why this reads as a set
+ * membership rather than as an exclusion list.
+ */
+export const ACTIVITIES_NEEDING_RELIABLE_ICE: ReadonlySet<string> = new Set([
+  'ice_skating',
+  'ice_fishing',
+  /* The outdoor one. `ice_hockey_indoor` is a different activity on a rink and
+     is weather-insensitive, so it never reaches here. */
+  'ice_hockey',
+]);
+
+/** Country names as `SeoLocation.country` and `/api/geocode` both spell them. */
+export const COUNTRIES_WITH_RELIABLE_ICE: ReadonlySet<string> = new Set([
+  'Canada',
+  'Finland',
+  'Sweden',
+  'Norway',
+  'Iceland',
+  'Estonia',
+  'Latvia',
+  'Lithuania',
+  'Russia',
+  'Belarus',
+  'United States',
+  /* Alpine, where the lakes freeze at altitude even though the country as a
+     whole is milder than the Nordics. */
+  'Switzerland',
+  'Austria',
+]);
 
 /**
  * The activities whose models are decided by measurements only a beach-facing

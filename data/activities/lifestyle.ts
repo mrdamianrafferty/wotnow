@@ -113,11 +113,27 @@ export const lifestyleActivities: ActivityType[] = [
      * per-criterion weighting to hang it on. That is an engine change touching
      * every model in the library, not a number in this file.
      */
+    /* The cold veto moved from -3 °C to 0 in September 2026, and it is about
+       the GROUND rather than the dog.
+       
+       -3 was chosen for the animal: a fur coat handles a frost, and dogs get
+       walked in one every winter morning. That is still true. What it missed is
+       that below zero the pavement is the hazard — and specifically that this
+       was the one everyday activity still reading 82, "a good day", on the
+       morning after freezing rain. Every other model with a comparable veto had
+       already stopped by then; measured across 81 weather-sensitive activities
+       at -1 °C, dog walking was the highest-scoring thing anybody would
+       actually go and do.
+       
+       Freezing rain now vetoes on its own (see freezingRainHours), but only on
+       the day it falls: ice laid down on Tuesday is still there on a clear,
+       dry, sub-zero Wednesday and nothing models that. Stopping at zero closes
+       that hole for the activity it mattered most for. */
     poorConditions: [
       'precipitation>5',               // heavy rain
       'windSpeed>13',                  // Force 7 — leads, litter and no conversation
       'gust>18',
-      'temperature<-3 or temperature>24', // frozen paws, or heatstroke weather
+      'temperature<0 or temperature>24',  // ice underfoot, or heatstroke weather
       'soilMoisture>50', // icy pavements or boggy fields
       'snowfallRateMmH>1',             // active snowfall reduces visibility & paw grip
       'snowDepthCm>4'                  // deeper snow becomes exhausting & icy
@@ -125,7 +141,7 @@ export const lifestyleActivities: ActivityType[] = [
 
     // Chilly, warm, or damp — not ideal, but you go anyway
     fairConditions: [
-      'temperature=-3..1 or 20..24',   // brief walks, early or late, shade and water
+      'temperature=0..1 or 20..24',    // brief walks, early or late, shade and water
       'windSpeed=9..13',               // Force 5–6, blustery on an open bank
       'gust=13..18',
       'precipitation=1..5',            // drizzle or showery
