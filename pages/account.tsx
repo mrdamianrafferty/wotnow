@@ -706,7 +706,7 @@ export default function AccountPage() {
             */}
           {mounted && (
             <>
-              <CallHourCard isSignedIn={isSignedIn} />
+              <CallHourCard />
               {/* Same notice, same reason: the hour is chosen here too. */}
               <CallDeliveryNotice />
             </>
