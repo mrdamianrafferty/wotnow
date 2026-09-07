@@ -49,6 +49,14 @@ export interface DaypartAggregate {
   /** m³/m³, as published. Callers convert to percent where the criteria are in percent. */
   soilMoisture?: number;
   cloudCover?: number;
+  /**
+   * Hours of this part with thunder in them — WMO weather code 95, 96 or 99.
+   *
+   * Counted rather than averaged, because a mean weather code is meaningless:
+   * codes are a nominal scale, and (95 + 0) / 2 is a number with no weather in
+   * it. What a reader needs is whether there was thunder in these hours at all.
+   */
+  thunderHours?: number;
 }
 
 /** The three parts a call can name. */
@@ -101,6 +109,7 @@ const DEFAULT_FIELDS = {
   uvIndex: 'uv_index',
   soilMoisture: 'soil_moisture_0_to_7cm',
   cloudCover: 'cloud_cover',
+  weatherCode: 'weather_code',
 } as const;
 
 const mean = (a?: number[]) => (a?.length ? a.reduce((x, y) => x + y, 0) / a.length : undefined);
@@ -176,6 +185,11 @@ export function aggregateDayparts(
         uvIndex: max(bag.uvIndex),
         soilMoisture: mean(bag.soilMoisture),
         cloudCover: mean(bag.cloudCover),
+        /* WMO 95 thunderstorm, 96 and 99 thunderstorm with hail. Nothing below
+           95 is a thunderstorm, so a single `>= 95` is the whole test. */
+        thunderHours: bag.weatherCode
+          ? bag.weatherCode.filter((c) => c >= 95).length
+          : undefined,
       };
     }
   }

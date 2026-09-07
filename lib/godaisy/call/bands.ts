@@ -70,6 +70,10 @@ export const GOOD_BANDS: ReadonlySet<CallBand> = new Set<CallBand>(['prime', 'wo
  */
 const DANGEROUS_KEYS: ReadonlySet<string> = new Set([
   'gust', 'waveHeight', 'waterTemperature', 'snowfallRateMmH', 'visibility',
+  /* Lightning is the clearest member of this set. Every sport's governing body
+     suspends play for it immediately and waits 30 minutes after the last
+     thunder; none of them treats it as a question of comfort. */
+  'thunderstormHours',
 ]);
 
 export function bandFor(score: number, vetoed?: boolean, hazardKey?: string): CallBand {
