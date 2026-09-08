@@ -1,3 +1,4 @@
+import { isDangerous } from '@/utils/criterionRoles';
 /**
  * The five bands The Call speaks in.
  *
@@ -68,20 +69,20 @@ export const GOOD_BANDS: ReadonlySet<CallBand> = new Set<CallBand>(['prime', 'wo
  * Everything else that vetoes is Not today: the day is off, and nobody is in
  * danger.
  */
-const DANGEROUS_KEYS: ReadonlySet<string> = new Set([
-  'gust', 'waveHeight', 'waterTemperature', 'snowfallRateMmH', 'visibility',
-  /* Lightning is the clearest member of this set. Every sport's governing body
-     suspends play for it immediately and waits 30 minutes after the last
-     thunder; none of them treats it as a question of comfort. */
-  'thunderstormHours',
-  /* And freezing rain, which the Met Office issues ice warnings for. */
-  'freezingRainHours',
-]);
+/* Was a literal set here, kept in step with three others by hand. It is now
+   derived: only a SAFETY criterion earns the red band. See utils/criterionRoles. */
 
-export function bandFor(score: number, vetoed?: boolean, hazardKey?: string): CallBand {
+export function bandFor(
+  score: number,
+  vetoed?: boolean,
+  hazardKey?: string,
+  /* `gust` is only dangerous afloat. Defaults to true so a caller that has not
+     said gets the stricter reading. */
+  onWater = true,
+): CallBand {
   // A hazard that fired short-circuits the score, but only a DANGEROUS one earns
   // the red band. The rest are simply a no.
-  if (vetoed) return hazardKey && DANGEROUS_KEYS.has(hazardKey) ? 'unsafe' : 'notToday';
+  if (vetoed) return hazardKey && isDangerous(hazardKey, { onWater }) ? 'unsafe' : 'notToday';
   if (score >= BAND_FLOOR.prime) return 'prime';
   if (score >= BAND_FLOOR.worthALook) return 'worthALook';
   if (score >= BAND_FLOOR.marginal) return 'marginal';

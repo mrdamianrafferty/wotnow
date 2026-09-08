@@ -6,6 +6,7 @@ import type { SnowRecommendation } from './snowRecommendations';
 import { getWindActivityRecommendation } from './windRecommendations';
 import type { WindRecommendation } from './windRecommendations';
 import { assessSoilCondition, isMudSensitive } from './soilMoistureUtils';
+import { isHazard } from './criterionRoles';
 
 // --- Types ---
 export interface WeatherData {
@@ -441,65 +442,10 @@ export function calculateConditionMatchScore(
  * useful thing on this object. When a day is vetoed, the one condition in that
  * list IS the answer to "why", and it is the sentence the reader wants.
  */
-/**
- * Quantities where having too LITTLE is a disappointment, not a danger.
- *
- * A poor condition reads as a hazard by default, which is right for almost all
- * of them — but `windSpeed<1.5` on a dinghy, or `waveHeight<0.25` on a surfboard,
- * says "there is nothing to work with", not "you may not come back". Before this
- * distinction existed, a flat calm on a sailing tile produced the sentence "Not
- * safe for sailing today", which is both false and the kind of false that
- * teaches a reader to ignore the real warnings.
- */
-const SHORTFALL_NOT_HAZARD = new Set([
-  'windSpeed', 'gust', 'waveHeight', 'swellHeight', 'swellPeriod', 'snowDepthCm',
-]);
-
-/**
- * Quantities where NO value is dangerous, in either direction.
- *
- * Ground condition is the whole set. Dry ground is the best a walker can hope
- * for — several models carried `soilMoisture<10` as a poor condition, inherited
- * from an agricultural reading where dry soil is a real problem, and left as a
- * hazard it vetoed a perfect summer day. And a waterlogged path is unpleasant,
- * not unsafe: at the wettest hour of the measured year it dropped hiking from
- * 81 to 14 on a two-point change, which is a cliff where the ground itself has
- * a gradient.
- *
- * These still count towards the penalty, so a bog still costs a day most of its
- * score. They simply cannot short-circuit the scoring the way a gale can.
- */
-const NEVER_A_HAZARD = new Set(['soilMoisture']);
-
-/**
- * On the water a gust is what capsizes you; on a lawn it is what takes the
- * tablecloth.
- *
- * That sentence is already in `getSuggestionsByDay`, above `safetyBlocksGood`,
- * where it records that applying the gust rule to every activity "took golf,
- * cricket, picnicking, outdoor yoga and painting down 25 points apiece on an
- * ordinary breezy afternoon — the same over-reach as treating a bog as a
- * hazard, and wrong for the same reason". That was fixed for the BAND GATE and
- * not for the veto, so a gust could still short-circuit a land activity to 14.
- *
- * Measured over a real year at five UK and Irish places, the daily maximum gust
- * has a median of 12.3 m/s and runs about three times the daily mean wind — so
- * a pleasant Force 3 afternoon carries a 12 m/s gust somewhere in it. Every
- * gust veto on a land activity sits at or below that, and the year came out
- * like this:
- *
- *     picnicking     vetoed 79.5% of days, gust alone on 13.9%
- *     outdoor_yoga   vetoed 75.0%,         gust alone on 18.1%
- *     photography    vetoed 23.0%,         gust alone on 19.3%
- *     urban_exploring vetoed 41.0%,        gust alone on  9.5%
- *
- * A gust on land is now a penalty and not a veto: the day still scores lower,
- * it simply stops being short-circuited to the hazard floor. On water it stays
- * exactly as it was — `isWaterActivity` is the line the rest of the scorer
- * already draws, and a dinghy really is capsized by the gust rather than
- * inconvenienced by it.
- */
-const NOT_A_HAZARD_ON_LAND = new Set(['gust']);
+/* The three sets that used to live here — SHORTFALL_NOT_HAZARD, NEVER_A_HAZARD
+   and NOT_A_HAZARD_ON_LAND — are now one table in utils/criterionRoles, with
+   their reasoning carried across intact. They were three ways of asking one
+   question and `gust` was in two of them with different answers. */
 
 /** True when a triggered condition fired because the value was BELOW its range. */
 function firedLow(condition: string, value: number | undefined): boolean {
@@ -610,10 +556,12 @@ export function scorePoorConditions(
     all.push(entry);
     if (score <= 0.7) continue;
     triggered.push(entry);
-    const harmless = NEVER_A_HAZARD.has(key)
-      || (SHORTFALL_NOT_HAZARD.has(key) && firedLow(cond, value))
-      || (opts.onWater === false && NOT_A_HAZARD_ON_LAND.has(key));
-    if (!harmless) hazards.push(entry);
+    /* One question, one table — see utils/criterionRoles. This replaced
+       NEVER_A_HAZARD, NOT_A_HAZARD_ON_LAND and the firedLow half of
+       SHORTFALL_NOT_HAZARD, which were three ways of asking it. */
+    if (isHazard(key, { onWater: opts.onWater, firedLow: firedLow(cond, value) })) {
+      hazards.push(entry);
+    }
     total += score;
   }
   return {
