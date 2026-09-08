@@ -2,10 +2,10 @@
  * Localised Grow Daisy species page.
  * URL: /grow/[lang]/species/[slug] (e.g. /grow/fr/species/tomato)
  *
- * The English version at /grow/species/[slug] is the canonical URL; this
- * page is the translated variant. It fetches the same data as the English
- * page, translates the title, description, and advice via DeepL (cached),
- * and renders hreflang tags to all language variants.
+ * The English version lives at /grow/species/[slug]; this page is its own
+ * canonical and is tied to the English page through hreflang. It fetches the
+ * same data as the English page, translates title, description and advice via
+ * DeepL (cached), and renders hreflang tags to all language variants.
  *
  * Content (howto_steps, faqs) is populated by Cowork's CSV/SQL workflow.
  * This route renders gracefully when those columns are null.
@@ -318,7 +318,6 @@ function SpeciesPage(props: Extract<LocalisedSpeciesProps, { unavailable?: false
   } = props;
   const router = useRouter();
   const enPath = `/grow/species/${species.slug}`;
-  const canonicalUrl = `https://grow.godaisy.io${enPath}`;
   const langUrl = `https://grow.godaisy.io/grow/${lang}/species/${species.slug}`;
 
   const title = `${translatedName} — Grow Daisy`;
@@ -330,8 +329,27 @@ function SpeciesPage(props: Extract<LocalisedSpeciesProps, { unavailable?: false
       <Head>
         <title>{title}</title>
         <meta name="description" content={description} />
-        {/* Canonical always points to the English page */}
-        <link rel="canonical" href={canonicalUrl} />
+        {/*
+          * SELF-CANONICAL. This page is its own canonical URL.
+          *
+          * It used to point at the English page, and that one line is what
+          * Search Console reported as "Alternative page with proper canonical
+          * tag" — 296 pages, validation failed 22 August 2026, every example a
+          * `/grow/{lang}/species/{slug}`.
+          *
+          * The page and its own head were contradicting each other. The
+          * hreflang cluster below says "these are equivalent alternates, index
+          * each for its locale"; a canonical pointing across languages says "I
+          * am a duplicate, drop me". Google resolves that in favour of the
+          * canonical, which is the whole of the report. Google's own guidance
+          * is explicit that each language version self-canonicalises and the
+          * alternates are expressed through hreflang alone.
+          *
+          * And the content really is not a duplicate: /grow/de/species/aspen
+          * serves "Zitterpappel" with a German description and German advice.
+          * The old canonical was throwing that away.
+          */}
+        <link rel="canonical" href={langUrl} />
         <meta property="og:title" content={title} />
         <meta property="og:description" content={description} />
         <meta property="og:type" content="website" />
