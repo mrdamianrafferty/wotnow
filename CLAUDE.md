@@ -130,7 +130,7 @@ Sync with `npm run env:sync` for scripts.
   - Monetization: RevenueCat integration (iOS/Android)
 - **Mobile:**  
   - Capacitor config: `capacitor.config.growdaisy.ts`
-  - iOS/Android project setup in `ios-growdaisy/`, `android-growdaisy/`
+  - iOS project in `ios-growdaisy/`; Android is the `growdaisy` flavour of `android/`
   - App icons/splash: `scripts/generate-growdaisy-icons.ts`
   - Auth: Apple/Google sign-in, deep links, shared Supabase config
 
