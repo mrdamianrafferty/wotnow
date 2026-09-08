@@ -1,9 +1,26 @@
 import Document, { Html, Head, Main, NextScript } from 'next/document';
+import { isValidGrowLang } from '@/lib/grow/i18n';
+
+/**
+ * The `lang` attribute has to follow the URL, not the codebase's default.
+ *
+ * `/grow/de/species/aspen` served "Zitterpappel" and a German description
+ * under `<html lang="en">`. That is the page telling a screen reader to
+ * pronounce German with an English voice, and telling Google the localised
+ * URL is an English document while its own hreflang cluster says otherwise.
+ *
+ * `__NEXT_DATA__.query` carries the resolved route params, so `[lang]` is
+ * already there for every localised Grow route; anything else stays English.
+ */
+function documentLang(query: Record<string, string | string[] | undefined>): string {
+  const lang = Array.isArray(query.lang) ? query.lang[0] : query.lang;
+  return typeof lang === 'string' && isValidGrowLang(lang) ? lang : 'en';
+}
 
 export default class MyDocument extends Document {
   render() {
     return (
-      <Html lang="en">
+      <Html lang={documentLang(this.props.__NEXT_DATA__.query ?? {})}>
         <Head>
   {/* Site verification */}
   <meta name="google-site-verification" content="fcfe641a3f11aa29" />

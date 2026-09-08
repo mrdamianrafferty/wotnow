@@ -70,7 +70,6 @@ export const getServerSideProps: GetServerSideProps<LocalisedSpeciesDirectoryPro
 export default function LocalisedSpeciesDirectoryPage({ species, lang }: LocalisedSpeciesDirectoryProps) {
   const labels = getSpeciesDirectoryLabels(lang);
   const enPath = '/grow/species';
-  const canonicalUrl = `https://grow.godaisy.io${enPath}`;
   const langUrl = `https://grow.godaisy.io/grow/${lang}/species`;
   const title = `${labels.heading} — Grow Daisy`;
   const description = labels.intro(species.length);
@@ -80,8 +79,11 @@ export default function LocalisedSpeciesDirectoryPage({ species, lang }: Localis
       <Head>
         <title>{title}</title>
         <meta name="description" content={description} />
-        {/* Canonical always points to the English directory */}
-        <link rel="canonical" href={canonicalUrl} />
+        {/* Self-canonical, for the reason set out on the species page: a
+            canonical pointing across languages contradicts the hreflang
+            cluster below, and Google resolves that against the localised
+            page. */}
+        <link rel="canonical" href={langUrl} />
         <meta property="og:title" content={title} />
         <meta property="og:description" content={description} />
         <meta property="og:type" content="website" />
