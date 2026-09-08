@@ -26,12 +26,18 @@ import type { Suggestion, WeatherData } from '@/utils/getSuggestionsByDay';
 import type { ActivityType } from '@/data/activities/types';
 import { bandFor, isGood, type CallBand } from './bands';
 
-import { lightTagsFor, EVENING } from '@/data/activityLight';
+import { lightTagsFor, EVENING, NOT_BEFORE_NINE } from '@/data/activityLight';
+import { PART_ORDER as PARTS, type DaypartName } from '@/lib/weather/dayparts';
 import SunCalc from 'suncalc';
 
-/** In the order the day happens. Overnight is never offered — see the adapter. */
-export const PART_ORDER = ['morning', 'afternoon', 'evening'] as const;
-export type PartName = (typeof PART_ORDER)[number];
+/**
+ * In the order the day happens. Overnight is never offered — see the adapter.
+ *
+ * Re-exported from the weather module rather than declared twice: they were two
+ * literals that had to agree, and `early` was added to one of them.
+ */
+export { PART_ORDER } from '@/lib/weather/dayparts';
+export type PartName = DaypartName;
 
 export type ForecastParts = Partial<Record<PartName, WeatherData>>;
 
@@ -73,13 +79,19 @@ function usableParts(
   activities: ActivityType[],
 ): ReadonlySet<PartName> {
   const tags = activities.find((a) => a.id === activityId)?.tags;
-  return tags?.includes('night') ? NIGHT_ONLY : ALL_PARTS;
+  if (tags?.includes('night')) return NIGHT_ONLY;
+  /* Conditions are not the only thing that makes an hour wrong. At seven the
+     weather can be perfect for a barbecue and the suggestion still be absurd —
+     see NOT_BEFORE_NINE, which explains why its default is the opposite of the
+     after-dark lists beside it. */
+  return NOT_BEFORE_NINE.has(activityId) ? NOT_EARLY : ALL_PARTS;
 }
 
-const ALL_PARTS: ReadonlySet<PartName> = new Set(PART_ORDER);
+const ALL_PARTS: ReadonlySet<PartName> = new Set(PARTS);
 /* Overnight is bucketed and never offered as a window — see `dayparts.ts` — so
    the evening is where a night activity is scored. */
 const NIGHT_ONLY: ReadonlySet<PartName> = new Set<PartName>(['evening']);
+const NOT_EARLY: ReadonlySet<PartName> = new Set<PartName>(['morning', 'afternoon', 'evening']);
 
 /** Where the day is, so the sun can be put in the right place. */
 export interface Coords { lat: number; lon: number }
@@ -92,7 +104,7 @@ export interface Coords { lat: number; lon: number }
  * hour most of the bucket looks like, and picking either edge would make the
  * answer flip on a technicality twice a year.
  */
-const PART_HOUR: Record<PartName, number> = { morning: 9, afternoon: 15, evening: 20 };
+const PART_HOUR: Record<PartName, number> = { early: 7, morning: 10, afternoon: 15, evening: 20 };
 
 /*
  * NIGHT IS SUNSET TO SUNRISE.
@@ -128,7 +140,11 @@ const AFTER_DARK_SUPPRESSED = 0.4;   // needs the light it will not have
  * make the pub outrank a walk on a bright afternoon — and the call's own rule
  * that an indoor option cannot lead a good day still sits above all of this.
  */
-const EVENING_THING: Record<PartName, number> = { morning: 0.55, afternoon: 0.85, evening: 1.15 };
+const EVENING_THING: Record<PartName, number> = {
+  /* `early` takes morning's figure: a 7 a.m. run and a 10 a.m. one are the same
+     kind of outing, and neither is an evening. */
+  early: 0.55, morning: 0.55, afternoon: 0.85, evening: 1.15,
+};
 
 /** The scorer's own ceiling. A part should not outscore what a day can reach. */
 const MAX_SCORE = 100;
@@ -185,7 +201,22 @@ function timeOfDay(
   if (t >= sunrise.getTime() && t <= sunset.getTime()) return 1;
 
   const tags = lightTagsFor(activityId, activity.tags ?? []);
-  if (tags.includes('floodlit')) return 1;
+  /**
+   * FLOODLIGHTS JUSTIFY AN EVENING, NOT A DAWN.
+   *
+   * This was `if (tags.includes('floodlit')) return 1` when the evening was the
+   * only part that could be dark. `early` made it wrong at the other end:
+   * measured in Edinburgh on 15 January, where the sun rises at 08:42, football
+   * scored 81 — prime — in a 07:00 block that is pitch black, while running in
+   * the same block correctly scored 55 and hiking 31.
+   *
+   * A club floodlights a pitch for evening play. Nobody switches them on at
+   * seven in the morning for a reader who did not ask, and the same mistake at
+   * the other end of the day is the one `data/activityLight` was written to
+   * stop. A floodlit sport in a dark early block now falls through to the
+   * ordinary suppression, exactly as an unlit one does.
+   */
+  if (tags.includes('floodlit') && part === 'evening') return 1;
   if (tags.includes('evening_ok') || tags.includes('night')) return AFTER_DARK_DAMPED;
   return AFTER_DARK_SUPPRESSED;
 }
@@ -205,7 +236,7 @@ export function scoreParts(
   coords?: Coords,
 ): Array<{ name: PartName; band: CallBand; score: number; key?: string }> {
   const usable = usableParts(activityId, activities);
-  const present = PART_ORDER.filter((p): p is PartName => Boolean(parts[p]) && usable.has(p));
+  const present = PARTS.filter((p): p is PartName => Boolean(parts[p]) && usable.has(p));
   if (!present.length) return [];
 
   /*
@@ -272,6 +303,44 @@ export function scoreParts(
  * the forecast cannot support; three bars claim exactly what was scored. It is
  * also free, because these scores were computed for the window anyway.
  */
+/**
+ * ADJACENT BLOCKS THAT SAY THE SAME THING ARE ONE BLOCK.
+ *
+ * The day was cut into a fourth part so a hot country's early window would stop
+ * being averaged away — Seville's 06-12 mean is 24.9 °C against a 06-09 mean of
+ * 23.3, and running's ceiling is 25. But a fourth bar is only worth a reader's
+ * attention where it differs. In Manchester every hour of every block is under
+ * 25 °C, and four bars would be four ways of saying "fine".
+ *
+ * So the split is not gated on a temperature spread, or on latitude, or on a
+ * month. It is gated on whether the answer changes. If early and morning land
+ * in the same band they merge, the reader sees the three parts they always saw,
+ * and nothing had to know it was in Manchester.
+ *
+ * The merged block takes the WEAKEST score of the parts in it, for the reason
+ * `promote` takes the weakest of its run: a block is advice about a span of
+ * time, and it should be true of all of it.
+ *
+ * Merging is by BAND rather than by score. Two parts at 71 and 76 are both
+ * "worth a look" and splitting them would offer a distinction a reader cannot
+ * act on; two at 59 and 61 really are different advice.
+ */
+export function distinctBlocks<T extends { name: PartName; band: CallBand; score: number }>(
+  scored: readonly T[],
+): Array<T & { spans: PartName[] }> {
+  const out: Array<T & { spans: PartName[] }> = [];
+  for (const part of scored) {
+    const last = out[out.length - 1];
+    if (last && last.band === part.band) {
+      last.spans.push(part.name);
+      if (part.score < last.score) last.score = part.score;
+      continue;
+    }
+    out.push({ ...part, spans: [part.name] });
+  }
+  return out;
+}
+
 export function partBands(
   activityId: string,
   parts: ForecastParts | undefined,

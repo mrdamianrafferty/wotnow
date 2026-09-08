@@ -18,22 +18,36 @@ const series = (fields: Record<string, number[]>) => ({
 const flat = (v: number) => Array.from({ length: 24 }, () => v);
 
 describe('daypart bucketing', () => {
-  it('uses the same boundaries the rain window has always used', () => {
+  it('cuts the morning in two, and leaves the rest where they were', () => {
+    /*
+     * `early` was added for hot climates: Seville's 06-12 mean is 24.9 °C
+     * against a 06-09 mean of 23.3, and running's ceiling is 25, so the block's
+     * own mean hid the window Sevillians actually use.
+     *
+     * The RAIN WINDOW deliberately keeps 06-12 as one "morning" — it has its
+     * own boundaries in the adapter, and a reader wants "showers in the
+     * morning" rather than "showers early". Two different jobs: one is prose
+     * about when it rained, the other is a unit of scoring.
+     */
     expect([0, 5].map(bucketFor)).toEqual(['overnight', 'overnight']);
-    expect([6, 11].map(bucketFor)).toEqual(['morning', 'morning']);
+    expect([6, 8].map(bucketFor)).toEqual(['early', 'early']);
+    expect([9, 11].map(bucketFor)).toEqual(['morning', 'morning']);
     expect([12, 17].map(bucketFor)).toEqual(['afternoon', 'afternoon']);
     expect([18, 23].map(bucketFor)).toEqual(['evening', 'evening']);
   });
 
   it('never offers overnight as a part a call can name', () => {
-    expect([...PART_ORDER]).toEqual(['morning', 'afternoon', 'evening']);
+    expect([...PART_ORDER]).toEqual(['early', 'morning', 'afternoon', 'evening']);
+    expect(PART_ORDER).not.toContain('overnight');
   });
 
-  it('groups a full day into four buckets of six hours', () => {
+  it('groups a full day into five buckets', () => {
     const out = aggregateDayparts(series({ temperature_2m: flat(10) }), { windUnit: 'kmh' });
     const day = out['2026-09-07'];
-    expect(Object.keys(day).sort()).toEqual(['afternoon', 'evening', 'morning', 'overnight']);
-    expect(day.morning?.hours).toBe(6);
+    expect(Object.keys(day).sort()).toEqual(['afternoon', 'early', 'evening', 'morning', 'overnight']);
+    expect(day.early?.hours).toBe(3);
+    expect(day.morning?.hours).toBe(3);
+    expect(day.afternoon?.hours).toBe(6);
   });
 
   /*
@@ -50,12 +64,14 @@ describe('daypart bucketing', () => {
   });
 
   it('sums rain over the part and counts only the wet hours', () => {
-    // Morning is 06:00-11:00 — three wet hours totalling 3 mm.
+    // Early is 06:00-08:00 — two wet hours totalling 3 mm. (These hours were
+    // `morning` before `early` was split off; the bucket is incidental to what
+    // this asserts, which is that rain SUMS and wet hours COUNT.)
     const precip = flat(0);
     precip[6] = 1; precip[7] = 2; precip[8] = 0; precip[9] = 0; precip[10] = 0; precip[11] = 0;
     const out = aggregateDayparts(series({ precipitation: precip, temperature_2m: flat(10) }), { windUnit: 'kmh' });
-    expect(out['2026-09-07'].morning?.precipitation).toBeCloseTo(3, 5);
-    expect(out['2026-09-07'].morning?.precipitationHours).toBe(2);
+    expect(out['2026-09-07'].early?.precipitation).toBeCloseTo(3, 5);
+    expect(out['2026-09-07'].early?.precipitationHours).toBe(2);
     expect(out['2026-09-07'].afternoon?.precipitation).toBe(0);
   });
 
@@ -68,13 +84,13 @@ describe('daypart bucketing', () => {
     const wind = flat(5); wind[8] = 40;
     const deg = flat(350); deg[8] = 180;
     const out = aggregateDayparts(series({ wind_speed_10m: wind, wind_direction_10m: deg }), { windUnit: 'kmh' });
-    expect(out['2026-09-07'].morning?.windDirection).toBe(180);
+    expect(out['2026-09-07'].early?.windDirection).toBe(180);
   });
 
   it('reports how many samples a part had, so a thin one can be dropped', () => {
     const time = ['2026-09-07T06:00', '2026-09-07T07:00', '2026-09-07T13:00'];
     const out = aggregateDayparts({ time, temperature_2m: [10, 11, 15] }, { windUnit: 'kmh' });
-    expect(out['2026-09-07'].morning?.hours).toBe(2);
+    expect(out['2026-09-07'].early?.hours).toBe(2);
     expect(out['2026-09-07'].afternoon?.hours).toBe(1);
   });
 
