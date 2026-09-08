@@ -129,6 +129,7 @@ import { applyEveningBonus } from './eveningScoring';
 import { describeConditions, phraseFor, type RainWindow } from './activityReasons';
 import { assessSoilCondition, isMudSensitive, getMudMessage } from './soilMoistureUtils';
 import { BAND_FLOOR } from '../lib/godaisy/call/bands';
+import { isDangerous } from './criterionRoles';
 // import { activityTypes } from '../data/activityTypes';
 // import { getActivityMessage } from '../data/activityMessages';
 
@@ -715,9 +716,14 @@ function calculateActivityScoreWithSnow(
    * genuinely wet day still scores badly — the caps see to that, and the ladder
    * test pins it.
    */
+  /* This one did NOT fold into the role table, and the note at the bottom of
+     utils/criterionRoles says why: it asks "is this already charged elsewhere",
+     which is a fact about the scorer rather than about the criterion. Deriving
+     it from COMFORT stopped a bog disqualifying a picnic. */
   const PRICED_ELSEWHERE = new Set(['precipitation']);
+  const canDisqualify = (key: string) => !PRICED_ELSEWHERE.has(key);
   const worst = (b: { criteria: { score: number; key: string }[] }) => {
-    const scored = b.criteria.filter((c) => !PRICED_ELSEWHERE.has(c.key));
+    const scored = b.criteria.filter((c) => canDisqualify(c.key));
     return scored.length ? Math.min(...scored.map((c) => c.score)) : 1;
   };
 
@@ -769,7 +775,7 @@ function calculateActivityScoreWithSnow(
    */
   const vetoed = statedVetoes(activity.poorConditions ?? []);
   const pricedByVeto = (c: CriterionScore) => {
-    if (PRICED_ELSEWHERE.has(c.key)) return true;
+    if (!canDisqualify(c.key)) return true;
     const dir = overflowDirection(c.condition, c.value);
     return dir ? vetoed.get(c.key)?.[dir] === true : false;
   };
@@ -853,9 +859,13 @@ function calculateActivityScoreWithSnow(
      it demoted windsurfing on a gusty afternoon for the sin of a soft mean,
      which is the opposite of what a windsurfer thinks of that day. Too MUCH
      wind is caught by the poor band and its veto, as it was before. */
-  const DECIDES_SAFETY = new Set(['gust', 'waveHeight', 'waterTemperature']);
+  /* Was a fourth hand-kept set, `{gust, waveHeight, waterTemperature}`. It is
+     the SAFETY role, and deriving it means thunder, freezing rain, snowfall
+     rate and visibility join it without anybody having to remember to add
+     them — which is exactly how the first three came to be out of step. */
+  const decidesSafety = (key: string) => isDangerous(key, { onWater: isWaterActivity });
   const worstSafety = (b: { criteria: { score: number; key: string }[] }) => {
-    const scored = b.criteria.filter((c) => DECIDES_SAFETY.has(c.key));
+    const scored = b.criteria.filter((c) => decidesSafety(c.key));
     return scored.length ? Math.min(...scored.map((c) => c.score)) : 1;
   };
 
@@ -1179,7 +1189,7 @@ function calculateActivityScoreWithSnow(
      band. Ahead of the nearest-poor guess below, because this is not a guess. */
   const safetyBinding = demotedBy === 'safety'
     ? good.criteria
-      .filter((c) => DECIDES_SAFETY.has(c.key))
+      .filter((c) => decidesSafety(c.key))
       .slice().sort((a, b) => a.score - b.score)[0]
     : undefined;
 
@@ -1189,7 +1199,7 @@ function calculateActivityScoreWithSnow(
      below and its own sentence, so it is excluded here. */
   const shoulderBinding = demotedBy === 'shoulder'
     ? good.criteria
-      .filter((c) => c.score < 0.35 && pricedByVeto(c) && !PRICED_ELSEWHERE.has(c.key))
+      .filter((c) => c.score < 0.35 && pricedByVeto(c) && canDisqualify(c.key))
       .slice().sort((a, b) => a.score - b.score)[0]
     : undefined;
 
