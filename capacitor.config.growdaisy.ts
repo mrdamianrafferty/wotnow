@@ -23,7 +23,7 @@ const config: CapacitorConfig = {
   // Deep linking configuration for OAuth callbacks
   // URL schemes are configured in native projects:
   // - iOS: ios-growdaisy/App/App/Info.plist (CFBundleURLSchemes = growdaisy)
-  // - Android: android-growdaisy/app/src/main/AndroidManifest.xml (android:scheme = growdaisy)
+  // - Android: the `growdaisy` flavour in android/app/build.gradle (manifestPlaceholders.deepLinkScheme)
 
   plugins: {
     SplashScreen: {
