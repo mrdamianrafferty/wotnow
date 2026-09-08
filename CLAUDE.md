@@ -66,7 +66,7 @@ npm run env:sync         # Sync .env.local to .env.cli for scripts
 - **React Query:** Data fetching/caching.
 - **Tailwind + DaisyUI:** Unified design system.
 - **Translation:** DeepL API, multi-language, cached in DB.
-- **Testing:** Jest, Playwright E2E, see `E2E_TESTING_GUIDE.md`.
+- **Testing:** Jest and Playwright E2E. See `__tests__/` and `e2e/`.
 
 ---
 
@@ -105,7 +105,7 @@ Sync with `npm run env:sync` for scripts.
 
 ## Best Practices
 
-- **Do not edit Tailwind/PostCSS config** (see `DO_NOT_TOUCH_CSS_CONFIG.md`)
+- **Do not edit Tailwind/PostCSS config** — Tailwind 4 + DaisyUI 5, tuned; changes there have broken the build before
 - Use DaisyUI classes for UI
 - Keep shared logic in general dirs, specialist logic in app-specific dirs
 - Use `<TranslatedText>` for all user-facing text
@@ -140,19 +140,16 @@ Sync with `npm run env:sync` for scripts.
 
 - **Add a plant:** Add to `plant_species`, image to `/public/grow/plants/`, update image map, run `validate:taxonomy`
 - **Add API endpoint:** Create in `pages/api/grow/`, use Supabase server client, add types, handle errors
-- **Debug weather/gardening logic:** See `PLANT_DATA_FEATURE_AUDIT.md`, `GROW_DAISY_MASTER_PLAN.md`
+- **Debug weather/gardening logic:** See `PLANT_DATA_FEATURE_AUDIT.md`
 - **Test:** Use Jest for unit/integration, Playwright for E2E
 
 ---
 
 ## Documentation
 
-- `GETTING_STARTED.md` – Start here
-- `GROW_DAISY_MOBILE_APP_PLAN.md` – Mobile app setup
-- `PLANT_DATA_FEATURE_AUDIT.md` – Plant data coverage
-- `GROW_DAISY_MASTER_PLAN.md` – Monetization/features
-- `DATABASE_SCHEMA_REFERENCE.md` – Table/column reference
-- `E2E_TESTING_GUIDE.md` – Playwright E2E tests
+See the Documentation Index below for the eleven root documents that exist.
+Anything referenced here and missing was archived on 2026-09-08 — check
+`Archived projects stuff/wotnow-root-docs-2025` on the drive, or git history.
 
 ---
 
@@ -242,7 +239,7 @@ All tables include Row-Level Security (RLS) policies for data protection.
 
 ### Styling
 
-- **DO NOT modify Tailwind/PostCSS config** - See `DO_NOT_TOUCH_CSS_CONFIG.md`
+- **DO NOT modify Tailwind/PostCSS config**
 - Use DaisyUI component classes (badge, card, btn, etc.)
 - Responsive design: mobile-first with `sm:`, `md:`, `lg:` breakpoints
 - Framer Motion for animations (`motion.*` components)
@@ -266,14 +263,11 @@ Jest is configured with Next.js integration. Test files use `.test.ts` or `.test
 - Mock Supabase client with `jest.mock()`
 
 **API Test Documentation:**
-- **`TESTING_FIXES_SUMMARY.md`** - Comprehensive guide to Findr API test suite (86% pass rate, 55/64 tests passing)
   - Test patterns for RPC mocking, createClient mocking, serverClient mocking
   - All predictions, catch-log, conditions, and marine-weather tests passing (100%)
   - Documented approach for fixing remaining species-details tests
-- **`TRANSLATION_429_FIX.md`** - Translation rate limiting fixes with request deduplication and graceful fallbacks
 
 **E2E Test Documentation:**
-- **`E2E_TESTING_GUIDE.md`** - Complete Playwright E2E testing guide (12/12 tests passing, 3 skipped)
   - Multi-browser testing: Chromium, Firefox, WebKit, Mobile Chrome, Mobile Safari
   - Test coverage: Go Daisy (homepage, weather, activities) and Findr (predictions, catch-log)
   - Helper utilities for authentication and location selection
@@ -302,7 +296,7 @@ Jest is configured with Next.js integration. Test files use `.test.ts` or `.test
 - Activity-specific logic should be clearly separated (e.g., `pages/findr/`, `components/findr/`)
 
 ### CSS Configuration
-**DO NOT MODIFY** Tailwind or PostCSS configs without review. Existing setup uses Tailwind 4 with DaisyUI 5 and specific optimizations. See `DO_NOT_TOUCH_CSS_CONFIG.md`.
+**DO NOT MODIFY** Tailwind or PostCSS configs without review. Existing setup uses Tailwind 4 with DaisyUI 5 and specific optimizations.
 
 ### Translation System
 - All user-facing text (species names, activity descriptions, etc.) should use `<TranslatedText>` components for i18n support
@@ -344,11 +338,11 @@ tsx scripts/clear-all-cache-for-date.js
 - Android native apps planned after ios apps are polished
 - Native app development has not yet started
 
-See `DEPLOYMENT.md` for detailed deployment procedures.
+Deployment specifics are in the Deployment section above.
 
 ## Quick Start
 
-**NEW TO THE PROJECT?** Start here: **`GETTING_STARTED.md`**
+**NEW TO THE PROJECT?** Start with this file, then `LAUNCH_ROADMAP.md`.
 
 This comprehensive guide covers:
 - 🏗️ Architecture overview (tech stack, directory structure)
@@ -362,86 +356,59 @@ This comprehensive guide covers:
 
 ## Documentation Index
 
-### 🟢 Current & Active
+Eleven markdown files live at the repo root. That is the whole list, and it is
+meant to stay roughly this short.
 
-**Go Daisy+ Subscription:**
-- `GODAISY_PLUS_IMPLEMENTATION_PLAN.md` - ⏳ **PLANNED** - Complete implementation plan for Go Daisy+ free/paid gating (Mar 8, 2026)
-  - Phase 1: Foundation (DB migration, subscription.ts, hook, Stripe/RevenueCat)
-  - Phase 2: Feature gating (homepage, weather, activities, onboarding, coastal)
-  - Phase 3: Monetisation (checkout page, account management, push gating, social, journal)
-  - Phase 4: Growth (promo code system, deep link, code batches)
-  - ~19 dev-days across 4–5 weeks
+**Current plans**
+- `LAUNCH_ROADMAP.md` — Go Daisy & Grow Daisy launch readiness
+- `GODAISY_PLUS_IMPLEMENTATION_PLAN.md` — free/paid gating
+- `MOBILE_APP_IMPLEMENTATION_GUIDE.md` — the native wrappers
+- `APP_STORE_COMPLIANCE_PLAN.md`, `QA_REVENUECAT_IAP_TEST_PLAN.md`
 
-**Launch Roadmap:**
-- `LAUNCH_ROADMAP.md` - **ACTIVE** - Go Daisy & Grow Daisy launch readiness roadmap (Feb 26, 2026)
-  - Phase 1: Unify design system tokens (DaisyUI + shadcn bridge)
-  - Phase 2: Translation coverage (onboarding, premium, auth pages)
-  - Phase 3: Critical UX & content fixes
-  - Phase 4: Navigation & architecture
-  - Phase 5: Polish & delight
+**Grow Daisy**
+- `GROW_DAISY_EDITORIAL_VOICE.md`, `PLANT_SPECIES_REVIEW.md`,
+  `PLANT_DATA_FEATURE_AUDIT.md`, `GUILD_UX_HORTICULTURE_REVIEW.md`
 
-**Getting Started:**
-- `GETTING_STARTED.md` - **START HERE** - Complete architecture & system overview (Oct 18, 2025)
+**And** `README.md` and this file.
 
-**Performance Optimizations:**
-- `SUPABASE_OPTIMIZATION_IMPLEMENTATION_COMPLETE.md` - ✅ **DEPLOYED** Query parallelization & timing (Oct 18, 2025)
-- `SUPABASE_OPTIMIZATION_EXECUTIVE_SUMMARY.md` - Quick reference for optimization strategy
-- `SUPABASE_OPTIMIZATION_ACTION_PLAN.md` - Detailed implementation plan with risks
-- `SUPABASE_OPTIMIZATION_CRITICAL_ANALYSIS.md` - Deep analysis of optimization opportunities
-- `PERFORMANCE_ANALYSIS.md` - Overall performance metrics and targets
+### Where everything else went
 
-**Data Ingestion & Quality:**
-- `FILL_VALUE_FILTERING_COMPLETE.md` - ✅ **DEPLOYED** Copernicus fill value detection (Oct 18, 2025)
-- `PARTIAL_DATA_IMPLEMENTATION_COMPLETE.md` - ✅ **DEPLOYED** Accept 3/7 variable minimum (Oct 18, 2025)
-- `PARTIAL_DATA_ACCEPTANCE_STRATEGY.md` - Strategy for handling incomplete data
-- `DATASET_FRESHNESS_ANALYSIS.md` - Data age analysis and thresholds
-- `ENHANCED_REINGEST_QUICK_REF.md` - Quick reference for data re-ingestion
-- `TARGETED_REINGEST_COMPLETE.md` - Rectangle-specific re-ingestion guide
-- `REINGEST_QUICK_REF.md` - Short command reference for re-ingestion
+421 root documents were archived on 2026-09-08. Almost all were Findr-era —
+bite score, bio-bands, species data, Copernicus ingestion — and 422 of the 432
+had not been touched since 2025.
 
-**Recent Fixes & Deployments:**
-- `28E5_ROOT_CAUSE_ANALYSIS.md` - Analysis of missing data issue (Oct 18, 2025)
-- `EMERGENCY_FIX_28E5_20251018.md` - Emergency patch for rectangle 28E5
-- `BITE_SCORE_FIX_APPLIED_SUCCESS.md` - ✅ **DEPLOYED** Bite score calculation fix (Oct 18, 2025)
-- `DUPLICATE_FISH_CLEANUP_SUMMARY.md` - Species alias system implementation
-- `GOOGLE_MAPS_LOADER_FIX.md` - Maps initialization fix (Oct 18, 2025)
+They are on the archive drive under
+`Archived projects stuff/wotnow-root-docs-2025`, with a MANIFEST. **Git history
+is the real backup**: any of them is still `git show <rev>:<path>`.
 
-**Core System Documentation:**
-- `CLAUDE.md` - **THIS FILE** - Main guidance document
-- `DATABASE_SCHEMA_REFERENCE.md` - ✅ **ESSENTIAL** Complete table/column reference with types (Nov 12, 2025)
-- `RPC_TYPE_CASTING_GUIDE.md` - ✅ **ESSENTIAL** Guide to preventing RPC type mismatches (Nov 12, 2025)
-- `RPC_REGION_MAPPING_FIX_20251112.md` - ✅ **DEPLOYED** Biogeographic region mapping fix (Nov 12, 2025)
-- `RPC_FIX_AND_DOCUMENTATION_SUMMARY_20251112.md` - Complete RPC fix summary (Nov 12, 2025)
-- `CONFIDENCE_SCORING_ALGORITHM.md` - How prediction confidence is calculated
-- `FINDR_PREDICTIONS_DATA_SOURCES.md` - Data sources for predictions
-- `COPERNICUS_DATA_INGESTION_GUIDE.md` - CMEMS data ingestion process
-- `DIAGNOSIS_QUICK_REF.md` - Quick troubleshooting guide
-
-
-### 🟡 Reference (Still Relevant But Historical)
-
-
-### �️ Archived Documentation
-
-**Location:** `/archive/` folder
-
-All outdated documentation has been moved to the `archive/` folder to keep the workspace clean.
-See `archive/README.md` for a complete list of archived files and what replaced them.
-
-**Categories archived:**
-- Superseded implementations (old optimization plans, early Copernicus analysis)
-- Historical development phases (Phase 2, 9, 9.5)
-- Resolved issues (location system, router race conditions, UI fixes)
-- Completed work (image optimization, resource hints)
+Findr itself now lives in its own repository. Its documentation, native app,
+store assets and species imagery are all there.
 
 ### 📋 Documentation Best Practices
 
-**When Creating New Documentation:**
-1. Use clear, dated filenames (e.g., `FEATURE_NAME_COMPLETE_20251018.md`)
-2. Mark deployment status clearly: ✅ **DEPLOYED**, 🚧 **IN PROGRESS**, ⏳ **PLANNED**
-3. Include "Status" and "Next Steps" sections
-4. Cross-reference related docs
-5. Update this index when adding new docs
+**The repo root is for documents that are still being worked from.** A finished
+write-up — a fix that shipped, an analysis that is now settled, a phase that is
+over — belongs in `docs/archive/` or off the repo entirely, not at the root.
+
+This rule exists because it was missing. 432 markdown files accumulated at the
+root, 422 of them untouched since 2025, because nobody had said where else to
+put them. Every one was a reasonable thing to write; the problem was only that
+there was no exit.
+
+**When creating new documentation:**
+1. Ask whether it needs to be a file at all. A PR description is often the
+   better home for "what I did and why" — it stays attached to the change.
+2. If it is a file and it describes finished work, put it in `docs/archive/`
+   on the day you write it, not later.
+3. Mark status clearly: ✅ **DEPLOYED**, 🚧 **IN PROGRESS**, ⏳ **PLANNED**.
+4. Add it to the Documentation Index above, and take it out again when it stops
+   being current. An index nobody prunes is how this happened.
+
+**Large files:** CI fails any PR adding a file over 5 MB
+(`.github/workflows/large-file-guard.yml`). Build output, virtualenvs,
+ephemerides and raw media do not belong in git — the repo carried a 4.59 GiB
+pack because that check did not exist. If a large file genuinely belongs,
+label the PR `large-file-ok`.
 
 **When Updating Existing Documentation:**
 1. Add "Updated: YYYY-MM-DD" to the top of the doc
