@@ -1,12 +1,23 @@
 #!/usr/bin/env ts-node
 /**
- * Regenerate bgMapOptimized.ts based on actual WEBP files
+ * Regenerate bgMapOptimized.ts based on actual webp files.
+ *
+ * PATHS ARE LOWERCASE, AND THAT IS LOAD-BEARING. This script used to read
+ * `public/WEBP` and emit `/WEBP/...` URLs. macOS is case-insensitive so it
+ * worked locally, but it put a second spelling of one directory into git:
+ * 1,031 files tracked twice, under `public/WEBP/` and `public/webp/`, with
+ * identical blobs. On a case-sensitive filesystem — which is to say on every
+ * deploy — that checked out as two real directories.
+ *
+ * The generated output this writes has always used `/webp/`, so nothing was
+ * ever served from the uppercase copy. It existed only because this file
+ * created it. Keep every path here lowercase.
  */
 
 import * as fs from 'fs';
 import * as path from 'path';
 
-const WEBP_DIR = path.join(process.cwd(), 'public/WEBP');
+const WEBP_DIR = path.join(process.cwd(), 'public/webp');
 const PNGS_DIR = path.join(process.cwd(), 'public/PNGS');
 const OUTPUT_FILE = path.join(process.cwd(), 'data/bgMapOptimized.ts');
 
@@ -43,9 +54,9 @@ for (const [activityId, filename] of Object.entries(activityMappings)) {
   // Check if this filename has optimized versions
   if (largeFiles.includes(filename)) {
     newMappings[activityId] = {
-      webpLarge: `/WEBP/${filename}-1600x900.webp`,
-      webpMedium: `/WEBP/${filename}-1200x675.webp`,
-      webpSmall: `/WEBP/${filename}-750x422.webp`,
+      webpLarge: `/webp/${filename}-1600x900.webp`,
+      webpMedium: `/webp/${filename}-1200x675.webp`,
+      webpSmall: `/webp/${filename}-750x422.webp`,
       fallback: `/PNGS/${filename}.png`
     };
   } else {
