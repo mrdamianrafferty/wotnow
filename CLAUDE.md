@@ -287,6 +287,47 @@ Jest is configured with Next.js integration. Test files use `.test.ts` or `.test
 
 ## Important Notes
 
+### There is dead code in here on purpose. Don't chase it.
+
+Roughly **200 files under `components/`, `lib/`, `utils/` and `hooks/`, and
+about **345 under `scripts/`**, are unreachable from any entry point. That is
+known, it is deliberate, and it is not a task waiting for you.
+
+**It costs nothing that matters.** Unreachable files are never bundled — webpack
+builds from entry points — so there is no runtime cost, no bundle weight and no
+user-visible effect. The parts that *did* cost something have been dealt with:
+the dependencies they held open were dropped (#201), and the files that were
+actively misleading were removed (#199).
+
+**So do not spend an afternoon on them.** Not a sweep, not a ticket, not a
+"while I'm here". The remaining case for removing them is readability, and that
+is worth far less than the time it takes to verify 200 files safely.
+
+**What to do instead, when one gets in your way:** delete that one, with the
+check below, and move on.
+
+#### Before deciding anything is dead
+
+Two rules, both learned the hard way in one afternoon:
+
+1. **Ask what reaches it, not what imports it.** Walk the import graph out from
+   the real entry points — `pages/`, `app/`, `supabase/functions/`, tests, the
+   scripts named in `package.json`, and every config a tool loads by convention
+   (`middleware.ts`, `instrumentation.ts`, `next-sitemap.config.cjs`,
+   `capacitor.config.*.ts`, `worker/`). Anything unreached is dead; anything
+   merely "unimported" might just be convention-loaded.
+
+2. **Match by exact import specifier, never by name.** A substring search for
+   `Card` hits `ThreatCard`, `WaveCard` and `SpeciesCarousel`; one for `Popup`
+   hits leaflet's own. That false positive made a genuinely dead module look
+   alive through an entire investigation.
+
+And one trap that is not about imports at all: `scripts/prebake-call-images.ts`
+resolves image sources **by constructed path** at build time. A text search
+cannot see it. Run `npm run build` and compare `already present` / `source
+missing` against `main` before removing anything under `public/`.
+
+
 ### App Family Strategy
 - **Go Daisy** has been released as a generalist weather-informed activity app
 - **Grow** has been released as a specialist gardening app
