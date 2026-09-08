@@ -1046,6 +1046,65 @@ function calculateActivityScoreWithSnow(
   }
 
   /**
+   * A DAY THE BAND LOGIC DEMOTED IS NOT ALSO A DAY IT REFUSED.
+   *
+   * The demotion branch exists to say "rain, or a missed safety criterion, or a
+   * shoulder the veto already prices, refused the good band — none of those
+   * disqualifies it". It puts the day at 40-59 deliberately. Then everything
+   * below charges it AGAIN for the very thing that demoted it: the penalty
+   * (up to 40 points, and it saturates on one fired condition), `rainWeight`
+   * (up to 25), and the wind adjustment.
+   *
+   * Measured over a real year at five UK and Irish places, five ordinary
+   * activities, 9,125 (day, activity) rows:
+   *
+   *     the demoted branch chose the band on 25.7% of the year
+   *     and 70% of those days finished UNDER 40 anyway
+   *
+   * Of the 1,646 rows that happened to: 41% were taken under by the penalty,
+   * 33% by `rainWeight`, 26% by the wind adjustment. Every one of those is the
+   * same comfort factor that caused the demotion, charged a second and third
+   * time — the "charged three times for the same rain" pattern this file
+   * already names, and already fixed once for the band floor.
+   *
+   * So a demoted day floors at the marginal band. It was workable when the band
+   * logic said so and nothing since has told us otherwise.
+   *
+   * WHAT STILL BEATS THE FLOOR. The first attempt floored every demoted day and
+   * broke eight tests, all saying the same thing in different words: a day that
+   * has actually CROSSED a threshold the model states is not merely outside the
+   * good band. A bog at 55% where the model vetoes above 50, a flat calm below
+   * a windsurfer's minimum, a gust past its limit — those are statements the
+   * activity itself makes, and they must still be able to take a day under 40.
+   *
+   * So the floor is only for days that have crossed NOTHING:
+   *
+   *   NO POOR CONDITION FIRED. `poor.triggered` is empty: the day sits outside
+   *   the good band and inside every limit the model draws. That is the whole
+   *   population this is for, and it is what excludes the bog, the flat calm
+   *   and the gust.
+   *
+   *   NOT WET. The three rain caps are duration and intensity readings the
+   *   demotion does not make — twelve hours of drizzle is a wet day whatever
+   *   band the criteria chose, and `rainRateMmH >= 4` is the Met Office's own
+   *   heavy-rain boundary. All three still win.
+   *
+   *   IN SEASON. A February camping day is poor because it is February, which
+   *   the demotion knew nothing about.
+   *
+   * A HAZARD never reaches here at all — `hazards.length` returns far above, at
+   * the veto floor. Nothing dangerous is being floored into "workable".
+   */
+  const wetCapped = !isWaterActivity && !wantsRain
+    && ((rainRateMmH !== null && rainRateMmH >= 4) || wetness >= 0.5
+        || (rainHours !== null && rainHours >= 8));
+  const inSeason = !(opts.month && activity.seasonalMonths?.length
+    && !activity.seasonalMonths.includes(opts.month));
+  if (demotedBy !== null && poor.triggered.length === 0 && !wetCapped && inSeason) {
+    score = Math.max(score, BAND_FLOOR.marginal);
+  }
+
+  /**
    * ─── What the sentence is about ─────────────────────────────────────────
    *
    * One ordered choice, made here rather than in the copy layer, because only
