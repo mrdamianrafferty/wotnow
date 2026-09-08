@@ -1,0 +1,61 @@
+# Fail a PR that adds a large file.
+#
+# The repo reached a 4.59 GiB pack because nothing checked. Of the 400 largest
+# objects ever committed, 189 were .next/cache webpack artifacts at 25-57 MB
+# apiece, committed repeatedly before the ignore rule landed. Behind those:
+# node_modules, a 2,408-file Python virtualenv, a 31 MB JPL ephemeris and a
+# 25 MB After Effects project.
+#
+# Every one of those was removed later, which does nothing for the pack — git
+# keeps them for ever. The only cheap moment is before the merge, which is what
+# this job is.
+#
+# 5 MB is deliberately generous: the largest legitimate recent additions are
+# ~3 MB Android splash screens. If something genuinely belongs, label the PR
+# `large-file-ok` and it passes.
+
+name: Large file guard
+
+on:
+  pull_request:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    if: ${{ !contains(github.event.pull_request.labels.*.name, 'large-file-ok') }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Fail on files over 5 MB
+        env:
+          BASE: ${{ github.event.pull_request.base.sha }}
+          HEAD: ${{ github.event.pull_request.head.sha }}
+          LIMIT_MB: 5
+        run: |
+          limit=$((LIMIT_MB * 1024 * 1024))
+          # Added or modified only. Deletions and renames are never a problem.
+          mapfile -t files < <(git diff --diff-filter=AM --name-only "$BASE" "$HEAD")
+          over=0
+          for f in "${files[@]}"; do
+            [ -f "$f" ] || continue
+            size=$(stat -c%s "$f")
+            if [ "$size" -gt "$limit" ]; then
+              printf '  %6.1f MB  %s\n' "$(echo "$size/1048576" | bc -l)" "$f"
+              over=1
+            fi
+          done
+          if [ "$over" = 1 ]; then
+            echo
+            echo "The files above are larger than ${LIMIT_MB} MB."
+            echo
+            echo "Build output, dependencies, virtualenvs, ephemerides and raw"
+            echo "media do not belong in git — removing them later does not"
+            echo "shrink the repo, because history keeps them for ever."
+            echo
+            echo "If this one genuinely belongs, label the PR 'large-file-ok'."
+            exit 1
+          fi
+          echo "No file over ${LIMIT_MB} MB. ${#files[@]} added or modified."
