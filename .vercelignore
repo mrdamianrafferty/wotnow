@@ -85,6 +85,26 @@ ios-godaisy/
 ios-growdaisy/
 ios-findr/
 android/
+# `android-godaisy/` and `android-growdaisy/` were added to the repo after this
+# list was written and never mirrored into it, which cost a production deploy:
+#
+#   Total bundle size (294.48 MB) exceeds the maximum function size (225 MB)
+#
+# The reason a listed-in-.gitignore build directory reached the upload at all is
+# the trap worth remembering: THE VERCEL CLI READS `.gitignore` ONLY WHEN THERE
+# IS NO `.vercelignore`. Once this file exists it replaces `.gitignore`
+# entirely, so every Gradle artefact under `android-godaisy/app` — 108 MB of it,
+# ignored by git, invisible in `git status` — was being uploaded on every
+# `npm run deploy`. Only 57 files in each directory are actually tracked.
+#
+# The push-to-main deploy was unaffected: it builds from the repository, which
+# never contained any of this. Only the CLI path broke, which is why it went
+# unnoticed.
+android-godaisy/
+android-growdaisy/
+# Neither is imported by anything under pages/, lib/, components/ or utils/.
+img-optimizer/
+store-assets/
 test-*.js
 test-*.ts
 debug-*.js
