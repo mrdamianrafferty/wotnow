@@ -334,7 +334,37 @@ missing` against `main` before removing anything under `public/`.
 - Future specialist apps will follow the same pattern for other activities
 - When developing features, consider reusability across the app family
 - Shared components should live in general directories, not activity-specific ones
-- Activity-specific logic should be clearly separated (e.g., `pages/findr/`, `components/findr/`)
+- Activity-specific logic should be clearly separated (e.g. `pages/grow/`, `components/grow/`)
+
+### Which native project ships — `android/` builds all three
+
+**There is one Android project, and its name does not say so.** `android/` is not
+Findr's; it carries a product flavour for each app, and it is what every real
+build path uses:
+
+| | |
+|---|---|
+| `.github/workflows/android-release.yml` | `working-directory: android`, `./gradlew bundle${Flavor}Release` |
+| `scripts/build-android.sh` | `cd android` — behind all six `android:build:*` / `android:release:*` scripts |
+| `android/app/build.gradle` | reads `app-versions.json` for each flavour's versionCode and versionName |
+
+So a release is: bump `app-versions.json` (`scripts/bump-version.sh`), then tag
+`godaisy-v*` / `growdaisy-v*`, or run `npm run android:release:godaisy` locally.
+The build script swaps in the flavour's capacitor config around `npx cap sync
+android` and restores it afterwards — do not do that by hand.
+
+`android-godaisy/` and `android-growdaisy/` used to sit beside it and were
+deleted in #202. They were stale copies stuck at versionCode 1 that no workflow
+ever built, and they were **reachable** — `npm run cap:godaisy:open:android`
+opened one in Android Studio, so anyone following the obvious script was editing
+a project that could never ship, with no way to tell. Those scripts went too. If
+you find yourself recreating either directory, you have taken a wrong turn.
+
+**iOS is genuinely different.** There are no flavours, so `ios-godaisy/` and
+`ios-growdaisy/` are real, separate projects and `cap:godaisy:open:ios` is the
+right way in. `.vercelignore` still lists the deleted Android directories on
+purpose — `npx cap add` recreates them locally, and 108 MB of untracked Gradle
+output under one of them once broke a production deploy.
 
 ### CSS Configuration
 **DO NOT MODIFY** Tailwind or PostCSS configs without review. Existing setup uses Tailwind 4 with DaisyUI 5 and specific optimizations.
