@@ -26,7 +26,7 @@ import type { Suggestion, WeatherData } from '@/utils/getSuggestionsByDay';
 import type { ActivityType } from '@/data/activities/types';
 import { bandFor, isGood, type CallBand } from './bands';
 
-import { lightTagsFor, EVENING } from '@/data/activityLight';
+import { lightTagsFor, EVENING, NOT_BEFORE_NINE } from '@/data/activityLight';
 import { PART_ORDER as PARTS, type DaypartName } from '@/lib/weather/dayparts';
 import SunCalc from 'suncalc';
 
@@ -79,13 +79,19 @@ function usableParts(
   activities: ActivityType[],
 ): ReadonlySet<PartName> {
   const tags = activities.find((a) => a.id === activityId)?.tags;
-  return tags?.includes('night') ? NIGHT_ONLY : ALL_PARTS;
+  if (tags?.includes('night')) return NIGHT_ONLY;
+  /* Conditions are not the only thing that makes an hour wrong. At seven the
+     weather can be perfect for a barbecue and the suggestion still be absurd —
+     see NOT_BEFORE_NINE, which explains why its default is the opposite of the
+     after-dark lists beside it. */
+  return NOT_BEFORE_NINE.has(activityId) ? NOT_EARLY : ALL_PARTS;
 }
 
 const ALL_PARTS: ReadonlySet<PartName> = new Set(PARTS);
 /* Overnight is bucketed and never offered as a window — see `dayparts.ts` — so
    the evening is where a night activity is scored. */
 const NIGHT_ONLY: ReadonlySet<PartName> = new Set<PartName>(['evening']);
+const NOT_EARLY: ReadonlySet<PartName> = new Set<PartName>(['morning', 'afternoon', 'evening']);
 
 /** Where the day is, so the sun can be put in the right place. */
 export interface Coords { lat: number; lon: number }

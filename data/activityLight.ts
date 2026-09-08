@@ -109,6 +109,55 @@ export const EVENING: ReadonlySet<string> = new Set([
 ]);
 
 /**
+ * Things nobody does before nine in the morning.
+ *
+ * The day grew a fourth part, `early` (06:00-09:00), so a hot country's usable
+ * window would stop being averaged into a 27 °C late morning. It is judged at
+ * 07:00 — and at seven o'clock the weather can be perfect for a barbecue and
+ * the suggestion still be absurd. Conditions are not the only thing that makes
+ * an hour wrong for an activity.
+ *
+ * ─── Why the default is the OTHER WAY ROUND from the lists above ─────────
+ *
+ * `AFTER_DARK` names what CAN be done, and anything unlisted is suppressed,
+ * because the cost of a wrong entry is somebody driving to a reservoir they
+ * cannot see. This list names what CANNOT, and anything unlisted is allowed.
+ *
+ * The asymmetry is deliberate, and it is about what a missing entry costs. Most
+ * physical activity is fine at seven — running, walking the dog, cycling,
+ * fishing, birdwatching, a dawn tee time, an early court — and in the climates
+ * this part of the day exists FOR, seven o'clock is the only civilised hour
+ * there is. An allow-list would have to name almost every activity in the
+ * library, would certainly be under-populated, and every omission would silently
+ * undo the thing the early block was built to do.
+ *
+ * So a missing entry here costs an odd-sounding suggestion, and a wrong entry
+ * costs a Sevillian being told there is nowhere to run at the only cool hour of
+ * their day. The first is embarrassing and the second is useless.
+ *
+ * ─── What is on it, and what deliberately is not ─────────────────────────
+ *
+ * A MEAL OR AN OCCASION, which needs other people and a time of day people keep.
+ * A barbecue at seven in the morning is the case that prompted this.
+ *
+ * A SCHEDULED EVENT. Nobody puts on outdoor music at dawn.
+ *
+ * NOT the team sports, though a 7 a.m. fixture would be odd: the app is not
+ * scheduling a match, it is saying the conditions suit a game, and a kickabout
+ * before work is a real thing. NOT golf or tennis — a dawn tee time and an
+ * early court are precisely what people do to beat the heat. NOT the beach: in
+ * a hot country a swim at seven is the whole point.
+ */
+export const NOT_BEFORE_NINE: ReadonlySet<string> = new Set([
+  'bbq',
+  'picnicking',
+  'outdoor_music',
+  /* Indoor and evening things that never reach the early bucket anyway, listed
+     so the set reads as a complete judgement rather than a partial one. */
+  'going_to_pub',
+]);
+
+/**
  * The tags `computeEveningLightMultiplier` expects, for one activity.
  *
  * Merged with whatever the library already carries rather than replacing it, so
