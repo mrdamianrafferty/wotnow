@@ -484,7 +484,7 @@ function calculateActivityScoreWithSnow(
    * severity of what fired, and the ordinary path is clamped no lower than 16.
    * The two ranges cannot overlap, so a vetoed day is always at the bottom.
    */
-  const poor = scorePoorConditions(activity.poorConditions ?? [], w);
+  const poor = scorePoorConditions(activity.poorConditions ?? [], w, { onWater: isWaterActivity });
   const penalty = poor.penalty;
 
   /**

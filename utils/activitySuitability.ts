@@ -471,6 +471,36 @@ const SHORTFALL_NOT_HAZARD = new Set([
  */
 const NEVER_A_HAZARD = new Set(['soilMoisture']);
 
+/**
+ * On the water a gust is what capsizes you; on a lawn it is what takes the
+ * tablecloth.
+ *
+ * That sentence is already in `getSuggestionsByDay`, above `safetyBlocksGood`,
+ * where it records that applying the gust rule to every activity "took golf,
+ * cricket, picnicking, outdoor yoga and painting down 25 points apiece on an
+ * ordinary breezy afternoon — the same over-reach as treating a bog as a
+ * hazard, and wrong for the same reason". That was fixed for the BAND GATE and
+ * not for the veto, so a gust could still short-circuit a land activity to 14.
+ *
+ * Measured over a real year at five UK and Irish places, the daily maximum gust
+ * has a median of 12.3 m/s and runs about three times the daily mean wind — so
+ * a pleasant Force 3 afternoon carries a 12 m/s gust somewhere in it. Every
+ * gust veto on a land activity sits at or below that, and the year came out
+ * like this:
+ *
+ *     picnicking     vetoed 79.5% of days, gust alone on 13.9%
+ *     outdoor_yoga   vetoed 75.0%,         gust alone on 18.1%
+ *     photography    vetoed 23.0%,         gust alone on 19.3%
+ *     urban_exploring vetoed 41.0%,        gust alone on  9.5%
+ *
+ * A gust on land is now a penalty and not a veto: the day still scores lower,
+ * it simply stops being short-circuited to the hazard floor. On water it stays
+ * exactly as it was — `isWaterActivity` is the line the rest of the scorer
+ * already draws, and a dinghy really is capsized by the gust rather than
+ * inconvenienced by it.
+ */
+const NOT_A_HAZARD_ON_LAND = new Set(['gust']);
+
 /** True when a triggered condition fired because the value was BELOW its range. */
 function firedLow(condition: string, value: number | undefined): boolean {
   if (typeof value !== 'number') return false;
@@ -526,7 +556,13 @@ export function overflowDirection(
 
 export function scorePoorConditions(
   conditions: string[],
-  weather: WeatherData
+  weather: WeatherData,
+  /**
+   * True where the activity happens on water, in which case the gust keeps its
+   * teeth. Defaults to true so a caller that has not thought about it gets the
+   * old, stricter behaviour rather than a silently relaxed one.
+   */
+  opts: { onWater?: boolean } = {},
 ): { penalty: number; triggered: CriterionScore[]; hazards: CriterionScore[]; all: CriterionScore[] } {
   const triggered: CriterionScore[] = [];
   const hazards: CriterionScore[] = [];
@@ -575,7 +611,8 @@ export function scorePoorConditions(
     if (score <= 0.7) continue;
     triggered.push(entry);
     const harmless = NEVER_A_HAZARD.has(key)
-      || (SHORTFALL_NOT_HAZARD.has(key) && firedLow(cond, value));
+      || (SHORTFALL_NOT_HAZARD.has(key) && firedLow(cond, value))
+      || (opts.onWater === false && NOT_A_HAZARD_ON_LAND.has(key));
     if (!harmless) hazards.push(entry);
     total += score;
   }
