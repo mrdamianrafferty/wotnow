@@ -129,7 +129,7 @@ import { applyEveningBonus } from './eveningScoring';
 import { describeConditions, phraseFor, type RainWindow } from './activityReasons';
 import { assessSoilCondition, isMudSensitive, getMudMessage } from './soilMoistureUtils';
 import { BAND_FLOOR } from '../lib/godaisy/call/bands';
-import { isDangerous } from './criterionRoles';
+import { isDangerous, roleFor } from './criterionRoles';
 // import { activityTypes } from '../data/activityTypes';
 // import { getActivityMessage } from '../data/activityMessages';
 
@@ -904,7 +904,48 @@ function calculateActivityScoreWithSnow(
    */
   const safetyBlocksGood = isWaterActivity && worstSafety(good) < 0.5;
 
-  if (perfect.criteria.length && perfect.mean > 0.8 && worst(perfect) >= 0.5
+  /**
+   * Perfect tolerates ONE thing being off, as long as it is not a safety
+   * criterion — and not a viability one either.
+   *
+   * The floor was `worst(perfect) >= 0.5` on every criterion at once, and
+   * perfect bands are long: a dozen conditions is ordinary. Requiring all
+   * twelve made the band describe a day that does not occur rather than the
+   * best day of the year, which is why the top of the scale was empty.
+   *
+   * SAFETY is excluded because it is the one thing a good day cannot be wrong
+   * about. A perfect day for kayaking that is gusting Force 6 is not a perfect
+   * day with one flaw; it is a day for staying ashore, and the word PRIME on
+   * that tile is the failure this whole band exists to avoid.
+   *
+   * VIABILITY is excluded too, and that is a reading of "off" rather than an
+   * extra rule. A comfort criterion being missed means the day is worse; a
+   * viability one means the activity is not happening. No amount of sunshine
+   * makes a windless day windsurfable, and `windSpeed` on a shortfall is
+   * exactly that criterion — the library has drawn this line since
+   * SHORTFALL_NOT_HAZARD and it is drawn in `criterionRoles` now. Tolerating a
+   * viability miss would have called a flat calm a perfect day for the sail.
+   *
+   * So: at most one COMFORT criterion may sit below the floor. Everything else
+   * is unchanged, `perfect.mean > 0.8` still has to hold, and a second miss of
+   * any kind still refuses the band.
+   */
+  const perfectQualifies = (b: { criteria: CriterionScore[] }) => {
+    const misses = b.criteria.filter(
+      (c) => canDisqualify(c.key) && c.score < 0.5,
+    );
+    if (misses.length === 0) return true;
+    if (misses.length > 1) return false;
+    /* `firedLow` is deliberately NOT passed. It exists so that a flat calm on a
+       sailing tile does not read "not safe for sailing" — a question about the
+       word UNSAFE, not about the word PERFECT. Passing it here would map a
+       windsurfer's `windSpeed=8..12` missed from below onto COMFORT and call a
+       5 m/s afternoon a perfect day for the sail, which is precisely the
+       sentence the viability exclusion is here to prevent. */
+    return roleFor(misses[0].key, { onWater: isWaterActivity }) === 'comfort';
+  };
+
+  if (perfect.criteria.length && perfect.mean > 0.8 && perfectQualifies(perfect)
       && (rainExempt || rainMm <= 0.2) && penalty < 0.3) {
     score = span(perfect.mean, 0.8, 1, 88, 98);
     band = perfect;
