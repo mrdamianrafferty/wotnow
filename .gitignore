@@ -115,3 +115,9 @@ venv/
 # and scripts/sync-species-images.js writes its SQL here.
 tmp/
 reports/
+
+# JPL ephemerides and Skyfield's cache. Derived data with a stable public URL —
+# Skyfield downloads what it cannot find. `de440s.bsp` was committed at 31 MB
+# and was the largest file in the repo. See compute.py's EPHEMERIS_DIR.
+*.bsp
+.ephemeris/

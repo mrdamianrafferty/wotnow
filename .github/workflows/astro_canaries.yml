@@ -41,6 +41,16 @@ jobs:
             services/astro_highlights/astro_highlights/pyproject.toml
             services/astro_highlights/astro_highlights/setup.cfg
 
+      - name: Cache JPL ephemeris
+        uses: actions/cache@v4
+        with:
+          # ~31 MB, downloaded from NAIF/JPL on a miss. It used to be committed;
+          # this cache is what replaces that, so a nightly run does not pull it
+          # every time. The key is the filename because the file never changes:
+          # de440s covers 1849-2150 and is not revised.
+          path: services/astro_highlights/astro_highlights/.ephemeris
+          key: jpl-ephemeris-de440s
+
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
