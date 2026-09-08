@@ -330,7 +330,7 @@ export const outdoorRecreation: ActivityType[] = [
       'windSpeed=8..12',
       'precipitation=2..10',            // light to moderate rain
       'cloudCover=30..100',
-      'visibility=3..5',
+      'visibility=2..5',               // reaches the <2 veto; 2-3 km sat in no rung
       'soilMoisture=45..50',
       'gust=12.8..16'
     ],
