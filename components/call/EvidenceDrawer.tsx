@@ -38,6 +38,9 @@ export interface EvidenceDrawerProps {
 }
 
 const PART_LABEL: Record<string, string> = {
+  /* Six to nine. Split off so a hot country's usable window stops being
+     averaged into the late morning — see lib/weather/dayparts. */
+  early: 'Early',
   morning: 'Morning',
   afternoon: 'Afternoon',
   evening: 'Evening',

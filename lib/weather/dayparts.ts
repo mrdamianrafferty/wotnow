@@ -70,7 +70,27 @@ export interface DaypartAggregate {
 }
 
 /** The three parts a call can name. */
-export const PART_ORDER = ['morning', 'afternoon', 'evening'] as const;
+/**
+ * `early` exists for hot climates, and it is why the parts are no longer three.
+ *
+ * Measured in Seville, mid-June to mid-August, median temperature by hour:
+ *
+ *     6h  7h  8h  9h 10h 11h 12h ... 20h 21h 22h 23h
+ *     24  23  23  25  27  29  31 ...  35  32  30  29
+ *
+ * The six-hour 06-12 mean is 24.9 °C — teetering on running's 25 °C ceiling,
+ * so a Seville summer read "not today" for a run on half the days. The window
+ * Sevillians actually use is 6 to 9, and its mean is 23.3 °C. Four of those six
+ * hours are usable and the block's own mean hid all four.
+ *
+ * Splitting it is only worth anything where the day HAS that spread. In
+ * Manchester every hour of every block is under 25 °C, and a fourth bar there
+ * would say what the third one already said. That is handled by collapsing
+ * rather than by a threshold — see `distinctBlocks` in the call's window
+ * module. If early and morning agree, they merge and a reader sees the three
+ * parts they always saw.
+ */
+export const PART_ORDER = ['early', 'morning', 'afternoon', 'evening'] as const;
 export type DaypartName = (typeof PART_ORDER)[number];
 
 /**
@@ -92,7 +112,10 @@ export type DaypartName = (typeof PART_ORDER)[number];
 export type BucketName = 'overnight' | DaypartName;
 
 export function bucketFor(hour: number): BucketName {
-  return hour < 6 ? 'overnight' : hour < 12 ? 'morning' : hour < 18 ? 'afternoon' : 'evening';
+  if (hour < 6) return 'overnight';
+  if (hour < 9) return 'early';
+  if (hour < 12) return 'morning';
+  return hour < 18 ? 'afternoon' : 'evening';
 }
 
 /** Open-Meteo's hourly block: parallel arrays keyed by field name, plus `time`. */
