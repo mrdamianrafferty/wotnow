@@ -201,7 +201,22 @@ function timeOfDay(
   if (t >= sunrise.getTime() && t <= sunset.getTime()) return 1;
 
   const tags = lightTagsFor(activityId, activity.tags ?? []);
-  if (tags.includes('floodlit')) return 1;
+  /**
+   * FLOODLIGHTS JUSTIFY AN EVENING, NOT A DAWN.
+   *
+   * This was `if (tags.includes('floodlit')) return 1` when the evening was the
+   * only part that could be dark. `early` made it wrong at the other end:
+   * measured in Edinburgh on 15 January, where the sun rises at 08:42, football
+   * scored 81 — prime — in a 07:00 block that is pitch black, while running in
+   * the same block correctly scored 55 and hiking 31.
+   *
+   * A club floodlights a pitch for evening play. Nobody switches them on at
+   * seven in the morning for a reader who did not ask, and the same mistake at
+   * the other end of the day is the one `data/activityLight` was written to
+   * stop. A floodlit sport in a dark early block now falls through to the
+   * ordinary suppression, exactly as an unlit one does.
+   */
+  if (tags.includes('floodlit') && part === 'evening') return 1;
   if (tags.includes('evening_ok') || tags.includes('night')) return AFTER_DARK_DAMPED;
   return AFTER_DARK_SUPPRESSED;
 }

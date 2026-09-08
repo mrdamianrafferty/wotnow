@@ -90,3 +90,44 @@ describe('the judgements the list makes', () => {
     for (const id of NOT_BEFORE_NINE) expect(ids.has(id)).toBe(true);
   });
 });
+
+describe('floodlights justify an evening, not a dawn', () => {
+  /*
+   * Found by running the early block in Edinburgh in January, where the sun
+   * rises at 08:42. `computeEveningLightMultiplier` exempted every floodlit
+   * sport from darkness in ANY part, because when it was written the evening
+   * was the only part that could be dark. Football scored 81 — prime — in a
+   * 07:00 block that is pitch black, while running in the same block correctly
+   * scored 55 and hiking 31.
+   *
+   * A club floodlights a pitch for evening play. Nobody switches them on at
+   * seven for a reader who did not ask.
+   */
+  const DARK = { temperature: 4, precipitation: 0, precipitationHours: 0, clouds: 40,
+    windspeed: 8, gustspeed: 14, humidity: 80, visibility: 20000, soilMoisture: 30 };
+  const EDINBURGH_JAN = { early: DARK, morning: DARK, afternoon: DARK, evening: DARK };
+  const winter = (id: string) => {
+    const date = Math.floor(new Date('2026-01-15T12:00:00').getTime() / 1000);
+    const bars = partBands(id, EDINBURGH_JAN as never, date, allSports as never,
+      new Date('2026-01-15T09:00:00'), { lat: 55.953, lon: -3.188 });
+    return new Map(bars.map((b) => [b.name, b.score]));
+  };
+
+  it('suppresses a floodlit sport in a dark early block', () => {
+    const s = winter('football_soccer');
+    expect(s.get('early')!).toBeLessThan(40);
+    expect(s.get('morning')!).toBeGreaterThan(60);   // 10:00 is light by then
+  });
+
+  it('still lets floodlights carry a dark evening', () => {
+    expect(winter('football_soccer').get('evening')!).toBeGreaterThan(60);
+  });
+
+  it('leaves the unlit activities where they were, at both ends', () => {
+    for (const id of ['running', 'hiking']) {
+      const s = winter(id);
+      expect(s.get('early')!).toBeLessThan(s.get('morning')!);
+      expect(s.get('evening')!).toBeLessThan(s.get('afternoon')!);
+    }
+  });
+});
