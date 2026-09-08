@@ -1,15 +1,57 @@
 
-from skyfield.api import load, wgs84
+import os
+from pathlib import Path
+
+from skyfield.api import Loader, wgs84
 from skyfield import almanac
 from datetime import datetime, timedelta, timezone
 
+# Where the JPL ephemeris and Skyfield's timescale files live.
+#
+# These used to be resolved by the bare `load(...)` helper, which is a Loader
+# rooted at the CURRENT WORKING DIRECTORY. That worked, but it meant the 31 MB
+# `de440s.bsp` had to sit in the source tree to be found — and so it was
+# committed, and stayed committed, as the largest file in the repository.
+#
+# It never needed to be. Skyfield downloads an ephemeris it cannot find, from
+# NAIF/JPL, and caches it. The file is derived data with a stable public URL,
+# which is the definition of something that does not belong in git.
+#
+# So the directory is explicit and configurable instead:
+#
+#   ASTRO_EPHEMERIS_DIR   point it anywhere — a shared cache, a mounted drive,
+#                         a CI cache path
+#   default               `.ephemeris/` beside the package, which is gitignored
+#
+# Nothing about the astronomy changes. The first run in a fresh checkout
+# downloads ~31 MB and every run after that reads it from disk.
+EPHEMERIS_DIR = Path(
+    os.environ.get('ASTRO_EPHEMERIS_DIR')
+    or Path(__file__).resolve().parent.parent / '.ephemeris'
+)
+
+# de440s is the small modern ephemeris (1849-2150). de421 is the older, smaller
+# fallback, kept because it is what this code has always fallen back to.
+EPHEMERIS_FILES = ('de440s.bsp', 'de421.bsp')
+
+
 def load_ephemerides():
-    ts = load.timescale()
-    try:
-        eph = load('de440s.bsp')
-    except Exception:
-        eph = load('de421.bsp')
-    return type('E', (), {'ts':ts, 'eph':eph})
+    EPHEMERIS_DIR.mkdir(parents=True, exist_ok=True)
+    loader = Loader(str(EPHEMERIS_DIR))
+    ts = loader.timescale()
+
+    last_error = None
+    for name in EPHEMERIS_FILES:
+        try:
+            return type('E', (), {'ts': ts, 'eph': loader(name)})
+        except Exception as exc:  # noqa: BLE001 - fall through to the next one
+            last_error = exc
+
+    raise RuntimeError(
+        f"could not load an ephemeris into {EPHEMERIS_DIR}. Tried "
+        f"{', '.join(EPHEMERIS_FILES)}. Set ASTRO_EPHEMERIS_DIR to a directory "
+        f"holding one, or allow network access so Skyfield can fetch it."
+    ) from last_error
 
 def moon_phase_fraction(eph, ts, t):
     e = almanac.moon_phase(eph, t)
