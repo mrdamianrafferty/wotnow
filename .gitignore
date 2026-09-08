@@ -103,3 +103,15 @@ scripts/backups/*.json
 # Baked share photography — regenerate with scripts/prebake-call-images.ts
 public/call-photos/
 scratch/
+
+# Python virtualenvs — never commit one. `services/astro_highlights` carried a
+# 2,408-file Python 3.9 venv for months; CI builds its own from
+# requirements.txt with actions/setup-python (on 3.11), so it was never used.
+.venv/
+**/.venv/
+venv/
+
+# Scratch and generated output. `tmp/` held 36 one-off Findr-era diagnostics,
+# and scripts/sync-species-images.js writes its SQL here.
+tmp/
+reports/
