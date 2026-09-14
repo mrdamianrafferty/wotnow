@@ -110,26 +110,38 @@ export function parseSetup(raw: string | undefined | null): CallSetup | null {
     const json = typeof atob === 'function'
       ? decodeURIComponent(escape(atob(raw)))
       : Buffer.from(raw, 'base64').toString('utf8');
-    const d = JSON.parse(json) as Partial<CallSetup>;
-    if (d?.v !== 1) return null;
-
-    const sports = Array.isArray(d.sports)
-      ? d.sports.filter((s): s is string => typeof s === 'string' && VALID_SPORTS.has(s)).slice(0, 12)
-      : [];
-    if (!sports.length) return null;
-
-    const place = parsePlace(d.place);
-    if (!place) return null;
-
-    const coastal = parsePlace(d.coastal);
-    const hour = typeof d.hour === 'number' && Number.isInteger(d.hour) && d.hour >= 0 && d.hour <= 23
-      ? d.hour
-      : undefined;
-
-    return { v: 1, sports, place, ...(coastal ? { coastal } : {}), ...(hour !== undefined ? { hour } : {}) };
+    return sanitiseSetup(JSON.parse(json));
   } catch {
     return null;
   }
+}
+
+/**
+ * Validate an already-decoded setup, from the cookie or from the server's copy.
+ *
+ * The server's copy goes through the same gate because it is written by the
+ * same client: `/api/godaisy/call-setup` checks ids and coordinates, but not the
+ * 12-sport cap or the name length this module lays out against.
+ */
+export function sanitiseSetup(input: unknown): CallSetup | null {
+  if (!input || typeof input !== 'object') return null;
+  const d = input as Partial<CallSetup>;
+  if (d.v !== 1) return null;
+
+  const sports = Array.isArray(d.sports)
+    ? d.sports.filter((s): s is string => typeof s === 'string' && VALID_SPORTS.has(s)).slice(0, 12)
+    : [];
+  if (!sports.length) return null;
+
+  const place = parsePlace(d.place);
+  if (!place) return null;
+
+  const coastal = parsePlace(d.coastal);
+  const hour = typeof d.hour === 'number' && Number.isInteger(d.hour) && d.hour >= 0 && d.hour <= 23
+    ? d.hour
+    : undefined;
+
+  return { v: 1, sports, place, ...(coastal ? { coastal } : {}), ...(hour !== undefined ? { hour } : {}) };
 }
 
 function parsePlace(p: unknown): SetupPlace | null {

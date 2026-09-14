@@ -77,14 +77,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
              * Every platform, not just native: signing in on the web is just as
              * good a moment to mirror it, and the sender does not care which
              * browser the setup was typed into.
+             *
+             * It reconciles rather than pushes. Pushing this device's cookie on
+             * every auth event let whichever device spoke last overwrite the
+             * account — see `reconcileSetup` for the rule. When the account's
+             * setup replaces this device's, a page rendered on the server from
+             * the old cookie is rendered again.
              */
             try {
-              const { readSetup } = await import('@/lib/godaisy/call/setup');
-              const existing = readSetup();
-              if (existing) {
-                const { syncSetupToServer } = await import('@/lib/godaisy/call/sync');
-                void syncSetupToServer(existing);
-              }
+              const { reconcileSetup } = await import('@/lib/godaisy/call/sync');
+              void reconcileSetup(session.user.id)
+                .then(async (restored) => {
+                  if (!restored) return;
+                  const { default: Router } = await import('next/router');
+                  if (Router.pathname === '/' || Router.pathname === '/call') {
+                    await Router.replace(Router.asPath);
+                  }
+                })
+                .catch((e) => console.error('[Auth] Call setup refresh failed:', e));
             } catch (e) {
               console.error('[Auth] Call setup sync failed:', e);
             }
