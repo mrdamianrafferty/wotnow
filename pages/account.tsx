@@ -459,7 +459,7 @@ export default function AccountPage() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-white" data-theme="light">
+    <div className="min-h-screen flex flex-col bg-[var(--call-page)]" data-theme="light">
       <Head>
         <title>Account - Go Daisy</title>
       </Head>

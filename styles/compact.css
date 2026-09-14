@@ -14,8 +14,11 @@
   /* Buttons */
   .btn { min-height: 2.25rem !important; height: 2.25rem !important; padding: 0 0.75rem !important; font-size: 0.875rem !important; line-height: 1.25rem !important; }
 
-  /* Inputs/selects/textarea */
-  .input, .select, .textarea { height: 2.25rem !important; min-height: 2.25rem !important; padding: 0 0.75rem !important; font-size: 0.875rem !important; }
+  /* Inputs/selects/textarea — compact in height and padding, but never under
+     16px of text: iOS zooms the page on focus into a smaller field, and the
+     zoom leaves the page wider than the screen, scrolling sideways. At 14px
+     this did it to every form on a phone, the sign-in page among them. */
+  .input, .select, .textarea { height: 2.25rem !important; min-height: 2.25rem !important; padding: 0 0.75rem !important; font-size: 1rem !important; }
 
   /* Cards */
   .card, .card .card-body { padding: 0.75rem !important; gap: 0.5rem !important; }
