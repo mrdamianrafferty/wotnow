@@ -1,5 +1,25 @@
-import { createServerClient } from '@supabase/ssr'
+import { createServerClient, serializeCookieHeader, type CookieOptions } from '@supabase/ssr'
 import type { NextApiRequest, NextApiResponse } from 'next'
+
+/**
+ * `Set-Cookie` values for the cookies Supabase asks us to write.
+ *
+ * This was hand-built as `HttpOnly=${opts.httpOnly !== false}`, and a cookie
+ * attribute's value is ignored — `HttpOnly=false` still sets HttpOnly. So every
+ * token this route refreshed came back unreadable to `document.cookie`, and the
+ * browser client, which finds its session there, lost it: pages rendered on
+ * the server still saw a signed-in user, while every client-side call that
+ * needs a session (the call-setup mirror among them) quietly did nothing.
+ * `@supabase/ssr` asks for `httpOnly: false` precisely so its browser client can
+ * read these. It also dropped `Max-Age=0`, so a sign-out never deleted anything.
+ *
+ * The library's own serializer gets both right.
+ */
+export function toSetCookieHeaders(
+  cookiesToSet: Array<{ name: string; value: string; options?: CookieOptions }>,
+): string[] {
+  return cookiesToSet.map(({ name, value, options }) => serializeCookieHeader(name, value, options ?? {}))
+}
 
 /**
  * Creates a Supabase client for use in Next.js Pages API routes
@@ -21,11 +41,7 @@ export function createServerSupabaseClient(context: { req: NextApiRequest; res: 
           }));
         },
         setAll: (cookiesToSet) => {
-          // Set multiple cookies at once
-          const cookieStrings = cookiesToSet.map(({ name, value, options }) => {
-            const opts = options || {};
-            return `${name}=${value}; Path=${opts.path || '/'}; HttpOnly=${opts.httpOnly !== false}; SameSite=${opts.sameSite || 'lax'}; Secure=${opts.secure !== false}${opts.maxAge ? `; Max-Age=${opts.maxAge}` : ''}${opts.domain ? `; Domain=${opts.domain}` : ''}`;
-          });
+          const cookieStrings = toSetCookieHeaders(cookiesToSet);
           const existing = context.res.getHeader('Set-Cookie') || [];
           const existingArray = Array.isArray(existing) ? existing : [existing.toString()];
           context.res.setHeader('Set-Cookie', [...existingArray, ...cookieStrings]);
