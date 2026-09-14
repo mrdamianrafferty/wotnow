@@ -28,10 +28,10 @@ import { allSports } from '@/data/activities';
 import { ACTIVITY_GROUPS } from '@/data/activityGroups';
 import { useGoDaisyPushNotifications } from '@/hooks/useGoDaisyPushNotifications';
 import {
-  writeSetup, readSetup, mirrorToPreferences, DEFAULT_SPORTS,
+  mirrorToPreferences, DEFAULT_SPORTS,
   type CallSetup, type SetupPlace,
 } from '@/lib/godaisy/call/setup';
-import { syncSetupToServer } from '@/lib/godaisy/call/sync';
+import { loadSetup, saveSetup } from '@/lib/godaisy/call/sync';
 import { CallDeliveryNotice } from '@/components/call/CallDeliveryNotice';
 import {
   SportsStep, SpotsStep, HourStep, SEED_TARGET,
@@ -124,14 +124,29 @@ export default function StartPage() {
     return all.filter((o) => keep.has(o.id));
   }, []);
 
-  // Coming back to change something should not start from an empty screen.
+  /*
+   * Coming back to change something should not start from an empty screen —
+   * nor from the defaults, on a signed-in device with no cookie. `loadSetup`
+   * falls back to the account's copy, and without that a second phone opened
+   * onboarding on DEFAULT_SPORTS and saved them over the account's own list.
+   *
+   * The fallback is a network round trip, so every setter defers to anything
+   * the person has already tapped while it was in flight.
+   */
   useEffect(() => {
-    const saved = readSetup();
-    if (!saved) return;
-    setSports(saved.sports);
-    setPlace(saved.place);
-    if (saved.coastal) setCoastal(saved.coastal);
-    if (saved.hour !== undefined) setHour(saved.hour);
+    let live = true;
+    void loadSetup().then((saved) => {
+      if (!live || !saved) return;
+      setSports((cur) => (
+        cur.length === DEFAULT_SPORTS.length && cur.every((s, i) => s === DEFAULT_SPORTS[i])
+          ? saved.sports
+          : cur
+      ));
+      setPlace((cur) => cur ?? saved.place);
+      if (saved.coastal) setCoastal((cur) => cur ?? saved.coastal ?? null);
+      if (saved.hour !== undefined) setHour((cur) => cur ?? saved.hour);
+    });
+    return () => { live = false; };
   }, []);
 
   const needsCoastal = sports.some((id) => WATER.has(id));
@@ -217,17 +232,17 @@ export default function StartPage() {
       ...(coastal ? { coastal } : {}),
       ...(hour !== undefined ? { hour } : {}),
     };
-    writeSetup(setup);
     mirrorToPreferences(setup);
     /*
-     * And, for anyone signed in, to the server — the only copy the daily call's
-     * cron can read. Deliberately NOT awaited: the cookie is what `/call`
-     * renders from and it is already written, so making somebody wait on a
-     * network round-trip before they see the screen they just built would be
-     * paying for a store that screen does not read. `syncSetupToServer` never
-     * throws, and no-ops when signed out.
+     * The cookie, and for anyone signed in the server — the only copy the daily
+     * call's cron can read. Deliberately NOT awaited: `saveSetup` writes the
+     * cookie synchronously before its first await, and that is what `/call`
+     * renders from, so making somebody wait on a network round-trip before
+     * they see the screen they just built would be paying for a store that
+     * screen does not read. It never throws, and a failed sync is retried at
+     * the next launch.
      */
-    void syncSetupToServer(setup);
+    void saveSetup(setup);
     // `replace`, not `push`: the back button from the call should not land on
     // the last screen of a flow that is already finished.
     router.replace('/call');

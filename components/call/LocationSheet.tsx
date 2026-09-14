@@ -15,7 +15,8 @@
  */
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { readSetup, writeSetup, mirrorToPreferences, DEFAULT_SPORTS, type SetupPlace } from '@/lib/godaisy/call/setup';
+import { readSetup, mirrorToPreferences, DEFAULT_SPORTS, type SetupPlace } from '@/lib/godaisy/call/setup';
+import { saveSetup } from '@/lib/godaisy/call/sync';
 import { Spinner } from './Spinner';
 
 interface Suggestion extends SetupPlace {
@@ -83,16 +84,21 @@ export function LocationSheet({ current, onClose }: { current: string; onClose: 
    * server from this cookie — the verdict, the seven days, the photographs and
    * the share link all come from `getServerSideProps`. Re-deriving that in the
    * browser would be a second implementation of the whole page.
+   *
+   * The save is awaited before the reload. It used to write the cookie alone
+   * and rely on the next launch pushing it; launches now let the account win
+   * unless the change is marked pending, and a reload that beat the marker
+   * would put the old place straight back.
    */
-  const choose = useCallback((place: SetupPlace) => {
+  const choose = useCallback(async (place: SetupPlace) => {
     const saved = readSetup();
     const setup = saved
       ? { ...saved, place }
       // Somebody who never onboarded still gets to move the map. The sports
       // fall back to what the place is known for on the next render.
       : { v: 1 as const, sports: [...DEFAULT_SPORTS], place };
-    writeSetup(setup);
     mirrorToPreferences(setup);
+    await saveSetup(setup);
     window.location.assign('/');
   }, []);
 
