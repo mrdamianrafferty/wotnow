@@ -70,6 +70,10 @@
                                         (4.23). This clears 4.5 on every
                                         light ground, at any size.    */
   --call-on-dark:         #faf8f5;
+  /* Text on a moss fill. Not `--call-page`, which is what the buttons used:
+     the fill keeps its hue in dark mode and the page does not, so the label
+     went #1c1917 on #3d6b4f — 2.84:1. White-on-moss is 6.15 in both. */
+  --call-on-moss:         #faf8f5;
   --call-on-dark-body:    rgba(250, 248, 245, 0.92);
   --call-on-dark-label:   rgba(250, 248, 245, 0.82);
   --call-on-dark-quiet:   rgba(250, 248, 245, 0.70);
@@ -1281,12 +1285,12 @@ section.gd-land-foot  { padding: 32px var(--call-gutter-app) 44px; }
   border: 1px solid var(--call-moss);
   border-radius: var(--call-r-button);
   background: var(--call-moss);
-  color: var(--call-page);
+  color: var(--call-on-moss);
   font: 600 var(--call-body-sm)/1 var(--call-font-body);
   text-decoration: none; cursor: pointer;
   transition: opacity var(--call-t-press) var(--call-ease-out);
 }
-.gd-btn:hover { opacity: .88; background: var(--call-moss); color: var(--call-page); }
+.gd-btn:hover { opacity: .88; background: var(--call-moss); color: var(--call-on-moss); }
 .gd-btn:disabled { opacity: .45; cursor: not-allowed; }
 .gd-btn:focus-visible { outline: 2px solid var(--call-ink-1); outline-offset: 2px; }
 
@@ -1435,6 +1439,19 @@ section.gd-land-foot  { padding: 32px var(--call-gutter-app) 44px; }
 }
 .gd-acct p a:hover, .gd-cond p a:hover, .gd-spot p a:hover { color: var(--call-ink-1); }
 
+/* A note is a div, so the rule above never reached its links and the old
+   app's global `a { color: #4a90e2 }` did — 2.90:1 on the note's panel. Buttons
+   are excluded: `.gd-note a` outranks `.gd-btn`, and would paint moss text on
+   the moss "Log in" button. The good and bad notes keep their own ink, which
+   is what was measured against their fills. */
+.gd-note a:not(.gd-btn) {
+  color: var(--call-moss-ink);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.gd-note a:not(.gd-btn):hover { color: var(--call-ink-1); }
+.gd-note--good a:not(.gd-btn), .gd-note--bad a:not(.gd-btn) { color: inherit; }
+
 /* Cards and tiles for the support page, which was the last surface still
    carrying pastel Tailwind — an orange-500 Patreon button, and emerald, pink
    and orange icon tiles that between them named four palettes. Patreon's own
@@ -1467,10 +1484,10 @@ section.gd-land-foot  { padding: 32px var(--call-gutter-app) 44px; }
  */
 .gd-doc a.gd-btn, .gd-doc a.gd-app-store {
   text-decoration: none;
-  color: var(--call-page);
+  color: var(--call-on-moss);
 }
 .gd-doc a.gd-btn.gd-btn--quiet { color: var(--call-ink-2); }
-.gd-doc a.gd-btn:hover, .gd-doc a.gd-app-store:hover { color: var(--call-page); }
+.gd-doc a.gd-btn:hover, .gd-doc a.gd-app-store:hover { color: var(--call-on-moss); }
 .gd-doc a.gd-btn.gd-btn--quiet:hover { color: var(--call-ink-1); }
 
 .gd-acct-pw { display: flex; flex-direction: column; gap: 8px; max-width: 22rem; }
@@ -1840,10 +1857,14 @@ section.gd-land-foot  { padding: 32px var(--call-gutter-app) 44px; }
 .gd-acct { min-height: 100vh; background: var(--call-page); color: var(--call-ink-1); font-family: var(--call-font-body); }
 .gd-acct-inner { max-width: 620px; margin: 0 auto; padding: 28px var(--call-gutter-app) 56px; }
 .gd-acct-top { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; margin-bottom: var(--call-block); }
+/* The headings name their colour. `h1, h2, h3 { color: #222 }` in index.css
+   is aimed at the old app, and without a colour of their own these inherited
+   it rather than the page's ink — #222 on #1c1917 in dark mode, 1.10:1. */
 .gd-acct-h1 {
   margin: 0; font-family: var(--call-font-display);
   font-size: var(--call-page-title); font-weight: 700;
   line-height: 1.05; letter-spacing: -.02em;
+  color: var(--call-ink-1);
 }
 .gd-acct-signout {
   background: none; border: 0; cursor: pointer; padding: 6px 2px;
@@ -1856,6 +1877,7 @@ section.gd-land-foot  { padding: 32px var(--call-gutter-app) 44px; }
 .gd-acct-h2 {
   margin: 0 0 8px; font-family: var(--call-font-display);
   font-size: var(--call-screen-title); font-weight: 700; letter-spacing: -.01em;
+  color: var(--call-ink-1);
 }
 .gd-acct-label { display: block; margin: 0 0 5px; font-size: var(--call-body-sm); color: var(--call-ink-3); }
 .gd-acct-note { margin: 0 0 12px; max-width: 58ch; font-size: var(--call-body-sm); line-height: 1.55; color: var(--call-ink-3); }
