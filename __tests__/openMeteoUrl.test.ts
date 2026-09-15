@@ -410,6 +410,110 @@ describe('openMeteoUrl', () => {
       expect(redacted).not.toContain(encodeURIComponent(awkward));
       expect(redacted).not.toContain(awkward);
     });
+
+    it('redacts the configured key in the form encoding the request URL uses', () => {
+      // URLSearchParams writes a space as + and escapes some punctuation differently
+      // from encodeURIComponent (for example ' ( ) * ~ !).
+      for (const awkward of ['a b', "a'b(c)*d~e!f", 'a b/c+d']) {
+        const url = openMeteoUrl('forecast', '/v1/forecast', { latitude: 1 }, awkward);
+        const formEncoded = url.searchParams.toString().split('apikey=')[1];
+        const text = `failed near ${formEncoded} while fetching`;
+        const redacted = redactOpenMeteoApiKey(text, awkward);
+        expect(redacted).not.toContain(formEncoded);
+        expect(redacted).toBe('failed near REDACTED while fetching');
+      }
+    });
+
+    it('leaves no part of a key containing &, plain or inside an encoded URL', () => {
+      // The request carries apikey=abc%26def; the generic match stops at %26.
+      const awkward = 'abc&def';
+      const url = openMeteoUrl('forecast', '/v1/forecast', { latitude: 1 }, awkward).toString();
+      const text = `fetch failed: ${url} (from next=${encodeURIComponent(url)}) raw ${awkward}`;
+      const redacted = redactOpenMeteoApiKey(text, awkward);
+      expect(redacted).not.toContain('abc');
+      expect(redacted).not.toContain('def');
+    });
+
+    it('redacts an apikey that is the first parameter of an encoded URL', () => {
+      // %3Fapikey: the character before apikey is the F of the encoded ?.
+      const url = 'https://customer-api.open-meteo.com/v1/forecast?apikey=s3cr3tv4lue&latitude=1';
+      const once = encodeURIComponent(url);
+      for (const text of [once, encodeURIComponent(once)]) {
+        const redacted = redactOpenMeteoApiKey(text, null);
+        expect(redacted).not.toContain('s3cr3tv4lue');
+        expect(redacted).toContain('latitude');
+      }
+    });
+
+    it('redacts an apikey written as a property: JSON, inspected or plain', () => {
+      for (const text of ['{"apikey":"s3cr3tv4lue"}', "{ apikey: 's3cr3tv4lue' }", 'apikey : s3cr3tv4lue']) {
+        expect(redactOpenMeteoApiKey(text, null)).not.toContain('s3cr3tv4lue');
+      }
+    });
+
+    it('sanitises an object carrying an apikey property, with no key configured', () => {
+      delete process.env.OPEN_METEO_API_KEY;
+      const safe = redactOpenMeteoError({ apikey: 's3cr3tv4lue' });
+      expect(everything(safe)).not.toContain('s3cr3tv4lue');
+    });
+
+    it('redacts a whole bare value, %26 and all, with no key configured', () => {
+      expect(redactOpenMeteoApiKey('GET /v1/forecast?apikey=abc%26def&latitude=1', null)).toBe(
+        'GET /v1/forecast?apikey=REDACTED&latitude=1'
+      );
+      // Encoded once, the key's own & is %2526 and the separator %26.
+      const once = encodeURIComponent('https://x.test/v1/forecast?apikey=abc%26def&latitude=1');
+      const redacted = redactOpenMeteoApiKey(once, null);
+      expect(redacted).not.toContain('def');
+      expect(redacted).toContain('latitude');
+    });
+
+    it('keeps a DOMException a DOMException of the same name, redacting its message', () => {
+      const key = 'k3y-for-dom';
+      const safe = redactOpenMeteoError(new DOMException(`aborted apikey=${key}`, 'AbortError'), key);
+      expect(safe).toBeInstanceOf(DOMException);
+      expect((safe as DOMException).name).toBe('AbortError');
+      expect(everything(safe)).not.toContain(key);
+    });
+
+    it('redacts an assignment with whitespace around =, with no key configured', () => {
+      for (const text of ['apikey = customer-secret', 'apikey= customer-secret', 'APIKEY =customer-secret']) {
+        expect(redactOpenMeteoApiKey(text, null)).not.toContain('customer-secret');
+      }
+    });
+  });
+
+  describe('a caller-supplied apikey param', () => {
+    it('is never sent by openMeteoUrl, with or without a configured key', () => {
+      const params = { latitude: 1, apikey: 'caller', APIKey: 'caller2' };
+      const free = openMeteoUrl('forecast', '/v1/forecast', params, null);
+      expect(free.hostname).toBe('api.open-meteo.com');
+      expect(free.toString()).not.toMatch(/apikey|caller/i);
+
+      const keyed = openMeteoUrl('forecast', '/v1/forecast', params, 'k1');
+      expect(keyed.searchParams.getAll('apikey')).toEqual(['k1']);
+      expect(keyed.toString()).not.toContain('caller');
+    });
+
+    it('is never passed on in SDK params, with or without a configured key', () => {
+      const params: Record<string, unknown> = { latitude: 1, apikey: 'caller', APIKey: 'caller2' };
+      const free = openMeteoSdkRequest('forecast', '/v1/forecast', params, null);
+      expect(free.params).toEqual({ latitude: 1 });
+
+      const keyed = openMeteoSdkRequest('forecast', '/v1/forecast', params, 'k1');
+      expect(keyed.params).toEqual({ latitude: 1, apikey: 'k1' });
+    });
+
+    it('cannot come in through the path either', () => {
+      expect(() => openMeteoUrl('forecast', '/v1/forecast?apikey=caller', {}, null)).toThrow(TypeError);
+      expect(() => openMeteoUrl('forecast', '/v1/forecast#apikey=caller', {}, 'k1')).toThrow(TypeError);
+      expect(() => openMeteoSdkRequest('marine', '/v1/marine?apikey=caller', {}, null)).toThrow(TypeError);
+      try {
+        openMeteoUrl('forecast', '/v1/forecast?apikey=caller', {}, null);
+      } catch (e) {
+        expect(String(e)).not.toContain('caller');
+      }
+    });
   });
 
   describe('weather metrics never store the key', () => {
@@ -433,6 +537,14 @@ describe('openMeteoUrl', () => {
       expect(JSON.stringify(weatherMetrics.snapshot())).not.toContain(FAKE_KEY.slice(0, 6));
     });
 
+    it('redacts a keyed URL passed as the provider or endpoint label', () => {
+      const url = openMeteoUrl('forecast', '/v1/forecast', { latitude: 1 }).toString();
+      weatherMetrics.start(`open-meteo ${url}`, url).success({ status: 200 });
+      const snapshot = JSON.stringify(weatherMetrics.snapshot());
+      expect(snapshot).not.toContain(FAKE_KEY);
+      expect(snapshot).toContain('apikey=REDACTED');
+    });
+
     it('monitoredFetch records and rethrows a redacted error', async () => {
       const url = openMeteoUrl('forecast', '/v1/forecast', { latitude: 1 }).toString();
       global.fetch = jest.fn(async () => {
@@ -452,6 +564,42 @@ describe('openMeteoUrl', () => {
         throw original;
       }) as unknown as typeof fetch;
       await expect(monitoredFetch('metno', 'x', 'https://example.test')).rejects.toBe(original);
+    });
+
+    it('monitoredFetch keeps an AbortError from a request with no apikey as it is', async () => {
+      // NWS, Met.no and OpenWeather share this wrapper; cancellation must stay an AbortError.
+      const abort = new DOMException('The operation was aborted.', 'AbortError');
+      global.fetch = jest.fn(async () => {
+        throw abort;
+      }) as unknown as typeof fetch;
+      const thrown = await monitoredFetch('nws', 'points', new URL('https://api.weather.gov/points/1,1')).catch(
+        (e: unknown) => e
+      );
+      expect(thrown).toBe(abort);
+      expect((thrown as DOMException).name).toBe('AbortError');
+    });
+
+    it('monitoredFetch keeps an AbortError from a keyed request an AbortError', async () => {
+      const url = openMeteoUrl('forecast', '/v1/forecast', { latitude: 1 }).toString();
+      global.fetch = jest.fn(async () => {
+        throw new DOMException('The operation was aborted.', 'AbortError');
+      }) as unknown as typeof fetch;
+      const thrown = await monitoredFetch('open-meteo', 'forecast', url).catch((e: unknown) => e);
+      expect(thrown).toBeInstanceOf(DOMException);
+      expect((thrown as DOMException).name).toBe('AbortError');
+      expect(everything(thrown)).not.toContain(FAKE_KEY);
+    });
+
+    it('monitoredFetch redacts a keyed request given as a URL from another realm', async () => {
+      const url = openMeteoUrl('forecast', '/v1/forecast', { latitude: 1 }).toString();
+      // Not instanceof URL, and no .url: only its string form says where it points.
+      const foreign = { href: url, toString: () => url } as unknown as URL;
+      global.fetch = jest.fn(async () => {
+        throw new TypeError(`Failed to parse URL from ${url}`);
+      }) as unknown as typeof fetch;
+      const thrown = await monitoredFetch('open-meteo', 'forecast', foreign).catch((e: unknown) => e);
+      expect(everything(thrown)).not.toContain(FAKE_KEY);
+      expect(JSON.stringify(weatherMetrics.snapshot())).not.toContain(FAKE_KEY);
     });
 
     it('the SDK marine path logs and records nothing that carries the key', async () => {

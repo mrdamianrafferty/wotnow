@@ -88,8 +88,18 @@ export function openMeteoHost(api: OpenMeteoApi, apiKey: string | null | undefin
   return hostFor(api, normaliseOpenMeteoApiKey(apiKey));
 }
 
+/**
+ * A pathname only. A query or fragment here would carry parameters -- an apikey
+ * among them -- past the rules that params follow. The message never echoes the
+ * path, which could hold a key.
+ */
+function pathname(path: string): string {
+  if (/[?#]/.test(path)) throw new TypeError('Open-Meteo path must be a pathname; pass parameters separately');
+  return path.startsWith('/') ? path : `/${path}`;
+}
+
 function baseUrl(api: OpenMeteoApi, path: string, key: string | undefined): string {
-  return `https://${hostFor(api, key)}${path.startsWith('/') ? path : `/${path}`}`;
+  return `https://${hostFor(api, key)}${pathname(path)}`;
 }
 
 /**
@@ -108,6 +118,8 @@ export function openMeteoUrl(
   const url = new URL(baseUrl(api, path, key));
   for (const [name, value] of Object.entries(params)) {
     if (value === undefined || value === null) continue;
+    // One normalised key controls both the host and apikey: never forward a caller's.
+    if (name.toLowerCase() === 'apikey') continue;
     url.searchParams.set(name, Array.isArray(value) ? value.join(',') : String(value));
   }
   if (key) url.searchParams.set('apikey', key);
@@ -124,29 +136,52 @@ export function openMeteoSdkRequest<P extends Record<string, unknown>>(
   path: string,
   params: P,
   apiKey: string | null | undefined = getOpenMeteoApiKey()
-): { url: string; params: P & { apikey?: string } } {
+): { url: string; params: Omit<P, 'apikey'> & { apikey?: string } } {
   const key = normaliseOpenMeteoApiKey(apiKey);
+  // One normalised key controls both the host and apikey: never forward a caller's.
+  const rest = Object.fromEntries(
+    Object.entries(params).filter(([name]) => name.toLowerCase() !== 'apikey')
+  ) as Omit<P, 'apikey'>;
   return {
     url: baseUrl(api, path, key),
-    params: key ? { ...params, apikey: key } : params,
+    params: key ? { ...rest, apikey: key } : rest,
   };
 }
 
 /**
- * An `apikey` assignment wherever a word can start: at the start of the text or after
- * any non-letter (?, &, space, quote, comma, semicolon, bracket, newline, ...).
- * Case-insensitive; plain (`apikey=`) or URL-encoded (`apikey%3D`, `apikey%253D`);
- * with an optional opening quote. Group 1 is the preceding character and group 2 the
+ * An `apikey` assignment wherever a word can start: at the start of the text, after
+ * any non-letter (?, &, space, quote, comma, semicolon, bracket, newline, ...), or
+ * after a percent-encoded character (`%3Fapikey`, `%253Fapikey` in an encoded URL).
+ * Case-insensitive; plain (`apikey=`), URL-encoded (`apikey%3D`, `apikey%253D`) or a
+ * property (`apikey: 'x'`, `"apikey":"x"`), with an optional opening quote. Group 1
+ * is the preceding text and group 2 the
  * assignment, both kept. The value runs to the next separator, or in encoded text to
  * an encoded `&`. Over-redacting the tail of a message is acceptable; leaving part of
  * a key is not.
  */
-const APIKEY_ASSIGNMENT = /(^|[^a-z])(apikey(?:=|%(?:25)*3d)["']?)(?:(?!%(?:25)*26)[^&#\s"'`\\<>,;()[\]{}])*/gi;
+const APIKEY_ASSIGNMENT = /(^|[^a-z]|%(?:25)*[0-9a-f]{2})(apikey(?:\s*=\s*|%((?:25)*)3d|["']?\s*:\s*)["']?)((?:%[0-9a-f]{2}|[^%&#\s"'`\\<>,;()[\]{}])*)/gi;
+
+/**
+ * Replace every apikey value. A bare or property value is the key whole, %26 and
+ * all. An encoded assignment ends at an & encoded to the same level as its =
+ * (`apikey%3D...%26`, `apikey%253D...%2526`); what follows is the next parameter,
+ * which is checked again.
+ */
+function redactAssignments(text: string): string {
+  return text.replace(
+    APIKEY_ASSIGNMENT,
+    (_match: string, before: string, assignment: string, level: string | undefined, value: string) => {
+      if (level === undefined) return `${before}${assignment}REDACTED`;
+      const end = value.toLowerCase().indexOf(`%${level}26`);
+      return `${before}${assignment}REDACTED${end < 0 ? '' : redactAssignments(value.slice(end))}`;
+    }
+  );
+}
 
 /**
  * Replace any `apikey` value in a URL or message with REDACTED, and any literal
- * occurrence of the configured key (plain or URL-encoded) as well. Safe to call on
- * text with no key in it.
+ * occurrence of the configured key (plain, URL-encoded or form-encoded) as well. Safe
+ * to call on text with no key in it.
  */
 export function redactOpenMeteoApiKey(text: string, apiKey: string | null | undefined = getOpenMeteoApiKey()): string {
   return redactText(text, normaliseOpenMeteoApiKey(apiKey));
@@ -154,13 +189,24 @@ export function redactOpenMeteoApiKey(text: string, apiKey: string | null | unde
 
 /** Redact with an ALREADY-normalised key. No default, for the same reason as hostFor(). */
 function redactText(text: string, key: string | undefined): string {
-  let redacted = text.replace(APIKEY_ASSIGNMENT, '$1$2REDACTED');
+  let redacted = text;
   if (key) {
-    redacted = redacted.split(key).join('REDACTED');
-    const encoded = encodeURIComponent(key);
-    if (encoded !== key) redacted = redacted.split(encoded).join('REDACTED');
+    // The exact key goes first. The generic assignment match below stops at an
+    // encoded &, so run first it would cut a key like `abc&def` (sent as abc%26def)
+    // in half and leave a tail the exact match could no longer find.
+    // The key as written, as encodeURIComponent writes it, and as URLSearchParams
+    // writes it into a request URL (openMeteoUrl above, and the SDK's own
+    // `?${new URLSearchParams(params)}`): space as +, and different escapes for a
+    // few punctuation characters. Longest first, so no variant is left half-done.
+    // Each also encoded once more, as it appears inside an encoded URL (next=...).
+    const form = new URLSearchParams({ k: key }).toString().slice(2);
+    const once = [key, encodeURIComponent(key), form];
+    const variants = new Set([...once, ...once.map((v) => encodeURIComponent(v))]);
+    for (const variant of [...variants].sort((a, b) => b.length - a.length)) {
+      redacted = redacted.split(variant).join('REDACTED');
+    }
   }
-  return redacted;
+  return redactAssignments(redacted);
 }
 
 /** Built-in error types a redacted copy keeps. AggregateError is handled separately. */
@@ -260,8 +306,15 @@ function render(value: unknown): Rendering {
 
   function props(target: object, names: PropertyKey[]): void {
     for (const name of names) {
+      const value = read(target, name);
+      // Printed as `name: value`, so a property like { apikey: 'x' } is seen as the
+      // assignment it is, not as two unrelated strings.
+      if (typeof name === 'string' && (typeof value === 'string' || typeof value === 'number')) {
+        parts.push(`${name}: ${value}`);
+        continue;
+      }
       walk(name);
-      walk(read(target, name));
+      walk(value);
     }
   }
 
@@ -294,7 +347,7 @@ function render(value: unknown): Rendering {
       const ctor = read(v, 'constructor');
       if (typeof ctor === 'function') parts.push(text(read(ctor, 'name')));
 
-      if (v instanceof Error) {
+      if (isErrorLike(v)) {
         const names = ERROR_FIELDS.filter((name) => name in v);
         for (const name of ownKeys(v)) if (!names.includes(name)) names.push(name);
         props(v, names);
@@ -348,12 +401,27 @@ function render(value: unknown): Rendering {
   return { text: parts.join('\n'), verified };
 }
 
+/**
+ * An Error, or a DOMException. In Node a DOMException is an Error, but not across
+ * realms (Jest's test environment has its own Error), and there it would lose its
+ * message and be printed as {}.
+ */
+function isErrorLike(v: unknown): v is Error {
+  if (v instanceof Error) return true;
+  return typeof DOMException !== 'undefined' && v instanceof DOMException;
+}
+
 function carriesKey(texts: Array<string | undefined>, key: string | undefined): boolean {
   return texts.some((t) => t !== undefined && redactText(t, key) !== t);
 }
 
-function errorLike(original: object, message: string): Error {
+function errorLike(original: object, message: string, key: string | undefined): Error {
   try {
+    // A DOMException (AbortError, TimeoutError, ...) keeps its class and name, so
+    // cancellation handling still recognises it.
+    if (typeof DOMException !== 'undefined' && original instanceof DOMException) {
+      return new DOMException(message, redactText(readString(original, 'name') ?? 'Error', key));
+    }
     if (AggregateErrorCtor && original instanceof AggregateErrorCtor) return new AggregateErrorCtor([], message);
     for (const Ctor of BUILTIN_ERROR_TYPES) if (original instanceof Ctor) return new Ctor(message);
   } catch {
@@ -373,13 +441,13 @@ function sanitised(original: unknown, rendering: Rendering, key: string | undefi
   }
   let isError = false;
   try {
-    isError = original instanceof Error;
+    isError = isErrorLike(original);
   } catch {
     // treat as a non-error
   }
   const ownMessage = isError ? readString(original, 'message') : undefined;
   const message = redactText(ownMessage ?? safeJson(original) ?? rendering.text, key);
-  const out = errorLike(original, message);
+  const out = errorLike(original, message, key);
   if (isError) {
     const name = readString(original, 'name');
     if (name !== undefined) {
