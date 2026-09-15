@@ -13,7 +13,7 @@
  */
 import { WMO_DESCRIPTIONS } from '../grow/dailyForecast';
 import { aggregateDayparts, type HourlySeries } from './dayparts';
-import { openMeteoUrl } from '../services/openMeteoUrl';
+import { openMeteoUrl, redactOpenMeteoError } from '../services/openMeteoUrl';
 
 export type { DaypartAggregate, DaypartName } from './dayparts';
 
@@ -88,7 +88,14 @@ export async function fetchOpenMeteoAsOneCallShape(lat: number, lon: number): Pr
     forecast_days: '7',
   });
   const url = openMeteoUrl('forecast', '/v1/forecast', Object.fromEntries(params)).toString();
-  const res = await fetch(url);
+  let res: Response;
+  try {
+    res = await fetch(url);
+  } catch (error) {
+    // The URL carries apikey when configured, and a fetch rejection can quote it;
+    // callers (grow/weather, garden/tasks, SEO pages) log what this throws.
+    throw redactOpenMeteoError(error);
+  }
   if (!res.ok) throw new Error(`Open-Meteo forecast failed: ${res.status}`);
   const data = await res.json();
 

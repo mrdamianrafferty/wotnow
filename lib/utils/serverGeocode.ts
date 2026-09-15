@@ -6,7 +6,7 @@
  * ~1 req/sec — fine for our traffic, most calls are cached by callers anyway.
  */
 
-import { openMeteoUrl } from '../services/openMeteoUrl';
+import { openMeteoUrl, redactOpenMeteoError } from '../services/openMeteoUrl';
 
 const NOMINATIM_USER_AGENT ='WotNow-GoDaisy-GrowDaisy/1.0 (contact: damian@flyglobalmusic.com)';
 
@@ -106,7 +106,8 @@ export async function geocodeForward(query: string, limit = 5): Promise<GeocodeR
   try {
     return await fetchOpenMeteoForward(query, limit);
   } catch (err) {
-    console.warn('[serverGeocode] Open-Meteo forward geocode failed:', err);
+    // The request URL carries apikey when configured, and a fetch rejection can quote it.
+    console.warn('[serverGeocode] Open-Meteo forward geocode failed:', redactOpenMeteoError(err));
     return [];
   }
 }

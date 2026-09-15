@@ -49,7 +49,7 @@
  */
 
 import { fetchMarineHoursWithFallback, type MarineProviderHour } from './marineProviders';
-import { openMeteoUrl } from '../lib/services/openMeteoUrl';
+import { openMeteoUrl, redactOpenMeteoError } from '../lib/services/openMeteoUrl';
 
 // Lightweight types to avoid importing app-wide types.
 // Extend in your codebase if you already have richer interfaces.
@@ -428,7 +428,8 @@ export async function attachOpenMeteoToForecast(
       fetchOpenMeteoUVSoilWinter(lat, lon, start, end),
     ]);
   } catch (e) {
-    console.error('[attachOpenMeteoToForecast] fetch failed', e);
+    // Both requests carry apikey when configured, and a fetch rejection can quote the URL.
+    console.error('[attachOpenMeteoToForecast] fetch failed', redactOpenMeteoError(e));
   }
 
   const byDate: Record<string, DayAgg> = {};
