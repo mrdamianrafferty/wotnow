@@ -24,6 +24,7 @@ import type { ClimateZoneCode } from '@/lib/grow/climate';
 import { getUnifiedWeatherData } from '@/lib/grow/weatherDataSource';
 import { fetchOpenMeteoDailyForecastRaw } from '@/lib/services/weatherService';
 import { mapOpenMeteoDaily } from '@/lib/grow/dailyForecast';
+import { openMeteoUrl, redactOpenMeteoError } from '@/lib/services/openMeteoUrl';
 
 const SUPABASE_URL = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
 const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -83,7 +84,12 @@ function getDefaultSoilConditions(): SoilConditions {
  * Returns default values if API fails (non-critical data)
  */
 async function fetchSoilConditions(lat: number, lon: number): Promise<SoilConditions> {
-  const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&hourly=soil_temperature_0cm,soil_temperature_6cm,soil_temperature_18cm,soil_temperature_54cm,soil_moisture_0_to_1cm,soil_moisture_1_to_3cm,soil_moisture_3_to_9cm,soil_moisture_9_to_27cm&forecast_days=1`;
+  const url = openMeteoUrl('forecast', '/v1/forecast', {
+    latitude: lat,
+    longitude: lon,
+    hourly: 'soil_temperature_0cm,soil_temperature_6cm,soil_temperature_18cm,soil_temperature_54cm,soil_moisture_0_to_1cm,soil_moisture_1_to_3cm,soil_moisture_3_to_9cm,soil_moisture_9_to_27cm',
+    forecast_days: 1,
+  }).toString();
 
   try {
     const response = await fetch(url);
@@ -116,7 +122,7 @@ async function fetchSoilConditions(lat: number, lon: number): Promise<SoilCondit
       moisture9to27cm: (hourly.soil_moisture_9_to_27cm?.[idx] ?? 0.35) * 100,
     };
   } catch (err) {
-    console.error('[WeatherTasks] fetchSoilConditions error:', err);
+    console.error('[WeatherTasks] fetchSoilConditions error:', redactOpenMeteoError(err));
     // Return defaults - soil data is nice-to-have, not critical
     return getDefaultSoilConditions();
   }

@@ -1,5 +1,6 @@
 /**
- * Fetches current + hourly + daily weather from Open-Meteo (free, no key) and
+ * Fetches current + hourly + daily weather from Open-Meteo (free API, or the
+ * customer API when OPEN_METEO_API_KEY is set — see lib/services/openMeteoUrl.ts) and
  * adapts it into the same shape OpenWeather One Call 3.0 returns, so callers
  * that already consume OpenWeather's shape (current/hourly/daily transforms)
  * work unchanged regardless of which source supplied the data.
@@ -12,6 +13,7 @@
  */
 import { WMO_DESCRIPTIONS } from '../grow/dailyForecast';
 import { aggregateDayparts, type HourlySeries } from './dayparts';
+import { openMeteoUrl, redactOpenMeteoError } from '../services/openMeteoUrl';
 
 export type { DaypartAggregate, DaypartName } from './dayparts';
 
@@ -85,8 +87,15 @@ export async function fetchOpenMeteoAsOneCallShape(lat: number, lon: number): Pr
     wind_speed_unit: 'ms',
     forecast_days: '7',
   });
-  const url = `https://api.open-meteo.com/v1/forecast?${params.toString()}`;
-  const res = await fetch(url);
+  const url = openMeteoUrl('forecast', '/v1/forecast', Object.fromEntries(params)).toString();
+  let res: Response;
+  try {
+    res = await fetch(url);
+  } catch (error) {
+    // The URL carries apikey when configured, and a fetch rejection can quote it;
+    // callers (grow/weather, garden/tasks, SEO pages) log what this throws.
+    throw redactOpenMeteoError(error);
+  }
   if (!res.ok) throw new Error(`Open-Meteo forecast failed: ${res.status}`);
   const data = await res.json();
 

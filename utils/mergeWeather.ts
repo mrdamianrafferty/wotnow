@@ -49,6 +49,7 @@
  */
 
 import { fetchMarineHoursWithFallback, type MarineProviderHour } from './marineProviders';
+import { openMeteoUrl, redactOpenMeteoError } from '../lib/services/openMeteoUrl';
 
 // Lightweight types to avoid importing app-wide types.
 // Extend in your codebase if you already have richer interfaces.
@@ -252,7 +253,7 @@ async function fetchStormglassAstronomy(lat: number, lon: number, startDate: str
  * Note: Pollen variables live on the Air Quality endpoint. UV is on the Forecast endpoint.
  */
 async function fetchOpenMeteoAirPollen(lat: number, lon: number, startDate: string, endDate: string) {
-  const url = new URL('https://air-quality-api.open-meteo.com/v1/air-quality');
+  const url = openMeteoUrl('airQuality', '/v1/air-quality');
   url.searchParams.set('latitude', String(lat));
   url.searchParams.set('longitude', String(lon));
   url.searchParams.set('timezone', 'auto');
@@ -282,7 +283,7 @@ async function fetchOpenMeteoAirPollen(lat: number, lon: number, startDate: stri
  * Fetch Open-Meteo Forecast (hourly) for UV and soil variables, plus winter variables if desired.
  */
 async function fetchOpenMeteoUVSoilWinter(lat: number, lon: number, startDate: string, endDate: string) {
-  const url = new URL('https://api.open-meteo.com/v1/forecast');
+  const url = openMeteoUrl('forecast', '/v1/forecast');
   url.searchParams.set('latitude', String(lat));
   url.searchParams.set('longitude', String(lon));
   url.searchParams.set('timezone', 'auto');
@@ -427,7 +428,8 @@ export async function attachOpenMeteoToForecast(
       fetchOpenMeteoUVSoilWinter(lat, lon, start, end),
     ]);
   } catch (e) {
-    console.error('[attachOpenMeteoToForecast] fetch failed', e);
+    // Both requests carry apikey when configured, and a fetch rejection can quote the URL.
+    console.error('[attachOpenMeteoToForecast] fetch failed', redactOpenMeteoError(e));
   }
 
   const byDate: Record<string, DayAgg> = {};

@@ -33,6 +33,7 @@ import { activityTypes } from '../../data/activityTypes';
 import type { ActivityType } from '../../data/activities/types';
 import type { SeoLocation } from '../../data/seoLocations';
 import { fetchOpenMeteoAsOneCallShape } from '../weather/openMeteoOneCallAdapter';
+import { openMeteoUrl } from '../services/openMeteoUrl';
 import { promote } from '../godaisy/call/promote';
 import { partBands } from '../godaisy/call/window';
 import { bandFor, isSevere } from '../godaisy/call/bands';
@@ -353,10 +354,14 @@ async function withMarine(
   const onTheCoast = location.beachFacingDeg !== null && location.beachFacingDeg !== undefined;
   if (!onTheCoast && !location.coastal) return forecast;
   try {
-    const url =
-      `https://marine-api.open-meteo.com/v1/marine?latitude=${location.lat}&longitude=${location.lon}` +
-      '&daily=wave_height_max,swell_wave_height_max,swell_wave_period_max' +
-      '&hourly=sea_surface_temperature&timezone=UTC&forecast_days=7';
+    const url = openMeteoUrl('marine', '/v1/marine', {
+      latitude: location.lat,
+      longitude: location.lon,
+      daily: 'wave_height_max,swell_wave_height_max,swell_wave_period_max',
+      hourly: 'sea_surface_temperature',
+      timezone: 'UTC',
+      forecast_days: 7,
+    });
     const res = await fetch(url);
     if (!res.ok) return forecast;
     const j = (await res.json()) as {

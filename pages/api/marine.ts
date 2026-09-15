@@ -15,13 +15,13 @@ import { weatherMetrics } from '../../lib/monitoring/weatherMetrics';
 import { getSupabaseServerClient } from '../../lib/supabase/serverClient';
 import { round3dp, createCacheKey, COORDINATE_PRECISION } from '../../lib/utils/coordinates';
 import { withRateLimit } from '../../lib/utils/apiMiddleware';
+import { openMeteoUrl, redactOpenMeteoError } from '../../lib/services/openMeteoUrl';
 
 const coordKey3dp = (lat: number, lon: number) => createCacheKey(lat, lon, COORDINATE_PRECISION.STANDARD);
 
 const STORMGLASS_API = 'https://api.stormglass.io/v2/weather/point';
 const METNO_OCEAN_API = 'https://api.met.no/weatherapi/oceanforecast/2.0/complete';
 const NOAA_COOPS_API = 'https://api.tidesandcurrents.noaa.gov/api/prod/datagetter';
-const OPENMETEO_MARINE_API = 'https://marine-api.open-meteo.com/v1/marine';
 
 // Marine data response structure
 interface MarineDataHour {
@@ -387,7 +387,13 @@ async function fetchNOAAProduct(
  */
 async function fetchFromOpenMeteo(lat: number, lon: number, _startISO: string, _endISO: string): Promise<MarineDataResponse | null> {
   try {
-    const url = `${OPENMETEO_MARINE_API}?latitude=${lat}&longitude=${lon}&hourly=wave_height,wave_direction,wave_period&timezone=UTC&forecast_days=7`;
+    const url = openMeteoUrl('marine', '/v1/marine', {
+      latitude: lat,
+      longitude: lon,
+      hourly: 'wave_height,wave_direction,wave_period',
+      timezone: 'UTC',
+      forecast_days: 7,
+    }).toString();
     
     const response = await fetch(url);
 
@@ -412,7 +418,7 @@ async function fetchFromOpenMeteo(lat: number, lon: number, _startISO: string, _
     console.log('✅ Open-Meteo: Marine data found');
     return { hours, source: 'openmeteo' };
   } catch (error) {
-    console.error('❌ Open-Meteo error:', error);
+    console.error('❌ Open-Meteo error:', redactOpenMeteoError(error));
     return null;
   }
 }

@@ -6,7 +6,9 @@
  * ~1 req/sec — fine for our traffic, most calls are cached by callers anyway.
  */
 
-const NOMINATIM_USER_AGENT = 'WotNow-GoDaisy-GrowDaisy/1.0 (contact: damian@flyglobalmusic.com)';
+import { openMeteoUrl, redactOpenMeteoError } from '../services/openMeteoUrl';
+
+const NOMINATIM_USER_AGENT ='WotNow-GoDaisy-GrowDaisy/1.0 (contact: damian@flyglobalmusic.com)';
 
 export interface GeocodeResult {
   lat: number;
@@ -60,7 +62,8 @@ async function fetchNominatimReverse(lat: number, lon: number): Promise<GeocodeR
 /**
  * The second opinion, from Open-Meteo rather than OpenWeather.
  *
- * No key, and it is the same geocoder `/start` searches with — so a place the
+ * No key needed (the customer API when OPEN_METEO_API_KEY is set), and it is
+ * the same geocoder `/start` searches with — so a place the
  * onboarding flow can name is a place this can resolve, which was not true
  * before. Open-Meteo publishes no REVERSE geocoder, so there is no second
  * opinion for coordinates any more: Nominatim answers or nothing does. That is
@@ -68,8 +71,12 @@ async function fetchNominatimReverse(lat: number, lon: number): Promise<GeocodeR
  * fallback rather than a feature.
  */
 async function fetchOpenMeteoForward(query: string, limit: number): Promise<GeocodeResult[]> {
-  const url = `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(query)}` +
-    `&count=${limit}&language=en&format=json`;
+  const url = openMeteoUrl('geocoding', '/v1/search', {
+    name: query,
+    count: limit,
+    language: 'en',
+    format: 'json',
+  });
   const res = await fetch(url);
   if (!res.ok) throw new Error(`Open-Meteo forward geocode failed: ${res.status}`);
   const data = (await res.json()) as {
@@ -99,7 +106,8 @@ export async function geocodeForward(query: string, limit = 5): Promise<GeocodeR
   try {
     return await fetchOpenMeteoForward(query, limit);
   } catch (err) {
-    console.warn('[serverGeocode] Open-Meteo forward geocode failed:', err);
+    // The request URL carries apikey when configured, and a fetch rejection can quote it.
+    console.warn('[serverGeocode] Open-Meteo forward geocode failed:', redactOpenMeteoError(err));
     return [];
   }
 }
