@@ -838,7 +838,7 @@ describe('GET /api/marine', () => {
       const data = JSON.parse(res._getData());
       // Waterfall includes 'source' property instead of 'meta'
       expect(data).toHaveProperty('source');
-      expect(['copernicus', 'metno', 'openmeteo', 'stormglass-paid']).toContain(data.source);
+      expect(['metno', 'openmeteo', 'stormglass-paid']).toContain(data.source);
     });
   });
 

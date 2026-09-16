@@ -322,7 +322,7 @@ const VARIANTS: Record<ActivityKey, Variant> = {
 
 /**
  * Fetch sea temperature from our backend /api/marine endpoint
- * This endpoint uses free data sources (Copernicus, Met.no, Open-Meteo)
+ * This endpoint uses free data sources (Met.no, NOAA, Open-Meteo)
  * with Stormglass only as emergency fallback
  */
 async function fetchSeaTempFromBackend(
