@@ -20,8 +20,6 @@ Keep (required by the above threads)
 - lib
   - lib/openweather.ts
   - lib/googleMaps.ts
-  - lib/types.ts
-  - lib/useForecastData.ts
 - components
   - components/Popup.tsx
   - components/AstronomyCard.tsx
@@ -83,8 +81,8 @@ Quarantine candidates (not reachable from the traced threads)
   - components/sharing/**, hooks/useSharing.ts, lib/db/sharing.ts, flows/share-flow.yaml
   - pages/invite/[id].tsx, pages/poll/[id].tsx (not pulled by these threads)
 - Extra UI components not used by traced pages
-  - components/HomepageBanner.tsx, Card.tsx, ForecastCards.tsx, HomeDayTabs.tsx, TopTabs.tsx
-  - components/Map.tsx, MarineTable.tsx, MarineDayTabs.tsx, WaterTempKey.tsx
+  - components/HomepageBanner.tsx, Card.tsx, HomeDayTabs.tsx, TopTabs.tsx
+  - components/Map.tsx, MarineDayTabs.tsx, WaterTempKey.tsx
   - components/SceneLayers.tsx, WeatherAnimationLayer.tsx, SmartBackgroundImage.tsx
   - components/MoonNugget.tsx, components/footer.tsx
   - components/PollenWarning.tsx.backup

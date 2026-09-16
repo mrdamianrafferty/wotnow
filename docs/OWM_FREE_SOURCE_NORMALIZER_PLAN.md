@@ -53,7 +53,10 @@ geo-routed fetch.
 Derived from the **actual** consumers of `/api/owm`. Anything not listed here is not
 required and need not be synthesized.
 
-### Consumer A — `lib/useForecastData.ts` (the app forecast strip)
+### Consumer A — `lib/useForecastData.ts` (REMOVED 2026-09-16)
+> Deleted along with `ForecastCards`/`MarineTable`/`ActivityOutlooks` and `lib/types.ts`:
+> nothing had imported it since 2025-09-19. The `.list` shape below is kept for reference only.
+
 Reads **`.list`** as `OWMForecastSlot[]` (`lib/types.ts`), grouped into 8 day-buckets
 (`diff 0..7`). Each slot:
 ```ts
@@ -95,7 +98,7 @@ scoring; `rain`/`clouds`/`humidity` improve it but degrade gracefully if absent.
 ```
 
 > **Wind units:** `OWMForecastSlot.wind.speed` and `daily.wind_speed` are **m/s**
-> (`useForecastData`/`getActivityScore` multiply by 3.6 → km/h). Met.no is m/s native;
+> (`getActivityScore` multiplies by 3.6 → km/h). Met.no is m/s native;
 > Open-Meteo request must use `wind_speed_unit=ms`; NWS needs mph→m/s (`parseWindSpeed`
 > already does this).
 

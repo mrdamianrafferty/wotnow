@@ -3,16 +3,14 @@
  * Marine Weather Data API
  * 
  * Data Source Priority:
- * 1. Copernicus Database (free, comprehensive European waters)
- * 2. Met.no Ocean Forecast (free, Nordic seas & North Atlantic)
- * 3. NOAA CO-OPS (free, North American coastal waters)
- * 4. Open-Meteo Marine (free, global basic data)
- * 5. Stormglass (paid, last resort only)
+ * 1. Met.no Ocean Forecast (free, Nordic seas & North Atlantic)
+ * 2. NOAA CO-OPS (free, North American coastal waters)
+ * 3. Open-Meteo Marine (global; customer API when OPEN_METEO_API_KEY is set)
+ * 4. Stormglass (paid, last resort only)
  */
 
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { weatherMetrics } from '../../lib/monitoring/weatherMetrics';
-import { getSupabaseServerClient } from '../../lib/supabase/serverClient';
 import { round3dp, createCacheKey, COORDINATE_PRECISION } from '../../lib/utils/coordinates';
 import { withRateLimit } from '../../lib/utils/apiMiddleware';
 import { openMeteoUrl, redactOpenMeteoError } from '../../lib/services/openMeteoUrl';
@@ -81,65 +79,6 @@ function getDynamicTTL(): number {
 }
 
 // ---------------------------------------------------------------------------
-
-/**
- * Try to fetch marine data from Copernicus database
- * Returns data if available and recent (< 3 days old)
- */
-async function fetchFromCopernicus(lat: number, lon: number, _startISO: string, _endISO: string): Promise<MarineDataResponse | null> {
-  try {
-    const supabase = getSupabaseServerClient();
-    
-    // Query copernicus_data table for nearest rectangle
-    // For now, we'll use a simple distance-based query
-    // In production, you might want to use PostGIS or pre-computed rectangle lookups
-    const { data, error } = await supabase
-      .from('copernicus_data')
-      .select('*')
-      .gte('data_date', new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]) // Last 3 days
-      .order('data_date', { ascending: false })
-      .limit(100); // Get recent data points
-    
-    if (error || !data || data.length === 0) {
-      console.log('📊 Copernicus DB: No data found');
-      return null;
-    }
-
-    // Find nearest rectangle by simple lat/lon distance
-    // This is a simplified approach - production should use proper geospatial queries
-    let nearest = data[0];
-    let minDist = Infinity;
-    
-    for (const row of data) {
-      if (!row.rectangle_center_lat || !row.rectangle_center_lon) continue;
-      const dlat = row.rectangle_center_lat - lat;
-      const dlon = row.rectangle_center_lon - lon;
-      const dist = Math.sqrt(dlat * dlat + dlon * dlon);
-      if (dist < minDist) {
-        minDist = dist;
-        nearest = row;
-      }
-    }
-
-    // Convert Copernicus data to marine API format
-    const hours = [{
-      time: nearest.data_date || new Date().toISOString(),
-      waterTemperature: { value: nearest.sea_temp_c || null },
-      waveHeight: { value: nearest.significant_wave_height_m || null },
-      currentSpeed: { value: nearest.current_speed_ms || null },
-      currentDirection: { value: nearest.current_direction_deg || null },
-      salinity: { value: nearest.salinity_psu || null },
-      windSpeed: { value: nearest.wind_speed_ms ? nearest.wind_speed_ms * 1.94384 : null }, // Convert m/s to knots
-      windDirection: { value: nearest.wind_direction_deg || null },
-    }];
-
-    console.log('✅ Copernicus DB: Data found', { rectangle: nearest.rectangle_code, distance: minDist.toFixed(3) });
-    return { hours, source: 'copernicus' };
-  } catch (error) {
-    console.error('❌ Copernicus DB error:', error);
-    return null;
-  }
-}
 
 /**
  * Try to fetch marine data from Met.no Ocean Forecast
@@ -522,25 +461,20 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
   // 🌊 WATERFALL: Try data sources in order of preference (free → paid)
   console.log('🔄 Cache miss - trying data sources in order...');
   
-  // 1. Try Copernicus Database (free, comprehensive European waters)
-  let result = await fetchFromCopernicus(rlat, rlon, startISO, endISO);
+  // 1. Try Met.no Ocean Forecast (free, Nordic seas & North Atlantic)
+  let result = await fetchFromMetNo(rlat, rlon, startISO, endISO);
   
-  // 2. Try Met.no Ocean Forecast (free, Nordic seas & North Atlantic)
-  if (!result) {
-    result = await fetchFromMetNo(rlat, rlon, startISO, endISO);
-  }
-  
-  // 3. Try NOAA CO-OPS (free, North American coastal waters)
+  // 2. Try NOAA CO-OPS (free, North American coastal waters)
   if (!result) {
     result = await fetchFromNOAA(rlat, rlon, startISO, endISO);
   }
   
-  // 4. Try Open-Meteo Marine (free, global basic data)
+  // 3. Try Open-Meteo Marine (free, global basic data)
   if (!result) {
     result = await fetchFromOpenMeteo(rlat, rlon, startISO, endISO);
   }
   
-  // 5. LAST RESORT: Try Stormglass (paid, only when all free sources fail)
+  // 4. LAST RESORT: Try Stormglass (paid, only when all free sources fail)
   if (!result) {
     const apiKey = process.env.STORMGLASS_SECRET_KEY;
     if (!apiKey) {
