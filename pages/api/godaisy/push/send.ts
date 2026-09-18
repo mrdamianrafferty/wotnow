@@ -10,6 +10,7 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { createClient } from '@supabase/supabase-js';
 import { checkRateLimit, RateLimitError } from '@/lib/utils/rate-limiter';
+import { resolvePushCaller, refuseSend } from '@/lib/push/pushSendAuth';
 import {
   sendGoDaisyPushNotification,
   sendGoDaisyBulkNotification,
@@ -54,29 +55,17 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  // Authentication: Either API secret or Bearer token
-  const authHeader = req.headers.authorization;
-  const apiSecret = req.headers['x-push-api-secret'];
-
-  let isAuthorized = false;
-  let userId: string | undefined;
-
-  if (apiSecret && PUSH_API_SECRET && apiSecret === PUSH_API_SECRET) {
-    isAuthorized = true;
-  }
-
-  if (!isAuthorized && authHeader?.startsWith('Bearer ')) {
-    const accessToken = authHeader.substring(7);
+  // Authentication: the push API secret (server calls), or a signed-in person's
+  // token (sending to themselves). See lib/push/pushSendAuth.ts.
+  const caller = await resolvePushCaller(req, PUSH_API_SECRET, async (accessToken) => {
     const { data: { user }, error } = await supabase.auth.getUser(accessToken);
-    if (!error && user) {
-      isAuthorized = true;
-      userId = user.id;
-    }
-  }
+    return !error && user ? user.id : null;
+  });
 
-  if (!isAuthorized) {
+  if (!caller) {
     return res.status(401).json({ error: 'Unauthorized' });
   }
+  const userId = caller.kind === 'user' ? caller.userId : undefined;
 
   // Rate limiting: 10 requests per minute
   try {
@@ -89,6 +78,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   const body = req.body as SendNotificationRequest;
+
+  // A signed-in person could broadcast any title and text to every user.
+  const refusal = refuseSend(caller, body);
+  if (refusal) {
+    return res.status(403).json({ error: refusal });
+  }
 
   let payload: PushNotificationPayload | undefined = body.payload;
 
