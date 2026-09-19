@@ -106,6 +106,89 @@ export const config = {
 };
 
 // =============================================================================
+// CHECKED PROFILE WRITES
+// =============================================================================
+
+/**
+ * The profile a Stripe event names does not exist.
+ *
+ * Deterministic, so the handler answers 200: a retry cannot create the
+ * profile, and a non-2xx only makes Stripe hammer the endpoint for three days
+ * and then disable it. Logged loudly instead — a paid event for a missing
+ * profile is something a human needs to look at.
+ */
+class ProfileNotFoundError extends Error {
+  constructor(readonly userId: string, readonly label: string) {
+    super(`[webhook] ${label}: no profile row for user ${userId}`);
+    this.name = 'ProfileNotFoundError';
+  }
+}
+
+type ProfileWriteOutcome = 'updated' | 'superseded';
+
+/** Postgres unique_violation. */
+const UNIQUE_VIOLATION = '23505';
+
+/**
+ * Update the caller's profile row and prove it happened.
+ *
+ * Every profile write in this file used to be a bare `.update().eq()`, and
+ * seven of the eleven discarded the returned error — including both
+ * cancellation downgrades, so a failed downgrade left a cancelled customer on
+ * a paid tier indefinitely. A zero-row update also returns no error, so a
+ * write that matched nothing read as success.
+ *
+ * - A database error throws, so the handler returns 500 and Stripe retries.
+ *   Every write in this file is therefore required to be safe to replay.
+ * - Zero rows with no `onlyIfSubscription` throws ProfileNotFoundError.
+ * - With `onlyIfSubscription`, the write only lands if the profile still
+ *   belongs to that Stripe subscription. Zero rows on a profile that exists
+ *   means the customer has since moved to another subscription (or to
+ *   lifetime), and returns 'superseded' — the stale event must not touch it.
+ */
+async function writeProfile(
+  supabase: SupabaseServerClient,
+  userId: string,
+  data: Record<string, unknown>,
+  label: string,
+  onlyIfSubscription?: { column: string; subscriptionId: string }
+): Promise<ProfileWriteOutcome> {
+  let query = supabase
+    .from('profiles')
+    // @ts-expect-error - Supabase type inference issue with profile updates
+    .update(data)
+    .eq('id', userId);
+  if (onlyIfSubscription) {
+    query = query.eq(onlyIfSubscription.column, onlyIfSubscription.subscriptionId);
+  }
+
+  const { data: rows, error } = await query.select('id');
+  if (error) {
+    console.error(`[webhook] ${label}: profile update failed for user ${userId}:`, error.message);
+    throw error;
+  }
+  if (rows && rows.length > 0) return 'updated';
+
+  if (onlyIfSubscription) {
+    const { data: profile, error: readError } = await supabase
+      .from('profiles')
+      .select('id')
+      .eq('id', userId)
+      .maybeSingle();
+    if (readError) throw readError;
+    if (profile) {
+      console.log(
+        `[webhook] ${label}: user ${userId} no longer on ${onlyIfSubscription.subscriptionId}; ` +
+        'stale event, profile left unchanged'
+      );
+      return 'superseded';
+    }
+  }
+
+  throw new ProfileNotFoundError(userId, label);
+}
+
+// =============================================================================
 // GROW DAISY SPECIFIC HANDLERS
 // =============================================================================
 
@@ -142,18 +225,19 @@ async function updateGrowProfileFromSubscription(
     updateData.grow_subscription_end = new Date(growPeriodEnd * 1000).toISOString();
   }
 
-  const { error } = await supabase
-    .from('profiles')
-    // @ts-expect-error - Supabase type inference issue with profile updates
-    .update(updateData)
-    .eq('id', userId);
+  // A subscription that is no longer active may only downgrade the profile it
+  // still owns. Without this, an old subscription lapsing after the customer
+  // had bought lifetime (or resubscribed) knocked them down to seed.
+  const outcome = await writeProfile(
+    supabase,
+    userId,
+    updateData,
+    'grow subscription',
+    isActive ? undefined : { column: 'grow_stripe_subscription_id', subscriptionId: subscription.id }
+  );
+  if (outcome === 'superseded') return;
 
-  if (error) {
-    console.error('[grow] Error updating profile:', error);
-    throw error;
-  }
-
-  console.log(`[grow] Updated subscription for user ${userId}: tier=${tier}, status=${subscription.status}`);
+  console.log(`[grow] Updated subscription for user ${userId}: tier=${updateData.grow_subscription_tier}, status=${subscription.status}`);
 
   // Handle voucher if present
   if (subscription.metadata?.voucherCode && subscription.metadata?.voucherId) {
@@ -180,16 +264,7 @@ async function updateGrowProfileFromLifetime(
     grow_trial_ends_at: null,
   };
 
-  const { error } = await supabase
-    .from('profiles')
-    // @ts-expect-error - Supabase type inference issue with profile updates
-    .update(updateData)
-    .eq('id', userId);
-
-  if (error) {
-    console.error('[grow] Error updating profile for lifetime:', error);
-    throw error;
-  }
+  await writeProfile(supabase, userId, updateData, 'grow lifetime');
 
   console.log(`[grow] Activated lifetime ${tier} for user ${userId}`);
 
@@ -197,6 +272,31 @@ async function updateGrowProfileFromLifetime(
   if (session.metadata?.voucherCode && session.metadata?.voucherId) {
     await handleGrowVoucherFromSession(supabase, userId, session);
   }
+}
+
+/**
+ * Has this user already had this voucher recorded?
+ *
+ * apply_voucher inserts a usage row and increments `current_uses` every time
+ * it runs, and handleGrowVoucher runs on EVERY subscription.created/updated
+ * that carries voucher metadata — renewals, plan changes and Stripe retries
+ * included. Without this check each of those counted as another redemption
+ * and walked the voucher towards `max_uses`. The database has no unique
+ * (voucher_id, user_id) index to stop it; this is the guard until it does.
+ */
+async function voucherAlreadyApplied(
+  supabase: SupabaseServerClient,
+  voucherId: string,
+  userId: string
+): Promise<boolean> {
+  const { data, error } = await supabase
+    .from('voucher_usage')
+    .select('id')
+    .eq('voucher_id', voucherId)
+    .eq('user_id', userId)
+    .limit(1);
+  if (error) throw error;
+  return (data?.length ?? 0) > 0;
 }
 
 /**
@@ -208,6 +308,8 @@ async function handleGrowVoucher(
   subscription: Stripe.Subscription
 ) {
   try {
+    if (await voucherAlreadyApplied(supabase, subscription.metadata!.voucherId, userId)) return;
+
     const priceId = subscription.items.data[0]?.price.id;
     if (!priceId) return;
 
@@ -234,12 +336,18 @@ async function handleGrowVoucher(
     }
 
     // @ts-expect-error - RPC function not in generated types
-    await supabase.rpc('apply_voucher', {
+    const { data: applied, error: rpcError } = await supabase.rpc('apply_voucher', {
       voucher_id_input: subscription.metadata!.voucherId,
       user_id_input: userId,
       original_price_input: originalPrice,
       final_price_input: finalPrice,
     });
+    // apply_voucher traps every exception and returns false, so a failed
+    // redemption arrives as data, not as an error.
+    if (rpcError || applied === false) {
+      console.error('[grow] apply_voucher did not record usage:', rpcError?.message ?? 'returned false');
+      return;
+    }
 
     console.log(`[grow] Applied voucher ${subscription.metadata!.voucherCode} for user ${userId}`);
   } catch (err) {
@@ -256,16 +364,22 @@ async function handleGrowVoucherFromSession(
   session: Stripe.Checkout.Session
 ) {
   try {
+    if (await voucherAlreadyApplied(supabase, session.metadata!.voucherId, userId)) return;
+
     const originalPrice = (session.amount_total || 0) / 100;
     const finalPrice = (session.amount_total || 0) / 100; // Already discounted
 
     // @ts-expect-error - RPC function not in generated types
-    await supabase.rpc('apply_voucher', {
+    const { data: applied, error: rpcError } = await supabase.rpc('apply_voucher', {
       voucher_id_input: session.metadata!.voucherId,
       user_id_input: userId,
       original_price_input: originalPrice,
       final_price_input: finalPrice,
     });
+    if (rpcError || applied === false) {
+      console.error('[grow] apply_voucher did not record lifetime usage:', rpcError?.message ?? 'returned false');
+      return;
+    }
 
     console.log(`[grow] Applied voucher ${session.metadata!.voucherCode} for lifetime purchase`);
   } catch (err) {
@@ -303,7 +417,9 @@ async function recordGrowEvent(
       event_data: eventData as unknown,
     });
 
-  if (error) {
+  // A 23505 is a Stripe retry of an event already recorded (stripe_event_id
+  // is UNIQUE) — the replay being recognised, not a fault.
+  if (error && error.code !== UNIQUE_VIOLATION) {
     // Audit-log failure must not fail the webhook, but it must be visible.
     console.error(`[grow] Failed to record ${eventType} (${stripeEventId}):`, error.message);
   }
@@ -459,16 +575,14 @@ async function updateGoDaisyProfileFromSubscription(
     updateData.godaisy_subscription_end = new Date(godaisyPeriodEnd * 1000).toISOString();
   }
 
-  const { error } = await supabase
-    .from('profiles')
-    // @ts-expect-error - Supabase type inference issue with profile updates
-    .update(updateData)
-    .eq('id', userId);
-
-  if (error) {
-    console.error('[godaisy+] Error updating profile:', error);
-    throw error;
-  }
+  const outcome = await writeProfile(
+    supabase,
+    userId,
+    updateData,
+    'godaisy+ subscription',
+    isActive ? undefined : { column: 'godaisy_stripe_subscription_id', subscriptionId: subscription.id }
+  );
+  if (outcome === 'superseded') return;
 
   console.log(`[godaisy+] Updated subscription for user ${userId}: tier=${isActive ? 'plus' : 'free'}, status=${subscription.status}`);
 }
@@ -485,13 +599,20 @@ async function recordGoDaisyEvent(
   eventData: Stripe.Checkout.Session | Stripe.Subscription
 ) {
   // @ts-expect-error - Supabase type inference issue with godaisy_subscription_events
-  await supabase.from('godaisy_subscription_events').insert({
+  const { error } = await supabase.from('godaisy_subscription_events').insert({
     user_id: userId,
     event_type: eventType,
     stripe_event_id: stripeEventId,
     tier,
     event_data: eventData as unknown,
   });
+
+  // stripe_event_id is UNIQUE, so a Stripe retry of an event already
+  // recorded fails with 23505. That is the replay being recognised, not a
+  // fault. Any other failure is logged but must not fail the webhook.
+  if (error && error.code !== UNIQUE_VIOLATION) {
+    console.error(`[godaisy+] Failed to record ${eventType} (${stripeEventId}):`, error.message);
+  }
 }
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
@@ -592,11 +713,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
         // Update customer ID in profile
         if (session.customer) {
-          await supabase
-            .from('profiles')
-            // @ts-expect-error - Supabase type inference issue with profile updates
-            .update({ stripe_customer_id: session.customer as string })
-            .eq('id', userId);
+          await writeProfile(
+            supabase, userId, { stripe_customer_id: session.customer as string }, 'checkout customer id'
+          );
         }
 
         // Route to correct handler based on app
@@ -605,11 +724,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           await recordGoDaisyEvent(supabase, userId, event.type, event.id, 'plus', session);
           // Store customer ID for Go Daisy+
           if (session.customer) {
-            await supabase
-              .from('profiles')
-              // @ts-expect-error - Supabase type inference issue with profile updates
-              .update({ godaisy_stripe_customer_id: session.customer as string })
-              .eq('id', userId);
+            await writeProfile(
+              supabase, userId, { godaisy_stripe_customer_id: session.customer as string }, 'godaisy+ customer id'
+            );
           }
           console.log(`[godaisy+] Processed checkout for user ${userId}`);
         } else if (isGrowDaisyEvent(session.metadata) && session.mode === 'payment') {
@@ -650,7 +767,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
       case 'customer.subscription.created':
       case 'customer.subscription.updated': {
-        const subscription = event.data.object as Stripe.Subscription;
+        // Act on the subscription as it is NOW, not as the event snapshot
+        // describes it. Stripe does not guarantee delivery order, and a
+        // retried or late `updated` from while the subscription was still
+        // active would otherwise re-grant a paid tier after `deleted` had
+        // already downgraded it. A retrieve failure throws, so Stripe retries.
+        const subscription = await stripe.subscriptions.retrieve(
+          (event.data.object as Stripe.Subscription).id
+        );
         const userId = subscription.metadata?.supabase_user_id;
 
         if (!userId) {
@@ -763,32 +887,48 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         }
 
         // Route to correct handler based on app
+        // Both downgrades are checked writes (see writeProfile): these two
+        // used to discard their error, so a failed downgrade left a cancelled
+        // customer on a paid tier for good. They are also scoped to the
+        // subscription being deleted — cancelling an OLD subscription must
+        // not downgrade a customer who has since resubscribed or bought
+        // lifetime (lifetime sets grow_stripe_subscription_id to null).
         if (isGoDaisyPlusEvent(subscription.metadata)) {
           // Go Daisy+ - downgrade to free
-          await supabase
-            .from('profiles')
-            // @ts-expect-error - Supabase type inference issue with profile updates
-            .update({
+          const outcome = await writeProfile(
+            supabase,
+            userId,
+            {
               godaisy_subscription_tier: 'free',
               godaisy_subscription_end: new Date().toISOString(),
-            })
-            .eq('id', userId);
+            },
+            'godaisy+ cancellation',
+            { column: 'godaisy_stripe_subscription_id', subscriptionId: subscription.id }
+          );
 
           await recordGoDaisyEvent(supabase, userId, event.type, event.id, 'free', subscription);
-          console.log(`[godaisy+] Subscription cancelled for user ${userId}, downgraded to free`);
+          if (outcome === 'updated') {
+            console.log(`[godaisy+] Subscription cancelled for user ${userId}, downgraded to free`);
+          }
         } else if (isGrowDaisyEvent(subscription.metadata)) {
           // Downgrade to seed tier
-          await supabase
-            .from('profiles')
-            // @ts-expect-error - Supabase type inference issue with profile updates
-            .update({
+          const outcome = await writeProfile(
+            supabase,
+            userId,
+            {
               grow_subscription_tier: 'seed',
               grow_subscription_end: new Date().toISOString(),
-            })
-            .eq('id', userId);
+            },
+            'grow cancellation',
+            { column: 'grow_stripe_subscription_id', subscriptionId: subscription.id }
+          );
 
           const tier = (subscription.metadata?.tier as GrowSubscriptionTier) || 'seed';
           await recordGrowEvent(supabase, userId, event.type, event.id, tier, subscription);
+
+          // Superseded means the customer is on another plan now; telling
+          // them they have been cancelled would be wrong.
+          if (outcome === 'superseded') break;
 
           // Access usually runs to the end of the paid period rather than
           // stopping the moment Stripe deletes the subscription, so quote the
@@ -870,6 +1010,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     return res.status(200).json({ received: true });
   } catch (error) {
+    if (error instanceof ProfileNotFoundError) {
+      // Deterministic — see ProfileNotFoundError. ERROR level so it is
+      // findable; a retry cannot fix it.
+      console.error(error.message);
+      return res.status(200).json({ received: true, ignored: 'profile_not_found' });
+    }
     console.error('Webhook handler error:', error);
     return res.status(500).json({
       error: error instanceof Error ? error.message : 'Webhook processing failed'
