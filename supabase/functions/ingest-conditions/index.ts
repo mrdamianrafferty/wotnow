@@ -501,14 +501,19 @@ async function fetchNoaaForCell(cell: GridCell, diagnostics?: ProviderDiagnostic
         recordProviderError(diagnostics, `SST observation ${timeValue} is older than ${MAX_OBSERVATION_AGE_DAYS} days — refusing to store it as current`);
         continue;
       }
-      const temperature = Number(firstRow[firstRow.length - 1]);
-      if (temperature == null || Number.isNaN(temperature)) {
-        recordProviderError(diagnostics, `Invalid temperature for cell ${cell.cell_id} (offset ${offsetHours}h)`);
+      const temperature = readErddapNumber(firstRow[firstRow.length - 1]);
+      if (temperature === null) {
+        recordProviderError(diagnostics, `No temperature (masked pixel) for cell ${cell.cell_id} (offset ${offsetHours}h)`);
         continue;
       }
 
-      let celsius = Number(temperature);
+      let celsius = temperature;
       if (celsius > 200) celsius -= 273.15;
+      // Sea water freezes near -1.9 °C and nowhere exceeds ~36 °C at the surface.
+      if (celsius < -2.5 || celsius > 40) {
+        recordProviderError(diagnostics, `Implausible temperature ${celsius} for cell ${cell.cell_id} (offset ${offsetHours}h)`);
+        continue;
+      }
       if (diagnostics) diagnostics.successes++;
 
       return {
@@ -596,8 +601,8 @@ async function fetchChlorophyllForCell(cell: GridCell, diagnostics?: ProviderDia
       recordProviderError(diagnostics, `Chlorophyll observation ${timeValue} is older than ${MAX_OBSERVATION_AGE_DAYS} days — refusing to store it as current`);
       return null;
     }
-    const chl = Number(firstRow[firstRow.length - 1]);
-    if (!Number.isFinite(chl) || chl < 0) {
+    const chl = readErddapNumber(firstRow[firstRow.length - 1]);
+    if (chl === null || chl <= 0) {
       recordProviderError(diagnostics, `Invalid chlorophyll value for cell ${cell.cell_id}: ${chl}`);
       return null;
     }
@@ -680,8 +685,8 @@ async function fetchKd490ForCell(cell: GridCell, diagnostics?: ProviderDiagnosti
       recordProviderError(diagnostics, `Kd490 observation ${timeValue} is older than ${MAX_OBSERVATION_AGE_DAYS} days — refusing to store it as current`);
       return null;
     }
-    const kd490 = Number(firstRow[firstRow.length - 1]);
-    if (!Number.isFinite(kd490) || kd490 < 0) {
+    const kd490 = readErddapNumber(firstRow[firstRow.length - 1]);
+    if (kd490 === null || kd490 <= 0) {
       recordProviderError(diagnostics, `Invalid Kd490 value for cell ${cell.cell_id}: ${kd490}`);
       return null;
     }
@@ -765,6 +770,20 @@ function wrapLongitude(lon: number): number {
   while (value < -180) value += 360;
   while (value > 180) value -= 360;
   return value;
+}
+
+// ERDDAP's JSON encodes a masked or missing pixel as `null`, and
+// Number(null) is 0, not NaN -- so a NaN check passes it straight through.
+// That stored 0.0 °C for hundreds of tropical coastal cells from 2026-09-15,
+// plus zero chlorophyll and Kd490, all indistinguishable from real readings.
+// Anything that is not already a finite number is missing, never zero.
+function readErddapNumber(raw: unknown): number | null {
+  if (typeof raw === "number") return Number.isFinite(raw) ? raw : null;
+  if (typeof raw === "string" && raw.trim() !== "") {
+    const n = Number(raw);
+    return Number.isFinite(n) ? n : null;
+  }
+  return null;
 }
 
 function clamp(value: number, min: number, max: number): number {
