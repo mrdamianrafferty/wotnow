@@ -60,7 +60,13 @@ if (!SUPABASE_URL || !SERVICE_KEY) {
 const LOCK_NAME = "ingest-conditions";
 const LOCK_TTL_SECONDS = 90;
 const INVOCATION_DEADLINE_MS = 50_000;
-const HTTP_TIMEOUT_MS = 5_000;
+// Per-request ceiling for ERDDAP. Was 5 s; measured 2026-09-24, the blended SST
+// endpoint took 7.4-9.4 s per single-point request, so every fetch aborted and
+// the function wrote nothing -- through pg_cron and godaisy-core's workflows
+// alike -- while every invocation still returned 200. fetchWithTimeout also
+// caps each request at the time left before the invocation deadline, so a
+// slow request started late cannot outlive pg_net's 60 s wait or the lock.
+const HTTP_TIMEOUT_MS = Number(env.ERDDAP_HTTP_TIMEOUT_MS) || 15_000;
 
 type IngestRequestPayload = {
   bbox?: [number, number, number, number];
@@ -427,14 +433,14 @@ async function fetchNoaaSurfaceTemperatures(
   if (diagnostics) diagnostics.sampledCells = limitedCells.length;
 
   await mapWithConcurrency(limitedCells, NOAA_CONCURRENCY, deadline, async (cell) => {
-    const sample = await fetchNoaaForCell(cell, diagnostics);
+    const sample = await fetchNoaaForCell(cell, deadline, diagnostics);
     if (sample) results.push(sample);
   });
 
   return results;
 }
 
-async function fetchNoaaForCell(cell: GridCell, diagnostics?: ProviderDiagnostics): Promise<ProviderSample | null> {
+async function fetchNoaaForCell(cell: GridCell, deadline: number, diagnostics?: ProviderDiagnostics): Promise<ProviderSample | null> {
   const useGriddap = NOAA_INTERFACE === "griddap";
   const offsets = useGriddap ? [0] : (NOAA_TIME_OFFSETS.length > 0 ? NOAA_TIME_OFFSETS : [0]);
   const windowMs = Math.max(NOAA_TIME_WINDOW_HOURS, 1) * 60 * 60 * 1000;
@@ -482,7 +488,7 @@ async function fetchNoaaForCell(cell: GridCell, diagnostics?: ProviderDiagnostic
     }
 
     try {
-      const resp = await fetchWithTimeout(url.toString());
+      const resp = await fetchWithTimeout(url.toString(), deadline);
       if (!resp.ok) {
         recordProviderError(diagnostics, `HTTP ${resp.status} ${resp.statusText} for cell ${cell.cell_id} (offset ${offsetHours}h)`);
         continue;
@@ -501,14 +507,19 @@ async function fetchNoaaForCell(cell: GridCell, diagnostics?: ProviderDiagnostic
         recordProviderError(diagnostics, `SST observation ${timeValue} is older than ${MAX_OBSERVATION_AGE_DAYS} days — refusing to store it as current`);
         continue;
       }
-      const temperature = Number(firstRow[firstRow.length - 1]);
-      if (temperature == null || Number.isNaN(temperature)) {
-        recordProviderError(diagnostics, `Invalid temperature for cell ${cell.cell_id} (offset ${offsetHours}h)`);
+      const temperature = readErddapNumber(firstRow[firstRow.length - 1]);
+      if (temperature === null) {
+        recordProviderError(diagnostics, `No temperature (masked pixel) for cell ${cell.cell_id} (offset ${offsetHours}h)`);
         continue;
       }
 
-      let celsius = Number(temperature);
+      let celsius = temperature;
       if (celsius > 200) celsius -= 273.15;
+      // Sea water freezes near -1.9 °C and nowhere exceeds ~36 °C at the surface.
+      if (celsius < -2.5 || celsius > 40) {
+        recordProviderError(diagnostics, `Implausible temperature ${celsius} for cell ${cell.cell_id} (offset ${offsetHours}h)`);
+        continue;
+      }
       if (diagnostics) diagnostics.successes++;
 
       return {
@@ -554,14 +565,14 @@ async function fetchChlorophyllData(
   if (diagnostics) diagnostics.sampledCells = limitedCells.length;
 
   await mapWithConcurrency(limitedCells, CHL_CONCURRENCY, deadline, async (cell) => {
-    const sample = await fetchChlorophyllForCell(cell, diagnostics);
+    const sample = await fetchChlorophyllForCell(cell, deadline, diagnostics);
     if (sample) results.push(sample);
   });
 
   return results;
 }
 
-async function fetchChlorophyllForCell(cell: GridCell, diagnostics?: ProviderDiagnostics): Promise<ProviderSample | null> {
+async function fetchChlorophyllForCell(cell: GridCell, deadline: number, diagnostics?: ProviderDiagnostics): Promise<ProviderSample | null> {
   if (diagnostics) diagnostics.attempted++;
   const normalizedBase = CHL_ERDDAP_BASE_URL.replace(/\/+$/, "");
   const apiRoot = normalizedBase.endsWith("/erddap") ? normalizedBase : `${normalizedBase}/erddap`;
@@ -579,7 +590,7 @@ async function fetchChlorophyllForCell(cell: GridCell, diagnostics?: ProviderDia
   url.search = `?${CHL_VARIABLE}[(last)][(0.0):1:(0.0)]${latSlice}${lonSlice}`;
 
   try {
-    const resp = await fetchWithTimeout(url.toString());
+    const resp = await fetchWithTimeout(url.toString(), deadline);
     if (!resp.ok) {
       recordProviderError(diagnostics, `HTTP ${resp.status} ${resp.statusText} for chlorophyll cell ${cell.cell_id}`);
       return null;
@@ -596,8 +607,8 @@ async function fetchChlorophyllForCell(cell: GridCell, diagnostics?: ProviderDia
       recordProviderError(diagnostics, `Chlorophyll observation ${timeValue} is older than ${MAX_OBSERVATION_AGE_DAYS} days — refusing to store it as current`);
       return null;
     }
-    const chl = Number(firstRow[firstRow.length - 1]);
-    if (!Number.isFinite(chl) || chl < 0) {
+    const chl = readErddapNumber(firstRow[firstRow.length - 1]);
+    if (chl === null || chl <= 0) {
       recordProviderError(diagnostics, `Invalid chlorophyll value for cell ${cell.cell_id}: ${chl}`);
       return null;
     }
@@ -641,14 +652,14 @@ async function fetchKd490Data(
   if (diagnostics) diagnostics.sampledCells = limitedCells.length;
 
   await mapWithConcurrency(limitedCells, KD490_CONCURRENCY, deadline, async (cell) => {
-    const sample = await fetchKd490ForCell(cell, diagnostics);
+    const sample = await fetchKd490ForCell(cell, deadline, diagnostics);
     if (sample) results.push(sample);
   });
 
   return results;
 }
 
-async function fetchKd490ForCell(cell: GridCell, diagnostics?: ProviderDiagnostics): Promise<ProviderSample | null> {
+async function fetchKd490ForCell(cell: GridCell, deadline: number, diagnostics?: ProviderDiagnostics): Promise<ProviderSample | null> {
   if (diagnostics) diagnostics.attempted++;
   const normalizedBase = KD490_ERDDAP_BASE_URL.replace(/\/+$/, "");
   const apiRoot = normalizedBase.endsWith("/erddap") ? normalizedBase : `${normalizedBase}/erddap`;
@@ -663,7 +674,7 @@ async function fetchKd490ForCell(cell: GridCell, diagnostics?: ProviderDiagnosti
   url.search = `?${KD490_VARIABLE}[(last)][(0.0):1:(0.0)]${latSlice}${lonSlice}`;
 
   try {
-    const resp = await fetchWithTimeout(url.toString());
+    const resp = await fetchWithTimeout(url.toString(), deadline);
     if (!resp.ok) {
       recordProviderError(diagnostics, `HTTP ${resp.status} ${resp.statusText} for Kd490 cell ${cell.cell_id}`);
       return null;
@@ -680,8 +691,8 @@ async function fetchKd490ForCell(cell: GridCell, diagnostics?: ProviderDiagnosti
       recordProviderError(diagnostics, `Kd490 observation ${timeValue} is older than ${MAX_OBSERVATION_AGE_DAYS} days — refusing to store it as current`);
       return null;
     }
-    const kd490 = Number(firstRow[firstRow.length - 1]);
-    if (!Number.isFinite(kd490) || kd490 < 0) {
+    const kd490 = readErddapNumber(firstRow[firstRow.length - 1]);
+    if (kd490 === null || kd490 <= 0) {
       recordProviderError(diagnostics, `Invalid Kd490 value for cell ${cell.cell_id}: ${kd490}`);
       return null;
     }
@@ -720,9 +731,10 @@ async function fetchKd490ForCell(cell: GridCell, diagnostics?: ProviderDiagnosti
 
 // Helpers --------------------------------------------------------------------
 
-async function fetchWithTimeout(url: string, init: RequestInit = {}): Promise<Response> {
+async function fetchWithTimeout(url: string, deadline: number, init: RequestInit = {}): Promise<Response> {
   const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), HTTP_TIMEOUT_MS);
+  const timeoutMs = Math.max(0, Math.min(HTTP_TIMEOUT_MS, deadline - Date.now()));
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
   try {
     return await fetch(url, { ...init, signal: controller.signal });
   } finally {
@@ -765,6 +777,20 @@ function wrapLongitude(lon: number): number {
   while (value < -180) value += 360;
   while (value > 180) value -= 360;
   return value;
+}
+
+// ERDDAP's JSON encodes a masked or missing pixel as `null`, and
+// Number(null) is 0, not NaN -- so a NaN check passes it straight through.
+// That stored 0.0 °C for hundreds of tropical coastal cells from 2026-09-15,
+// plus zero chlorophyll and Kd490, all indistinguishable from real readings.
+// Anything that is not already a finite number is missing, never zero.
+function readErddapNumber(raw: unknown): number | null {
+  if (typeof raw === "number") return Number.isFinite(raw) ? raw : null;
+  if (typeof raw === "string" && raw.trim() !== "") {
+    const n = Number(raw);
+    return Number.isFinite(n) ? n : null;
+  }
+  return null;
 }
 
 function clamp(value: number, min: number, max: number): number {
