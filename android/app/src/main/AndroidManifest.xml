@@ -67,8 +67,8 @@
 
     <!-- Permissions -->
 
-    <!-- Remove advertising ID permissions from dependencies - we don't use ads -->
-    <uses-permission android:name="com.google.android.gms.permission.AD_ID" tools:node="remove" />
+    <!-- Play counts analytics as advertising, so the Play Console declaration says the app uses
+         the advertising ID. The manifest must carry AD_ID to match; dependencies add it. -->
     <uses-permission android:name="android.permission.ACCESS_ADSERVICES_AD_ID" tools:node="remove" />
 
     <!-- Core -->
