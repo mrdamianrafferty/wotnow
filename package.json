@@ -68,7 +68,7 @@
     }
   },
   "engines": {
-    "node": "20.x"
+    "node": "24.x"
   },
   "dependencies": {
     "@capacitor-community/apple-sign-in": "^7.1.0",
