@@ -401,9 +401,12 @@ const pwaConfig = withPWA({
         },
       },
     },
-    // Cache all HTML pages (SSR/SSG) - general fallback
+    // Cache all HTML pages (SSR/SSG) - general fallback.
+    // Same-origin only. The old /^https?:\/\/[^\/]+\/.*/ matched EVERY GET, so the worker
+    // fetched map tiles, Nominatim and other third-party requests itself, where the site's
+    // CSP connect-src (which does not list them) blocked them: the map picker went grey.
     {
-      urlPattern: /^https?:\/\/[^\/]+\/.*/,
+      urlPattern: ({ url }) => url.origin === self.location.origin,
       handler: 'StaleWhileRevalidate',
       options: {
         cacheName: 'pages-cache',
