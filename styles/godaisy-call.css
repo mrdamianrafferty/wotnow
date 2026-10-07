@@ -1630,6 +1630,12 @@ section.gd-land-foot  { padding: 32px var(--call-gutter-app) 44px; }
   font-size: var(--call-caption);
   color: var(--call-ink-4);
 }
+.gd-foot-stores {
+  margin: 10px 0 0;
+  font-size: var(--call-caption);
+  color: var(--call-ink-4);
+}
+.gd-foot-stores a { color: inherit; text-decoration: underline; text-underline-offset: 2px; }
 
 .gd-foot-title { margin: 0 0 12px; color: var(--call-ink-4); }
 
