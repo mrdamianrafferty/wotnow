@@ -7,9 +7,9 @@
  * Play listing exists or a territory changes. This page is the indirection, and
  * it is the only thing the codes ever have to know.
  *
- * It also does what a store URL cannot: route by platform. An Android phone
- * scanning an App Store link gets an apology; here it gets the web app, which
- * works today.
+ * It also does what a store URL cannot: route by platform. iOS goes to the App
+ * Store, Android to Google Play, and anything else is offered both plus the
+ * web app.
  *
  * The redirect is CLIENT-SIDE ON PURPOSE. A server redirect keyed on
  * User-Agent would be cached by the CDN and then served to the wrong platform —
@@ -23,7 +23,7 @@
 import { useEffect, useState } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
-import { APP_STORE_URL, APP_STORE_NAME } from '@/lib/daisyFamily';
+import { APP_STORE_URL, PLAY_STORE_URL } from '@/lib/daisyFamily';
 
 type Platform = 'ios' | 'android' | 'other';
 
@@ -44,10 +44,11 @@ export default function AppPage() {
   useEffect(() => {
     const p = detect();
     setPlatform(p);
-    // Only iOS auto-forwards: it is the only platform with somewhere to go.
-    // `replace`, so the back button returns to whatever they scanned from
-    // rather than bouncing them straight back out to the App Store.
+    // Phones auto-forward to their own store. `replace`, so the back button
+    // returns to whatever they scanned from rather than bouncing them straight
+    // back out to the store.
     if (p === 'ios') window.location.replace(APP_STORE_URL);
+    if (p === 'android') window.location.replace(PLAY_STORE_URL);
   }, []);
 
   return (
@@ -62,19 +63,17 @@ export default function AppPage() {
         <div className="call-setup-inner">
           <p className="call-label">Go Daisy</p>
           <h1 className="call-setup-question">
-            {platform === 'ios' ? 'Taking you to the App Store…' : 'Get Go Daisy'}
+            {platform === 'ios'
+              ? 'Taking you to the App Store…'
+              : platform === 'android'
+                ? 'Taking you to Google Play…'
+                : 'Get Go Daisy'}
           </h1>
 
-          {platform === 'android' && (
-            <p className="call-setup-help">
-              The Android app is not out yet. The web app does everything the phone app
-              does — add it to your home screen and it behaves like one.
-            </p>
-          )}
           {platform === 'other' && (
             <p className="call-setup-help">
-              {APP_STORE_NAME} is on iPhone and iPad. On anything else, the web app does
-              the same job.
+              Go Daisy is on iPhone, iPad and Android. On anything else, the web app
+              does the same job.
             </p>
           )}
 
@@ -82,6 +81,11 @@ export default function AppPage() {
             {platform !== 'android' && (
               <a className="call-btn call-setup-next" href={APP_STORE_URL}>
                 Open the App Store
+              </a>
+            )}
+            {platform !== 'ios' && (
+              <a className="call-btn call-setup-next" href={PLAY_STORE_URL}>
+                Open Google Play
               </a>
             )}
             <Link className="call-setup-back" href="/call">

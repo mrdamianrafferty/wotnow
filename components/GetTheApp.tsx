@@ -19,7 +19,7 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { trackEvent } from '../lib/analytics/events';
-import { APP_STORE_URL, APP_LINK_PATH, daisyFamily } from '../lib/daisyFamily';
+import { APP_STORE_URL, PLAY_STORE_URL, APP_LINK_PATH, daisyFamily } from '../lib/daisyFamily';
 
 export interface GetTheAppProps {
   /**
@@ -58,6 +58,15 @@ export default function GetTheApp({ placement, place }: GetTheAppProps) {
               })}
             >
               Download on the App Store
+            </a>
+            <a
+              className="gd-app-store"
+              href={PLAY_STORE_URL}
+              onClick={() => trackEvent('cross_promo_click', {
+                from_app: 'go_daisy', to_app: 'google_play', placement,
+              })}
+            >
+              Get it on Google Play
             </a>
             <Link className="gd-app-web" href="/call">
               Or use it in this browser
