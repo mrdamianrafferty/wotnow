@@ -1,0 +1,55 @@
+name: Play Store Listing
+
+# Uploads store-assets/<app>/ screenshots to the Google Play listing.
+# Run from the Actions tab. Leave "commit" off first: that run validates the
+# upload and discards it, so it changes nothing on Play.
+#
+# One-time setup — the same secret serves android-release.yml:
+#   1. Google Cloud console: enable "Google Play Android Developer API",
+#      create a service account (no roles), add a JSON key.
+#   2. Play Console > Users and permissions > Invite new users: the service
+#      account's email, app permissions for Go Daisy and Grow Daisy with
+#      "Manage store presence" (plus the release permissions, for releases).
+#      It can take a day before the API accepts it.
+#   3. GitHub > Settings > Secrets and variables > Actions: the key file's
+#      contents as GOOGLE_PLAY_SERVICE_ACCOUNT_JSON.
+
+on:
+  workflow_dispatch:
+    inputs:
+      app:
+        description: 'App'
+        required: true
+        type: choice
+        options:
+          - godaisy
+          - growdaisy
+      graphics:
+        description: 'Also replace feature graphic and icon'
+        type: boolean
+        default: false
+      commit:
+        description: 'Publish (off = dry run)'
+        type: boolean
+        default: false
+
+jobs:
+  upload:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: 'npm'
+
+      - run: npm ci --ignore-scripts
+
+      - name: Upload listing images
+        env:
+          GOOGLE_PLAY_SERVICE_ACCOUNT_JSON: ${{ secrets.GOOGLE_PLAY_SERVICE_ACCOUNT_JSON }}
+        run: >-
+          npx tsx scripts/upload-store-listing.ts ${{ inputs.app }}
+          ${{ inputs.graphics && '--graphics' || '' }}
+          ${{ inputs.commit && '--commit' || '' }}
