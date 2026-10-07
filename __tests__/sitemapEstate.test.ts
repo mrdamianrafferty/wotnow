@@ -60,12 +60,12 @@ describe('the Go Daisy sitemap carries the estate', () => {
     const count = (state.body.match(/<loc>/g) ?? []).length;
 
     /*
-     * Nine static pages, plus a hub per qualifying activity, plus a leaf per
+     * Eight static pages, plus a hub per qualifying activity, plus a leaf per
      * (activity, location). Computed from the same data the handler reads, so
      * this stays true as the dataset changes and false the moment a whole half
      * of it goes missing.
      */
-    const expected = 9 + activitiesWithHubs().length + getAllSeoPagePaths().length;
+    const expected = 8 + activitiesWithHubs().length + getAllSeoPagePaths().length;
     expect(count).toBe(expected);
 
     // And the shape, not just the arithmetic: a document of the right size made
