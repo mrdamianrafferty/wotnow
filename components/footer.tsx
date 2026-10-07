@@ -22,7 +22,8 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { trackEvent } from '../lib/analytics/events';
-import { daisyFamily } from '../lib/daisyFamily';
+import { APP_STORE_URL, PLAY_STORE_URL, daisyFamily } from '../lib/daisyFamily';
+import { useIsNativeApp } from '../hooks/useIsNativeApp';
 
 // Go Daisy is the umbrella app in the Daisy family, so its footer links out to
 // every sibling (unlike the specialist apps, which only link to the one or two
@@ -48,6 +49,8 @@ function handleCrossPromoClick(toApp: string) {
 
 export default function Footer() {
   const year = new Date().getFullYear();
+  // The native app loads these same pages; a store link inside it is noise.
+  const isNative = useIsNativeApp();
 
   return (
     <footer className="gd-foot">
@@ -63,6 +66,18 @@ export default function Footer() {
             />
             <p className="gd-foot-mark">Go Daisy</p>
             <p className="gd-foot-line">Weather you can act on.</p>
+            {/*
+              * On every page with a footer — the FAQ, the long-form pages and
+              * the ~2,000 spot pages — so whichever one a search lands on, both
+              * stores are one tap away.
+              */}
+            {!isNative && (
+              <p className="gd-foot-stores">
+                <a href={APP_STORE_URL} onClick={() => handleCrossPromoClick('app_store')}>App Store</a>
+                <span aria-hidden="true"> · </span>
+                <a href={PLAY_STORE_URL} onClick={() => handleCrossPromoClick('google_play')}>Google Play</a>
+              </p>
+            )}
           </div>
 
           <nav className="gd-foot-col" aria-labelledby="foot-about">

@@ -15,15 +15,21 @@
  */
 
 import Head from 'next/head';
+import { APP_STORE_URL, PLAY_STORE_URL } from '@/lib/daisyFamily';
 
 type AppContext = 'godaisy' | 'findr' | 'grow';
 
-const APP_CONFIGS: Record<AppContext, { name: string; url: string; logo: string; description: string }> = {
+const APP_CONFIGS: Record<
+  AppContext,
+  { name: string; url: string; logo: string; description: string; sameAs?: string[] }
+> = {
   godaisy: {
     name: 'Go Daisy',
     url: 'https://godaisy.io',
     logo: 'https://godaisy.io/logo.png',
     description: 'Weather-informed activity recommendations for outdoor enthusiasts.',
+    // Tells search engines the store listings belong to this site.
+    sameAs: [APP_STORE_URL, PLAY_STORE_URL],
   },
   findr: {
     name: 'Findr',
@@ -84,9 +90,7 @@ export function OrganizationJsonLd({ app }: { app?: AppContext } = {}) {
     url: config.url,
     logo: config.logo,
     description: config.description,
-    sameAs: [
-      // Add social media URLs when available
-    ],
+    sameAs: config.sameAs ?? [],
     contactPoint: {
       '@type': 'ContactPoint',
       contactType: 'customer support',
