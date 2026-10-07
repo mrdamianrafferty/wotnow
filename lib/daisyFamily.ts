@@ -26,14 +26,25 @@ export const APP_STORE_URL =
 export const APP_STORE_NAME = 'Go Daisy — The Active Life App';
 
 /**
+ * The Google Play listing — live since October 2026.
+ *
+ * The package id is the `godaisy` flavour's `applicationId` in
+ * `android/app/build.gradle`. Play resolves on that alone, so there is no slug
+ * to drift.
+ */
+export const PLAY_STORE_URL =
+  'https://play.google.com/store/apps/details?id=io.godaisy.app';
+
+/**
  * Where the QR codes point, and why it is not the App Store directly.
  *
  * A QR is printed, screenshotted and shared; it outlives whatever it encodes.
- * Pointing it at `/app` means the destination can change — a Play listing when
- * Android ships, a different territory, a landing page — without every code
- * already in the world going stale. It also lets the page route by platform,
- * which a store URL cannot: an Android phone scanning an App Store link gets an
- * apology, and here it gets the web app.
+ * Pointing it at `/app` means the destination can change — a different
+ * territory, a landing page — without every code already in the world going
+ * stale. It also lets the page route by platform, which a store URL cannot: an
+ * Android phone scanning an App Store link gets an apology, and here it gets
+ * Google Play. (That is the case this indirection was built for: the Play
+ * listing arrived after the codes were printed, and none of them changed.)
  */
 export const APP_LINK_PATH = '/app';
 

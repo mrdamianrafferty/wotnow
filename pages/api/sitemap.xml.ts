@@ -89,9 +89,6 @@ function getGoDaisyUrls(baseUrl: string): SitemapUrl[] {
     { loc: `${baseUrl}/AboutUs`, lastmod: today, changefreq: 'monthly', priority: 0.5 },
     { loc: `${baseUrl}/support`, lastmod: today, changefreq: 'monthly', priority: 0.4 },
 
-    // Android tester recruitment landing page
-    { loc: `${baseUrl}/android-testers`, lastmod: today, changefreq: 'weekly', priority: 0.6 },
-
     // NOTE: /settings and /login deliberately omitted (have noindex meta)
   ];
 

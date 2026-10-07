@@ -216,6 +216,15 @@ const nextConfig = {
        */
       { source: '/settings', destination: '/account', permanent: true },
 
+      /*
+       * `/android-testers` recruited the twelve closed-beta testers Google Play
+       * required. Go Daisy is live on Play now, so the form has nothing left to
+       * do — but the URL was on the landing page, the FAQ and the sitemap, and
+       * anyone arriving from those wants the Android app. `/app` sends an
+       * Android phone straight to the Play listing.
+       */
+      { source: '/android-testers', destination: '/app', permanent: true },
+
       // grow.godaisy.io root → /grow
       {
         source: '/',

@@ -136,7 +136,7 @@ const FAQ_GROUPS: FaqGroup[] = [
       },
       {
         q: 'Is Go Daisy on Android?',
-        a: 'The Android version is built and in closed beta. Google Play asks new apps to put twelve testers through a fortnight of real-world use before launching to the public, and we are recruiting that group now. If you have an Android phone and would like to be one of them, see the Android testers section on the home page. The web app at godaisy.io works in any browser, on any phone, in the meantime.',
+        a: 'Yes. Go Daisy is on Google Play — search for Go Daisy, or go to play.google.com/store/apps/details?id=io.godaisy.app. It is the same app as the iPhone version, free and ad-free. The web app at godaisy.io also works in any browser, on any phone.',
       },
       {
         q: 'How is Go Daisy different from Windy, the Met Office app, or AccuWeather?',

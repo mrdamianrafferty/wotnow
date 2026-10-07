@@ -51,7 +51,7 @@ import { PageHeader } from './call/PageHeader';
 import dynamic from 'next/dynamic';
 import SEO from './SEO';
 import GetTheApp from './GetTheApp';
-import { APP_STORE_URL } from '../lib/daisyFamily';
+import { APP_STORE_URL, PLAY_STORE_URL } from '../lib/daisyFamily';
 import { activityIdToSlug, prettyActivityName } from '../lib/seo/activityNames';
 import { DEFAULT_SPORTS } from '../lib/godaisy/call/setup';
 
@@ -169,9 +169,9 @@ const softwareAppJsonLd = {
   description:
     'Free weather app that scores over a hundred activities — surfing, hiking, padel, cricket, stargazing, sea swimming and more — and sends one sentence a day telling you what today is good for.',
   applicationCategory: 'WeatherApplication',
-  operatingSystem: 'iOS',
+  operatingSystem: 'iOS, Android',
   url: 'https://godaisy.io',
-  installUrl: APP_STORE_URL,
+  installUrl: [APP_STORE_URL, PLAY_STORE_URL],
   offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' },
   publisher: { '@type': 'Organization', name: 'Go Daisy', url: 'https://godaisy.io' },
 };
@@ -265,6 +265,15 @@ const LandingPage: React.FC<LandingPageProps> = ({
                   className="gd-land-link"
                 >
                   get it on your iPhone
+                </a>
+                {' '}or{' '}
+                <a
+                  href={PLAY_STORE_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="gd-land-link"
+                >
+                  Android
                 </a>
                 .
               </p>
@@ -423,10 +432,10 @@ const LandingPage: React.FC<LandingPageProps> = ({
             <p>
               Free for everyone, forever — supported by our specialist sister apps, not by
               ads or by selling your data. Built by independent makers in the UK and
-              Asturias, Spain. iOS today, Android in closed beta —{' '}
-              <Link href="/android-testers" className="gd-land-link">
-                help us launch
-              </Link>
+              Asturias, Spain. On{' '}
+              <a href={APP_STORE_URL} className="gd-land-link">iPhone</a>
+              {' '}and{' '}
+              <a href={PLAY_STORE_URL} className="gd-land-link">Android</a>
               .
             </p>
             {/*

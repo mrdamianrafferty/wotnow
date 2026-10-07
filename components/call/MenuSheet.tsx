@@ -92,7 +92,7 @@ const GROUPS: ReadonlyArray<{ title: string; items: readonly Item[] }> = [
     items: [
       { href: '/whether-weather', label: 'How the scoring works' },
       { href: '/support', label: 'Support Go Daisy' },
-      { href: '/app', label: 'Get it on your iPhone' },
+      { href: '/app', label: 'Get it on your phone' },
     ],
   },
 ];
