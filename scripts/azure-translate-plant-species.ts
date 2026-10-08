@@ -405,18 +405,22 @@ async function runCareGuides(species: SpeciesRow[]) {
   for (const lang of langs) {
     // Skip anything already cached (DeepL or manual) — those are already paid for.
     const have = new Set<string>();
-    // Page through this language's cache rows instead of an .in() filter: forty
-    // care-guide paragraphs make a request URL too long and fetch fails outright.
-    for (let from = 0; ; from += 1000) {
+    // Look rows up by their short content hash. A filter on the full source text puts
+    // forty paragraphs in the request URL and fails; paging through every cached row
+    // missed about one in eight, which re-bought strings already stored.
+    const wanted = new Map(sources.map((s) => [hash(s), s] as const));
+    const hashes = [...wanted.keys()];
+    for (let i = 0; i < hashes.length; i += 100) {
       const { data, error } = await supabase
         .from('translation_cache')
-        .select('source_text')
+        .select('source_text, source_content_hash')
         .eq('target_language', lang)
-        .order('id')
-        .range(from, from + 999);
+        .in('source_content_hash', hashes.slice(i, i + 100));
       if (error) throw error;
-      data?.forEach((r) => have.add(r.source_text.trim()));
-      if (!data || data.length < 1000) break;
+      for (const r of data ?? []) {
+        const s = wanted.get(r.source_content_hash);
+        if (s !== undefined && r.source_text.trim() === s) have.add(s);
+      }
     }
     const todo = sources.filter((t) => !have.has(t));
     // With --plant-names, what Azure receives differs from what we store under:

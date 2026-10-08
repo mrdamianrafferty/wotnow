@@ -42,6 +42,22 @@ const TO = String.raw`\s*(?:-|–|to|and)\s*`;
 export function inchesToCentimetres(text: string): string {
   let t = text;
 
+  // The text already gives centimetres in brackets ("2 inches (5 cm)", "12-18 in (30-46 cm)"):
+  // keep the author's figure and drop the inches, so the measurement isn't said twice.
+  t = t.replace(
+    new RegExp(
+      `${NUM}(?:\\s*(?:-|–|to)\\s*${NUM})?\\s*(?:inches|inch|in\\.?|")\\s*` +
+      String.raw`\(\s*(?:about |approximately |approx\.? )?(\d[\d.,]*(?:\s*(?:-|–|to)\s*\d[\d.,]*)?\s*(?:cm|centimet(?:er|re)s?))\s*\)`,
+      'gi',
+    ),
+    (_m, _a, _b, cm: string) => cm,
+  );
+  // ...and the same when the inches are a word: "an inch (2.5 cm)", "half an inch (1.3 cm)"
+  t = t.replace(
+    /\b(?:half an|an|a|one)\s+inch\s*\(\s*(?:about |approximately |approx\.? )?(\d[\d.,]*(?:\s*(?:-|–|to)\s*\d[\d.,]*)?\s*(?:cm|centimet(?:er|re)s?))\s*\)/gi,
+    (_m, cm: string) => cm,
+  );
+
   // "an inch or 2", "the top inch or two" -> 2.5 to 5 cm
   t = t.replace(/\b(?:(?:an|1|one)\s+)?inch\s+or\s+(?:2|two)\b/gi, '2.5 to 5 cm');
   // "half an inch to an inch" -> 1.5 to 2.5 cm
