@@ -6,6 +6,7 @@
  *   names         plant_species.name_{fr,es,de,it,pt,nl,pl} where empty, translated
  *                 from the English `name` and written straight into the column.
  *   care-guides   each distinct `description` string inside plant_species.care_guides,
+ *                 plus the section titles and CareGuideCard's labels,
  *                 stored in translation_cache (source_text = the English string,
  *                 translation_source = 'azure') — the same table autoTranslate reads.
  *
@@ -130,10 +131,15 @@ async function translateAll(texts: string[], lang: Lang): Promise<string[]> {
 
 // ─── Data ────────────────────────────────────────────────────────────────
 
+const CARD_UI_STRINGS = ['Care Guide', 'tip', 'tips', 'more care tips available'];
+
+/** Same as formatSectionTitle in CareGuideCard.tsx: "pest_control" -> "Pest Control". */
+const formatSectionTitle = (type: string) => type.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
+
 interface SpeciesRow {
   slug: string;
   name: string;
-  care_guides: Array<{ description?: string }> | null;
+  care_guides: Array<{ type?: string; description?: string }> | null;
   [col: string]: unknown;
 }
 
@@ -189,11 +195,14 @@ async function runNames(species: SpeciesRow[]) {
 
 async function runCareGuides(species: SpeciesRow[]) {
   console.log('\n── Care guides ──');
-  const sources = [...new Set(
-    species.flatMap((s) => (Array.isArray(s.care_guides) ? s.care_guides : []))
-      .map((g) => g.description?.trim() ?? '')
-      .filter(Boolean),
-  )].slice(0, limit);
+  const guides = species.flatMap((s) => (Array.isArray(s.care_guides) ? s.care_guides : []));
+  const sources = [...new Set([
+    // What components/grow/CareGuideCard.tsx looks up: its labels, the section
+    // titles (formatSectionTitle) and the descriptions. Keep in step with it.
+    ...CARD_UI_STRINGS,
+    ...guides.map((g) => (g.type ? formatSectionTitle(g.type) : '')),
+    ...guides.map((g) => g.description?.trim() ?? ''),
+  ].filter(Boolean))].slice(0, limit);
   console.log(`${sources.length} distinct strings, ${sources.reduce((n, t) => n + t.length, 0)} chars per language`);
 
   for (const lang of langs) {
