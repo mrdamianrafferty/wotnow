@@ -280,11 +280,23 @@ function protectNames(text: string, row: SpeciesRow | undefined, lang: Lang): st
   const names = englishNamesFor(row).filter((n) => n.toLowerCase() !== local.toLowerCase());
   if (!names.length) return text;
   const re = new RegExp(`\\b(${names.map(escRe).join('|')})\\b`, 'gi');
-  return text.replace(
-    re,
-    (m) => `<mstrans:dictionary translation="${escAttr(adjustCase(local, lang))}">${m}</mstrans:dictionary>`,
-  );
+  // Leave anything in brackets alone: that is where the Latin name lives, and a genus
+  // like "Campanula" is also an English name, so it would be "translated" ("Campánula").
+  return text
+    .split(/(\([^)]*\))/)
+    .map((part, i) =>
+      i % 2 === 1
+        ? part
+        : part.replace(
+            re,
+            (m) => `<mstrans:dictionary translation="${escAttr(adjustCase(local, lang))}">${m}</mstrans:dictionary>`,
+          ),
+    )
+    .join('');
 }
+
+/** Latin binomials in brackets, e.g. "(Campanula persicifolia)", that the output must keep verbatim. */
+const latinNames = (t: string) => [...t.matchAll(/\(([A-Z][a-z]+(?: [a-z×.-]+)+)\)/g)].map((m) => m[1]);
 
 /** Which species a care-guide description belongs to (first one wins if shared). */
 function ownersByDescription(species: SpeciesRow[]): Map<string, SpeciesRow> {
@@ -401,6 +413,11 @@ async function runCareGuides(species: SpeciesRow[]) {
     await translateAll(prepared, lang, async (sentBatch, out) => {
       const src = todo.slice(offset, offset + sentBatch.length);
       offset += sentBatch.length;
+      // Scientific names must come through untouched; say so if one didn't.
+      src.forEach((s, j) => {
+        const lost = latinNames(s).filter((l) => !out[j].includes(l));
+        if (lost.length) console.log(`   !! Latin name changed in ${lang}: ${lost.join(', ')}`);
+      });
       const now = new Date().toISOString();
       const rows = src.map((s, j) => ({
         source_text: s,
