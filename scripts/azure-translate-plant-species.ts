@@ -39,7 +39,7 @@ const AZURE_CODE: Record<Lang, string> = {
 
 // Azure limits: 1,000 elements and 50,000 characters per request (per target language).
 const MAX_ELEMENTS = 100;
-const MAX_REQUEST_CHARS = 20_000;
+const MAX_REQUEST_CHARS = 10_000; // small batches: progress shows and saves often
 const DEFAULT_MAX_CHARS = 1_600_000; // names + care guides for all 7 languages is ~1.52M
 
 // ─── Args ────────────────────────────────────────────────────────────────
@@ -57,6 +57,8 @@ const doCare = flag('care-guides') || !flag('names');
 const langs = (option('langs')?.split(',') ?? [...LANGS]).map((l) => l.trim()) as Lang[];
 const limit = option('limit') ? Number(option('limit')) : Infinity;
 const maxChars = Number(option('max-chars') ?? DEFAULT_MAX_CHARS);
+// Azure throttles characters per minute (about 33,300 on paid tiers, from memory — lower it if you see 429s).
+const charsPerMinute = Number(option('chars-per-minute') ?? 30_000);
 
 for (const l of langs) {
   if (!LANGS.includes(l)) throw new Error(`Unsupported --langs entry "${l}". Use: ${LANGS.join(',')}`);
@@ -86,39 +88,93 @@ if (apply && (!AZURE_KEY || !AZURE_REGION)) {
 
 let billed = 0;
 
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
+/**
+ * Stay under Azure's characters-per-minute throttle. A request that would push
+ * the last 60 seconds over the limit waits until the oldest sends age out.
+ */
+const recentSends: Array<{ at: number; chars: number }> = [];
+async function pace(chars: number) {
+  for (;;) {
+    const now = Date.now();
+    while (recentSends.length && now - recentSends[0].at > 60_000) recentSends.shift();
+    const used = recentSends.reduce((n, s) => n + s.chars, 0);
+    if (!recentSends.length || used + chars <= charsPerMinute) break;
+    const waitMs = recentSends[0].at + 60_000 - now + 250;
+    console.log(`   pacing: waiting ${Math.ceil(waitMs / 1000)}s (Azure limit ~${charsPerMinute} chars/min)`);
+    await sleep(waitMs);
+  }
+  recentSends.push({ at: Date.now(), chars });
+}
+
 async function azureTranslate(texts: string[], lang: Lang): Promise<string[]> {
   const url = `${AZURE_ENDPOINT}/translate?api-version=3.0&from=en&to=${AZURE_CODE[lang]}`;
+  const chars = texts.reduce((n, t) => n + t.length, 0);
   for (let attempt = 0; ; attempt++) {
-    const res = await fetch(url, {
-      method: 'POST',
-      headers: {
-        'Ocp-Apim-Subscription-Key': AZURE_KEY!,
-        'Ocp-Apim-Subscription-Region': AZURE_REGION!,
-        'Content-Type': 'application/json; charset=UTF-8',
-      },
-      body: JSON.stringify(texts.map((Text) => ({ Text }))),
-    });
+    await pace(chars);
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 60_000);
+    let res: Response | null = null;
+    try {
+      res = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Ocp-Apim-Subscription-Key': AZURE_KEY!,
+          'Ocp-Apim-Subscription-Region': AZURE_REGION!,
+          'Content-Type': 'application/json; charset=UTF-8',
+        },
+        body: JSON.stringify(texts.map((Text) => ({ Text }))),
+        signal: controller.signal,
+      });
+    } catch (err) {
+      // Timeout or network error: retry, but not forever.
+      if (attempt >= 4) throw new Error(`Azure request failed after ${attempt + 1} tries: ${err instanceof Error ? err.message : err}`);
+      console.log(`   request failed (${err instanceof Error ? err.name : 'error'}), retrying in ${2 ** attempt * 5}s`);
+      await sleep(2 ** attempt * 5000);
+      continue;
+    } finally {
+      clearTimeout(timer);
+    }
     if ((res.status === 429 || res.status >= 500) && attempt < 5) {
-      await new Promise((r) => setTimeout(r, 2000 * 2 ** attempt));
+      const retryAfter = Number(res.headers.get('retry-after'));
+      const waitS = Number.isFinite(retryAfter) && retryAfter > 0 ? retryAfter : 2 ** attempt * 5;
+      console.log(`   Azure ${res.status}: ${(await res.text()).slice(0, 120)} — retrying in ${waitS}s`);
+      await sleep(waitS * 1000);
       continue;
     }
     if (!res.ok) throw new Error(`Azure ${res.status}: ${(await res.text()).slice(0, 300)}`);
     const body = (await res.json()) as Array<{ translations: Array<{ text: string }> }>;
     if (body.length !== texts.length) throw new Error('Azure returned a different number of results');
-    billed += texts.reduce((n, t) => n + t.length, 0);
+    billed += chars;
     return body.map((b) => b.translations[0].text);
   }
 }
 
-/** Translate in requests sized to Azure's limits, preserving order. */
-async function translateAll(texts: string[], lang: Lang): Promise<string[]> {
+/**
+ * Translate in requests sized to Azure's limits, preserving order. `onBatch`
+ * receives each batch as soon as it comes back, so callers can save it straight
+ * away: a stall or crash then loses one batch, not the whole language.
+ */
+async function translateAll(
+  texts: string[],
+  lang: Lang,
+  onBatch?: (src: string[], out: string[]) => Promise<void>,
+): Promise<string[]> {
   const out: string[] = [];
   let batch: string[] = [];
   let size = 0;
+  let sent = 0;
   const flush = async () => {
-    if (batch.length) out.push(...(await azureTranslate(batch, lang)));
+    if (!batch.length) return;
+    const translated = await azureTranslate(batch, lang);
+    out.push(...translated);
+    sent += batch.length;
+    if (onBatch) await onBatch(batch, translated);
+    console.log(`   ${lang}: ${sent}/${texts.length} strings done (${billed.toLocaleString()} chars billed so far)`);
     batch = [];
     size = 0;
+    guardBudget(); // stop part-way if --max-chars is passed; what was saved stays saved
   };
   for (const t of texts) {
     if (batch.length && (batch.length >= MAX_ELEMENTS || size + t.length > MAX_REQUEST_CHARS)) await flush();
@@ -228,15 +284,15 @@ async function runCareGuides(species: SpeciesRow[]) {
     if (!apply || todo.length === 0) continue;
     guardBudget();
 
-    const translated = await translateAll(todo, lang);
-    const now = new Date().toISOString();
-    for (let i = 0; i < todo.length; i += 50) {
-      const rows = todo.slice(i, i + 50).map((src, j) => ({
-        source_text: src,
+    let stored = 0;
+    await translateAll(todo, lang, async (src, out) => {
+      const now = new Date().toISOString();
+      const rows = src.map((s, j) => ({
+        source_text: s,
         target_language: lang,
-        translated_text: translated[i + j],
+        translated_text: out[j],
         translation_source: 'azure',
-        source_content_hash: hash(src),
+        source_content_hash: hash(s),
         needs_review: false,
         access_count: 0,
         created_at: now,
@@ -246,8 +302,9 @@ async function runCareGuides(species: SpeciesRow[]) {
         .from('translation_cache')
         .upsert(rows, { onConflict: 'source_text,target_language', ignoreDuplicates: true });
       if (error) throw error;
-    }
-    console.log(`   stored ${todo.length}`);
+      stored += rows.length;
+    });
+    console.log(`   stored ${stored} ${lang} rows`);
   }
 }
 
