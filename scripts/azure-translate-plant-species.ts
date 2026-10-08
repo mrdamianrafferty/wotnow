@@ -223,7 +223,7 @@ async function runCareGuides(species: SpeciesRow[]) {
     }
     const todo = sources.filter((t) => !have.has(t));
     const chars = todo.reduce((n, t) => n + t.length, 0);
-    console.log(`${lang}: ${have.size} already cached, ${todo.length} to translate, ${chars} chars`);
+    console.log(`${lang}: ${sources.length - todo.length} already cached, ${todo.length} to translate, ${chars} chars`);
     plannedChars += chars;
     if (!apply || todo.length === 0) continue;
     guardBudget();
