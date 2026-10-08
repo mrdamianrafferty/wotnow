@@ -62,10 +62,15 @@ async function wikidata(lang: string, names: string[]): Promise<Map<string, Entr
       OPTIONAL { ?item rdfs:label ?label FILTER(LANG(?label) = "${lang}") }
       OPTIONAL { ?item skos:altLabel ?alias FILTER(LANG(?alias) = "${lang}") }
     } GROUP BY ?sci ?label`;
-    const res = await fetch(`https://query.wikidata.org/sparql?format=json&query=${encodeURIComponent(query)}`, {
-      headers: { 'User-Agent': 'WotNowNameCheck/1.0 (damian@flyglobalmusic.com)', Accept: 'application/sparql-results+json' },
-    });
-    if (!res.ok) throw new Error(`Wikidata answered ${res.status}`);
+    let res: Response | undefined;
+    for (let attempt = 1; attempt <= 5; attempt++) {
+      res = await fetch(`https://query.wikidata.org/sparql?format=json&query=${encodeURIComponent(query)}`, {
+        headers: { 'User-Agent': 'WotNowNameCheck/1.0 (damian@flyglobalmusic.com)', Accept: 'application/sparql-results+json' },
+      });
+      if (res.ok || ![429, 500, 502, 503, 504].includes(res.status)) break;
+      await sleep(attempt * 5000); // Wikidata sheds load now and then; wait and retry
+    }
+    if (!res || !res.ok) throw new Error(`Wikidata answered ${res?.status}`);
     const data = (await res.json()) as { results: { bindings: Array<Record<string, { value: string }>> } };
     for (const b of data.results.bindings) {
       const sci = b.sci.value;
