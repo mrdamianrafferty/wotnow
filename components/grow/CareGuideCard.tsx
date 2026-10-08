@@ -35,7 +35,7 @@ function getSectionIcon(type: string): string {
 
 // The card's own labels. scripts/azure-translate-plant-species.ts pre-translates
 // these, so keep the two lists in step.
-export const CARE_GUIDE_UI_STRINGS = ['Care Guide', 'tip', 'tips', 'more care tips available'] as const;
+export const CARE_GUIDE_UI_STRINGS = ['Care Guide', 'care tip', 'care tips', 'more care tips available'] as const;
 
 export function formatSectionTitle(type: string): string {
   return type
@@ -95,7 +95,7 @@ export function CareGuideCard({ species, maxSections = 5, expandable = true }: C
           {t('Care Guide')}
         </div>
         <Badge variant="secondary" className="text-xs">
-          {careGuides.length} {t(careGuides.length === 1 ? 'tip' : 'tips')}
+          {careGuides.length} {t(careGuides.length === 1 ? 'care tip' : 'care tips')}
         </Badge>
       </div>
 

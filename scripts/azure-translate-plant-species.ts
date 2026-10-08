@@ -131,7 +131,7 @@ async function translateAll(texts: string[], lang: Lang): Promise<string[]> {
 
 // ─── Data ────────────────────────────────────────────────────────────────
 
-const CARD_UI_STRINGS = ['Care Guide', 'tip', 'tips', 'more care tips available'];
+const CARD_UI_STRINGS = ['Care Guide', 'care tip', 'care tips', 'more care tips available'];
 
 /** Same as formatSectionTitle in CareGuideCard.tsx: "pest_control" -> "Pest Control". */
 const formatSectionTitle = (type: string) => type.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
