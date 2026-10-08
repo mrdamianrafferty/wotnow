@@ -257,11 +257,20 @@ function localNameFor(row: SpeciesRow, lang: Lang): string | null {
   return stripParen(v.split('/')[0]) || null;
 }
 
-/** Mid-sentence matches are lower case in every language but German (nouns) and Latin names. */
-function adjustCase(local: string, matched: string, lang: Lang): string {
+/**
+ * Insert the name in lower case (German nouns and Latin binomials excepted). We can't
+ * know whether Azure will put an article before it ("La búgula…"), so capitals at the
+ * start of sentences are restored afterwards by restoreSentenceCase.
+ */
+function adjustCase(local: string, lang: Lang): string {
   if (lang === 'de') return local;
   if (/^[A-Z][a-z]+ [a-z]+$/.test(local)) return local; // Latin binomial
-  return /^[a-z]/.test(matched) ? local[0].toLowerCase() + local.slice(1) : local;
+  return local[0].toLowerCase() + local.slice(1);
+}
+
+/** Capitalise the first letter of the text, of each paragraph and after . ! ? */
+function restoreSentenceCase(t: string): string {
+  return t.replace(/(^|[.!?]\s+|\n\s*)(\p{Ll})/gu, (_, lead: string, c: string) => lead + c.toUpperCase());
 }
 
 function protectNames(text: string, row: SpeciesRow | undefined, lang: Lang): string {
@@ -273,7 +282,7 @@ function protectNames(text: string, row: SpeciesRow | undefined, lang: Lang): st
   const re = new RegExp(`\\b(${names.map(escRe).join('|')})\\b`, 'gi');
   return text.replace(
     re,
-    (m) => `<mstrans:dictionary translation="${escAttr(adjustCase(local, m, lang))}">${m}</mstrans:dictionary>`,
+    (m) => `<mstrans:dictionary translation="${escAttr(adjustCase(local, lang))}">${m}</mstrans:dictionary>`,
   );
 }
 
@@ -298,7 +307,7 @@ async function runPreview(species: SpeciesRow[]) {
     .slice(0, previewCount);
   console.log(`\n── Preview (${lang}): ${picks.length} descriptions, plain vs plant-name pass ──`);
   const plain = await azureTranslate(picks.map(([d]) => d), lang);
-  const named = await azureTranslate(picks.map(([d, row]) => protectNames(d, row, lang)), lang);
+  const named = (await azureTranslate(picks.map(([d, row]) => protectNames(d, row, lang)), lang)).map(restoreSentenceCase);
   picks.forEach(([d], i) => {
     console.log(`\n[${picks[i][1].slug}]`);
     console.log(`  EN:    ${d.slice(0, 220)}${d.length > 220 ? '…' : ''}`);
@@ -396,7 +405,7 @@ async function runCareGuides(species: SpeciesRow[]) {
       const rows = src.map((s, j) => ({
         source_text: s,
         target_language: lang,
-        translated_text: out[j],
+        translated_text: usePlantNames ? restoreSentenceCase(out[j]) : out[j],
         // The table's CHECK only allows auto/reviewed/manual, so Azure rows are
         // 'auto' like DeepL's, and `notes` records where they came from.
         translation_source: 'auto',
