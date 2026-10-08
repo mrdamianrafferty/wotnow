@@ -57,6 +57,11 @@ const CORRECTIONS: Record<Lang, Record<string, string>> = {
   pt: {
     'lupin-yellow': 'Tremoço-amarelo', 'snapdragon': 'Boca-de-leão', 'mandarin': 'Tangerineira',
     'sweet-woodruff': 'Aspérula-odorífera',
+    // Wikidata checked
+    'black-walnut': 'Nogueira-preta', 'runner-bean': 'Feijão-da-Espanha', 'sycamore': 'Falso-plátano',
+    'wild-strawberry': 'Morangueiro-silvestre', 'gooseberry': 'Groselheira-espinhosa',
+    'tulip-poplar': 'Tulipeiro-da-Virgínia', 'tulip-tree': 'Tulipeiro-da-Virgínia',
+    'privet-common': 'Alfeneiro-comum', 'rowan': 'Tramazeira / sorveira-dos-passarinhos', 'dwarf-rowan': 'Tramazeira-anã',
   },
   nl: {
     'bluebell': 'Wilde hyacint', 'alchemilla-mollis': 'Fraaie vrouwenmantel', 'blueberry': 'Blauwe bosbes',
