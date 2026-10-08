@@ -8,7 +8,8 @@
  *   care-guides   each distinct `description` string inside plant_species.care_guides,
  *                 plus the section titles and CareGuideCard's labels,
  *                 stored in translation_cache (source_text = the English string,
- *                 translation_source = 'azure') — the same table autoTranslate reads.
+ *                 translation_source = 'auto', notes = 'azure-translator') — the same
+ *                 table autoTranslate reads.
  *
  * DRY RUN BY DEFAULT: counts the characters Azure would bill and writes nothing.
  * Pass --apply to translate and write. Existing translations are never overwritten.
@@ -291,7 +292,10 @@ async function runCareGuides(species: SpeciesRow[]) {
         source_text: s,
         target_language: lang,
         translated_text: out[j],
-        translation_source: 'azure',
+        // The table's CHECK only allows auto/reviewed/manual, so Azure rows are
+        // 'auto' like DeepL's, and `notes` records where they came from.
+        translation_source: 'auto',
+        notes: 'azure-translator',
         source_content_hash: hash(s),
         needs_review: false,
         access_count: 0,
