@@ -21,6 +21,15 @@
  *      self-heals rather than poisoning the row. Run it only to warm strings you
  *      know people read: --job=cache, or --job=both.
  *
+ * SHARES THE LIVE APP'S BUDGET. The DeepL key is shared with Grewp, Rise Daisy and
+ * Findr, and this app ranks last of the five, so the live app stops at 40% of the
+ * account and 50,000 characters a month (lib/translation/deepl-budget.ts). This
+ * script used to size itself from "everything left in the account minus a 25,000
+ * reserve", so one run could spend what the other apps were relying on. It now
+ * plans against the smaller of that and the shared budget, reserves each job's
+ * characters in the shared ledger before sending them, and settles to what DeepL
+ * billed. Run with `npx tsx` or Node >= 22.18 (it loads the TypeScript budget module).
+ *
  * It checks the quota BEFORE spending any of it and exits 0 when there is none,
  * so a daily schedule no-ops harmlessly until the plan is upgraded or the
  * billing month rolls over, then completes itself.
@@ -34,6 +43,9 @@ import fs from 'node:fs';
 import path from 'node:path';
 import * as deepl from 'deepl-node';
 import { createClient } from '@supabase/supabase-js';
+import {
+  budgetSnapshot, describeBudget, reserve, settle, translateWaves, stashUnsaved,
+} from './lib/budgeted-deepl.mjs';
 
 const ARGS = process.argv.slice(2);
 const APPLY = ARGS.includes('--apply');
@@ -96,44 +108,38 @@ if (ASSUMED && APPLY) {
   console.error('--assume-budget is a dry-run aid and cannot be combined with --apply.');
   process.exit(1);
 }
+// The shared budget (app cap + account ceiling) binds whenever it is smaller. If it
+// cannot be read, that is "spend nothing", never "spend freely".
+const shared = await budgetSnapshot(dl);
 let budget = ASSUMED
   ? numericFlag('assume-budget', 0)
-  : Math.max(0, limit - used - RESERVE);
+  : Math.min(Math.max(0, limit - used - RESERVE), shared.room ?? 0);
 
 log(`DeepL quota   ${used.toLocaleString()} / ${limit.toLocaleString()} used`);
 log(`reserve       ${RESERVE.toLocaleString()} held back for the live app`);
+describeBudget(shared, log);
 log(`budget        ${budget.toLocaleString()} characters`);
 log('');
 
 if (budget <= 0) {
-  log('No quota available. Nothing to do — exiting cleanly so a schedule can retry.');
+  log(shared.room === null
+    ? 'The shared DeepL budget could not be read, so nothing is spent. Try again shortly.'
+    : 'No quota available. Nothing to do — exiting cleanly so a schedule can retry.');
   log('Free resets on the 1st of the billing month; DeepL Pro removes the cliff.');
   process.exit(0);
 }
 
-/** Translate with the informal register, in small waves. Returns null per item on failure. */
+/**
+ * Translate with the informal register, in small waves. Returns the text per item,
+ * or null on failure (never the source: that is the original bug). `billed` is
+ * summed separately so the caller can settle the reservation to what DeepL charged.
+ */
 async function translate(texts, lang) {
-  const out = [];
-  for (let i = 0; i < texts.length; i += CONCURRENCY) {
-    const wave = texts.slice(i, i + CONCURRENCY);
-    const done = await Promise.all(
-      wave.map(async (t) => {
-        try {
-          const r = await dl.translateText(t, null, lang, {
-            preserveFormatting: true,
-            formality: 'prefer_less',
-          });
-          return r.text;
-        } catch (e) {
-          log(`  ! ${String(e).slice(0, 90)}`);
-          return null; // never fall back to the source — that is the original bug
-        }
-      })
-    );
-    out.push(...done);
-    log(`  ${Math.min(i + CONCURRENCY, texts.length)}/${texts.length}`);
-  }
-  return out;
+  const results = await translateWaves(dl, texts, lang, { concurrency: CONCURRENCY, log: (...a) => log(' ', ...a) });
+  return {
+    texts: results.map((r) => (r ? r.text : null)),
+    billed: results.reduce((n, r) => n + (r ? r.billed : 0), 0),
+  };
 }
 
 // ══ JOB 1 · French register ═══════════════════════════════════════════════
@@ -152,7 +158,11 @@ async function jobFrench() {
   if (cost > budget) return log(`  SKIPPED — needs ${cost.toLocaleString()}, budget ${budget.toLocaleString()}\n`);
   if (!APPLY) return log('  dry run — not translating\n');
 
-  const next = await translate(rows.map((r) => r.text_en), 'fr');
+  const reservation = await reserve(dl, 'fr', cost);
+  if (!reservation.ok) return log(`  SKIPPED — the shared budget refused ${cost.toLocaleString()} characters (${reservation.reason})\n`);
+  const done = await translate(rows.map((r) => r.text_en), 'fr');
+  await settle(reservation, 'fr', done.billed);
+  const next = done.texts;
   budget -= cost;
 
   const changed = rows
@@ -210,8 +220,15 @@ async function jobCache() {
   }
 
   // Shortest first — most rows repaired per character of quota.
+  // One entry per (language, string): a duplicate in the backup would be billed twice.
+  const seen = new Set();
   const todo = purged
-    .filter((r) => !present.has(`${r.target_language} ${r.source_text.trim()}`))
+    .filter((r) => {
+      const key = `${r.target_language} ${r.source_text.trim()}`;
+      if (present.has(key) || seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    })
     .sort((a, b) => a.source_text.length - b.source_text.length);
 
   const affordable = [];
@@ -230,7 +247,15 @@ async function jobCache() {
   let written = 0;
   for (const [lang, rows] of Object.entries(byLang)) {
     log(`  ${lang} · ${rows.length}`);
-    const next = await translate(rows.map((r) => r.source_text), lang);
+    const chars = rows.reduce((n, r) => n + r.source_text.length, 0);
+    const reservation = await reserve(dl, lang, chars);
+    if (!reservation.ok) {
+      log(`    shared budget refused ${chars.toLocaleString()} characters (${reservation.reason}) — skipping ${lang}`);
+      continue;
+    }
+    const done = await translate(rows.map((r) => r.source_text), lang);
+    await settle(reservation, lang, done.billed);
+    const next = done.texts;
     const good = rows
       .map((r, i) => ({ r, t: next[i] }))
       .filter(({ r, t }) => t && t.trim() !== r.source_text.trim());
@@ -247,8 +272,12 @@ async function jobCache() {
         })),
         { onConflict: 'source_text,target_language' }
       );
-      if (e) log(`    upsert failed: ${e.message}`);
-      else written += Math.min(200, good.length - i);
+      if (e) {
+        // Paid for and not stored. Keep them: re-running would buy them again.
+        const lost = good.slice(i, i + 200).map(({ r, t }) => ({ source_text: r.source_text.trim(), target_language: lang, translated_text: t }));
+        const file = stashUnsaved(lost, `repair-${lang}`);
+        log(`    upsert failed: ${e.message} — ${lost.length} paid translations saved to ${file}`);
+      } else written += Math.min(200, good.length - i);
     }
   }
   log(`  refilled ${written} rows · ${todo.length - affordable.length} left for the next run\n`);

@@ -30,6 +30,18 @@
  * Each is 124k-129k characters, so the free 500k covers roughly three and a
  * half a month, and the five priority languages take about six weeks.
  *
+ * SHARES THE LIVE APP'S BUDGET. The DeepL key is shared with Grewp, Rise Daisy
+ * and Findr, and this app ranks last of the five, so the live app stops at 40% of
+ * the account and 50,000 characters a month (lib/translation/deepl-budget.ts).
+ * This script draws from the same ledger: it plans against the smaller of that
+ * budget and its own caps below, reserves each batch of 50 strings before sending
+ * it, settles to what DeepL billed, and stops cleanly when the budget refuses. At
+ * the default 50,000 a month a 125k-character language takes about two and a half
+ * months, which is the cost of being last; raise DEEPL_APP_MONTHLY_CHAR_CAP only
+ * once the apps above have finished filling.
+ *
+ * Run with `npx tsx` or Node >= 22.18 (it loads the TypeScript budget module).
+ *
  * SAFE ON A SCHEDULE. It checks the quota before spending any of it, holds a
  * reserve back for the live app, and exits 0 when there is nothing left — so a
  * daily run no-ops until the month rolls over, then carries on where it
@@ -44,6 +56,9 @@
  */
 import * as deepl from 'deepl-node';
 import { createClient } from '@supabase/supabase-js';
+import {
+  budgetSnapshot, describeBudget, reserve, settle, release, translateWaves, stashUnsaved,
+} from './lib/budgeted-deepl.mjs';
 
 const ARGS = process.argv.slice(2);
 const APPLY = ARGS.includes('--apply');
@@ -140,20 +155,29 @@ if (ASSUMED && APPLY) {
  */
 const quotaLeft = Math.max(0, limit - used - RESERVE);
 const capLeft = Math.max(0, MONTHLY_CAP - used);
-let budget = ASSUMED ? numericFlag('assume-budget', 0) : Math.min(quotaLeft, capLeft);
+// The shared budget (app cap + account ceiling) is the binding one whenever it is
+// smaller. If it cannot be read, that is "spend nothing", never "spend freely".
+const shared = await budgetSnapshot(dl);
+const sharedLeft = shared.room ?? 0;
+let budget = ASSUMED ? numericFlag('assume-budget', 0) : Math.min(quotaLeft, capLeft, sharedLeft);
 
 log(`DeepL quota   ${used.toLocaleString()} / ${limit.toLocaleString()} used this month`);
 log(`reserve       ${RESERVE.toLocaleString()} held back for the live app`);
 log(`monthly cap   ${MONTHLY_CAP.toLocaleString()} — ${capLeft.toLocaleString()} of it left`);
+describeBudget(shared, log);
 log(`budget        ${budget.toLocaleString()} characters`);
 log(`languages     at most ${MAX_LANGUAGES} completed in this run`);
 log(APPLY ? 'mode          APPLY' : 'mode          dry run');
 log('');
 
 if (budget <= 0) {
-  const why = capLeft <= 0 && quotaLeft > 0
-    ? `This month's cap of ${MONTHLY_CAP.toLocaleString()} is reached. Quota remains, and is deliberately left for the live app.`
-    : 'No quota available. The free plan resets on the 1st of the billing month.';
+  const why = shared.room === null
+    ? 'The shared DeepL budget could not be read, so nothing is spent. Try again shortly.'
+    : sharedLeft <= 0
+      ? `The shared budget is spent (${shared.binding}). That is deliberate: this app ranks last, and what is left belongs to the apps above it.`
+      : capLeft <= 0 && quotaLeft > 0
+        ? `This month's cap of ${MONTHLY_CAP.toLocaleString()} is reached. Quota remains, and is deliberately left for the live app.`
+        : 'No quota available. The free plan resets on the 1st of the billing month.';
   log(why);
   log('Nothing to do — exiting cleanly so a schedule can retry.');
   process.exit(0);
@@ -227,37 +251,13 @@ async function cachedFor(lang, texts) {
   return have;
 }
 
-/** Translate a wave at a time. Never falls back to the source — see below. */
-async function translate(texts, deeplLang) {
-  const out = [];
-  for (let i = 0; i < texts.length; i += CONCURRENCY) {
-    const wave = texts.slice(i, i + CONCURRENCY);
-    const done = await Promise.all(
-      wave.map(async (t) => {
-        try {
-          const r = await dl.translateText(t, null, deeplLang, {
-            preserveFormatting: true,
-            // French defaults to formal (vous) and the others did not; the app
-            // is informal everywhere else, so it is set for all of them.
-            formality: 'prefer_less',
-          });
-          return r.text;
-        } catch (e) {
-          log(`    ! ${String(e).slice(0, 100)}`);
-          /*
-           * NEVER THE SOURCE. Returning the English text here is the original
-           * bug: the caller caches it, a cached row is a hit, and the string is
-           * never retried. That made 3,491 rows permanently English.
-           */
-          return null;
-        }
-      }),
-    );
-    out.push(...done);
-    log(`    ${Math.min(i + CONCURRENCY, texts.length)}/${texts.length}`);
-  }
-  return out;
-}
+/**
+ * Translate a wave at a time. Returns `{ text, billed }` or null per string, and
+ * never falls back to the source: returning the English text is the original bug
+ * (the caller caches it, a cached row is a hit, and the string is never retried;
+ * that made 3,491 rows permanently English).
+ */
+const translate = (texts, deeplLang) => translateWaves(dl, texts, deeplLang, { concurrency: CONCURRENCY, log });
 
 /*
  * UPSERT, NOT INSERT.
@@ -360,36 +360,66 @@ for (const lang of plan) {
     continue;
   }
 
-  const translated = await translate(take, lang.deepl);
-  const rows = [];
-  for (let i = 0; i < take.length; i++) {
-    if (translated[i] === null) continue; // failed — leave it for the next run
-    rows.push({
-      source_text: take[i],
-      target_language: lang.code,
-      translated_text: translated[i],
-      // The same value the app writes. Nothing filters on it, but a cache with
-      // two names for the same thing is a cache somebody will mis-query later.
-      translation_source: 'auto',
-      access_count: 1,
-      last_accessed_at: new Date().toISOString(),
-    });
+  /*
+   * ONE BATCH AT A TIME: reserve, translate, settle, store.
+   *
+   * It used to translate the whole language and write at the end, so an upsert
+   * failure (or a killed process) after thousands of paid strings discarded all
+   * of them, and the next run bought them again. Now each batch of 50 is reserved
+   * against the shared budget, paid for, and written before the next begins, so
+   * the most a failure can lose is one batch, and that goes to a backup file.
+   */
+  const BATCH = 50;
+  let langWrote = 0;
+  let refused = false;
+  for (let i = 0; i < take.length; i += BATCH) {
+    const batch = take.slice(i, i + BATCH);
+    const chars = batch.reduce((n, t) => n + t.length, 0);
+    const reservation = await reserve(dl, lang.code, chars);
+    if (!reservation.ok) {
+      log(`            budget refused ${chars.toLocaleString()} characters (${reservation.reason}) — stopping here, already-written strings are safe`);
+      refused = true;
+      break;
+    }
+
+    const results = await translate(batch, lang.deepl);
+    await settle(reservation, lang.code, results.reduce((n, r) => n + (r ? r.billed : 0), 0));
+    spent += results.reduce((n, r) => n + (r ? r.billed : 0), 0);
+    budget -= chars;
+
+    const rows = [];
+    for (let j = 0; j < batch.length; j++) {
+      if (results[j] === null) continue; // failed — leave it for the next run
+      rows.push({
+        source_text: batch[j],
+        target_language: lang.code,
+        translated_text: results[j].text,
+        // The same value the app writes. Nothing filters on it, but a cache with
+        // two names for the same thing is a cache somebody will mis-query later.
+        translation_source: 'auto',
+        access_count: 1,
+        last_accessed_at: new Date().toISOString(),
+      });
+    }
+    try {
+      await store(rows);
+    } catch (e) {
+      // Paid for and not stored. Keep them: re-running would buy them again.
+      const file = stashUnsaved(rows, `species-${lang.code}`);
+      console.error(`    ! could not store ${rows.length} translations (${String(e).slice(0, 120)}). Saved to ${file}`);
+      process.exit(1);
+    }
+    wrote += rows.length;
+    langWrote += rows.length;
   }
 
-  await store(rows);
-  wrote += rows.length;
-  spent += cost;
-  budget -= cost;
-  if (finishes) completed += 1;
-  log(`            wrote ${rows.length}/${take.length}${rows.length < take.length ? ' (the rest failed and will be retried next run)' : ''}\n`);
-
-  /*
-   * A language that did not finish means the budget ran out inside it, so
-   * there is nothing left for the next one. Stopping here rather than falling
-   * through keeps the promise the ordering makes: no language is started until
-   * the one before it is done.
-   */
-  if (!finishes) break;
+  const allWritten = !refused && langWrote === take.length;
+  if (finishes && allWritten) completed += 1;
+  log(`            wrote ${langWrote}/${take.length}${langWrote < take.length ? ' (the rest failed or were refused, and will be retried next run)' : ''}\n`);
+  // A language that did not finish means the budget ran out inside it, so nothing is
+  // left for the next one. Stopping keeps the promise the ordering makes: no language
+  // starts until the one before it is done.
+  if (refused || !(finishes && allWritten)) break;
 }
 
 log('');
