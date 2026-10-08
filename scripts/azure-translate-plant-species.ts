@@ -28,6 +28,7 @@ import crypto from 'crypto';
 import * as dotenv from 'dotenv';
 import { createClient } from '@supabase/supabase-js';
 import { inchesToCentimetres } from '../lib/grow/imperialToMetric';
+import { normalizeQuotes } from '../lib/translation/normalizeQuotes';
 
 dotenv.config({ path: '.env.local' });
 
@@ -419,7 +420,9 @@ async function runCareGuides(species: SpeciesRow[]) {
       if (error) throw error;
       for (const r of data ?? []) {
         const s = wanted.get(r.source_content_hash);
-        if (s !== undefined && r.source_text.trim() === s) have.add(s);
+        // The table's trigger stores source_text with curly quotes straightened,
+        // so compare against the normalised form of our English.
+        if (s !== undefined && r.source_text.trim() === normalizeQuotes(s)) have.add(s);
       }
     }
     const todo = sources.filter((t) => !have.has(t));
