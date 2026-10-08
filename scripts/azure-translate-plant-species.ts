@@ -208,15 +208,18 @@ async function runCareGuides(species: SpeciesRow[]) {
   for (const lang of langs) {
     // Skip anything already cached (DeepL or manual) — those are already paid for.
     const have = new Set<string>();
-    for (let i = 0; i < sources.length; i += 20) {
-      const chunk = sources.slice(i, i + 20);
+    // Page through this language's cache rows instead of an .in() filter: forty
+    // care-guide paragraphs make a request URL too long and fetch fails outright.
+    for (let from = 0; ; from += 1000) {
       const { data, error } = await supabase
         .from('translation_cache')
         .select('source_text')
         .eq('target_language', lang)
-        .in('source_text', chunk);
+        .order('id')
+        .range(from, from + 999);
       if (error) throw error;
-      data?.forEach((r) => have.add(r.source_text));
+      data?.forEach((r) => have.add(r.source_text.trim()));
+      if (!data || data.length < 1000) break;
     }
     const todo = sources.filter((t) => !have.has(t));
     const chars = todo.reduce((n, t) => n + t.length, 0);
