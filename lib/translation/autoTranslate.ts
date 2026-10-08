@@ -22,6 +22,14 @@ if (typeof window !== 'undefined') {
 import * as deepl from 'deepl-node';
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import crypto from 'crypto';
+import { reserveChars, settleReservation, releaseReservation, prefixThatFits } from './deepl-budget';
+
+/**
+ * The translation cache could not be READ. That is not a miss: treating it as one
+ * sends strings that are already stored to DeepL and pays for them again. Callers
+ * show English and spend nothing.
+ */
+class TranslationCacheUnavailableError extends Error {}
 
 // In-memory cache stores translations for the duration of the Node.js process
 // This provides instant lookups without hitting the database
@@ -293,7 +301,8 @@ async function checkDatabaseCache(
       .limit(1)
       .maybeSingle();
 
-    if (error || !data) {
+    if (error) throw new TranslationCacheUnavailableError(error.message);
+    if (!data) {
       return null;
     }
 
@@ -306,7 +315,9 @@ async function checkDatabaseCache(
     };
   } catch (error) {
     console.error('Database cache lookup failed:', error);
-    return null;
+    throw error instanceof TranslationCacheUnavailableError
+      ? error
+      : new TranslationCacheUnavailableError(error instanceof Error ? error.message : String(error));
   }
 }
 
@@ -338,7 +349,7 @@ async function storeDatabaseCache(
     const hasFishingTerms = hasFishingTerminology(sourceText);
     const contentHash = hashText(sourceText);
 
-    await supabase.from('translation_cache').upsert(
+    const { error: upsertError } = await supabase.from('translation_cache').upsert(
       {
         source_text: sourceText.trim(),
         target_language: targetLang.toLowerCase(),
@@ -356,6 +367,11 @@ async function storeDatabaseCache(
         onConflict: 'source_text,target_language',
       }
     );
+    // supabase-js returns PostgREST errors rather than throwing them. Unchecked,
+    // a failed write is invisible and the string is paid for again next time.
+    if (upsertError) {
+      console.error(`FAILED to store ${targetLang} translation in cache — will be re-billed:`, upsertError.message);
+    }
   } catch (error) {
     console.error('Failed to store translation in cache:', error);
     // Don't throw - the translation still works even if caching fails
@@ -366,10 +382,10 @@ async function storeDatabaseCache(
  * Translate text using the DeepL API.
  * Returns the original text if translation fails, ensuring graceful degradation.
  */
-async function translateWithDeepL(
+async function translateWithDeepLRaw(
   text: string,
   targetLang: string
-): Promise<string | null> {
+): Promise<{ text: string; billed: number } | null> {
   try {
     const translator = getTranslator();
     const deeplLangCode = DEEPL_LANGUAGE_MAP[targetLang.toLowerCase()];
@@ -395,7 +411,7 @@ async function translateWithDeepL(
       }
     );
 
-    return result.text;
+    return { text: result.text, billed: result.billedCharacters ?? text.length };
   } catch (error) {
     // Return NULL, never the source text. Callers fall back to English for
     // display, but must not persist that fallback — see the note in
@@ -403,6 +419,37 @@ async function translateWithDeepL(
     console.error('DeepL translation failed:', error);
     return null;
   }
+}
+
+/** DeepL's own account-wide usage, for the budget's ceiling. */
+async function deeplAccountUsage(): Promise<{ count: number; limit: number }> {
+  const usage = await getTranslator().getUsage();
+  if (!usage.character) throw new Error('DeepL usage response has no character quota');
+  return { count: usage.character.count, limit: usage.character.limit };
+}
+
+/**
+ * One metered DeepL call. The budget (this app's monthly cap and a ceiling on the
+ * whole shared account) is checked first and fails closed; a refusal returns null,
+ * which every caller already treats as "show English, do not cache".
+ */
+async function translateWithDeepL(
+  text: string,
+  targetLang: string
+): Promise<string | null> {
+  if (!DEEPL_LANGUAGE_MAP[targetLang.toLowerCase()]) {
+    console.warn(`Language ${targetLang} not supported by DeepL`);
+    return null;
+  }
+  const reservation = await reserveChars(targetLang.toLowerCase(), text.length, deeplAccountUsage);
+  if (!reservation.ok) return null;
+  const result = await translateWithDeepLRaw(text, targetLang);
+  if (!result) {
+    await releaseReservation(reservation, targetLang.toLowerCase()); // nothing billed
+    return null;
+  }
+  await settleReservation(reservation, targetLang.toLowerCase(), result.billed);
+  return result.text;
 }
 
 /**
@@ -441,7 +488,13 @@ export async function translateFromCacheOnly(
   const memoryCached = memoryCache.get(cacheKey);
   if (memoryCached) return memoryCached;
 
-  const dbCached = await checkDatabaseCache(text, targetLang);
+  let dbCached: { translation: string; source: string } | null;
+  try {
+    dbCached = await checkDatabaseCache(text, targetLang);
+  } catch (error) {
+    if (error instanceof TranslationCacheUnavailableError) return null; // unreadable: the caller treats it as "not yet"
+    throw error;
+  }
   if (dbCached) {
     memoryCache.set(cacheKey, dbCached.translation);
     return dbCached.translation;
@@ -471,8 +524,15 @@ export async function autoTranslate(
     return memoryCached;
   }
 
-  // Check database cache (fast)
-  const dbCached = await checkDatabaseCache(text, targetLang);
+  // Check database cache (fast). If it cannot be read that is not a miss:
+  // calling DeepL would pay for a string that may already be stored.
+  let dbCached: { translation: string; source: string } | null;
+  try {
+    dbCached = await checkDatabaseCache(text, targetLang);
+  } catch (error) {
+    if (error instanceof TranslationCacheUnavailableError) return text;
+    throw error;
+  }
   if (dbCached) {
     memoryCache.set(cacheKey, dbCached.translation);
     return dbCached.translation;
@@ -524,7 +584,8 @@ async function checkDatabaseCacheBatch(
       .in('source_text', normalizedTexts)
       .eq('target_language', targetLang.toLowerCase());
 
-    if (error || !data) {
+    if (error) throw new TranslationCacheUnavailableError(error.message);
+    if (!data) {
       return new Map();
     }
 
@@ -537,7 +598,9 @@ async function checkDatabaseCacheBatch(
     return cacheMap;
   } catch (error) {
     console.error('Batch database cache lookup failed:', error);
-    return new Map();
+    throw error instanceof TranslationCacheUnavailableError
+      ? error
+      : new TranslationCacheUnavailableError(error instanceof Error ? error.message : String(error));
   }
 }
 
@@ -586,7 +649,17 @@ export async function autoTranslateBatch(
 
   // **PHASE 2.4: Single batch database lookup instead of N queries**
   if (uncachedTexts.length > 0) {
-    const dbCache = await checkDatabaseCacheBatch(uncachedTexts, targetLang);
+    let dbCache: Map<string, string>;
+    try {
+      dbCache = await checkDatabaseCacheBatch(uncachedTexts, targetLang);
+    } catch (error) {
+      // Unreadable is not a miss: sending these to DeepL would re-buy strings
+      // that are probably stored. Show English and spend nothing.
+      if (error instanceof TranslationCacheUnavailableError) {
+        return results.map((r, i) => r || texts[i]);
+      }
+      throw error;
+    }
 
     // Fill in database cache hits
     for (let i = 0; i < uncachedIndexes.length; i++) {
@@ -606,32 +679,61 @@ export async function autoTranslateBatch(
   // Translate remaining uncached texts via DeepL
   const stillUncachedIndexes = uncachedIndexes.filter(idx => idx >= 0);
   if (stillUncachedIndexes.length > 0) {
-    // DeepL rate-limits on concurrency, and a 429 used to come back as the
-    // English source and get cached forever — which is how the cache filled
-    // with passthroughs. Send them in small waves instead of all at once.
-    const translations: (string | null)[] = [];
-    for (let i = 0; i < stillUncachedIndexes.length; i += DEEPL_BATCH_CONCURRENCY) {
-      const wave = stillUncachedIndexes.slice(i, i + DEEPL_BATCH_CONCURRENCY);
-      translations.push(
-        ...(await Promise.all(wave.map(idx => translateWithDeepL(texts[idx], targetLang))))
-      );
+    // A string repeated in one batch is sent, and billed, once.
+    const slotsByText = new Map<string, number[]>();
+    for (const idx of stillUncachedIndexes) {
+      const key = texts[idx].trim();
+      const slots = slotsByText.get(key);
+      if (slots) slots.push(idx);
+      else slotsByText.set(key, [idx]);
+    }
+    const unique = Array.from(slotsByText.keys());
+    const lang = targetLang.toLowerCase();
+
+    // The budget covers the batch as a whole: reserve once, translate what fits
+    // (front of the batch first), and show English for the rest, uncached, so it
+    // is retried once there is room.
+    let toSend: string[] = [];
+    let reservation: Awaited<ReturnType<typeof reserveChars>> | null = null;
+    if (DEEPL_LANGUAGE_MAP[lang]) {
+      const lengths = unique.map((t) => t.length);
+      reservation = await reserveChars(lang, lengths.reduce((a, b) => a + b, 0), deeplAccountUsage);
+      let count = unique.length;
+      if (!reservation.ok && reservation.room > 0) {
+        count = prefixThatFits(lengths, reservation.room);
+        if (count > 0) {
+          reservation = await reserveChars(lang, lengths.slice(0, count).reduce((a, b) => a + b, 0), deeplAccountUsage);
+        }
+      }
+      if (reservation.ok && count > 0) toSend = unique.slice(0, count);
     }
 
-    // Store translations in both caches
-    for (let i = 0; i < stillUncachedIndexes.length; i++) {
-      const idx = stillUncachedIndexes[i];
-      const text = texts[idx];
-      const translated = translations[i];
-
-      // null means the call failed. Fall back to English for display only —
-      // caching it would make the failure permanent.
-      if (translated === null) {
-        continue;
+    if (toSend.length > 0 && reservation && reservation.ok) {
+      // DeepL rate-limits on concurrency, and a 429 used to come back as the
+      // English source and get cached forever — which is how the cache filled
+      // with passthroughs. Send them in small waves instead of all at once.
+      const translations: Array<{ text: string; billed: number } | null> = [];
+      for (let i = 0; i < toSend.length; i += DEEPL_BATCH_CONCURRENCY) {
+        const wave = toSend.slice(i, i + DEEPL_BATCH_CONCURRENCY);
+        translations.push(...(await Promise.all(wave.map((t) => translateWithDeepLRaw(t, targetLang)))));
       }
+      // Correct the reservation to what DeepL actually billed (failed calls bill nothing).
+      await settleReservation(reservation, lang, translations.reduce((n, r) => n + (r ? r.billed : 0), 0));
 
-      results[idx] = translated;
-      memoryCache.set(getCacheKey(text, targetLang), translated);
-      await storeDatabaseCache(text, targetLang, translated);
+      // Store translations in both caches
+      for (let i = 0; i < toSend.length; i++) {
+        const translated = translations[i];
+
+        // null means the call failed. Fall back to English for display only —
+        // caching it would make the failure permanent.
+        if (translated === null) {
+          continue;
+        }
+
+        for (const idx of slotsByText.get(toSend[i])!) results[idx] = translated.text;
+        memoryCache.set(getCacheKey(toSend[i], targetLang), translated.text);
+        await storeDatabaseCache(toSend[i], targetLang, translated.text);
+      }
     }
   }
 
