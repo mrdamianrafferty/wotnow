@@ -27,6 +27,7 @@
 import crypto from 'crypto';
 import * as dotenv from 'dotenv';
 import { createClient } from '@supabase/supabase-js';
+import { inchesToCentimetres } from '../lib/grow/imperialToMetric';
 
 dotenv.config({ path: '.env.local' });
 
@@ -59,6 +60,8 @@ const langs = (option('langs')?.split(',') ?? [...LANGS]).map((l) => l.trim()) a
 const limit = option('limit') ? Number(option('limit')) : Infinity;
 const maxChars = Number(option('max-chars') ?? DEFAULT_MAX_CHARS);
 const usePlantNames = flag('plant-names');
+// Inches become centimetres in the text sent for translation (the English we store under is unchanged).
+const metric = !flag('keep-inches');
 const previewCount = Number(option('preview') ?? 0); // translate N descriptions both ways, save nothing
 // Azure throttles characters per minute (about 33,300 on paid tiers, from memory — lower it if you see 429s).
 const charsPerMinute = Number(option('chars-per-minute') ?? 30_000);
@@ -298,6 +301,25 @@ function protectNames(text: string, row: SpeciesRow | undefined, lang: Lang): st
 /** Latin binomials in brackets, e.g. "(Campanula persicifolia)", that the output must keep verbatim. */
 const latinNames = (t: string) => [...t.matchAll(/\(([A-Z][a-z]+(?: [a-z×.-]+)+)\)/g)].map((m) => m[1]);
 
+const LATIN = /^[A-Z][a-z]+(?: [a-z×.-]+)+$/;
+
+/**
+ * Azure sometimes localises a genus inside the brackets ("Cedrus" -> "Cedro") or
+ * capitalises "var. sativus". Put the original scientific names back, pairing the
+ * bracketed groups of source and output by position. If they don't pair up (the
+ * counts differ) the text is left alone and the caller's warning flags it.
+ */
+function restoreLatinNames(src: string, out: string): string {
+  const srcGroups = [...src.matchAll(/\(([^)]*)\)/g)].map((m) => m[1]);
+  if (!srcGroups.some((g) => LATIN.test(g))) return out;
+  if ((out.match(/\([^)]*\)/g) ?? []).length !== srcGroups.length) return out;
+  let i = -1;
+  return out.replace(/\([^)]*\)/g, (m) => {
+    i++;
+    return LATIN.test(srcGroups[i]) ? `(${srcGroups[i]})` : m;
+  });
+}
+
 /** Which species a care-guide description belongs to (first one wins if shared). */
 function ownersByDescription(species: SpeciesRow[]): Map<string, SpeciesRow> {
   const m = new Map<string, SpeciesRow>();
@@ -319,7 +341,9 @@ async function runPreview(species: SpeciesRow[]) {
     .slice(0, previewCount);
   console.log(`\n── Preview (${lang}): ${picks.length} descriptions, plain vs plant-name pass ──`);
   const plain = await azureTranslate(picks.map(([d]) => d), lang);
-  const named = (await azureTranslate(picks.map(([d, row]) => protectNames(d, row, lang)), lang)).map(restoreSentenceCase);
+  const named = (
+    await azureTranslate(picks.map(([d, row]) => protectNames(metric ? inchesToCentimetres(d) : d, row, lang)), lang)
+  ).map((t, i) => restoreLatinNames(picks[i][0], restoreSentenceCase(t)));
   picks.forEach(([d], i) => {
     console.log(`\n[${picks[i][1].slug}]`);
     console.log(`  EN:    ${d.slice(0, 220)}${d.length > 220 ? '…' : ''}`);
@@ -397,12 +421,15 @@ async function runCareGuides(species: SpeciesRow[]) {
     const todo = sources.filter((t) => !have.has(t));
     // With --plant-names, what Azure receives differs from what we store under:
     // `todo` stays the English key, `prepared` is the text sent (with name markup).
-    const prepared = usePlantNames ? todo.map((t) => protectNames(t, owners.get(t), lang)) : todo;
+    const metricText = metric ? todo.map(inchesToCentimetres) : todo;
+    const converted = metricText.filter((p, i) => p !== todo[i]).length;
+    const prepared = usePlantNames ? metricText.map((t, i) => protectNames(t, owners.get(todo[i]), lang)) : metricText;
     const chars = prepared.reduce((n, t) => n + t.length, 0);
-    const tagged = prepared.filter((p, i) => p !== todo[i]).length;
+    const tagged = prepared.filter((p, i) => p !== metricText[i]).length;
     console.log(
       `${lang}: ${sources.length - todo.length} already cached, ${todo.length} to translate, ${chars} chars` +
-      (usePlantNames ? ` (${tagged} with plant-name markup, +${chars - todo.reduce((n, t) => n + t.length, 0)} chars)` : ''),
+      (metric ? ` (${converted} with inches converted to cm)` : '') +
+      (usePlantNames ? ` (${tagged} with plant-name markup, +${chars - metricText.reduce((n, t) => n + t.length, 0)} chars)` : ''),
     );
     plannedChars += chars;
     if (!apply || todo.length === 0) continue;
@@ -413,16 +440,18 @@ async function runCareGuides(species: SpeciesRow[]) {
     await translateAll(prepared, lang, async (sentBatch, out) => {
       const src = todo.slice(offset, offset + sentBatch.length);
       offset += sentBatch.length;
-      // Scientific names must come through untouched; say so if one didn't.
+      // Tidy each translation, then check the scientific names came through untouched.
       src.forEach((s, j) => {
+        if (usePlantNames) out[j] = restoreSentenceCase(out[j]);
+        out[j] = restoreLatinNames(s, out[j]);
         const lost = latinNames(s).filter((l) => !out[j].includes(l));
-        if (lost.length) console.log(`   !! Latin name changed in ${lang}: ${lost.join(', ')}`);
+        if (lost.length) console.log(`   !! Latin name changed in ${lang}: ${lost.join(', ')} (kept as translated; fix by hand)`);
       });
       const now = new Date().toISOString();
       const rows = src.map((s, j) => ({
         source_text: s,
         target_language: lang,
-        translated_text: usePlantNames ? restoreSentenceCase(out[j]) : out[j],
+        translated_text: out[j],
         // The table's CHECK only allows auto/reviewed/manual, so Azure rows are
         // 'auto' like DeepL's, and `notes` records where they came from.
         translation_source: 'auto',
