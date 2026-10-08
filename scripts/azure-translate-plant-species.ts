@@ -58,6 +58,8 @@ const doCare = flag('care-guides') || !flag('names');
 const langs = (option('langs')?.split(',') ?? [...LANGS]).map((l) => l.trim()) as Lang[];
 const limit = option('limit') ? Number(option('limit')) : Infinity;
 const maxChars = Number(option('max-chars') ?? DEFAULT_MAX_CHARS);
+const usePlantNames = flag('plant-names');
+const previewCount = Number(option('preview') ?? 0); // translate N descriptions both ways, save nothing
 // Azure throttles characters per minute (about 33,300 on paid tiers, from memory — lower it if you see 429s).
 const charsPerMinute = Number(option('chars-per-minute') ?? 30_000);
 
@@ -80,8 +82,8 @@ const supabase = createClient(SUPABASE_URL, SERVICE_KEY, {
 const AZURE_KEY = process.env.AZURE_TRANSLATOR_KEY;
 const AZURE_REGION = process.env.AZURE_TRANSLATOR_REGION;
 const AZURE_ENDPOINT = (process.env.AZURE_TRANSLATOR_ENDPOINT || 'https://api.cognitive.microsofttranslator.com').replace(/\/$/, '');
-if (apply && (!AZURE_KEY || !AZURE_REGION)) {
-  console.error('--apply needs AZURE_TRANSLATOR_KEY and AZURE_TRANSLATOR_REGION in .env.local');
+if ((apply || previewCount) && (!AZURE_KEY || !AZURE_REGION)) {
+  console.error('--apply and --preview need AZURE_TRANSLATOR_KEY and AZURE_TRANSLATOR_REGION in .env.local');
   process.exit(1);
 }
 
@@ -201,7 +203,10 @@ interface SpeciesRow {
 }
 
 async function loadSpecies(): Promise<SpeciesRow[]> {
-  const cols = ['slug', 'name', 'care_guides', ...LANGS.map((l) => `name_${l}`)].join(',');
+  const cols = [
+    'slug', 'name', 'care_guides', 'perenual_common_name', 'perenual_other_names', 'name_en_aliases',
+    ...LANGS.map((l) => `name_${l}`),
+  ].join(',');
   const rows: SpeciesRow[] = [];
   for (let from = 0; ; from += 1000) {
     const { data, error } = await supabase.from('plant_species').select(cols).order('slug').range(from, from + 999);
@@ -214,6 +219,95 @@ async function loadSpecies(): Promise<SpeciesRow[]> {
 
 const isBlank = (v: unknown) => typeof v !== 'string' || v.trim() === '';
 const hash = (t: string) => crypto.createHash('sha256').update(t.trim()).digest('hex').substring(0, 16);
+
+// ─── Plant-name pass ─────────────────────────────────────────────────────
+//
+// Care-guide prose names the plant in English ("willow bell", "Bay Laurel"), and
+// Azure sometimes translates the words instead of the plant ("willow bell" came
+// back as "salgueiro", "bay laurel" as "loureiro-do-louro"). With --plant-names we
+// wrap those phrases in Azure's dynamic-dictionary markup, which tells it exactly
+// what to write: the species' reviewed name_<lang> from plant_species.
+
+const asArray = (v: unknown): unknown[] => (Array.isArray(v) ? v : []);
+const stripParen = (s: string) => s.replace(/\s*\([^)]*\)/g, '').trim();
+const escRe = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+const escAttr = (s: string) => s.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
+
+/** English phrases the care-guide text may use for this plant, longest first. */
+function englishNamesFor(row: SpeciesRow): string[] {
+  const raw: unknown[] = [
+    row.perenual_common_name, row.name,
+    ...asArray(row.perenual_other_names), ...asArray(row.name_en_aliases),
+  ];
+  const out = new Set<string>();
+  for (const r of raw) {
+    if (typeof r !== 'string') continue;
+    for (const part of r.split('/')) {
+      const p = stripParen(part);
+      if (p.length >= 4) out.add(p);
+    }
+  }
+  return [...out].sort((a, b) => b.length - a.length);
+}
+
+/** The species' name in `lang`, first alternative only: "Anona / cherimoia" -> "Anona". */
+function localNameFor(row: SpeciesRow, lang: Lang): string | null {
+  const v = row[`name_${lang}`];
+  if (typeof v !== 'string') return null;
+  return stripParen(v.split('/')[0]) || null;
+}
+
+/** Mid-sentence matches are lower case in every language but German (nouns) and Latin names. */
+function adjustCase(local: string, matched: string, lang: Lang): string {
+  if (lang === 'de') return local;
+  if (/^[A-Z][a-z]+ [a-z]+$/.test(local)) return local; // Latin binomial
+  return /^[a-z]/.test(matched) ? local[0].toLowerCase() + local.slice(1) : local;
+}
+
+function protectNames(text: string, row: SpeciesRow | undefined, lang: Lang): string {
+  if (!row) return text;
+  const local = localNameFor(row, lang);
+  if (!local) return text;
+  const names = englishNamesFor(row).filter((n) => n.toLowerCase() !== local.toLowerCase());
+  if (!names.length) return text;
+  const re = new RegExp(`\\b(${names.map(escRe).join('|')})\\b`, 'gi');
+  return text.replace(
+    re,
+    (m) => `<mstrans:dictionary translation="${escAttr(adjustCase(local, m, lang))}">${m}</mstrans:dictionary>`,
+  );
+}
+
+/** Which species a care-guide description belongs to (first one wins if shared). */
+function ownersByDescription(species: SpeciesRow[]): Map<string, SpeciesRow> {
+  const m = new Map<string, SpeciesRow>();
+  for (const s of species) {
+    for (const g of Array.isArray(s.care_guides) ? s.care_guides : []) {
+      const d = g.description?.trim();
+      if (d && !m.has(d)) m.set(d, s);
+    }
+  }
+  return m;
+}
+
+/** Translate a few descriptions both ways and print them side by side. Writes nothing. */
+async function runPreview(species: SpeciesRow[]) {
+  const lang = langs[0];
+  const owners = ownersByDescription(species);
+  const picks = [...owners.entries()]
+    .filter(([d, row]) => protectNames(d, row, lang) !== d)
+    .slice(0, previewCount);
+  console.log(`\n── Preview (${lang}): ${picks.length} descriptions, plain vs plant-name pass ──`);
+  const plain = await azureTranslate(picks.map(([d]) => d), lang);
+  const named = await azureTranslate(picks.map(([d, row]) => protectNames(d, row, lang)), lang);
+  picks.forEach(([d], i) => {
+    console.log(`\n[${picks[i][1].slug}]`);
+    console.log(`  EN:    ${d.slice(0, 220)}${d.length > 220 ? '…' : ''}`);
+    console.log(`  PLAIN: ${plain[i].slice(0, 220)}${plain[i].length > 220 ? '…' : ''}`);
+    console.log(`  NAMED: ${named[i].slice(0, 220)}${named[i].length > 220 ? '…' : ''}`);
+    if (/mstrans|<\/?\w+:/.test(named[i])) console.log('  !! markup left in output');
+  });
+  console.log(`\nBilled for this preview: ${billed.toLocaleString()} chars. Nothing was saved.`);
+}
 
 // ─── Names ───────────────────────────────────────────────────────────────
 
@@ -261,6 +355,7 @@ async function runCareGuides(species: SpeciesRow[]) {
     ...guides.map((g) => g.description?.trim() ?? ''),
   ].filter(Boolean))].slice(0, limit);
   console.log(`${sources.length} distinct strings, ${sources.reduce((n, t) => n + t.length, 0)} chars per language`);
+  const owners = ownersByDescription(species);
 
   for (const lang of langs) {
     // Skip anything already cached (DeepL or manual) — those are already paid for.
@@ -279,14 +374,24 @@ async function runCareGuides(species: SpeciesRow[]) {
       if (!data || data.length < 1000) break;
     }
     const todo = sources.filter((t) => !have.has(t));
-    const chars = todo.reduce((n, t) => n + t.length, 0);
-    console.log(`${lang}: ${sources.length - todo.length} already cached, ${todo.length} to translate, ${chars} chars`);
+    // With --plant-names, what Azure receives differs from what we store under:
+    // `todo` stays the English key, `prepared` is the text sent (with name markup).
+    const prepared = usePlantNames ? todo.map((t) => protectNames(t, owners.get(t), lang)) : todo;
+    const chars = prepared.reduce((n, t) => n + t.length, 0);
+    const tagged = prepared.filter((p, i) => p !== todo[i]).length;
+    console.log(
+      `${lang}: ${sources.length - todo.length} already cached, ${todo.length} to translate, ${chars} chars` +
+      (usePlantNames ? ` (${tagged} with plant-name markup, +${chars - todo.reduce((n, t) => n + t.length, 0)} chars)` : ''),
+    );
     plannedChars += chars;
     if (!apply || todo.length === 0) continue;
     guardBudget();
 
     let stored = 0;
-    await translateAll(todo, lang, async (src, out) => {
+    let offset = 0;
+    await translateAll(prepared, lang, async (sentBatch, out) => {
+      const src = todo.slice(offset, offset + sentBatch.length);
+      offset += sentBatch.length;
       const now = new Date().toISOString();
       const rows = src.map((s, j) => ({
         source_text: s,
@@ -325,6 +430,10 @@ async function main() {
   const species = await loadSpecies();
   console.log(`Loaded ${species.length} species; languages: ${langs.join(', ')}`);
 
+  if (previewCount) {
+    await runPreview(species);
+    return;
+  }
   if (doNames) await runNames(species);
   if (doCare) await runCareGuides(species);
 
