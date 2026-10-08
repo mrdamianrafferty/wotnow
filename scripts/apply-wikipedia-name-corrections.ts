@@ -20,7 +20,7 @@ import { createClient } from '@supabase/supabase-js';
 
 dotenv.config({ path: '.env.local' });
 
-type Lang = 'de' | 'fr' | 'it' | 'pt' | 'nl' | 'pl';
+type Lang = 'de' | 'es' | 'fr' | 'it' | 'pt' | 'nl' | 'pl';
 
 const CORRECTIONS: Record<Lang, Record<string, string>> = {
   de: {
@@ -41,7 +41,19 @@ const CORRECTIONS: Record<Lang, Record<string, string>> = {
     'snow-in-summer': 'Céraiste cotonneux', 'willow-coppice': 'Saule des vanniers',
     'alchemilla-mollis': 'Alchémille molle', 'black-acacia': 'Acacia à bois noir', 'burr-oak': 'Chêne à gros fruits',
   },
-  it: { 'lambs-lettuce': 'Valerianella (songino)' },
+  es: {
+    // Wikipedia/Wikidata checked
+    'american-alder': 'Abedul amarillo', 'burr-oak': 'Roble bur', 'hackberry': 'Almez americano',
+    'swede': 'Rutabaga / nabo sueco', 'wild-garlic': 'Ajo de oso', 'willow-coppice': 'Mimbrera (sauce mimbre)',
+    'cider-gum': 'Eucalipto de Gunn', 'chinese-silver-grass': 'Miscanthus chino', 'blackberry': 'Zarzamora',
+    'italian-ryegrass': 'Ballico italiano (raigrás italiano)', 'lupin-yellow': 'Altramuz amarillo',
+    'ash-manna': 'Fresno de flor', 'midland-hawthorn': 'Espino navarro', 'sweet-clover': 'Meliloto',
+  },
+  it: {
+    'lambs-lettuce': 'Valerianella (songino)', 'black-walnut': 'Noce nero', 'wild-garlic': 'Aglio orsino',
+    'snapdragon': 'Bocca di leone', 'blackberry': 'Rovo comune', 'runner-bean': 'Fagiolo di Spagna',
+    'indigo-bush': 'Amorfa (falso indaco)', 'ash-manna': 'Frassino da manna', 'willow-coppice': 'Salice da vimini',
+  },
   pt: {
     'lupin-yellow': 'Tremoço-amarelo', 'snapdragon': 'Boca-de-leão', 'mandarin': 'Tangerineira',
     'sweet-woodruff': 'Aspérula-odorífera',
