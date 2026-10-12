@@ -154,6 +154,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       coords: { lat: location.lat, lon: location.lon },
       names: Object.fromEntries((allSports as Array<{ id: string; name: string }>).map((a) => [a.id, a.name])),
       dayIndex, weekday: weekday(d.date),
+      // Without the library the weekend bonus and the indoor ordering cannot
+      // apply, and the card would name a different activity from the screen.
+      activities: allSports as never,
     });
 
     // The share takes the DISPLAYED alternate, not the day's default — otherwise

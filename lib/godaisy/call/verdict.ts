@@ -114,6 +114,13 @@ export interface VerdictInput {
   promoted?: boolean;
   /** For a no-day: the next day that is a yes, already formatted ("Tuesday"). */
   nextYes?: string;
+  /**
+   * True when a gust near this activity's own limit capped the day below Prime
+   * (see `gustCeiling`). The gust is then the reason, whatever the scorer's
+   * weakest criterion happened to be — otherwise a day held back by wind reads
+   * "Dry, 20°C." and the person is left to guess why it is not Prime.
+   */
+  gusty?: boolean;
   /** Seeds the phrasing so the same day at the same place always reads the same. */
   place?: string;
   /** Steps the phrasing, so consecutive days never repeat. 0 = today. */
@@ -401,7 +408,7 @@ const upperFirst = (t: string) => (t ? t[0].toUpperCase() + t.slice(1) : t);
  * told you to close it and given you no reason to come back.
  */
 export function makeVerdict(input: VerdictInput): Verdict {
-  const { suggestion, activityName, weather, band, isFirst, window, promoted, nextYes, place = '', dayIndex = 0, weekday = '' } = input;
+  const { suggestion, activityName, weather, band, isFirst, window, promoted, gusty, nextYes, place = '', dayIndex = 0, weekday = '' } = input;
   const when = (text: string) => fillWhen(text, weekday, dayIndex === 0);
   const windowClause = window ? windowSentence(window.parts, window.ends) : '';
 
@@ -483,10 +490,12 @@ export function makeVerdict(input: VerdictInput): Verdict {
 
   // Say what is good about it. Only reach for the binding criterion when it is
   // genuinely limiting — otherwise a fine day gets explained by its dullest number.
-  const limiting = suggestion.binding && suggestion.binding.score < LIMITING_BELOW;
-  const clause = limiting
-    ? bindingClause(weather, suggestion.activityId, suggestion.binding?.key)
-    : goodClause(weather, suggestion.activityId);
+  const limiting = gusty || (suggestion.binding && suggestion.binding.score < LIMITING_BELOW);
+  const clause = gusty
+    ? bindingClause(weather, suggestion.activityId, 'gust')
+    : limiting
+      ? bindingClause(weather, suggestion.activityId, suggestion.binding?.key)
+      : goodClause(weather, suggestion.activityId);
   /*
    * A PROMOTED DAY DOES NOT GET TO DESCRIBE ITSELF.
    *

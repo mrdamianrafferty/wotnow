@@ -17,6 +17,7 @@ import { promote } from './promote';
 import type { ActivityType } from '@/data/activities/types';
 import { factsFor, nextYesFact, type CallFact } from './facts';
 import { makeVerdict, type Verdict } from './verdict';
+import { daySeed, gustCeiling, isAdventurous, isWeekend, rankScore, rotateLeaders } from './rank';
 
 export interface CallOption {
   activityId: string;
@@ -119,13 +120,31 @@ export function makeCall(input: MakeCallInput): Call {
     dayIndex = 0, weekday = '', parts, activities = [], now = new Date(), lang = 'en', coords,
   } = input;
 
-  const mine = suggestions.filter((s) => sports.includes(s.activityId));
+  const byId = new Map(activities.map((a) => [a.id, a]));
+
+  // A gust close to an activity's own limit means the day is not Prime. Applied
+  // to the suggestion itself, up front, so the score, the band and the ranking
+  // all agree — see `gustCeiling`.
+  const capped = new Set<string>();
+  const mine = suggestions
+    .filter((s) => sports.includes(s.activityId))
+    .map((s) => {
+      const ceiling = gustCeiling(byId.get(s.activityId), weather.gustspeed);
+      if (ceiling === undefined || s.score <= ceiling) return s;
+      capped.add(s.activityId);
+      return { ...s, score: ceiling };
+    });
+
+  // Weekends favour the bigger outing — see ./rank. Reorders the good options
+  // only; the score, the band and the sentence are the real conditions.
+  const weekend = isWeekend(date);
+  const rankOf = (s: Suggestion) => rankScore(s.score, byId.get(s.activityId), weekend);
 
   // Rank across everything added; the seeded three only break ties. Sorting by
   // score alone would make the order arbitrary between equals, and "arbitrary"
   // shows up as the verdict changing between two refreshes of the same day.
   const ranked = [...mine].sort((a, b) => {
-    if (b.score !== a.score) return b.score - a.score;
+    if (rankOf(b) !== rankOf(a)) return rankOf(b) - rankOf(a);
     const aSeed = seeded.includes(a.activityId) ? 0 : 1;
     const bSeed = seeded.includes(b.activityId) ? 0 : 1;
     if (aSeed !== bSeed) return aSeed - bSeed;
@@ -223,6 +242,7 @@ export function makeCall(input: MakeCallInput): Call {
         dayIndex,
         weekday,
         ...(lift ? { promoted: true } : {}),
+        ...(capped.has(s.activityId) ? { gusty: true } : {}),
         ...(window ? { window } : {}),
       }),
       facts: factsFor(lift ? { ...s, score: lift.score, vetoed: false } : s, runWeather, lang),
@@ -250,12 +270,23 @@ export function makeCall(input: MakeCallInput): Call {
   const indoor = new Set(
     activities.filter((a) => a.weatherSensitive === false).map((a) => a.id),
   );
-  const good = ranked.filter((s) => isGood(bandOf(s)));
+  let good = ranked.filter((s) => isGood(bandOf(s)));
   if (good.some((s) => !indoor.has(s.activityId))) {
     // Stable: `ranked` is already the score order, and this only lifts the
     // outdoor block above the indoor one without disturbing either.
     good.sort((a, b) => Number(indoor.has(a.activityId)) - Number(indoor.has(b.activityId)));
   }
+  // Equals take turns. Seeded by the calendar day alone so the push, the screen
+  // and the share card — which each build this independently — agree.
+  // On a weekend the adventurous options take turns among themselves, so the
+  // rotation cannot hand the lead back to a sit-down activity the bonus just
+  // put behind them.
+  good = rotateLeaders(
+    good,
+    rankOf,
+    (s) => `${indoor.has(s.activityId)}|${weekend && isAdventurous(byId.get(s.activityId))}`,
+    daySeed(date),
+  );
 
   if (!good.length) {
     // Nothing worth putting on the call screen. The verdict is built from the
