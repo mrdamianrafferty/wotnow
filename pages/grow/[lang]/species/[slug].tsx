@@ -25,6 +25,7 @@ import {
   PlantJsonLd,
 } from '@/components/JsonLd';
 import { isValidGrowLang, type GrowPathCode } from '@/lib/grow/i18n';
+import { localisedPageStrings } from '@/lib/grow/localisedPageStrings';
 import { isBotRequest } from '@/lib/http/is-bot';
 import { translatedLanguagesFor, cacheKey } from '@/lib/grow/translatedLanguages';
 import { getSupabaseServerClient } from '@/lib/supabase/serverClient';
@@ -320,12 +321,20 @@ function SpeciesPage(props: Extract<LocalisedSpeciesProps, { unavailable?: false
   const enPath = `/grow/species/${species.slug}`;
   const langUrl = `https://grow.godaisy.io/grow/${lang}/species/${species.slug}`;
 
+  const ui = localisedPageStrings(lang);
   const title = `${translatedName} — Grow Daisy`;
   const description = translatedDescription ??
     `${translatedName}${species.scientificName ? ` (${species.scientificName})` : ''}. Care, timing, and what to do now.`;
 
   return (
-    <GrowLayout>
+    <GrowLayout
+      title={translatedName}
+      breadcrumbs={[
+        { label: ui.grow, href: '/grow' },
+        { label: ui.plants, href: `/grow/${lang}/species` },
+        { label: translatedName },
+      ]}
+    >
       <Head>
         <title>{title}</title>
         <meta name="description" content={description} />
@@ -413,13 +422,13 @@ function SpeciesPage(props: Extract<LocalisedSpeciesProps, { unavailable?: false
           onClick={(e) => { e.preventDefault(); void router.push(enPath); }}
           className="inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-5 py-2.5 text-sm font-medium text-white hover:bg-emerald-700 transition-colors"
         >
-          View full growing guide →
+          {ui.viewFullGuide}
         </a>
       </div>
 
       {relatedSpecies.length > 0 && (
         <div className="max-w-4xl mx-auto px-4 pb-12">
-          <RelatedSpeciesCard species={relatedSpecies} basePath={`/grow/${lang}/species`} />
+          <RelatedSpeciesCard species={relatedSpecies} basePath={`/grow/${lang}/species`} title={ui.relatedPlants} />
         </div>
       )}
     </GrowLayout>

@@ -23,6 +23,7 @@ import * as deepl from 'deepl-node';
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import crypto from 'crypto';
 import { reserveChars, settleReservation, releaseReservation, prefixThatFits } from './deepl-budget';
+import { normalizeQuotes } from './normalizeQuotes';
 
 /**
  * The translation cache could not be READ. That is not a miss: treating it as one
@@ -296,7 +297,9 @@ async function checkDatabaseCache(
     const { data, error } = await supabase
       .from('translation_cache')
       .select('translated_text, translation_source')
-      .eq('source_text', text.trim())
+      // translation_cache stores source_text with curly quotes straightened (DB trigger),
+      // so look it up the same way or a string like “baby kiwi” is never found.
+      .eq('source_text', normalizeQuotes(text.trim()))
       .eq('target_language', targetLang.toLowerCase())
       .limit(1)
       .maybeSingle();
@@ -575,7 +578,7 @@ async function checkDatabaseCacheBatch(
     const supabase = getSupabaseAdminClient();
 
     // Normalize texts for cache lookup
-    const normalizedTexts = texts.map(t => t.trim());
+    const normalizedTexts = texts.map(t => normalizeQuotes(t.trim()));
 
     // **PHASE 2.4: Single query with IN clause instead of N queries**
     const { data, error } = await supabase
@@ -665,7 +668,7 @@ export async function autoTranslateBatch(
     for (let i = 0; i < uncachedIndexes.length; i++) {
       const idx = uncachedIndexes[i];
       const text = uncachedTexts[i];
-      const cached = dbCache.get(text.trim());
+      const cached = dbCache.get(normalizeQuotes(text.trim()));
 
       if (cached) {
         results[idx] = cached;

@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { BookOpen, ChevronDown, ChevronUp } from 'lucide-react';
 import { Badge } from '../ui/badge';
 import type { PlantSpecies } from '../../lib/grow/species';
+import { useTranslationMap } from '../../lib/translation/useTranslationMap';
 
 interface CareGuideCardProps {
   species: Pick<PlantSpecies, 'careGuides'>;
@@ -32,7 +33,11 @@ function getSectionIcon(type: string): string {
   return '📖';
 }
 
-function formatSectionTitle(type: string): string {
+// The card's own labels. scripts/azure-translate-plant-species.ts pre-translates
+// these, so keep the two lists in step.
+export const CARE_GUIDE_UI_STRINGS = ['Care Guide', 'care tip', 'care tips', 'more care tips available'] as const;
+
+export function formatSectionTitle(type: string): string {
   return type
     .replace(/_/g, ' ')
     .replace(/\b\w/g, c => c.toUpperCase());
@@ -46,12 +51,27 @@ export function CareGuideCard({ species, maxSections = 5, expandable = true }: C
   const [expandedSections, setExpandedSections] = useState<Set<number>>(new Set());
   
   const careGuides = species.careGuides;
-  
+  const displayedSections = useMemo(
+    () => (careGuides ?? []).slice(0, maxSections),
+    [careGuides, maxSections],
+  );
+
+  // One batched lookup for every string the card shows. The array must be
+  // memoised: useTranslationMap refetches whenever its input changes identity.
+  // Serves English until the translations arrive, and stays English if they fail.
+  const textsToTranslate = useMemo(
+    () => [
+      ...CARE_GUIDE_UI_STRINGS,
+      ...displayedSections.flatMap((s) => [formatSectionTitle(s.type), s.description ?? '']),
+    ],
+    [displayedSections],
+  );
+  const { t } = useTranslationMap(textsToTranslate);
+
   if (!careGuides || careGuides.length === 0) {
     return null;
   }
 
-  const displayedSections = careGuides.slice(0, maxSections);
   const hasMore = careGuides.length > maxSections;
 
   const toggleSection = (index: number) => {
@@ -72,10 +92,10 @@ export function CareGuideCard({ species, maxSections = 5, expandable = true }: C
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2 text-sm font-medium text-gray-700">
           <BookOpen className="h-4 w-4 text-green-600" />
-          Care Guide
+          {t('Care Guide')}
         </div>
         <Badge variant="secondary" className="text-xs">
-          {careGuides.length} {careGuides.length === 1 ? 'tip' : 'tips'}
+          {careGuides.length} {t(careGuides.length === 1 ? 'care tip' : 'care tips')}
         </Badge>
       </div>
 
@@ -100,7 +120,7 @@ export function CareGuideCard({ species, maxSections = 5, expandable = true }: C
               >
                 <div className="flex items-center gap-2">
                   <span className="text-base">{icon}</span>
-                  <span className="font-medium text-sm text-gray-800">{title}</span>
+                  <span className="font-medium text-sm text-gray-800">{t(title)}</span>
                 </div>
                 {expandable && (
                   isExpanded 
@@ -112,7 +132,7 @@ export function CareGuideCard({ species, maxSections = 5, expandable = true }: C
               {(isExpanded || !expandable) && section.description && (
                 <div className="px-3 pb-3 pt-0 border-t border-gray-100">
                   <p className="text-sm text-gray-600 whitespace-pre-line mt-2">
-                    {section.description}
+                    {t(section.description)}
                   </p>
                 </div>
               )}
@@ -123,7 +143,7 @@ export function CareGuideCard({ species, maxSections = 5, expandable = true }: C
       
       {hasMore && (
         <p className="text-xs text-gray-500 text-center">
-          +{careGuides.length - maxSections} more care tips available
+          +{careGuides.length - maxSections} {t('more care tips available')}
         </p>
       )}
     </div>
