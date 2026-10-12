@@ -213,7 +213,7 @@ export const natureActivities: ActivityType[] = [
       'soilMoisture=18..35',
       'precipitation=0',
       'visibility>10',
-      'gust<8.8'],
+      'gust<7'],   // m/s. Was 8.8 — 32 km/h; a lawn job in a gale is not perfect
     goodConditions: [
       'airTemperature=12..27',
       'windSpeed<8',
@@ -222,7 +222,7 @@ export const natureActivities: ActivityType[] = [
       'humidity<80',
       'soilMoisture=15..45',
       'visibility>5',
-      'gust<12.8'],
+      'gust<10'],   // m/s (36 km/h). Was 12.8 — 46 km/h scored as GOOD: prime at 'gusting to 44 km/h' on live
     fairConditions: [
       'airTemperature=5..12 or 27..32',
       'windSpeed=8..12',
@@ -231,7 +231,7 @@ export const natureActivities: ActivityType[] = [
       'humidity=80..90',
       'soilMoisture=45..50',
       'visibility=2..5',
-      'gust=12.8..16'],
+      'gust=10..13'],
     poorConditions: [
       'airTemperature<5 or airTemperature>32',
       'windSpeed>12',
@@ -241,7 +241,7 @@ export const natureActivities: ActivityType[] = [
       'visibility<2',
       'snowfallRateMmH>1',
       'snowDepthCm>2',
-      'gust>16'],
+      'gust>13'],   // m/s (47 km/h)
     indoorAlternative: 'Plan garden layout or start seedlings indoors'
   },
    {

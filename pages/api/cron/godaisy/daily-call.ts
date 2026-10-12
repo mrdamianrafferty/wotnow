@@ -57,6 +57,7 @@ import { getSuggestionsByDay, type Suggestion } from '@/utils/getSuggestionsByDa
 import { allSports } from '@/data/activities';
 import { makeCall } from '@/lib/godaisy/call/makeCall';
 import { isGood } from '@/lib/godaisy/call/bands';
+import { isWeekend } from '@/lib/godaisy/call/rank';
 import { asSharedSentence } from '@/lib/godaisy/call/verdict';
 import { locationFromSetup } from '@/lib/godaisy/call/location';
 import type { CallSetup } from '@/lib/godaisy/call/setup';
@@ -172,6 +173,31 @@ interface Outcome {
   detail?: string;
 }
 
+interface DecisionRow {
+  user_id: string;
+  call_date: string;
+  outcome: Outcome['status'];
+  detail: string | null;
+  activity_id: string | null;
+  band: string | null;
+  weekend: boolean;
+  considered: Array<{ activityId: string; score: number }>;
+  alternates: string[];
+}
+
+/**
+ * Write the decision down. Never throws: the log is for reading later, and a
+ * missing table or a write error must not stop the notification it describes.
+ */
+async function logDecision(entry: DecisionRow): Promise<void> {
+  try {
+    const { error } = await supabase.from('godaisy_call_log').insert(entry);
+    if (error) console.warn('[GoDaisyDailyCall] call log write failed:', error.message);
+  } catch (err) {
+    console.warn('[GoDaisyDailyCall] call log write failed:', err instanceof Error ? err.message : err);
+  }
+}
+
 /**
  * Make the call for one person and, if it is worth sending, send it.
  *
@@ -250,10 +276,39 @@ async function callOne(row: PrefRow, tz: string, localDate: string): Promise<Out
     activities: allSports as never,
   });
 
+  /*
+   * Every decision leaves a row, the silent ones included.
+   *
+   * `godaisy_notification_log` only holds what went out, so a suppressed day was
+   * indistinguishable from a failed one, and nobody could see what was weighed
+   * and passed over — five weeks went by with surfing, kayaking and fishing
+   * never once the answer and nothing to say whether the sea had earned that.
+   * `considered` is every sport the person picked, scored for THIS day.
+   */
+  const callDate = new Date(day.date * 1000).toISOString().slice(0, 10);
+  const considered = day.suggestions
+    .filter((s) => setup.sports.includes(s.activityId))
+    .map((s) => ({ activityId: s.activityId, score: Math.round(s.score) }))
+    .sort((a, b) => b.score - a.score);
+  const record = (outcome: Outcome['status'], detail?: string) =>
+    logDecision({
+      user_id: row.user_id,
+      call_date: callDate,
+      outcome,
+      detail: detail ?? null,
+      activity_id: call.call?.activityId ?? null,
+      band: call.call?.band ?? null,
+      weekend: isWeekend(day.date),
+      considered,
+      alternates: call.alternates.map((a) => a.activityId),
+    });
+
   // The bar. `isGood` is prime or worth a look — the app's own vocabulary,
   // so what gets sent and what the screen calls a good day cannot drift apart.
   if (!call.call || !isGood(call.call.band)) {
-    return { userId: row.user_id, status: 'suppressed', detail: call.call?.band ?? 'no call' };
+    const detail = call.call?.band ?? 'no call';
+    await record('suppressed', detail);
+    return { userId: row.user_id, status: 'suppressed', detail };
   }
 
   /*
@@ -284,7 +339,9 @@ async function callOne(row: PrefRow, tz: string, localDate: string): Promise<Out
    */
   const calledActivity = allSports.find((a) => a.id === call.call!.activityId);
   if (calledActivity?.weatherSensitive === false) {
-    return { userId: row.user_id, status: 'suppressed', detail: `indoor: ${call.call.activityId}` };
+    const detail = `indoor: ${call.call.activityId}`;
+    await record('suppressed', detail);
+    return { userId: row.user_id, status: 'suppressed', detail };
   }
 
   const title = dayIndex === 0
@@ -362,6 +419,8 @@ async function callOne(row: PrefRow, tz: string, localDate: string): Promise<Out
     error_message: sent > 0 ? null : failures.join('; ').slice(0, 500),
     sent_at: sent > 0 ? new Date().toISOString() : null,
   });
+
+  await record(sent > 0 ? 'sent' : 'error', sent > 0 ? undefined : failures.join('; ').slice(0, 500));
 
   if (sent > 0) {
     await supabase
