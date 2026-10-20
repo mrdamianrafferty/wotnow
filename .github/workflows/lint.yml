@@ -23,3 +23,8 @@ jobs:
 
       - name: Run ESLint (CI)
         run: npm run lint:ci
+
+      # New objects in public get no Data API grants from 2026-10-30.
+      - name: New migrations grant what they create
+        if: ${{ !cancelled() }}
+        run: npm run check:migration-grants

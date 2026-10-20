@@ -81,6 +81,10 @@ npm run env:sync         # Sync .env.local to .env.cli for scripts
 - `data/` – Static data, lookup tables
 - `supabase/migrations/` – DB migrations
 
+**Migrations:**
+- **Every migration grants what it creates (from 2026-10-30).** Supabase no longer auto-grants new tables, views, functions or sequences in `public` to `anon`, `authenticated` or `service_role`, so an object without a GRANT is unreachable through supabase-js, *including service_role* (a cron writing to a new table fails with "permission denied"), and a helper function used in an RLS policy breaks every query on that table. Put the grants in the same migration as the `create`: `grant select on public.t to anon;` only if signed-out users need it; `grant select, insert, update, delete on public.t to authenticated, service_role;`; `grant execute on function public.f(<args>) to authenticated, service_role;`; `grant usage, select on sequence public.t_id_seq to authenticated, service_role;` for `serial` columns (identity columns don't need it). Trigger functions need nothing. An object that must stay off the API says so: `-- api-grant-none: <name> <why>`. `npm run check:migration-grants` (CI) enforces this for migrations after `20261020120000_replay_api_role_grants.sql`, which replays production's existing grants for `db reset` and preview branches.
+
+
 ---
 
 ## Environment Variables

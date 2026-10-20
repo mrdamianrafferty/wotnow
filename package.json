@@ -17,6 +17,7 @@
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "lint:ci": "eslint . --max-warnings=0",
+    "check:migration-grants": "node scripts/check-migration-grants.mjs",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "build:strict": "npm run lint:ci && next build --webpack",
     "test": "jest",
