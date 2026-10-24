@@ -20,6 +20,14 @@
 jest.mock('../lib/weather/openMeteoOneCallAdapter', () => ({
   fetchOpenMeteoAsOneCallShape: jest.fn(),
 }));
+/* The per-place forecast cache would answer the second request from memory and
+   make every count after the first read zero. This file counts fetches PER
+   REQUEST, so the cache passes straight through here; it has its own tests in
+   seoForecastCache.test.ts. */
+jest.mock('../lib/seo/forecastCache', () => ({
+  ...jest.requireActual('../lib/seo/forecastCache'),
+  cachedForecast: (_key: string, fetcher: () => Promise<unknown[]>) => fetcher(),
+}));
 import { fetchOpenMeteoAsOneCallShape } from '../lib/weather/openMeteoOneCallAdapter';
 import handler from '../pages/api/godaisy/activity-conditions';
 

@@ -38,6 +38,7 @@ import { promote } from '../godaisy/call/promote';
 import { partBands } from '../godaisy/call/window';
 import { bandFor, isSevere } from '../godaisy/call/bands';
 import type { DaypartAggregate, DaypartName } from '../weather/openMeteoOneCallAdapter';
+import { cachedForecast, forecastCacheKey } from './forecastCache';
 
 // ============================================================================
 // Public types
@@ -450,7 +451,25 @@ function readsTheSea(activity: ActivityType): boolean {
   return /waveHeight|swell|waterTemperature|seaState|tide/i.test(bands);
 }
 
+/**
+ * The forecast for a place, cached per place (see `forecastCache.ts`).
+ *
+ * Every SEO page, hub, share image, `/call` and the daily-call cron come
+ * through here, and ~106 distinct places stand behind thousands of pages, so
+ * this is where Open-Meteo calls are saved. The key carries whether the marine
+ * add-on applies, since a coastal and an inland forecast differ.
+ */
 export async function fetchForecastForLocation(
+  location: SeoLocation
+): Promise<LocationForecast> {
+  const coastal = (location.beachFacingDeg !== null && location.beachFacingDeg !== undefined) || !!location.coastal;
+  return cachedForecast(
+    forecastCacheKey(location.lat, location.lon, coastal),
+    () => fetchForecastForLocationUncached(location),
+  );
+}
+
+async function fetchForecastForLocationUncached(
   location: SeoLocation
 ): Promise<LocationForecast> {
   // Map an OpenWeather-One-Call-shaped payload into the shape getSuggestionsByDay wants.
