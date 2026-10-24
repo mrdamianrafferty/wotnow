@@ -122,6 +122,7 @@
     "@turf/helpers": "^7.2.0",
     "@turf/nearest-point-on-line": "^7.2.0",
     "@vercel/analytics": "^1.5.0",
+    "@vercel/functions": "^3.10.3",
     "@vercel/speed-insights": "^1.2.0",
     "apn": "^2.2.0",
     "browser-image-compression": "^2.0.2",
