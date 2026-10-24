@@ -22,9 +22,9 @@ import { generateSmartTasks } from '@/lib/grow/smartTasks';
 import type { SmartTaskContext, PlantInfo } from '@/lib/grow/smartTasks';
 import type { ClimateZoneCode } from '@/lib/grow/climate';
 import { getUnifiedWeatherData } from '@/lib/grow/weatherDataSource';
-import { fetchOpenMeteoDailyForecastRaw } from '@/lib/services/weatherService';
-import { mapOpenMeteoDaily } from '@/lib/grow/dailyForecast';
-import { openMeteoUrl, redactOpenMeteoError } from '@/lib/services/openMeteoUrl';
+import { getDailyForecast } from '@/lib/grow/dailyForecast';
+import { fetchSoilNow } from '@/lib/grow/soilNow';
+import { redactOpenMeteoError } from '@/lib/services/openMeteoUrl';
 
 const SUPABASE_URL = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
 const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -41,8 +41,8 @@ const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
 });
 
 /**
- * Fetch weather forecast from Open-Meteo (free tier, no API key required)
- * Falls back gracefully if service unavailable
+ * Daily forecast: MET Norway first (free per call), Open-Meteo as fallback, both
+ * cached across instances. Falls back gracefully if every source fails.
  */
 async function fetchWeatherForecast(lat: number, lon: number): Promise<WeatherForecast[]> {
   // Validate coordinates
@@ -51,8 +51,7 @@ async function fetchWeatherForecast(lat: number, lon: number): Promise<WeatherFo
   }
 
   try {
-    const data = await fetchOpenMeteoDailyForecastRaw(lat, lon, 7);
-    return mapOpenMeteoDaily(data);
+    return await getDailyForecast({ lat, lon, days: 7 });
   } catch (err) {
     console.error('[WeatherTasks] fetchWeatherForecast error:', err);
     // Return empty array rather than throwing - allows graceful fallback
@@ -63,67 +62,33 @@ async function fetchWeatherForecast(lat: number, lon: number): Promise<WeatherFo
 /**
  * Default soil conditions when API fails
  */
+// Fallback values when Open-Meteo soil API is unavailable
+// Using 35% as a reasonable default for temperate climates
+const DEFAULT_SOIL: SoilConditions = {
+  temp0cm: 15,
+  temp6cm: 14,
+  temp18cm: 12,
+  temp54cm: 10,
+  moisture0to1cm: 35,
+  moisture1to3cm: 35,
+  moisture3to9cm: 35,
+  moisture9to27cm: 35,
+};
+
 function getDefaultSoilConditions(): SoilConditions {
-  // Fallback values when Open-Meteo soil API is unavailable
-  // Using 35% as a reasonable default for temperate climates
   console.warn('[WeatherTasks] Using default soil conditions - API may be unavailable');
-  return {
-    temp0cm: 15,
-    temp6cm: 14,
-    temp18cm: 12,
-    temp54cm: 10,
-    moisture0to1cm: 35,
-    moisture1to3cm: 35,
-    moisture3to9cm: 35,
-    moisture9to27cm: 35,
-  };
+  return { ...DEFAULT_SOIL };
 }
 
 /**
- * Fetch soil conditions from Open-Meteo
- * Returns default values if API fails (non-critical data)
+ * Soil conditions from the shared, cached Open-Meteo weather fetch (met.no has
+ * no soil fields). Returns default values if it fails (non-critical data).
  */
 async function fetchSoilConditions(lat: number, lon: number): Promise<SoilConditions> {
-  const url = openMeteoUrl('forecast', '/v1/forecast', {
-    latitude: lat,
-    longitude: lon,
-    hourly: 'soil_temperature_0cm,soil_temperature_6cm,soil_temperature_18cm,soil_temperature_54cm,soil_moisture_0_to_1cm,soil_moisture_1_to_3cm,soil_moisture_3_to_9cm,soil_moisture_9_to_27cm',
-    forecast_days: 1,
-  }).toString();
-
   try {
-    const response = await fetch(url);
-
-    if (!response.ok) {
-      console.error(`[WeatherTasks] Open-Meteo error: ${response.status}`);
-      return getDefaultSoilConditions();
-    }
-
-    const data = await response.json();
-    const hourly = data.hourly;
-
-    if (!hourly) {
-      console.error('[WeatherTasks] Invalid soil data - no hourly data');
-      return getDefaultSoilConditions();
-    }
-
-    // Get current hour's data (or average)
-    const currentHour = new Date().getHours();
-    const idx = Math.min(currentHour, (hourly.soil_temperature_0cm?.length || 1) - 1);
-
-    return {
-      temp0cm: hourly.soil_temperature_0cm?.[idx] ?? 15,
-      temp6cm: hourly.soil_temperature_6cm?.[idx] ?? 14,
-      temp18cm: hourly.soil_temperature_18cm?.[idx] ?? 12,
-      temp54cm: hourly.soil_temperature_54cm?.[idx] ?? 10,
-      moisture0to1cm: (hourly.soil_moisture_0_to_1cm?.[idx] ?? 0.35) * 100,
-      moisture1to3cm: (hourly.soil_moisture_1_to_3cm?.[idx] ?? 0.35) * 100,
-      moisture3to9cm: (hourly.soil_moisture_3_to_9cm?.[idx] ?? 0.35) * 100,
-      moisture9to27cm: (hourly.soil_moisture_9_to_27cm?.[idx] ?? 0.35) * 100,
-    };
+    return (await fetchSoilNow(lat, lon, DEFAULT_SOIL)) ?? getDefaultSoilConditions();
   } catch (err) {
     console.error('[WeatherTasks] fetchSoilConditions error:', redactOpenMeteoError(err));
-    // Return defaults - soil data is nice-to-have, not critical
     return getDefaultSoilConditions();
   }
 }

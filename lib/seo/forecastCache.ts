@@ -11,13 +11,10 @@
  * warning it may suspend the key. Cached per place, the SEO estate's ceiling is
  * roughly places × (24h / TTL) fetches a day however hard crawlers hit it.
  *
- * TWO LAYERS.
- *  1. In-memory per function instance, which also de-duplicates concurrent
- *     requests: a hub rebuilding 106 spots in parallel, or a spot page and its
- *     12 neighbours, share one in-flight fetch per place.
- *  2. Vercel Runtime Cache (`@vercel/functions` getCache), shared by every
- *     instance in the region and surviving deploys. Outside Vercel it falls back
- *     to an in-memory store, so local dev and tests behave the same.
+ * The two layers (per-instance memory with in-flight de-duplication, then
+ * Vercel's Runtime Cache) live in `lib/cache/sharedFetchCache.ts`. A hub
+ * rebuilding 106 spots in parallel, or a spot page and its 12 neighbours,
+ * share one in-flight fetch per place.
  *
  * FAILURES ARE CACHED TOO, briefly. A page that throws on a 429 stores nothing,
  * so the next request rebuilds and retries, which is the loop that keeps a rate
@@ -34,7 +31,7 @@
  * metres from a seeded town shares its forecast, and arbitrary user coordinates
  * can't each mint a fresh entry.
  */
-import { getCache } from '@vercel/functions';
+import { sharedCached, __resetSharedMemoryCache } from '../cache/sharedFetchCache';
 
 /** A good forecast is reused for 3 hours. Open-Meteo's models update hourly at most; a 3 h old forecast is fine for a day-level activity score. */
 export const SUCCESS_TTL_S = 3 * 60 * 60;
@@ -43,12 +40,6 @@ export const FAILURE_TTL_S = 10 * 60;
 
 /** Bump when the cached shape changes so old entries are ignored rather than misread. */
 const KEY_VERSION = 'v1';
-const MAX_MEMORY_ENTRIES = 2000;
-
-type Entry<T> = { value: T[]; expiresAt: number };
-
-const memory = new Map<string, Entry<unknown>>();
-const inflight = new Map<string, Promise<unknown[]>>();
 
 export function forecastCacheKey(lat: number, lon: number, coastal: boolean): string {
   return `seo-forecast:${KEY_VERSION}:${lat.toFixed(2)},${lon.toFixed(2)}:${coastal ? 'c' : 'i'}`;
@@ -64,72 +55,24 @@ export function dropEndedDays<T extends { date: number }>(days: T[], nowMs = Dat
   return kept.length === days.length ? days : kept;
 }
 
-function remember<T>(key: string, value: T[], ttlS: number): void {
-  if (memory.size >= MAX_MEMORY_ENTRIES) {
-    const now = Date.now();
-    for (const [k, e] of memory) if (e.expiresAt <= now) memory.delete(k);
-    // Still full of live entries: drop the oldest insertion.
-    if (memory.size >= MAX_MEMORY_ENTRIES) memory.delete(memory.keys().next().value as string);
-  }
-  memory.set(key, { value, expiresAt: Date.now() + ttlS * 1000 });
-}
-
 /**
  * Return the cached forecast for `key`, or run `fetcher` once and cache what it
- * returns. Cache errors never fail the request: a broken cache only costs a fetch.
+ * returns. A fresh fetch is returned exactly as the provider gave it; only
+ * copies served from the cache are trimmed of ended days.
  */
 export async function cachedForecast<T extends { date: number }>(
   key: string,
   fetcher: () => Promise<T[]>,
 ): Promise<T[]> {
-  const hit = memory.get(key) as Entry<T> | undefined;
-  if (hit && hit.expiresAt > Date.now()) return dropEndedDays(hit.value);
-
-  const pending = inflight.get(key) as Promise<T[]> | undefined;
-  if (pending) return dropEndedDays(await pending);
-
-  // `fresh` marks a result this call fetched itself: it is returned exactly as
-  // the provider gave it, and only copies served from the cache are trimmed.
-  let fresh = false;
-  const run = (async (): Promise<T[]> => {
-    const cache = getCache();
-    try {
-      const stored = (await cache.get(key)) as { value: T[]; expiresAt: number } | undefined;
-      if (stored && Array.isArray(stored.value) && stored.expiresAt > Date.now()) {
-        memory.set(key, stored);
-        return stored.value;
-      }
-    } catch (err) {
-      console.warn('[forecastCache] runtime cache read failed:', err instanceof Error ? err.message : err);
-    }
-
-    const value = await fetcher();
-    fresh = true;
-    const ttlS = value.length ? SUCCESS_TTL_S : FAILURE_TTL_S;
-    remember(key, value, ttlS);
-    try {
-      await cache.set(
-        key,
-        { value, expiresAt: Date.now() + ttlS * 1000 },
-        { ttl: ttlS, tags: ['seo-forecast'], name: 'seo-forecast' },
-      );
-    } catch (err) {
-      console.warn('[forecastCache] runtime cache write failed:', err instanceof Error ? err.message : err);
-    }
-    return value;
-  })();
-
-  inflight.set(key, run);
-  try {
-    const value = await run;
-    return fresh ? value : dropEndedDays(value);
-  } finally {
-    inflight.delete(key);
-  }
+  const { value, fresh } = await sharedCached<T[]>(
+    key,
+    { ttlS: SUCCESS_TTL_S, failureTtlS: FAILURE_TTL_S, name: 'seo-forecast', isFailure: (v) => v.length === 0 },
+    fetcher,
+  );
+  return fresh ? value : dropEndedDays(value);
 }
 
 /** Test hook: forget everything held in this instance. */
 export function __resetForecastMemoryCache(): void {
-  memory.clear();
-  inflight.clear();
+  __resetSharedMemoryCache();
 }

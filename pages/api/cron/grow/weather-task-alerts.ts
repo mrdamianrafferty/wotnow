@@ -22,9 +22,9 @@ import { sendPushNotification, NotificationType } from '@/lib/grow/notifications
 import { sendGrowApnsPushNotification } from '@/lib/grow/apnsClient';
 import { sendFcmPushNotification } from '@/lib/notifications/fcmClient';
 import { verifyCronAuth } from '@/lib/cron-auth';
-import { fetchOpenMeteoDailyForecastRaw } from '@/lib/services/weatherService';
-import { mapOpenMeteoDaily } from '@/lib/grow/dailyForecast';
-import { openMeteoUrl, redactOpenMeteoError } from '@/lib/services/openMeteoUrl';
+import { getDailyForecast } from '@/lib/grow/dailyForecast';
+import { fetchSoilNow } from '@/lib/grow/soilNow';
+import { redactOpenMeteoError } from '@/lib/services/openMeteoUrl';
 
 /**
  * Map alert types to notification types
@@ -55,12 +55,12 @@ const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
 });
 
 /**
- * Fetch weather forecast from Open-Meteo (free tier, no API key required)
+ * Daily forecast: MET Norway first (free per call), Open-Meteo as fallback, both
+ * cached across instances. Users in the same ~1 km cell share one fetch.
  */
 async function fetchWeatherForecast(lat: number, lon: number): Promise<WeatherForecast[]> {
   try {
-    const data = await fetchOpenMeteoDailyForecastRaw(lat, lon, 5);
-    return mapOpenMeteoDaily(data);
+    return await getDailyForecast({ lat, lon, days: 5 });
   } catch (error) {
     console.error('[WeatherCron] Forecast error:', error);
     return [];
@@ -68,37 +68,12 @@ async function fetchWeatherForecast(lat: number, lon: number): Promise<WeatherFo
 }
 
 /**
- * Fetch soil conditions from Open-Meteo
+ * Soil conditions from the shared, cached Open-Meteo weather fetch (met.no has
+ * no soil fields). One request per ~1 km per hour across every route and cron.
  */
 async function fetchSoilConditions(lat: number, lon: number): Promise<SoilConditions> {
   try {
-    const url = openMeteoUrl('forecast', '/v1/forecast', {
-      latitude: lat,
-      longitude: lon,
-      hourly: 'soil_temperature_0cm,soil_temperature_6cm,soil_temperature_18cm,soil_temperature_54cm,soil_moisture_0_to_1cm,soil_moisture_1_to_3cm,soil_moisture_3_to_9cm,soil_moisture_9_to_27cm',
-      forecast_days: 1,
-    }).toString();
-    const response = await fetch(url);
-
-    if (!response.ok) {
-      return defaultSoilConditions();
-    }
-
-    const data = await response.json();
-    const hourly = data.hourly;
-    const currentHour = new Date().getHours();
-    const idx = Math.min(currentHour, (hourly.soil_temperature_0cm?.length || 1) - 1);
-
-    return {
-      temp0cm: hourly.soil_temperature_0cm?.[idx] ?? 15,
-      temp6cm: hourly.soil_temperature_6cm?.[idx] ?? 14,
-      temp18cm: hourly.soil_temperature_18cm?.[idx] ?? 12,
-      temp54cm: hourly.soil_temperature_54cm?.[idx] ?? 10,
-      moisture0to1cm: (hourly.soil_moisture_0_to_1cm?.[idx] ?? 0.3) * 100,
-      moisture1to3cm: (hourly.soil_moisture_1_to_3cm?.[idx] ?? 0.3) * 100,
-      moisture3to9cm: (hourly.soil_moisture_3_to_9cm?.[idx] ?? 0.3) * 100,
-      moisture9to27cm: (hourly.soil_moisture_9_to_27cm?.[idx] ?? 0.3) * 100,
-    };
+    return (await fetchSoilNow(lat, lon, defaultSoilConditions())) ?? defaultSoilConditions();
   } catch (error) {
     console.error('[WeatherCron] Soil error:', redactOpenMeteoError(error));
     return defaultSoilConditions();
