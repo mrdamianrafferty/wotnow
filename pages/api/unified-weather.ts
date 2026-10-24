@@ -1,3 +1,4 @@
+import { fetchMetNoComplete } from '../../lib/weather/metnoClient';
 import type { NextApiRequest, NextApiResponse } from 'next';
 import {
   buildRectangleCacheKey,
@@ -364,17 +365,16 @@ async function fetchFromMetNo(lat: number, lon: number, units: string, mode: str
   const span = weatherMetrics.start('metno', 'locationforecast', `${units}|${mode}`);
 
   try {
-    const url = `https://api.met.no/weatherapi/locationforecast/2.0/complete?lat=${metLat}&lon=${metLon}`;
-    const ua = process.env.METNO_USER_AGENT || 'Go Daisy/1.0 (hello@godaisy.io)';
-    const response = await fetch(url, { headers: { 'User-Agent': ua, 'Accept': 'application/json' } });
-    const statusCode = response.status;
-
-    if (!response.ok) {
-      span.failure(new Error(`HTTP ${statusCode}`), { status: statusCode });
+    // Shared across instances (lib/weather/metnoClient.ts): met.no asks clients
+    // to cache, and Grow's daily forecast reads the same payload.
+    let metPayload: MetNoForecastResponse;
+    try {
+      metPayload = (await fetchMetNoComplete(metLat, metLon)) as unknown as MetNoForecastResponse;
+    } catch (err) {
+      span.failure(err instanceof Error ? err : new Error(String(err)));
       return null;
     }
-
-    const metPayload = await response.json() as MetNoForecastResponse;
+    const statusCode = 200;
     const ts = metPayload.properties?.timeseries ?? [];
     if (!ts.length) {
       span.failure(new Error('Empty timeseries payload'), { status: statusCode });
@@ -2306,7 +2306,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       // Keep this as a single day request to avoid API errors
       // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
       const startDate = today.toISOString().split('T')[0];
-      const endDate = startDate; // same-day window is sufficient for latest snapshot
+      // Same-day window. fetchOpenMeteoWeather serves it from the same cached
+      // today..tomorrow request the pressure supplement above just made, so
+      // this costs no second Open-Meteo call.
+      const endDate = startDate;
       
       const soilCacheKey = `${latlonKey}_${startDate}`;
       const soilCached = omSoilCache.get(soilCacheKey);

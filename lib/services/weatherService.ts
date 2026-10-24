@@ -9,6 +9,7 @@ import {
   COORDINATE_PRECISION
 } from '../utils/coordinates';
 import { getSupabaseServerClient } from '../supabase/serverClient';
+import { sharedCached, roundCoord } from '../cache/sharedFetchCache';
 
 /**
  * Normalize and merge core weather fields (clouds, rain, snow, etc.) with fallback logic
@@ -1914,7 +1915,7 @@ function getOpenWeatherAssistantUrl(apiKey: string) {
  * This limit is enforced in the unified-weather.ts API endpoint file, but be careful when
  * calling this function directly from other places.
  */
-export async function fetchOpenMeteoWeather(lat: number, lon: number, startDate: string, endDate: string): Promise<unknown> {
+async function fetchOpenMeteoWeatherUncached(lat: number, lon: number, startDate: string, endDate: string): Promise<unknown> {
   // Validate the date range doesn't exceed 5 days
   const start = new Date(startDate);
   const end = new Date(endDate);
@@ -1979,7 +1980,7 @@ export async function fetchOpenMeteoWeather(lat: number, lon: number, startDate:
  * Uses `forecast_days` (1–16) rather than start/end dates, so the 5-day window limit that
  * applies to fetchOpenMeteoWeather does NOT apply here.
  */
-export async function fetchOpenMeteoDailyForecastRaw(lat: number | string, lon: number | string, days = 7): Promise<unknown> {
+async function fetchOpenMeteoDailyForecastRawUncached(lat: number | string, lon: number | string, days = 7): Promise<unknown> {
   const url = openMeteoUrl('forecast', '/v1/forecast');
   url.searchParams.set('latitude', String(lat));
   url.searchParams.set('longitude', String(lon));
@@ -2016,7 +2017,7 @@ export async function fetchOpenMeteoDailyForecastRaw(lat: number | string, lon: 
  * This limit is enforced in the unified-weather.ts API endpoint file, but be careful when
  * calling this function directly from other places.
  */
-async function fetchOpenMeteoAirPollen(lat: number, lon: number, startDate: string, endDate: string): Promise<unknown> {
+async function fetchOpenMeteoAirPollenUncached(lat: number, lon: number, startDate: string, endDate: string): Promise<unknown> {
   // Validate the date range doesn't exceed 5 days
   const start = new Date(startDate);
   const end = new Date(endDate);
@@ -2615,3 +2616,110 @@ async function fetchWorldTides(
 export {
   fetchWorldTides,
 };
+
+// ─── Shared, cross-instance caching for the Open-Meteo fetchers ──────────────
+//
+// Open-Meteo bills per call, weighted by variables (these ask for 9–20, so
+// 1–2 calls each), and the account ran 9.1M calls in 30 days against a 1M plan
+// (2026-10). The per-lambda Maps in unified-weather and friends rarely hit on
+// Vercel, and the cron and API routes had none. Each fetcher below now:
+//   - rounds the point (weather/daily 2 dp ≈ 1 km; air quality 1 dp ≈ 11 km,
+//     the CAMS grid is 0.1° in Europe and coarser elsewhere), so nearby users
+//     and exact GPS fixes share one entry;
+//   - fetches ONE normalised window per point and trims the answer back to the
+//     window the caller asked for. Weight doesn't depend on days up to 14, so a
+//     wider window is free, and it makes soil-profile (today), grow/weather
+//     (today) and unified-weather (today..tomorrow) share one request. Callers
+//     get exactly the shape they got before;
+//   - caches through lib/cache/sharedFetchCache.ts (instance memory +
+//     Vercel Runtime Cache, in-flight de-duplication, failures held 10 min).
+// The returned objects are shared between callers: read them, never mutate.
+
+const OM_FAILURE_TTL_S = 10 * 60;
+const OM_WEATHER_TTL_S = 60 * 60;       // hourly pressure/visibility/snow/soil
+const OM_AIR_TTL_S = 3 * 60 * 60;       // CAMS pollen/AQ forecasts update ~daily
+const OM_DAILY_TTL_S = 3 * 60 * 60;     // daily min/max/precip for Grow
+
+function addDaysIso(isoDate: string, n: number): string {
+  const d = new Date(`${isoDate}T00:00:00Z`);
+  d.setUTCDate(d.getUTCDate() + n);
+  return d.toISOString().slice(0, 10);
+}
+
+type HourlyBag = { hourly?: Record<string, unknown> & { time?: string[] } } & Record<string, unknown>;
+
+/** Keep only the hourly rows whose local date falls in [startDate, endDate]. Exported for tests. */
+export function sliceHourlyToDates<T>(data: T, startDate: string, endDate: string): T {
+  const bag = data as unknown as HourlyBag;
+  const time = bag?.hourly?.time;
+  if (!Array.isArray(time)) return data;
+  const keep: number[] = [];
+  for (let i = 0; i < time.length; i++) {
+    const day = String(time[i]).slice(0, 10);
+    if (day >= startDate && day <= endDate) keep.push(i);
+  }
+  if (keep.length === time.length) return data;
+  const hourly: Record<string, unknown> = {};
+  for (const [k, v] of Object.entries(bag.hourly as Record<string, unknown>)) {
+    hourly[k] = Array.isArray(v) && v.length === time.length ? keep.map((i) => v[i]) : v;
+  }
+  return { ...bag, hourly } as unknown as T;
+}
+
+/**
+ * Fetch general weather, soil, and snow data from Open-Meteo, cached per ~1 km.
+ *
+ * ⚠️ Open-Meteo's 5-day limit still applies to [startDate, endDate].
+ */
+export async function fetchOpenMeteoWeather(lat: number, lon: number, startDate: string, endDate: string): Promise<unknown> {
+  const rLat = roundCoord(lat, 2);
+  const rLon = roundCoord(lon, 2);
+  // Normalised window: at least two days from the start, never past the 5-day limit.
+  const minEnd = addDaysIso(startDate, 1);
+  const fetchEnd = endDate > minEnd ? endDate : minEnd;
+  const { value } = await sharedCached(
+    `om-weather:v1:${rLat},${rLon}:${startDate}:${fetchEnd}`,
+    { ttlS: OM_WEATHER_TTL_S, failureTtlS: OM_FAILURE_TTL_S, name: 'om-weather' },
+    () => fetchOpenMeteoWeatherUncached(rLat, rLon, startDate, fetchEnd),
+  );
+  return sliceHourlyToDates(value, startDate, endDate);
+}
+
+/** Air quality and pollen from Open-Meteo, cached per ~11 km over a 5-day window. */
+async function fetchOpenMeteoAirPollen(lat: number, lon: number, startDate: string, endDate: string): Promise<unknown> {
+  const rLat = roundCoord(lat, 1);
+  const rLon = roundCoord(lon, 1);
+  const windowEnd = addDaysIso(startDate, 4);
+  const fetchEnd = endDate > windowEnd ? endDate : windowEnd; // >5 days still throws below, as before
+  const { value } = await sharedCached(
+    `om-air:v1:${rLat},${rLon}:${startDate}:${fetchEnd}`,
+    { ttlS: OM_AIR_TTL_S, failureTtlS: OM_FAILURE_TTL_S, name: 'om-air' },
+    () => fetchOpenMeteoAirPollenUncached(rLat, rLon, startDate, fetchEnd),
+  );
+  return sliceHourlyToDates(value, startDate, endDate);
+}
+
+/**
+ * Daily forecast from Open-Meteo, cached per ~1 km. Always fetches at least 7
+ * days and trims to `days`, so 5-, 7- and 3-day callers share one request.
+ */
+export async function fetchOpenMeteoDailyForecastRaw(lat: number | string, lon: number | string, days = 7): Promise<unknown> {
+  const n = Math.min(Math.max(Math.round(days), 1), 16);
+  const fetchDays = Math.max(n, 7);
+  const rLat = roundCoord(Number(lat), 2);
+  const rLon = roundCoord(Number(lon), 2);
+  const { value } = await sharedCached(
+    `om-daily:v1:${rLat},${rLon}:${fetchDays}`,
+    { ttlS: OM_DAILY_TTL_S, failureTtlS: OM_FAILURE_TTL_S, name: 'om-daily' },
+    () => fetchOpenMeteoDailyForecastRawUncached(rLat, rLon, fetchDays),
+  );
+  if (n === fetchDays) return value;
+  const bag = value as { daily?: Record<string, unknown> & { time?: string[] } } & HourlyBag;
+  const dailyTime = bag?.daily?.time;
+  if (!Array.isArray(dailyTime) || !dailyTime.length) return value;
+  const daily: Record<string, unknown> = {};
+  for (const [k, v] of Object.entries(bag.daily as Record<string, unknown>)) {
+    daily[k] = Array.isArray(v) && v.length === dailyTime.length ? v.slice(0, n) : v;
+  }
+  return sliceHourlyToDates({ ...bag, daily }, String(dailyTime[0]).slice(0, 10), String(dailyTime[n - 1]).slice(0, 10));
+}

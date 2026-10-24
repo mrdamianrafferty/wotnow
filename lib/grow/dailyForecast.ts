@@ -1,14 +1,23 @@
 /**
  * Shared daily-forecast provider for Grow Daisy gardening signals.
  *
- * Free-first policy: Open-Meteo (free, unlimited) is the PRIMARY source. OpenWeather
- * One Call 3.0 is only used as a backstop when Open-Meteo fails. This keeps One Call 3.0
+ * Open-Meteo is the PRIMARY source (a paid plan billed per call since 2026-09, cached
+ * per ~1 km across instances in weatherService.ts). OpenWeather One Call 3.0 is only
+ * used as a backstop when Open-Meteo fails.
+ *
+ * Why not MET Norway, which is free per call: its `complete` forecast publishes wind
+ * gusts and UV for only ~2.5 days even in the Nordics, and no gusts or rain
+ * probability at all elsewhere (checked Oslo, Stockholm, London, Edinburgh,
+ * 2026-10-24). The Grow alerts need a 5–7 day window and alert on both: a gust of
+ * 50 km/h or more is the strong-wind warning, rain probability drives watering. This keeps One Call 3.0
  * usage within quota while preserving the simple `WeatherForecast[]` contract that the
  * local-signal engine consumes.
  *
  * Used by:
  *  - pages/api/grow/signals/index.ts (per-request)
+ *  - pages/api/grow/weather-tasks.ts (per-request)
  *  - pages/api/cron/grow/local-signal-alerts.ts (cron)
+ *  - pages/api/cron/grow/weather-task-alerts.ts (cron)
  */
 import {
   fetchOpenMeteoDailyForecastRaw,
@@ -135,7 +144,7 @@ export async function getDailyForecast({
   apiKey?: string;
   days?: number;
 }): Promise<WeatherForecast[]> {
-  // PRIMARY: Open-Meteo (free, unlimited)
+  // PRIMARY: Open-Meteo (cached per ~1 km; see the header for why not met.no)
   try {
     const raw = await fetchOpenMeteoDailyForecastRaw(lat, lon, days);
     const mapped = mapOpenMeteoDaily(raw);
