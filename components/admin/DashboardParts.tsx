@@ -70,7 +70,7 @@ export function StatCard({ label, value, sub, children }: { label: string; value
 }
 
 /** Line sparkline, oldest first; the last 7 points drawn solid, the 7 before faint. */
-export function Sparkline({ values, label }: { values: number[]; label: string }) {
+export function Sparkline({ values, label, color }: { values: number[]; label: string; color?: string }) {
   if (values.length < 2) return null;
   const W = 140;
   const H = 32;
@@ -85,7 +85,7 @@ export function Sparkline({ values, label }: { values: number[]; label: string }
   const split = Math.max(0, values.length - 8);
   return (
     // A div, not <figure>: DaisyUI lays out any figure inside .card as a flex row.
-    <div className="mt-2 text-primary">
+    <div className="mt-2 text-primary" style={color ? { color } : undefined}>
       <svg viewBox={`0 0 ${W} ${H}`} width="100%" height={H} preserveAspectRatio="none" role="img" aria-label={`${label}, daily, last ${values.length} days`}>
         <path d={path(0, split + 1)} fill="none" stroke="currentColor" strokeOpacity={0.35} strokeWidth={1.5} vectorEffect="non-scaling-stroke" />
         <path d={path(split, values.length)} fill="none" stroke="currentColor" strokeWidth={2} vectorEffect="non-scaling-stroke" />
