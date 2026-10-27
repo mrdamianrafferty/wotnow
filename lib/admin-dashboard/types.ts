@@ -8,11 +8,9 @@
  */
 
 import type { StoreDownloadsSummary } from '@/lib/store-stats/summary';
+import type { StripeWebSummary } from './stripe-web';
 
-export type Section<T> =
-  | { state: 'ok'; data: T }
-  | { state: 'not_configured'; missing: string[]; hint?: string }
-  | { state: 'error'; message: string };
+export type Section<T> = { state: 'ok'; data: T } | { state: 'not_configured'; missing: string[]; hint?: string } | { state: 'error'; message: string };
 
 /** A count over the last 7 days against the 7 before, with the daily series. */
 export interface WeekMetric {
@@ -90,6 +88,8 @@ export interface MetricsSummary {
   analytics: Section<Ga4Summary>;
   platformHealth: Section<SentrySummary>;
   audience: Section<AudienceSummary>;
+  /** Stripe web plans, only for an app that sells them (Grow Daisy). Same shape as Rise Daisy's. */
+  webRevenue?: Section<StripeWebSummary>;
 }
 
 /** 14 daily values → this week vs last week. */

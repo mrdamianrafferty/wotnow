@@ -9,7 +9,16 @@
 import type { CSSProperties, ReactNode } from 'react';
 import Link from 'next/link';
 import { appAttention, deriveAttention, type AttentionItem } from '@/lib/admin-dashboard/attention';
-import type { AppSnapshot, FamilyAppId, FamilyCountry, FamilySummary, Part, Trend } from '@/lib/admin-dashboard/family';
+import {
+  FAMILY_APPS,
+  appMrr,
+  type AppSnapshot,
+  type FamilyAppId,
+  type FamilyCountry,
+  type FamilySummary,
+  type Part,
+  type Trend,
+} from '@/lib/admin-dashboard/family';
 import { fmt, money } from './DashboardParts';
 import s from './FamilyDashboard.module.css';
 
@@ -49,7 +58,8 @@ const okData = <T,>(p: Part<T>): T | null => (p.state === 'ok' ? p.data : null);
 /** Why a part has no figure, in a couple of words. */
 function reason(p: Part<unknown>): string {
   if (p.state === 'error') return 'error';
-  if (p.state === 'not_configured') return p.note ? p.note.toLowerCase() : 'not connected';
+  // A short note ("No store data yet") reads well in place; a sentence-long hint belongs in Needs attention
+  if (p.state === 'not_configured') return p.note && p.note.length <= 24 ? p.note.toLowerCase() : 'not connected';
   return '';
 }
 
@@ -183,10 +193,15 @@ function Header({ data, attention }: { data: FamilySummary; attention: Attention
 
   const [mrrMain, ...mrrRest] = totals.mrr;
   const mrrByApp = apps
-    .map((a) => ({ a, r: okData(a.revenue) }))
-    .filter((x) => x.r && x.r.mrr && x.r.currency)
-    .sort((x, y) => y.r!.mrr! - x.r!.mrr!)
-    .map((x) => `${x.a.name} ${money(x.r!.mrr!, x.r!.currency!)}`);
+    .flatMap((a) =>
+      appMrr(a)
+        .filter((m) => m.value > 0)
+        .map((m) => ({ a, m })),
+    )
+    .sort((x, y) => y.m.value - x.m.value)
+    .map((x) => `${x.a.name} ${money(x.m.value, x.m.currency)}`);
+  // A club app takes no money, so it is not "not reporting" subscriptions
+  const payingApps = FAMILY_APPS.filter((f) => !f.noRevenue && apps.some((a) => a.id === f.id)).length;
 
   const topErrors = apps.map((a) => ({ a, e: okData(a.health)?.errors?.value ?? 0 })).sort((x, y) => y.e - x.e)[0];
 
@@ -211,7 +226,7 @@ function Header({ data, attention }: { data: FamilySummary; attention: Attention
       label: 'Paying subscriptions',
       value: totals.activeSubscriptions.apps ? fmt(totals.activeSubscriptions.value) : '—',
       change: totals.activeTrials.apps ? `${fmt(totals.activeTrials.value)} in trial` : 'Trials not reported',
-      note: ofN(totals.activeSubscriptions.apps),
+      note: `${totals.activeSubscriptions.apps} of ${payingApps} paid apps reporting`,
     },
     {
       label: 'Active users',
@@ -638,6 +653,8 @@ function AppCard({ app, attention, maxDl }: { app: AppSnapshot; attention: Atten
   const hl = okData(app.health);
   const aud = okData(app.audience);
 
+  const mrr = appMrr(app);
+  const webMrr = app.webRevenue?.state === 'ok' ? app.webRevenue.data.mrrByCurrency.filter((m) => m.mrr > 0) : [];
   const platforms = dl
     ? [`iOS ${fmt(dl.ios?.value ?? 0)}`, ...(dl.android && dl.android.value > 0 ? [`Android ${fmt(dl.android.value)}`] : [])].join(' · ')
     : '';
@@ -647,11 +664,20 @@ function AppCard({ app, attention, maxDl }: { app: AppSnapshot; attention: Atten
       value: dl ? fmt(dl.total.value) : '—',
       note: dl ? `${arrow(dl.total)} · ${platforms}` : reason(app.downloads),
     },
-    {
-      label: 'MRR',
-      value: rev?.mrr != null && rev.currency ? money(rev.mrr, rev.currency) : '—',
-      note: rev ? (rev.activeSubscriptions != null ? plural(rev.activeSubscriptions, 'subscription') : 'subscriptions not reported') : reason(app.revenue),
-    },
+    rev?.source === 'none'
+      ? { label: 'MRR', value: '—', note: 'No revenue — club app' }
+      : {
+          label: 'MRR',
+          value: mrr.length ? mrr.map((m) => money(m.value, m.currency)).join(' + ') : '—',
+          note: rev
+            ? [
+                rev.activeSubscriptions != null ? plural(rev.activeSubscriptions, 'subscription') : 'subscriptions not reported',
+                webMrr.length ? `incl. ${webMrr.map((m) => money(m.mrr, m.currency)).join(' + ')} web` : null,
+              ]
+                .filter(Boolean)
+                .join(' · ')
+            : reason(app.revenue),
+        },
     {
       label: 'Active users',
       value: an?.activeUsers ? fmt(an.activeUsers.value) : '—',
@@ -668,7 +694,7 @@ function AppCard({ app, attention, maxDl }: { app: AppSnapshot; attention: Atten
     },
   ];
 
-  const source = rev ? (rev.source === 'revenuecat' ? 'RevenueCat' : rev.source === 'stripe' ? 'Stripe' : cap(rev.source)) : null;
+  const source = rev && rev.source !== 'none' ? (rev.source === 'revenuecat' ? 'RevenueCat' : rev.source === 'stripe' ? 'Stripe' : cap(rev.source)) : null;
   const footnote = [
     source && (rev?.revenue28d != null && rev.currency ? `${source} · ${money(rev.revenue28d, rev.currency)} taken in 28 days` : source),
     dl?.latestDate
@@ -676,7 +702,8 @@ function AppCard({ app, attention, maxDl }: { app: AppSnapshot; attention: Atten
       : null,
   ]
     .filter(Boolean)
-    .join(' · ');
+    .join(' · ')
+    .replace(/^./, (c) => c.toUpperCase());
 
   return (
     <article className={s.appCard}>
@@ -713,6 +740,20 @@ function AppCard({ app, attention, maxDl }: { app: AppSnapshot; attention: Atten
           </div>
         ) : footnote ? (
           <p className={s.small}>{footnote}</p>
+        ) : null}
+
+        {app.club ? (
+          <div className={s.chips}>
+            <span className={s.chipsLabel}>Club</span>
+            <div className={s.stats}>
+              {app.club.stats.map((c) => (
+                <div key={c.key} className={s.stat}>
+                  <span className={s.statNote}>{c.label}</span>
+                  <span className={s.clubValue}>{fmt(c.value)}</span>
+                </div>
+              ))}
+            </div>
+          </div>
         ) : null}
 
         <div className={s.chips}>

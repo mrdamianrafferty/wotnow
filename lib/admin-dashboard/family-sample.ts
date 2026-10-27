@@ -114,6 +114,72 @@ export function sampleFamilyBodies(now = new Date()): Record<FamilyAppId, unknow
       ),
       webRevenue: { state: 'ok', data: { activeSubscriptions: 1 } },
     },
+    growdaisy: {
+      app: 'grow_daisy',
+      generatedAt,
+      storeDownloads: downloads(
+        [4, 3],
+        [
+          { country: 'GB', downloads: 9 },
+          { country: 'IE', downloads: 3 },
+          { country: 'FR', downloads: 1 },
+        ],
+      ),
+      revenue: {
+        state: 'ok',
+        data: { source: 'revenuecat', currency: 'GBP', mrr: 12.5, revenue28d: 18.97, activeSubscriptions: 4, activeTrials: 1, newCustomers28d: 20 },
+      },
+      analytics: { state: 'ok', data: { activeUsers: week(212, 240), pageViews: week(980, 1100) } },
+      platformHealth: { state: 'not_configured', missing: [], hint: 'Grow Daisy has no Sentry project yet.' },
+      audience: audience(
+        now,
+        [
+          ['GB', 'United Kingdom', 150],
+          ['IE', 'Ireland', 31],
+          ['FR', 'France', 12],
+          ['US', 'United States', 9],
+        ],
+        [70, 136, 6],
+      ),
+      webRevenue: {
+        state: 'ok',
+        data: { activeSubscriptions: 2, trialing: 0, cancellingAtPeriodEnd: 0, new28d: 1, mrrByCurrency: [{ currency: 'GBP', mrr: 6.99, subscriptions: 2 }] },
+      },
+    },
+    hungerford: {
+      app: 'hungerford',
+      generatedAt,
+      storeDownloads: {
+        state: 'ok',
+        data: {
+          ios: platform(2, 1),
+          android: { available: false, reason: 'No Android app' },
+          configured: { ios: true },
+          hasData: true,
+          latestDate: '2026-10-26',
+          countries30d: [{ country: 'GB', downloads: 6 }],
+        },
+      },
+      revenue: { state: 'ok', data: { source: 'none', note: 'Private club app: no revenue.' } },
+      analytics: { state: 'ok', data: { activeUsers: week(48, 41), pageViews: week(410, 380) } },
+      platformHealth: { state: 'ok', data: { errors: week(12, 9), crashFreeRate: null, topIssues: [] } },
+      audience: audience(
+        now,
+        [
+          ['GB', 'United Kingdom', 46],
+          ['IE', 'Ireland', 2],
+        ],
+        [20, 27, 1],
+      ),
+      club: {
+        members: { total: 212, byStatus: [{ status: 'full', count: 180 }] },
+        week: { from: '2026-10-20', to: '2026-10-26' },
+        catchEntries7d: 37,
+        fishLogged7d: 52,
+        trips7d: 41,
+        blankTrips7d: 9,
+      },
+    },
     findr: {
       app: 'findr',
       generatedAt,

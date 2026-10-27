@@ -135,7 +135,8 @@ describe('familyTotals', () => {
       { currency: 'EUR', value: 1240, apps: 1 },
       { currency: 'GBP', value: 327.9, apps: 3 },
     ]);
-    expect(totals.activeSubscriptions).toEqual({ value: 17 + 61 + 0 + 48, apps: 4 });
+    // Rise's Stripe web plans (webRevenue, 1) add to its RevenueCat 61: different books
+    expect(totals.activeSubscriptions).toEqual({ value: 17 + 61 + 1 + 0 + 48, apps: 4 });
     expect(totals.activeTrials).toEqual({ value: 4 + 9 + 0 + 6, apps: 4 });
   });
 

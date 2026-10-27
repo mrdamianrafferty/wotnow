@@ -563,6 +563,13 @@
   font-size: 13px;
   color: var(--fg-3);
 }
+.clubValue {
+  font-family: var(--font-heading);
+  font-size: 20px;
+  font-weight: 800;
+  color: var(--fg-1);
+  font-variant-numeric: tabular-nums;
+}
 .compare {
   display: flex;
   flex-direction: column;

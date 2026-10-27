@@ -8,7 +8,7 @@
  * feeding another rule.
  */
 
-import type { AppSnapshot, FamilyAppId, FamilySummary, Part } from './family';
+import { FAMILY_APPS, type AppSnapshot, type FamilyAppId, type FamilySummary, type Part } from './family';
 
 export type AttentionLevel = 'danger' | 'check' | 'waiting';
 
@@ -57,13 +57,21 @@ const PART_LABELS = {
 } as const;
 type PartKey = keyof typeof PART_LABELS;
 
+/** What is wrong with a part, as a phrase after its label ("Health: …"). Null when nothing is. */
 function partProblem(p: Part<unknown>): string | null {
   if (p.state === 'error') return `error: ${p.message}`;
   if (p.state === 'not_configured') {
     if (p.missing.length) return `not configured (${p.missing.join(', ')})`;
-    return p.note ? p.note.charAt(0).toLowerCase() + p.note.slice(1) : 'not configured';
+    return p.note ? p.note.replace(/\.$/, '') : 'not configured';
   }
   return null;
+}
+
+/** The same, as a sentence on its own. */
+function partSentence(label: string, p: Part<unknown>, why: string): string {
+  if (p.state === 'error') return `${cap(why.replace(/^error: /, ''))}.`.replace(/\.\.$/, '.');
+  if (p.state === 'not_configured' && !p.missing.length && p.note) return `${cap(why)}.`;
+  return `${label} is ${why}.`;
 }
 
 function errorsRising(apps: AppSnapshot[], familyErrors: number): AttentionItem[] {
@@ -103,6 +111,7 @@ function notReporting(apps: AppSnapshot[]): AttentionItem[] {
     const parts: { label: string; part: Part<unknown> }[] = (Object.keys(PART_LABELS) as PartKey[]).map((k) => ({ label: PART_LABELS[k], part: a[k] }));
     // Audience is new: an app that has not shipped it yet is counted in the Audience section, not here
     if (a.audience.state === 'error') parts.push({ label: 'Audience', part: a.audience });
+    if (a.webRevenue && a.webRevenue.state !== 'ok') parts.push({ label: 'Web revenue', part: a.webRevenue });
     const problems = parts
       .map((p) => ({ ...p, why: partProblem(p.part) }))
       .filter((p): p is { label: string; part: Part<unknown>; why: string } => p.why !== null);
@@ -116,10 +125,7 @@ function notReporting(apps: AppSnapshot[]): AttentionItem[] {
         label: a.name,
         title:
           problems.length === 1 ? `${first.label} ${first.part.state === 'error' ? 'failed' : 'isn’t connected'}` : `${problems.length} sources not reporting`,
-        body:
-          problems.length === 1
-            ? `${cap(first.part.state === 'error' ? first.why.replace(/^error: /, '') : `${first.label} is ${first.why}`)}.`
-            : problems.map((p) => `${p.label}: ${p.why}`).join('. ') + '.',
+        body: problems.length === 1 ? partSentence(first.label, first.part, first.why) : problems.map((p) => `${p.label}: ${p.why}`).join('. ') + '.',
         short: problems.length === 1 ? `${first.label} ${first.part.state === 'error' ? 'failing' : 'not connected'}` : `${problems.length} sources missing`,
       },
     ];
@@ -180,7 +186,12 @@ function automatedTraffic(summary: FamilySummary): AttentionItem[] {
 }
 
 function androidMissing(apps: AppSnapshot[]): AttentionItem[] {
-  const dl = apps.map((a) => okData(a.downloads)).filter((d): d is NonNullable<typeof d> => d !== null);
+  // Only apps that ship on Android: Hungerford is web and iOS only
+  const onAndroid = new Set(FAMILY_APPS.filter((f) => f.platforms.includes('android')).map((f) => f.id));
+  const dl = apps
+    .filter((a) => onAndroid.has(a.id))
+    .map((a) => okData(a.downloads))
+    .filter((d): d is NonNullable<typeof d> => d !== null);
   if (dl.length === 0) return [];
   const androidAny = dl.some((d) => d.android !== null && d.android.value + d.android.previous > 0);
   const ios = dl.reduce((a, d) => a + (d.ios ? d.ios.value + d.ios.previous : 0), 0);

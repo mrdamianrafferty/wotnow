@@ -24,7 +24,12 @@ describe('summariseRevenueCharts', () => {
   it('takes the newest day for MRR, actives and trials and sums revenue and new customers', () => {
     const data = summariseRevenueCharts({
       // Out of order on purpose: sorted by cohort before taking the newest
-      mrr: { values: [{ cohort: 3 * DAY, measure: 0, value: 42 }, { cohort: DAY, measure: 0, value: 10 }] },
+      mrr: {
+        values: [
+          { cohort: 3 * DAY, measure: 0, value: 42 },
+          { cohort: DAY, measure: 0, value: 10 },
+        ],
+      },
       actives: points([5, 6, 7]),
       trials: points([2, 1]),
       revenue: { values: [...points([1.5, 2.25]).values, { cohort: 1_790_000_000, measure: 1, value: 99 }] },

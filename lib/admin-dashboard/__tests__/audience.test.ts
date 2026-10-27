@@ -111,7 +111,7 @@ describe('family audience', () => {
     expect(sg.value).toBe(663 + 42 + 19);
     expect(sg.apps).toEqual(['risedaisy', 'flycast', 'findr']);
     expect(totals.audience.countries[0].code).toBe('SG');
-    expect(totals.audience.reporting).toBe(5);
+    expect(totals.audience.reporting).toBe(7);
     // Unknown country rows keep their own bucket rather than merging into a real one
     expect(totals.audience.countries.some((c) => c.code === null)).toBe(true);
   });
@@ -127,8 +127,8 @@ describe('family audience', () => {
 
   it('sums store countries across apps that send them', () => {
     const { totals } = sampleFamilySummary(now);
-    expect(totals.audience.storeReporting).toBe(5);
-    expect(totals.audience.storeCountries.find((c) => c.code === 'FR')).toMatchObject({ value: 8, apps: ['risedaisy', 'findr'] });
+    expect(totals.audience.storeReporting).toBe(7);
+    expect(totals.audience.storeCountries.find((c) => c.code === 'FR')).toMatchObject({ value: 9, apps: ['risedaisy', 'findr', 'growdaisy'] });
     expect(totals.audience.storeCountries.some((c) => c.code === 'SG')).toBe(false);
   });
 
@@ -141,8 +141,8 @@ describe('family audience', () => {
     expect(g.audience).toMatchObject({ state: 'not_configured', note: 'Not reported by this app' });
     expect(g.downloads).toMatchObject({ state: 'ok', data: { countries30d: null } });
     const t = familyTotals(apps).audience;
-    expect(t.reporting).toBe(4);
-    expect(t.storeReporting).toBe(4);
+    expect(t.reporting).toBe(6);
+    expect(t.storeReporting).toBe(6);
     expect(t.countries.find((c) => c.code === 'ES')!.apps).not.toContain('grewp');
   });
 
@@ -201,14 +201,23 @@ describe('deriveAttention', () => {
     const items = deriveAttention(sampleFamilySummary(now));
     expect(items.map((i) => `${i.level}:${i.rule}:${i.label}`)).toEqual([
       'danger:errors_rising:Go Daisy',
+      'check:not_reporting:Grow Daisy',
       'check:not_reporting:Findr',
       'check:wrong_property:Go Daisy',
       'check:automated_traffic:Rise Daisy · Fly Cast · Findr',
       'waiting:android_missing:Android',
     ]);
     expect(items[0].title).toBe('Errors up 92% in a week');
-    expect(items[1]).toMatchObject({ title: 'Health failed', body: 'Sentry 404: project “findr” not found.' });
-    expect(items[3]).toMatchObject({ title: 'Singapore traffic looks automated', country: { code: 'SG', visitors: 724, share: 43 } });
+    expect(items.find((i) => i.label === 'Findr')).toMatchObject({ title: 'Health failed', body: 'Sentry 404: project “findr” not found.' });
+    expect(items.find((i) => i.label === 'Grow Daisy')).toMatchObject({
+      title: 'Health isn’t connected',
+      body: 'Grow Daisy has no Sentry project yet.',
+    });
+    // 724 of 1,945 visitors across the seven apps
+    expect(items.find((i) => i.rule === 'automated_traffic')).toMatchObject({
+      title: 'Singapore traffic looks automated',
+      country: { code: 'SG', visitors: 724, share: 37 },
+    });
   });
 
   it('says nothing when nothing is wrong', () => {
@@ -338,5 +347,61 @@ describe('deriveAttention', () => {
     expect(appAttention(items, 'godaisy')).toMatchObject({ level: 'danger', short: 'Errors rising' });
     expect(appAttention(items, 'findr')).toMatchObject({ short: 'Health failing' });
     expect(appAttention(items, 'risedaisy')).toBeNull();
+  });
+});
+
+// ─── Seven apps: Grow Daisy and Hungerford ───────────────────────────
+
+describe('Hungerford and Grow Daisy', () => {
+  const summary = sampleFamilySummary(now);
+  const get = (id: string) => summary.apps.find((a) => a.id === id)!;
+
+  it('reads Hungerford’s revenue "none" as no revenue, not as an error or zeros', () => {
+    expect(get('hungerford').revenue).toMatchObject({ state: 'ok', data: { source: 'none', mrr: null } });
+    // Even when it sends nothing at all
+    expect(readAppSummary(app('hungerford'), {}).revenue).toMatchObject({ state: 'ok', data: { source: 'none' } });
+    expect(deriveAttention(summary).some((i) => i.apps.includes('hungerford'))).toBe(false);
+  });
+
+  it('reads Hungerford’s {available:false} Android as no Android, and never waits on it', () => {
+    expect(get('hungerford').downloads).toMatchObject({ state: 'ok', data: { android: null, total: { value: 2 } } });
+    const iosOnly = summaryOf(
+      ['hungerford', 'findr'].map((id) =>
+        readAppSummary(app(id), {
+          storeDownloads: {
+            state: 'ok',
+            data: { ios: { week: 3, previousWeek: 1 }, android: id === 'findr' ? { week: 1, previousWeek: 0 } : { available: false }, hasData: true },
+          },
+        }),
+      ),
+    );
+    expect(deriveAttention(iosOnly).some((i) => i.rule === 'android_missing')).toBe(false);
+  });
+
+  it('keeps only numeric club figures, with labels', () => {
+    expect(get('hungerford').club?.stats).toEqual([
+      { key: 'members', label: 'Members', value: 212 },
+      { key: 'catchEntries7d', label: 'Catch entries · 7 days', value: 37 },
+      { key: 'fishLogged7d', label: 'Fish logged · 7 days', value: 52 },
+      { key: 'trips7d', label: 'Trips · 7 days', value: 41 },
+      { key: 'blankTrips7d', label: 'Blank trips · 7 days', value: 9 },
+    ]);
+    expect(readAppSummary(app('hungerford'), { club: { state: 'ok', data: { newThing30d: 4, label: 'x' } } }).club?.stats).toEqual([
+      { key: 'newThing30d', label: 'New Thing · 30 days', value: 4 },
+    ]);
+    expect(get('grewp').club).toBeNull();
+  });
+
+  it('adds Grow Daisy’s Stripe web MRR and subscriptions to its in-app ones', () => {
+    const totals = summary.totals;
+    expect(totals.mrr.find((m) => m.currency === 'GBP')).toEqual({ currency: 'GBP', value: 26.49, apps: 4 });
+    // Grow: 4 RevenueCat + 2 Stripe web; Rise: 3 + 1 web; Hungerford is not a paid app and does not count
+    expect(totals.activeSubscriptions).toEqual({ value: 0 + (4 + 2) + (3 + 1) + 0 + 0 + 3, apps: 6 });
+  });
+
+  it('turns a failing webRevenue into an attention item, and ignores its absence', () => {
+    const failed = deriveAttention(withBody('growdaisy', (b) => ({ ...b, webRevenue: { state: 'error', message: 'Stripe 401' } })));
+    expect(failed.find((i) => i.apps.includes('growdaisy'))!.body).toContain('Web revenue: error: Stripe 401');
+    expect(get('grewp').webRevenue).toBeNull();
   });
 });

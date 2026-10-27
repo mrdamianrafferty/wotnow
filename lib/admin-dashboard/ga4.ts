@@ -10,6 +10,7 @@
  * batchRunReports request. Vercel Web Analytics also runs but has no read API.
  */
 
+import { metricsApp } from './app-identity';
 import { decodeServiceAccountKey, getServiceAccountToken } from '@/lib/google/service-account-token';
 import { errorMessage, weekMetric, type AudienceSummary, type Ga4Summary, type Section } from './types';
 
@@ -184,7 +185,7 @@ async function runBatch<T>(
       return {
         state: 'not_configured',
         missing: [],
-        hint: 'GA4 refused the service account (403). Add its client_email as a Viewer on the Go Daisy GA4 property.',
+        hint: `GA4 refused the service account (403). Add its client_email as a Viewer on the ${metricsApp(env).name} GA4 property.`,
       };
     }
     if (!res.ok) return { state: 'error', message: `GA4 ${res.status}: ${(await res.text()).slice(0, 160)}` };

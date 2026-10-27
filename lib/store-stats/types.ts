@@ -6,8 +6,16 @@
  * every row carries `app_id`; the table was created by Rise Daisy's migration.
  */
 
-/** The `app_id` Go Daisy writes and reads in store_stats_daily. */
-export const STORE_STATS_APP_ID = 'go_daisy';
+import { metricsApp } from '@/lib/admin-dashboard/app-identity';
+
+/**
+ * The `app_id` this deployment writes and reads in store_stats_daily:
+ * 'go_daisy' on the wotnow project, 'grow_daisy' on growdaisy (see
+ * lib/admin-dashboard/app-identity.ts).
+ */
+export function storeStatsAppId(env: Record<string, string | undefined> = process.env): string {
+  return metricsApp(env).id;
+}
 
 export type StorePlatform = 'ios' | 'android';
 

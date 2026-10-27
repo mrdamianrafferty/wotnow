@@ -15,6 +15,7 @@
  */
 
 import { errorMessage, weekMetric, type Section, type SentrySummary } from './types';
+import { metricsApp } from './app-identity';
 
 const SENTRY_API = 'https://sentry.io/api/0';
 const DEFAULT_ORG = 'go-daisy';
@@ -67,9 +68,13 @@ export function projectIdFromDsn(dsn: string | undefined): string | null {
 
 export async function fetchSentrySummary(env: Record<string, string | undefined> = process.env): Promise<Section<SentrySummary>> {
   const token = (env.SENTRY_ADMIN_TOKEN || env.SENTRY_AUTH_TOKEN || '').trim();
-  const projectId = env.SENTRY_DASHBOARD_PROJECT_ID?.trim() || projectIdFromDsn(env.NEXT_PUBLIC_SENTRY_DSN_GODAISY);
+  const app = metricsApp(env);
+  const projectId = env.SENTRY_DASHBOARD_PROJECT_ID?.trim() || (app.sentryDsnVar ? projectIdFromDsn(env[app.sentryDsnVar]) : null);
+  if (!projectId && !app.sentryDsnVar) {
+    return { state: 'not_configured', missing: [], hint: `${app.name} has no Sentry project yet.` };
+  }
   const org = env.SENTRY_ORG?.trim() || DEFAULT_ORG;
-  const missing = [!token && 'SENTRY_ADMIN_TOKEN', !projectId && 'NEXT_PUBLIC_SENTRY_DSN_GODAISY'].filter(Boolean) as string[];
+  const missing = [!token && 'SENTRY_ADMIN_TOKEN', !projectId && app.sentryDsnVar].filter(Boolean) as string[];
   if (missing.length || !projectId) return { state: 'not_configured', missing };
 
   const get = async <T>(path: string): Promise<{ status: number; body: T | null }> => {
@@ -87,12 +92,22 @@ export async function fetchSentrySummary(env: Record<string, string | undefined>
   try {
     // All three take the numeric project id; without it they cover the whole org.
     const [issues, stats, sessions] = await Promise.all([
-      get<IssueResponse[]>(`/organizations/${org}/issues/?${new URLSearchParams({ project: projectId, query: 'is:unresolved', statsPeriod: '14d', sort: 'freq', limit: '5' })}`),
-      get<StatsV2Response>(`/organizations/${org}/stats_v2/?${new URLSearchParams({ field: 'sum(quantity)', category: 'error', interval: '1d', statsPeriod: '15d', project: projectId })}`),
-      get<SessionsResponse>(`/organizations/${org}/sessions/?${new URLSearchParams({ field: 'crash_free_rate(session)', statsPeriod: '14d', interval: '1d', project: projectId })}`),
+      get<IssueResponse[]>(
+        `/organizations/${org}/issues/?${new URLSearchParams({ project: projectId, query: 'is:unresolved', statsPeriod: '14d', sort: 'freq', limit: '5' })}`,
+      ),
+      get<StatsV2Response>(
+        `/organizations/${org}/stats_v2/?${new URLSearchParams({ field: 'sum(quantity)', category: 'error', interval: '1d', statsPeriod: '15d', project: projectId })}`,
+      ),
+      get<SessionsResponse>(
+        `/organizations/${org}/sessions/?${new URLSearchParams({ field: 'crash_free_rate(session)', statsPeriod: '14d', interval: '1d', project: projectId })}`,
+      ),
     ]);
     if (issues.status === 401 || issues.status === 403) {
-      return { state: 'not_configured', missing: ['SENTRY_ADMIN_TOKEN'], hint: `Sentry refused the token (${issues.status}). It needs org:read, project:read and event:read in the "${org}" organisation.` };
+      return {
+        state: 'not_configured',
+        missing: ['SENTRY_ADMIN_TOKEN'],
+        hint: `Sentry refused the token (${issues.status}). It needs org:read, project:read and event:read in the "${org}" organisation.`,
+      };
     }
     if (issues.status === 404) {
       return { state: 'not_configured', missing: ['SENTRY_ORG'], hint: `Sentry has no organisation "${org}" for this token.` };

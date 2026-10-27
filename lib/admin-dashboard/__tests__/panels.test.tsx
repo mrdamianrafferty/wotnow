@@ -62,8 +62,8 @@ describe('admin dashboard panels', () => {
     expect(screen.getByText('Errors up 92% in a week')).toBeInTheDocument();
     expect(screen.getByText('Singapore traffic looks automated')).toBeInTheDocument();
     expect(screen.getByText('likely automated')).toBeInTheDocument();
-    expect(screen.getByText(/GA4 returned no age or gender rows for any of the 5 apps/)).toBeInTheDocument();
-    expect(screen.getByText('5 things need attention')).toBeInTheDocument();
+    expect(screen.getByText(/GA4 returned no age or gender rows for any of the 7 apps/)).toBeInTheDocument();
+    expect(screen.getByText('6 things need attention')).toBeInTheDocument();
   });
 
   it('shows an app that did not answer, in its card and in Needs attention', () => {

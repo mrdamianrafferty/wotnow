@@ -10,7 +10,7 @@
  * {configured:false}, or bare data.
  */
 
-export type FamilyAppId = 'godaisy' | 'risedaisy' | 'findr' | 'flycast' | 'grewp';
+export type FamilyAppId = 'godaisy' | 'growdaisy' | 'risedaisy' | 'hungerford' | 'findr' | 'flycast' | 'grewp';
 
 export interface FamilyApp {
   id: FamilyAppId;
@@ -19,19 +19,22 @@ export interface FamilyApp {
   envKey: string;
   /** One colour per app, used everywhere the app appears. */
   color: string;
+  /** Store platforms it ships on; an app without Android never counts as "Android missing". */
+  platforms: ('ios' | 'android')[];
+  /** A club app that takes no money: no revenue is a fact, not a gap. */
+  noRevenue?: boolean;
+  /** The metrics app id this codebase can read in-process (see app-identity.ts). */
+  inProcess?: 'go_daisy' | 'grow_daisy';
 }
 
 export const FAMILY_APPS: FamilyApp[] = [
-  { id: 'godaisy', name: 'Go Daisy', envKey: 'GODAISY', color: '#475569' },
-  {
-    id: 'risedaisy',
-    name: 'Rise Daisy',
-    envKey: 'RISEDAISY',
-    color: '#0c6231',
-  },
-  { id: 'findr', name: 'Findr', envKey: 'FINDR', color: '#0e7490' },
-  { id: 'flycast', name: 'Fly Cast', envKey: 'FLYCAST', color: '#22d3ee' },
-  { id: 'grewp', name: 'Grewp', envKey: 'GREWP', color: '#18b254' },
+  { id: 'godaisy', name: 'Go Daisy', envKey: 'GODAISY', color: '#475569', platforms: ['ios', 'android'], inProcess: 'go_daisy' },
+  { id: 'growdaisy', name: 'Grow Daisy', envKey: 'GROWDAISY', color: '#73e2a0', platforms: ['ios', 'android'], inProcess: 'grow_daisy' },
+  { id: 'risedaisy', name: 'Rise Daisy', envKey: 'RISEDAISY', color: '#0c6231', platforms: ['ios', 'android'] },
+  { id: 'hungerford', name: 'Hungerford', envKey: 'HUNGERFORD', color: '#164e63', platforms: ['ios'], noRevenue: true },
+  { id: 'findr', name: 'Findr', envKey: 'FINDR', color: '#0e7490', platforms: ['ios', 'android'] },
+  { id: 'flycast', name: 'Fly Cast', envKey: 'FLYCAST', color: '#22d3ee', platforms: ['ios', 'android'] },
+  { id: 'grewp', name: 'Grewp', envKey: 'GREWP', color: '#18b254', platforms: ['ios', 'android'] },
 ];
 
 /** A 7-day count against the 7 days before; `daily` oldest first when known. */
@@ -59,7 +62,9 @@ export interface DownloadsPart {
 }
 
 export interface RevenuePart {
+  /** 'none' for an app that takes no money (Hungerford). */
   source: string;
+  note?: string | null;
   currency: string | null;
   mrr: number | null;
   activeSubscriptions: number | null;
@@ -92,6 +97,18 @@ export interface AudiencePart {
   };
 }
 
+/** Stripe web plans (Rise Daisy, Grow Daisy): separate from in-app revenue, so never double counted. */
+export interface WebRevenuePart {
+  activeSubscriptions: number | null;
+  trialing: number | null;
+  mrrByCurrency: { currency: string; mrr: number; subscriptions: number }[];
+}
+
+/** Extra club KPIs (Hungerford), labelled and in the order sent. */
+export interface ClubPart {
+  stats: { key: string; label: string; value: number }[];
+}
+
 export type AppStatus = 'ok' | 'not_configured' | 'unavailable';
 
 export interface AppSnapshot {
@@ -109,6 +126,10 @@ export interface AppSnapshot {
   health: Part<HealthPart>;
   /** Added 2026-10-27; an app that has not shipped it yet reads as not reported. */
   audience: Part<AudiencePart>;
+  /** Only apps that sell on the web send it; null when absent. */
+  webRevenue: Part<WebRevenuePart> | null;
+  /** Only club apps send it; null when absent. */
+  club: ClubPart | null;
 }
 
 /** A country summed across apps, with the apps it came from (largest first). */
@@ -320,6 +341,9 @@ export function readAudience(d: Obj): AudiencePart | null {
 }
 
 export function readRevenue(d: Obj): RevenuePart | null {
+  if (d.source === 'none') {
+    return { source: 'none', note: str(d.note), currency: null, mrr: null, activeSubscriptions: null, activeTrials: null, revenue28d: null };
+  }
   // Stripe summaries (Grewp) may carry MRR per currency instead of one figure
   const byCurrency = Array.isArray(d.mrrByCurrency) ? d.mrrByCurrency.filter(isObj) : [];
   const single = byCurrency.length === 1 ? byCurrency[0] : null;
@@ -332,6 +356,40 @@ export function readRevenue(d: Obj): RevenuePart | null {
     revenue28d: num(d.revenue28d),
   };
   return part.mrr === null && part.activeSubscriptions === null && part.activeTrials === null && part.revenue28d === null ? null : part;
+}
+
+export function readWebRevenue(d: Obj): WebRevenuePart | null {
+  const byCurrency = (Array.isArray(d.mrrByCurrency) ? d.mrrByCurrency : [])
+    .filter(isObj)
+    .map((m) => ({ currency: str(m.currency)?.toUpperCase() ?? '', mrr: num(m.mrr) ?? NaN, subscriptions: num(m.subscriptions) ?? 0 }))
+    .filter((m) => m.currency && Number.isFinite(m.mrr));
+  const part = { activeSubscriptions: num(d.activeSubscriptions), trialing: num(d.trialing), mrrByCurrency: byCurrency };
+  return part.activeSubscriptions === null && byCurrency.length === 0 ? null : part;
+}
+
+const CLUB_LABELS: Record<string, string> = {
+  members: 'Members',
+  catchEntries7d: 'Catch entries · 7 days',
+  fishLogged7d: 'Fish logged · 7 days',
+  trips7d: 'Trips · 7 days',
+  blankTrips7d: 'Blank trips · 7 days',
+};
+const humanise = (k: string) =>
+  CLUB_LABELS[k] ??
+  k
+    .replace(/(\d+)d$/, ' · $1 days')
+    .replace(/([a-z])([A-Z])/g, '$1 $2')
+    .replace(/^./, (c) => c.toUpperCase());
+
+/** Any numeric club figure, and `members.total`; everything else is ignored. */
+export function readClub(v: unknown): ClubPart | null {
+  const part = readSection(v);
+  if (part.state !== 'ok') return null;
+  const stats = Object.entries(part.data).flatMap(([key, val]) => {
+    const value = num(val) ?? (isObj(val) ? num(val.total) : null);
+    return value === null ? [] : [{ key, label: humanise(key), value }];
+  });
+  return stats.length ? { stats } : null;
 }
 
 export function readAnalytics(d: Obj): AnalyticsPart | null {
@@ -368,7 +426,29 @@ export function unavailableSnapshot(app: FamilyApp, status: Exclude<AppStatus, '
     analytics: NOT_REACHED,
     health: NOT_REACHED,
     audience: NOT_REACHED,
+    webRevenue: null,
+    club: null,
   };
+}
+
+/** A club app's revenue is "none", whatever (if anything) it sent. */
+function readRevenueSection(app: FamilyApp, v: unknown): Part<RevenuePart> {
+  const part = mapPart(readSection(v), readRevenue);
+  if (app.noRevenue && (part.state !== 'ok' || part.data.mrr === null)) {
+    return {
+      state: 'ok',
+      data: {
+        source: 'none',
+        note: part.state === 'ok' ? (part.data.note ?? null) : null,
+        currency: null,
+        mrr: null,
+        activeSubscriptions: null,
+        activeTrials: null,
+        revenue28d: null,
+      },
+    };
+  }
+  return part;
 }
 
 function readDownloadsSection(v: unknown): Part<DownloadsPart> {
@@ -388,42 +468,65 @@ export function readAppSummary(app: FamilyApp, body: unknown): AppSnapshot {
     status: 'ok',
     generatedAt: str(body.generatedAt),
     downloads: readDownloadsSection(body.storeDownloads),
-    revenue: mapPart(readSection(body.revenue), readRevenue),
+    revenue: readRevenueSection(app, body.revenue),
     analytics: mapPart(readSection(body.analytics), readAnalytics),
     health: mapPart(readSection(body.platformHealth), readHealth),
     audience: mapPart(readSection(body.audience), readAudience),
+    webRevenue: body.webRevenue === undefined ? null : mapPart(readSection(body.webRevenue), readWebRevenue),
+    club: readClub(body.club),
   };
 }
 
 // ─── Family totals ───────────────────────────────────────────────────
 
+/** One app's MRR per currency: in-app plus Stripe web plans. Empty when it reports none. */
+export function appMrr(a: AppSnapshot): { currency: string; value: number }[] {
+  const m = new Map<string, number>();
+  const r = a.revenue.state === 'ok' ? a.revenue.data : null;
+  if (r?.mrr != null && r.currency) m.set(r.currency, r.mrr);
+  const w = a.webRevenue?.state === 'ok' ? a.webRevenue.data : null;
+  for (const x of w?.mrrByCurrency ?? []) m.set(x.currency, (m.get(x.currency) ?? 0) + x.mrr);
+  return [...m.entries()].map(([currency, value]) => ({ currency, value: Math.round(value * 100) / 100 })).sort((x, y) => y.value - x.value);
+}
+
 const okData = <T>(p: Part<T>): T | null => (p.state === 'ok' ? p.data : null);
 
 export function familyTotals(apps: AppSnapshot[]): FamilyTotals {
   const dl = apps.map((a) => ({ app: a, d: okData(a.downloads) })).filter((x): x is { app: AppSnapshot; d: DownloadsPart } => x.d !== null);
-  const rev = apps.map((a) => okData(a.revenue)).filter((r): r is RevenuePart => r !== null);
   const users = apps.map((a) => okData(a.analytics)?.activeUsers ?? null).filter((t): t is Trend => t !== null);
   const errs = apps.map((a) => okData(a.health)?.errors ?? null).filter((t): t is Trend => t !== null);
 
   const mrr = new Map<string, { value: number; apps: number }>();
-  for (const r of rev) {
-    if (r.mrr === null || !r.currency) continue;
-    const m = mrr.get(r.currency) ?? { value: 0, apps: 0 };
-    mrr.set(r.currency, {
-      value: Math.round((m.value + r.mrr) * 100) / 100,
-      apps: m.apps + 1,
-    });
+  for (const a of apps) {
+    for (const m of appMrr(a)) {
+      const t = mrr.get(m.currency) ?? { value: 0, apps: 0 };
+      mrr.set(m.currency, { value: Math.round((t.value + m.value) * 100) / 100, apps: t.apps + 1 });
+    }
   }
-  const count = (field: 'activeSubscriptions' | 'activeTrials') => {
-    const vals = rev.map((r) => r[field]).filter((n): n is number => n !== null);
-    return { value: vals.reduce((a, b) => a + b, 0), apps: vals.length };
+  // In-app (RevenueCat/Stripe) plus web plans: different books, so they add up
+  const count = (inApp: (r: RevenuePart) => number | null, web: (w: WebRevenuePart) => number | null) => {
+    const vals = apps
+      .map((a) => {
+        const r = okData(a.revenue);
+        const w = a.webRevenue ? okData(a.webRevenue) : null;
+        const parts = [r ? inApp(r) : null, w ? web(w) : null].filter((n): n is number => n !== null);
+        return parts.length ? parts.reduce((x, y) => x + y, 0) : null;
+      })
+      .filter((n): n is number => n !== null);
+    return { value: vals.reduce((x, y) => x + y, 0), apps: vals.length };
   };
 
   return {
     downloads: { ...sumTrends(dl.map((x) => x.d.total)), apps: dl.length },
     mrr: [...mrr.entries()].map(([currency, m]) => ({ currency, ...m })).sort((a, b) => b.value - a.value || b.apps - a.apps),
-    activeSubscriptions: count('activeSubscriptions'),
-    activeTrials: count('activeTrials'),
+    activeSubscriptions: count(
+      (r) => r.activeSubscriptions,
+      (w) => w.activeSubscriptions,
+    ),
+    activeTrials: count(
+      (r) => r.activeTrials,
+      (w) => w.trialing,
+    ),
     activeUsers: { ...sumTrends(users), apps: users.length },
     errors: { ...sumTrends(errs), apps: errs.length },
     downloadShare: dl

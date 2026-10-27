@@ -9,9 +9,8 @@
  */
 
 import { decodeServiceAccountKey, getServiceAccountToken } from '@/lib/google/service-account-token';
+import { metricsApp } from '@/lib/admin-dashboard/app-identity';
 import type { StoreStatRow } from './types';
-
-const DEFAULT_PACKAGE_NAME = 'io.godaisy.app';
 
 export interface GoogleConfig {
   clientEmail: string;
@@ -31,7 +30,7 @@ export function getGoogleConfig(env: Record<string, string | undefined> = proces
     clientEmail: credentials.clientEmail,
     privateKey: credentials.privateKey,
     bucket: bucket.replace(/^gs:\/\//, '').replace(/\/+$/, ''),
-    packageName: env.GOOGLE_PLAY_PACKAGE_NAME || DEFAULT_PACKAGE_NAME,
+    packageName: env.GOOGLE_PLAY_PACKAGE_NAME || metricsApp(env).playPackage,
   };
 }
 
