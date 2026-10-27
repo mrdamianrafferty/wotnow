@@ -15,6 +15,7 @@ module.exports = {
     '/findr/info-old',
     '/findr/findr-info-page',
     '/interests-old',
+    '/admin/*',
   ],
   robotsTxtOptions: {
     policies: [

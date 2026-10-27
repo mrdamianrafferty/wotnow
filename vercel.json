@@ -34,6 +34,10 @@
     "app/api/**/*.ts": {
       "maxDuration": 30,
       "excludeFiles": "{tmp/**,__tests__/**,*.test.ts,*.test.tsx,docs/**,archive/**,supabase/migrations/**,scripts/**,*.md}"
+    },
+    "pages/api/cron/godaisy/store-stats.ts": {
+      "maxDuration": 300,
+      "excludeFiles": "{tmp/**,__tests__/**,*.test.ts,*.test.tsx,docs/**,archive/**,supabase/migrations/**,scripts/**,*.md}"
     }
   },
   "rewrites": [
@@ -74,6 +78,10 @@
     {
       "path": "/api/cron/godaisy/daily-call",
       "schedule": "0 * * * *"
+    },
+    {
+      "path": "/api/cron/godaisy/store-stats",
+      "schedule": "0 7 * * *"
     }
   ],
   "headers": [
