@@ -7,7 +7,7 @@
 import { getSupabaseServerClient } from '@/lib/supabase/serverClient';
 import { summariseStoreStats, utcDay, type StoreDownloadsSummary } from '@/lib/store-stats/summary';
 import { STORE_STATS_APP_ID } from '@/lib/store-stats/types';
-import { fetchGa4Summary } from './ga4';
+import { fetchAudienceSummary, fetchGa4Summary } from './ga4';
 import { fetchRevenueSummary } from './revenuecat';
 import { fetchSentrySummary } from './sentry';
 import { errorMessage, type MetricsSummary, type Section } from './types';
@@ -31,11 +31,12 @@ export async function fetchStoreDownloads(now = new Date()): Promise<Section<Sto
 }
 
 export async function getMetricsSummary(): Promise<MetricsSummary> {
-  const [storeDownloads, revenue, analytics, platformHealth] = await Promise.all([
+  const [storeDownloads, revenue, analytics, platformHealth, audience] = await Promise.all([
     fetchStoreDownloads(),
     fetchRevenueSummary(),
     fetchGa4Summary(),
     fetchSentrySummary(),
+    fetchAudienceSummary(),
   ]);
-  return { app: STORE_STATS_APP_ID, generatedAt: new Date().toISOString(), storeDownloads, revenue, analytics, platformHealth };
+  return { app: STORE_STATS_APP_ID, generatedAt: new Date().toISOString(), storeDownloads, revenue, analytics, platformHealth, audience };
 }

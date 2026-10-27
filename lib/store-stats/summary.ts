@@ -35,6 +35,11 @@ export interface PlatformDownloads {
 export interface StoreDownloadsSummary {
   ios: PlatformDownloads;
   android: PlatformDownloads;
+  /**
+   * First-time downloads per store region over the last 30 complete days,
+   * both platforms summed, top 10, 'ZZ' (unknown) left out.
+   */
+  countries30d: CountryDownloads[];
   hasData: boolean;
   /** Newest day any store has reported */
   latestDate: string | null;
@@ -84,10 +89,32 @@ function summarisePlatform(rows: StoreStatInput[], now: Date): PlatformDownloads
   };
 }
 
+export function countries30d(rows: StoreStatInput[], now: Date): CountryDownloads[] {
+  const oldest = utcDay(now, 30);
+  const newest = utcDay(now, 1);
+  const perCountry = new Map<string, number>();
+  for (const r of rows) {
+    if (r.stat_date < oldest || r.stat_date > newest || r.country === 'ZZ') continue;
+    perCountry.set(r.country, (perCountry.get(r.country) ?? 0) + r.downloads);
+  }
+  return [...perCountry.entries()]
+    .filter(([, downloads]) => downloads > 0)
+    .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
+    .slice(0, 10)
+    .map(([country, downloads]) => ({ country, downloads }));
+}
+
 export function summariseStoreStats(rows: StoreStatInput[], now = new Date()): StoreDownloadsSummary {
   return {
-    ios: summarisePlatform(rows.filter((r) => r.platform === 'ios'), now),
-    android: summarisePlatform(rows.filter((r) => r.platform === 'android'), now),
+    ios: summarisePlatform(
+      rows.filter((r) => r.platform === 'ios'),
+      now,
+    ),
+    android: summarisePlatform(
+      rows.filter((r) => r.platform === 'android'),
+      now,
+    ),
+    countries30d: countries30d(rows, now),
     hasData: rows.length > 0,
     latestDate: rows.reduce<string | null>((latest, r) => (latest === null || r.stat_date > latest ? r.stat_date : latest), null),
   };

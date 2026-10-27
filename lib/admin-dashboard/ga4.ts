@@ -11,7 +11,7 @@
  */
 
 import { decodeServiceAccountKey, getServiceAccountToken } from '@/lib/google/service-account-token';
-import { errorMessage, weekMetric, type Ga4Summary, type Section } from './types';
+import { errorMessage, weekMetric, type AudienceSummary, type Ga4Summary, type Section } from './types';
 
 interface Ga4Row {
   dimensionValues?: { value?: string }[];
@@ -111,7 +111,59 @@ export function summariseGa4(json: Ga4BatchResponse, now: Date): Ga4Summary {
   };
 }
 
-export async function fetchGa4Summary(env: Record<string, string | undefined> = process.env): Promise<Section<Ga4Summary>> {
+// ─── Audience: country, device, age, gender ─────────────────────────
+
+const RANGE_7D = { startDate: '7daysAgo', endDate: 'yesterday' };
+
+/** The four audience reports, in the order summariseAudience reads them. */
+export function audienceRequests() {
+  const byUsers = { orderBys: [{ metric: { metricName: 'activeUsers' }, desc: true }], metrics: [{ name: 'activeUsers' }] };
+  return [
+    { dateRanges: [RANGE_7D], dimensions: [{ name: 'countryId' }, { name: 'country' }], ...byUsers, limit: 10 },
+    { dateRanges: [RANGE_7D], dimensions: [{ name: 'deviceCategory' }], ...byUsers },
+    { dateRanges: [RANGE_7D], dimensions: [{ name: 'userAgeBracket' }], ...byUsers },
+    { dateRanges: [RANGE_7D], dimensions: [{ name: 'userGender' }], ...byUsers },
+  ];
+}
+
+const NOT_SET = new Set(['(not set)', '']);
+const DEMOGRAPHICS_NOTE = 'GA4 returned no age or gender rows: Google signals is off or the property is under its privacy thresholds.';
+
+export function summariseAudience(json: Ga4BatchResponse, now: Date): AudienceSummary {
+  const [countries, devices, age, gender] = json.reports ?? [];
+  const known = (rows: Ga4Row[] | undefined) => (rows ?? []).filter((r) => !['unknown', '(not set)', ''].includes(dim(r, 0).toLowerCase()));
+
+  const ageRows = known(age?.rows).map((r) => ({ bracket: dim(r, 0), activeUsers: num(r, 0) }));
+  const genderRows = known(gender?.rows).map((r) => ({ gender: dim(r, 0), activeUsers: num(r, 0) }));
+  const available = ageRows.length > 0 || genderRows.length > 0;
+
+  return {
+    window: { from: isoDay(new Date(now.getTime() - 7 * 86400_000)), to: isoDay(new Date(now.getTime() - 86400_000)) },
+    countries: (countries?.rows ?? [])
+      .map((r) => {
+        const code = dim(r, 0);
+        const name = dim(r, 1);
+        return {
+          code: NOT_SET.has(code) ? null : code,
+          name: NOT_SET.has(name) ? 'Unknown' : name,
+          activeUsers: num(r, 0),
+        };
+      })
+      .sort((a, b) => b.activeUsers - a.activeUsers)
+      .slice(0, 10),
+    devices: (devices?.rows ?? []).map((r) => ({ category: dim(r, 0), activeUsers: num(r, 0) })),
+    demographics: { available, age: ageRows, gender: genderRows, ...(available ? {} : { note: DEMOGRAPHICS_NOTE }) },
+  };
+}
+
+// ─── Fetch ───────────────────────────────────────────────────────────
+
+/** One batchRunReports call against GA_PROPERTY_ID, as a Section. */
+async function runBatch<T>(
+  env: Record<string, string | undefined>,
+  requests: object[],
+  summarise: (json: Ga4BatchResponse, now: Date) => T,
+): Promise<Section<T>> {
   const propertyId = env.GA_PROPERTY_ID?.trim();
   const credentials = env.GOOGLE_ANALYTICS_CREDENTIALS?.trim();
   const missing = [!propertyId && 'GA_PROPERTY_ID', !credentials && 'GOOGLE_ANALYTICS_CREDENTIALS'].filter(Boolean) as string[];
@@ -125,7 +177,7 @@ export async function fetchGa4Summary(env: Record<string, string | undefined> = 
     const res = await fetch(`https://analyticsdata.googleapis.com/v1beta/properties/${encodeURIComponent(propertyId!)}:batchRunReports`, {
       method: 'POST',
       headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ requests: ga4Requests() }),
+      body: JSON.stringify({ requests }),
       signal: AbortSignal.timeout(15_000),
     });
     if (res.status === 403) {
@@ -136,8 +188,17 @@ export async function fetchGa4Summary(env: Record<string, string | undefined> = 
       };
     }
     if (!res.ok) return { state: 'error', message: `GA4 ${res.status}: ${(await res.text()).slice(0, 160)}` };
-    return { state: 'ok', data: summariseGa4((await res.json()) as Ga4BatchResponse, new Date()) };
+    return { state: 'ok', data: summarise((await res.json()) as Ga4BatchResponse, new Date()) };
   } catch (err) {
     return { state: 'error', message: errorMessage(err) };
   }
+}
+
+export function fetchGa4Summary(env: Record<string, string | undefined> = process.env): Promise<Section<Ga4Summary>> {
+  return runBatch(env, ga4Requests(), summariseGa4);
+}
+
+/** A second batch: batchRunReports takes at most five reports, and the traffic batch has four. */
+export function fetchAudienceSummary(env: Record<string, string | undefined> = process.env): Promise<Section<AudienceSummary>> {
+  return runBatch(env, audienceRequests(), summariseAudience);
 }

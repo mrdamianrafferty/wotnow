@@ -9,11 +9,16 @@
 
 import { useEffect, useState } from 'react';
 import Head from 'next/head';
-import Link from 'next/link';
 import { useRouter } from 'next/router';
+import { Inter, Manrope } from 'next/font/google';
 import { useAuth } from '@/context/AuthContext';
 import { FamilyDashboard } from '@/components/admin/FamilyDashboard';
+import s from '@/components/admin/FamilyDashboard.module.css';
 import type { FamilySummary } from '@/lib/admin-dashboard/family';
+
+// The Grewp Design System's pair, self-hosted by next/font for this page only
+const manrope = Manrope({ subsets: ['latin'], weight: ['600', '700', '800'], display: 'swap', variable: '--font-manrope' });
+const inter = Inter({ subsets: ['latin'], weight: ['400', '600', '700'], display: 'swap', variable: '--font-inter' });
 
 export default function AdminAppsPage() {
   const router = useRouter();
@@ -49,16 +54,14 @@ export default function AdminAppsPage() {
     </Head>
   );
 
+  const root = `${s.root} ${manrope.variable} ${inter.variable}`;
+
   if (!sample && (loading || !user)) {
     return (
       <>
         {head}
-        <div className="flex items-center justify-center min-h-screen bg-base-100 px-4">
-          {loading ? (
-            <span className="loading loading-spinner loading-lg text-primary" />
-          ) : (
-            <p className="text-base-content/60">Sign in to access admin tools.</p>
-          )}
+        <div className={`${root} ${s.center}`}>
+          {loading ? <span className="loading loading-spinner loading-lg" /> : <p className={s.meta}>Sign in to access admin tools.</p>}
         </div>
       </>
     );
@@ -67,27 +70,18 @@ export default function AdminAppsPage() {
   return (
     <>
       {head}
-      <main className="max-w-6xl mx-auto px-4 py-8 bg-base-100 min-h-screen">
-        <div className="flex flex-wrap items-baseline justify-between gap-x-4">
-          <h1 className="text-2xl font-semibold">All apps</h1>
-          <Link href="/admin/dashboard" className="link link-hover text-sm">
-            Go Daisy in detail →
-          </Link>
-        </div>
-        <p className="text-sm text-base-content/70 mt-1">
-          The last 7 complete days against the 7 before. Each app reports its own figures; a card says so when one could not.
-        </p>
-        {sample ? <div className="alert alert-info mt-4 text-sm">Sample data, not real figures.</div> : null}
-        {error ? <div className="alert alert-error mt-4">{error}</div> : null}
-        {data === null && !error ? <span className="loading loading-spinner loading-md mt-6" /> : null}
-
+      <div className={root}>
         {data ? (
-          <>
-            <FamilyDashboard data={data} />
-            <p className="mt-8 text-xs text-base-content/50">Generated {new Date(data.generatedAt).toLocaleString('en-GB')}.</p>
-          </>
-        ) : null}
-      </main>
+          <FamilyDashboard
+            data={data}
+            notice={sample ? <p className={`${s.banner} ${s.bannerInfo}`}>Sample data, not real figures.</p> : null}
+          />
+        ) : (
+          <div className={s.center}>
+            {error ? <p className={`${s.banner} ${s.bannerError}`}>{error}</p> : <span className="loading loading-spinner loading-md" />}
+          </div>
+        )}
+      </div>
     </>
   );
 }
