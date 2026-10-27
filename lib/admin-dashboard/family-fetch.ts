@@ -3,12 +3,14 @@
  * metrics-summary, in parallel, each with its own short timeout, and fold the
  * answers with lib/admin-dashboard/family.ts.
  *
- * Go Daisy is read in-process. Every other app is called at
+ * The app this deployment is (Go Daisy) is read in-process. Every other app,
+ * Grow Daisy included, is called at
  * METRICS_<APP>_URL with `Authorization: Bearer $METRICS_<APP>_TOKEN`; the
  * tokens never leave this server. An app that is unset, slow, refusing or
  * malformed becomes one "unavailable" card, never a failed page.
  */
 
+import { metricsApp } from './app-identity';
 import { getMetricsSummary } from './metrics';
 import { FAMILY_APPS, familyTotals, readAppSummary, unavailableSnapshot, type AppSnapshot, type FamilyApp, type FamilySummary } from './family';
 
@@ -20,7 +22,8 @@ export async function fetchAppSnapshot(
   fetchImpl: typeof fetch = fetch,
 ): Promise<AppSnapshot> {
   try {
-    if (app.id === 'godaisy') return readAppSummary(app, await getMetricsSummary());
+    // The app this deployment is (Go Daisy on wotnow) is read in-process; its sibling in the same codebase is called like any other
+    if (app.inProcess && app.inProcess === metricsApp(env).id) return readAppSummary(app, await getMetricsSummary());
 
     const urlVar = `METRICS_${app.envKey}_URL`;
     const tokenVar = `METRICS_${app.envKey}_TOKEN`;

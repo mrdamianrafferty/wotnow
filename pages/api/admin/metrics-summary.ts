@@ -1,6 +1,6 @@
 /**
  * GET /api/admin/metrics-summary → MetricsSummary
- * { app, generatedAt, storeDownloads, revenue, analytics, platformHealth },
+ * { app, generatedAt, storeDownloads, revenue, analytics, platformHealth, audience },
  * each a Section: { state: 'ok', data } | 'not_configured' | 'error'.
  *
  * Read by /admin/dashboard and by the multi-app dashboard, which sends

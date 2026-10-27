@@ -8,11 +8,9 @@
  */
 
 import type { StoreDownloadsSummary } from '@/lib/store-stats/summary';
+import type { StripeWebSummary } from './stripe-web';
 
-export type Section<T> =
-  | { state: 'ok'; data: T }
-  | { state: 'not_configured'; missing: string[]; hint?: string }
-  | { state: 'error'; message: string };
+export type Section<T> = { state: 'ok'; data: T } | { state: 'not_configured'; missing: string[]; hint?: string } | { state: 'error'; message: string };
 
 /** A count over the last 7 days against the 7 before, with the daily series. */
 export interface WeekMetric {
@@ -60,6 +58,25 @@ export interface SentrySummary {
 }
 
 /**
+ * Who visits, from GA4 over the last 7 complete days. The same shape every
+ * app in the family returns (the family audience contract, 2026-10-27).
+ */
+export interface AudienceSummary {
+  /** YYYY-MM-DD, inclusive. */
+  window: { from: string; to: string };
+  /** Top 10 by active users. GA4's "(not set)" becomes code null, "Unknown". */
+  countries: { code: string | null; name: string; activeUsers: number }[];
+  devices: { category: string; activeUsers: number }[];
+  demographics: {
+    /** False when GA4 returned no age and no gender rows. */
+    available: boolean;
+    age: { bracket: string; activeUsers: number }[];
+    gender: { gender: string; activeUsers: number }[];
+    note?: string;
+  };
+}
+
+/**
  * GET /api/admin/metrics-summary. App-agnostic on purpose: the multi-app
  * dashboard reads the same shape from every app in the family.
  */
@@ -70,6 +87,9 @@ export interface MetricsSummary {
   revenue: Section<RevenueSummary>;
   analytics: Section<Ga4Summary>;
   platformHealth: Section<SentrySummary>;
+  audience: Section<AudienceSummary>;
+  /** Stripe web plans, only for an app that sells them (Grow Daisy). Same shape as Rise Daisy's. */
+  webRevenue?: Section<StripeWebSummary>;
 }
 
 /** 14 daily values → this week vs last week. */

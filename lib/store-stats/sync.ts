@@ -8,7 +8,7 @@
 import { getSupabaseServerClient } from '@/lib/supabase/serverClient';
 import { createAppleToken, fetchAppleDay, getAppleConfig } from './apple';
 import { fetchGoogleMonths, getGoogleConfig } from './google';
-import { STORE_STATS_APP_ID, type StoreStatRow } from './types';
+import { storeStatsAppId, type StoreStatRow } from './types';
 
 export interface PlatformResult {
   configured: boolean;
@@ -43,11 +43,10 @@ async function upsert(rows: StoreStatRow[]): Promise<void> {
   // store_stats_daily is granted to service_role only, so this needs SUPABASE_SERVICE_ROLE_KEY
   const db = getSupabaseServerClient();
   const syncedAt = new Date().toISOString();
+  const appId = storeStatsAppId();
   for (let i = 0; i < rows.length; i += 500) {
-    const chunk = rows.slice(i, i + 500).map((r) => ({ ...r, app_id: STORE_STATS_APP_ID, synced_at: syncedAt }));
-    const { error } = await db
-      .from('store_stats_daily')
-      .upsert(chunk, { onConflict: 'app_id,stat_date,platform,country' });
+    const chunk = rows.slice(i, i + 500).map((r) => ({ ...r, app_id: appId, synced_at: syncedAt }));
+    const { error } = await db.from('store_stats_daily').upsert(chunk, { onConflict: 'app_id,stat_date,platform,country' });
     if (error) throw new Error(error.message);
   }
 }

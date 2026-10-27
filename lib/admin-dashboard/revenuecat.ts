@@ -4,21 +4,20 @@
  *
  * Go Daisy has no RevenueCat project of its own. Its App Store app
  * (`app7b23f455ba`, io.godaisy.app) sits in the "Grow Daisy" project beside
- * Grow Daisy's, and the v2 metrics/overview endpoint is project-wide with no
- * app filter, so it would report Grow's revenue as Go Daisy's. The Charts
+ * Grow Daisy's (`appb6332dd627`), and the v2 metrics/overview endpoint is project-wide with no
+ * app filter, so it would report both apps' revenue on both cards. The Charts
  * endpoints do take an app filter, so this reads five charts instead.
  *
  * The key needs the "Charts & metrics" read permission (a v2 secret key).
  * Stripe web billing is not in RevenueCat and is not counted here.
  */
 
+import { metricsApp } from './app-identity';
 import { errorMessage, type RevenueSummary, type Section } from './types';
 
 const RC_API = 'https://api.revenuecat.com/v2';
 /** RevenueCat project "Grow Daisy", which holds both Daisy apps. */
 const DEFAULT_PROJECT_ID = 'projb49b8cff';
-/** "Go Daisy (App Store)" in that project. */
-const DEFAULT_APP_ID = 'app7b23f455ba';
 const CURRENCY = 'GBP';
 
 export interface ChartResponse {
@@ -31,9 +30,7 @@ export type RevenueChart = (typeof REVENUE_CHARTS)[number];
 
 /** The chart's first measure, oldest first. Null when the chart had no values at all. */
 function series(chart: ChartResponse | null | undefined): number[] | null {
-  const points = (chart?.values ?? [])
-    .filter((v) => (v.measure ?? 0) === 0 && typeof v.value === 'number')
-    .sort((a, b) => (a.cohort ?? 0) - (b.cohort ?? 0));
+  const points = (chart?.values ?? []).filter((v) => (v.measure ?? 0) === 0 && typeof v.value === 'number').sort((a, b) => (a.cohort ?? 0) - (b.cohort ?? 0));
   return points.length === 0 ? null : points.map((v) => v.value as number);
 }
 
@@ -74,7 +71,8 @@ export async function fetchRevenueSummary(env: Record<string, string | undefined
   const key = env.REVENUECAT_METRICS_API_KEY?.trim();
   if (!key) return { state: 'not_configured', missing: ['REVENUECAT_METRICS_API_KEY'] };
   const projectId = env.REVENUECAT_PROJECT_ID?.trim() || DEFAULT_PROJECT_ID;
-  const appId = env.REVENUECAT_APP_ID?.trim() || DEFAULT_APP_ID;
+  // Each app's own RevenueCat app (Go Daisy app7b23f455ba, Grow Daisy appb6332dd627), so the shared project is never counted twice
+  const appId = env.REVENUECAT_APP_ID?.trim() || metricsApp(env).revenuecatAppId;
   const query = chartQuery(appId, new Date());
 
   try {

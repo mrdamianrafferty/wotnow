@@ -1,15 +1,17 @@
 /**
  * Everything /admin/dashboard and the multi-app dashboard show, fetched in
- * parallel. Each source reports "not configured" or its own error without
+ * parallel, for whichever app this deployment is (Go Daisy on the wotnow
+ * project, Grow Daisy on growdaisy: see app-identity.ts). Each source reports "not configured" or its own error without
  * failing the others.
  */
 
 import { getSupabaseServerClient } from '@/lib/supabase/serverClient';
 import { summariseStoreStats, utcDay, type StoreDownloadsSummary } from '@/lib/store-stats/summary';
-import { STORE_STATS_APP_ID } from '@/lib/store-stats/types';
-import { fetchGa4Summary } from './ga4';
+import { storeStatsAppId } from '@/lib/store-stats/types';
+import { fetchAudienceSummary, fetchGa4Summary } from './ga4';
 import { fetchRevenueSummary } from './revenuecat';
 import { fetchSentrySummary } from './sentry';
+import { fetchStripeWebSummary } from './stripe-web';
 import { errorMessage, type MetricsSummary, type Section } from './types';
 
 /** From store_stats_daily, filled by /api/cron/godaisy/store-stats. */
@@ -20,7 +22,7 @@ export async function fetchStoreDownloads(now = new Date()): Promise<Section<Sto
     const { data, error } = await getSupabaseServerClient()
       .from('store_stats_daily')
       .select('stat_date, platform, country, downloads, redownloads, uninstalls')
-      .eq('app_id', STORE_STATS_APP_ID)
+      .eq('app_id', storeStatsAppId())
       .gte('stat_date', utcDay(now, 30))
       .limit(10000);
     if (error) return { state: 'error', message: errorMessage(error.message) };
@@ -31,11 +33,22 @@ export async function fetchStoreDownloads(now = new Date()): Promise<Section<Sto
 }
 
 export async function getMetricsSummary(): Promise<MetricsSummary> {
-  const [storeDownloads, revenue, analytics, platformHealth] = await Promise.all([
+  const [storeDownloads, revenue, analytics, platformHealth, audience, webRevenue] = await Promise.all([
     fetchStoreDownloads(),
     fetchRevenueSummary(),
     fetchGa4Summary(),
     fetchSentrySummary(),
+    fetchAudienceSummary(),
+    fetchStripeWebSummary(),
   ]);
-  return { app: STORE_STATS_APP_ID, generatedAt: new Date().toISOString(), storeDownloads, revenue, analytics, platformHealth };
+  return {
+    app: storeStatsAppId(),
+    generatedAt: new Date().toISOString(),
+    storeDownloads,
+    revenue,
+    analytics,
+    platformHealth,
+    audience,
+    ...(webRevenue ? { webRevenue } : {}),
+  };
 }

@@ -8,10 +8,8 @@
 
 import { createPrivateKey, sign } from 'node:crypto';
 import { gunzipSync } from 'node:zlib';
+import { metricsApp } from '@/lib/admin-dashboard/app-identity';
 import type { StoreStatRow } from './types';
-
-/** Go Daisy's Apple ID (its App Store URL, lib/daisyFamily.ts). */
-const DEFAULT_APP_ID = '6755695873';
 
 // Product types that count as a first-time download, and as a re-download.
 // Updates (7*), in-app purchases (IA*) and the rest are ignored.
@@ -34,11 +32,9 @@ export function getAppleConfig(env: Record<string, string | undefined> = process
   if (!keyId || !issuerId || !rawKey || !vendorNumber) return null;
 
   // Accept the .p8 contents as-is, with \n escapes, or base64 encoded
-  const privateKey = rawKey.includes('BEGIN PRIVATE KEY')
-    ? rawKey.replace(/\\n/g, '\n')
-    : Buffer.from(rawKey, 'base64').toString('utf-8');
+  const privateKey = rawKey.includes('BEGIN PRIVATE KEY') ? rawKey.replace(/\\n/g, '\n') : Buffer.from(rawKey, 'base64').toString('utf-8');
 
-  return { keyId, issuerId, privateKey, vendorNumber, appId: env.APP_STORE_APP_ID || DEFAULT_APP_ID };
+  return { keyId, issuerId, privateKey, vendorNumber, appId: env.APP_STORE_APP_ID || metricsApp(env).appleId };
 }
 
 function base64url(input: Buffer | string): string {

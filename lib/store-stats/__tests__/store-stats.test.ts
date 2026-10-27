@@ -14,7 +14,7 @@ import { createAppleToken, getAppleConfig, parseAppleSalesReport } from '../appl
 import { decodePlayCsv, getGoogleConfig, parsePlayInstallsCsv } from '../google';
 import { dateRange } from '../sync';
 import { summariseStoreStats } from '../summary';
-import { STORE_STATS_APP_ID } from '../types';
+import { storeStatsAppId } from '../types';
 
 const APP_ID = '6755695873';
 
@@ -83,7 +83,8 @@ describe('config defaults', () => {
     const google = getGoogleConfig({ GOOGLE_PLAY_REPORTS_CREDENTIALS: creds, GOOGLE_PLAY_REPORTS_BUCKET: 'gs://pubsite_prod_1/' });
     expect(google?.packageName).toBe('io.godaisy.app');
     expect(google?.bucket).toBe('pubsite_prod_1');
-    expect(STORE_STATS_APP_ID).toBe('go_daisy');
+    expect(storeStatsAppId({})).toBe('go_daisy');
+    expect(storeStatsAppId({ METRICS_APP_ID: 'grow_daisy' })).toBe('grow_daisy');
   });
 
   it('is null when unset and throws when the Play key is unreadable', () => {

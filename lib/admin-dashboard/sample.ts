@@ -54,6 +54,31 @@ export function sampleMetrics(now = new Date(), { unconfigured = false } = {}): 
             ],
           },
         },
+    audience: unconfigured
+      ? { state: 'not_configured', missing: ['GA_PROPERTY_ID', 'GOOGLE_ANALYTICS_CREDENTIALS'] }
+      : {
+          state: 'ok',
+          data: {
+            window: { from: utcDay(now, 7), to: utcDay(now, 1) },
+            countries: [
+              { code: 'GB', name: 'United Kingdom', activeUsers: 212 },
+              { code: 'IE', name: 'Ireland', activeUsers: 64 },
+              { code: 'US', name: 'United States', activeUsers: 23 },
+              { code: null, name: 'Unknown', activeUsers: 4 },
+            ],
+            devices: [
+              { category: 'mobile', activeUsers: 228 },
+              { category: 'desktop', activeUsers: 66 },
+              { category: 'tablet', activeUsers: 6 },
+            ],
+            demographics: {
+              available: false,
+              age: [],
+              gender: [],
+              note: 'GA4 returned no age or gender rows: Google signals is off or the property is under its privacy thresholds.',
+            },
+          },
+        },
     platformHealth: {
       state: 'ok',
       data: {

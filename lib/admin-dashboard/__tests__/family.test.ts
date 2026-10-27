@@ -6,20 +6,61 @@
  * malformed and missing ones, and the fetcher's failure paths.
  */
 
-import { FAMILY_APPS, familyTotals, readAppSummary, readTrend, unavailableSnapshot, type AppSnapshot } from '../family';
+import { FAMILY_APPS, familyTotals, readAppSummary, readTrend, unavailableSnapshot, type AppSnapshot, type FamilySummary } from '../family';
 import { fetchAppSnapshot } from '../family-fetch';
-import { sampleFamilyBodies, sampleFamilySummary } from '../family-sample';
+import { sampleFamilyBodies } from '../family-sample';
+import { sampleMetrics } from '../sample';
 
 jest.mock('../metrics', () => ({ getMetricsSummary: jest.fn(async () => ({ generatedAt: 'x' })) }));
 
 const app = (id: string) => FAMILY_APPS.find((a) => a.id === id)!;
 const now = new Date('2026-10-27T07:00:00Z');
-const bodies = sampleFamilyBodies(now);
+const sample = sampleFamilyBodies(now) as Record<string, Record<string, unknown>>;
+
+/**
+ * The slightly different shapes the apps first shipped: Go Daisy's own
+ * response, Rise's extra webRevenue, Fly Cast's object app id and alerts,
+ * Grewp's Stripe mrrByCurrency and the legacy {configured:false}.
+ */
+const bodies = {
+  godaisy: sampleMetrics(now),
+  risedaisy: {
+    ...sample.risedaisy,
+    revenue: { state: 'ok', data: { source: 'revenuecat', currency: 'GBP', mrr: 286.4, revenue28d: 402.1, activeSubscriptions: 61, activeTrials: 9 } },
+  },
+  flycast: { ...sample.flycast, platformHealth: { state: 'not_configured', missing: ['SENTRY_AUTH_TOKEN', 'SENTRY_PROJECT'] } },
+  grewp: {
+    ...sample.grewp,
+    revenue: {
+      state: 'ok',
+      data: { source: 'stripe', mrrByCurrency: [{ currency: 'EUR', mrr: 1240, subscriptions: 48 }], activeSubscriptions: 48, trialing: 6 },
+    },
+    analytics: { configured: false },
+    platformHealth: { state: 'error', message: 'Sentry 500' },
+  },
+};
+
+/** The legacy bodies, with Findr not answering. */
+function legacySummary(): FamilySummary {
+  const apps = FAMILY_APPS.map((a) =>
+    a.id === 'findr' ? unavailableSnapshot(a, 'unavailable', 'No answer within 8 s') : readAppSummary(a, bodies[a.id as keyof typeof bodies]),
+  );
+  return { generatedAt: now.toISOString(), apps, totals: familyTotals(apps) };
+}
 
 describe('readTrend', () => {
   it('reads a WeekMetric and a PlatformDownloads alike', () => {
     expect(readTrend({ value: 14, previous: 7, daily: [1, 2] })).toEqual({ value: 14, previous: 7, delta: 100, daily: [1, 2] });
-    expect(readTrend({ week: 3, previousWeek: 0, sparkline: [{ date: 'a', downloads: 1 }, { date: 'b', downloads: 2 }] })).toEqual({
+    expect(
+      readTrend({
+        week: 3,
+        previousWeek: 0,
+        sparkline: [
+          { date: 'a', downloads: 1 },
+          { date: 'b', downloads: 2 },
+        ],
+      }),
+    ).toEqual({
       value: 3,
       previous: 0,
       delta: null,
@@ -79,24 +120,23 @@ describe('readAppSummary', () => {
 
 describe('familyTotals', () => {
   it('adds up the reporting apps only', () => {
-    const { apps, totals } = sampleFamilySummary(now);
+    const { apps, totals } = legacySummary();
     const okDownloads = apps.filter((a) => a.downloads.state === 'ok');
     expect(totals.downloads.apps).toBe(okDownloads.length);
-    expect(totals.downloads.value).toBe(
-      okDownloads.reduce((a, x) => a + (x.downloads.state === 'ok' ? x.downloads.data.total.value : 0), 0),
-    );
+    expect(totals.downloads.value).toBe(okDownloads.reduce((a, x) => a + (x.downloads.state === 'ok' ? x.downloads.data.total.value : 0), 0));
     expect(totals.downloads.daily).toHaveLength(14);
     // Findr is unavailable and counts nowhere
     expect(totals.downloadShare.map((s) => s.id)).not.toContain('findr');
   });
 
   it('sums MRR within a currency only and counts subscriptions across sources', () => {
-    const { totals } = sampleFamilySummary(now);
+    const { totals } = legacySummary();
     expect(totals.mrr).toEqual([
-      { currency: 'GBP', value: 327.9, apps: 3 },
       { currency: 'EUR', value: 1240, apps: 1 },
+      { currency: 'GBP', value: 327.9, apps: 3 },
     ]);
-    expect(totals.activeSubscriptions).toEqual({ value: 17 + 61 + 0 + 48, apps: 4 });
+    // Rise's Stripe web plans (webRevenue, 1) add to its RevenueCat 61: different books
+    expect(totals.activeSubscriptions).toEqual({ value: 17 + 61 + 1 + 0 + 48, apps: 4 });
     expect(totals.activeTrials).toEqual({ value: 4 + 9 + 0 + 6, apps: 4 });
   });
 
@@ -136,7 +176,11 @@ describe('fetchAppSnapshot', () => {
 
   it('sends the app’s own token and reads the answer', async () => {
     const f = ok(bodies.flycast);
-    const s = await fetchAppSnapshot(app('flycast'), { METRICS_FLYCAST_URL: 'https://flycast.example/api/admin/metrics-summary', METRICS_FLYCAST_TOKEN: 'tok' }, f);
+    const s = await fetchAppSnapshot(
+      app('flycast'),
+      { METRICS_FLYCAST_URL: 'https://flycast.example/api/admin/metrics-summary', METRICS_FLYCAST_TOKEN: 'tok' },
+      f,
+    );
     expect(s.status).toBe('ok');
     const [, init] = f.mock.calls[0] as unknown as [string, RequestInit];
     expect((init.headers as Record<string, string>).Authorization).toBe('Bearer tok');
@@ -144,7 +188,10 @@ describe('fetchAppSnapshot', () => {
 
   it('turns refusals, errors, non-JSON and timeouts into one unavailable card', async () => {
     const env = { METRICS_GREWP_URL: 'https://grewp.example/m', METRICS_GREWP_TOKEN: 't' };
-    expect(await fetchAppSnapshot(app('grewp'), env, ok({}, 403))).toMatchObject({ status: 'unavailable', message: expect.stringContaining('METRICS_GREWP_TOKEN') });
+    expect(await fetchAppSnapshot(app('grewp'), env, ok({}, 403))).toMatchObject({
+      status: 'unavailable',
+      message: expect.stringContaining('METRICS_GREWP_TOKEN'),
+    });
     expect(await fetchAppSnapshot(app('grewp'), env, ok({}, 502))).toMatchObject({ status: 'unavailable', message: 'HTTP 502' });
     const html = jest.fn(async () => new Response('<html>', { status: 200 }));
     expect(await fetchAppSnapshot(app('grewp'), env, html)).toMatchObject({ status: 'unavailable', message: 'Response was not JSON' });
