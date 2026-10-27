@@ -8,7 +8,9 @@ import { RevenuePanel } from '@/components/admin/RevenuePanel';
 import { AnalyticsPanel } from '@/components/admin/AnalyticsPanel';
 import { PlatformHealthPanel } from '@/components/admin/PlatformHealthPanel';
 import { StoreDownloads } from '@/components/admin/StoreDownloads';
+import { FamilyDashboard } from '@/components/admin/FamilyDashboard';
 import { sampleMetrics } from '../sample';
+import { sampleFamilySummary } from '../family-sample';
 
 const now = new Date('2026-10-27T07:00:00Z');
 
@@ -51,5 +53,13 @@ describe('admin dashboard panels', () => {
     render(<StoreDownloads data={data.storeDownloads.data} />);
     expect(screen.getByText('iOS · App Store')).toBeInTheDocument();
     expect(screen.getByText('Android · Google Play')).toBeInTheDocument();
+  });
+
+  it('shows every app in the family, including one that did not answer', () => {
+    render(<FamilyDashboard data={sampleFamilySummary(now)} />);
+    for (const name of ['Go Daisy', 'Rise Daisy', 'Findr', 'Fly Cast', 'Grewp']) expect(screen.getAllByText(name).length).toBeGreaterThan(0);
+    expect(screen.getByText('Unavailable')).toBeInTheDocument();
+    expect(screen.getByText('No answer within 8 s')).toBeInTheDocument();
+    expect(screen.getByText(/Not configured \(SENTRY_AUTH_TOKEN, SENTRY_PROJECT\)/)).toBeInTheDocument();
   });
 });
