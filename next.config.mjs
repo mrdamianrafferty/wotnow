@@ -329,6 +329,20 @@ const pwaConfig = withPWA({
   // deploy. Bumping cacheId invalidates all existing SW caches so every client re-fetches fresh.
   cacheId: '20260706-ga4-tag-fix',
   runtimeCaching: [
+    // ADMIN: never cached. Workbox uses the first matching route, so this must stay first.
+    // Otherwise the same-origin catch-all below serves /admin pages from pages-cache
+    // (stale-while-revalidate) and the dashboard shows the previous deploy's code.
+    // Covers pages (/admin, /admin/...), /api/admin/*, and _next/data JSON for admin pages.
+    {
+      urlPattern: ({ url }) =>
+        url.origin === self.location.origin &&
+        (/^\/admin(?:\/|$)/.test(url.pathname) ||
+          /^\/api\/admin(?:\/|$)/.test(url.pathname) ||
+          /^\/_next\/data\/[^/]+\/admin(?:\/|\.json$)/.test(url.pathname)),
+      handler: 'NetworkOnly',
+      // next-pwa's fallbacks plugin reads c.options, so it must exist
+      options: {},
+    },
     // FINDR-SPECIFIC CACHING: Prioritize for offline fishing use
     // Cache Findr pages with CacheFirst for reliable offline access
     {
