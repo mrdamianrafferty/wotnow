@@ -23,6 +23,7 @@ import dynamic from 'next/dynamic'
 import { ErrorBoundary } from '../components/ErrorBoundary';
 import { PullToRefresh } from '../components/PullToRefresh';
 import { OrganizationJsonLd, WebsiteJsonLd } from '../components/JsonLd';
+import { GA_MEASUREMENT_IDS } from '../lib/analytics/gaIds';
 
 // Lazy-load RevenueCat auth sync (iOS only, Grow only)
 const RevenueCatAuthSync = dynamic(
@@ -81,14 +82,6 @@ type ThemeName = 'light' | 'wotnow' | string;
 type PagePropsWithTheme = {
   theme?: ThemeName;
   [key: string]: unknown;
-};
-
-// GA4 measurement IDs, one property per domain. Findr is deliberately excluded —
-// the live Findr app now lives in its own repo (fishfindr.eu) and carries its own
-// tag there, so firing GA from the legacy /findr routes here would double-count.
-const GA_MEASUREMENT_IDS: Record<'godaisy' | 'grow', string> = {
-  godaisy: 'G-0YDQB1067L',
-  grow: 'G-S895QHFGQH',
 };
 
 export default function App({ Component, pageProps }: AppProps<PagePropsWithTheme>) {

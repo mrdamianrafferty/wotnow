@@ -14,7 +14,8 @@
  *
  * Setup:
  * 1. Install desired provider: npm install @capacitor-community/firebase-analytics
- * 2. Set NEXT_PUBLIC_GA_MEASUREMENT_ID in .env.local
+ * 2. GA4 itself is loaded once, by pages/_app.tsx, using the per-domain ID in
+ *    lib/analytics/gaIds.ts. This file only sends events through that gtag.
  * 3. Events will be automatically tracked
  *
  * Usage:
@@ -38,6 +39,13 @@
  */
 
 import { Capacitor } from '@capacitor/core';
+import { getCurrentGaId } from './gaIds';
+
+declare global {
+  interface Window {
+    gtag?: (...args: unknown[]) => void;
+  }
+}
 
 /**
  * Event names (type-safe)
@@ -110,12 +118,14 @@ export interface EventProperties {
 }
 
 /**
- * Check if analytics is configured
+ * Check if analytics is configured. GA4 is loaded by _app.tsx (production only),
+ * so web availability is "a gtag exists"; this file never loads its own.
  */
 function isAnalyticsAvailable(): boolean {
-  return Boolean(
-    process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID ||
-    process.env.NEXT_PUBLIC_MIXPANEL_TOKEN
+  return (
+    (typeof window !== 'undefined' && typeof window.gtag === 'function') ||
+    Boolean(process.env.NEXT_PUBLIC_MIXPANEL_TOKEN) ||
+    Capacitor.isNativePlatform()
   );
 }
 
@@ -130,28 +140,6 @@ async function initializeAnalytics(): Promise<void> {
   }
 
   try {
-    // Initialize Google Analytics (web)
-    if (typeof window !== 'undefined' && process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID) {
-      // Google Analytics 4 via gtag.js
-      const script = document.createElement('script');
-      script.src = `https://www.googletagmanager.com/gtag/js?id=${process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID}`;
-      script.async = true;
-      document.head.appendChild(script);
-
-      // @ts-expect-error - gtag is loaded dynamically
-      window.dataLayer = window.dataLayer || [];
-      // @ts-expect-error - gtag is loaded dynamically
-      window.gtag = function gtag(...args: unknown[]) { window.dataLayer.push(args); };
-      // @ts-expect-error - gtag is loaded dynamically
-      window.gtag('js', new Date());
-      // @ts-expect-error - gtag is loaded dynamically
-      window.gtag('config', process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID, {
-        send_page_view: false, // We'll track manually
-      });
-
-      console.log('[Analytics] Google Analytics initialized');
-    }
-
     // Initialize Firebase Analytics (native)
     if (Capacitor.isNativePlatform()) {
       try {
@@ -163,7 +151,7 @@ async function initializeAnalytics(): Promise<void> {
           storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET || '',
           messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID || '',
           appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID || '',
-          measurementId: process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID || '',
+          measurementId: getCurrentGaId() || '',
         });
         console.log('[Analytics] Firebase Analytics initialized');
       } catch (error) {
@@ -207,8 +195,7 @@ export async function trackEvent(
 
   try {
     // Google Analytics (web)
-    if (typeof window !== 'undefined' && 'gtag' in window) {
-      // @ts-expect-error - gtag is loaded dynamically
+    if (typeof window !== 'undefined' && typeof window.gtag === 'function') {
       window.gtag('event', eventName, properties);
     }
 
@@ -276,8 +263,7 @@ export async function setUserProperties(
 
   try {
     // Google Analytics (web)
-    if (typeof window !== 'undefined' && 'gtag' in window) {
-      // @ts-expect-error - gtag is loaded dynamically
+    if (typeof window !== 'undefined' && typeof window.gtag === 'function') {
       window.gtag('set', 'user_properties', properties);
     }
 
@@ -321,11 +307,9 @@ export async function setUserId(userId: string): Promise<void> {
 
   try {
     // Google Analytics (web)
-    if (typeof window !== 'undefined' && 'gtag' in window) {
-      // @ts-expect-error - gtag is loaded dynamically
-      window.gtag('config', process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID, {
-        user_id: userId,
-      });
+    // 'set', not 'config': a second config for the same ID would fire another page_view.
+    if (typeof window !== 'undefined' && typeof window.gtag === 'function') {
+      window.gtag('set', { user_id: userId });
     }
 
     // Firebase Analytics (native)
