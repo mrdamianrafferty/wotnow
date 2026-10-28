@@ -11,7 +11,7 @@
 
 import { utcDay } from '@/lib/store-stats/summary';
 import { dashboardUrl } from './app-links';
-import { FAMILY_APPS, familyTotals, readAppSummary, type FamilyAppId, type FamilySummary, type Part, type TopIssuePart, type VercelCountry, type VercelPart } from './family';
+import { FAMILY_APPS, familyTotals, readAppSummary, type FamilyAppId, type FamilySummary, type Part, type PlayPart, type PlayRelease, type TopIssuePart, type VercelCountry, type VercelPart } from './family';
 
 /** A WeekMetric with these weekly totals, spread over 14 days. */
 function week(value: number, previous: number) {
@@ -327,22 +327,42 @@ export function sampleTopIssues(): Partial<Record<FamilyAppId, Part<TopIssuePart
   };
 }
 
+/** Google Play parts: one app of each kind the card and the attention rules distinguish. */
+export function samplePlay(): Partial<Record<FamilyAppId, Part<PlayPart>>> {
+  const ok = (rating: [number, number] | null, release: PlayRelease | null): Part<PlayPart> => ({
+    state: 'ok',
+    data: { packageName: 'sample', rating: rating ? { average: rating[0], previous: rating[1], date: '2026-10-27' } : null, release, notes: [] },
+  });
+  const rel = (status: PlayRelease['status'], name: string, userFraction: number | null = null): PlayRelease => ({ status, name, userFraction, versionCodes: ['1'] });
+  return {
+    godaisy: ok([4.6, 4.6], rel('completed', '1.4.2')),
+    growdaisy: ok([4.4, 4.5], rel('inProgress', '1.2.0', 0.2)),
+    risedaisy: ok([4.8, 4.7], rel('completed', '1.8.3')),
+    findr: ok([3.6, 4.1], rel('completed', '2.1.0')),
+    flycast: ok(null, rel('draft', '1.0.3')),
+    grewp: ok([4.9, 4.9], rel('halted', '0.9.1', 0.5)),
+  };
+}
+
 /**
- * `withVercel` adds the Vercel figures (sampleVercel) and `withTopIssues` the
- * Sentry top issues; both off by default so the other tests' fixtures stay as they were.
+ * `withVercel` adds the Vercel figures (sampleVercel), `withTopIssues` the
+ * Sentry top issues and `withPlay` the Google Play parts (samplePlay); all
+ * off by default so the other tests' fixtures stay as they were.
  */
 export function sampleFamilySummary(
   now = new Date(),
-  { withVercel = false, withTopIssues = false }: { withVercel?: boolean; withTopIssues?: boolean } = {},
+  { withVercel = false, withTopIssues = false, withPlay = false }: { withVercel?: boolean; withTopIssues?: boolean; withPlay?: boolean } = {},
 ): FamilySummary {
   const bodies = sampleFamilyBodies(now);
   const extra = withVercel ? sampleVercel(now) : {};
   const top = withTopIssues ? sampleTopIssues() : {};
+  const play = withPlay ? samplePlay() : {};
   const apps = FAMILY_APPS.map((a) => ({
     ...readAppSummary(a, bodies[a.id]),
     dashboardUrl: dashboardUrl(a.id, a.envKey),
     ...(extra[a.id] ? { vercel: extra[a.id] } : {}),
     ...(top[a.id] ? { topIssue: top[a.id] } : {}),
+    ...(play[a.id] ? { play: play[a.id] } : {}),
   }));
   return { generatedAt: now.toISOString(), apps, totals: familyTotals(apps) };
 }

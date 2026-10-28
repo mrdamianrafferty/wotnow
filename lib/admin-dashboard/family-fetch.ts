@@ -23,6 +23,7 @@ import { cachedSnapshot, claimRefresh } from './family-cache';
 import { getMetricsSummary } from './metrics';
 import { withVercel } from './vercel-analytics';
 import { withSentryTop } from './sentry-top';
+import { withPlay } from './play-console';
 import { dashboardUrl } from './app-links';
 import { FAMILY_APPS, familyTotals, readAppSummary, unavailableSnapshot, type AppSnapshot, type FamilyApp, type FamilySummary } from './family';
 
@@ -80,7 +81,7 @@ export async function getFamilySummary(
   const state = await claimRefresh(refresh, { cache });
   const apps = await Promise.all(
     FAMILY_APPS.map((app) =>
-      cachedSnapshot(app, async () => withSentryTop(await withVercel(await fetchAppSnapshot(app, env), app, env), app, env), { bypass: state.refreshed, cache }),
+      cachedSnapshot(app, async () => withPlay(await withSentryTop(await withVercel(await fetchAppSnapshot(app, env), app, env), app, env), app, env), { bypass: state.refreshed, cache }),
     ),
   );
   // Attached after the cache so a changed METRICS_<APP>_DASHBOARD_URL shows at once
