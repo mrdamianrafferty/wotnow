@@ -23,6 +23,7 @@ import {
   type Trend,
 } from '@/lib/admin-dashboard/family';
 import { fmt, money } from './DashboardParts';
+import { ErrorRateBlock, FunnelBlock } from './AppFunnel';
 import { PROJECT_TOTAL_LABEL as PROJECT_TOTAL } from './RevenuePanel';
 import s from './FamilyDashboard.module.css';
 
@@ -901,6 +902,9 @@ function AppCard({ app, attention, maxDl }: { app: AppSnapshot; attention: Atten
         ) : footnote ? (
           <p className={s.small}>{footnote}</p>
         ) : null}
+
+        <FunnelBlock app={app} />
+        <ErrorRateBlock app={app} />
 
         {app.club ? (
           <div className={s.chips}>

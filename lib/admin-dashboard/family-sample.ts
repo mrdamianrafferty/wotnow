@@ -11,7 +11,7 @@
 
 import { utcDay } from '@/lib/store-stats/summary';
 import { dashboardUrl } from './app-links';
-import { FAMILY_APPS, familyTotals, readAppSummary, type FamilyAppId, type FamilySummary, type Part, type VercelCountry, type VercelPart } from './family';
+import { FAMILY_APPS, familyTotals, readAppSummary, type FamilyAppId, type FamilySummary, type Part, type TopIssuePart, type VercelCountry, type VercelPart } from './family';
 
 /** A WeekMetric with these weekly totals, spread over 14 days. */
 function week(value: number, previous: number) {
@@ -22,7 +22,13 @@ function week(value: number, previous: number) {
 
 function platform(value: number, previous: number) {
   const w = week(value, previous);
-  return { week: w.value, previousWeek: w.previous, delta: w.delta, sparkline: w.daily.map((downloads, i) => ({ date: `d${i}`, downloads })) };
+  return {
+    week: w.value,
+    previousWeek: w.previous,
+    delta: w.delta,
+    sparkline: w.daily.map((downloads, i) => ({ date: `d${i}`, downloads })),
+    total30d: Math.round(((value + previous) / 14) * 30),
+  };
 }
 
 function downloads(ios: [number, number], countries30d: { country: string; downloads: number }[]) {
@@ -281,6 +287,7 @@ function vercel(now: Date, visitors: [number, number], pageviews: [number, numbe
       visitors: trend(visitors),
       pageviews: trend(pageviews),
       countries: countries.map(([code, name, v, p]): VercelCountry => ({ code, name, visitors: v, pageviews: p })),
+      visitors28d: Math.round(((visitors[0] + visitors[1]) / 2) * 3.6),
     },
   };
 }
@@ -302,10 +309,40 @@ export function sampleVercel(now = new Date()): Partial<Record<FamilyAppId, Part
   };
 }
 
-/** `withVercel` adds the Vercel figures (sampleVercel); off by default so the other tests' fixtures stay as they were. */
-export function sampleFamilySummary(now = new Date(), { withVercel = false }: { withVercel?: boolean } = {}): FamilySummary {
+const issue = (title: string, shortId: string, count: number, project: string, sharedWith: string | null = null): Part<TopIssuePart> => ({
+  state: 'ok',
+  data: { title, shortId, count, permalink: `https://go-daisy.sentry.io/issues/${shortId}/`, project, sharedWith },
+});
+
+/** Top unresolved Sentry issues as sentry-top.ts would attach them. */
+export function sampleTopIssues(): Partial<Record<FamilyAppId, Part<TopIssuePart>>> {
+  return {
+    godaisy: issue("TypeError: Cannot read properties of undefined (reading 'hourly')", 'GODAISY-NEXTJS-4F', 2210, 'godaisy-nextjs'),
+    growdaisy: { state: 'not_configured', missing: [], note: 'Grow Daisy has no Sentry project' },
+    risedaisy: issue('ChunkLoadError: Loading chunk 812 failed', 'RISE-DAISY-2K', 640, 'rise-daisy'),
+    hungerford: issue('ChunkLoadError: Loading chunk 812 failed', 'RISE-DAISY-2K', 640, 'rise-daisy', 'Rise Daisy'),
+    findr: { state: 'not_configured', missing: ['SENTRY_ADMIN_TOKEN'], note: 'Sentry refused the token for findr-nextjs (403): it needs event:read on that project' },
+    flycast: { state: 'not_configured', missing: [], note: 'No unresolved issues in 7 days' },
+    grewp: issue('Error: Hydration failed because the server rendered HTML did not match', 'GREWP-NEXTJS-1A', 402, 'grewp-nextjs'),
+  };
+}
+
+/**
+ * `withVercel` adds the Vercel figures (sampleVercel) and `withTopIssues` the
+ * Sentry top issues; both off by default so the other tests' fixtures stay as they were.
+ */
+export function sampleFamilySummary(
+  now = new Date(),
+  { withVercel = false, withTopIssues = false }: { withVercel?: boolean; withTopIssues?: boolean } = {},
+): FamilySummary {
   const bodies = sampleFamilyBodies(now);
   const extra = withVercel ? sampleVercel(now) : {};
-  const apps = FAMILY_APPS.map((a) => ({ ...readAppSummary(a, bodies[a.id]), dashboardUrl: dashboardUrl(a.id, a.envKey), ...(extra[a.id] ? { vercel: extra[a.id] } : {}) }));
+  const top = withTopIssues ? sampleTopIssues() : {};
+  const apps = FAMILY_APPS.map((a) => ({
+    ...readAppSummary(a, bodies[a.id]),
+    dashboardUrl: dashboardUrl(a.id, a.envKey),
+    ...(extra[a.id] ? { vercel: extra[a.id] } : {}),
+    ...(top[a.id] ? { topIssue: top[a.id] } : {}),
+  }));
   return { generatedAt: now.toISOString(), apps, totals: familyTotals(apps) };
 }
