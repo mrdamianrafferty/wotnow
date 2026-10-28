@@ -6,6 +6,9 @@
  * Each app's answer is cached (lib/admin-dashboard/family-cache.ts);
  * `?refresh=1` asks every app again, at most once every five minutes.
  *
+ * `searchConsole` (Google search per site) rides alongside the apps, with
+ * its own six-hour cache: lib/admin-dashboard/search-console.ts.
+ *
  * Admins only (GODAISY_ADMIN_EMAILS). Unlike metrics-summary, the dashboard
  * read token does not open this: it is the family view, not one app's.
  */
@@ -13,6 +16,7 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { getAdminEmail } from '@/lib/admin-dashboard/auth';
 import { getFamilySummary } from '@/lib/admin-dashboard/family-fetch';
+import { getSearchConsole } from '@/lib/admin-dashboard/search-console';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'GET') {
@@ -22,5 +26,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   res.setHeader('Cache-Control', 'private, no-store');
 
   if (!(await getAdminEmail(req, res))) return res.status(403).json({ error: 'Admin access required' });
-  return res.status(200).json(await getFamilySummary(process.env, { refresh: req.query.refresh === '1' }));
+  const [family, searchConsole] = await Promise.all([getFamilySummary(process.env, { refresh: req.query.refresh === '1' }), getSearchConsole(process.env)]);
+  return res.status(200).json({ ...family, searchConsole });
 }

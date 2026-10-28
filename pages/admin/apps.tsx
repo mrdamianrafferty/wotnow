@@ -15,21 +15,27 @@ import { useAuth } from '@/context/AuthContext';
 import { FamilyDashboard } from '@/components/admin/FamilyDashboard';
 import s from '@/components/admin/FamilyDashboard.module.css';
 import type { FamilySummary } from '@/lib/admin-dashboard/family';
+// Google search, below the family dashboard
+import { SearchConsolePanel } from '@/components/admin/SearchConsolePanel';
+import type { SearchConsoleSummary } from '@/lib/admin-dashboard/search-console';
+import type { Section } from '@/lib/admin-dashboard/types';
+
+type PageData = FamilySummary & { searchConsole?: Section<SearchConsoleSummary> };
 
 // The Grewp Design System's pair, self-hosted by next/font for this page only
 const manrope = Manrope({ subsets: ['latin'], weight: ['600', '700', '800'], display: 'swap', variable: '--font-manrope' });
 const inter = Inter({ subsets: ['latin'], weight: ['400', '600', '700'], display: 'swap', variable: '--font-inter' });
 
-async function load(accessToken: string, refresh = false): Promise<{ data: FamilySummary } | { error: string }> {
+async function load(accessToken: string, refresh = false): Promise<{ data: PageData } | { error: string }> {
   const res = await fetch(`/api/admin/apps-summary${refresh ? '?refresh=1' : ''}`, { headers: { Authorization: `Bearer ${accessToken}` } });
-  const body = (await res.json().catch(() => ({}))) as FamilySummary & { error?: string };
+  const body = (await res.json().catch(() => ({}))) as PageData & { error?: string };
   return res.ok ? { data: body } : { error: body.error ?? 'Could not load the family dashboard' };
 }
 
 export default function AdminAppsPage() {
   const router = useRouter();
   const { user, session, loading } = useAuth();
-  const [data, setData] = useState<FamilySummary | null>(null);
+  const [data, setData] = useState<PageData | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
   const sample = process.env.NODE_ENV !== 'production' && router.query.sample === '1';
@@ -37,7 +43,9 @@ export default function AdminAppsPage() {
   useEffect(() => {
     if (!router.isReady) return;
     if (sample) {
-      import('@/lib/admin-dashboard/family-sample').then((m) => setData(m.sampleFamilySummary(new Date(), { withVercel: true })));
+      Promise.all([import('@/lib/admin-dashboard/family-sample'), import('@/lib/admin-dashboard/search-console-sample')]).then(([m, sc]) =>
+        setData({ ...m.sampleFamilySummary(new Date(), { withVercel: true }), searchConsole: sc.sampleSearchConsole(new Date()) }),
+      );
       return;
     }
     if (loading || !session) return;
@@ -106,6 +114,7 @@ export default function AdminAppsPage() {
             {error ? <p className={`${s.banner} ${s.bannerError}`}>{error}</p> : <span className="loading loading-spinner loading-md" />}
           </div>
         )}
+        {data ? <SearchConsolePanel section={data.searchConsole} /> : null}
       </div>
     </>
   );
