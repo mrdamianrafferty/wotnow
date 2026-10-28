@@ -8,6 +8,7 @@
  */
 
 import type { StoreDownloadsSummary } from '@/lib/store-stats/summary';
+import type { StoreListingSummary } from '@/lib/store-stats/listing-summary';
 import type { StripeWebSummary } from './stripe-web';
 
 export type Section<T> = { state: 'ok'; data: T } | { state: 'not_configured'; missing: string[]; hint?: string } | { state: 'error'; message: string };
@@ -91,6 +92,13 @@ export interface MetricsSummary {
   app: string;
   generatedAt: string;
   storeDownloads: Section<StoreDownloadsSummary>;
+  /**
+   * App Store listing conversion (Apple Analytics Reports): impressions,
+   * product-page views, first-time downloads and conversion = product-page
+   * downloads ÷ product-page views, 28 complete days ending three days back.
+   * Same shape as Rise Daisy's (RiseDaisy#875). iOS only.
+   */
+  storeListing: Section<StoreListingSummary>;
   revenue: Section<RevenueSummary>;
   analytics: Section<Ga4Summary>;
   platformHealth: Section<SentrySummary>;
