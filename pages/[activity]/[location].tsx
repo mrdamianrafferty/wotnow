@@ -58,6 +58,7 @@ import {
   slugToActivityId,
   prettyActivityName,
 } from '../../lib/seo/activityNames';
+import { utcClockTime } from '../../lib/seo/utcClockTime';
 
 const Footer = dynamic(() => import('../../components/footer'), { ssr: false });
 
@@ -617,11 +618,7 @@ export default function ProgrammaticSeoPage({
             <p className="gd-spot-note">
               Data from Open-Meteo, and Open-Meteo Marine for waves and sea temperature.
               Last updated{' '}
-              {new Date(score.lastUpdated).toLocaleTimeString('en-GB', {
-                hour: '2-digit',
-                minute: '2-digit',
-              })}{' '}
-              UTC.
+              {utcClockTime(score.lastUpdated)} UTC.
             </p>
           </div>
         </section>
