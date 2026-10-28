@@ -25,6 +25,7 @@ import {
 } from '@/lib/admin-dashboard/family';
 import { fmt, money } from './DashboardParts';
 import { ErrorRateBlock, FunnelBlock } from './AppFunnel';
+import { StoreListingBlock, pointsChange, rateText } from './StoreListingBlock';
 import { PROJECT_TOTAL_LABEL as PROJECT_TOTAL } from './RevenuePanel';
 import s from './FamilyDashboard.module.css';
 
@@ -276,6 +277,29 @@ function Header({ data, attention, refresh }: { data: FamilySummary; attention: 
   // A club app takes no money, so it is not "not reporting" subscriptions
   const payingApps = FAMILY_APPS.filter((f) => !f.noRevenue && apps.some((a) => a.id === f.id)).length;
 
+  // Weighted by views across the apps with data (family.ts familyListing), never an average of rates
+  const ls = totals.storeListing;
+  const listingChange = ls ? pointsChange(ls.conversionRate, ls.previous?.conversionRate) : null;
+  const listingKpi = {
+    label: 'App Store conversion',
+    value: ls?.apps ? rateText(ls.conversionRate) : '—',
+    change: ls?.apps
+      ? listingChange === null
+        ? 'No rate the 28 days before'
+        : listingChange === 'Same'
+          ? 'Same as the 28 days before'
+          : `${listingChange} on the 28 days before`
+      : ls?.waiting
+        ? 'Waiting for Apple’s first reports'
+        : 'No app reporting',
+    note: ls?.apps
+      ? `${fmt(ls.productPageViews)} views → ${fmt(ls.productPageDownloads)} downloads, 28 days · ${ofN(ls.apps)}`
+      : ls?.waiting
+        ? `${plural(ls.waiting, 'app')} set up, no report synced yet`
+        : '',
+    title: 'First-time downloads from the product page ÷ product-page views, summed across apps (weighted by views), 28 complete days ending 3 days back',
+  };
+
   const topErrors = apps.map((a) => ({ a, e: okData(a.health)?.errors?.value ?? 0 })).sort((x, y) => y.e - x.e)[0];
 
   const kpis: { label: string; value: string; change: string; note: string; title?: string }[] = [
@@ -317,6 +341,7 @@ function Header({ data, attention, refresh }: { data: FamilySummary; attention: 
       change: totals.errors.apps ? onWeekBefore(totals.errors) : 'No app reporting',
       note: topErrors && topErrors.e > 0 ? `${pct(topErrors.e, totals.errors.value)}% from ${topErrors.a.name}` : ofN(totals.errors.apps),
     },
+    listingKpi,
   ];
 
   return (
@@ -915,6 +940,7 @@ function AppCard({ app, attention, maxDl }: { app: AppSnapshot; attention: Atten
         ) : null}
 
         <FunnelBlock app={app} />
+        <StoreListingBlock app={app} />
         <ErrorRateBlock app={app} />
 
         {app.club ? (

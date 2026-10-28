@@ -117,3 +117,26 @@ describe('admin dashboard panels', () => {
     expect(screen.getByText('last 28 days · project total (Go Daisy + Grow Daisy)')).toBeInTheDocument();
   });
 });
+
+describe('family dashboard: App Store listing', () => {
+  it('shows each app’s conversion and the family rate weighted by views', () => {
+    const data = sampleFamilySummary(now);
+    // Grewp as it is until grewp#517 deploys: no storeListing key
+    const apps = data.apps.map((a) => (a.id === 'grewp' ? readAppSummary(FAMILY_APPS.find((f) => f.id === 'grewp')!, { generatedAt: data.generatedAt }) : a));
+    const totals = familyTotals(apps);
+    render(<FamilyDashboard data={{ ...data, apps, totals }} />);
+    expect(screen.getByText('App Store conversion')).toBeInTheDocument();
+    expect(screen.getByText(`${totals.storeListing!.conversionRate!.toFixed(1)}%`)).toBeInTheDocument();
+    // Six apps send it; the one that does not says so rather than showing 0%
+    expect(screen.getAllByText(/% convert$/)).toHaveLength(6);
+    expect(screen.getAllByText('Not reported by this app').length).toBeGreaterThanOrEqual(1);
+  });
+
+  it('reads quietly while Apple’s first report has not landed', () => {
+    render(<FamilyDashboard data={sampleFamilySummary(now, { listingWaiting: true })} />);
+    expect(screen.getByText('Waiting for Apple’s first reports')).toBeInTheDocument();
+    expect(screen.getByText('7 apps set up, no report synced yet')).toBeInTheDocument();
+    expect(screen.getAllByText(/^Waiting for Apple’s first report\./)).toHaveLength(7);
+    expect(screen.queryByText(/% convert$/)).toBeNull();
+  });
+});

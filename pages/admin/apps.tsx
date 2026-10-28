@@ -4,7 +4,8 @@
  * app's metrics-summary endpoint server-side. Same admins as
  * /admin/dashboard (GODAISY_ADMIN_EMAILS).
  *
- * In development, ?sample=1 renders made-up figures for all five apps.
+ * In development, ?sample=1 renders made-up figures for all five apps;
+ * ?sample=1&listing=waiting shows the store listing before Apple's first report.
  */
 
 import { useCallback, useEffect, useState } from 'react';
@@ -39,12 +40,16 @@ export default function AdminAppsPage() {
   const [error, setError] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
   const sample = process.env.NODE_ENV !== 'production' && router.query.sample === '1';
+  const listingWaiting = router.query.listing === 'waiting';
 
   useEffect(() => {
     if (!router.isReady) return;
     if (sample) {
       Promise.all([import('@/lib/admin-dashboard/family-sample'), import('@/lib/admin-dashboard/search-console-sample')]).then(([m, sc]) =>
-        setData({ ...m.sampleFamilySummary(new Date(), { withVercel: true, withTopIssues: true, withPlay: true }), searchConsole: sc.sampleSearchConsole(new Date()) }),
+        setData({
+          ...m.sampleFamilySummary(new Date(), { withVercel: true, withTopIssues: true, withPlay: true, listingWaiting }),
+          searchConsole: sc.sampleSearchConsole(new Date()),
+        }),
       );
       return;
     }
@@ -58,7 +63,7 @@ export default function AdminAppsPage() {
     return () => {
       cancelled = true;
     };
-  }, [router.isReady, sample, loading, session]);
+  }, [router.isReady, sample, listingWaiting, loading, session]);
 
   // Refresh keeps the current figures on screen until the new ones arrive
   const onRefresh = useCallback(async () => {
