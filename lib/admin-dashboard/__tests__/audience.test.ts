@@ -204,7 +204,7 @@ describe('deriveAttention', () => {
       'check:not_reporting:Grow Daisy',
       'check:not_reporting:Findr',
       'check:wrong_property:Go Daisy',
-      'check:automated_traffic:Rise Daisy · Fly Cast · Findr',
+      'check:automated_traffic:Rise Daisy',
       'waiting:android_missing:Android',
     ]);
     expect(items[0].title).toBe('Errors up 92% in a week');
@@ -213,11 +213,12 @@ describe('deriveAttention', () => {
       title: 'Health isn’t connected',
       body: 'Grow Daisy has no Sentry project yet.',
     });
-    // 724 of 1,945 visitors across the seven apps
+    // Rise Daisy's 663 of 1,049; Findr (19) and Fly Cast (68% desktop) do not pass the rule on their own
     expect(items.find((i) => i.rule === 'automated_traffic')).toMatchObject({
-      title: 'Singapore traffic looks automated',
-      country: { code: 'SG', visitors: 724, share: 37 },
+      title: 'Likely automated traffic from Singapore',
+      country: { code: 'SG', visitors: 663, share: 63 },
     });
+    expect(items.find((i) => i.rule === 'automated_traffic')!.body).toContain('663 of 1,049 Rise Daisy users (63%)');
   });
 
   it('says nothing when nothing is wrong', () => {
@@ -298,11 +299,11 @@ describe('deriveAttention', () => {
     ).toHaveLength(0);
   });
 
-  it('flags a non-home country only at 30% of visitors with no downloads from it', () => {
+  it('flags a non-home country only on the adjusted-users rule (see automated.test.ts)', () => {
     const auto = (s: FamilySummary) => deriveAttention(s).filter((i) => i.rule === 'automated_traffic');
     expect(auto(sampleFamilySummary(now))).toHaveLength(1);
     // A Singapore download clears it
-    const sgDownload = withBody('findr', (b) => {
+    const sgDownload = withBody('risedaisy', (b) => {
       (b.storeDownloads as { data: { countries30d: unknown[] } }).data.countries30d.push({ country: 'SG', downloads: 1 });
       return b;
     });

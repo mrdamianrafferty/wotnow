@@ -8,6 +8,7 @@
  * feeding another rule.
  */
 
+import { adjustUsers, familyUsers, HOME_COUNTRIES } from './automated';
 import { FAMILY_APPS, type AppSnapshot, type FamilyAppId, type FamilySummary, type Part } from './family';
 
 export type AttentionLevel = 'danger' | 'check' | 'waiting';
@@ -28,8 +29,7 @@ export interface AttentionItem {
   country?: { code: string; name: string; visitors: number; share: number };
 }
 
-/** The family's home markets: a spike from here is not suspicious on its own. */
-export const HOME_COUNTRIES = new Set(['GB', 'IE']);
+export { HOME_COUNTRIES };
 
 /** Thresholds, named so the tests and the copy agree. */
 export const RULES = {
@@ -37,7 +37,6 @@ export const RULES = {
   errorsRisingMin: 100,
   wrongPropertyMaxUsers: 5,
   wrongPropertyMinErrors: 100,
-  automatedShare: 0.3,
   /** Either counter needs this many people before the other being far lower means anything. */
   disagreeMinVisitors: 20,
   /** ...and "far lower" is under this share of it. */
@@ -169,29 +168,29 @@ function wrongProperty(apps: AppSnapshot[]): AttentionItem[] {
   });
 }
 
+/** The countries the adjusted active-users figure leaves out (automated.ts), one item each, naming the apps and how many users. */
 function automatedTraffic(summary: FamilySummary): AttentionItem[] {
-  const aud = summary.totals.audience;
-  // Without store countries there is no way to say "no downloads from there"
-  if (aud.visitors === 0 || aud.storeReporting === 0) return [];
-  const stored = new Set(aud.storeCountries.filter((c) => c.value > 0).map((c) => c.code));
-  const names = new Map(summary.apps.map((a) => [a.id, a.name]));
-  return aud.countries
-    .filter((c) => c.code !== null && !HOME_COUNTRIES.has(c.code) && c.value / aud.visitors >= RULES.automatedShare && !stored.has(c.code))
-    .map((c) => ({
+  const views = summary.apps.map((a) => ({ a, v: adjustUsers(a) }));
+  return familyUsers(summary.apps).countries.map((c) => {
+    const per = views.flatMap(({ a, v }) => {
+      const f = v.flagged.find((x) => x.code === c.code);
+      return f ? [{ a, f, total: v.audienceTotal }] : [];
+    });
+    const users = per.reduce((s, x) => s + x.f.users, 0);
+    const total = per.reduce((s, x) => s + x.total, 0);
+    const detail = per.map(({ a, f, total: t }) => `${n(f.users)} of ${n(t)} ${a.name} users (${f.share}%)`).join(', ');
+    const how = per.some((x) => x.f.basis === 'vercel') ? 'pages per visitor far above the rest' : 'a mostly desktop audience';
+    return {
       level: 'check' as const,
       rule: 'automated_traffic' as const,
-      apps: c.apps,
-      label: c.apps.map((id) => names.get(id) ?? id).join(' · '),
-      title: `${c.name} traffic looks automated`,
-      body: `${n(c.value)} of ${n(aud.visitors)} visitors, and not one ${c.name} store download in 30 days. Filter it in GA4 before trusting user counts.`,
+      apps: per.map((x) => x.a.id),
+      label: per.map((x) => x.a.name).join(' · '),
+      title: `Likely automated traffic from ${c.name}`,
+      body: `${detail}, left out of the adjusted active users: no ${c.name} store download in 30 days and ${how}. The raw GA4 figure is still shown.`,
       short: 'Bot traffic',
-      country: {
-        code: c.code!,
-        name: c.name,
-        visitors: c.value,
-        share: Math.round((c.value / aud.visitors) * 100),
-      },
-    }));
+      country: { code: c.code, name: c.name, visitors: users, share: total > 0 ? Math.round((users / total) * 100) : 0 },
+    };
+  });
 }
 
 /** GA4 needs consent and Vercel does not, so a wide gap either way means a tag or script is broken. */

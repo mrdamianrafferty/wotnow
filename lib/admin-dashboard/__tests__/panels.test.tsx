@@ -60,8 +60,10 @@ describe('admin dashboard panels', () => {
     render(<FamilyDashboard data={sampleFamilySummary(now)} />);
     for (const name of ['Go Daisy', 'Rise Daisy', 'Findr', 'Fly Cast', 'Grewp']) expect(screen.getAllByText(name).length).toBeGreaterThan(0);
     expect(screen.getByText('Errors up 92% in a week')).toBeInTheDocument();
-    expect(screen.getByText('Singapore traffic looks automated')).toBeInTheDocument();
+    expect(screen.getByText('Likely automated traffic from Singapore')).toBeInTheDocument();
     expect(screen.getByText('likely automated')).toBeInTheDocument();
+    // Headline active users: raw beside the adjusted figure
+    expect(screen.getByText('Raw 1,945 → 1,282 adjusted · Singapore excluded')).toBeInTheDocument();
     expect(screen.getByText(/GA4 returned no age or gender rows for any of the 7 apps/)).toBeInTheDocument();
     expect(screen.getByText('6 things need attention')).toBeInTheDocument();
   });
