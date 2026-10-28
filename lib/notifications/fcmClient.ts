@@ -23,6 +23,31 @@ const FCM_API_URL = `https://fcm.googleapis.com/v1/projects/${FCM_PROJECT_ID}/me
 
 let cachedAccessToken: { token: string; expiry: number } | null = null;
 
+const PEM_HEADER = '-----BEGIN PRIVATE KEY-----';
+const PEM_FOOTER = '-----END PRIVATE KEY-----';
+
+/**
+ * Rebuild a PEM from whatever the env store gave us. Production holds this key
+ * as one line with no newlines (vercel-env-add.sh strips line breaks), which
+ * OpenSSL 3 rejects with "DECODER routines::unsupported". Taking only the
+ * base64 body and rewrapping it at 64 columns handles that, plus wrapping
+ * quotes, literal "\n" and CRLF.
+ */
+function normalizePemPrivateKey(raw: string): string | null {
+  const trimmed = raw.trim();
+  if (!trimmed.includes(PEM_HEADER) || !trimmed.includes(PEM_FOOTER)) return null;
+
+  const body = trimmed
+    .replace(PEM_HEADER, '')
+    .replace(PEM_FOOTER, '')
+    .replace(/\\n|[\s"']/g, '');
+
+  const lines = body.match(/.{1,64}/g);
+  if (!lines) return null;
+
+  return `${PEM_HEADER}\n${lines.join('\n')}\n${PEM_FOOTER}\n`;
+}
+
 /**
  * Get OAuth2 access token for FCM API
  * Tokens are cached until near expiry
@@ -39,9 +64,16 @@ async function getAccessToken(): Promise<string | null> {
   }
 
   try {
+    const privateKey = normalizePemPrivateKey(FCM_PRIVATE_KEY);
+
+    if (!privateKey) {
+      console.error('[FCM] FCM_PRIVATE_KEY is not a PKCS#8 PEM key (missing BEGIN/END PRIVATE KEY markers)');
+      return null;
+    }
+
     const jwtClient = new google.auth.JWT({
       email: FCM_CLIENT_EMAIL,
-      key: FCM_PRIVATE_KEY.replace(/\\n/g, '\n'),
+      key: privateKey,
       scopes: ['https://www.googleapis.com/auth/firebase.messaging'],
     });
 

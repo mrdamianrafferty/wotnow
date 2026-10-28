@@ -402,7 +402,7 @@ tsx scripts/clear-all-cache-for-date.js
   ./scripts/vercel-env-add.sh VAR_NAME "value" production
   ```
 - NEVER use `echo "multiline\nvalue" | vercel env add` directly
-- The script automatically strips line breaks from values (important for private keys)
+- The script strips line breaks from ordinary values, but keeps them for PEM blocks (`-----BEGIN ...-----`): a one-line PEM fails in OpenSSL 3 with `DECODER routines::unsupported` (this is what broke `FCM_PRIVATE_KEY`)
 
 **Domains:**
 - Go Daisy: `godaisy.io` (generalist app)
