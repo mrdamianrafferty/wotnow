@@ -23,7 +23,8 @@
 
 import { getServiceAccountToken } from '@/lib/google/service-account-token';
 import { decodePlayCsv, getGoogleConfig, splitCsvLine, type GoogleConfig } from '@/lib/store-stats/google';
-import { cleanMessage, type AppSnapshot, type FamilyApp, type FamilyAppId, type Part, type PlayPart, type PlayRelease, type PlayReleaseStatus, type PlayReview, type PlayReviews } from './family';
+import { parseInstallsOverviewCsv, parseStorePerformanceCsv, summariseInstalls, summariseListing, type InstallRow, type ListingRow } from './play-reports';
+import { cleanMessage, withPlayDownloads, type AppSnapshot, type FamilyApp, type FamilyAppId, type Part, type PlayInstalls, type PlayListing, type PlayPart, type PlayRelease, type PlayReleaseStatus, type PlayReview, type PlayReviews } from './family';
 
 /** Play package per app; Hungerford is iOS and web only. Go Daisy and Grow Daisy match app-identity.ts. */
 export const PLAY_PACKAGES: Partial<Record<FamilyAppId, string>> = {
@@ -207,6 +208,30 @@ async function fetchRating(config: GoogleConfig, packageName: string, now: Date,
   return readRating(rows);
 }
 
+/** One report object from the reports bucket: its text, or null when Play has not written it. */
+async function fetchReport(config: GoogleConfig, object: string, auth: HeadersInit, fetchImpl: typeof fetch): Promise<string | null> {
+  const url = `https://storage.googleapis.com/storage/v1/b/${encodeURIComponent(config.bucket)}/o/${encodeURIComponent(object)}?alt=media`;
+  const res = await fetchImpl(url, { headers: auth, signal: AbortSignal.timeout(TIMEOUT_MS), cache: 'no-store' });
+  if (res.status === 404) return null;
+  if (!res.ok) throw new PlayError(`Play report → ${res.status}`, res.status);
+  return decodePlayCsv(Buffer.from(await res.arrayBuffer()));
+}
+
+/** This month's and last month's report, each parsed; a month Play has not written is simply absent. */
+async function fetchMonths<T>(config: GoogleConfig, kind: string, packageName: string, file: string, now: Date, fetchImpl: typeof fetch, parse: (csv: string) => T[]): Promise<T[]> {
+  const auth = { Authorization: `Bearer ${await token(config, STORAGE_SCOPE)}` };
+  const texts = await Promise.all(recentMonths(now, 2).map((month) => fetchReport(config, `stats/${kind}/${kind}_${packageName}_${month}_${file}.csv`, auth, fetchImpl)));
+  return texts.flatMap((t) => (t === null ? [] : parse(t)));
+}
+
+async function fetchInstalls(config: GoogleConfig, packageName: string, now: Date, fetchImpl: typeof fetch): Promise<PlayInstalls | null> {
+  return summariseInstalls(await fetchMonths<InstallRow>(config, 'installs', packageName, 'overview', now, fetchImpl, parseInstallsOverviewCsv), now);
+}
+
+async function fetchListing(config: GoogleConfig, packageName: string, now: Date, fetchImpl: typeof fetch): Promise<PlayListing | null> {
+  return summariseListing(await fetchMonths<ListingRow>(config, 'store_performance', packageName, 'country', now, fetchImpl, parseStorePerformanceCsv), now);
+}
+
 async function fetchRelease(config: GoogleConfig, packageName: string, fetchImpl: typeof fetch): Promise<PlayRelease | null> {
   const headers = { Authorization: `Bearer ${await token(config, PUBLISHER_SCOPE)}`, 'Content-Type': 'application/json' };
   const base = `${PUBLISHER_API}/${encodeURIComponent(packageName)}`;
@@ -234,11 +259,11 @@ async function fetchReviews(config: GoogleConfig, packageName: string, fetchImpl
   return readReviews(await res.json());
 }
 
-function describe(err: unknown, packageName: string, half: 'rating' | 'release' | 'reviews'): string {
+function describe(err: unknown, packageName: string, half: 'reports' | 'release' | 'reviews'): string {
   if (err instanceof PlayError && (err.status === 401 || err.status === 403)) {
     const cause = err.message.replace(/^Play [a-z ]+→ \d+ ?/, '');
     return (
-      half === 'rating'
+      half === 'reports'
         ? `The reports bucket refused the service account (${err.status}). Check GOOGLE_PLAY_REPORTS_BUCKET and that the account can read it. ${cause}`
         : half === 'reviews'
           ? `Play refused the reviews call (${err.status}). Give the service account access to ratings and reviews in Play Console. ${cause}`
@@ -266,25 +291,34 @@ export async function fetchPlayPart(
   }
   if (!config) return { state: 'not_configured', missing: ['GOOGLE_PLAY_REPORTS_CREDENTIALS', 'GOOGLE_PLAY_REPORTS_BUCKET'].filter((k) => !env[k]) };
 
-  const [rating, release, reviews] = await Promise.allSettled([
+  const [rating, installs, listing, release, reviews] = await Promise.allSettled([
     fetchRating(config, packageName, now, fetchImpl),
+    fetchInstalls(config, packageName, now, fetchImpl),
+    fetchListing(config, packageName, now, fetchImpl),
     fetchRelease(config, packageName, fetchImpl),
     fetchReviews(config, packageName, fetchImpl),
   ]);
+  // Three reads share the reports bucket, so they share a cause: say it once
+  const reports = [rating, installs, listing].find((r): r is PromiseRejectedResult => r.status === 'rejected');
   const notes: string[] = [];
-  if (rating.status === 'rejected') notes.push(`Rating: ${describe(rating.reason, packageName, 'rating')}`);
+  if (reports) notes.push(`Reports: ${describe(reports.reason, packageName, 'reports')}`);
   if (release.status === 'rejected') notes.push(`Release: ${describe(release.reason, packageName, 'release')}`);
   if (reviews.status === 'rejected') notes.push(`Reviews: ${describe(reviews.reason, packageName, 'reviews')}`);
 
-  // Every half failing is a failure; any one is still worth showing, with why the others are missing
-  if (rating.status === 'rejected' && release.status === 'rejected' && reviews.status === 'rejected') return { state: 'error', message: notes.join(' · ').slice(0, 300) };
+  // Every read failing is a failure; any one is still worth showing, with why the others are missing
+  if (reports && rating.status === 'rejected' && installs.status === 'rejected' && listing.status === 'rejected' && release.status === 'rejected' && reviews.status === 'rejected') {
+    return { state: 'error', message: notes.join(' · ').slice(0, 300) };
+  }
+  const value = <T,>(r: PromiseSettledResult<T>): T | null => (r.status === 'fulfilled' ? r.value : null);
   return {
     state: 'ok',
     data: {
       packageName,
-      rating: rating.status === 'fulfilled' ? rating.value : null,
-      release: release.status === 'fulfilled' ? release.value : null,
-      reviews: reviews.status === 'fulfilled' ? reviews.value : null,
+      rating: value(rating),
+      release: value(release),
+      reviews: value(reviews),
+      installs: value(installs),
+      listing: value(listing),
       notes,
     },
   };
@@ -293,5 +327,7 @@ export async function fetchPlayPart(
 /** The snapshot with its Play part attached, even when the app's own endpoint did not answer: Play is asked separately. */
 export async function withPlay(snapshot: AppSnapshot, app: FamilyApp, env?: Record<string, string | undefined>, fetchImpl?: typeof fetch): Promise<AppSnapshot> {
   const play = await fetchPlayPart(app, env, { fetchImpl });
-  return play ? { ...snapshot, play } : snapshot;
+  if (!play) return snapshot;
+  const withPart = { ...snapshot, play };
+  return play.state === 'ok' && play.data.installs ? withPlayDownloads(withPart, play.data.installs) : withPart;
 }

@@ -23,7 +23,7 @@
 import { getCache, type RuntimeCache } from '@vercel/functions';
 import type { AppSnapshot, FamilyApp } from './family';
 
-const KEY_VERSION = 'v5';
+const KEY_VERSION = 'v6';
 export const GOOD_TTL_S = 60 * 60;
 export const FAILED_TTL_S = 5 * 60;
 export const REFRESH_COOLDOWN_S = 5 * 60;

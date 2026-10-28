@@ -33,3 +33,18 @@ describe('Google Play row on the family dashboard', () => {
     expect(card('grewp').queryByText(/reviews? this week/)).toBeNull();
   });
 });
+
+describe('Play downloads on the card', () => {
+  it('shows active devices, uninstalls and the listing’s visitors → installs, only for apps that have them', () => {
+    render(<FamilyDashboard data={sampleFamilySummary(now, { withPlay: true })} />);
+    const findr = within(document.getElementById('app-findr')!);
+    expect(findr.getByText('22 active devices · 3 uninstalls in 7 days')).toBeInTheDocument();
+    expect(findr.getByText(/Listing 96 visitors → 6 installs \(6\.3%\)/)).toBeInTheDocument();
+    expect(within(document.getElementById('app-grewp')!).queryByText(/active device/)).toBeNull();
+  });
+
+  it('counts the Android downloads in the card’s total', () => {
+    render(<FamilyDashboard data={sampleFamilySummary(now, { withPlay: true })} />);
+    expect(within(document.getElementById('app-risedaisy')!).getByText(/Android 14/)).toBeInTheDocument();
+  });
+});

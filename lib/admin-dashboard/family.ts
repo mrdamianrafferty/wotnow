@@ -220,8 +220,31 @@ export interface PlayPart {
   release: PlayRelease | null;
   /** Reviews from the last week (the most Play's API returns); null when they could not be read. */
   reviews: PlayReviews | null;
+  /** Android downloads from Play's own installs report (play-reports.ts); null when there is none. */
+  installs: PlayInstalls | null;
+  /** Store listing visitors and the installs they led to; null when there is none. */
+  listing: PlayListing | null;
   /** Why a half is missing when another was read. */
   notes: string[];
+}
+
+export interface PlayInstalls {
+  /** People who installed: this week, the week before, and the 14 days (oldest first, ending yesterday). */
+  downloads: Trend;
+  /** The newest day the report covers; Play writes a couple of days late. */
+  latestDate: string;
+  /** Devices that have the app installed, on that day. */
+  activeDevices: number | null;
+  uninstalls7d: number;
+}
+
+export interface PlayListing {
+  days: number;
+  visitors: number;
+  acquisitions: number;
+  /** Acquisitions ÷ visitors, as a percentage to 1 dp; null with no visitors. */
+  conversion: number | null;
+  latestDate: string;
 }
 
 export interface PlayReview {
@@ -398,7 +421,7 @@ function mapPart<T>(part: Part<Obj>, read: (d: Obj) => T | null): Part<T> {
   return data === null ? { state: 'error', message: 'Unreadable response' } : { state: 'ok', data };
 }
 
-function sumTrends(trends: Trend[]): Trend {
+export function sumTrends(trends: Trend[]): Trend {
   const value = trends.reduce((a, t) => a + t.value, 0);
   const previous = trends.reduce((a, t) => a + t.previous, 0);
   // Daily series only add up when every one covers the same days
@@ -682,6 +705,30 @@ export function readAppSummary(app: FamilyApp, body: unknown): AppSnapshot {
     audience: mapPart(readSection(body.audience), readAudience),
     webRevenue: body.webRevenue === undefined ? null : mapPart(readSection(body.webRevenue), readWebRevenue),
     club: readClub(body.club),
+  };
+}
+
+/**
+ * Play's installs report as the app's Android downloads. It is the same
+ * report the sibling apps sync into store_stats_daily, read directly, so
+ * Android shows even where an app's own sync is not set up (or the app did
+ * not answer at all). iOS, and the store regions, stay as the app sent them.
+ */
+export function withPlayDownloads(snapshot: AppSnapshot, installs: PlayInstalls): AppSnapshot {
+  const own = snapshot.downloads.state === 'ok' ? snapshot.downloads.data : null;
+  const present = [own?.ios ?? null, installs.downloads].filter((t): t is NonNullable<typeof t> => t !== null);
+  return {
+    ...snapshot,
+    downloads: {
+      state: 'ok',
+      data: {
+        ios: own?.ios ?? null,
+        android: installs.downloads,
+        total: sumTrends(present),
+        latestDate: [own?.latestDate ?? null, installs.latestDate].filter((d): d is string => d !== null).sort().pop() ?? null,
+        countries30d: own?.countries30d ?? null,
+      },
+    },
   };
 }
 
