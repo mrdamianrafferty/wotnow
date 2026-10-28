@@ -10,6 +10,7 @@
  */
 
 import { utcDay } from '@/lib/store-stats/summary';
+import { dashboardUrl } from './app-links';
 import { FAMILY_APPS, familyTotals, readAppSummary, type FamilyAppId, type FamilySummary, type Part, type VercelCountry, type VercelPart } from './family';
 
 /** A WeekMetric with these weekly totals, spread over 14 days. */
@@ -305,6 +306,6 @@ export function sampleVercel(now = new Date()): Partial<Record<FamilyAppId, Part
 export function sampleFamilySummary(now = new Date(), { withVercel = false }: { withVercel?: boolean } = {}): FamilySummary {
   const bodies = sampleFamilyBodies(now);
   const extra = withVercel ? sampleVercel(now) : {};
-  const apps = FAMILY_APPS.map((a) => ({ ...readAppSummary(a, bodies[a.id]), ...(extra[a.id] ? { vercel: extra[a.id] } : {}) }));
+  const apps = FAMILY_APPS.map((a) => ({ ...readAppSummary(a, bodies[a.id]), dashboardUrl: dashboardUrl(a.id, a.envKey), ...(extra[a.id] ? { vercel: extra[a.id] } : {}) }));
   return { generatedAt: now.toISOString(), apps, totals: familyTotals(apps) };
 }

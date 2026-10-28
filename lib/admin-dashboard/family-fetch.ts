@@ -21,6 +21,7 @@ import { metricsApp } from './app-identity';
 import { cachedSnapshot, claimRefresh } from './family-cache';
 import { getMetricsSummary } from './metrics';
 import { withVercel } from './vercel-analytics';
+import { dashboardUrl } from './app-links';
 import { FAMILY_APPS, familyTotals, readAppSummary, unavailableSnapshot, type AppSnapshot, type FamilyApp, type FamilySummary } from './family';
 
 const TIMEOUT_MS = 8_000;
@@ -78,5 +79,7 @@ export async function getFamilySummary(
   const apps = await Promise.all(
     FAMILY_APPS.map((app) => cachedSnapshot(app, async () => withVercel(await fetchAppSnapshot(app, env), app, env), { bypass: state.refreshed, cache })),
   );
-  return { generatedAt: new Date().toISOString(), refresh: state, apps, totals: familyTotals(apps) };
+  // Attached after the cache so a changed METRICS_<APP>_DASHBOARD_URL shows at once
+  const linked = apps.map((a) => ({ ...a, dashboardUrl: dashboardUrl(a.id, FAMILY_APPS.find((f) => f.id === a.id)?.envKey ?? '', env) }));
+  return { generatedAt: new Date().toISOString(), refresh: state, apps: linked, totals: familyTotals(apps) };
 }
