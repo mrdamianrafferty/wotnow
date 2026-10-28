@@ -429,6 +429,20 @@
   height: 8px;
   border-radius: 4px;
 }
+/* An adjusted bar over its lighter raw length */
+.barTrackRaw {
+  position: relative;
+}
+.barTrackRaw .barFill {
+  position: relative;
+}
+.barGhost {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 8px;
+  border-radius: 4px;
+}
 .muted {
   color: var(--fg-3);
 }

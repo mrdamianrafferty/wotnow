@@ -10,6 +10,7 @@ import type { CSSProperties, ReactNode } from 'react';
 import Link from 'next/link';
 import { attentionActions, makeAction, type ActionLink } from '@/lib/admin-dashboard/app-links';
 import { appAttention, deriveAttention, type AttentionItem } from '@/lib/admin-dashboard/attention';
+import { adjustUsers, AUTOMATED_RULE_TEXT, familyUsers, type UsersView } from '@/lib/admin-dashboard/automated';
 import {
   FAMILY_APPS,
   appMrr,
@@ -112,6 +113,7 @@ function BarRow({
   title,
   flag,
   second,
+  ghost,
 }: {
   name: ReactNode;
   value: string;
@@ -121,6 +123,8 @@ function BarRow({
   flag?: string;
   /** A second bar under the first (Vercel beside GA4), labelled and lighter. */
   second?: { label: string; value: string; note?: string; fill: CSSProperties };
+  /** The raw figure behind an adjusted bar: a lighter bar of the full raw length. */
+  ghost?: CSSProperties;
 }) {
   return (
     <div className={s.barRow} title={title}>
@@ -134,7 +138,8 @@ function BarRow({
           {note ? <span className={s.muted}> {note}</span> : null}
         </span>
       </div>
-      <div className={s.barTrack}>
+      <div className={`${s.barTrack} ${ghost ? s.barTrackRaw : ''}`}>
+        {ghost ? <div className={s.barGhost} style={ghost} /> : null}
         <div className={s.barFill} style={fill} />
       </div>
       {second ? (
@@ -211,6 +216,12 @@ function AlertIcon({ level }: { level: AttentionItem['level'] }) {
   );
 }
 
+/** "Raw 1,049 · Singapore excluded", or why the figure is raw only. */
+function adjustedLine(uv: UsersView): string | null {
+  if (uv.excluded > 0 && uv.raw) return `Raw ${fmt(uv.raw.value)} · ${uv.flagged.map((f) => countryName(f.code, f.name)).join(', ')} excluded`;
+  return uv.rawOnlyWhy ? `Raw only: ${uv.rawOnlyWhy}` : null;
+}
+
 // ─── Sections ────────────────────────────────────────────────────────
 
 /** "14:05", in the viewer's time zone. */
@@ -243,7 +254,8 @@ function Header({ data, attention, refresh }: { data: FamilySummary; attention: 
   const { totals, apps } = data;
   const count = apps.length;
   const ofN = (n: number) => `${n} of ${count} apps reporting`;
-  const automated = attention.find((a) => a.rule === 'automated_traffic');
+  const fu = familyUsers(apps);
+  const excludedNames = fu.countries.map((c) => countryName(c.code, c.name)).join(', ');
   const androidPending = attention.some((a) => a.rule === 'android_missing');
 
   const dl = apps.map((a) => okData(a.downloads)).filter((d): d is NonNullable<typeof d> => d !== null);
@@ -264,7 +276,7 @@ function Header({ data, attention, refresh }: { data: FamilySummary; attention: 
 
   const topErrors = apps.map((a) => ({ a, e: okData(a.health)?.errors?.value ?? 0 })).sort((x, y) => y.e - x.e)[0];
 
-  const kpis: { label: string; value: string; change: string; note: string }[] = [
+  const kpis: { label: string; value: string; change: string; note: string; title?: string }[] = [
     {
       label: 'Downloads',
       value: totals.downloads.apps ? fmt(totals.downloads.value) : '—',
@@ -289,11 +301,13 @@ function Header({ data, attention, refresh }: { data: FamilySummary; attention: 
     },
     {
       label: 'Active users',
-      value: totals.activeUsers.apps ? fmt(totals.activeUsers.value) : '—',
-      change: totals.activeUsers.apps ? onWeekBefore(totals.activeUsers) : 'No app reporting',
-      note: automated?.country
-        ? `${automated.country.share}% from ${countryName(automated.country.code, automated.country.name)}, likely automated`
-        : `Summed per app · ${ofN(totals.activeUsers.apps)}`,
+      value: fu.headline.apps ? fmt(fu.headline.value) : '—',
+      change: fu.headline.apps ? `${onWeekBefore(fu.headline)}${fu.excluded > 0 && fu.headline.delta !== null ? ' (est.)' : ''}` : 'No app reporting',
+      note:
+        fu.excluded > 0
+          ? `Raw ${fmt(fu.raw.value)} → ${fmt(fu.headline.value)} adjusted · ${excludedNames} excluded${fu.rawOnly.length ? ` · ${fu.rawOnly.length} raw only` : ''}`
+          : `Summed per app · ${ofN(fu.headline.apps)}${fu.rawOnly.length ? ` · ${fu.rawOnly.length} raw only` : ''}`,
+      title: AUTOMATED_RULE_TEXT,
     },
     {
       label: 'Error events',
@@ -329,7 +343,7 @@ function Header({ data, attention, refresh }: { data: FamilySummary; attention: 
         </div>
         <div className={s.kpis}>
           {kpis.map((k) => (
-            <div key={k.label} className={s.kpi}>
+            <div key={k.label} className={s.kpi} title={k.title}>
               <span className={s.kpiLabel}>{k.label}</span>
               <span className={s.kpiValue}>{k.value}</span>
               <span className={s.kpiChange}>{k.change}</span>
@@ -404,10 +418,12 @@ function Comparisons({ data, androidPending }: { data: FamilySummary; androidPen
         };
       })
       .sort((x, y) => (y.t?.value ?? -1) - (x.t?.value ?? -1));
+  const views = new Map(apps.map((a) => [a.id, adjustUsers(a)]));
   const users = rows((a) => ({
-    t: okData(a.analytics)?.activeUsers ?? null,
+    t: views.get(a.id)?.headline ?? null,
     part: a.analytics,
   }));
+  const fu = familyUsers(apps);
   const errors = rows((a) => ({
     t: okData(a.health)?.errors ?? null,
     part: a.health,
@@ -415,11 +431,13 @@ function Comparisons({ data, androidPending }: { data: FamilySummary; androidPen
   const max = (rs: Row[]) => Math.max(0, ...rs.map((r) => r.t?.value ?? 0));
   const vercelOf = (a: AppSnapshot) => (a.vercel?.state === 'ok' ? a.vercel.data.visitors : null);
   // GA4 and Vercel share one scale, so the two bars of an app are comparable
-  const usersMax = Math.max(max(users), ...apps.map((a) => vercelOf(a)?.value ?? 0));
+  const usersMax = Math.max(max(users), ...apps.map((a) => views.get(a.id)?.raw?.value ?? 0), ...apps.map((a) => vercelOf(a)?.value ?? 0));
   const anyVercel = apps.some((a) => vercelOf(a));
 
   const bars = (rs: Row[], unit: string, withVercel = false) =>
     rs.map(({ a, t, why }) => {
+      const uv = withVercel ? views.get(a.id) : undefined;
+      const adjusted = !!uv && uv.excluded > 0 && !!uv.raw;
       const v = withVercel && anyVercel ? vercelOf(a) : null;
       const vNote = a.vercel?.state === 'not_configured' ? 'not configured' : a.vercel?.state === 'error' ? 'unavailable' : 'not reported';
       return (
@@ -435,9 +453,14 @@ function Comparisons({ data, androidPending }: { data: FamilySummary; androidPen
           )
         }
         value={t ? fmt(t.value) : '—'}
-        note={t ? arrow(t) : why}
+        note={t ? (adjusted ? `${arrow(t)}${t.delta !== null ? ' est.' : ''} · raw ${fmt(uv!.raw!.value)}` : arrow(t)) : why}
         fill={barStyle(a.color, t?.value ?? 0, withVercel && anyVercel ? usersMax : max(rs))}
-        title={t ? `${a.name}: ${fmt(t.value)} ${unit}, ${arrow(t)} on the week before` : `${a.name}: ${why}`}
+        title={
+          t
+            ? `${a.name}: ${fmt(t.value)} ${unit}${adjusted ? ` adjusted (raw ${fmt(uv!.raw!.value)}, ${uv!.flagged.map((f) => countryName(f.code, f.name)).join(', ')} excluded)` : ''}, ${arrow(t)} on the week before${uv?.rawOnlyWhy ? `. Raw only: ${uv.rawOnlyWhy}` : ''}`
+            : `${a.name}: ${why}`
+        }
+        {...(adjusted ? { ghost: { ...barStyle(a.color, uv!.raw!.value, usersMax), opacity: 0.22 } } : {})}
         {...(withVercel && anyVercel
           ? {
               second: {
@@ -493,12 +516,16 @@ function Comparisons({ data, androidPending }: { data: FamilySummary; androidPen
       <Card
         title="Active users"
         sub={
-          totals.activeUsers.apps
-            ? `${fmt(totals.activeUsers.value)} across the family, summed per app${anyVercel ? '. Vercel counts without consent' : ''}`
+          fu.headline.apps
+            ? `${fmt(fu.headline.value)} adjusted${fu.excluded > 0 ? ` (raw ${fmt(fu.raw.value)})` : ''} across the family, summed per app${anyVercel ? '. Vercel counts without consent' : ''}`
             : 'No app reports active users'
         }
       >
         <div className={s.bars}>{bars(users, 'active users', true)}</div>
+        <p className={s.small} title={AUTOMATED_RULE_TEXT}>
+          {AUTOMATED_RULE_TEXT}
+          {fu.rawOnly.length ? ` Raw only: ${fu.rawOnly.map((r) => `${r.name} (${r.why})`).join(', ')}.` : ''}
+        </p>
       </Card>
 
       <Card
@@ -593,8 +620,8 @@ function Audience({ data, attention }: { data: FamilySummary; attention: Attenti
           {flagged.map((f) =>
             f.country ? (
               <p key={f.country.code} className={s.small}>
-                {countryName(f.country.code, f.country.name)} is {f.country.share}% of all visitors to {plural(f.apps.length, 'app')} yet sent no store
-                downloads in 30 days. Treat it as automated traffic until a GA4 filter proves otherwise.
+                {countryName(f.country.code, f.country.name)} is {f.country.share}% of {plural(f.apps.length, 'app')}’ visitors yet sent no store
+                downloads in 30 days. It is left out of the adjusted active users.
               </p>
             ) : null,
           )}
@@ -780,7 +807,8 @@ function AppCard({ app, attention, maxDl }: { app: AppSnapshot; attention: Atten
       : vc.state === 'error'
         ? `Vercel: ${reason(vc)}`
         : 'Vercel: not configured';
-  const stats: { label: string; value: string; note: string; sub?: string }[] = [
+  const uv = adjustUsers(app);
+  const stats: { label: string; value: string; note: string; sub?: string; title?: string }[] = [
     {
       label: 'Downloads',
       value: dl ? fmt(dl.total.value) : '—',
@@ -805,11 +833,12 @@ function AppCard({ app, attention, maxDl }: { app: AppSnapshot; attention: Atten
         },
     {
       label: 'Active users',
-      value: an?.activeUsers ? fmt(an.activeUsers.value) : '—',
-      note: an?.activeUsers
-        ? `${arrow(an.activeUsers)}${an.pageViews ? ` · ${plural(an.pageViews.value, 'view')}` : ''}`
+      value: uv.headline ? fmt(uv.headline.value) : '—',
+      note: uv.headline
+        ? `${arrow(uv.headline)}${uv.excluded > 0 && uv.headline.delta !== null ? ' (est.)' : ''}${an?.pageViews ? ` · ${plural(an.pageViews.value, 'view')}` : ''}`
         : reason(app.analytics) || 'not reported',
-      ...(vercelLine ? { sub: vercelLine } : {}),
+      sub: [adjustedLine(uv), vercelLine].filter(Boolean).join(' · ') || undefined,
+      title: AUTOMATED_RULE_TEXT,
     },
     {
       label: 'Errors',
@@ -842,7 +871,7 @@ function AppCard({ app, attention, maxDl }: { app: AppSnapshot; attention: Atten
         {open}
         <div className={s.stats}>
           {stats.map((st) => (
-            <div key={st.label} className={s.stat}>
+            <div key={st.label} className={s.stat} title={st.title}>
               <span className={s.statLabel}>{st.label}</span>
               <span className={s.statValue}>{st.value}</span>
               <span className={s.statNote}>{st.note}</span>
@@ -911,7 +940,7 @@ function AppCard({ app, attention, maxDl }: { app: AppSnapshot; attention: Atten
 export function FamilyDashboard({ data, notice, refresh }: { data: FamilySummary; notice?: ReactNode; refresh?: RefreshControl }) {
   const attention = deriveAttention(data);
   const androidPending = attention.some((a) => a.rule === 'android_missing');
-  const byUsers = [...data.apps].sort((a, b) => (okData(b.analytics)?.activeUsers?.value ?? -1) - (okData(a.analytics)?.activeUsers?.value ?? -1));
+  const byUsers = [...data.apps].sort((a, b) => (adjustUsers(b).headline?.value ?? -1) - (adjustUsers(a).headline?.value ?? -1));
   const maxDl = Math.max(0, ...data.apps.map((a) => okData(a.downloads)).flatMap((d) => (d ? [d.total.value, d.total.previous] : [])));
 
   return (
