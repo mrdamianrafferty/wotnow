@@ -299,6 +299,7 @@ export function sampleFamilyBodies(now = new Date(), { listingWaiting = false }:
       app: 'grewp',
       generatedAt,
       storeDownloads: downloads([1, 1], [{ country: 'ES', downloads: 1 }]),
+      storeListing: ls([5, 0.5], [4, 0.5], [['ES', 3], ['US', 1]]),
       revenue: {
         state: 'ok',
         data: { source: 'stripe', currency: 'EUR', mrr: 207, revenue28d: null, activeSubscriptions: 3, activeTrials: null, newCustomers28d: null },

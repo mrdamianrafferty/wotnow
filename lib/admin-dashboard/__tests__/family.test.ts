@@ -230,7 +230,7 @@ describe('storeListing', () => {
     expect(listing({ storeListing: { state: 'error', message: 'Supabase: Bearer abc leaked' } })).toEqual({ state: 'error', message: 'Supabase: [redacted] leaked' });
   });
 
-  it('reads a missing key as not reported, never zeros (Grewp, or an app not yet deployed)', () => {
+  it('reads a missing key as not reported, never zeros (an app whose deploy does not send it yet)', () => {
     const p = listing({ generatedAt: 'x' });
     expect(p).toEqual({ state: 'not_configured', missing: [], note: 'Not reported by this app' });
     expect(listingWaiting(p)).toBe(false);
@@ -265,13 +265,16 @@ describe('storeListing', () => {
     expect(f).toEqual({ productPageViews: 0, productPageDownloads: 0, firstTimeDownloads: 0, conversionRate: null, previous: null, apps: 0, waiting: 0 });
   });
 
-  it('reads every sample app, Grewp as not reported, and the waiting sample as waiting', () => {
+  it('reads every sample app, and the waiting sample as waiting', () => {
     const parts = FAMILY_APPS.map((a) => readAppSummary(a, sample[a.id]).storeListing);
-    expect(parts.filter((p) => p?.state === 'ok')).toHaveLength(6);
-    expect(readAppSummary(app('grewp'), sample.grewp).storeListing).toMatchObject({ note: 'Not reported by this app' });
+    // All seven send it (Grewp from grewp#517)
+    expect(parts.filter((p) => p?.state === 'ok')).toHaveLength(7);
+    // Grewp before that deploy: the same body without the key
+    const { storeListing: _omit, ...oldGrewp } = sample.grewp;
+    expect(readAppSummary(app('grewp'), oldGrewp).storeListing).toMatchObject({ note: 'Not reported by this app' });
     const waiting = sampleFamilyBodies(now, { listingWaiting: true }) as Record<string, unknown>;
     const w = FAMILY_APPS.map((a) => readAppSummary(a, waiting[a.id]));
-    expect(familyListing(w)).toMatchObject({ apps: 0, waiting: 6, conversionRate: null });
+    expect(familyListing(w)).toMatchObject({ apps: 0, waiting: 7, conversionRate: null });
     const rise = parts[FAMILY_APPS.findIndex((a) => a.id === 'risedaisy')] as { state: 'ok'; data: StoreListingPart };
     expect(rise.data.totals.productPageViews).toBeGreaterThan(0);
     expect(rise.data.totals.productPageDownloads).toBeLessThanOrEqual(rise.data.totals.productPageViews);

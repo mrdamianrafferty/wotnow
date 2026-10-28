@@ -184,8 +184,8 @@ export interface AppSnapshot {
   audience: Part<AudiencePart>;
   /**
    * App Store listing conversion, added 2026-10-28. Optional so a snapshot
-   * cached before it reads as not reported; an app that does not send it
-   * (Grewp) reads the same way, never as zeros.
+   * cached before it reads as not reported; an app whose deploy does not
+   * send it yet reads the same way, never as zeros.
    */
   storeListing?: Part<StoreListingPart>;
   /** Vercel Web Analytics, added by the dashboard itself (vercel-analytics.ts); absent for an optional project that did not answer. */
