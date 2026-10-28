@@ -2,7 +2,7 @@ import { DocPage } from '@/components/call/DocPage';
 import React from 'react';
 
 export default function PrivacyPolicy() {
-  const lastUpdated = 'January 1, 2026';
+  const lastUpdated = 'October 28, 2026';
 
   return (
     <>
@@ -69,6 +69,7 @@ export default function PrivacyPolicy() {
               <ul className="list-disc pl-6 mt-2">
                 <li><strong>Supabase</strong> - Database and authentication</li>
                 <li><strong>Google Maps</strong> - Location search and mapping</li>
+                <li><strong>Google Analytics</strong> - Usage analytics (Go Daisy, Grow Daisy)</li>
                 <li><strong>Copernicus Marine Service</strong> - Marine environmental data</li>
                 <li><strong>Open-Meteo</strong> - Weather forecasts, air quality, pollen and soil data</li>
                 <li><strong>Stripe</strong> - Payment processing for premium subscriptions (Findr, Grow Daisy)</li>
@@ -78,6 +79,18 @@ export default function PrivacyPolicy() {
               </ul>
               <p className="mt-2">
                 Each service has its own privacy policy governing how they handle data.
+              </p>
+              <p className="mt-2">
+                On Go Daisy and Grow Daisy we have turned on Google Analytics advertising features:
+                Google signals, and demographics and interests reporting. These give us aggregated
+                reports, such as rough age ranges and interests across all our visitors, never
+                information about you as an individual. To produce them, Google may associate
+                activity on our sites with your Google account if you are signed in to Google and
+                have allowed ad personalisation. We do not run ads or remarketing on our sites, and
+                we do not use this data for advertising. You can switch ad personalisation off at{' '}
+                <a href="https://adssettings.google.com" className="link" target="_blank" rel="noopener noreferrer">adssettings.google.com</a>,
+                or stop Google Analytics collecting data in your browser with the{' '}
+                <a href="https://tools.google.com/dlpage/gaoptout" className="link" target="_blank" rel="noopener noreferrer">Google Analytics opt-out browser add-on</a>.
               </p>
             </section>
 
