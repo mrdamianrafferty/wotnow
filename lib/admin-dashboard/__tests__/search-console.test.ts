@@ -21,6 +21,7 @@ import {
   searchTtl,
   searchWindows,
   summariseSite,
+  topRows,
 } from '../search-console';
 import { sampleSearchConsole } from '../search-console-sample';
 
@@ -93,6 +94,15 @@ describe('reading', () => {
     expect(d.position).toEqual({ value: 9.9, previous: 12.1 });
     expect(d.topQueries).toEqual([{ key: 'q', clicks: 5, impressions: 50, ctr: 10, position: 2 }]);
     expect(d.topPages).toEqual([]);
+  });
+
+  it('ranks top rows by impressions, not the API order, keeping five', () => {
+    // Google returns rows by clicks; with every click at 0 that is key order.
+    const keys = ['a', 'b', 'c', 'd', 'e', 'f', 'g'];
+    const imps = [1, 59, 12, 3, 6, 40, 12];
+    const clicks = [0, 0, 0, 0, 0, 0, 1];
+    const body = { rows: keys.map((k, i) => ({ keys: [k], clicks: clicks[i], impressions: imps[i], ctr: 0, position: 1 })) };
+    expect(topRows(body).map((r) => r.key)).toEqual(['b', 'f', 'g', 'c', 'e']);
   });
 
   it('a readable property with no searches is a real zero, with no position', () => {
