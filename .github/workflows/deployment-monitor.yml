@@ -6,62 +6,81 @@ on:
       - main
   workflow_dispatch:
 
+# A newer push to main supersedes the older run: Vercel usually cancels the
+# older build too, and watching it would only report that cancellation.
+concurrency:
+  group: deployment-monitor
+  cancel-in-progress: true
+
 jobs:
   check-deployment:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
-      - name: Wait for Vercel deployment
+      # Watches the production deployment of THIS commit until it finishes.
+      #
+      # It used to sleep 5 minutes, read the newest deployment of any kind
+      # once, and fail on anything but READY. A build still running at 5
+      # minutes read as a failure (2026-10-28: both c2683278 and 36b9802b
+      # "failed" while Vercel deployed them fine), and the newest deployment
+      # could be a preview or another commit's.
+      - name: Wait for this commit's production deployment
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+          SHA: ${{ github.sha }}
         run: |
-          echo "⏳ Waiting 5 minutes for Vercel to complete deployment..."
-          sleep 300
+          # Up to 25 minutes, a check every 30 s
+          MAX_POLLS=50
+          for i in $(seq 1 $MAX_POLLS); do
+            RESPONSE=$(curl -s "https://api.vercel.com/v6/deployments?projectId=${VERCEL_PROJECT_ID}&target=production&sha=${SHA}&limit=5" \
+              -H "Authorization: Bearer ${VERCEL_TOKEN}")
+            if ! echo "$RESPONSE" | jq -e '.deployments' >/dev/null 2>&1; then
+              echo "::error::Vercel API gave no deployment list: $(echo "$RESPONSE" | jq -c '.error // .' 2>/dev/null | head -c 300)"
+              exit 1
+            fi
 
-      - name: Check deployment status
-        run: |
-          echo "🔍 Checking latest deployment status..."
+            DEPLOYMENT=$(echo "$RESPONSE" | jq -c --arg sha "$SHA" '[.deployments[] | select(.meta.githubCommitSha == $sha)][0] // empty')
+            if [ -z "$DEPLOYMENT" ]; then
+              echo "[$i/$MAX_POLLS] No production deployment for ${SHA:0:8} yet"
+              sleep 30
+              continue
+            fi
 
-          # Get latest deployment from Vercel API
-          DEPLOYMENTS=$(curl -s "https://api.vercel.com/v6/deployments?projectId=${{ secrets.VERCEL_PROJECT_ID }}&limit=1" \
-            -H "Authorization: Bearer ${{ secrets.VERCEL_TOKEN }}")
+            STATE=$(echo "$DEPLOYMENT" | jq -r '.state // .readyState')
+            URL=$(echo "$DEPLOYMENT" | jq -r '.url')
+            echo "[$i/$MAX_POLLS] ${SHA:0:8}: $STATE (https://$URL)"
 
-          STATE=$(echo $DEPLOYMENTS | jq -r '.deployments[0].state')
-          URL=$(echo $DEPLOYMENTS | jq -r '.deployments[0].url')
-          CREATED=$(echo $DEPLOYMENTS | jq -r '.deployments[0].created')
+            case "$STATE" in
+              READY)
+                echo "✅ Production deployment for ${SHA:0:8} is live"
+                exit 0
+                ;;
+              ERROR)
+                echo "::error::Vercel production deployment for ${SHA:0:8} failed: https://$URL"
+                exit 1
+                ;;
+              CANCELED)
+                # Superseded by a newer push; that push's run reports on it
+                echo "⏭️ Deployment for ${SHA:0:8} was cancelled, so a newer one replaced it"
+                exit 0
+                ;;
+              *)
+                # BUILDING, QUEUED or INITIALIZING
+                sleep 30
+                ;;
+            esac
+          done
 
-          echo "📊 Deployment Status:"
-          echo "   State: $STATE"
-          echo "   URL: https://$URL"
-          echo "   Created: $(date -d @$((CREATED/1000)) 2>/dev/null || date -r $((CREATED/1000)))"
-
-          # Check if deployment is in error state
-          if [ "$STATE" = "ERROR" ]; then
-            echo "❌ DEPLOYMENT FAILED!"
-            echo "::error::Vercel deployment failed. Check https://vercel.com/dashboard for details."
-            exit 1
-          elif [ "$STATE" = "READY" ]; then
-            echo "✅ Deployment successful!"
-          elif [ "$STATE" = "BUILDING" ] || [ "$STATE" = "QUEUED" ]; then
-            echo "⚠️  Deployment still in progress after 5 minutes. May need attention."
-            exit 1
-          else
-            echo "⚠️  Unknown deployment state: $STATE"
-            exit 1
-          fi
-
-      - name: Check bundle size (optional)
-        if: success()
-        run: |
-          echo "📦 Checking for bundle size issues in recent deployments..."
-          # This is a placeholder - you could add more sophisticated checks here
-          echo "✅ Bundle size check passed"
+          echo "::error::No finished production deployment for ${SHA:0:8} after 25 minutes"
+          exit 1
 
       - name: Notify on failure
         if: failure()
         run: |
           echo "🚨 DEPLOYMENT MONITORING FAILED!"
-          echo "This means either:"
-          echo "1. The Vercel deployment failed"
-          echo "2. The deployment is taking too long"
-          echo "3. There's an issue with the deployment API"
+          echo "Either the production deployment failed, it didn't finish within 25 minutes,"
+          echo "or the Vercel API couldn't be read (check the VERCEL_TOKEN and VERCEL_PROJECT_ID secrets)."
           echo ""
           echo "👉 Check your Vercel dashboard: https://vercel.com/dashboard"
           echo "👉 Run locally: cd ~/Projects/WotNow && vercel ls | head -5"
