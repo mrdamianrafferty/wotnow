@@ -10,7 +10,8 @@
  * malformed becomes one "unavailable" card, never a failed page.
  *
  * Each app's Vercel Web Analytics figures are added to its snapshot
- * (vercel-analytics.ts) and ride in the same cache entry.
+ * (vercel-analytics.ts), and its top unresolved Sentry issue (sentry-top.ts);
+ * both ride in the same cache entry.
  *
  * Each app's answer is cached for an hour (five minutes when it failed), so
  * a page load does not spend seven apps' GA4 quota: see family-cache.ts.
@@ -21,6 +22,7 @@ import { metricsApp } from './app-identity';
 import { cachedSnapshot, claimRefresh } from './family-cache';
 import { getMetricsSummary } from './metrics';
 import { withVercel } from './vercel-analytics';
+import { withSentryTop } from './sentry-top';
 import { dashboardUrl } from './app-links';
 import { FAMILY_APPS, familyTotals, readAppSummary, unavailableSnapshot, type AppSnapshot, type FamilyApp, type FamilySummary } from './family';
 
@@ -77,7 +79,9 @@ export async function getFamilySummary(
 ): Promise<FamilySummary> {
   const state = await claimRefresh(refresh, { cache });
   const apps = await Promise.all(
-    FAMILY_APPS.map((app) => cachedSnapshot(app, async () => withVercel(await fetchAppSnapshot(app, env), app, env), { bypass: state.refreshed, cache })),
+    FAMILY_APPS.map((app) =>
+      cachedSnapshot(app, async () => withSentryTop(await withVercel(await fetchAppSnapshot(app, env), app, env), app, env), { bypass: state.refreshed, cache }),
+    ),
   );
   // Attached after the cache so a changed METRICS_<APP>_DASHBOARD_URL shows at once
   const linked = apps.map((a) => ({ ...a, dashboardUrl: dashboardUrl(a.id, FAMILY_APPS.find((f) => f.id === a.id)?.envKey ?? '', env) }));

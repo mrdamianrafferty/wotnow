@@ -23,7 +23,7 @@
 import { getCache, type RuntimeCache } from '@vercel/functions';
 import type { AppSnapshot, FamilyApp } from './family';
 
-const KEY_VERSION = 'v2';
+const KEY_VERSION = 'v3';
 export const GOOD_TTL_S = 60 * 60;
 export const FAILED_TTL_S = 5 * 60;
 export const REFRESH_COOLDOWN_S = 5 * 60;
@@ -39,7 +39,7 @@ interface Stored {
 /** Unreachable, unconfigured, or answering with a section in error: worth asking again soon. */
 export function isFailedSnapshot(s: AppSnapshot): boolean {
   if (s.status !== 'ok') return true;
-  const parts = [s.downloads, s.revenue, s.analytics, s.health, s.audience, s.webRevenue, s.vercel];
+  const parts = [s.downloads, s.revenue, s.analytics, s.health, s.audience, s.webRevenue, s.vercel, s.topIssue];
   return parts.some((p) => p?.state === 'error');
 }
 

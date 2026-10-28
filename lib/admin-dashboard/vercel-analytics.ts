@@ -9,6 +9,8 @@
  *   GET /v1/query/web-analytics/visits/count      → {data:{visitors,pageviews}}
  *   GET /v1/query/web-analytics/visits/aggregate  → by=country, top 10
  *
+ * Plus one count over the last 28 complete days, for the per-app funnel.
+ *
  * Rise Daisy and Hungerford share the rise-daisy project; Hungerford's
  * subdomain rewrites to /hungerford/*, so it is that path prefix and Rise is
  * everything else. Grow Daisy's project deploys from another repo: it is
@@ -126,30 +128,33 @@ export function vercelWindows(now: Date) {
     from: utcDay(now, fromBack),
     to: utcDay(now, toBack),
   });
-  return { current: range(7, 1), previous: range(14, 8) };
+  return { current: range(7, 1), previous: range(14, 8), funnel: range(28, 1) };
 }
 
 const iso = (w: { from: string; to: string }) => ({ since: `${w.from}T00:00:00.000Z`, until: `${w.to}T23:59:59.999Z` });
 
 async function readVercel(source: Source, token: string, fetchImpl: typeof fetch, now: Date): Promise<VercelPart> {
   const id = await projectId(source.project, token, fetchImpl);
-  const { current, previous } = vercelWindows(now);
+  const { current, previous, funnel } = vercelWindows(now);
   const filter: Record<string, string> = source.filter ? { filter: source.filter } : {};
   const count = async (w: { from: string; to: string }) => {
     const c = readCount(await call('/v1/query/web-analytics/visits/count', { projectId: id, ...iso(w), ...filter }, token, fetchImpl));
     if (!c) throw new VercelError('Vercel’s count had no visitors or pageviews');
     return c;
   };
-  const [now7, prev7, countryBody] = await Promise.all([
+  const [now7, prev7, countryBody, last28] = await Promise.all([
     count(current),
     count(previous),
     call('/v1/query/web-analytics/visits/aggregate', { projectId: id, by: 'country', limit: '10', ...iso(current), ...filter }, token, fetchImpl),
+    // The funnel's window (funnel.ts); losing it only blanks that one step
+    count(funnel).catch(() => null),
   ]);
   return {
     window: current,
     visitors: trend(now7.visitors, prev7.visitors),
     pageviews: trend(now7.pageviews, prev7.pageviews),
     countries: readCountries(countryBody),
+    visitors28d: last28?.visitors ?? null,
   };
 }
 
