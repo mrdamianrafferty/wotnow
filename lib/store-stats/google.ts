@@ -42,7 +42,7 @@ export function decodePlayCsv(buffer: Buffer): string {
   return buffer.toString('utf-8').replace(/^﻿/, '');
 }
 
-function splitCsvLine(line: string): string[] {
+export function splitCsvLine(line: string): string[] {
   const cells: string[] = [];
   let current = '';
   let quoted = false;
