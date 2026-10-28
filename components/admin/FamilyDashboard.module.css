@@ -416,6 +416,10 @@
   font-size: 14px;
   color: var(--fg-2);
 }
+.barLabelSecond {
+  font-size: 13px;
+  margin-top: 2px;
+}
 .barTrack {
   height: 8px;
   background: var(--neutral-100);

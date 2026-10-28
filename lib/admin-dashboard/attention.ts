@@ -15,7 +15,7 @@ export type AttentionLevel = 'danger' | 'check' | 'waiting';
 export interface AttentionItem {
   level: AttentionLevel;
   /** Stable, for React keys and tests. */
-  rule: 'errors_rising' | 'not_reporting' | 'wrong_property' | 'automated_traffic' | 'android_missing';
+  rule: 'errors_rising' | 'not_reporting' | 'wrong_property' | 'automated_traffic' | 'android_missing' | 'analytics_disagree' | 'automated_vercel';
   /** Apps it is about; empty for a family-wide item. */
   apps: FamilyAppId[];
   /** Who it is about, as shown: an app name, several, or "Android". */
@@ -38,6 +38,14 @@ export const RULES = {
   wrongPropertyMaxUsers: 5,
   wrongPropertyMinErrors: 100,
   automatedShare: 0.3,
+  /** Either counter needs this many people before the other being far lower means anything. */
+  disagreeMinVisitors: 20,
+  /** ...and "far lower" is under this share of it. */
+  disagreeRatio: 0.25,
+  /** Vercel: a country whose visitors view this many pages each is a script, not people. */
+  botViewsPerVisitor: 15,
+  /** ...once it has this many visitors or views, so a single curious reader cannot trip it. */
+  botMinVisitorsOrViews: 50,
 } as const;
 
 const LEVEL_ORDER: Record<AttentionLevel, number> = {
@@ -47,6 +55,7 @@ const LEVEL_ORDER: Record<AttentionLevel, number> = {
 };
 const n = (x: number) => x.toLocaleString('en-GB');
 const cap = (t: string) => t.charAt(0).toUpperCase() + t.slice(1);
+const NO_PART: Part<never> = { state: 'not_configured', missing: [] };
 const okData = <T>(p: Part<T>): T | null => (p.state === 'ok' ? p.data : null);
 
 const PART_LABELS = {
@@ -185,6 +194,52 @@ function automatedTraffic(summary: FamilySummary): AttentionItem[] {
     }));
 }
 
+/** GA4 needs consent and Vercel does not, so a wide gap either way means a tag or script is broken. */
+function analyticsDisagree(apps: AppSnapshot[]): AttentionItem[] {
+  return apps.flatMap((a): AttentionItem[] => {
+    const v = okData(a.vercel ?? NO_PART)?.visitors.value;
+    const g = okData(a.analytics)?.activeUsers?.value;
+    if (v === undefined || g === undefined) return [];
+    const ga4Low = v >= RULES.disagreeMinVisitors && g < v * RULES.disagreeRatio;
+    const vercelLow = g >= RULES.disagreeMinVisitors && v < g * RULES.disagreeRatio;
+    if (!ga4Low && !vercelLow) return [];
+    return [
+      {
+        level: 'check',
+        rule: 'analytics_disagree',
+        apps: [a.id],
+        label: a.name,
+        title: 'Analytics disagree',
+        body: `Vercel counted ${n(v)} visitor${v === 1 ? '' : 's'} and GA4 ${n(g)} active user${g === 1 ? '' : 's'} this week. Check the ${ga4Low ? 'GA4 tag (is it blocked, or on the wrong property?)' : 'Vercel script (is <Analytics /> on the page?)'}.`,
+        short: 'Analytics disagree',
+      },
+    ];
+  });
+}
+
+/** Vercel counts every request that runs its script, so one country's pages-per-visitor gives a crawler away. */
+function automatedVercel(apps: AppSnapshot[]): AttentionItem[] {
+  return apps.flatMap((a): AttentionItem[] => {
+    const v = okData(a.vercel ?? NO_PART);
+    if (!v) return [];
+    const c = v.countries
+      .filter((x) => x.pageviews / Math.max(x.visitors, 1) > RULES.botViewsPerVisitor && (x.visitors >= RULES.botMinVisitorsOrViews || x.pageviews >= RULES.botMinVisitorsOrViews))
+      .sort((x, y) => y.pageviews - x.pageviews)[0];
+    if (!c) return [];
+    return [
+      {
+        level: 'check',
+        rule: 'automated_vercel',
+        apps: [a.id],
+        label: a.name,
+        title: `Likely automated traffic from ${c.name}`,
+        body: `${n(c.visitors)} visitor${c.visitors === 1 ? '' : 's'} from ${c.name} made ${n(c.pageviews)} page views (${Math.round(c.pageviews / Math.max(c.visitors, 1))} each) on Vercel. People don’t browse like that.`,
+        short: 'Bot traffic',
+      },
+    ];
+  });
+}
+
 function androidMissing(apps: AppSnapshot[]): AttentionItem[] {
   // Only apps that ship on Android: Hungerford is web and iOS only
   const onAndroid = new Set(FAMILY_APPS.filter((f) => f.platforms.includes('android')).map((f) => f.id));
@@ -216,6 +271,8 @@ export function deriveAttention(summary: FamilySummary): AttentionItem[] {
     ...notReporting(apps),
     ...wrongProperty(apps),
     ...automatedTraffic(summary),
+    ...analyticsDisagree(apps),
+    ...automatedVercel(apps),
     ...androidMissing(apps),
   ];
   // Stable sort: level first, rule order within a level

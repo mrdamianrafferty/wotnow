@@ -9,6 +9,9 @@
  * tokens never leave this server. An app that is unset, slow, refusing or
  * malformed becomes one "unavailable" card, never a failed page.
  *
+ * Each app's Vercel Web Analytics figures are added to its snapshot
+ * (vercel-analytics.ts) and ride in the same cache entry.
+ *
  * Each app's answer is cached for an hour (five minutes when it failed), so
  * a page load does not spend seven apps' GA4 quota: see family-cache.ts.
  */
@@ -17,6 +20,7 @@ import type { RuntimeCache } from '@vercel/functions';
 import { metricsApp } from './app-identity';
 import { cachedSnapshot, claimRefresh } from './family-cache';
 import { getMetricsSummary } from './metrics';
+import { withVercel } from './vercel-analytics';
 import { FAMILY_APPS, familyTotals, readAppSummary, unavailableSnapshot, type AppSnapshot, type FamilyApp, type FamilySummary } from './family';
 
 const TIMEOUT_MS = 8_000;
@@ -72,7 +76,7 @@ export async function getFamilySummary(
 ): Promise<FamilySummary> {
   const state = await claimRefresh(refresh, { cache });
   const apps = await Promise.all(
-    FAMILY_APPS.map((app) => cachedSnapshot(app, () => fetchAppSnapshot(app, env), { bypass: state.refreshed, cache })),
+    FAMILY_APPS.map((app) => cachedSnapshot(app, async () => withVercel(await fetchAppSnapshot(app, env), app, env), { bypass: state.refreshed, cache })),
   );
   return { generatedAt: new Date().toISOString(), refresh: state, apps, totals: familyTotals(apps) };
 }
