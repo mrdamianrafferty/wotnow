@@ -978,6 +978,22 @@ function AppCard({ app, attention, maxDl }: { app: AppSnapshot; attention: Atten
                   {play.reviews.lowUnanswered > 0 ? ` · ${play.reviews.lowUnanswered} to reply` : ''}
                 </span>
               ) : null}
+              {play.installs && (play.installs.activeDevices !== null || play.installs.uninstalls7d > 0) ? (
+                <span className={s.chip}>
+                  {[
+                    play.installs.activeDevices !== null ? `${plural(play.installs.activeDevices, 'active device')}` : null,
+                    play.installs.uninstalls7d > 0 ? `${plural(play.installs.uninstalls7d, 'uninstall')} in 7 days` : null,
+                  ]
+                    .filter(Boolean)
+                    .join(' · ')}
+                </span>
+              ) : null}
+              {play.listing && play.listing.visitors > 0 ? (
+                <span className={s.chip} title={`Play store listing, ${play.listing.days} days`}>
+                  Listing {fmt(play.listing.visitors)} visitors → {fmt(play.listing.acquisitions)} installs
+                  {play.listing.conversion !== null ? ` (${fmt(play.listing.conversion, 1)}%)` : ''}
+                </span>
+              ) : null}
               {play.notes.map((n) => (
                 <span key={n} className={s.chip} title={n}>
                   {n.split(':')[0]} unavailable

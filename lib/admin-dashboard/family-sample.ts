@@ -12,7 +12,7 @@
 import { utcDay } from '@/lib/store-stats/summary';
 import { summariseStoreListing, type ListingInput } from '@/lib/store-stats/listing-summary';
 import { dashboardUrl } from './app-links';
-import { FAMILY_APPS, familyTotals, readAppSummary, type FamilyAppId, type FamilySummary, type Part, type PlayPart, type PlayRelease, type PlayReviews, type TopIssuePart, type VercelCountry, type VercelPart } from './family';
+import { FAMILY_APPS, familyTotals, readAppSummary, type AppSnapshot, type FamilyAppId, type FamilySummary, type Part, type PlayInstalls, type PlayListing, type PlayPart, type PlayRelease, type PlayReviews, withPlayDownloads, type TopIssuePart, type VercelCountry, type VercelPart } from './family';
 
 /** A WeekMetric with these weekly totals, spread over 14 days. */
 function week(value: number, previous: number) {
@@ -374,9 +374,34 @@ export function sampleTopIssues(): Partial<Record<FamilyAppId, Part<TopIssuePart
 /** Google Play parts: one app of each kind the card and the attention rules distinguish. */
 export function samplePlay(): Partial<Record<FamilyAppId, Part<PlayPart>>> {
   const none: PlayReviews = { count: 0, average: null, lowUnanswered: 0, recent: [] };
-  const ok = (rating: [number, number] | null, release: PlayRelease | null, reviews: PlayReviews = none): Part<PlayPart> => ({
+  /** Installs for the week and the week before, spread over the 14 days. */
+  const installs = (value: number, previous: number, activeDevices: number, uninstalls7d: number): PlayInstalls => {
+    const w = week(value, previous);
+    return { downloads: w, latestDate: '2026-10-25', activeDevices, uninstalls7d };
+  };
+  const listing = (visitors: number, acquisitions: number): PlayListing => ({
+    days: 28,
+    visitors,
+    acquisitions,
+    conversion: visitors ? Math.round((acquisitions / visitors) * 1000) / 10 : null,
+    latestDate: '2026-10-25',
+  });
+  const ok = (
+    rating: [number, number] | null,
+    release: PlayRelease | null,
+    reviews: PlayReviews = none,
+    extra: { installs?: PlayInstalls; listing?: PlayListing } = {},
+  ): Part<PlayPart> => ({
     state: 'ok',
-    data: { packageName: 'sample', rating: rating ? { average: rating[0], previous: rating[1], date: '2026-10-27' } : null, release, reviews, notes: [] },
+    data: {
+      packageName: 'sample',
+      rating: rating ? { average: rating[0], previous: rating[1], date: '2026-10-27' } : null,
+      release,
+      reviews,
+      installs: extra.installs ?? null,
+      listing: extra.listing ?? null,
+      notes: [],
+    },
   });
   const findrReviews: PlayReviews = {
     count: 3,
@@ -390,10 +415,10 @@ export function samplePlay(): Partial<Record<FamilyAppId, Part<PlayPart>>> {
   };
   const rel = (status: PlayRelease['status'], name: string, userFraction: number | null = null): PlayRelease => ({ status, name, userFraction, versionCodes: ['1'] });
   return {
-    godaisy: ok([4.6, 4.6], rel('completed', '1.4.2')),
+    godaisy: ok([4.6, 4.6], rel('completed', '1.4.2'), none, { installs: installs(9, 6, 41, 2), listing: listing(180, 14) }),
     growdaisy: ok([4.4, 4.5], rel('inProgress', '1.2.0', 0.2)),
-    risedaisy: ok([4.8, 4.7], rel('completed', '1.8.3')),
-    findr: ok([3.6, 4.1], rel('completed', '2.1.0'), findrReviews),
+    risedaisy: ok([4.8, 4.7], rel('completed', '1.8.3'), none, { installs: installs(14, 11, 63, 1), listing: listing(240, 31) }),
+    findr: ok([3.6, 4.1], rel('completed', '2.1.0'), findrReviews, { installs: installs(5, 7, 22, 3), listing: listing(96, 6) }),
     flycast: ok(null, rel('draft', '1.0.3')),
     grewp: ok([4.9, 4.9], rel('halted', '0.9.1', 0.5)),
   };
@@ -418,12 +443,18 @@ export function sampleFamilySummary(
   const extra = withVercel ? sampleVercel(now) : {};
   const top = withTopIssues ? sampleTopIssues() : {};
   const play = withPlay ? samplePlay() : {};
-  const apps = FAMILY_APPS.map((a) => ({
-    ...readAppSummary(a, bodies[a.id]),
-    dashboardUrl: dashboardUrl(a.id, a.envKey),
-    ...(extra[a.id] ? { vercel: extra[a.id] } : {}),
-    ...(top[a.id] ? { topIssue: top[a.id] } : {}),
-    ...(play[a.id] ? { play: play[a.id] } : {}),
-  }));
+  const apps = FAMILY_APPS.map((a) => {
+    const snapshot: AppSnapshot = {
+      ...readAppSummary(a, bodies[a.id]),
+      dashboardUrl: dashboardUrl(a.id, a.envKey),
+      ...(extra[a.id] ? { vercel: extra[a.id] } : {}),
+      ...(top[a.id] ? { topIssue: top[a.id] } : {}),
+      ...(play[a.id] ? { play: play[a.id] } : {}),
+    };
+    // As the live fetch does: Play's installs become the app's Android downloads
+    const part = play[a.id];
+    const installs = part?.state === 'ok' ? part.data.installs : null;
+    return installs ? withPlayDownloads(snapshot, installs) : snapshot;
+  });
   return { generatedAt: now.toISOString(), apps, totals: familyTotals(apps) };
 }

@@ -31,6 +31,19 @@ const CSV = [
   '2026-10-27,org.grewp.app,NA,4.8',
 ].join('\n');
 
+const INSTALLS_CSV = [
+  'Date,Package name,Daily Device Installs,Daily Device Uninstalls,Daily Device Upgrades,Total User Installs,Daily User Installs,Daily User Uninstalls,Active Device Installs,Install events,Update events,Uninstall events',
+  '2026-10-16,org.grewp.app,1,0,0,0,1,0,8,1,0,0',
+  '2026-10-22,org.grewp.app,2,0,0,0,2,0,11,2,5,0',
+  '2026-10-23,org.grewp.app,0,1,0,0,0,1,10,0,2,1',
+].join('\n');
+const LISTING_CSV = [
+  'Date,Package name,Country / region,Store listing acquisitions,Store listing visitors,Store listing conversion rate',
+  '2026-10-20,org.grewp.app,GB,1,10,10.0',
+  '2026-10-20,org.grewp.app,Other,0,5,0.0',
+  '2026-10-22,org.grewp.app,GB,2,5,40.0',
+].join('\n');
+
 describe('ratings CSV', () => {
   it('reads rows by header name, skipping NA and malformed dates', () => {
     const rows = parseRatingsOverviewCsv(`${CSV}\nnot-a-date,x,1,1`);
@@ -87,15 +100,21 @@ describe('production release', () => {
 });
 
 /** A fake Play: the reports bucket and the Publisher API, recording every call. */
-function fakePlay({ ratings = CSV, publisher = 200, reviews = {} as unknown, reviewsStatus = 200 }: { ratings?: string | null; publisher?: number; reviews?: unknown; reviewsStatus?: number } = {}) {
+function fakePlay({ ratings = CSV, publisher = 200, reviews = {} as unknown, reviewsStatus = 200, bucket = 200 }: { ratings?: string | null; publisher?: number; reviews?: unknown; reviewsStatus?: number; bucket?: number } = {}) {
   const calls: { method: string; url: string }[] = [];
   const impl = (async (input: RequestInfo | URL, init?: RequestInit) => {
     const url = String(input);
     const method = init?.method ?? 'GET';
     calls.push({ method, url });
     if (url.startsWith('https://storage.googleapis.com/')) {
-      // Only the newest month has a file
-      return ratings !== null && url.includes('_202610_overview') ? new Response(ratings) : new Response('', { status: 404 });
+      if (bucket !== 200) return new Response('', { status: bucket });
+      // Only the newest month has a file, per report
+      const path = decodeURIComponent(url);
+      if (!path.includes('_202610_')) return new Response('', { status: 404 });
+      if (path.includes('stats/ratings/') && ratings !== null) return new Response(ratings);
+      if (path.includes('stats/installs/') && path.includes('_overview.csv')) return new Response(INSTALLS_CSV);
+      if (path.includes('stats/store_performance/') && path.includes('_country.csv')) return new Response(LISTING_CSV);
+      return new Response('', { status: 404 });
     }
     if (method === 'GET' && url.includes('/reviews?')) return reviewsStatus === 200 ? json(reviews) : new Response('{}', { status: reviewsStatus });
     if (publisher !== 200) return new Response('{"error":{"message":"API has not been used"}}', { status: publisher });
@@ -130,12 +149,21 @@ describe('fetchPlayPart', () => {
         rating: { average: 4.8, previous: 4.5, date: '2026-10-27' },
         release: { status: 'completed', name: '0.9.1', userFraction: null, versionCodes: ['9'] },
         reviews: { count: 0, average: null, lowUnanswered: 0, recent: [] },
+        installs: {
+          downloads: { value: 2, previous: 1, delta: 100, daily: [0, 0, 1, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0] },
+          latestDate: '2026-10-23',
+          activeDevices: 10,
+          uninstalls7d: 1,
+        },
+        listing: { days: 28, visitors: 20, acquisitions: 3, conversion: 15, latestDate: '2026-10-22' },
         notes: [],
       },
     });
     const storage = play.calls.filter((c) => c.url.startsWith('https://storage.googleapis.com/'));
-    expect(storage).toHaveLength(3);
-    expect(storage.every((c) => decodeURIComponent(c.url).includes('stats/ratings/ratings_org.grewp.app_'))).toBe(true);
+    expect(storage).toHaveLength(7);
+    expect(storage.filter((c) => decodeURIComponent(c.url).includes('stats/ratings/ratings_org.grewp.app_'))).toHaveLength(3);
+    expect(storage.filter((c) => decodeURIComponent(c.url).includes('stats/installs/installs_org.grewp.app_'))).toHaveLength(2);
+    expect(storage.filter((c) => decodeURIComponent(c.url).includes('stats/store_performance/store_performance_org.grewp.app_'))).toHaveLength(2);
     expect(storage.every((c) => c.url.includes('pubsite_prod_rev_123') && !c.url.includes('gs%3A'))).toBe(true);
     expect(play.calls.map((c) => c.method)).toEqual(expect.arrayContaining(['POST', 'DELETE']));
     expect(play.calls.at(-1)).toMatchObject({ method: 'DELETE', url: expect.stringContaining('/edits/edit-1') });
@@ -149,6 +177,14 @@ describe('fetchPlayPart', () => {
     expect(notes[0]).toMatch(/^Release: Play refused the service account \(403\)/);
   });
 
+  it('says a bucket refusal once, however many reports it blocked, and keeps release and reviews', async () => {
+    const part = await fetchPlayPart(app('grewp'), env, { fetchImpl: fakePlay({ bucket: 403 }).impl, now });
+    expect(part).toMatchObject({ state: 'ok', data: { rating: null, installs: null, listing: null, release: { status: 'completed' } } });
+    const notes = (part as Extract<Part<PlayPart>, { state: 'ok' }>).data.notes;
+    expect(notes).toHaveLength(1);
+    expect(notes[0]).toMatch(/^Reports: The reports bucket refused the service account \(403\)/);
+  });
+
   it('treats an app with no ratings report as no rating, not an error', async () => {
     const part = await fetchPlayPart(app('grewp'), env, { fetchImpl: fakePlay({ ratings: null }).impl, now });
     expect(part).toMatchObject({ state: 'ok', data: { rating: null, release: { status: 'completed' } } });
@@ -158,7 +194,7 @@ describe('fetchPlayPart', () => {
     const impl = (async () => new Response('', { status: 500 })) as typeof fetch;
     const part = await fetchPlayPart(app('grewp'), env, { fetchImpl: impl, now });
     expect(part).toMatchObject({ state: 'error' });
-    expect((part as { message: string }).message).toMatch(/Rating:.*Release:.*Reviews:/);
+    expect((part as { message: string }).message).toMatch(/Reports:.*Release:.*Reviews:/);
   });
 
   it('keeps the rating and release when only the reviews call is refused, and says why', async () => {
@@ -219,7 +255,10 @@ describe('reviews', () => {
 });
 
 describe('Needs attention', () => {
-  const ok = (rating: PlayPart['rating'], release: PlayPart['release'], reviews: PlayPart['reviews'] = null): Part<PlayPart> => ({ state: 'ok', data: { packageName: 'p', rating, release, reviews, notes: [] } });
+  const ok = (rating: PlayPart['rating'], release: PlayPart['release'], reviews: PlayPart['reviews'] = null): Part<PlayPart> => ({
+    state: 'ok',
+    data: { packageName: 'p', rating, release, reviews, installs: null, listing: null, notes: [] },
+  });
   const rel = (status: 'draft' | 'inProgress' | 'halted' | 'completed', userFraction: number | null = null) => ({ status, name: '1.2.3', userFraction, versionCodes: ['1'] });
   const rate = (average: number, previous: number | null = average) => ({ average, previous, date: '2026-10-27' });
 
