@@ -4,6 +4,7 @@
 // https://docs.sentry.io/platforms/javascript/guides/nextjs/
 
 import * as Sentry from '@sentry/nextjs';
+import { tracesSampleRate } from './lib/sentry-config';
 
 const getSentryDSN = (): string | undefined => {
   if (typeof window !== 'undefined') {
@@ -17,15 +18,15 @@ const getSentryDSN = (): string | undefined => {
     }
   }
 
-  // Default DSN (Findr for localhost/other domains)
-  return process.env.NEXT_PUBLIC_SENTRY_DSN;
+  // localhost and anything else is Go Daisy. NEXT_PUBLIC_SENTRY_DSN is Findr's, never a fallback.
+  return process.env.NEXT_PUBLIC_SENTRY_DSN_GODAISY;
 };
 
 Sentry.init({
   dsn: getSentryDSN(),
 
-  // Adjust this value in production, or use tracesSampler for greater control
-  tracesSampleRate: 1,
+  // 0.1 in production, 1 in dev; NEXT_PUBLIC_ prefix so the override reaches the browser
+  tracesSampleRate: tracesSampleRate(process.env.NEXT_PUBLIC_SENTRY_TRACES_SAMPLE_RATE, process.env.NODE_ENV),
 
   // Setting this option to true will print useful information to the console while you're setting up Sentry.
   debug: false,

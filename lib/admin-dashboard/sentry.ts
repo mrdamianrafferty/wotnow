@@ -6,8 +6,8 @@
  * the source-map upload target, not necessarily Go Daisy's. Go Daisy's
  * browser errors go to NEXT_PUBLIC_SENTRY_DSN_GODAISY (instrumentation-client),
  * and a DSN ends in its project's numeric id, so that is what is read, with
- * SENTRY_DASHBOARD_PROJECT_ID as an override. Server-side errors use the
- * default DSN and are not in this panel.
+ * SENTRY_DASHBOARD_PROJECT_ID as an override. Server-side errors use SENTRY_DSN
+ * (same project) and are counted here.
  *
  * The token is read from SENTRY_ADMIN_TOKEN first: SENTRY_AUTH_TOKEN is the
  * source-map upload token, which usually cannot read issues or stats. Needs
@@ -96,7 +96,7 @@ export async function fetchSentrySummary(env: Record<string, string | undefined>
         `/organizations/${org}/issues/?${new URLSearchParams({ project: projectId, query: 'is:unresolved', statsPeriod: '14d', sort: 'freq', limit: '5' })}`,
       ),
       get<StatsV2Response>(
-        `/organizations/${org}/stats_v2/?${new URLSearchParams({ field: 'sum(quantity)', category: 'error', interval: '1d', statsPeriod: '15d', project: projectId })}`,
+        `/organizations/${org}/stats_v2/?${new URLSearchParams({ field: 'sum(quantity)', category: 'error', outcome: 'accepted', interval: '1d', statsPeriod: '15d', project: projectId })}`,
       ),
       get<SessionsResponse>(
         `/organizations/${org}/sessions/?${new URLSearchParams({ field: 'crash_free_rate(session)', statsPeriod: '14d', interval: '1d', project: projectId })}`,
