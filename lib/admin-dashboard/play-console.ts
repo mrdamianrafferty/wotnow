@@ -23,7 +23,7 @@
 
 import { getServiceAccountToken } from '@/lib/google/service-account-token';
 import { decodePlayCsv, getGoogleConfig, splitCsvLine, type GoogleConfig } from '@/lib/store-stats/google';
-import { cleanMessage, type AppSnapshot, type FamilyApp, type FamilyAppId, type Part, type PlayPart, type PlayRelease, type PlayReleaseStatus } from './family';
+import { cleanMessage, type AppSnapshot, type FamilyApp, type FamilyAppId, type Part, type PlayPart, type PlayRelease, type PlayReleaseStatus, type PlayReview, type PlayReviews } from './family';
 
 /** Play package per app; Hungerford is iOS and web only. Go Daisy and Grow Daisy match app-identity.ts. */
 export const PLAY_PACKAGES: Partial<Record<FamilyAppId, string>> = {
@@ -125,6 +125,48 @@ export function readProductionRelease(body: unknown): PlayRelease | null {
   return read.sort((a, b) => STATUSES.indexOf(a.status) - STATUSES.indexOf(b.status))[0] ?? null;
 }
 
+// ─── Reviews ─────────────────────────────────────────────────────────
+
+/** A review is low when it gives one or two stars. */
+export const LOW_STARS = 2;
+const REVIEW_TEXT_MAX = 280;
+
+/**
+ * Android Publisher reviews.list → the week's reviews. Play returns only the
+ * last week, newest edit of each, each with the user's comment and any
+ * developer reply. The author's name is never read: the dashboard has no use for it.
+ */
+export function readReviews(body: unknown): PlayReviews {
+  const raw = isObj(body) && Array.isArray(body.reviews) ? body.reviews.filter(isObj) : [];
+  const reviews = raw.flatMap((r): PlayReview[] => {
+    const comments = Array.isArray(r.comments) ? r.comments.filter(isObj) : [];
+    const user = comments.map((c) => c.userComment).find(isObj);
+    const stars = user && typeof user.starRating === 'number' ? Math.round(user.starRating) : 0;
+    if (!user || stars < 1 || stars > 5) return [];
+    const seconds = isObj(user.lastModified) ? Number(user.lastModified.seconds) : NaN;
+    const text = str(user.text)?.replace(/\s+/g, ' ').trim();
+    return [
+      {
+        stars,
+        text: text ? (text.length > REVIEW_TEXT_MAX ? `${text.slice(0, REVIEW_TEXT_MAX - 1)}…` : text) : null,
+        version: str(user.appVersionName),
+        date: Number.isFinite(seconds) ? new Date(seconds * 1000).toISOString() : '',
+        replied: comments.some((c) => isObj(c.developerComment)),
+      },
+    ];
+  });
+  const low = (r: PlayReview) => r.stars <= LOW_STARS && !r.replied;
+  const recent = [...reviews]
+    .sort((a, b) => Number(b.stars <= LOW_STARS && !b.replied) - Number(a.stars <= LOW_STARS && !a.replied) || a.stars - b.stars || b.date.localeCompare(a.date))
+    .slice(0, 3);
+  return {
+    count: reviews.length,
+    average: reviews.length ? Math.round((reviews.reduce((t, r) => t + r.stars, 0) / reviews.length) * 10) / 10 : null,
+    lowUnanswered: reviews.filter(low).length,
+    recent,
+  };
+}
+
 // ─── Fetching ────────────────────────────────────────────────────────
 
 class PlayError extends Error {
@@ -184,13 +226,23 @@ async function fetchRelease(config: GoogleConfig, packageName: string, fetchImpl
   }
 }
 
-function describe(err: unknown, packageName: string, half: 'rating' | 'release'): string {
+async function fetchReviews(config: GoogleConfig, packageName: string, fetchImpl: typeof fetch): Promise<PlayReviews> {
+  const headers = { Authorization: `Bearer ${await token(config, PUBLISHER_SCOPE)}` };
+  const res = await fetchImpl(`${PUBLISHER_API}/${encodeURIComponent(packageName)}/reviews?maxResults=100`, { headers, signal: AbortSignal.timeout(TIMEOUT_MS), cache: 'no-store' });
+  if (!res.ok) throw new PlayError(`Play reviews → ${res.status} ${(await res.text()).slice(0, 160)}`, res.status);
+  // A week with no reviews is an empty object, not an error
+  return readReviews(await res.json());
+}
+
+function describe(err: unknown, packageName: string, half: 'rating' | 'release' | 'reviews'): string {
   if (err instanceof PlayError && (err.status === 401 || err.status === 403)) {
     const cause = err.message.replace(/^Play [a-z ]+→ \d+ ?/, '');
     return (
       half === 'rating'
         ? `The reports bucket refused the service account (${err.status}). Check GOOGLE_PLAY_REPORTS_BUCKET and that the account can read it. ${cause}`
-        : `Play refused the service account (${err.status}). Enable the Google Play Android Developer API and give it access to the app in Play Console. ${cause}`
+        : half === 'reviews'
+          ? `Play refused the reviews call (${err.status}). Give the service account access to ratings and reviews in Play Console. ${cause}`
+          : `Play refused the service account (${err.status}). Enable the Google Play Android Developer API and give it access to the app in Play Console. ${cause}`
     ).trim();
   }
   if (err instanceof PlayError && err.status === 404) return `Play has no app ${packageName} for this account`;
@@ -214,19 +266,25 @@ export async function fetchPlayPart(
   }
   if (!config) return { state: 'not_configured', missing: ['GOOGLE_PLAY_REPORTS_CREDENTIALS', 'GOOGLE_PLAY_REPORTS_BUCKET'].filter((k) => !env[k]) };
 
-  const [rating, release] = await Promise.allSettled([fetchRating(config, packageName, now, fetchImpl), fetchRelease(config, packageName, fetchImpl)]);
+  const [rating, release, reviews] = await Promise.allSettled([
+    fetchRating(config, packageName, now, fetchImpl),
+    fetchRelease(config, packageName, fetchImpl),
+    fetchReviews(config, packageName, fetchImpl),
+  ]);
   const notes: string[] = [];
   if (rating.status === 'rejected') notes.push(`Rating: ${describe(rating.reason, packageName, 'rating')}`);
   if (release.status === 'rejected') notes.push(`Release: ${describe(release.reason, packageName, 'release')}`);
+  if (reviews.status === 'rejected') notes.push(`Reviews: ${describe(reviews.reason, packageName, 'reviews')}`);
 
-  // Both halves failing is a failure; one half is still worth showing, with why the other is missing
-  if (rating.status === 'rejected' && release.status === 'rejected') return { state: 'error', message: notes.join(' · ').slice(0, 300) };
+  // Every half failing is a failure; any one is still worth showing, with why the others are missing
+  if (rating.status === 'rejected' && release.status === 'rejected' && reviews.status === 'rejected') return { state: 'error', message: notes.join(' · ').slice(0, 300) };
   return {
     state: 'ok',
     data: {
       packageName,
       rating: rating.status === 'fulfilled' ? rating.value : null,
       release: release.status === 'fulfilled' ? release.value : null,
+      reviews: reviews.status === 'fulfilled' ? reviews.value : null,
       notes,
     },
   };

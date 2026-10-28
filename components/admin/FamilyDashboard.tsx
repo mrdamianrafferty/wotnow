@@ -946,6 +946,12 @@ function AppCard({ app, attention, maxDl }: { app: AppSnapshot; attention: Atten
                 <span className={s.chip}>No rating yet</span>
               )}
               {play.release ? <span className={s.chip}>{releaseLabel(play.release)}</span> : <span className={s.chip}>No production release</span>}
+              {play.reviews && play.reviews.count > 0 ? (
+                <span className={s.chip} title={play.reviews.recent[0]?.text ?? undefined}>
+                  {plural(play.reviews.count, 'review')} this week{play.reviews.average != null ? ` · ★ ${play.reviews.average.toFixed(1)}` : ''}
+                  {play.reviews.lowUnanswered > 0 ? ` · ${play.reviews.lowUnanswered} to reply` : ''}
+                </span>
+              ) : null}
               {play.notes.map((n) => (
                 <span key={n} className={s.chip} title={n}>
                   {n.split(':')[0]} unavailable

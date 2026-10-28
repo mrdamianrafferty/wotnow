@@ -16,7 +16,7 @@ export type AttentionLevel = 'danger' | 'check' | 'waiting';
 export interface AttentionItem {
   level: AttentionLevel;
   /** Stable, for React keys and tests. */
-  rule: 'errors_rising' | 'not_reporting' | 'wrong_property' | 'automated_traffic' | 'android_missing' | 'analytics_disagree' | 'automated_vercel' | 'play_release_halted' | 'play_release_draft' | 'play_rollout' | 'rating_low' | 'play_unreadable';
+  rule: 'errors_rising' | 'not_reporting' | 'wrong_property' | 'automated_traffic' | 'android_missing' | 'analytics_disagree' | 'automated_vercel' | 'play_release_halted' | 'play_release_draft' | 'play_rollout' | 'rating_low' | 'review_low' | 'play_unreadable';
   /** Apps it is about; empty for a family-wide item. */
   apps: FamilyAppId[];
   /** Who it is about, as shown: an app name, several, or "Android". */
@@ -327,6 +327,23 @@ function playStatus(apps: AppSnapshot[]): AttentionItem[] {
         });
       }
     }
+  }
+
+  // A 1–2 star review nobody has answered, this week
+  for (const a of apps) {
+    const reviews = okData(a.play ?? NO_PLAY)?.reviews;
+    if (!reviews || reviews.lowUnanswered === 0) continue;
+    const worst = reviews.recent[0];
+    const quote = worst?.text ? `“${worst.text.length > 140 ? `${worst.text.slice(0, 139)}…` : worst.text}”` : 'with no comment';
+    items.push({
+      level: 'check',
+      rule: 'review_low',
+      apps: [a.id],
+      label: a.name,
+      title: reviews.lowUnanswered === 1 ? 'A low Play review needs a reply' : `${reviews.lowUnanswered} low Play reviews need a reply`,
+      body: `${worst ? `${worst.stars}★${worst.version ? ` on ${worst.version}` : ''}: ` : ''}${quote}. Reply in Play Console.`,
+      short: 'Low review',
+    });
   }
 
   // One line for a shared cause (the API not enabled, the account not invited) rather than one per app
