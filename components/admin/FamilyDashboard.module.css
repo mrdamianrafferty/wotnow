@@ -696,3 +696,54 @@
     font-size: 12px;
   }
 }
+
+/* Deep links: every link is at least 44px tall to tap, and wraps rather than scrolls */
+.root a.rowLink {
+  color: inherit;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+}
+.root a.rowLink:hover,
+.root a.rowLink:focus-visible {
+  color: var(--brand-700);
+  text-decoration: underline;
+}
+.root a.nameLink {
+  color: inherit;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+}
+.root a.nameLink:hover {
+  color: var(--brand-700);
+  text-decoration: underline;
+}
+.root a.openLink,
+.root a.actionLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 44px;
+  padding: 0 4px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--brand-700);
+  text-decoration: none;
+}
+.root a.openLink {
+  align-self: flex-start;
+  margin: -12px 0 -8px;
+}
+.root a.openLink:hover,
+.root a.actionLink:hover {
+  color: var(--brand-800);
+  text-decoration: underline;
+}
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 16px;
+}

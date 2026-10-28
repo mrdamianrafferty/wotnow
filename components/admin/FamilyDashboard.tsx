@@ -8,6 +8,7 @@
 
 import type { CSSProperties, ReactNode } from 'react';
 import Link from 'next/link';
+import { attentionActions, makeAction, type ActionLink } from '@/lib/admin-dashboard/app-links';
 import { appAttention, deriveAttention, type AttentionItem } from '@/lib/admin-dashboard/attention';
 import {
   FAMILY_APPS,
@@ -151,6 +152,19 @@ function BarRow({
         </>
       ) : null}
     </div>
+  );
+}
+
+/** A link that opens in a new tab when it leaves the site; ≥44px tall via the class. */
+function SmartLink({ link, className, children }: { link: ActionLink; className: string; children: ReactNode }) {
+  return link.external ? (
+    <a href={link.href} className={className} target="_blank" rel="noopener noreferrer" aria-label={link.aria}>
+      {children}
+    </a>
+  ) : (
+    <Link href={link.href} className={className} aria-label={link.aria}>
+      {children}
+    </Link>
   );
 }
 
@@ -328,7 +342,9 @@ function Header({ data, attention, refresh }: { data: FamilySummary; attention: 
   );
 }
 
-function Attention({ items }: { items: AttentionItem[] }) {
+function Attention({ items, apps }: { items: AttentionItem[]; apps: AppSnapshot[] }) {
+  const urls = Object.fromEntries(apps.map((a) => [a.id, a.dashboardUrl]));
+  const names = Object.fromEntries(apps.map((a) => [a.id, a.name]));
   return (
     <section id="attention" className={s.attention} aria-labelledby="attention-h">
       <div className={s.sectionHead}>
@@ -351,6 +367,18 @@ function Attention({ items }: { items: AttentionItem[] }) {
               </div>
               <p className={s.alertTitle}>{it.title}</p>
               <p className={s.alertBody}>{it.body}</p>
+              {(() => {
+                const actions = attentionActions(it, urls, names);
+                return actions.length ? (
+                  <div className={s.actions}>
+                    {actions.map((l) => (
+                      <SmartLink key={l.href} link={l} className={s.actionLink}>
+                        {l.text} <span aria-hidden="true">→</span>
+                      </SmartLink>
+                    ))}
+                  </div>
+                ) : null;
+              })()}
             </div>
           ))}
         </div>
@@ -400,10 +428,10 @@ function Comparisons({ data, androidPending }: { data: FamilySummary; androidPen
         name={
           withVercel && anyVercel ? (
             <>
-              {a.name} <span className={s.muted}>GA4</span>
+              <a href={`#app-${a.id}`} className={s.rowLink} aria-label={`Jump to ${a.name}'s card`}>{a.name}</a> <span className={s.muted}>GA4</span>
             </>
           ) : (
-            a.name
+            <a href={`#app-${a.id}`} className={s.rowLink} aria-label={`Jump to ${a.name}'s card`}>{a.name}</a>
           )
         }
         value={t ? fmt(t.value) : '—'}
@@ -453,7 +481,7 @@ function Comparisons({ data, androidPending }: { data: FamilySummary; androidPen
               return (
                 <div key={a.id} className={s.legendRow}>
                   <span className={s.dot} style={{ background: a.color }} />
-                  <span className={s.grow}>{a.name}</span>
+                  <a href={`#app-${a.id}`} className={`${s.grow} ${s.rowLink}`} aria-label={`Jump to ${a.name}'s card`}>{a.name}</a>
                   <span className={s.strong}>{d ? fmt(d.total.value) : '—'}</span>
                   <span className={s.pct}>{d ? `${pct(d.total.value, shareTotal)}%` : ''}</span>
                 </div>
@@ -701,22 +729,29 @@ function AppCard({ app, attention, maxDl }: { app: AppSnapshot; attention: Atten
         ? { kind: item.level === 'danger' ? 'bad' : 'warn', label: item.short }
         : { kind: 'ok', label: 'Healthy' };
 
+  const dash = app.dashboardUrl ? makeAction(`Open ${app.name}'s dashboard`, app.dashboardUrl) : null;
   const head = (
     <div className={s.appHead}>
       <div>
-        <h3 className={s.appName}>{app.name}</h3>
+        <h3 className={s.appName}>{dash ? <SmartLink link={dash} className={s.nameLink}>{app.name}</SmartLink> : app.name}</h3>
         {app.fetchedAt ? <span className={s.asOf}>as of {hhmm(app.fetchedAt)}</span> : null}
       </div>
       <span className={`${s.pill} ${s[`pill_${pill.kind}`]}`}>{pill.label}</span>
     </div>
   );
+  const open = dash ? (
+    <SmartLink link={dash} className={s.openLink}>
+      Open dashboard <span aria-hidden="true">→</span>
+    </SmartLink>
+  ) : null;
 
   if (app.status !== 'ok') {
     return (
-      <article className={s.appCard}>
+      <article id={`app-${app.id}`} className={s.appCard}>
         <div className={s.band} style={{ background: app.color }} />
         <div className={s.appBody}>
           {head}
+          {open}
           <p className={s.unavailable}>
             {app.message}
             {app.missing?.length ? ` Set ${app.missing.join(' and ')} in Vercel.` : ''}
@@ -800,10 +835,11 @@ function AppCard({ app, attention, maxDl }: { app: AppSnapshot; attention: Atten
     .replace(/^./, (c) => c.toUpperCase());
 
   return (
-    <article className={s.appCard}>
+    <article id={`app-${app.id}`} className={s.appCard}>
       <div className={s.band} style={{ background: app.color }} />
       <div className={s.appBody}>
         {head}
+        {open}
         <div className={s.stats}>
           {stats.map((st) => (
             <div key={st.label} className={s.stat}>
@@ -883,7 +919,7 @@ export function FamilyDashboard({ data, notice, refresh }: { data: FamilySummary
       <Header data={data} attention={attention} refresh={refresh} />
       <main className={s.main}>
         {notice}
-        <Attention items={attention} />
+        <Attention items={attention} apps={data.apps} />
         <Comparisons data={data} androidPending={androidPending} />
         <Audience data={data} attention={attention} />
         <section id="apps" className={s.section} aria-labelledby="apps-h">

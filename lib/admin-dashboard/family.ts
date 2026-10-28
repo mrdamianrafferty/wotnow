@@ -143,6 +143,8 @@ export interface AppSnapshot {
   message?: string;
   missing?: string[];
   generatedAt: string | null;
+  /** The app's own admin dashboard (app-links.ts, after any env override); absent or null when it has none. */
+  dashboardUrl?: string | null;
   /** When the dashboard fetched this snapshot; older than the page when it came from the cache (family-cache.ts). */
   fetchedAt?: string;
   downloads: Part<DownloadsPart>;
