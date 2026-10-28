@@ -136,6 +136,31 @@ export interface ClubPart {
   stats: { key: string; label: string; value: number }[];
 }
 
+/** App Store listing figures over one window (lib/store-stats/listing-summary.ts). */
+export interface ListingFigures {
+  impressions: number;
+  productPageViews: number;
+  /** All first-time downloads, from any page or none */
+  firstTimeDownloads: number;
+  /** First-time downloads from the product page: the conversion numerator */
+  productPageDownloads: number;
+  /** productPageDownloads ÷ productPageViews, %, 1 dp; null with no views */
+  conversionRate: number | null;
+  /** productPageViews ÷ impressions, %, 1 dp; null with no impressions */
+  pageViewRate: number | null;
+}
+
+/** Listing conversion over 28 complete days ending three days back, against the 28 before. */
+export interface StoreListingPart {
+  window: { from: string; to: string; days: number } | null;
+  totals: ListingFigures;
+  /** null when the app sent no previous window */
+  previous: ListingFigures | null;
+  countries: (ListingFigures & { country: string })[];
+  daily: { date: string; productPageViews: number; productPageDownloads: number }[];
+  latestDate: string | null;
+}
+
 export type AppStatus = 'ok' | 'not_configured' | 'unavailable';
 
 export interface AppSnapshot {
@@ -157,6 +182,12 @@ export interface AppSnapshot {
   health: Part<HealthPart>;
   /** Added 2026-10-27; an app that has not shipped it yet reads as not reported. */
   audience: Part<AudiencePart>;
+  /**
+   * App Store listing conversion, added 2026-10-28. Optional so a snapshot
+   * cached before it reads as not reported; an app that does not send it
+   * (Grewp) reads the same way, never as zeros.
+   */
+  storeListing?: Part<StoreListingPart>;
   /** Vercel Web Analytics, added by the dashboard itself (vercel-analytics.ts); absent for an optional project that did not answer. */
   vercel?: Part<VercelPart>;
   /** Only apps that sell on the web send it; null when absent. */
@@ -215,6 +246,20 @@ export interface FamilyAudience {
   storeReporting: number;
 }
 
+/** Listing conversion across the apps with data, weighted by views: Σ page downloads ÷ Σ page views. */
+export interface FamilyListing {
+  productPageViews: number;
+  productPageDownloads: number;
+  firstTimeDownloads: number;
+  conversionRate: number | null;
+  /** The same sums over each app's previous window; null when no reporting app sent one. */
+  previous: { productPageViews: number; productPageDownloads: number; conversionRate: number | null } | null;
+  /** Apps whose listing section came back ok */
+  apps: number;
+  /** Apps with credentials set that are waiting for Apple's first report */
+  waiting: number;
+}
+
 export interface FamilyTotals {
   downloads: Trend & { apps: number };
   /** MRR is only summed within a currency; the largest figure first (currencies are not converted). */
@@ -232,6 +277,8 @@ export interface FamilyTotals {
     value: number;
   }[];
   audience: FamilyAudience;
+  /** Optional so a summary built before it existed still type-checks; familyTotals always sets it. */
+  storeListing?: FamilyListing;
 }
 
 export interface FamilySummary {
@@ -277,7 +324,7 @@ function readSection(v: unknown): Part<Obj> {
     return {
       state: 'not_configured',
       missing: [],
-      note: 'Not reported by this app',
+      note: NOT_REPORTED,
     };
   if (!isObj(v)) return { state: 'error', message: 'Unreadable response' };
   if (v.configured === false) return { state: 'not_configured', missing: strings(v.missing) };
@@ -462,6 +509,66 @@ export function readHealth(d: Obj): HealthPart | null {
   return { errors, crashFreeRate: rate, topIssues };
 }
 
+/** A share as a percentage to 1 dp, as listing-summary.ts rounds it; null with nothing to divide by. */
+export const pct1 = (n: number, d: number): number | null => (d > 0 ? Math.round((n / d) * 1000) / 10 : null);
+
+const count = (v: unknown): number | null => {
+  const n = num(v);
+  return n !== null && n >= 0 ? n : null;
+};
+
+/**
+ * One window's figures. The four counts must be there; the rates are
+ * recomputed from them, so a rate can never disagree with its own counts.
+ */
+export function readListingFigures(v: unknown): ListingFigures | null {
+  if (!isObj(v)) return null;
+  const views = count(v.productPageViews);
+  const pageDownloads = count(v.productPageDownloads);
+  if (views === null || pageDownloads === null) return null;
+  const impressions = count(v.impressions) ?? 0;
+  return {
+    impressions,
+    productPageViews: views,
+    firstTimeDownloads: count(v.firstTimeDownloads) ?? pageDownloads,
+    productPageDownloads: pageDownloads,
+    conversionRate: pct1(pageDownloads, views),
+    pageViewRate: pct1(views, impressions),
+  };
+}
+
+export function readStoreListing(d: Obj): StoreListingPart | null {
+  const totals = readListingFigures(d.totals);
+  if (!totals) return null;
+  const w = isObj(d.window) ? d.window : null;
+  const window = w && str(w.from) && str(w.to) ? { from: str(w.from)!, to: str(w.to)!, days: num(w.days) ?? 28 } : null;
+  const countries = rows(d.countries, (c) => {
+    const country = str(c.country)?.toUpperCase();
+    const f = readListingFigures(c);
+    return country && /^[A-Z]{2}$/.test(country) && country !== 'ZZ' && f ? { country, ...f } : null;
+  });
+  const daily = rows(d.daily, (x) => {
+    const date = str(x.date);
+    const views = count(x.productPageViews);
+    const downloads = count(x.productPageDownloads);
+    return date && views !== null && downloads !== null ? { date, productPageViews: views, productPageDownloads: downloads } : null;
+  });
+  return { window, totals, previous: readListingFigures(d.previous), countries, daily, latestDate: str(d.latestDate) };
+}
+
+const NOT_REPORTED = 'Not reported by this app';
+
+/** Credentials set, no report instance synced yet: the quiet state until Apple's first report lands. */
+export const listingWaiting = (p: Part<StoreListingPart> | undefined): boolean =>
+  !!p && p.state === 'not_configured' && p.missing.length === 0 && p.note !== NOT_REPORTED;
+
+function readStoreListingSection(v: unknown): Part<StoreListingPart> {
+  const part = readSection(v);
+  // Not expected (the apps send not_configured instead), but an empty summary is waiting, not unreadable
+  if (part.state === 'ok' && part.data.hasData === false) return { state: 'not_configured', missing: [], note: 'No listing data yet' };
+  return mapPart(part, readStoreListing);
+}
+
 const NOT_REACHED: Part<never> = { state: 'not_configured', missing: [] };
 
 /** An app the dashboard could not ask (no URL/token) or that did not answer usefully. */
@@ -521,6 +628,7 @@ export function readAppSummary(app: FamilyApp, body: unknown): AppSnapshot {
     status: 'ok',
     generatedAt: str(body.generatedAt),
     downloads: readDownloadsSection(body.storeDownloads),
+    storeListing: readStoreListingSection(body.storeListing),
     revenue: readRevenueSection(app, body.revenue),
     analytics: mapPart(readSection(body.analytics), readAnalytics),
     health: mapPart(readSection(body.platformHealth), readHealth),
@@ -593,6 +701,26 @@ export function familyTotals(apps: AppSnapshot[]): FamilyTotals {
       }))
       .sort((a, b) => b.value - a.value),
     audience: familyAudience(apps),
+    storeListing: familyListing(apps),
+  };
+}
+
+export function familyListing(apps: AppSnapshot[]): FamilyListing {
+  const parts = apps.map((a) => (a.storeListing ? okData(a.storeListing) : null)).filter((p): p is StoreListingPart => p !== null);
+  const sum = (pick: (p: StoreListingPart) => number) => parts.reduce((a, p) => a + pick(p), 0);
+  const views = sum((p) => p.totals.productPageViews);
+  const downloads = sum((p) => p.totals.productPageDownloads);
+  const prev = parts.map((p) => p.previous).filter((p): p is ListingFigures => p !== null);
+  const prevViews = prev.reduce((a, p) => a + p.productPageViews, 0);
+  const prevDownloads = prev.reduce((a, p) => a + p.productPageDownloads, 0);
+  return {
+    productPageViews: views,
+    productPageDownloads: downloads,
+    firstTimeDownloads: sum((p) => p.totals.firstTimeDownloads),
+    conversionRate: pct1(downloads, views),
+    previous: prev.length ? { productPageViews: prevViews, productPageDownloads: prevDownloads, conversionRate: pct1(prevDownloads, prevViews) } : null,
+    apps: parts.length,
+    waiting: apps.filter((a) => listingWaiting(a.storeListing)).length,
   };
 }
 

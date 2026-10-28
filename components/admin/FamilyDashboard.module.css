@@ -150,7 +150,8 @@
 
 .kpis {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(200px, 100%), 1fr));
+  /* 180px so six fit one row in the 1240px header */
+  grid-template-columns: repeat(auto-fit, minmax(min(180px, 100%), 1fr));
   gap: 16px;
 }
 .kpi {

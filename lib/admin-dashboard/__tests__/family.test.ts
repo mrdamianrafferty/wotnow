@@ -6,7 +6,19 @@
  * malformed and missing ones, and the fetcher's failure paths.
  */
 
-import { FAMILY_APPS, familyTotals, readAppSummary, readTrend, unavailableSnapshot, type AppSnapshot, type FamilySummary } from '../family';
+import {
+  FAMILY_APPS,
+  familyListing,
+  familyTotals,
+  listingWaiting,
+  readAppSummary,
+  readStoreListing,
+  readTrend,
+  unavailableSnapshot,
+  type AppSnapshot,
+  type FamilySummary,
+  type StoreListingPart,
+} from '../family';
 import { fetchAppSnapshot } from '../family-fetch';
 import { sampleFamilyBodies } from '../family-sample';
 import { sampleMetrics } from '../sample';
@@ -154,6 +166,115 @@ describe('familyTotals', () => {
       downloads: { state: 'ok', data: { ios: null, android: null, latestDate: null, total: { value: 1, previous: 1, delta: 0, daily } } },
     });
     expect(familyTotals([mk([1, 2]), mk([1, 2, 3])]).downloads.daily).toEqual([]);
+  });
+});
+
+describe('storeListing', () => {
+  const figures = (views: number, pageDownloads: number, extra: Record<string, unknown> = {}) => ({
+    impressions: views * 9,
+    productPageViews: views,
+    firstTimeDownloads: pageDownloads + 2,
+    productPageDownloads: pageDownloads,
+    conversionRate: views ? Math.round((pageDownloads / views) * 1000) / 10 : null,
+    pageViewRate: 11.1,
+    ...extra,
+  });
+  const okBody = (views: number, pageDownloads: number, prev: [number, number] | null = [100, 5]) => ({
+    storeListing: {
+      state: 'ok',
+      data: {
+        window: { from: '2026-09-28', to: '2026-10-25', days: 28 },
+        totals: figures(views, pageDownloads),
+        previous: prev ? figures(...prev) : undefined,
+        countries: [{ country: 'gb', ...figures(views, pageDownloads) }, { country: 'ZZ', ...figures(1, 0) }, { country: 'GB', productPageViews: 'x' }],
+        daily: [{ date: '2026-10-25', productPageViews: 3, productPageDownloads: 1 }, { date: '2026-10-24' }],
+        hasData: true,
+        latestDate: '2026-10-27',
+      },
+    },
+  });
+  const listing = (body: unknown) => readAppSummary(app('risedaisy'), body).storeListing;
+  const data = (body: unknown) => {
+    const p = listing(body);
+    if (p?.state !== 'ok') throw new Error(`expected ok, got ${JSON.stringify(p)}`);
+    return p.data;
+  };
+
+  it('reads an ok section, dropping bad and unknown-territory rows', () => {
+    const d = data(okBody(200, 12));
+    expect(d.window).toEqual({ from: '2026-09-28', to: '2026-10-25', days: 28 });
+    expect(d.totals).toEqual({ impressions: 1800, productPageViews: 200, firstTimeDownloads: 14, productPageDownloads: 12, conversionRate: 6, pageViewRate: 11.1 });
+    expect(d.previous?.conversionRate).toBe(5);
+    expect(d.countries.map((c) => c.country)).toEqual(['GB']);
+    expect(d.daily).toEqual([{ date: '2026-10-25', productPageViews: 3, productPageDownloads: 1 }]);
+    expect(d.latestDate).toBe('2026-10-27');
+  });
+
+  it('recomputes the rates from the counts, and null with no views', () => {
+    expect(readStoreListing({ totals: figures(40, 3, { conversionRate: 99 }) })?.totals.conversionRate).toBe(7.5);
+    expect(readStoreListing({ totals: figures(0, 0) })?.totals.conversionRate).toBeNull();
+    expect(readStoreListing({ totals: figures(10, 1) })).toMatchObject({ window: null, previous: null, countries: [], daily: [] });
+  });
+
+  it('keeps not_configured with its hint as the quiet waiting state', () => {
+    const p = listing({ storeListing: { state: 'not_configured', missing: [], hint: 'Apple credentials are set but no Analytics Reports instance has been synced yet.' } });
+    expect(p).toEqual({ state: 'not_configured', missing: [], note: 'Apple credentials are set but no Analytics Reports instance has been synced yet.' });
+    expect(listingWaiting(p)).toBe(true);
+    // Missing credentials are not waiting: they need setting
+    const unset = listing({ storeListing: { state: 'not_configured', missing: ['APP_STORE_VENDOR_NUMBER'] } });
+    expect(unset).toEqual({ state: 'not_configured', missing: ['APP_STORE_VENDOR_NUMBER'] });
+    expect(listingWaiting(unset)).toBe(false);
+  });
+
+  it('passes an error through, cleaned', () => {
+    expect(listing({ storeListing: { state: 'error', message: 'Supabase: Bearer abc leaked' } })).toEqual({ state: 'error', message: 'Supabase: [redacted] leaked' });
+  });
+
+  it('reads a missing key as not reported, never zeros (Grewp, or an app not yet deployed)', () => {
+    const p = listing({ generatedAt: 'x' });
+    expect(p).toEqual({ state: 'not_configured', missing: [], note: 'Not reported by this app' });
+    expect(listingWaiting(p)).toBe(false);
+  });
+
+  it('reads malformed data as unreadable, not as zeros', () => {
+    expect(listing({ storeListing: { state: 'ok', data: { totals: { productPageViews: 'many' } } } })).toEqual({ state: 'error', message: 'Unreadable response' });
+    expect(listing({ storeListing: { state: 'ok', data: { totals: figures(-5, 1) } } })).toEqual({ state: 'error', message: 'Unreadable response' });
+    expect(listing({ storeListing: { state: 'ok', data: [] } })).toEqual({ state: 'error', message: 'Unreadable response' });
+    expect(listing({ storeListing: 'yes' })).toEqual({ state: 'error', message: 'Unreadable response' });
+    expect(listing({ storeListing: { state: 'ok', data: { hasData: false } } })).toEqual({ state: 'not_configured', missing: [], note: 'No listing data yet' });
+  });
+
+  it('weights the family rate by views, not by averaging the apps’ rates', () => {
+    const snap = (id: string, body: unknown): AppSnapshot => readAppSummary(app(id), body);
+    const apps = [
+      snap('risedaisy', okBody(1000, 50, [800, 40])), // 5%
+      snap('findr', okBody(10, 5, null)), // 50%
+      snap('grewp', {}), // not reported
+      snap('flycast', { storeListing: { state: 'not_configured', missing: [], hint: 'waiting' } }),
+    ];
+    const f = familyListing(apps);
+    // (50 + 5) / (1000 + 10) = 5.4%, where an average of rates would say 27.5%
+    expect(f).toMatchObject({ productPageViews: 1010, productPageDownloads: 55, conversionRate: 5.4, apps: 2, waiting: 1 });
+    // Only Rise sent a previous window
+    expect(f.previous).toEqual({ productPageViews: 800, productPageDownloads: 40, conversionRate: 5 });
+    expect(familyTotals(apps).storeListing).toEqual(f);
+  });
+
+  it('is empty, not zero-rate, with nothing reporting', () => {
+    const f = familyListing(FAMILY_APPS.map((a) => unavailableSnapshot(a, 'not_configured', 'x')));
+    expect(f).toEqual({ productPageViews: 0, productPageDownloads: 0, firstTimeDownloads: 0, conversionRate: null, previous: null, apps: 0, waiting: 0 });
+  });
+
+  it('reads every sample app, Grewp as not reported, and the waiting sample as waiting', () => {
+    const parts = FAMILY_APPS.map((a) => readAppSummary(a, sample[a.id]).storeListing);
+    expect(parts.filter((p) => p?.state === 'ok')).toHaveLength(6);
+    expect(readAppSummary(app('grewp'), sample.grewp).storeListing).toMatchObject({ note: 'Not reported by this app' });
+    const waiting = sampleFamilyBodies(now, { listingWaiting: true }) as Record<string, unknown>;
+    const w = FAMILY_APPS.map((a) => readAppSummary(a, waiting[a.id]));
+    expect(familyListing(w)).toMatchObject({ apps: 0, waiting: 6, conversionRate: null });
+    const rise = parts[FAMILY_APPS.findIndex((a) => a.id === 'risedaisy')] as { state: 'ok'; data: StoreListingPart };
+    expect(rise.data.totals.productPageViews).toBeGreaterThan(0);
+    expect(rise.data.totals.productPageDownloads).toBeLessThanOrEqual(rise.data.totals.productPageViews);
   });
 });
 

@@ -10,6 +10,7 @@
  */
 
 import { utcDay } from '@/lib/store-stats/summary';
+import { summariseStoreListing, type ListingInput } from '@/lib/store-stats/listing-summary';
 import { dashboardUrl } from './app-links';
 import { FAMILY_APPS, familyTotals, readAppSummary, type FamilyAppId, type FamilySummary, type Part, type TopIssuePart, type VercelCountry, type VercelPart } from './family';
 
@@ -61,9 +62,45 @@ const health = (value: number, previous: number, crashFreeRate: number | null) =
   data: { errors: week(value, previous), crashFreeRate, topIssues: [{ id: 'a' }, { id: 'b' }] },
 });
 
-/** Raw bodies, keyed by app, as each endpoint returns them. */
-export function sampleFamilyBodies(now = new Date()): Record<FamilyAppId, unknown> {
+/**
+ * A storeListing section as the apps send it: `views` and `downloads` per
+ * day this window and the one before (split across `countries` by weight),
+ * or, with `waiting`, the not-configured state every app is in until
+ * Apple's first report instance lands (expected around 30 Oct 2026).
+ */
+function listing(now: Date, waiting: boolean, [views, downloads]: [number, number], [prevViews, prevDownloads]: [number, number], countries: [string, number][]) {
+  if (waiting) return { state: 'not_configured', missing: [], hint: 'Apple credentials are set but no Analytics Reports instance has been synced yet.' };
+  const weight = countries.reduce((a, [, w]) => a + w, 0);
+  const rows: ListingInput[] = [];
+  // Fractional daily rates carried forward, so 0.3 downloads a day still adds up to about 8 in 28 days
+  const carry = new Map<string, [number, number]>();
+  for (let back = 58; back >= 3; back--) {
+    const [v, d] = back <= 30 ? [views, downloads] : [prevViews, prevDownloads];
+    const wobble = 0.75 + ((back * 7) % 6) / 10;
+    for (const [country, w] of countries) {
+      const [cv, cd] = carry.get(country) ?? [0, 0];
+      const nv = cv + v * wobble * (w / weight);
+      const nd = cd + d * wobble * (w / weight);
+      const pageViews = Math.floor(nv);
+      const pageDownloads = Math.min(pageViews, Math.floor(nd));
+      carry.set(country, [nv - pageViews, nd - pageDownloads]);
+      rows.push({
+        stat_date: utcDay(now, back),
+        country,
+        impressions: pageViews * 9,
+        product_page_views: pageViews,
+        first_time_downloads: pageDownloads + (back % 4 === 0 ? 1 : 0),
+        product_page_downloads: pageDownloads,
+      });
+    }
+  }
+  return { state: 'ok', data: summariseStoreListing(rows, now) };
+}
+
+/** Raw bodies, keyed by app, as each endpoint returns them. `listingWaiting` puts every storeListing in its pre-report state. */
+export function sampleFamilyBodies(now = new Date(), { listingWaiting = false }: { listingWaiting?: boolean } = {}): Record<FamilyAppId, unknown> {
   const generatedAt = now.toISOString();
+  const ls = (cur: [number, number], prev: [number, number], countries: [string, number][]) => listing(now, listingWaiting, cur, prev, countries);
   return {
     godaisy: {
       app: 'go_daisy',
@@ -75,6 +112,7 @@ export function sampleFamilyBodies(now = new Date()): Record<FamilyAppId, unknow
           { country: 'BR', downloads: 1 },
         ],
       ),
+      storeListing: ls([2, 0.3], [2, 0.4], [['GB', 3], ['DE', 1]]),
       revenue: {
         state: 'ok',
         data: { source: 'revenuecat', currency: 'GBP', mrr: 0, revenue28d: 0, activeSubscriptions: 0, activeTrials: 0, newCustomers28d: 0 },
@@ -98,6 +136,7 @@ export function sampleFamilyBodies(now = new Date()): Record<FamilyAppId, unknow
           { country: 'BE', downloads: 1 },
         ],
       ),
+      storeListing: ls([24, 3], [30, 3.2], [['GB', 4], ['US', 3], ['FR', 2], ['IE', 1]]),
       revenue: {
         state: 'ok',
         data: { source: 'revenuecat', currency: 'GBP', mrr: 7, revenue28d: 5, activeSubscriptions: 3, activeTrials: 0, newCustomers28d: 40 },
@@ -132,6 +171,7 @@ export function sampleFamilyBodies(now = new Date()): Record<FamilyAppId, unknow
           { country: 'FR', downloads: 1 },
         ],
       ),
+      storeListing: ls([9, 1.6], [8, 1.1], [['GB', 5], ['IE', 2], ['FR', 1]]),
       revenue: {
         state: 'ok',
         data: { source: 'revenuecat', currency: 'GBP', mrr: 12.5, revenue28d: 18.97, activeSubscriptions: 4, activeTrials: 1, newCustomers28d: 20 },
@@ -167,6 +207,7 @@ export function sampleFamilyBodies(now = new Date()): Record<FamilyAppId, unknow
           countries30d: [{ country: 'GB', downloads: 6 }],
         },
       },
+      storeListing: ls([3, 1.1], [3, 1], [['GB', 1]]),
       revenue: { state: 'ok', data: { source: 'none', note: 'Private club app: no revenue.' } },
       analytics: { state: 'ok', data: { activeUsers: week(48, 41), pageViews: week(410, 380) } },
       platformHealth: { state: 'ok', data: { errors: week(12, 9), crashFreeRate: null, topIssues: [] } },
@@ -198,6 +239,7 @@ export function sampleFamilyBodies(now = new Date()): Record<FamilyAppId, unknow
           { country: 'BR', downloads: 1 },
         ],
       ),
+      storeListing: ls([6, 0.5], [4, 0.4], [['FR', 2], ['GB', 1]]),
       revenue: {
         state: 'ok',
         data: { source: 'revenuecat', currency: 'EUR', mrr: 0, revenue28d: 0, activeSubscriptions: 0, activeTrials: 0, newCustomers28d: 2 },
@@ -233,6 +275,7 @@ export function sampleFamilyBodies(now = new Date()): Record<FamilyAppId, unknow
           ],
         },
       },
+      storeListing: ls([4, 0.4], [5, 0.3], [['US', 2], ['GB', 1]]),
       revenue: {
         state: 'ok',
         data: { source: 'revenuecat', currency: 'GBP', mrr: 0, revenue28d: 0, activeSubscriptions: 0, activeTrials: 0, newCustomers28d: 3, activeUsers28d: 66 },
@@ -330,12 +373,13 @@ export function sampleTopIssues(): Partial<Record<FamilyAppId, Part<TopIssuePart
 /**
  * `withVercel` adds the Vercel figures (sampleVercel) and `withTopIssues` the
  * Sentry top issues; both off by default so the other tests' fixtures stay as they were.
+ * `listingWaiting` shows the store listing as it is until Apple's first report lands.
  */
 export function sampleFamilySummary(
   now = new Date(),
-  { withVercel = false, withTopIssues = false }: { withVercel?: boolean; withTopIssues?: boolean } = {},
+  { withVercel = false, withTopIssues = false, listingWaiting = false }: { withVercel?: boolean; withTopIssues?: boolean; listingWaiting?: boolean } = {},
 ): FamilySummary {
-  const bodies = sampleFamilyBodies(now);
+  const bodies = sampleFamilyBodies(now, { listingWaiting });
   const extra = withVercel ? sampleVercel(now) : {};
   const top = withTopIssues ? sampleTopIssues() : {};
   const apps = FAMILY_APPS.map((a) => ({
