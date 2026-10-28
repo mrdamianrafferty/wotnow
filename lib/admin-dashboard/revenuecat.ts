@@ -6,14 +6,21 @@
  * (`app7b23f455ba`, io.godaisy.app) sits in the "Grow Daisy" project beside
  * Grow Daisy's (`appb6332dd627`), and the v2 metrics/overview endpoint is project-wide with no
  * app filter, so it would report both apps' revenue on both cards. The Charts
- * endpoints do take an app filter, so this reads five charts instead.
+ * endpoints can be filtered per app, so this reads five charts instead.
+ *
+ * Not every chart takes the same filter (checked 2026-10-28 with the chart
+ * options schema): mrr, actives, trials and revenue take `app_id`, but
+ * customers_new does not ("Invalid filter: app_id", 400) and takes
+ * `first_app_id`, the app a customer was first seen in. Should RevenueCat
+ * reject a chart's filter anyway, that one chart is read unfiltered and its
+ * figure is marked as the project total rather than failing the section.
  *
  * The key needs the "Charts & metrics" read permission (a v2 secret key).
  * Stripe web billing is not in RevenueCat and is not counted here.
  */
 
 import { metricsApp } from './app-identity';
-import { errorMessage, type RevenueSummary, type Section } from './types';
+import { errorMessage, type RevenueFigure, type RevenueSummary, type Section } from './types';
 
 const RC_API = 'https://api.revenuecat.com/v2';
 /** RevenueCat project "Grow Daisy", which holds both Daisy apps. */
@@ -43,8 +50,32 @@ const total = (chart: ChartResponse | null | undefined) => {
   return s === null ? null : Math.round(s.reduce((a, b) => a + b, 0) * 100) / 100;
 };
 
-export function summariseRevenueCharts(charts: Partial<Record<RevenueChart, ChartResponse | null>>, currency = CURRENCY): RevenueSummary {
+/** The per-app filter each chart accepts. */
+export const APP_FILTER: Record<RevenueChart, string> = {
+  mrr: 'app_id',
+  actives: 'app_id',
+  trials: 'app_id',
+  revenue: 'app_id',
+  customers_new: 'first_app_id',
+};
+
+/** The summary figure each chart becomes. */
+export const CHART_FIELD: Record<RevenueChart, RevenueFigure> = {
+  mrr: 'mrr',
+  actives: 'activeSubscriptions',
+  trials: 'activeTrials',
+  revenue: 'revenue28d',
+  customers_new: 'newCustomers28d',
+};
+
+export function summariseRevenueCharts(
+  charts: Partial<Record<RevenueChart, ChartResponse | null>>,
+  currency = CURRENCY,
+  /** Charts that had to be read unfiltered, so are the whole project's. */
+  unfiltered: RevenueChart[] = [],
+): RevenueSummary {
   return {
+    ...(unfiltered.length ? { projectTotal: unfiltered.map((c) => CHART_FIELD[c]) } : {}),
     source: 'revenuecat',
     currency,
     mrr: latest(charts.mrr),
@@ -55,16 +86,17 @@ export function summariseRevenueCharts(charts: Partial<Record<RevenueChart, Char
   };
 }
 
-/** Query string for one chart: daily, the last 28 complete days, Go Daisy's app only. */
-export function chartQuery(appId: string, now: Date): URLSearchParams {
+/** Query string for one chart: daily, the last 28 complete days, this app only (or the whole project when appId is null). */
+export function chartQuery(chart: RevenueChart, appId: string | null, now: Date): URLSearchParams {
   const day = (back: number) => new Date(now.getTime() - back * 86_400_000).toISOString().slice(0, 10);
-  return new URLSearchParams({
-    start_date: day(28),
-    end_date: day(1),
-    resolution: '0',
-    currency: CURRENCY,
-    filters: JSON.stringify([{ name: 'app_id', values: [appId] }]),
-  });
+  const q = new URLSearchParams({ start_date: day(28), end_date: day(1), resolution: '0', currency: CURRENCY });
+  if (appId) q.set('filters', JSON.stringify([{ name: APP_FILTER[chart], values: [appId] }]));
+  return q;
+}
+
+/** RevenueCat's 400 for a filter the chart does not support. */
+export function isFilterRejection(status: number, body: string): boolean {
+  return status === 400 && /invalid filter/i.test(body);
 }
 
 export async function fetchRevenueSummary(env: Record<string, string | undefined> = process.env): Promise<Section<RevenueSummary>> {
@@ -73,16 +105,25 @@ export async function fetchRevenueSummary(env: Record<string, string | undefined
   const projectId = env.REVENUECAT_PROJECT_ID?.trim() || DEFAULT_PROJECT_ID;
   // Each app's own RevenueCat app (Go Daisy app7b23f455ba, Grow Daisy appb6332dd627), so the shared project is never counted twice
   const appId = env.REVENUECAT_APP_ID?.trim() || metricsApp(env).revenuecatAppId;
-  const query = chartQuery(appId, new Date());
+  const now = new Date();
+  const unfiltered: RevenueChart[] = [];
+  const get = (chart: RevenueChart, app: string | null) =>
+    fetch(`${RC_API}/projects/${encodeURIComponent(projectId)}/charts/${chart}?${chartQuery(chart, app, now)}`, {
+      headers: { Authorization: `Bearer ${key}` },
+      signal: AbortSignal.timeout(10_000),
+    });
 
   try {
     const responses = await Promise.all(
-      REVENUE_CHARTS.map((chart) =>
-        fetch(`${RC_API}/projects/${encodeURIComponent(projectId)}/charts/${chart}?${query}`, {
-          headers: { Authorization: `Bearer ${key}` },
-          signal: AbortSignal.timeout(10_000),
-        }),
-      ),
+      REVENUE_CHARTS.map(async (chart) => {
+        const res = await get(chart, appId);
+        if (res.status !== 400) return res;
+        const body = await res.clone().text();
+        if (!isFilterRejection(res.status, body)) return res;
+        // This chart cannot be split per app: show the project's figure, labelled, rather than no revenue at all
+        unfiltered.push(chart);
+        return get(chart, null);
+      }),
     );
     const refused = responses.find((r) => r.status === 401 || r.status === 403);
     if (refused) {
@@ -99,7 +140,7 @@ export async function fetchRevenueSummary(env: Record<string, string | undefined
     }
     const bodies = (await Promise.all(responses.map((r) => r.json()))) as ChartResponse[];
     const charts = Object.fromEntries(REVENUE_CHARTS.map((c, i) => [c, bodies[i]])) as Record<RevenueChart, ChartResponse>;
-    return { state: 'ok', data: summariseRevenueCharts(charts) };
+    return { state: 'ok', data: summariseRevenueCharts(charts, CURRENCY, REVENUE_CHARTS.filter((c) => unfiltered.includes(c))) };
   } catch (err) {
     return { state: 'error', message: errorMessage(err) };
   }

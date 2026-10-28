@@ -35,7 +35,14 @@ export interface RevenueSummary {
   activeSubscriptions: number | null;
   activeTrials: number | null;
   newCustomers28d: number | null;
+  /**
+   * Figures RevenueCat would not split per app, so they are the whole
+   * project's (Go Daisy + Grow Daisy). Absent when every figure is this app's.
+   */
+  projectTotal?: RevenueFigure[];
 }
+
+export type RevenueFigure = 'mrr' | 'revenue28d' | 'activeSubscriptions' | 'activeTrials' | 'newCustomers28d';
 
 export interface Ga4Summary {
   /** Last 14 complete days, oldest first (YYYY-MM-DD). */

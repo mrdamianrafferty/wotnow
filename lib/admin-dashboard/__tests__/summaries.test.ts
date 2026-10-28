@@ -54,11 +54,24 @@ describe('summariseRevenueCharts', () => {
   });
 
   it('asks for the last 28 complete days of Go Daisy’s app only', () => {
-    const q = chartQuery('app7b23f455ba', now);
+    const q = chartQuery('mrr', 'app7b23f455ba', now);
     expect(q.get('start_date')).toBe('2026-09-29');
     expect(q.get('end_date')).toBe('2026-10-26');
     expect(q.get('resolution')).toBe('0');
     expect(JSON.parse(q.get('filters')!)).toEqual([{ name: 'app_id', values: ['app7b23f455ba'] }]);
+  });
+
+  it('splits new customers by first_app_id, the filter customers_new accepts', () => {
+    expect(JSON.parse(chartQuery('customers_new', 'app7b23f455ba', now).get('filters')!)).toEqual([
+      { name: 'first_app_id', values: ['app7b23f455ba'] },
+    ]);
+    expect(chartQuery('revenue', null, now).has('filters')).toBe(false);
+  });
+
+  it('marks charts read unfiltered as project totals', () => {
+    const data = summariseRevenueCharts({ customers_new: points([1]) }, 'GBP', ['customers_new']);
+    expect(data.projectTotal).toEqual(['newCustomers28d']);
+    expect(summariseRevenueCharts({}).projectTotal).toBeUndefined();
   });
 });
 

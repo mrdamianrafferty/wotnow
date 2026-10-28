@@ -7,7 +7,7 @@
  * In development, ?sample=1 renders made-up figures for all five apps.
  */
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import Head from 'next/head';
 import { useRouter } from 'next/router';
 import { Inter, Manrope } from 'next/font/google';
@@ -20,11 +20,18 @@ import type { FamilySummary } from '@/lib/admin-dashboard/family';
 const manrope = Manrope({ subsets: ['latin'], weight: ['600', '700', '800'], display: 'swap', variable: '--font-manrope' });
 const inter = Inter({ subsets: ['latin'], weight: ['400', '600', '700'], display: 'swap', variable: '--font-inter' });
 
+async function load(accessToken: string, refresh = false): Promise<{ data: FamilySummary } | { error: string }> {
+  const res = await fetch(`/api/admin/apps-summary${refresh ? '?refresh=1' : ''}`, { headers: { Authorization: `Bearer ${accessToken}` } });
+  const body = (await res.json().catch(() => ({}))) as FamilySummary & { error?: string };
+  return res.ok ? { data: body } : { error: body.error ?? 'Could not load the family dashboard' };
+}
+
 export default function AdminAppsPage() {
   const router = useRouter();
   const { user, session, loading } = useAuth();
   const [data, setData] = useState<FamilySummary | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [refreshing, setRefreshing] = useState(false);
   const sample = process.env.NODE_ENV !== 'production' && router.query.sample === '1';
 
   useEffect(() => {
@@ -35,17 +42,28 @@ export default function AdminAppsPage() {
     }
     if (loading || !session) return;
     let cancelled = false;
-    (async () => {
-      const res = await fetch('/api/admin/apps-summary', { headers: { Authorization: `Bearer ${session.access_token}` } });
-      const body = (await res.json().catch(() => ({}))) as FamilySummary & { error?: string };
+    load(session.access_token).then((r) => {
       if (cancelled) return;
-      if (!res.ok) setError(body.error ?? 'Could not load the family dashboard');
-      else setData(body);
-    })();
+      if ('error' in r) setError(r.error);
+      else setData(r.data);
+    });
     return () => {
       cancelled = true;
     };
   }, [router.isReady, sample, loading, session]);
+
+  // Refresh keeps the current figures on screen until the new ones arrive
+  const onRefresh = useCallback(async () => {
+    if (!session) return;
+    setRefreshing(true);
+    const r = await load(session.access_token, true);
+    setRefreshing(false);
+    if ('error' in r) setError(r.error);
+    else {
+      setError(null);
+      setData(r.data);
+    }
+  }, [session]);
 
   const head = (
     <Head>
@@ -74,7 +92,14 @@ export default function AdminAppsPage() {
         {data ? (
           <FamilyDashboard
             data={data}
-            notice={sample ? <p className={`${s.banner} ${s.bannerInfo}`}>Sample data, not real figures.</p> : null}
+            notice={
+              sample ? (
+                <p className={`${s.banner} ${s.bannerInfo}`}>Sample data, not real figures.</p>
+              ) : error ? (
+                <p className={`${s.banner} ${s.bannerError}`}>{error}</p>
+              ) : null
+            }
+            refresh={sample ? undefined : { onRefresh, refreshing }}
           />
         ) : (
           <div className={s.center}>
