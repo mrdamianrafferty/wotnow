@@ -12,6 +12,7 @@ import { appAttention, deriveAttention, type AttentionItem } from '@/lib/admin-d
 import {
   FAMILY_APPS,
   appMrr,
+  isProjectTotal,
   type AppSnapshot,
   type FamilyAppId,
   type FamilyCountry,
@@ -20,6 +21,7 @@ import {
   type Trend,
 } from '@/lib/admin-dashboard/family';
 import { fmt, money } from './DashboardParts';
+import { PROJECT_TOTAL_LABEL as PROJECT_TOTAL } from './RevenuePanel';
 import s from './FamilyDashboard.module.css';
 
 // ─── Formatting ──────────────────────────────────────────────────────
@@ -180,7 +182,33 @@ function AlertIcon({ level }: { level: AttentionItem['level'] }) {
 
 // ─── Sections ────────────────────────────────────────────────────────
 
-function Header({ data, attention }: { data: FamilySummary; attention: AttentionItem[] }) {
+/** "14:05", in the viewer's time zone. */
+export const hhmm = (iso: string) => new Date(iso).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+
+export interface RefreshControl {
+  onRefresh: () => void;
+  refreshing: boolean;
+}
+
+/** Refresh asks every app again; the server allows it once every five minutes for everyone. */
+function RefreshButton({ data, control }: { data: FamilySummary; control: RefreshControl }) {
+  const next = data.refresh?.nextRefreshAt ?? null;
+  const waiting = next !== null && Date.parse(next) > Date.now();
+  const label = control.refreshing ? 'Refreshing…' : waiting ? `Refresh after ${hhmm(next!)}` : 'Refresh';
+  return (
+    <button
+      type="button"
+      className={`${s.pillLinkOutline} ${s.pillButton}`}
+      onClick={control.onRefresh}
+      disabled={control.refreshing || waiting}
+      title="Each app’s figures are kept for an hour so GA4’s quota lasts. Refresh asks every app now, at most once every five minutes."
+    >
+      {label}
+    </button>
+  );
+}
+
+function Header({ data, attention, refresh }: { data: FamilySummary; attention: AttentionItem[]; refresh?: RefreshControl }) {
   const { totals, apps } = data;
   const count = apps.length;
   const ofN = (n: number) => `${n} of ${count} apps reporting`;
@@ -194,7 +222,7 @@ function Header({ data, attention }: { data: FamilySummary; attention: Attention
   const [mrrMain, ...mrrRest] = totals.mrr;
   const mrrByApp = apps
     .flatMap((a) =>
-      appMrr(a)
+      appMrr(a, true)
         .filter((m) => m.value > 0)
         .map((m) => ({ a, m })),
     )
@@ -265,6 +293,7 @@ function Header({ data, attention }: { data: FamilySummary; attention: Attention
             <a href="#attention" className={s.pillLinkOutline}>
               {attention.length === 0 ? 'All clear' : `${plural(attention.length, 'thing')} need${attention.length === 1 ? 's' : ''} attention`}
             </a>
+            {refresh ? <RefreshButton data={data} control={refresh} /> : null}
           </nav>
         </div>
         <div className={s.kpis}>
@@ -627,7 +656,10 @@ function AppCard({ app, attention, maxDl }: { app: AppSnapshot; attention: Atten
 
   const head = (
     <div className={s.appHead}>
-      <h3 className={s.appName}>{app.name}</h3>
+      <div>
+        <h3 className={s.appName}>{app.name}</h3>
+        {app.fetchedAt ? <span className={s.asOf}>as of {hhmm(app.fetchedAt)}</span> : null}
+      </div>
       <span className={`${s.pill} ${s[`pill_${pill.kind}`]}`}>{pill.label}</span>
     </div>
   );
@@ -671,7 +703,10 @@ function AppCard({ app, attention, maxDl }: { app: AppSnapshot; attention: Atten
           value: mrr.length ? mrr.map((m) => money(m.value, m.currency)).join(' + ') : '—',
           note: rev
             ? [
-                rev.activeSubscriptions != null ? plural(rev.activeSubscriptions, 'subscription') : 'subscriptions not reported',
+                isProjectTotal(rev, 'mrr') ? `MRR is the ${PROJECT_TOTAL}` : null,
+                rev.activeSubscriptions != null
+                  ? `${plural(rev.activeSubscriptions, 'subscription')}${isProjectTotal(rev, 'activeSubscriptions') ? ` (${PROJECT_TOTAL})` : ''}`
+                  : 'subscriptions not reported',
                 webMrr.length ? `incl. ${webMrr.map((m) => money(m.mrr, m.currency)).join(' + ')} web` : null,
               ]
                 .filter(Boolean)
@@ -696,7 +731,10 @@ function AppCard({ app, attention, maxDl }: { app: AppSnapshot; attention: Atten
 
   const source = rev && rev.source !== 'none' ? (rev.source === 'revenuecat' ? 'RevenueCat' : rev.source === 'stripe' ? 'Stripe' : cap(rev.source)) : null;
   const footnote = [
-    source && (rev?.revenue28d != null && rev.currency ? `${source} · ${money(rev.revenue28d, rev.currency)} taken in 28 days` : source),
+    source &&
+      (rev?.revenue28d != null && rev.currency
+        ? `${source} · ${money(rev.revenue28d, rev.currency)} taken in 28 days${isProjectTotal(rev, 'revenue28d') ? ` (${PROJECT_TOTAL})` : ''}`
+        : source),
     dl?.latestDate
       ? `store data to ${new Date(`${dl.latestDate}T00:00:00Z`).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', timeZone: 'UTC' })}`
       : null,
@@ -777,7 +815,7 @@ function AppCard({ app, attention, maxDl }: { app: AppSnapshot; attention: Atten
 
 // ─── Page body ───────────────────────────────────────────────────────
 
-export function FamilyDashboard({ data, notice }: { data: FamilySummary; notice?: ReactNode }) {
+export function FamilyDashboard({ data, notice, refresh }: { data: FamilySummary; notice?: ReactNode; refresh?: RefreshControl }) {
   const attention = deriveAttention(data);
   const androidPending = attention.some((a) => a.rule === 'android_missing');
   const byUsers = [...data.apps].sort((a, b) => (okData(b.analytics)?.activeUsers?.value ?? -1) - (okData(a.analytics)?.activeUsers?.value ?? -1));
@@ -785,7 +823,7 @@ export function FamilyDashboard({ data, notice }: { data: FamilySummary; notice?
 
   return (
     <>
-      <Header data={data} attention={attention} />
+      <Header data={data} attention={attention} refresh={refresh} />
       <main className={s.main}>
         {notice}
         <Attention items={attention} />
@@ -813,7 +851,8 @@ export function FamilyDashboard({ data, notice }: { data: FamilySummary; notice?
             hour: '2-digit',
             minute: '2-digit',
           })}
-          . Each app’s figures come from its own stores, RevenueCat or Stripe, GA4 and Sentry.{' '}
+          . Each app’s figures come from its own stores, RevenueCat or Stripe, GA4 and Sentry, and are kept for up to an hour (five minutes when an app
+          failed), so a card may be older than the page: its time is on it.{' '}
           <Link href="/admin/dashboard" className={s.link}>
             Go Daisy in detail →
           </Link>

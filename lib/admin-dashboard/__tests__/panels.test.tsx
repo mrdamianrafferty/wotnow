@@ -89,4 +89,29 @@ describe('admin dashboard panels', () => {
     expect(screen.getByText('All clear')).toBeInTheDocument();
     expect(screen.getAllByText(/No app reports its audience yet/)).toHaveLength(2);
   });
+
+  it('shows when each card was fetched, and a Refresh that waits out the cooldown', () => {
+    const data = sampleFamilySummary(now);
+    const apps = data.apps.map((a) => ({ ...a, fetchedAt: '2026-10-27T06:12:00Z' }));
+    const later = new Date(Date.now() + 4 * 60_000).toISOString();
+    const onRefresh = jest.fn();
+    const { rerender } = render(<FamilyDashboard data={{ ...data, apps }} refresh={{ onRefresh, refreshing: false }} />);
+    expect(screen.getAllByText(/^as of \d\d:\d\d$/)).toHaveLength(apps.length);
+    screen.getByRole('button', { name: 'Refresh' }).click();
+    expect(onRefresh).toHaveBeenCalled();
+    rerender(<FamilyDashboard data={{ ...data, apps, refresh: { refreshed: true, nextRefreshAt: later } }} refresh={{ onRefresh, refreshing: false }} />);
+    expect(screen.getByRole('button', { name: /^Refresh after/ })).toBeDisabled();
+  });
+
+  it('labels a revenue figure that is the shared RevenueCat project’s total', () => {
+    render(
+      <RevenuePanel
+        revenue={{
+          state: 'ok',
+          data: { source: 'revenuecat', currency: 'GBP', mrr: 1, revenue28d: 2, activeSubscriptions: 1, activeTrials: 0, newCustomers28d: 4, projectTotal: ['newCustomers28d'] },
+        }}
+      />,
+    );
+    expect(screen.getByText('last 28 days · project total (Go Daisy + Grow Daisy)')).toBeInTheDocument();
+  });
 });

@@ -70,6 +70,12 @@ export interface RevenuePart {
   activeSubscriptions: number | null;
   activeTrials: number | null;
   revenue28d: number | null;
+  /**
+   * Figures that are a shared RevenueCat project's total rather than this
+   * app's (Go Daisy and Grow Daisy share one). Shown labelled; never summed
+   * into family totals, where they would be counted once per app.
+   */
+  projectTotal?: string[];
 }
 
 export interface AnalyticsPart {
@@ -120,6 +126,8 @@ export interface AppSnapshot {
   message?: string;
   missing?: string[];
   generatedAt: string | null;
+  /** When the dashboard fetched this snapshot; older than the page when it came from the cache (family-cache.ts). */
+  fetchedAt?: string;
   downloads: Part<DownloadsPart>;
   revenue: Part<RevenuePart>;
   analytics: Part<AnalyticsPart>;
@@ -188,6 +196,8 @@ export interface FamilyTotals {
 
 export interface FamilySummary {
   generatedAt: string;
+  /** The Refresh control's state (family-cache.ts); absent for sample data. */
+  refresh?: { refreshed: boolean; nextRefreshAt: string | null };
   apps: AppSnapshot[];
   totals: FamilyTotals;
 }
@@ -355,6 +365,8 @@ export function readRevenue(d: Obj): RevenuePart | null {
     activeTrials: num(d.activeTrials) ?? num(d.trialing),
     revenue28d: num(d.revenue28d),
   };
+  const projectTotal = Array.isArray(d.projectTotal) ? d.projectTotal.filter((f): f is string => typeof f === 'string') : [];
+  if (projectTotal.length) part.projectTotal = projectTotal;
   return part.mrr === null && part.activeSubscriptions === null && part.activeTrials === null && part.revenue28d === null ? null : part;
 }
 
@@ -479,11 +491,18 @@ export function readAppSummary(app: FamilyApp, body: unknown): AppSnapshot {
 
 // ─── Family totals ───────────────────────────────────────────────────
 
-/** One app's MRR per currency: in-app plus Stripe web plans. Empty when it reports none. */
-export function appMrr(a: AppSnapshot): { currency: string; value: number }[] {
+/** True when this figure is a shared project's total, not the app's own. */
+export const isProjectTotal = (r: RevenuePart | null | undefined, field: keyof RevenuePart) => !!r?.projectTotal?.includes(field);
+
+/**
+ * One app's MRR per currency: in-app plus Stripe web plans. Empty when it
+ * reports none. `ownOnly` leaves out an in-app MRR that is a shared
+ * project's total, for sums across apps.
+ */
+export function appMrr(a: AppSnapshot, ownOnly = false): { currency: string; value: number }[] {
   const m = new Map<string, number>();
   const r = a.revenue.state === 'ok' ? a.revenue.data : null;
-  if (r?.mrr != null && r.currency) m.set(r.currency, r.mrr);
+  if (r?.mrr != null && r.currency && !(ownOnly && isProjectTotal(r, 'mrr'))) m.set(r.currency, r.mrr);
   const w = a.webRevenue?.state === 'ok' ? a.webRevenue.data : null;
   for (const x of w?.mrrByCurrency ?? []) m.set(x.currency, (m.get(x.currency) ?? 0) + x.mrr);
   return [...m.entries()].map(([currency, value]) => ({ currency, value: Math.round(value * 100) / 100 })).sort((x, y) => y.value - x.value);
@@ -498,18 +517,18 @@ export function familyTotals(apps: AppSnapshot[]): FamilyTotals {
 
   const mrr = new Map<string, { value: number; apps: number }>();
   for (const a of apps) {
-    for (const m of appMrr(a)) {
+    for (const m of appMrr(a, true)) {
       const t = mrr.get(m.currency) ?? { value: 0, apps: 0 };
       mrr.set(m.currency, { value: Math.round((t.value + m.value) * 100) / 100, apps: t.apps + 1 });
     }
   }
   // In-app (RevenueCat/Stripe) plus web plans: different books, so they add up
-  const count = (inApp: (r: RevenuePart) => number | null, web: (w: WebRevenuePart) => number | null) => {
+  const count = (field: 'activeSubscriptions' | 'activeTrials', web: (w: WebRevenuePart) => number | null) => {
     const vals = apps
       .map((a) => {
         const r = okData(a.revenue);
         const w = a.webRevenue ? okData(a.webRevenue) : null;
-        const parts = [r ? inApp(r) : null, w ? web(w) : null].filter((n): n is number => n !== null);
+        const parts = [r && !isProjectTotal(r, field) ? r[field] : null, w ? web(w) : null].filter((n): n is number => n !== null);
         return parts.length ? parts.reduce((x, y) => x + y, 0) : null;
       })
       .filter((n): n is number => n !== null);
@@ -519,14 +538,8 @@ export function familyTotals(apps: AppSnapshot[]): FamilyTotals {
   return {
     downloads: { ...sumTrends(dl.map((x) => x.d.total)), apps: dl.length },
     mrr: [...mrr.entries()].map(([currency, m]) => ({ currency, ...m })).sort((a, b) => b.value - a.value || b.apps - a.apps),
-    activeSubscriptions: count(
-      (r) => r.activeSubscriptions,
-      (w) => w.activeSubscriptions,
-    ),
-    activeTrials: count(
-      (r) => r.activeTrials,
-      (w) => w.trialing,
-    ),
+    activeSubscriptions: count('activeSubscriptions', (w) => w.activeSubscriptions),
+    activeTrials: count('activeTrials', (w) => w.trialing),
     activeUsers: { ...sumTrends(users), apps: users.length },
     errors: { ...sumTrends(errs), apps: errs.length },
     downloadShare: dl

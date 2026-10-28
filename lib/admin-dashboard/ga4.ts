@@ -10,6 +10,7 @@
  * batchRunReports request. Vercel Web Analytics also runs but has no read API.
  */
 
+import { getCache, type RuntimeCache } from '@vercel/functions';
 import { metricsApp } from './app-identity';
 import { decodeServiceAccountKey, getServiceAccountToken } from '@/lib/google/service-account-token';
 import { errorMessage, weekMetric, type AudienceSummary, type Ga4Summary, type Section } from './types';
@@ -116,21 +117,32 @@ export function summariseGa4(json: Ga4BatchResponse, now: Date): Ga4Summary {
 
 const RANGE_7D = { startDate: '7daysAgo', endDate: 'yesterday' };
 
-/** The four audience reports, in the order summariseAudience reads them. */
-export function audienceRequests() {
+/**
+ * The audience reports, in the order summariseAudience reads them. Age and
+ * gender are GA4 "potentially thresholded" dimensions, which draw on a small
+ * separate hourly quota per property; `withDemographics: false` leaves them
+ * out so the batch costs none of it.
+ */
+export function audienceRequests(withDemographics = true) {
   const byUsers = { orderBys: [{ metric: { metricName: 'activeUsers' }, desc: true }], metrics: [{ name: 'activeUsers' }] };
   return [
     { dateRanges: [RANGE_7D], dimensions: [{ name: 'countryId' }, { name: 'country' }], ...byUsers, limit: 10 },
     { dateRanges: [RANGE_7D], dimensions: [{ name: 'deviceCategory' }], ...byUsers },
-    { dateRanges: [RANGE_7D], dimensions: [{ name: 'userAgeBracket' }], ...byUsers },
-    { dateRanges: [RANGE_7D], dimensions: [{ name: 'userGender' }], ...byUsers },
+    ...(withDemographics
+      ? [
+          { dateRanges: [RANGE_7D], dimensions: [{ name: 'userAgeBracket' }], ...byUsers },
+          { dateRanges: [RANGE_7D], dimensions: [{ name: 'userGender' }], ...byUsers },
+        ]
+      : []),
   ];
 }
 
 const NOT_SET = new Set(['(not set)', '']);
 const DEMOGRAPHICS_NOTE = 'GA4 returned no age or gender rows: Google signals is off or the property is under its privacy thresholds.';
+export const DEMOGRAPHICS_SKIPPED_NOTE = `${DEMOGRAPHICS_NOTE} Not asked again for a week, to save GA4's thresholded quota.`;
+export const DEMOGRAPHICS_QUOTA_NOTE = 'Age and gender left out this time: GA4’s hourly quota for thresholded reports is used up.';
 
-export function summariseAudience(json: Ga4BatchResponse, now: Date): AudienceSummary {
+export function summariseAudience(json: Ga4BatchResponse, now: Date, note = DEMOGRAPHICS_NOTE): AudienceSummary {
   const [countries, devices, age, gender] = json.reports ?? [];
   const known = (rows: Ga4Row[] | undefined) => (rows ?? []).filter((r) => !['unknown', '(not set)', ''].includes(dim(r, 0).toLowerCase()));
 
@@ -153,7 +165,7 @@ export function summariseAudience(json: Ga4BatchResponse, now: Date): AudienceSu
       .sort((a, b) => b.activeUsers - a.activeUsers)
       .slice(0, 10),
     devices: (devices?.rows ?? []).map((r) => ({ category: dim(r, 0), activeUsers: num(r, 0) })),
-    demographics: { available, age: ageRows, gender: genderRows, ...(available ? {} : { note: DEMOGRAPHICS_NOTE }) },
+    demographics: { available, age: ageRows, gender: genderRows, ...(available ? {} : { note }) },
   };
 }
 
@@ -199,7 +211,41 @@ export function fetchGa4Summary(env: Record<string, string | undefined> = proces
   return runBatch(env, ga4Requests(), summariseGa4);
 }
 
-/** A second batch: batchRunReports takes at most five reports, and the traffic batch has four. */
-export function fetchAudienceSummary(env: Record<string, string | undefined> = process.env): Promise<Section<AudienceSummary>> {
-  return runBatch(env, audienceRequests(), summariseAudience);
+/** How long an empty age/gender answer is trusted before asking again. */
+export const DEMOGRAPHICS_RECHECK_S = 7 * 86_400;
+const demographicsEmptyKey = (propertyId: string) => `ga4-demographics-empty:v1:${propertyId}`;
+
+/** GA4's 429 for the thresholded-requests quota (age, gender), as opposed to the core one. */
+export const isThresholdedQuota = (message: string) => /\b429\b/.test(message) && /thresholded/i.test(message);
+
+/**
+ * A second batch: batchRunReports takes at most five reports, and the traffic
+ * batch has four.
+ *
+ * Age and gender are only asked for while they might answer. When both come
+ * back empty (Google signals off, or a property under the thresholds) that is
+ * remembered in the Runtime Cache for a week, and until then the batch leaves
+ * them out and spends none of the thresholded quota. When that quota is
+ * already exhausted, the batch is retried without them, so countries and
+ * devices still show.
+ */
+export async function fetchAudienceSummary(
+  env: Record<string, string | undefined> = process.env,
+  cache: RuntimeCache = getCache(),
+): Promise<Section<AudienceSummary>> {
+  const propertyId = env.GA_PROPERTY_ID?.trim();
+  const key = propertyId ? demographicsEmptyKey(propertyId) : null;
+  // A cache error only costs the demographic reports, never the section
+  const knownEmpty = key ? await cache.get(key).then(Boolean, () => false) : false;
+
+  if (knownEmpty) return runBatch(env, audienceRequests(false), (json, now) => summariseAudience(json, now, DEMOGRAPHICS_SKIPPED_NOTE));
+
+  const result = await runBatch(env, audienceRequests(true), summariseAudience);
+  if (result.state === 'error' && isThresholdedQuota(result.message)) {
+    return runBatch(env, audienceRequests(false), (json, now) => summariseAudience(json, now, DEMOGRAPHICS_QUOTA_NOTE));
+  }
+  if (key && result.state === 'ok' && !result.data.demographics.available) {
+    await cache.set(key, new Date().toISOString(), { ttl: DEMOGRAPHICS_RECHECK_S, name: 'ga4-demographics-empty' }).catch(() => undefined);
+  }
+  return result;
 }
