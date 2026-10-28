@@ -84,6 +84,23 @@ export interface AnalyticsPart {
   pageViews: Trend | null;
 }
 
+/** Vercel Web Analytics for the same seven days as GA4: counts people without asking for consent. */
+export interface VercelCountry {
+  /** ISO-2, upper case. */
+  code: string;
+  name: string;
+  visitors: number;
+  pageviews: number;
+}
+
+export interface VercelPart {
+  window: { from: string; to: string };
+  visitors: Trend;
+  pageviews: Trend;
+  /** Top 10 by visitors. */
+  countries: VercelCountry[];
+}
+
 export interface HealthPart {
   errors: Trend | null;
   crashFreeRate: number | null;
@@ -134,6 +151,8 @@ export interface AppSnapshot {
   health: Part<HealthPart>;
   /** Added 2026-10-27; an app that has not shipped it yet reads as not reported. */
   audience: Part<AudiencePart>;
+  /** Vercel Web Analytics, added by the dashboard itself (vercel-analytics.ts); absent for an optional project that did not answer. */
+  vercel?: Part<VercelPart>;
   /** Only apps that sell on the web send it; null when absent. */
   webRevenue: Part<WebRevenuePart> | null;
   /** Only club apps send it; null when absent. */

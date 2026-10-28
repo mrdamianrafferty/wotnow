@@ -110,6 +110,7 @@ function BarRow({
   fill,
   title,
   flag,
+  second,
 }: {
   name: ReactNode;
   value: string;
@@ -117,6 +118,8 @@ function BarRow({
   fill: CSSProperties;
   title: string;
   flag?: string;
+  /** A second bar under the first (Vercel beside GA4), labelled and lighter. */
+  second?: { label: string; value: string; note?: string; fill: CSSProperties };
 }) {
   return (
     <div className={s.barRow} title={title}>
@@ -133,6 +136,20 @@ function BarRow({
       <div className={s.barTrack}>
         <div className={s.barFill} style={fill} />
       </div>
+      {second ? (
+        <>
+          <div className={`${s.barLabel} ${s.barLabelSecond}`}>
+            <span>{second.label}</span>
+            <span>
+              <strong className={s.strong}>{second.value}</strong>
+              {second.note ? <span className={s.muted}> {second.note}</span> : null}
+            </span>
+          </div>
+          <div className={s.barTrack}>
+            <div className={s.barFill} style={second.fill} />
+          </div>
+        </>
+      ) : null}
     </div>
   );
 }
@@ -368,18 +385,44 @@ function Comparisons({ data, androidPending }: { data: FamilySummary; androidPen
     part: a.health,
   }));
   const max = (rs: Row[]) => Math.max(0, ...rs.map((r) => r.t?.value ?? 0));
+  const vercelOf = (a: AppSnapshot) => (a.vercel?.state === 'ok' ? a.vercel.data.visitors : null);
+  // GA4 and Vercel share one scale, so the two bars of an app are comparable
+  const usersMax = Math.max(max(users), ...apps.map((a) => vercelOf(a)?.value ?? 0));
+  const anyVercel = apps.some((a) => vercelOf(a));
 
-  const bars = (rs: Row[], unit: string) =>
-    rs.map(({ a, t, why }) => (
+  const bars = (rs: Row[], unit: string, withVercel = false) =>
+    rs.map(({ a, t, why }) => {
+      const v = withVercel && anyVercel ? vercelOf(a) : null;
+      const vNote = a.vercel?.state === 'not_configured' ? 'not configured' : a.vercel?.state === 'error' ? 'unavailable' : 'not reported';
+      return (
       <BarRow
         key={a.id}
-        name={a.name}
+        name={
+          withVercel && anyVercel ? (
+            <>
+              {a.name} <span className={s.muted}>GA4</span>
+            </>
+          ) : (
+            a.name
+          )
+        }
         value={t ? fmt(t.value) : '—'}
         note={t ? arrow(t) : why}
-        fill={barStyle(a.color, t?.value ?? 0, max(rs))}
+        fill={barStyle(a.color, t?.value ?? 0, withVercel && anyVercel ? usersMax : max(rs))}
         title={t ? `${a.name}: ${fmt(t.value)} ${unit}, ${arrow(t)} on the week before` : `${a.name}: ${why}`}
+        {...(withVercel && anyVercel
+          ? {
+              second: {
+                label: 'Vercel',
+                value: v ? fmt(v.value) : '—',
+                note: v ? arrow(v) : vNote,
+                fill: { ...barStyle(a.color, v?.value ?? 0, usersMax), opacity: 0.45 },
+              },
+            }
+          : {})}
       />
-    ));
+      );
+    });
 
   return (
     <section className={`${s.section} ${s.grid3}`} aria-label="Comparisons">
@@ -421,9 +464,13 @@ function Comparisons({ data, androidPending }: { data: FamilySummary; androidPen
 
       <Card
         title="Active users"
-        sub={totals.activeUsers.apps ? `${fmt(totals.activeUsers.value)} across the family, summed per app` : 'No app reports active users'}
+        sub={
+          totals.activeUsers.apps
+            ? `${fmt(totals.activeUsers.value)} across the family, summed per app${anyVercel ? '. Vercel counts without consent' : ''}`
+            : 'No app reports active users'
+        }
       >
-        <div className={s.bars}>{bars(users, 'active users')}</div>
+        <div className={s.bars}>{bars(users, 'active users', true)}</div>
       </Card>
 
       <Card
@@ -690,7 +737,15 @@ function AppCard({ app, attention, maxDl }: { app: AppSnapshot; attention: Atten
   const platforms = dl
     ? [`iOS ${fmt(dl.ios?.value ?? 0)}`, ...(dl.android && dl.android.value > 0 ? [`Android ${fmt(dl.android.value)}`] : [])].join(' · ')
     : '';
-  const stats: { label: string; value: string; note: string }[] = [
+  const vc = app.vercel;
+  const vercelLine = !vc
+    ? null
+    : vc.state === 'ok'
+      ? `Vercel: ${plural(vc.data.visitors.value, 'visitor')} · ${plural(vc.data.pageviews.value, 'view')}`
+      : vc.state === 'error'
+        ? `Vercel: ${reason(vc)}`
+        : 'Vercel: not configured';
+  const stats: { label: string; value: string; note: string; sub?: string }[] = [
     {
       label: 'Downloads',
       value: dl ? fmt(dl.total.value) : '—',
@@ -719,6 +774,7 @@ function AppCard({ app, attention, maxDl }: { app: AppSnapshot; attention: Atten
       note: an?.activeUsers
         ? `${arrow(an.activeUsers)}${an.pageViews ? ` · ${plural(an.pageViews.value, 'view')}` : ''}`
         : reason(app.analytics) || 'not reported',
+      ...(vercelLine ? { sub: vercelLine } : {}),
     },
     {
       label: 'Errors',
@@ -754,6 +810,7 @@ function AppCard({ app, attention, maxDl }: { app: AppSnapshot; attention: Atten
               <span className={s.statLabel}>{st.label}</span>
               <span className={s.statValue}>{st.value}</span>
               <span className={s.statNote}>{st.note}</span>
+              {st.sub ? <span className={s.statNote}>{st.sub}</span> : null}
             </div>
           ))}
         </div>

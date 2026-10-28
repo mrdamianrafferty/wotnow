@@ -10,7 +10,7 @@
  */
 
 import { utcDay } from '@/lib/store-stats/summary';
-import { FAMILY_APPS, familyTotals, readAppSummary, type FamilyAppId, type FamilySummary } from './family';
+import { FAMILY_APPS, familyTotals, readAppSummary, type FamilyAppId, type FamilySummary, type Part, type VercelCountry, type VercelPart } from './family';
 
 /** A WeekMetric with these weekly totals, spread over 14 days. */
 function week(value: number, previous: number) {
@@ -271,8 +271,40 @@ export function sampleFamilyBodies(now = new Date()): Record<FamilyAppId, unknow
   };
 }
 
-export function sampleFamilySummary(now = new Date()): FamilySummary {
+function vercel(now: Date, visitors: [number, number], pageviews: [number, number], countries: [string, string, number, number][]): Part<VercelPart> {
+  const trend = (v: [number, number]) => ({ value: v[0], previous: v[1], delta: v[1] ? Math.round(((v[0] - v[1]) / v[1]) * 100) : null, daily: [] });
+  return {
+    state: 'ok',
+    data: {
+      window: { from: utcDay(now, 7), to: utcDay(now, 1) },
+      visitors: trend(visitors),
+      pageviews: trend(pageviews),
+      countries: countries.map(([code, name, v, p]): VercelCountry => ({ code, name, visitors: v, pageviews: p })),
+    },
+  };
+}
+
+/**
+ * Vercel Web Analytics for the week of 21–27 Oct 2026, as the owner compared
+ * it with GA4: Go Daisy's GA4 was blocked by its CSP (89 vs 1), Fly Cast's
+ * Vercel script was not wired (3 vs 23), Grewp's US made 5,468 views from 125
+ * visitors. Grow Daisy has no entry: its project is optional.
+ */
+export function sampleVercel(now = new Date()): Partial<Record<FamilyAppId, Part<VercelPart>>> {
+  return {
+    godaisy: vercel(now, [89, 70], [210, 160], [['GB', 'United Kingdom', 52, 120], ['US', 'United States', 21, 50], ['DE', 'Germany', 9, 24]]),
+    risedaisy: vercel(now, [626, 590], [2100, 1900], [['GB', 'United Kingdom', 300, 1100], ['ES', 'Spain', 180, 600], ['US', 'United States', 70, 210]]),
+    hungerford: vercel(now, [48, 40], [140, 120], [['GB', 'United Kingdom', 44, 130]]),
+    findr: vercel(now, [31, 25], [90, 70], [['GB', 'United Kingdom', 19, 55], ['IE', 'Ireland', 6, 20]]),
+    flycast: vercel(now, [3, 2], [6, 4], [['GB', 'United Kingdom', 3, 6]]),
+    grewp: vercel(now, [1035, 880], [7400, 3100], [['US', 'United States', 125, 5468], ['GB', 'United Kingdom', 410, 900], ['IN', 'India', 160, 420]]),
+  };
+}
+
+/** `withVercel` adds the Vercel figures (sampleVercel); off by default so the other tests' fixtures stay as they were. */
+export function sampleFamilySummary(now = new Date(), { withVercel = false }: { withVercel?: boolean } = {}): FamilySummary {
   const bodies = sampleFamilyBodies(now);
-  const apps = FAMILY_APPS.map((a) => readAppSummary(a, bodies[a.id]));
+  const extra = withVercel ? sampleVercel(now) : {};
+  const apps = FAMILY_APPS.map((a) => ({ ...readAppSummary(a, bodies[a.id]), ...(extra[a.id] ? { vercel: extra[a.id] } : {}) }));
   return { generatedAt: now.toISOString(), apps, totals: familyTotals(apps) };
 }

@@ -37,7 +37,7 @@ export default function AdminAppsPage() {
   useEffect(() => {
     if (!router.isReady) return;
     if (sample) {
-      import('@/lib/admin-dashboard/family-sample').then((m) => setData(m.sampleFamilySummary()));
+      import('@/lib/admin-dashboard/family-sample').then((m) => setData(m.sampleFamilySummary(new Date(), { withVercel: true })));
       return;
     }
     if (loading || !session) return;
