@@ -77,7 +77,7 @@ describe('fetchVercelPart', () => {
     expect(part).toMatchObject({ state: 'ok', data: { visitors: { value: 100, previous: 80, delta: 25 }, pageviews: { value: 400 } } });
     const counts = ok.calls.filter((u) => u.pathname.endsWith('/count'));
     expect(counts.map((u) => u.searchParams.get('since'))).toEqual(['2026-10-21T00:00:00.000Z', '2026-10-14T00:00:00.000Z']);
-    expect(counts[0].searchParams.get('until')).toBe('2026-10-27T23:59:59.999Z');
+    expect(counts[0].searchParams.get('until')).toBe('2026-10-28T00:00:00.000Z');
     expect(counts[0].searchParams.get('teamId')).toBe(VERCEL_TEAM_ID);
     expect(counts[0].searchParams.get('projectId')).toBe('prj_x');
     expect(counts[0].searchParams.has('filter')).toBe(false);

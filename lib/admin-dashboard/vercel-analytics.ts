@@ -129,7 +129,16 @@ export function vercelWindows(now: Date) {
   return { current: range(7, 1), previous: range(14, 8) };
 }
 
-const iso = (w: { from: string; to: string }) => ({ since: `${w.from}T00:00:00.000Z`, until: `${w.to}T23:59:59.999Z` });
+/**
+ * `until` is the midnight after the last day. Vercel rounds an end-of-day
+ * `until` down to that day's midnight on the count endpoint, which drops the
+ * day itself (measured 28 Oct 2026: Grewp 1,035 visitors that way, 1,366 with
+ * the next midnight).
+ */
+const iso = (w: { from: string; to: string }) => ({
+  since: `${w.from}T00:00:00.000Z`,
+  until: `${new Date(Date.parse(`${w.to}T00:00:00.000Z`) + 86_400_000).toISOString()}`,
+});
 
 async function readVercel(source: Source, token: string, fetchImpl: typeof fetch, now: Date): Promise<VercelPart> {
   const id = await projectId(source.project, token, fetchImpl);
