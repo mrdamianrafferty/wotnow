@@ -10,6 +10,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import Head from 'next/head';
+import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { Inter, Manrope } from 'next/font/google';
 import { useAuth } from '@/context/AuthContext';
@@ -92,7 +93,9 @@ export default function AdminAppsPage() {
       <>
         {head}
         <div className={`${root} ${s.center}`}>
-          {loading ? <span className="loading loading-spinner loading-lg" /> : <p className={s.meta}>Sign in to access admin tools.</p>}
+          {loading ? <span className="loading loading-spinner loading-lg" /> : <p className={s.meta}>
+              <Link href="/login?returnTo=/admin/apps" style={{ textDecoration: 'underline' }}>Sign in</Link> to access admin tools.
+            </p>}
         </div>
       </>
     );

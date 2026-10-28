@@ -12,6 +12,7 @@
 
 import { useEffect, useState } from 'react';
 import Head from 'next/head';
+import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { useAuth } from '@/context/AuthContext';
 import { StoreDownloads } from '@/components/admin/StoreDownloads';
@@ -65,7 +66,12 @@ export default function AdminDashboardPage() {
           {loading ? (
             <span className="loading loading-spinner loading-lg text-primary" />
           ) : (
-            <p className="text-base-content/60">Sign in to access admin tools.</p>
+            <p className="text-base-content/60">
+              <Link href="/login?returnTo=/admin/dashboard" className="link">
+                Sign in
+              </Link>{' '}
+              to access admin tools.
+            </p>
           )}
         </div>
       </>
