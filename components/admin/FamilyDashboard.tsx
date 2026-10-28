@@ -20,6 +20,7 @@ import {
   type FamilyCountry,
   type FamilySummary,
   type Part,
+  type PlayRelease,
   type Trend,
 } from '@/lib/admin-dashboard/family';
 import { fmt, money } from './DashboardParts';
@@ -770,6 +771,15 @@ function Demographics({ data }: { data: FamilySummary }) {
   );
 }
 
+/** A production release as one chip: "1.8.3 · live", "1.8.3 · 20% rollout", "… · halted", "… · draft, not sent". */
+function releaseLabel(r: PlayRelease): string {
+  const v = r.name ?? 'Release';
+  if (r.status === 'completed') return `${v} · live`;
+  if (r.status === 'draft') return `${v} · draft, not sent`;
+  const pct = r.userFraction != null ? `${Math.round(r.userFraction * 100)}%` : null;
+  return r.status === 'halted' ? `${v} · halted${pct ? ` at ${pct}` : ''}` : `${v} · ${pct ?? 'staged'} rollout`;
+}
+
 function AppCard({ app, attention, maxDl }: { app: AppSnapshot; attention: AttentionItem[]; maxDl: number }) {
   const item = appAttention(attention, app.id);
   const pill =
@@ -819,6 +829,7 @@ function AppCard({ app, attention, maxDl }: { app: AppSnapshot; attention: Atten
   const an = okData(app.analytics);
   const hl = okData(app.health);
   const aud = okData(app.audience);
+  const play = app.play ? okData(app.play) : null;
 
   const mrr = appMrr(app);
   const webMrr = app.webRevenue?.state === 'ok' ? app.webRevenue.data.mrrByCurrency.filter((m) => m.mrr > 0) : [];
@@ -942,6 +953,45 @@ function AppCard({ app, attention, maxDl }: { app: AppSnapshot; attention: Atten
                   <span className={s.clubValue}>{fmt(c.value)}</span>
                 </div>
               ))}
+            </div>
+          </div>
+        ) : null}
+
+        {play ? (
+          <div className={s.chips}>
+            <span className={s.chipsLabel}>Google Play</span>
+            <div className={s.chipRow}>
+              {play.rating ? (
+                <span className={s.chip}>
+                  ★ {play.rating.average.toFixed(1)}
+                  {play.rating.previous !== null && Math.abs(play.rating.average - play.rating.previous) >= 0.05
+                    ? ` (${play.rating.average > play.rating.previous ? '+' : '−'}${Math.abs(play.rating.average - play.rating.previous).toFixed(1)} in 30 days)`
+                    : ''}
+                </span>
+              ) : (
+                <span className={s.chip}>No rating yet</span>
+              )}
+              {play.release ? <span className={s.chip}>{releaseLabel(play.release)}</span> : <span className={s.chip}>No production release</span>}
+              {play.reviews && play.reviews.count > 0 ? (
+                <span className={s.chip} title={play.reviews.recent[0]?.text ?? undefined}>
+                  {plural(play.reviews.count, 'review')} this week{play.reviews.average != null ? ` · ★ ${play.reviews.average.toFixed(1)}` : ''}
+                  {play.reviews.lowUnanswered > 0 ? ` · ${play.reviews.lowUnanswered} to reply` : ''}
+                </span>
+              ) : null}
+              {play.notes.map((n) => (
+                <span key={n} className={s.chip} title={n}>
+                  {n.split(':')[0]} unavailable
+                </span>
+              ))}
+            </div>
+          </div>
+        ) : app.play?.state === 'error' ? (
+          <div className={s.chips}>
+            <span className={s.chipsLabel}>Google Play</span>
+            <div className={s.chipRow}>
+              <span className={s.chip} title={app.play.message}>
+                Error
+              </span>
             </div>
           </div>
         ) : null}

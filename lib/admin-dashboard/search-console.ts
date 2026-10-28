@@ -42,6 +42,12 @@ const DAY = 86_400_000;
 export const LAG_DAYS = 3;
 export const WINDOW_DAYS = 28;
 const TOP_N = 5;
+/**
+ * Google ranks rows by clicks, and at our volumes nearly every row has 0, so a
+ * 5-row request returns five ties in key order (alphabetical). Fetch enough to
+ * rank by impressions ourselves.
+ */
+const RANK_ROWS = 250;
 
 // ─── Sites ───────────────────────────────────────────────────────────
 
@@ -175,6 +181,13 @@ function readTotals(body: unknown) {
   return row ?? { key: '', clicks: 0, impressions: 0, ctr: 0, position: 0 };
 }
 
+/** Top rows by impressions, clicks breaking ties. */
+export function topRows(body: unknown): SearchRow[] {
+  return readRows(body)
+    .sort((a, b) => b.impressions - a.impressions || b.clicks - a.clicks)
+    .slice(0, TOP_N);
+}
+
 export function summariseSite(current: unknown, previous: unknown, queries: unknown, pages: unknown): SiteSearch {
   const c = readTotals(current);
   const p = readTotals(previous);
@@ -184,8 +197,8 @@ export function summariseSite(current: unknown, previous: unknown, queries: unkn
     impressions: { value: c.impressions, previous: p.impressions, delta: pctDelta(c.impressions, p.impressions) },
     ctr: { value: ctr(c), previous: ctr(p) },
     position: { value: c.impressions > 0 ? c.position : null, previous: p.impressions > 0 ? p.position : null },
-    topQueries: readRows(queries).slice(0, TOP_N),
-    topPages: readRows(pages).slice(0, TOP_N),
+    topQueries: topRows(queries),
+    topPages: topRows(pages),
   };
 }
 
@@ -249,7 +262,7 @@ async function readSite(
     google(`/sites/${encodeURIComponent(property)}/searchAnalytics/query`, token, fetchImpl, {
       startDate: range.from,
       endDate: range.to,
-      ...(dimension ? { dimensions: [dimension], rowLimit: TOP_N } : {}),
+      ...(dimension ? { dimensions: [dimension], rowLimit: RANK_ROWS } : {}),
       ...(filters ? { dimensionFilterGroups: filters } : {}),
     });
   try {

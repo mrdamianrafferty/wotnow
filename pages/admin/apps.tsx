@@ -46,7 +46,10 @@ export default function AdminAppsPage() {
     if (!router.isReady) return;
     if (sample) {
       Promise.all([import('@/lib/admin-dashboard/family-sample'), import('@/lib/admin-dashboard/search-console-sample')]).then(([m, sc]) =>
-        setData({ ...m.sampleFamilySummary(new Date(), { withVercel: true, withTopIssues: true, listingWaiting }), searchConsole: sc.sampleSearchConsole(new Date()) }),
+        setData({
+          ...m.sampleFamilySummary(new Date(), { withVercel: true, withTopIssues: true, withPlay: true, listingWaiting }),
+          searchConsole: sc.sampleSearchConsole(new Date()),
+        }),
       );
       return;
     }

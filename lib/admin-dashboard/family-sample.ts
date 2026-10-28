@@ -12,7 +12,7 @@
 import { utcDay } from '@/lib/store-stats/summary';
 import { summariseStoreListing, type ListingInput } from '@/lib/store-stats/listing-summary';
 import { dashboardUrl } from './app-links';
-import { FAMILY_APPS, familyTotals, readAppSummary, type FamilyAppId, type FamilySummary, type Part, type TopIssuePart, type VercelCountry, type VercelPart } from './family';
+import { FAMILY_APPS, familyTotals, readAppSummary, type FamilyAppId, type FamilySummary, type Part, type PlayPart, type PlayRelease, type PlayReviews, type TopIssuePart, type VercelCountry, type VercelPart } from './family';
 
 /** A WeekMetric with these weekly totals, spread over 14 days. */
 function week(value: number, previous: number) {
@@ -371,23 +371,59 @@ export function sampleTopIssues(): Partial<Record<FamilyAppId, Part<TopIssuePart
   };
 }
 
+/** Google Play parts: one app of each kind the card and the attention rules distinguish. */
+export function samplePlay(): Partial<Record<FamilyAppId, Part<PlayPart>>> {
+  const none: PlayReviews = { count: 0, average: null, lowUnanswered: 0, recent: [] };
+  const ok = (rating: [number, number] | null, release: PlayRelease | null, reviews: PlayReviews = none): Part<PlayPart> => ({
+    state: 'ok',
+    data: { packageName: 'sample', rating: rating ? { average: rating[0], previous: rating[1], date: '2026-10-27' } : null, release, reviews, notes: [] },
+  });
+  const findrReviews: PlayReviews = {
+    count: 3,
+    average: 2.7,
+    lowUnanswered: 2,
+    recent: [
+      { stars: 1, text: 'Crashes every time I open the species list.', version: '1.0.9', date: '2026-10-26T18:00:00.000Z', replied: false },
+      { stars: 2, text: 'Needs offline maps.', version: '1.0.9', date: '2026-10-25T09:00:00.000Z', replied: false },
+      { stars: 5, text: 'Great app', version: '1.0.9', date: '2026-10-24T09:00:00.000Z', replied: true },
+    ],
+  };
+  const rel = (status: PlayRelease['status'], name: string, userFraction: number | null = null): PlayRelease => ({ status, name, userFraction, versionCodes: ['1'] });
+  return {
+    godaisy: ok([4.6, 4.6], rel('completed', '1.4.2')),
+    growdaisy: ok([4.4, 4.5], rel('inProgress', '1.2.0', 0.2)),
+    risedaisy: ok([4.8, 4.7], rel('completed', '1.8.3')),
+    findr: ok([3.6, 4.1], rel('completed', '2.1.0'), findrReviews),
+    flycast: ok(null, rel('draft', '1.0.3')),
+    grewp: ok([4.9, 4.9], rel('halted', '0.9.1', 0.5)),
+  };
+}
+
 /**
- * `withVercel` adds the Vercel figures (sampleVercel) and `withTopIssues` the
- * Sentry top issues; both off by default so the other tests' fixtures stay as they were.
+ * `withVercel` adds the Vercel figures (sampleVercel), `withTopIssues` the
+ * Sentry top issues and `withPlay` the Google Play parts (samplePlay); all
+ * off by default so the other tests' fixtures stay as they were.
  * `listingWaiting` shows the store listing as it is until Apple's first report lands.
  */
 export function sampleFamilySummary(
   now = new Date(),
-  { withVercel = false, withTopIssues = false, listingWaiting = false }: { withVercel?: boolean; withTopIssues?: boolean; listingWaiting?: boolean } = {},
+  {
+    withVercel = false,
+    withTopIssues = false,
+    withPlay = false,
+    listingWaiting = false,
+  }: { withVercel?: boolean; withTopIssues?: boolean; withPlay?: boolean; listingWaiting?: boolean } = {},
 ): FamilySummary {
   const bodies = sampleFamilyBodies(now, { listingWaiting });
   const extra = withVercel ? sampleVercel(now) : {};
   const top = withTopIssues ? sampleTopIssues() : {};
+  const play = withPlay ? samplePlay() : {};
   const apps = FAMILY_APPS.map((a) => ({
     ...readAppSummary(a, bodies[a.id]),
     dashboardUrl: dashboardUrl(a.id, a.envKey),
     ...(extra[a.id] ? { vercel: extra[a.id] } : {}),
     ...(top[a.id] ? { topIssue: top[a.id] } : {}),
+    ...(play[a.id] ? { play: play[a.id] } : {}),
   }));
   return { generatedAt: now.toISOString(), apps, totals: familyTotals(apps) };
 }

@@ -9,14 +9,14 @@
  */
 
 import { adjustUsers, familyUsers, HOME_COUNTRIES } from './automated';
-import { FAMILY_APPS, type AppSnapshot, type FamilyAppId, type FamilySummary, type Part } from './family';
+import { FAMILY_APPS, type AppSnapshot, type FamilyAppId, type FamilySummary, type Part, type PlayPart } from './family';
 
 export type AttentionLevel = 'danger' | 'check' | 'waiting';
 
 export interface AttentionItem {
   level: AttentionLevel;
   /** Stable, for React keys and tests. */
-  rule: 'errors_rising' | 'not_reporting' | 'wrong_property' | 'automated_traffic' | 'android_missing' | 'analytics_disagree' | 'automated_vercel';
+  rule: 'errors_rising' | 'not_reporting' | 'wrong_property' | 'automated_traffic' | 'android_missing' | 'analytics_disagree' | 'automated_vercel' | 'play_release_halted' | 'play_release_draft' | 'play_rollout' | 'rating_low' | 'review_low' | 'play_unreadable';
   /** Apps it is about; empty for a family-wide item. */
   apps: FamilyAppId[];
   /** Who it is about, as shown: an app name, several, or "Android". */
@@ -45,6 +45,9 @@ export const RULES = {
   botViewsPerVisitor: 15,
   /** ...once it has this many visitors or views, so a single curious reader cannot trip it. */
   botMinVisitorsOrViews: 50,
+  /** Google Play: a running average under this, or down this much in 30 days, is worth a look. */
+  ratingLow: 4,
+  ratingDrop: 0.3,
 } as const;
 
 const LEVEL_ORDER: Record<AttentionLevel, number> = {
@@ -263,6 +266,105 @@ function androidMissing(apps: AppSnapshot[]): AttentionItem[] {
   ];
 }
 
+const stars = (x: number) => x.toFixed(1);
+
+/** Google Play: a halted or waiting production release, a rollout under way, and a rating that is low or falling. */
+function playStatus(apps: AppSnapshot[]): AttentionItem[] {
+  const items: AttentionItem[] = [];
+  for (const a of apps) {
+    const play = okData(a.play ?? NO_PLAY);
+    if (!play) continue;
+    const r = play.release;
+    const label = r?.name ? `“${r.name}”` : 'The production release';
+    const pct = r?.userFraction != null ? `${Math.round(r.userFraction * 100)}%` : null;
+    if (r?.status === 'halted') {
+      items.push({
+        level: 'danger',
+        rule: 'play_release_halted',
+        apps: [a.id],
+        label: a.name,
+        title: 'Play rollout halted',
+        body: `${label} is halted${pct ? ` at ${pct}` : ''} on Google Play, so new users are not getting it. Resume or replace it in Play Console.`,
+        short: 'Rollout halted',
+      });
+    } else if (r?.status === 'draft') {
+      items.push({
+        level: 'waiting',
+        rule: 'play_release_draft',
+        apps: [a.id],
+        label: a.name,
+        title: 'Play release not sent',
+        body: `${label} is still a draft on the production track. Send it for review in Play Console when it is ready.`,
+        short: 'Draft release',
+      });
+    } else if (r?.status === 'inProgress') {
+      items.push({
+        level: 'waiting',
+        rule: 'play_rollout',
+        apps: [a.id],
+        label: a.name,
+        title: pct ? `Rolling out to ${pct}` : 'Rolling out',
+        body: `${label} is a staged rollout on Google Play${pct ? `, at ${pct} of users` : ''}. Raise it, or halt it if errors climb.`,
+        short: pct ? `Rollout ${pct}` : 'Rolling out',
+      });
+    }
+
+    const rating = play.rating;
+    if (rating) {
+      const drop = rating.previous !== null ? rating.previous - rating.average : 0;
+      if (rating.average < RULES.ratingLow || drop >= RULES.ratingDrop - 1e-9) {
+        items.push({
+          level: 'check',
+          rule: 'rating_low',
+          apps: [a.id],
+          label: a.name,
+          title: drop >= RULES.ratingDrop - 1e-9 ? `Play rating down to ${stars(rating.average)}` : `Play rating is ${stars(rating.average)}`,
+          body:
+            drop >= RULES.ratingDrop - 1e-9
+              ? `Down from ${stars(rating.previous!)} thirty days ago. Read the recent reviews in Play Console.`
+              : `Under ${stars(RULES.ratingLow)} stars. Read the recent reviews in Play Console.`,
+          short: 'Rating dropped',
+        });
+      }
+    }
+  }
+
+  // A 1–2 star review nobody has answered, this week
+  for (const a of apps) {
+    const reviews = okData(a.play ?? NO_PLAY)?.reviews;
+    if (!reviews || reviews.lowUnanswered === 0) continue;
+    const worst = reviews.recent[0];
+    const quote = worst?.text ? `“${worst.text.length > 140 ? `${worst.text.slice(0, 139)}…` : worst.text}”` : 'with no comment';
+    items.push({
+      level: 'check',
+      rule: 'review_low',
+      apps: [a.id],
+      label: a.name,
+      title: reviews.lowUnanswered === 1 ? 'A low Play review needs a reply' : `${reviews.lowUnanswered} low Play reviews need a reply`,
+      body: `${worst ? `${worst.stars}★${worst.version ? ` on ${worst.version}` : ''}: ` : ''}${quote}. Reply in Play Console.`,
+      short: 'Low review',
+    });
+  }
+
+  // One line for a shared cause (the API not enabled, the account not invited) rather than one per app
+  const broken = apps.filter((a) => a.play?.state === 'error');
+  if (broken.length) {
+    const first = broken[0].play as Extract<Part<PlayPart>, { state: 'error' }>;
+    items.push({
+      level: 'check',
+      rule: 'play_unreadable',
+      apps: broken.map((a) => a.id),
+      label: broken.map((a) => a.name).join(' · '),
+      title: 'Google Play didn’t answer',
+      body: first.message,
+      short: 'Play unreadable',
+    });
+  }
+  return items;
+}
+
+const NO_PLAY: Part<PlayPart> = { state: 'not_configured', missing: [] };
+
 export function deriveAttention(summary: FamilySummary): AttentionItem[] {
   const { apps, totals } = summary;
   const items = [
@@ -272,6 +374,7 @@ export function deriveAttention(summary: FamilySummary): AttentionItem[] {
     ...automatedTraffic(summary),
     ...analyticsDisagree(apps),
     ...automatedVercel(apps),
+    ...playStatus(apps),
     ...androidMissing(apps),
   ];
   // Stable sort: level first, rule order within a level

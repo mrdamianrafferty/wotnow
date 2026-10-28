@@ -196,6 +196,53 @@ export interface AppSnapshot {
   club: ClubPart | null;
   /** The app's top unresolved Sentry issue over 7 days, added by the dashboard itself (sentry-top.ts). */
   topIssue?: Part<TopIssuePart>;
+  /** Google Play rating and production release, added by the dashboard itself (play-console.ts); absent for an app not on Play. */
+  play?: Part<PlayPart>;
+}
+
+/** The Android Publisher API's release statuses that matter here. */
+export type PlayReleaseStatus = 'draft' | 'inProgress' | 'halted' | 'completed';
+
+export interface PlayRelease {
+  status: PlayReleaseStatus;
+  /** The release's name in Play Console, usually the version name. */
+  name: string | null;
+  /** Share of users a staged rollout has reached (0–1); null when it is not staged. */
+  userFraction: number | null;
+  versionCodes: string[];
+}
+
+export interface PlayPart {
+  packageName: string;
+  /** Running average of every rating, and the same 30 days earlier when the reports go back that far. */
+  rating: { average: number; previous: number | null; date: string } | null;
+  /** The production track's most pressing release; null when the track has none. */
+  release: PlayRelease | null;
+  /** Reviews from the last week (the most Play's API returns); null when they could not be read. */
+  reviews: PlayReviews | null;
+  /** Why a half is missing when another was read. */
+  notes: string[];
+}
+
+export interface PlayReview {
+  stars: number;
+  /** The reviewer's words, one line, cut short; null for a star-only review. */
+  text: string | null;
+  version: string | null;
+  /** ISO time of the last edit. */
+  date: string;
+  /** True once the developer has replied. */
+  replied: boolean;
+}
+
+export interface PlayReviews {
+  /** Reviews in the last week. */
+  count: number;
+  average: number | null;
+  /** 1–2 star reviews nobody has replied to yet. */
+  lowUnanswered: number;
+  /** Up to three, the ones most worth reading first: unanswered, then fewest stars, then newest. */
+  recent: PlayReview[];
 }
 
 /** One Sentry issue: the most events in the window among the project's unresolved ones. */
