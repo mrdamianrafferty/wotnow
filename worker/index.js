@@ -177,3 +177,27 @@ self.addEventListener('message', function (event) {
 });
 
 console.log('[ServiceWorker] Grow Daisy push notification handlers registered');
+
+// =============================================================================
+// ADMIN PURGE - /admin is NetworkOnly now; drop copies cached by earlier workers
+// =============================================================================
+
+self.addEventListener('activate', function (event) {
+  const isAdmin = function (request) {
+    const path = new URL(request.url).pathname;
+    return /^\/(?:api\/)?admin(?:\/|$)/.test(path) || /^\/_next\/data\/[^/]+\/admin(?:\/|\.json$)/.test(path);
+  };
+  event.waitUntil(
+    caches.keys().then(function (names) {
+      return Promise.all(
+        names.map(function (name) {
+          return caches.open(name).then(function (cache) {
+            return cache.keys().then(function (requests) {
+              return Promise.all(requests.filter(isAdmin).map(function (r) { return cache.delete(r); }));
+            });
+          });
+        })
+      );
+    })
+  );
+});
