@@ -1,10 +1,4 @@
-/* Google search on /admin/apps. Uses FamilyDashboard.module.css's tokens, which .root sets on the page. */
-
-.wrap {
-  max-width: 1240px;
-  margin: 0 auto;
-  padding: 0 24px 64px;
-}
+/* Google search on /admin/apps, inside FamilyDashboard's <main>; its tokens come from .root. */
 
 .property {
   font-size: 13px;
@@ -102,10 +96,4 @@
 }
 .error {
   color: #b91c1c;
-}
-
-@media (max-width: 480px) {
-  .wrap {
-    padding: 0 16px 48px;
-  }
 }

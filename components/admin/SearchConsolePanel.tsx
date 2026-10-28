@@ -118,34 +118,32 @@ function SiteCard({ site }: { site: SearchSite }) {
 export function SearchConsolePanel({ section }: { section: Section<SearchConsoleSummary> | undefined }) {
   if (!section) return null;
   return (
-    <div className={s.wrap}>
-      <section id="search" className={f.section} aria-labelledby="search-h">
-        <div className={f.sectionHead}>
-          <h2 id="search-h" className={f.h2}>
-            Google search
-          </h2>
-          {section.state === 'ok' ? (
-            <span className={f.meta}>
-              {dayLabel(section.data.window.from)} – {dayLabel(section.data.window.to)}, against the 28 days before · Search Console, kept for up to 6 h
-            </span>
-          ) : null}
-        </div>
+    <section id="search" className={f.section} aria-labelledby="search-h">
+      <div className={f.sectionHead}>
+        <h2 id="search-h" className={f.h2}>
+          Google search
+        </h2>
         {section.state === 'ok' ? (
-          <div className={f.grid3}>
-            {section.data.sites.map((site) => (
-              <SiteCard key={site.id} site={site} />
-            ))}
-          </div>
-        ) : (
-          <div className={`${f.card} ${f.cardDashed}`}>
-            <p className={`${s.notice} ${section.state === 'error' ? s.error : ''}`}>
-              {section.state === 'not_configured'
-                ? `Not connected. ${section.hint ?? `Set ${section.missing.join(', ')}.`}`
-                : `Search Console error: ${section.message}`}
-            </p>
-          </div>
-        )}
-      </section>
-    </div>
+          <span className={f.meta}>
+            {dayLabel(section.data.window.from)} – {dayLabel(section.data.window.to)}, against the 28 days before · Search Console, kept for up to 6 h
+          </span>
+        ) : null}
+      </div>
+      {section.state === 'ok' ? (
+        <div className={f.grid3}>
+          {section.data.sites.map((site) => (
+            <SiteCard key={site.id} site={site} />
+          ))}
+        </div>
+      ) : (
+        <div className={`${f.card} ${f.cardDashed}`}>
+          <p className={`${s.notice} ${section.state === 'error' ? s.error : ''}`}>
+            {section.state === 'not_configured'
+              ? `Not connected. ${section.hint ?? `Set ${section.missing.join(', ')}.`}`
+              : `Search Console error: ${section.message}`}
+          </p>
+        </div>
+      )}
+    </section>
   );
 }

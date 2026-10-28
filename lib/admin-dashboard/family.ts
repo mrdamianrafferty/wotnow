@@ -59,6 +59,8 @@ export interface DownloadsPart {
   latestDate: string | null;
   /** First-time downloads by store region over 30 days; null when the app does not send them yet. */
   countries30d: CountryCount[] | null;
+  /** First-time downloads over the last 30 complete days (PlatformDownloads.total30d); null per platform when not sent. */
+  total30d?: { ios: number | null; android: number | null };
 }
 
 export interface RevenuePart {
@@ -99,6 +101,8 @@ export interface VercelPart {
   pageviews: Trend;
   /** Top 10 by visitors. */
   countries: VercelCountry[];
+  /** Visitors over the last 28 complete UTC days, for the funnel (funnel.ts); absent in snapshots cached before it existed. */
+  visitors28d?: number | null;
 }
 
 export interface HealthPart {
@@ -159,6 +163,21 @@ export interface AppSnapshot {
   webRevenue: Part<WebRevenuePart> | null;
   /** Only club apps send it; null when absent. */
   club: ClubPart | null;
+  /** The app's top unresolved Sentry issue over 7 days, added by the dashboard itself (sentry-top.ts). */
+  topIssue?: Part<TopIssuePart>;
+}
+
+/** One Sentry issue: the most events in the window among the project's unresolved ones. */
+export interface TopIssuePart {
+  title: string;
+  shortId: string | null;
+  /** Events in the window. */
+  count: number;
+  permalink: string;
+  /** Sentry project slug it came from. */
+  project: string;
+  /** Set when the project is shared with another app (Hungerford reports to Rise Daisy's). */
+  sharedWith: string | null;
 }
 
 /** A country summed across apps, with the apps it came from (largest first). */
@@ -305,6 +324,7 @@ export function readDownloads(d: Obj): DownloadsPart | null {
     total: sumTrends(present),
     latestDate: str(d.latestDate),
     countries30d: readCountries30d(d.countries30d),
+    total30d: { ios: isObj(d.ios) ? num(d.ios.total30d) : null, android: isObj(d.android) ? num(d.android.total30d) : null },
   };
 }
 

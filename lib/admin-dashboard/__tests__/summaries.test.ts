@@ -135,6 +135,20 @@ describe('Sentry', () => {
     expect(data.topIssues[0]).toMatchObject({ level: 'error', count: 12 });
   });
 
+  it('asks Sentry for accepted events only', async () => {
+    const urls: string[] = [];
+    const fetchSpy = jest.spyOn(global, 'fetch').mockImplementation(async (input) => {
+      urls.push(String(input));
+      return new Response('[]', { status: 200 });
+    });
+    await fetchSentrySummary({ SENTRY_ADMIN_TOKEN: 't', SENTRY_DASHBOARD_PROJECT_ID: '42' });
+    fetchSpy.mockRestore();
+    const stats = urls.find((u) => u.includes('/stats_v2/'));
+    expect(stats).toBeDefined();
+    expect(new URL(stats!).searchParams.get('outcome')).toBe('accepted');
+    expect(new URL(stats!).searchParams.get('category')).toBe('error');
+  });
+
   it('has no crash-free rate without session data', () => {
     expect(summariseSentry(null, null, [], now).crashFreeRate).toBeNull();
   });

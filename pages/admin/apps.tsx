@@ -44,7 +44,7 @@ export default function AdminAppsPage() {
     if (!router.isReady) return;
     if (sample) {
       Promise.all([import('@/lib/admin-dashboard/family-sample'), import('@/lib/admin-dashboard/search-console-sample')]).then(([m, sc]) =>
-        setData({ ...m.sampleFamilySummary(new Date(), { withVercel: true }), searchConsole: sc.sampleSearchConsole(new Date()) }),
+        setData({ ...m.sampleFamilySummary(new Date(), { withVercel: true, withTopIssues: true }), searchConsole: sc.sampleSearchConsole(new Date()) }),
       );
       return;
     }
@@ -108,13 +108,13 @@ export default function AdminAppsPage() {
               ) : null
             }
             refresh={sample ? undefined : { onRefresh, refreshing }}
+            beforeFooter={<SearchConsolePanel section={data.searchConsole} />}
           />
         ) : (
           <div className={s.center}>
             {error ? <p className={`${s.banner} ${s.bannerError}`}>{error}</p> : <span className="loading loading-spinner loading-md" />}
           </div>
         )}
-        {data ? <SearchConsolePanel section={data.searchConsole} /> : null}
       </div>
     </>
   );

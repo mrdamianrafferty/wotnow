@@ -31,6 +31,7 @@ describe('windows', () => {
     expect(vercelWindows(now)).toEqual({
       current: { from: '2026-10-21', to: '2026-10-27' },
       previous: { from: '2026-10-14', to: '2026-10-20' },
+      funnel: { from: '2026-09-30', to: '2026-10-27' },
     });
   });
 });
@@ -76,12 +77,23 @@ describe('fetchVercelPart', () => {
     const part = await fetchVercelPart(app('godaisy'), { VERCEL_ANALYTICS_TOKEN: 't' }, ok.impl, now);
     expect(part).toMatchObject({ state: 'ok', data: { visitors: { value: 100, previous: 80, delta: 25 }, pageviews: { value: 400 } } });
     const counts = ok.calls.filter((u) => u.pathname.endsWith('/count'));
-    expect(counts.map((u) => u.searchParams.get('since'))).toEqual(['2026-10-21T00:00:00.000Z', '2026-10-14T00:00:00.000Z']);
+    expect(counts.map((u) => u.searchParams.get('since'))).toEqual(['2026-10-21T00:00:00.000Z', '2026-10-14T00:00:00.000Z', '2026-09-30T00:00:00.000Z']);
     expect(counts[0].searchParams.get('until')).toBe('2026-10-27T23:59:59.999Z');
     expect(counts[0].searchParams.get('teamId')).toBe(VERCEL_TEAM_ID);
     expect(counts[0].searchParams.get('projectId')).toBe('prj_x');
     expect(counts[0].searchParams.has('filter')).toBe(false);
     expect(ok.calls.find((u) => u.pathname.endsWith('/aggregate'))!.searchParams.get('by')).toBe('country');
+  });
+
+  it('adds the 28-day visitors for the funnel, and losing only that count blanks only that figure', async () => {
+    const part = await fetchVercelPart(app('godaisy'), { VERCEL_ANALYTICS_TOKEN: 't' }, ok.impl, now);
+    expect(part).toMatchObject({ state: 'ok', data: { visitors28d: 80 } });
+    const f = fakeVercel((url) => {
+      if (url.pathname.startsWith('/v9/projects/')) return json({ id: 'prj_x' });
+      if (url.pathname.endsWith('/count')) return url.searchParams.get('since')!.startsWith('2026-09-30') ? json({}, 500) : json({ data: { visitors: 5, pageviews: 9 } });
+      return json({ data: [] });
+    });
+    expect(await fetchVercelPart(app('findr'), { VERCEL_ANALYTICS_TOKEN: 't' }, f.impl, now)).toMatchObject({ state: 'ok', data: { visitors: { value: 5 }, visitors28d: null } });
   });
 
   it('splits the Rise Daisy project by path: Hungerford is the prefix, Rise is everything else', async () => {
