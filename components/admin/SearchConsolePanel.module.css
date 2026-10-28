@@ -1,0 +1,99 @@
+/* Google search on /admin/apps, inside FamilyDashboard's <main>; its tokens come from .root. */
+
+.property {
+  font-size: 13px;
+  overflow-wrap: anywhere;
+}
+
+.stats {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+.stat {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 12px;
+  border-radius: 10px;
+  background: var(--neutral-50);
+  min-width: 0;
+}
+.statLabel {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--fg-4);
+}
+.statValue {
+  font-family: var(--font-heading);
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--fg-1);
+  font-variant-numeric: tabular-nums;
+}
+.change {
+  font-size: 13px;
+  font-weight: 600;
+}
+.up {
+  color: var(--brand-700);
+}
+.down {
+  color: #b91c1c;
+}
+.flat {
+  color: var(--fg-3);
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.listTitle {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--fg-3);
+}
+.rows {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.row {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 14px;
+  line-height: 1.4;
+}
+.rowKey {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--fg-2);
+}
+.rowValue {
+  flex: none;
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  color: var(--fg-1);
+}
+
+.notice {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--fg-3);
+  overflow-wrap: anywhere;
+}
+.error {
+  color: #b91c1c;
+}

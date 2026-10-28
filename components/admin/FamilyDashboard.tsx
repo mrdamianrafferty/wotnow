@@ -941,7 +941,18 @@ function AppCard({ app, attention, maxDl }: { app: AppSnapshot; attention: Atten
 
 // ─── Page body ───────────────────────────────────────────────────────
 
-export function FamilyDashboard({ data, notice, refresh }: { data: FamilySummary; notice?: ReactNode; refresh?: RefreshControl }) {
+export function FamilyDashboard({
+  data,
+  notice,
+  refresh,
+  beforeFooter,
+}: {
+  data: FamilySummary;
+  notice?: ReactNode;
+  refresh?: RefreshControl;
+  /** Extra sections at the end of the page, above the footer (Google search). */
+  beforeFooter?: ReactNode;
+}) {
   const attention = deriveAttention(data);
   const androidPending = attention.some((a) => a.rule === 'android_missing');
   const byUsers = [...data.apps].sort((a, b) => (adjustUsers(b).headline?.value ?? -1) - (adjustUsers(a).headline?.value ?? -1));
@@ -968,6 +979,7 @@ export function FamilyDashboard({ data, notice, refresh }: { data: FamilySummary
             ))}
           </div>
         </section>
+        {beforeFooter}
         <p className={s.footer}>
           Generated{' '}
           {new Date(data.generatedAt).toLocaleString('en-GB', {
