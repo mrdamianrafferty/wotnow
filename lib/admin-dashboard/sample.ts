@@ -5,6 +5,7 @@
  */
 
 import { summariseStoreStats, utcDay, type StoreStatInput } from '@/lib/store-stats/summary';
+import { summariseStoreListing, type ListingInput } from '@/lib/store-stats/listing-summary';
 import { weekMetric, type MetricsSummary } from './types';
 
 export function sampleMetrics(now = new Date(), { unconfigured = false } = {}): MetricsSummary {
@@ -16,12 +17,18 @@ export function sampleMetrics(now = new Date(), { unconfigured = false } = {}): 
     rows.push({ stat_date: date, platform: 'android', country: 'GB', downloads: 2 + (back % 4), redownloads: 0, uninstalls: back % 2 });
     rows.push({ stat_date: date, platform: 'android', country: 'ES', downloads: back % 2, redownloads: 0, uninstalls: 0 });
   }
+  const listing: ListingInput[] = [];
+  for (let back = 3; back <= 60; back++) {
+    const views = 30 + (back % 9);
+    listing.push({ stat_date: utcDay(now, back), country: 'GB', impressions: views * 6, product_page_views: views, first_time_downloads: 5 + (back % 4), product_page_downloads: 3 + (back % 3) });
+  }
   const daily = (base: number) => Array.from({ length: 14 }, (_, i) => base + ((i * 7) % 11));
 
   return {
     app: 'go_daisy',
     generatedAt: now.toISOString(),
     storeDownloads: { state: 'ok', data: summariseStoreStats(rows, now) },
+    storeListing: { state: 'ok', data: summariseStoreListing(listing, now) },
     revenue: {
       state: 'ok',
       data: { source: 'revenuecat', currency: 'GBP', mrr: 41.5, revenue28d: 63.97, activeSubscriptions: 17, activeTrials: 4, newCustomers28d: 212 },
