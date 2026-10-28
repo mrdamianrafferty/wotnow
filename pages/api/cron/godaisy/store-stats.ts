@@ -40,7 +40,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const days = Number.isFinite(requested) ? Math.min(Math.max(requested, 1), MAX_DAYS) : DEFAULT_DAYS;
 
   const result = await syncStoreStats(days);
-  const failed = Boolean(result.ios.error || result.android.error);
+  const failed = Boolean(result.ios.error || result.android.error || result.listing.error);
   if (failed) console.error('[store-stats] sync errors:', result);
   else if (result.ios.skipped?.length) console.warn('[store-stats] skipped iOS days:', result.ios.skipped);
 

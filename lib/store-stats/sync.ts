@@ -3,10 +3,16 @@
  *
  * Re-syncing a day overwrites it, so the daily 4-day rolling window also picks
  * up the stores' late corrections and any day a previous run skipped.
+ *
+ * Alongside the downloads, App Store listing impressions, product-page views
+ * and first-time downloads go into app_store_listing_daily (apple-analytics.ts),
+ * for listing conversion. That table is shared with Rise Daisy and Findr (Rise
+ * Daisy's migration 20261028133937 created it), keyed by the same app_id.
  */
 
 import { getSupabaseServerClient } from '@/lib/supabase/serverClient';
 import { createAppleToken, fetchAppleDay, getAppleConfig } from './apple';
+import { fetchListingForApp, type ListingRow } from './apple-analytics';
 import { fetchGoogleMonths, getGoogleConfig } from './google';
 import { storeStatsAppId, type StoreStatRow } from './types';
 
@@ -23,6 +29,8 @@ export interface SyncResult {
   to: string;
   ios: PlatformResult;
   android: PlatformResult;
+  /** App Store listing views and downloads (Analytics Reports), iOS only */
+  listing: PlatformResult;
 }
 
 function message(err: unknown): string {
@@ -87,6 +95,46 @@ async function syncIos(dates: string[]): Promise<PlatformResult> {
   }
 }
 
+/**
+ * Each date Apple returns is its full current set for that date, so the
+ * stored date is replaced, not upserted into: a country that drops out of
+ * Apple's newer set must not linger from an older one.
+ */
+async function replaceListingDates(rows: ListingRow[]): Promise<void> {
+  if (rows.length === 0) return;
+  // Granted to service_role only, like store_stats_daily
+  const db = getSupabaseServerClient();
+  const appId = storeStatsAppId();
+  const dates = [...new Set(rows.map((r) => r.stat_date))];
+  const { error: delError } = await db.from('app_store_listing_daily').delete().eq('app_id', appId).in('stat_date', dates);
+  if (delError) throw new Error(delError.message);
+  const syncedAt = new Date().toISOString();
+  for (let i = 0; i < rows.length; i += 500) {
+    const chunk = rows.slice(i, i + 500).map((r) => ({ ...r, app_id: appId, synced_at: syncedAt }));
+    const { error } = await db.from('app_store_listing_daily').insert(chunk);
+    if (error) throw new Error(error.message);
+  }
+}
+
+/**
+ * Listing views and downloads from the Analytics Reports API, for instances
+ * Apple processed in the last `days` days. Apple publishes the first
+ * instances a day or two after a report request is created (Go Daisy's and
+ * Grow Daisy's were created 2026-10-28), so until then this stores nothing
+ * and is not an error.
+ */
+async function syncListing(days: number): Promise<PlatformResult> {
+  try {
+    const config = getAppleConfig();
+    if (!config) return { configured: false, rows: 0 };
+    const { rows } = await fetchListingForApp(config.appId, dateRange(days)[0], createAppleToken(config));
+    await replaceListingDates(rows);
+    return { configured: true, rows: rows.length };
+  } catch (err) {
+    return { configured: true, rows: 0, error: message(err) };
+  }
+}
+
 async function syncAndroid(dates: string[]): Promise<PlatformResult> {
   try {
     const config = getGoogleConfig();
@@ -104,6 +152,6 @@ async function syncAndroid(dates: string[]): Promise<PlatformResult> {
 
 export async function syncStoreStats(days: number): Promise<SyncResult> {
   const dates = dateRange(days);
-  const [ios, android] = await Promise.all([syncIos(dates), syncAndroid(dates)]);
-  return { from: dates[0], to: dates[dates.length - 1], ios, android };
+  const [ios, android, listing] = await Promise.all([syncIos(dates), syncAndroid(dates), syncListing(days)]);
+  return { from: dates[0], to: dates[dates.length - 1], ios, android, listing };
 }
