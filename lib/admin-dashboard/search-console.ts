@@ -151,7 +151,7 @@ export function searchWindows(now: Date) {
 
 type Obj = Record<string, unknown>;
 const isObj = (v: unknown): v is Obj => typeof v === 'object' && v !== null && !Array.isArray(v);
-const num = (v: unknown) => (typeof v === 'number' && Number.isFinite(v) ? v : 0);
+export const num = (v: unknown) => (typeof v === 'number' && Number.isFinite(v) ? v : 0);
 const round1 = (n: number) => Math.round(n * 10) / 10;
 
 /** Property ids the account can read. `siteUnverifiedUser` means it has no access. */
@@ -202,7 +202,7 @@ export function summariseSite(current: unknown, previous: unknown, queries: unkn
   };
 }
 
-class GoogleError extends Error {
+export class GoogleError extends Error {
   constructor(
     readonly status: number,
     message: string,
@@ -224,7 +224,7 @@ export interface SearchConsoleDeps {
   now?: () => Date;
 }
 
-async function google(path: string, token: string, fetchImpl: typeof fetch, body?: object): Promise<unknown> {
+export async function google(path: string, token: string, fetchImpl: typeof fetch, body?: object): Promise<unknown> {
   const res = await fetchImpl(`${API}${path}`, {
     method: body ? 'POST' : 'GET',
     headers: { Authorization: `Bearer ${token}`, Accept: 'application/json', ...(body ? { 'Content-Type': 'application/json' } : {}) },

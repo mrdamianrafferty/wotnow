@@ -387,6 +387,9 @@ function Header({ data, attention, refresh }: { data: FamilySummary; attention: 
             <a href="#audience" className={s.pillLinkOutline}>
               Audience
             </a>
+            <Link href="/admin/search" className={s.pillLinkOutline}>
+              Search detail
+            </Link>
             <a href="#attention" className={s.pillLinkOutline}>
               {attention.length === 0 ? 'All clear' : `${plural(attention.length, 'thing')} need${attention.length === 1 ? 's' : ''} attention`}
             </a>
