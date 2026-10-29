@@ -1023,6 +1023,29 @@ h1.call-setup-question, h1.call-verdict { margin-block: 0; }
 }
 .gd-spot-day-score { font: 600 13px var(--call-font-body); font-variant-numeric: tabular-nums; }
 
+/* ── Month by month (components/seo/MonthByMonth.tsx) ──────────────────
+   Numbers first, bars second: the bar only helps the eye along a column and
+   every figure is also printed, so nothing depends on seeing it. */
+.gd-month-scroll { overflow-x: auto; margin: 14px 0 0; }
+.gd-month { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; font-size: var(--call-body-sm); }
+.gd-month th, .gd-month td { padding: 7px 8px; text-align: left; border-bottom: 1px solid var(--call-border); vertical-align: middle; }
+.gd-month thead th { font: 600 var(--call-label) var(--call-font-body); color: var(--call-ink-3); vertical-align: bottom; }
+.gd-month-unit { font-weight: 400; color: var(--call-ink-4); }
+.gd-month tbody th { font-weight: 600; width: 4.5em; color: var(--call-ink-2); }
+.gd-month-val { display: block; font-weight: 600; color: var(--call-ink-1); }
+.gd-month-bar { display: block; height: 4px; margin-top: 4px; border-radius: 2px; background: var(--call-border-strong); }
+.gd-month tr.is-season > * { background: var(--call-band-prime-bg); }
+.gd-month tr.is-season .gd-month-bar { background: var(--call-bar-prime); }
+/* Four measures and a month column have to fit a 375px phone without a sideways scroll */
+@media (max-width: 480px) {
+  .gd-month { font-size: 13px; }
+  .gd-month th, .gd-month td { padding: 6px 4px; }
+  .gd-month tbody th { width: 3em; }
+  .gd-month thead th { font-size: 11px; }
+}
+.gd-month-key { display: flex; align-items: center; gap: 8px; margin: 12px 0 0; font-size: var(--call-caption); color: var(--call-ink-3); }
+.gd-month-swatch { width: 14px; height: 14px; border-radius: 3px; background: var(--call-band-prime-bg); border: 1px solid var(--call-bar-prime); }
+
 .gd-spot-conditions { display: grid; gap: var(--call-grid-gap); grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); }
 .gd-spot-condition {
   display: flex; flex-direction: column; gap: 3px;

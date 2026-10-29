@@ -29,6 +29,8 @@
 import React from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
+import MonthByMonth from '../../components/seo/MonthByMonth';
+import { monthByMonth, type MonthByMonth as MonthByMonthBlock } from '../../lib/seo/climate';
 import dynamic from 'next/dynamic';
 import type { GetStaticPaths, GetStaticProps } from 'next';
 import SEO from '../../components/SEO';
@@ -108,6 +110,8 @@ const FORECAST_CONCURRENCY = 4;
 // ============================================================================
 
 interface PageProps {
+  /** Measured averages by month for this activity at this place, or null where we have none (lib/seo/climate.ts). */
+  monthByMonth: MonthByMonthBlock | null;
   activityId: string;
   activitySlug: string;
   activityName: string;
@@ -327,6 +331,7 @@ export const getStaticProps: GetStaticProps<PageProps> = async (ctx) => {
 
   return {
     props: {
+      monthByMonth: monthByMonth(activityId, location, prettyActivityName(activityId)),
       activityId,
       activitySlug,
       activityName: prettyActivityName(activityId),
@@ -377,6 +382,7 @@ function bandWords(score: number): { band: CallBand; label: string; sentence: st
 // ============================================================================
 
 export default function ProgrammaticSeoPage({
+  monthByMonth: climate,
   activityId,
   activitySlug,
   activityName,
@@ -622,6 +628,11 @@ export default function ProgrammaticSeoPage({
             </p>
           </div>
         </section>
+
+        {/* ===================================================================
+            3b. MONTH BY MONTH — measured averages, only where we have them
+            =================================================================== */}
+        {climate && <MonthByMonth block={climate} />}
 
         {/* ===================================================================
             4. LOCATION CONTEXT
