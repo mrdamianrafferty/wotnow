@@ -26,6 +26,7 @@ import { existsSync, readFileSync, writeFileSync, mkdirSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { SEO_LOCATIONS } from '../data/seoLocations';
 import { corePagePaths } from '../lib/seo/tiers';
+import { ACTIVITY_MEASURES, MEASURES } from '../lib/seo/climate';
 import { landNormals, marineNormals, type LandNormals, type MarineNormals } from '../lib/seo/climateAggregate';
 
 // Relative to where it is run (the repo root, as `npx tsx scripts/...` is): ES modules have no __dirname
@@ -38,6 +39,9 @@ const MINUTE_MS = 65_000;
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
+/** The hourly or daily allowance is spent. It will not come back inside this run, so the run stops. */
+class AllowanceSpent extends Error {}
+
 async function getJson(url: string, label: string): Promise<any | null> {
   for (let attempt = 1; attempt <= 6; attempt++) {
     const res = await fetch(url);
@@ -46,8 +50,7 @@ async function getJson(url: string, label: string): Promise<any | null> {
       const body = await res.text().catch(() => '');
       // "Minutely" clears in a minute; hourly or daily limits will not clear inside this run
       if (/hourly|daily/i.test(body) && !/minutely/i.test(body)) {
-        console.warn(`  ${label}: ${body.slice(0, 120)}`);
-        return null;
+        throw new AllowanceSpent(`${label}: ${body.slice(0, 120)}`);
       }
       process.stdout.write(`(rate limited, waiting a minute) `);
       await sleep(MINUTE_MS);
@@ -86,6 +89,20 @@ async function land(lat: number, lon: number, slug: string): Promise<LandNormals
   });
 }
 
+/** The furthest a marine grid cell may be from the place and still stand for its sea. */
+const MAX_SEA_KM = 60;
+
+function km(lat1: number, lon1: number, lat2: number, lon2: number): number {
+  const rad = (d: number) => (d * Math.PI) / 180;
+  const a = Math.sin(rad(lat2 - lat1) / 2) ** 2 + Math.cos(rad(lat1)) * Math.cos(rad(lat2)) * Math.sin(rad(lon2 - lon1) / 2) ** 2;
+  return 6371 * 2 * Math.asin(Math.sqrt(a));
+}
+
+/** A place needs sea data if any of its core pages is an activity that reads waves or sea temperature. */
+function needsMarine(slug: string): boolean {
+  return corePagePaths().some((p) => p.location === slug && ACTIVITY_MEASURES[p.activity]?.some((k) => MEASURES[k].source === 'marine'));
+}
+
 async function marine(lat: number, lon: number, slug: string): Promise<MarineNormals | null> {
   const q = new URLSearchParams({
     latitude: String(lat),
@@ -98,15 +115,22 @@ async function marine(lat: number, lon: number, slug: string): Promise<MarineNor
   });
   const d = await getJson(`https://marine-api.open-meteo.com/v1/marine?${q}`, `${slug} marine`);
   if (!d?.daily?.time || !d?.hourly?.time) return null;
+  // The API snaps to the nearest sea cell. An inland city would otherwise be given a distant coast's numbers.
+  if (typeof d.latitude === 'number' && typeof d.longitude === 'number' && km(lat, lon, d.latitude, d.longitude) > MAX_SEA_KM) {
+    console.log(`(nearest sea ${Math.round(km(lat, lon, d.latitude, d.longitude))} km away: not used) `);
+    return null;
+  }
   return marineNormals({ time: d.daily.time, waveMax: d.daily.wave_height_max }, { time: d.hourly.time, sst: d.hourly.sea_surface_temperature });
 }
 
-function save(locations: Record<string, { land: LandNormals; marine?: MarineNormals }>) {
+function save(locations: Record<string, { land: LandNormals; marine?: MarineNormals }>, marineUnavailable: string[]) {
   const file = {
     generatedAt: new Date().toISOString().slice(0, 10),
     source: 'Open-Meteo historical archive (ERA5 reanalysis); marine: Open-Meteo Marine (ERA5-Ocean)',
     landYears: [LAND_YEARS[0].slice(0, 4), LAND_YEARS[1].slice(0, 4)],
     marineYears: [MARINE_YEARS[0].slice(0, 4), MARINE_YEARS[1].slice(0, 4)],
+    // Places where sea data was asked for and honestly is not there (inland, or no sea cell near): not asked again
+    marineUnavailable: [...new Set(marineUnavailable)].sort(),
     locations,
   };
   mkdirSync(dirname(OUT), { recursive: true });
@@ -119,39 +143,63 @@ async function main() {
   console.log(`${places.length} places with core pages`);
 
   const force = process.argv.includes('--force');
-  const previous: Record<string, { land: LandNormals; marine?: MarineNormals }> =
-    !force && existsSync(OUT) ? (JSON.parse(readFileSync(OUT, 'utf8')).locations ?? {}) : {};
-  const locations: Record<string, { land: LandNormals; marine?: MarineNormals }> = {};
+  type Entry = { land: LandNormals; marine?: MarineNormals };
+  const saved = !force && existsSync(OUT) ? JSON.parse(readFileSync(OUT, 'utf8')) : {};
+  const previous: Record<string, Entry> = saved.locations ?? {};
+  const unavailable = new Set<string>(saved.marineUnavailable ?? []);
+  const locations: Record<string, Entry> = {};
   const skipped: string[] = [];
+  let stoppedBy: string | null = null;
+
   for (const [i, p] of places.entries()) {
-    const coastal = p.beachFacingDeg != null || p.coastal === true;
-    // Kept as it was, unless it is coastal and still lacks the marine half it could have
+    const flaggedCoastal = p.beachFacingDeg != null || p.coastal === true;
+    // Any place with a sea activity wants sea data, flagged coastal or not (Athens, Dublin, New York publish
+    // sailing and scuba pages without being flagged). The distance guard in marine() keeps an inland city honest.
+    const wantsSea = flaggedCoastal || needsMarine(p.slug);
     const have = previous[p.slug];
-    if (have && (!coastal || have.marine)) {
+    const tag = `[${i + 1}/${places.length}] ${p.slug}${wantsSea ? ' (sea)' : ''} ... `;
+
+    if (have && (!wantsSea || have.marine || unavailable.has(p.slug))) {
       locations[p.slug] = have;
-      console.log(`[${i + 1}/${places.length}] ${p.slug} ... already built`);
+      console.log(`${tag}already built`);
       continue;
     }
-    process.stdout.write(`[${i + 1}/${places.length}] ${p.slug}${coastal ? ' (coastal)' : ''} ... `);
-    const l = await land(p.lat, p.lon, p.slug);
-    await sleep(PAUSE_MS);
-    if (!l) {
-      skipped.push(p.slug);
-      console.log('NO LAND DATA');
-      continue;
+
+    process.stdout.write(tag);
+    try {
+      // What is already known is kept: only the missing half is fetched
+      let landData = have?.land ?? null;
+      if (!landData) {
+        landData = await land(p.lat, p.lon, p.slug);
+        await sleep(PAUSE_MS);
+      }
+      if (!landData) {
+        skipped.push(p.slug);
+        console.log('NO LAND DATA');
+        continue;
+      }
+      const entry: Entry = { land: landData };
+      if (wantsSea) {
+        const m = await marine(p.lat, p.lon, p.slug);
+        await sleep(PAUSE_MS);
+        if (m) entry.marine = m;
+        else unavailable.add(p.slug);
+      }
+      locations[p.slug] = entry;
+      save(locations, [...unavailable]);
+      console.log(entry.marine ? 'land + sea' : wantsSea ? 'land only (no usable sea data)' : 'land');
+    } catch (err) {
+      if (!(err instanceof AllowanceSpent)) throw err;
+      stoppedBy = err.message;
+      console.log('\nSTOPPED: the API allowance is spent.');
+      break;
     }
-    const entry: { land: LandNormals; marine?: MarineNormals } = { land: l };
-    if (coastal) {
-      const m = await marine(p.lat, p.lon, p.slug);
-      await sleep(PAUSE_MS);
-      if (m) entry.marine = m;
-    }
-    locations[p.slug] = entry;
-    save(locations);
-    console.log(entry.marine ? 'land + marine' : coastal ? 'land only (marine missing)' : 'land');
   }
 
-  save(locations);
+  // Anything not reached keeps what it had, so a stopped run never loses finished places
+  for (const [slug, entry] of Object.entries(previous)) if (!locations[slug]) locations[slug] = entry;
+  save(locations, [...unavailable]);
+  if (stoppedBy) console.log(`Run again after the limit resets (${stoppedBy}); finished places are kept.`);
   console.log(`\nWrote ${Object.keys(locations).length} places to ${OUT}`);
   if (skipped.length) console.log(`No land data for: ${skipped.join(', ')}`);
 }

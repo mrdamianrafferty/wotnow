@@ -18,13 +18,10 @@ const get = (slug: string) => data.locations[slug];
 const range = (xs: number[]) => [Math.min(...xs), Math.max(...xs)];
 
 describe('the climate file', () => {
-  it('covers a good share of the places that have a core page, and says which it does not', () => {
-    // The build is rate-limited by the free archive API (see scripts/build-climate-normals.ts), so
-    // coverage grows in batches: running the script again fills the gaps. A place with no entry shows
-    // no block, which is the designed behaviour, so this is a floor, not a promise of all 90.
+  it('has land data for every place that has a core page', () => {
     const wanted = new Set(corePagePaths().map((p) => p.location));
-    const have = [...wanted].filter((slug) => data.locations[slug]);
-    expect(have.length / wanted.size).toBeGreaterThan(0.4);
+    const missing = [...wanted].filter((slug) => !data.locations[slug]);
+    expect(missing).toEqual([]);
   });
 
   it('names the years it covers, and the marine window is the shorter one', () => {
@@ -74,11 +71,30 @@ describe('the climate file', () => {
     expect(new Set(signatures).size).toBeGreaterThan(places.length * 0.9);
   });
 
-  it('only gives marine numbers to places on a coast', () => {
+  it('only gives sea numbers to places that publish a sea activity', () => {
+    // Athens, Dublin and New York publish sailing and scuba pages without being flagged `coastal`, so the
+    // flag is the wrong test. What matters is that some core page of the place reads waves or sea temperature.
+    const seaPlaces = new Set(
+      corePagePaths()
+        .filter((p) => ACTIVITY_MEASURES[p.activity]?.some((k) => MEASURES[k].source === 'marine'))
+        .map((p) => p.location),
+    );
     for (const [slug, e] of places) {
       if (!e.marine) continue;
-      const loc = SEO_LOCATIONS.find((l) => l.slug === slug)!;
-      expect([slug, loc.beachFacingDeg != null || loc.coastal === true]).toEqual([slug, true]);
+      expect([slug, seaPlaces.has(slug)]).toEqual([slug, true]);
+    }
+  });
+
+  it('remembers where sea data honestly is not there, and never holds sea numbers for those places', () => {
+    const unavailable: string[] = (file as unknown as { marineUnavailable?: string[] }).marineUnavailable ?? [];
+    expect(unavailable.length).toBeGreaterThan(0);
+    for (const slug of unavailable) expect([slug, data.locations[slug]?.marine === undefined]).toEqual([slug, true]);
+  });
+
+  it('keeps lakes and inland cities free of sea numbers', () => {
+    // Great Lakes cities and inland ones can publish "sea" activities in the dataset; they must not borrow a coast's water
+    for (const slug of ['chicago', 'milwaukee', 'toronto', 'austin', 'portland-or']) {
+      if (data.locations[slug]) expect([slug, data.locations[slug].marine === undefined]).toEqual([slug, true]);
     }
   });
 });
@@ -107,6 +123,33 @@ describe('facts anyone can check', () => {
   });
 });
 
+describe('the sea, as anyone who has swum there would expect', () => {
+  it('is far colder off Reykjavik than off Athens in winter, and frozen-cold in the Baltic', () => {
+    const r = get('reykjavik')?.marine;
+    const a = get('athens')?.marine;
+    const st = get('stockholm')?.marine;
+    if (!r || !a || !st) return;
+    expect(r.seaTemp[1]).toBeLessThan(5);
+    expect(a.seaTemp[1]).toBeGreaterThan(13);
+    expect(st.seaTemp[1]).toBeLessThan(2);
+  });
+
+  it('is warmest in late summer and coldest in late winter in the northern hemisphere', () => {
+    for (const slug of ['new-york', 'boston', 'copenhagen', 'valletta', 'vancouver']) {
+      const m = get(slug)?.marine;
+      if (!m) continue;
+      expect([slug, m.seaTemp[7] > m.seaTemp[1]]).toEqual([slug, true]);
+    }
+  });
+
+  it('has bigger waves on an open Atlantic coast than in a sheltered Baltic bay', () => {
+    const open = get('reykjavik')?.marine;
+    const baltic = get('stockholm')?.marine;
+    if (!open || !baltic) return;
+    expect(Math.max(...open.wave)).toBeGreaterThan(Math.max(...baltic.wave) * 2);
+  });
+});
+
 describe('what the pages will get', () => {
   it('gives most core pages a block, and never a partial one', () => {
     const pages = corePagePaths();
@@ -115,9 +158,9 @@ describe('what the pages will get', () => {
       return monthByMonth(activity, loc, activity, data);
     });
     const shown = blocks.filter(Boolean).length;
-    // Pages at places we have no data for (yet) show nothing, and so do sea activities at places with no sea
-    // data: both are left out rather than half-filled. Raise this floor as the data fills in.
-    expect(shown / pages.length).toBeGreaterThan(0.4);
+    // The pages left out are sea activities at places with no usable sea data (lakes, inland cities, gaps in the
+    // ocean model): left out rather than half-filled.
+    expect(shown / pages.length).toBeGreaterThan(0.88);
     for (const b of blocks) {
       if (!b) continue;
       expect(b.rows.length).toBeGreaterThanOrEqual(3);
