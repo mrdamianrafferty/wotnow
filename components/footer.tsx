@@ -24,6 +24,7 @@ import Image from 'next/image';
 import { trackEvent } from '../lib/analytics/events';
 import { APP_STORE_URL, PLAY_STORE_URL, daisyFamily } from '../lib/daisyFamily';
 import { useIsNativeApp } from '../hooks/useIsNativeApp';
+import RateGoDaisy from './RateGoDaisy';
 
 // Go Daisy is the umbrella app in the Daisy family, so its footer links out to
 // every sibling (unlike the specialist apps, which only link to the one or two
@@ -71,6 +72,11 @@ export default function Footer() {
               * the ~2,000 spot pages — so whichever one a search lands on, both
               * stores are one tap away.
               */}
+            {isNative && (
+              <p className="gd-foot-stores">
+                <RateGoDaisy placement="footer" />
+              </p>
+            )}
             {!isNative && (
               <p className="gd-foot-stores">
                 <a href={APP_STORE_URL} onClick={() => handleCrossPromoClick('app_store')}>App Store</a>

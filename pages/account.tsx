@@ -17,6 +17,8 @@ import { CallDeliveryNotice } from '@/components/call/CallDeliveryNotice';
 import { saveCallPlace, saveCallCoastal } from '@/lib/godaisy/call/sync';
 import { GODAISY_TIP_PRODUCTS } from '@/lib/godaisy/tipProducts';
 import type { TipPackage } from '@/lib/grow/revenueCat';
+import RateGoDaisy from '@/components/RateGoDaisy';
+import { useIsNativeApp } from '@/hooks/useIsNativeApp';
 
 /** Map product IDs to Lucide icons and accent colours */
 const TIP_ICON_MAP: Record<string, { icon: typeof Coffee; accent: string; bg: string }> = {
@@ -59,6 +61,7 @@ async function withTimeout<T>(p: Promise<T>, ms = 15000): Promise<T> {
 }
 
 export default function AccountPage() {
+  const isNativeApp = useIsNativeApp();
   const router = useRouter();
   const { preferences, setPreferences } = useUserPreferences();
   const { language, setLanguage } = useLanguage();
@@ -983,6 +986,16 @@ export default function AccountPage() {
                 {pwErr && <p className="gd-note gd-note--bad" role="alert">{pwErr}</p>}
                 {pwMsg && <p className="gd-note gd-note--good" role="status">{pwMsg}</p>}
               </div>
+            </section>
+          )}
+
+          {isNativeApp && (
+            <section className="gd-acct-block">
+              <h2 className="gd-acct-h2">Enjoying Go Daisy?</h2>
+              <p className="gd-acct-note">A rating helps other people find it, and it is free to leave one.</p>
+              <p className="gd-acct-note">
+                <RateGoDaisy placement="account" />
+              </p>
             </section>
           )}
 

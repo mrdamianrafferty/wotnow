@@ -440,6 +440,12 @@
   margin: 5px 0 0;            /* 9px flex gap + 5px = 14px, matching the dots below */
 }
 
+/* One quiet line for browser visitors (components/GetTheAppLink.tsx): muted, small, and not a button,
+   so the one button on this screen stays the one button. */
+.call-appline { margin: 10px 0 0; text-align: center; font: 500 13px var(--call-font-body); }
+.call-appline a { color: rgba(250,248,245,.6); text-decoration: underline; text-underline-offset: 3px; }
+.call-appline a:hover, .call-appline a:focus-visible { color: var(--call-on-dark); }
+
 /* ── The day pager ───────────────────────────────────────────────────
    Seven dots and the words "swipe for tomorrow". True on a phone, false
    in every desktop browser: there are no touch events behind a mouse, so

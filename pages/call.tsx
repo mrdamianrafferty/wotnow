@@ -36,6 +36,7 @@ import { EvidenceDrawer } from '@/components/call/EvidenceDrawer';
 import { MenuSheet } from '@/components/call/MenuSheet';
 import { LocationSheet } from '@/components/call/LocationSheet';
 import { DayPager } from '@/components/call/DayPager';
+import GetTheAppLink from '@/components/GetTheAppLink';
 import { asSentence } from '@/lib/godaisy/call/verdict';
 
 const DAYS = 7;
@@ -340,6 +341,12 @@ export default function CallPage({ slug, place, days, photos, indoor, coords, co
     });
 
     setTimeout(() => setSendState('idle'), 2400);
+
+    // Sending a call out is the app working. Ask for a rating (the system's own sheet, if the policy
+    // allows and this build has the plugin) a few seconds later, after the share sheet has closed.
+    setTimeout(() => {
+      import('@/lib/review/inAppReview').then((m) => m.noteHappyMoment('call_shared')).catch(() => { /* optional */ });
+    }, 4000);
   };
 
   return (
@@ -462,6 +469,8 @@ export default function CallPage({ slug, place, days, photos, indoor, coords, co
             index={dayIndex}
             onSelect={setDayIndex}
           />
+
+          <GetTheAppLink placement="call_screen" />
         </div>
 
         {menu && <MenuSheet onClose={() => setMenu(false)} />}

@@ -36,6 +36,21 @@ export const PLAY_STORE_URL =
   'https://play.google.com/store/apps/details?id=io.godaisy.app';
 
 /**
+ * Where someone goes to write a review, for the "Rate Go Daisy" links inside
+ * the app. These open the store's own review page, which is allowed; asking
+ * with a prompt of our own is not (see lib/review/policy.ts).
+ *
+ * iOS: `action=write-review` opens the review sheet in the App Store app.
+ * Android: the Play listing; Play has no write-review deep link, and the
+ * listing is one tap from the stars.
+ */
+export const APP_STORE_REVIEW_URL = 'https://apps.apple.com/app/id6755695873?action=write-review';
+
+export function reviewUrl(platform: 'ios' | 'android'): string {
+  return platform === 'ios' ? APP_STORE_REVIEW_URL : PLAY_STORE_URL;
+}
+
+/**
  * Where the QR codes point, and why it is not the App Store directly.
  *
  * A QR is printed, screenshotted and shared; it outlives whatever it encodes.

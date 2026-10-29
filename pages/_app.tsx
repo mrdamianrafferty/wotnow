@@ -143,6 +143,13 @@ export default function App({ Component, pageProps }: AppProps<PagePropsWithThem
     }
   }, []);
 
+  // Count this launch toward asking for a rating. Native only, and Go Daisy only: Grow and Findr
+  // are other apps loading the same code. See lib/review/policy.ts for when it actually asks.
+  useEffect(() => {
+    if (appContext !== 'godaisy') return;
+    import('../lib/review/inAppReview').then((m) => m.recordReviewSession()).catch(() => { /* a rating counter is optional */ });
+  }, [appContext]);
+
   // Note: Service worker cleanup removed to enable offline support
   // The PWA service worker now handles cache management via next-pwa's cleanupOutdatedCaches option
   // If you need to force-clear caches, users can do so via browser settings or app reinstall
