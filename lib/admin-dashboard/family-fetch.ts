@@ -92,5 +92,14 @@ export async function getFamilySummary(
   const apps = appleLifetime.state === 'ok' ? cached.map((a) => withAppleLifetime(a, FAMILY_APPS.find((f) => f.id === a.id)!, appleLifetime.byApp)) : cached;
   // Attached after the cache so a changed METRICS_<APP>_DASHBOARD_URL shows at once
   const linked = apps.map((a) => ({ ...a, dashboardUrl: dashboardUrl(a.id, FAMILY_APPS.find((f) => f.id === a.id)?.envKey ?? '', env) }));
-  return { generatedAt: new Date().toISOString(), refresh: state, apps: linked, totals: familyTotals(apps) };
+  const totals = familyTotals(apps);
+  const lifetimeNote =
+    appleLifetime.state === 'error'
+      ? `App Store: ${appleLifetime.message}`
+      : appleLifetime.state === 'not_configured'
+        ? 'App Store: not configured'
+        : totals.lifetime.ios === 0
+          ? 'App Store: no sales for any of these apps in the reports'
+          : null;
+  return { generatedAt: new Date().toISOString(), refresh: state, apps: linked, totals, lifetimeNote };
 }

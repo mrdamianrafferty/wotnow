@@ -367,6 +367,8 @@ export interface FamilySummary {
   refresh?: { refreshed: boolean; nextRefreshAt: string | null };
   apps: AppSnapshot[];
   totals: FamilyTotals;
+  /** Why the all-time App Store count is missing (Apple refused, not configured, no app listed); null when it is there. */
+  lifetimeNote?: string | null;
 }
 
 // ─── Defensive readers ───────────────────────────────────────────────
