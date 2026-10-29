@@ -89,8 +89,10 @@ export function summariseInstalls(unsorted: InstallRow[], now: Date): PlayInstal
   const value = daily.slice(7).reduce((a, n) => a + n, 0);
   const latest = rows[rows.length - 1];
   const lastWeek = days.slice(7);
+  const last30 = new Set(Array.from({ length: 30 }, (_, i) => utcDay(now, 30 - i)));
   return {
     downloads: { value, previous, delta: pctDelta(value, previous), daily },
+    downloads30d: [...perDay].filter(([d]) => last30.has(d)).reduce((a, [, n]) => a + n, 0),
     latestDate: latest.date,
     activeDevices: [...rows].reverse().find((r) => r.activeDevices !== null)?.activeDevices ?? null,
     uninstalls7d: rows.filter((r) => lastWeek.includes(r.date)).reduce((a, r) => a + r.uninstalls, 0),
