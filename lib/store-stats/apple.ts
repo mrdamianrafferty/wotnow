@@ -129,7 +129,8 @@ export async function fetchAppleReportText(config: AppleConfig, token: string, f
     'filter[reportSubType]': 'SUMMARY',
     'filter[vendorNumber]': config.vendorNumber,
     'filter[reportDate]': reportDate,
-    'filter[version]': '1_1',
+    // Daily summaries are version 1_1; Apple's monthly and yearly ones only exist as 1_0 ("The latest version for this report is 1_0")
+    'filter[version]': frequency === 'DAILY' ? '1_1' : '1_0',
   });
   const res = await fetchWithRetry(`https://api.appstoreconnect.apple.com/v1/salesReports?${params}`, {
     headers: { Authorization: `Bearer ${token}`, Accept: 'application/a-gzip' },
