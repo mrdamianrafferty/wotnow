@@ -16,6 +16,7 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import handler from '../pages/api/sitemap.xml';
 import { getAllSeoPagePaths } from '../data/seoLocations';
+import { corePagePaths } from '../lib/seo/tiers';
 import { activitiesWithHubs } from '../lib/seo/hubs';
 
 /** A response double that records what the handler sent. */
@@ -52,7 +53,7 @@ const req = (host = 'godaisy.io') =>
   ({ method: 'GET', headers: { host }, query: {} }) as unknown as NextApiRequest;
 
 describe('the Go Daisy sitemap carries the estate', () => {
-  it('lists every spot page and every hub', async () => {
+  it('lists every hub and the core spot pages, and not the whole estate', async () => {
     const { res, state } = makeRes();
     await handler(req(), res);
 
@@ -61,12 +62,14 @@ describe('the Go Daisy sitemap carries the estate', () => {
 
     /*
      * Eight static pages, plus a hub per qualifying activity, plus a leaf per
-     * (activity, location). Computed from the same data the handler reads, so
-     * this stays true as the dataset changes and false the moment a whole half
-     * of it goes missing.
+     * CORE (activity, location) (lib/seo/tiers.ts). Computed from the same data
+     * the handler reads, so this stays true as the dataset changes and false the
+     * moment a whole half of it goes missing.
      */
-    const expected = 8 + activitiesWithHubs().length + getAllSeoPagePaths().length;
+    const expected = 8 + activitiesWithHubs().length + corePagePaths().length;
     expect(count).toBe(expected);
+    // The long tail is deliberately left out: fewer URLs than the full estate
+    expect(count).toBeLessThan(8 + activitiesWithHubs().length + getAllSeoPagePaths().length);
 
     // And the shape, not just the arithmetic: a document of the right size made
     // of the wrong URLs would pass a count alone.
@@ -75,13 +78,15 @@ describe('the Go Daisy sitemap carries the estate', () => {
     expect(state.body).toContain('<loc>https://godaisy.io/surfing/newquay-cornwall</loc>');
   });
 
-  it('is thousands of URLs, not the nine static ones', async () => {
+  it('is hundreds of URLs, not the nine static ones', async () => {
     const { res, state } = makeRes();
     await handler(req(), res);
     const count = (state.body.match(/<loc>/g) ?? []).length;
 
-    // The literal failure, pinned. It answered 200 with exactly nine.
-    expect(count).toBeGreaterThan(1000);
+    // The literal failure, pinned. It answered 200 with exactly nine. The floor
+    // is the core tier's size, not the old 4,000: a sitemap that drops back to
+    // the statics still fails this by a wide margin.
+    expect(count).toBeGreaterThan(500);
   });
 
   it('puts the hubs above the leaves in priority', async () => {

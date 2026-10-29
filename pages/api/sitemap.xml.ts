@@ -10,7 +10,7 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { createClient } from '@supabase/supabase-js';
 import { buildHreflangLinks, GROW_TRANSLATED_PATH_CODES, type GrowPathCode } from '../../lib/grow/i18n';
-import { getAllSeoPagePaths } from '../../data/seoLocations';
+import { corePagePaths } from '../../lib/seo/tiers';
 import { activitiesWithHubs } from '../../lib/seo/hubs';
 import { translatedLanguagesFor, cacheKey } from '../../lib/grow/translatedLanguages';
 
@@ -141,7 +141,21 @@ function getGoDaisyUrls(baseUrl: string): SitemapUrl[] {
       priority: 0.8,
     }));
 
-    const leafUrls: SitemapUrl[] = getAllSeoPagePaths().map(
+    /*
+     * THE CORE, NOT THE WHOLE ESTATE (lib/seo/tiers.ts).
+     *
+     * This used to list every one of the 4,348 spot pages at one priority, and
+     * Google's own inspection of a sample showed none of them indexed: it had
+     * discovered the URLs and not spent a crawl on any. Three quarters of them
+     * are an activity that exists at every location, differing from their
+     * siblings only by the place name and the day's weather.
+     *
+     * So the sitemap leads with the pages where the place decides the activity,
+     * and says so by leaving the rest out. The rest are still live, still linked
+     * from their hubs and from each other, and can be found by following links;
+     * they are just not what we ask Google to prioritise. Nothing is noindexed.
+     */
+    const leafUrls: SitemapUrl[] = corePagePaths().map(
       ({ activity, location }: { activity: string; location: string }) => ({
         loc: `${baseUrl}/${slugifyActivity(activity)}/${location}`,
         lastmod: today,
