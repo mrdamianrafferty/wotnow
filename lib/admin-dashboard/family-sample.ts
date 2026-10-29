@@ -12,7 +12,7 @@
 import { utcDay } from '@/lib/store-stats/summary';
 import { summariseStoreListing, type ListingInput } from '@/lib/store-stats/listing-summary';
 import { dashboardUrl } from './app-links';
-import { FAMILY_APPS, familyTotals, readAppSummary, type AppSnapshot, type FamilyAppId, type FamilySummary, type Part, type PlayInstalls, type PlayListing, type PlayPart, type PlayRelease, type PlayReviews, withPlayDownloads, type TopIssuePart, type VercelCountry, type VercelPart } from './family';
+import { FAMILY_APPS, familyTotals, readAppSummary, type AppSnapshot, type FamilyAppId, type FamilySummary, type Part, type PlayInstalls, type PlayListing, type PlayPart, type PlayRelease, type PlayReviews, withPlayDownloads, type TopIssuePart, type VercelCountry, type VercelPart, withAppleLifetime } from './family';
 
 /** A WeekMetric with these weekly totals, spread over 14 days. */
 function week(value: number, previous: number) {
@@ -377,7 +377,7 @@ export function samplePlay(): Partial<Record<FamilyAppId, Part<PlayPart>>> {
   /** Installs for the week and the week before, spread over the 14 days. */
   const installs = (value: number, previous: number, activeDevices: number, uninstalls7d: number): PlayInstalls => {
     const w = week(value, previous);
-    return { downloads: w, latestDate: '2026-10-25', activeDevices, uninstalls7d };
+    return { downloads: w, downloads30d: value * 4 + previous, downloadsAllTime: { total: value * 14 + previous * 6 + 40, since: '2026-03-06' }, latestDate: '2026-10-25', activeDevices, uninstalls7d };
   };
   const listing = (visitors: number, acquisitions: number): PlayListing => ({
     days: 28,
@@ -454,7 +454,10 @@ export function sampleFamilySummary(
     // As the live fetch does: Play's installs become the app's Android downloads
     const part = play[a.id];
     const installs = part?.state === 'ok' ? part.data.installs : null;
-    return installs ? withPlayDownloads(snapshot, installs) : snapshot;
+    const withInstalls = installs ? withPlayDownloads(snapshot, installs) : snapshot;
+    // And the App Store's all-time count, from the vendor's sales reports
+    const dl = withInstalls.downloads.state === 'ok' ? withInstalls.downloads.data : null;
+    return dl && a.appleId ? withAppleLifetime(withInstalls, a, { [a.appleId]: (dl.ios?.value ?? dl.total.value) * 22 + 130 }) : withInstalls;
   });
   return { generatedAt: now.toISOString(), apps, totals: familyTotals(apps) };
 }

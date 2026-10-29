@@ -224,8 +224,43 @@ async function fetchMonths<T>(config: GoogleConfig, kind: string, packageName: s
   return texts.flatMap((t) => (t === null ? [] : parse(t)));
 }
 
+/**
+ * Installs over every month Play has a report for. The bucket holds one
+ * installs file a month from the app's first day, so list them and add them
+ * up. Null when they cannot be listed or read: the all-time figure is an
+ * extra, and a bucket that refuses to list must not take the week's numbers
+ * down with it.
+ */
+async function fetchInstallsAllTime(config: GoogleConfig, packageName: string, fetchImpl: typeof fetch): Promise<PlayInstalls['downloadsAllTime'] | null> {
+  try {
+    const auth = { Authorization: `Bearer ${await token(config, STORAGE_SCOPE)}` };
+    const prefix = `stats/installs/installs_${packageName}_`;
+    const names: string[] = [];
+    let page = '';
+    do {
+      const url = `https://storage.googleapis.com/storage/v1/b/${encodeURIComponent(config.bucket)}/o?prefix=${encodeURIComponent(prefix)}&fields=items(name),nextPageToken${page ? `&pageToken=${encodeURIComponent(page)}` : ''}`;
+      const res = await fetchImpl(url, { headers: auth, signal: AbortSignal.timeout(TIMEOUT_MS), cache: 'no-store' });
+      if (!res.ok) return null;
+      const body = (await res.json()) as { items?: { name?: string }[]; nextPageToken?: string };
+      for (const item of body.items ?? []) if (item.name && /_\d{6}_overview\.csv$/.test(item.name)) names.push(item.name);
+      page = body.nextPageToken ?? '';
+    } while (page);
+
+    const texts = await Promise.all(names.map((name) => fetchReport(config, name, auth, fetchImpl)));
+    const rows = texts.flatMap((t) => (t === null ? [] : parseInstallsOverviewCsv(t)));
+    if (rows.length === 0) return null;
+    return { total: rows.reduce((a, r) => a + r.installs, 0), since: rows.reduce((first, r) => (r.date < first ? r.date : first), rows[0].date) };
+  } catch {
+    return null;
+  }
+}
+
 async function fetchInstalls(config: GoogleConfig, packageName: string, now: Date, fetchImpl: typeof fetch): Promise<PlayInstalls | null> {
-  return summariseInstalls(await fetchMonths<InstallRow>(config, 'installs', packageName, 'overview', now, fetchImpl, parseInstallsOverviewCsv), now);
+  const [installs, allTime] = await Promise.all([
+    fetchMonths<InstallRow>(config, 'installs', packageName, 'overview', now, fetchImpl, parseInstallsOverviewCsv).then((rows) => summariseInstalls(rows, now)),
+    fetchInstallsAllTime(config, packageName, fetchImpl),
+  ]);
+  return installs && allTime ? { ...installs, downloadsAllTime: allTime } : installs;
 }
 
 async function fetchListing(config: GoogleConfig, packageName: string, now: Date, fetchImpl: typeof fetch): Promise<PlayListing | null> {

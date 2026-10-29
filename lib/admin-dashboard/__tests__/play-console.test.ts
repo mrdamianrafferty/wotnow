@@ -37,6 +37,12 @@ const INSTALLS_CSV = [
   '2026-10-22,org.grewp.app,2,0,0,0,2,0,11,2,5,0',
   '2026-10-23,org.grewp.app,0,1,0,0,0,1,10,0,2,1',
 ].join('\n');
+// An older month, only reachable by listing the bucket: all-time counts it, the 14 and 30 day windows do not
+const INSTALLS_CSV_SEPT = [
+  'Date,Package name,Daily Device Installs,Daily Device Uninstalls,Daily Device Upgrades,Total User Installs,Daily User Installs,Daily User Uninstalls,Active Device Installs,Install events,Update events,Uninstall events',
+  '2026-09-10,org.grewp.app,4,0,0,0,4,0,4,4,0,0',
+  '2026-09-21,org.grewp.app,2,0,0,0,2,0,6,2,0,0',
+].join('\n');
 const LISTING_CSV = [
   'Date,Package name,Country / region,Store listing acquisitions,Store listing visitors,Store listing conversion rate',
   '2026-10-20,org.grewp.app,GB,1,10,10.0',
@@ -100,7 +106,7 @@ describe('production release', () => {
 });
 
 /** A fake Play: the reports bucket and the Publisher API, recording every call. */
-function fakePlay({ ratings = CSV, publisher = 200, reviews = {} as unknown, reviewsStatus = 200, bucket = 200 }: { ratings?: string | null; publisher?: number; reviews?: unknown; reviewsStatus?: number; bucket?: number } = {}) {
+function fakePlay({ ratings = CSV, publisher = 200, reviews = {} as unknown, reviewsStatus = 200, bucket = 200, list = 200 }: { ratings?: string | null; publisher?: number; reviews?: unknown; reviewsStatus?: number; bucket?: number; list?: number } = {}) {
   const calls: { method: string; url: string }[] = [];
   const impl = (async (input: RequestInfo | URL, init?: RequestInit) => {
     const url = String(input);
@@ -108,8 +114,15 @@ function fakePlay({ ratings = CSV, publisher = 200, reviews = {} as unknown, rev
     calls.push({ method, url });
     if (url.startsWith('https://storage.googleapis.com/')) {
       if (bucket !== 200) return new Response('', { status: bucket });
-      // Only the newest month has a file, per report
       const path = decodeURIComponent(url);
+      // Listing the bucket for every month of installs
+      if (path.includes('/o?prefix=')) {
+        return list === 200
+          ? json({ items: [{ name: 'stats/installs/installs_org.grewp.app_202609_overview.csv' }, { name: 'stats/installs/installs_org.grewp.app_202610_overview.csv' }, { name: 'stats/installs/installs_org.grewp.app_202610_country.csv' }] })
+          : new Response('', { status: list });
+      }
+      if (path.includes('stats/installs/') && path.includes('_202609_overview.csv')) return new Response(INSTALLS_CSV_SEPT);
+      // Only the newest month has a file, per report
       if (!path.includes('_202610_')) return new Response('', { status: 404 });
       if (path.includes('stats/ratings/') && ratings !== null) return new Response(ratings);
       if (path.includes('stats/installs/') && path.includes('_overview.csv')) return new Response(INSTALLS_CSV);
@@ -152,6 +165,7 @@ describe('fetchPlayPart', () => {
         installs: {
           downloads: { value: 2, previous: 1, delta: 100, daily: [0, 0, 1, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0] },
           downloads30d: 3,
+          downloadsAllTime: { total: 9, since: '2026-09-10' },
           latestDate: '2026-10-23',
           activeDevices: 10,
           uninstalls7d: 1,
@@ -161,13 +175,20 @@ describe('fetchPlayPart', () => {
       },
     });
     const storage = play.calls.filter((c) => c.url.startsWith('https://storage.googleapis.com/'));
-    expect(storage).toHaveLength(7);
+    expect(storage).toHaveLength(10);
     expect(storage.filter((c) => decodeURIComponent(c.url).includes('stats/ratings/ratings_org.grewp.app_'))).toHaveLength(3);
-    expect(storage.filter((c) => decodeURIComponent(c.url).includes('stats/installs/installs_org.grewp.app_'))).toHaveLength(2);
+    expect(storage.filter((c) => decodeURIComponent(c.url).includes('stats/installs/installs_org.grewp.app_'))).toHaveLength(5); // two recent months, the listing, and the two overview files it names
     expect(storage.filter((c) => decodeURIComponent(c.url).includes('stats/store_performance/store_performance_org.grewp.app_'))).toHaveLength(2);
     expect(storage.every((c) => c.url.includes('pubsite_prod_rev_123') && !c.url.includes('gs%3A'))).toBe(true);
     expect(play.calls.map((c) => c.method)).toEqual(expect.arrayContaining(['POST', 'DELETE']));
     expect(play.calls.at(-1)).toMatchObject({ method: 'DELETE', url: expect.stringContaining('/edits/edit-1') });
+  });
+
+  it('leaves all-time out, and keeps the week, when the bucket cannot be listed', async () => {
+    const part = await fetchPlayPart(app('grewp'), env, { fetchImpl: fakePlay({ list: 403 }).impl, now });
+    const installs = (part as Extract<Part<PlayPart>, { state: 'ok' }>).data.installs;
+    expect(installs).toMatchObject({ downloads: { value: 2 }, downloads30d: 3 });
+    expect(installs).not.toHaveProperty('downloadsAllTime');
   });
 
   it('still shows the rating when the Publisher API refuses, and says why the release is missing', async () => {

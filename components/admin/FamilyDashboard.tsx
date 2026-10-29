@@ -322,6 +322,15 @@ function Header({ data, attention, refresh }: { data: FamilySummary; attention: 
       title: 'First-time downloads over the last 30 complete days, summed across apps. Apps that do not send a 30-day figure are not counted.',
     },
     {
+      label: 'Downloads, all time',
+      value: totals.lifetime.apps ? fmt(totals.lifetime.value) : '—',
+      change: totals.lifetime.apps ? 'First-time downloads since launch' : 'Not reported yet',
+      note: totals.lifetime.apps
+        ? `iOS ${fmt(totals.lifetime.ios)} · Android ${fmt(totals.lifetime.android)} · ${ofN(totals.lifetime.apps)}`
+        : 'Needs the App Store and Play reports',
+      title: 'First-time downloads since launch, summed across apps: App Store sales reports (first-time downloads) plus Play installs (people who installed). An app with no figure from a store is left out of that store’s count, not counted as zero.',
+    },
+    {
       label: 'Monthly recurring revenue',
       value: mrrMain ? money(mrrMain.value, mrrMain.currency) : '—',
       change: mrrRest.length
