@@ -73,6 +73,19 @@ describe('fetchAppleLifetime', () => {
     expect(await fetchAppleLifetime(config, new Date('2026-03-04T10:00:00Z'))).toEqual({ '111': 23, '222': 2 });
   });
 
+  it('asks for version 1_1 of a daily report and 1_0 of a monthly or yearly one, as Apple requires', async () => {
+    const urls: URL[] = [];
+    jest.spyOn(global, 'fetch').mockImplementation(async (input) => {
+      urls.push(new URL(String(input)));
+      return gz([['111', '1', 1]]);
+    });
+    await fetchAppleLifetime(config, new Date('2027-03-04T10:00:00Z'));
+    const versionOf = (frequency: string) => [...new Set(urls.filter((u) => u.searchParams.get('filter[frequency]') === frequency).map((u) => u.searchParams.get('filter[version]')))];
+    expect(versionOf('DAILY')).toEqual(['1_1']);
+    expect(versionOf('MONTHLY')).toEqual(['1_0']);
+    expect(versionOf('YEARLY')).toEqual(['1_0']);
+  });
+
   it('counts a 404 as nothing sold, but fails the whole figure on any other error', async () => {
     const fetchMock = jest.spyOn(global, 'fetch').mockImplementation(async (input) => (new URL(String(input)).searchParams.get('filter[frequency]') === 'MONTHLY' ? new Response('', { status: 404 }) : gz([['111', '1', 1]])));
     // Monthly reports 404: January is nothing sold, and February (not published yet) is read day by day: 28 + 3 days of March
