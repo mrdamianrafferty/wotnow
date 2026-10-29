@@ -231,6 +231,8 @@ export interface PlayPart {
 export interface PlayInstalls {
   /** People who installed: this week, the week before, and the 14 days (oldest first, ending yesterday). */
   downloads: Trend;
+  /** Installs over the 30 complete days ending yesterday; absent in snapshots cached before it existed. */
+  downloads30d?: number;
   /** The newest day the report covers; Play writes a couple of days late. */
   latestDate: string;
   /** Devices that have the app installed, on that day. */
@@ -727,6 +729,7 @@ export function withPlayDownloads(snapshot: AppSnapshot, installs: PlayInstalls)
         total: sumTrends(present),
         latestDate: [own?.latestDate ?? null, installs.latestDate].filter((d): d is string => d !== null).sort().pop() ?? null,
         countries30d: own?.countries30d ?? null,
+        total30d: { ios: own?.total30d?.ios ?? null, android: installs.downloads30d ?? null },
       },
     },
   };

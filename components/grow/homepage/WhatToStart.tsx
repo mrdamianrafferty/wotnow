@@ -33,7 +33,8 @@ function isInCurrentWindow(w: CalendarWindow): boolean {
   const now = new Date();
   const month = now.getMonth() + 1;
   const dayOfMonth = now.getDate();
-  const week = Math.ceil(dayOfMonth / 7);
+  // The calendar has four weeks a month: days 29-31 belong to week 4, not a fifth that reads as next month's week 1
+  const week = Math.min(4, Math.ceil(dayOfMonth / 7));
 
   const startIdx = (w.startMonth - 1) * 4 + (w.startWeek - 1);
   const endIdx = (w.endMonth - 1) * 4 + (w.endWeek - 1);

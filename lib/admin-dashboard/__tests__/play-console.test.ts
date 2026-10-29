@@ -151,6 +151,7 @@ describe('fetchPlayPart', () => {
         reviews: { count: 0, average: null, lowUnanswered: 0, recent: [] },
         installs: {
           downloads: { value: 2, previous: 1, delta: 100, daily: [0, 0, 1, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0] },
+          downloads30d: 3,
           latestDate: '2026-10-23',
           activeDevices: 10,
           uninstalls7d: 1,

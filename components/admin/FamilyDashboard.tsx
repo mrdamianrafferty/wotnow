@@ -265,6 +265,11 @@ function Header({ data, attention, refresh }: { data: FamilySummary; attention: 
   const ios = dl.reduce((a, d) => a + (d.ios?.value ?? 0), 0);
   const android = dl.reduce((a, d) => a + (d.android?.value ?? 0), 0);
 
+  // 30 complete days, first-time downloads. A platform an app does not send is left out, and the note says how many did
+  const dl30 = dl.filter((d) => d.total30d && (d.total30d.ios !== null || d.total30d.android !== null));
+  const ios30 = dl30.reduce((a, d) => a + (d.total30d?.ios ?? 0), 0);
+  const android30 = dl30.reduce((a, d) => a + (d.total30d?.android ?? 0), 0);
+
   const [mrrMain, ...mrrRest] = totals.mrr;
   const mrrByApp = apps
     .flatMap((a) =>
@@ -308,6 +313,13 @@ function Header({ data, attention, refresh }: { data: FamilySummary; attention: 
       value: totals.downloads.apps ? fmt(totals.downloads.value) : '—',
       change: totals.downloads.apps ? onWeekBefore(totals.downloads) : 'No app reporting',
       note: totals.downloads.apps ? (androidPending ? 'iOS only · Android pending' : `iOS ${fmt(ios)} · Android ${fmt(android)}`) : '',
+    },
+    {
+      label: 'Downloads, 30 days',
+      value: dl30.length ? fmt(ios30 + android30) : '—',
+      change: dl30.length ? 'Last 30 complete days' : 'No app reporting',
+      note: dl30.length ? `iOS ${fmt(ios30)} · Android ${fmt(android30)} · ${ofN(dl30.length)}` : '',
+      title: 'First-time downloads over the last 30 complete days, summed across apps. Apps that do not send a 30-day figure are not counted.',
     },
     {
       label: 'Monthly recurring revenue',
