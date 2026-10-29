@@ -270,6 +270,10 @@ function Header({ data, attention, refresh }: { data: FamilySummary; attention: 
   const ios30 = dl30.reduce((a, d) => a + (d.total30d?.ios ?? 0), 0);
   const android30 = dl30.reduce((a, d) => a + (d.total30d?.android ?? 0), 0);
 
+  // A client's app is counted in the download totals, so the tiles say it is in there
+  const clientNames = FAMILY_APPS.filter((f) => f.client && apps.some((a) => a.id === f.id && okData(a.downloads) !== null)).map((f) => f.name);
+  const inclClient = clientNames.length ? ` · incl. ${clientNames.join(', ')} (client app)` : '';
+
   const [mrrMain, ...mrrRest] = totals.mrr;
   const mrrByApp = apps
     .flatMap((a) =>
@@ -312,13 +316,13 @@ function Header({ data, attention, refresh }: { data: FamilySummary; attention: 
       label: 'Downloads',
       value: totals.downloads.apps ? fmt(totals.downloads.value) : '—',
       change: totals.downloads.apps ? onWeekBefore(totals.downloads) : 'No app reporting',
-      note: totals.downloads.apps ? (androidPending ? 'iOS only · Android pending' : `iOS ${fmt(ios)} · Android ${fmt(android)}`) : '',
+      note: totals.downloads.apps ? (androidPending ? 'iOS only · Android pending' : `iOS ${fmt(ios)} · Android ${fmt(android)}`) + inclClient : '',
     },
     {
       label: 'Downloads, 30 days',
       value: dl30.length ? fmt(ios30 + android30) : '—',
       change: dl30.length ? 'Last 30 complete days' : 'No app reporting',
-      note: dl30.length ? `iOS ${fmt(ios30)} · Android ${fmt(android30)} · ${ofN(dl30.length)}` : '',
+      note: dl30.length ? `iOS ${fmt(ios30)} · Android ${fmt(android30)} · ${ofN(dl30.length)}${inclClient}` : '',
       title: 'First-time downloads over the last 30 complete days, summed across apps. Apps that do not send a 30-day figure are not counted.',
     },
     {
@@ -326,7 +330,7 @@ function Header({ data, attention, refresh }: { data: FamilySummary; attention: 
       value: totals.lifetime.apps ? fmt(totals.lifetime.value) : '—',
       change: totals.lifetime.apps ? 'First-time downloads since launch' : 'Not reported yet',
       note: totals.lifetime.apps
-        ? `iOS ${fmt(totals.lifetime.ios)} · Android ${fmt(totals.lifetime.android)} · ${ofN(totals.lifetime.apps)}${data.lifetimeNote ? ` · ${data.lifetimeNote}` : ''}`
+        ? `iOS ${fmt(totals.lifetime.ios)} · Android ${fmt(totals.lifetime.android)} · ${ofN(totals.lifetime.apps)}${inclClient}${data.lifetimeNote ? ` · ${data.lifetimeNote}` : ''}`
         : (data.lifetimeNote ?? 'Needs the App Store and Play reports'),
       title: 'First-time downloads since launch, summed across apps: App Store sales reports (first-time downloads) plus Play installs (people who installed). An app with no figure from a store is left out of that store’s count, not counted as zero.',
     },
@@ -819,6 +823,12 @@ function AppCard({ app, attention, maxDl }: { app: AppSnapshot; attention: Atten
       <div>
         <h3 className={s.appName}>{dash ? <SmartLink link={dash} className={s.nameLink}>{app.name}</SmartLink> : app.name}</h3>
         {app.fetchedAt ? <span className={s.asOf}>as of {hhmm(app.fetchedAt)}</span> : null}
+        {FAMILY_APPS.find((f) => f.id === app.id)?.client ? (
+          <span className={s.asOf} title="Built for a client and paid for by them. Its downloads are in the family totals, but growing it is not our own growth.">
+            {' '}
+            · client app
+          </span>
+        ) : null}
       </div>
       <span className={`${s.pill} ${s[`pill_${pill.kind}`]}`}>{pill.label}</span>
     </div>
