@@ -25,16 +25,18 @@ export interface FamilyApp {
   noRevenue?: boolean;
   /** The metrics app id this codebase can read in-process (see app-identity.ts). */
   inProcess?: 'go_daisy' | 'grow_daisy';
+  /** App Store Connect app id: the key of its rows in the vendor's sales reports. */
+  appleId?: string;
 }
 
 export const FAMILY_APPS: FamilyApp[] = [
-  { id: 'godaisy', name: 'Go Daisy', envKey: 'GODAISY', color: '#475569', platforms: ['ios', 'android'], inProcess: 'go_daisy' },
-  { id: 'growdaisy', name: 'Grow Daisy', envKey: 'GROWDAISY', color: '#73e2a0', platforms: ['ios', 'android'], inProcess: 'grow_daisy' },
-  { id: 'risedaisy', name: 'Rise Daisy', envKey: 'RISEDAISY', color: '#0c6231', platforms: ['ios', 'android'] },
-  { id: 'hungerford', name: 'Hungerford', envKey: 'HUNGERFORD', color: '#164e63', platforms: ['ios'], noRevenue: true },
-  { id: 'findr', name: 'Findr', envKey: 'FINDR', color: '#0e7490', platforms: ['ios', 'android'] },
-  { id: 'flycast', name: 'Fly Cast', envKey: 'FLYCAST', color: '#22d3ee', platforms: ['ios', 'android'] },
-  { id: 'grewp', name: 'Grewp', envKey: 'GREWP', color: '#18b254', platforms: ['ios', 'android'] },
+  { id: 'godaisy', name: 'Go Daisy', envKey: 'GODAISY', color: '#475569', platforms: ['ios', 'android'], inProcess: 'go_daisy', appleId: '6755695873' },
+  { id: 'growdaisy', name: 'Grow Daisy', envKey: 'GROWDAISY', color: '#73e2a0', platforms: ['ios', 'android'], inProcess: 'grow_daisy', appleId: '6756812661' },
+  { id: 'risedaisy', name: 'Rise Daisy', envKey: 'RISEDAISY', color: '#0c6231', platforms: ['ios', 'android'], appleId: '6761378447' },
+  { id: 'hungerford', name: 'Hungerford', envKey: 'HUNGERFORD', color: '#164e63', platforms: ['ios'], noRevenue: true, appleId: '6804752331' },
+  { id: 'findr', name: 'Findr', envKey: 'FINDR', color: '#0e7490', platforms: ['ios', 'android'], appleId: '6755045700' },
+  { id: 'flycast', name: 'Fly Cast', envKey: 'FLYCAST', color: '#22d3ee', platforms: ['ios', 'android'], appleId: '6785914297' },
+  { id: 'grewp', name: 'Grewp', envKey: 'GREWP', color: '#18b254', platforms: ['ios', 'android'], appleId: '6756231693' },
 ];
 
 /** A 7-day count against the 7 days before; `daily` oldest first when known. */
@@ -61,6 +63,8 @@ export interface DownloadsPart {
   countries30d: CountryCount[] | null;
   /** First-time downloads over the last 30 complete days (PlatformDownloads.total30d); null per platform when not sent. */
   total30d?: { ios: number | null; android: number | null };
+  /** First-time downloads since launch, added by the dashboard from the stores' own reports; absent when neither store answered. */
+  lifetime?: { ios: number | null; android: number | null };
 }
 
 export interface RevenuePart {
@@ -233,6 +237,8 @@ export interface PlayInstalls {
   downloads: Trend;
   /** Installs over the 30 complete days ending yesterday; absent in snapshots cached before it existed. */
   downloads30d?: number;
+  /** Installs over every month Play has a report for, and the first day any covers; absent when the bucket could not be listed. */
+  downloadsAllTime?: { total: number; since: string };
   /** The newest day the report covers; Play writes a couple of days late. */
   latestDate: string;
   /** Devices that have the app installed, on that day. */
@@ -334,6 +340,8 @@ export interface FamilyListing {
 
 export interface FamilyTotals {
   downloads: Trend & { apps: number };
+  /** First-time downloads since launch; apps with neither store's figure are not counted. */
+  lifetime: { value: number; ios: number; android: number; apps: number };
   /** MRR is only summed within a currency; the largest figure first (currencies are not converted). */
   mrr: { currency: string; value: number; apps: number }[];
   activeSubscriptions: { value: number; apps: number };
@@ -730,9 +738,22 @@ export function withPlayDownloads(snapshot: AppSnapshot, installs: PlayInstalls)
         latestDate: [own?.latestDate ?? null, installs.latestDate].filter((d): d is string => d !== null).sort().pop() ?? null,
         countries30d: own?.countries30d ?? null,
         total30d: { ios: own?.total30d?.ios ?? null, android: installs.downloads30d ?? null },
+        ...(own?.lifetime || installs.downloadsAllTime ? { lifetime: { ios: own?.lifetime?.ios ?? null, android: installs.downloadsAllTime?.total ?? null } } : {}),
       },
     },
   };
+}
+
+/**
+ * The app's all-time App Store downloads from the vendor's sales reports, keyed
+ * by Apple id. An app with no rows in them is "not reported", never zero: it
+ * may be on another developer account.
+ */
+export function withAppleLifetime(snapshot: AppSnapshot, app: FamilyApp, byApp: Record<string, number>): AppSnapshot {
+  const count = app.appleId ? byApp[app.appleId] : undefined;
+  if (count === undefined || snapshot.downloads.state !== 'ok') return snapshot;
+  const data = snapshot.downloads.data;
+  return { ...snapshot, downloads: { state: 'ok', data: { ...data, lifetime: { ios: count, android: data.lifetime?.android ?? null } } } };
 }
 
 // ─── Family totals ───────────────────────────────────────────────────
@@ -781,8 +802,13 @@ export function familyTotals(apps: AppSnapshot[]): FamilyTotals {
     return { value: vals.reduce((x, y) => x + y, 0), apps: vals.length };
   };
 
+  const life = dl.map((x) => x.d.lifetime).filter((l): l is NonNullable<DownloadsPart['lifetime']> => !!l && (l.ios !== null || l.android !== null));
+  const lifeIos = life.reduce((a, l) => a + (l.ios ?? 0), 0);
+  const lifeAndroid = life.reduce((a, l) => a + (l.android ?? 0), 0);
+
   return {
     downloads: { ...sumTrends(dl.map((x) => x.d.total)), apps: dl.length },
+    lifetime: { value: lifeIos + lifeAndroid, ios: lifeIos, android: lifeAndroid, apps: life.length },
     mrr: [...mrr.entries()].map(([currency, m]) => ({ currency, ...m })).sort((a, b) => b.value - a.value || b.apps - a.apps),
     activeSubscriptions: count('activeSubscriptions', (w) => w.activeSubscriptions),
     activeTrials: count('activeTrials', (w) => w.trialing),

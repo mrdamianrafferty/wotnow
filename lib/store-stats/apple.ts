@@ -105,24 +105,56 @@ async function fetchWithRetry(url: string, init: RequestInit, attempts = 3): Pro
   return res;
 }
 
-/** Fetch and parse one day. Returns [] when Apple has no report for that date. */
-export async function fetchAppleDay(config: AppleConfig, statDate: string, token: string): Promise<StoreStatRow[]> {
+export type AppleFrequency = 'DAILY' | 'MONTHLY' | 'YEARLY';
+
+/**
+ * One sales report as text: `reportDate` is YYYY-MM-DD, YYYY-MM or YYYY for
+ * DAILY, MONTHLY and YEARLY. Null when Apple has none for that period (404).
+ */
+export async function fetchAppleReportText(config: AppleConfig, token: string, frequency: AppleFrequency, reportDate: string, signal?: AbortSignal): Promise<string | null> {
   const params = new URLSearchParams({
-    'filter[frequency]': 'DAILY',
+    'filter[frequency]': frequency,
     'filter[reportType]': 'SALES',
     'filter[reportSubType]': 'SUMMARY',
     'filter[vendorNumber]': config.vendorNumber,
-    'filter[reportDate]': statDate,
+    'filter[reportDate]': reportDate,
     'filter[version]': '1_1',
   });
   const res = await fetchWithRetry(`https://api.appstoreconnect.apple.com/v1/salesReports?${params}`, {
     headers: { Authorization: `Bearer ${token}`, Accept: 'application/a-gzip' },
+    signal,
   });
 
   // 404: no report for that date (nothing sold, or not published yet)
-  if (res.status === 404) return [];
+  if (res.status === 404) return null;
   if (!res.ok) throw new Error(`App Store Connect ${res.status}: ${(await res.text()).slice(0, 200)}`);
+  return gunzipSync(Buffer.from(await res.arrayBuffer())).toString('utf-8');
+}
 
-  const tsv = gunzipSync(Buffer.from(await res.arrayBuffer())).toString('utf-8');
-  return parseAppleSalesReport(tsv, config.appId, statDate);
+/** First-time downloads per Apple identifier in one sales report: every app on the vendor account, not just ours. */
+export function parseFirstTimeByApp(tsv: string): Map<string, number> {
+  const lines = tsv.split(/\r?\n/).filter((l) => l.trim() !== '');
+  const byApp = new Map<string, number>();
+  if (lines.length < 2) return byApp;
+
+  const header = lines[0].split('\t');
+  const typeIdx = header.indexOf('Product Type Identifier');
+  const unitsIdx = header.indexOf('Units');
+  const idIdx = header.indexOf('Apple Identifier');
+  if ([typeIdx, unitsIdx, idIdx].includes(-1)) return byApp;
+
+  for (const line of lines.slice(1)) {
+    const cells = line.split('\t');
+    if (!FIRST_TIME_TYPES.has(cells[typeIdx])) continue;
+    const units = parseInt(cells[unitsIdx] || '0', 10);
+    if (!Number.isFinite(units) || units <= 0 || !cells[idIdx]) continue;
+    byApp.set(cells[idIdx], (byApp.get(cells[idIdx]) ?? 0) + units);
+  }
+  return byApp;
+}
+
+/** Fetch and parse one day. Returns [] when Apple has no report for that date. */
+export async function fetchAppleDay(config: AppleConfig, statDate: string, token: string): Promise<StoreStatRow[]> {
+  const tsv = await fetchAppleReportText(config, token, 'DAILY', statDate);
+  return tsv === null ? [] : parseAppleSalesReport(tsv, config.appId, statDate);
 }

@@ -24,8 +24,9 @@ import { getMetricsSummary } from './metrics';
 import { withVercel } from './vercel-analytics';
 import { withSentryTop } from './sentry-top';
 import { withPlay } from './play-console';
+import { getAppleLifetime } from './apple-lifetime';
 import { dashboardUrl } from './app-links';
-import { FAMILY_APPS, familyTotals, readAppSummary, unavailableSnapshot, type AppSnapshot, type FamilyApp, type FamilySummary } from './family';
+import { FAMILY_APPS, familyTotals, readAppSummary, unavailableSnapshot, withAppleLifetime, type AppSnapshot, type FamilyApp, type FamilySummary } from './family';
 
 const TIMEOUT_MS = 8_000;
 
@@ -79,11 +80,16 @@ export async function getFamilySummary(
   { refresh = false, cache }: { refresh?: boolean; cache?: RuntimeCache } = {},
 ): Promise<FamilySummary> {
   const state = await claimRefresh(refresh, { cache });
-  const apps = await Promise.all(
-    FAMILY_APPS.map((app) =>
-      cachedSnapshot(app, async () => withPlay(await withSentryTop(await withVercel(await fetchAppSnapshot(app, env), app, env), app, env), app, env), { bypass: state.refreshed, cache }),
+  // One Apple report covers every app, so it is asked once, alongside the apps, and cached on its own for twelve hours
+  const [cached, appleLifetime] = await Promise.all([
+    Promise.all(
+      FAMILY_APPS.map((app) =>
+        cachedSnapshot(app, async () => withPlay(await withSentryTop(await withVercel(await fetchAppSnapshot(app, env), app, env), app, env), app, env), { bypass: state.refreshed, cache }),
+      ),
     ),
-  );
+    getAppleLifetime(env, { bypass: state.refreshed, cache }),
+  ]);
+  const apps = appleLifetime.state === 'ok' ? cached.map((a) => withAppleLifetime(a, FAMILY_APPS.find((f) => f.id === a.id)!, appleLifetime.byApp)) : cached;
   // Attached after the cache so a changed METRICS_<APP>_DASHBOARD_URL shows at once
   const linked = apps.map((a) => ({ ...a, dashboardUrl: dashboardUrl(a.id, FAMILY_APPS.find((f) => f.id === a.id)?.envKey ?? '', env) }));
   return { generatedAt: new Date().toISOString(), refresh: state, apps: linked, totals: familyTotals(apps) };
