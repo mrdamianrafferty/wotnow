@@ -83,6 +83,11 @@ post_install do |installer|
         config.build_settings['ENABLE_USER_SCRIPT_SANDBOXING'] = 'NO'
         config.build_settings['SWIFT_VERSION'] = '5.0'
         config.build_settings['SWIFT_STRICT_CONCURRENCY'] = 'minimal'
+        # Xcode 27 refuses anything below iOS 15; several pods still declare 14.0.
+        current = config.build_settings['IPHONEOS_DEPLOYMENT_TARGET']
+        if current.nil? || current.to_f < 17.0
+          config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '17.0'
+        end
       end
     end
   end
