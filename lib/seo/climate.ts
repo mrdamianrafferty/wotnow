@@ -83,6 +83,27 @@ export const ACTIVITY_MEASURES: Record<string, MeasureKey[]> = {
   mushroom_hunting: ['rainDays', 'maxTemp', 'minTemp', 'frostDays'],
 };
 
+/**
+ * What an activity shows where the water has waves but no water temperature (the Great Lakes, Puget Sound).
+ *
+ * Only for activities where wind and waves are the question and the water's temperature is secondary: you can
+ * sail, paddle or fish from a boat in cold water. NOT for swimming, snorkelling, diving or the beach, where
+ * the temperature is the point: those get no block rather than one that leaves out the main number. The
+ * temperature slot is given to the air's daytime high, which is real and relevant.
+ */
+export const WAVES_ONLY_MEASURES: Record<string, MeasureKey[]> = {
+  surfing: ['wave', 'wind', 'maxTemp', 'rainDays'],
+  sea_kayaking: ['wind', 'wave', 'maxTemp', 'rainDays'],
+  stand_up_paddleboarding: ['wind', 'wave', 'maxTemp', 'rainDays'],
+  sup_sea: ['wind', 'wave', 'maxTemp', 'rainDays'],
+  jet_skiing: ['wind', 'wave', 'maxTemp', 'rainDays'],
+  sailing: ['wind', 'wave', 'maxTemp', 'rainDays'],
+  windsurfing: ['wind', 'wave', 'maxTemp', 'rainDays'],
+  kitesurfing: ['wind', 'wave', 'maxTemp', 'rainDays'],
+  sea_fishing_shore: ['wave', 'wind', 'maxTemp', 'rainDays'],
+  sea_fishing_boat: ['wave', 'wind', 'maxTemp', 'rainDays'],
+};
+
 export const MONTH_NAMES = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 
 // ─── Words ───────────────────────────────────────────────────────────
@@ -129,7 +150,7 @@ export function extremes(series: number[]): Extremes {
 }
 
 /** One factual sentence about one measure's year, or null when there is nothing worth saying. */
-export function sentenceFor(key: MeasureKey, series: number[]): string | null {
+export function sentenceFor(key: MeasureKey, series: number[], opts: { openWater?: boolean } = {}): string | null {
   const { hi, lo } = extremes(series);
   const m = (i: number) => MONTH_NAMES[i];
   const v = (n: number) => round(n, MEASURES[key].decimals);
@@ -143,7 +164,8 @@ export function sentenceFor(key: MeasureKey, series: number[]): string | null {
     case 'wind':
       return `Winds average ${v(hi.value)} km/h in ${m(hi.month)}, the windiest month, and ${v(lo.value)} km/h in ${m(lo.month)}, the calmest.`;
     case 'wave':
-      return `Offshore waves are biggest in ${m(hi.month)} (the day's highest averages ${v(hi.value)} m) and smallest in ${m(lo.month)} (${v(lo.value)} m).`;
+      // "Offshore" is right for a sea and wrong for a lake or a sound, which have an open middle and no offshore
+      return `${opts.openWater ? 'Waves on the open water' : 'Offshore waves'} are biggest in ${m(hi.month)} (the day's highest averages ${v(hi.value)} m) and smallest in ${m(lo.month)} (${v(lo.value)} m).`;
     case 'rainDays':
       return `${m(hi.month)} is the wettest month, with about ${v(hi.value)} days of 1 mm or more; ${m(lo.month)} is the driest, with about ${v(lo.value)}.`;
     case 'snowDays':
@@ -177,9 +199,13 @@ export interface NormalsFile {
 const DEFAULT_FILE = normalsFile as unknown as NormalsFile;
 
 export function monthByMonth(activityId: string, place: { slug: string; name: string }, activityName: string, file: NormalsFile = DEFAULT_FILE): MonthByMonth | null {
-  const wanted = ACTIVITY_MEASURES[activityId];
   const entry = file.locations[place.slug];
-  if (!wanted || !entry) return null;
+  const full = ACTIVITY_MEASURES[activityId];
+  if (!full || !entry) return null;
+  // Waves but no water temperature: the activities that do not need one use their own list; the rest get no block
+  const wavesOnly = !!entry.marine && !entry.marine.seaTemp && full.includes('seaTemp');
+  const wanted = wavesOnly ? WAVES_ONLY_MEASURES[activityId] : full;
+  if (!wanted) return null;
 
   const rows: MonthByMonth['rows'] = [];
   for (const key of wanted) {
@@ -187,7 +213,7 @@ export function monthByMonth(activityId: string, place: { slug: string; name: st
     const series = info.source === 'land' ? (entry.land as unknown as Record<string, number[]>)[key] : (entry.marine as unknown as Record<string, number[]> | undefined)?.[key];
     // Every measure the activity needs, or no block: a partial table would imply the rest do not matter
     if (!series || series.length !== 12) return null;
-    rows.push({ key, label: info.label, unit: info.unit, decimals: info.decimals, values: series });
+    rows.push({ key, label: wavesOnly && key === 'wave' ? 'Wave height, open water' : info.label, unit: info.unit, decimals: info.decimals, values: series });
   }
 
   const seasonal = activityTypes.find((a) => a.id === activityId)?.seasonalMonths ?? null;
@@ -195,8 +221,11 @@ export function monthByMonth(activityId: string, place: { slug: string; name: st
   const usesMarine = rows.some((r) => MEASURES[r.key].source === 'marine');
   const [l0, l1] = file.landYears;
   const [m0, m1] = file.marineYears;
+  const usesTemp = rows.some((r) => r.key === 'seaTemp');
   const basis = usesMarine
-    ? `Averages of daily weather ${l0} to ${l1} and of waves and sea temperature ${m0} to ${m1}, from ERA5 reanalysis data (about 25 km resolution; waves are measured offshore, not in the surf at the beach). Not a forecast.`
+    ? usesTemp
+      ? `Averages of daily weather ${l0} to ${l1} and of waves and sea temperature ${m0} to ${m1}, from ERA5 reanalysis data (about 25 km resolution; waves are measured offshore, not in the surf at the beach). Not a forecast.`
+      : `Averages of daily weather ${l0} to ${l1} and of waves ${m0} to ${m1}, from ERA5 reanalysis data (about 25 km resolution; waves are measured on open water, not at the shore). Water temperature is not available for this water, so it is not shown. Not a forecast.`
     : `Averages of daily weather ${l0} to ${l1}, from ERA5 reanalysis data (about 25 km resolution). Not a forecast.`;
 
   return {
@@ -205,7 +234,7 @@ export function monthByMonth(activityId: string, place: { slug: string; name: st
     rows,
     seasonal: seasonal && seasonal.length ? seasonal : null,
     seasonSentence: seasonText ? (seasonText === 'all year' ? 'Our seasonal guide counts it as an all-year activity.' : `Our seasonal guide puts ${activityName.toLowerCase()} in season from ${seasonText}.`) : null,
-    sentences: rows.map((r) => sentenceFor(r.key, r.values)).filter((s): s is string => !!s),
+    sentences: rows.map((r) => sentenceFor(r.key, r.values, { openWater: wavesOnly })).filter((s): s is string => !!s),
     basis,
   };
 }

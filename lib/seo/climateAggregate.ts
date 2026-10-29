@@ -44,8 +44,11 @@ export interface LandNormals {
 export interface MarineNormals {
   /** Mean of each day's highest offshore wave, m. */
   wave: number[];
-  /** Mean sea-surface temperature, °C. */
-  seaTemp: number[];
+  /**
+   * Mean water-surface temperature, °C. Absent where the model has waves but no water temperature at all
+   * (the Great Lakes, Puget Sound): never filled in from somewhere else.
+   */
+  seaTemp?: number[];
 }
 
 const round1 = (n: number) => Math.round(n * 10) / 10;
@@ -99,7 +102,12 @@ export function landNormals(d: DailyLand): LandNormals | null {
 
 export function marineNormals(daily: { time: string[]; waveMax: (number | null)[] }, hourly: { time: string[]; sst: (number | null)[] }): MarineNormals | null {
   const wave = complete(monthlyMean(daily.time, daily.waveMax));
+  if (!wave) return null;
+  // No temperature readings at all means this water has no temperature series: waves only. A series with some
+  // months present and others missing is a broken fetch, not a lake, and is refused rather than half-published.
+  const anyTemp = hourly.sst.some((v) => typeof v === 'number' && Number.isFinite(v));
+  if (!anyTemp) return { wave };
   // Hourly values carry an ISO time with an hour; only the date part is read
   const sea = complete(monthlyMean(hourly.time, hourly.sst));
-  return wave && sea ? { wave, seaTemp: sea } : null;
+  return sea ? { wave, seaTemp: sea } : null;
 }

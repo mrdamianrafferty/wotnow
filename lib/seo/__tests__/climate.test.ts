@@ -1,5 +1,5 @@
 import { landNormals, marineNormals } from '../climateAggregate';
-import { ACTIVITY_MEASURES, MEASURES, describeMonths, extremes, monthByMonth, sentenceFor, type NormalsFile } from '../climate';
+import { ACTIVITY_MEASURES, MEASURES, WAVES_ONLY_MEASURES, describeMonths, extremes, monthByMonth, sentenceFor, type NormalsFile } from '../climate';
 import { placeSpecificActivities } from '../tiers';
 
 /** Two years of daily data where every January day is hot and every July day is cold, so the answer is known. */
@@ -81,6 +81,27 @@ describe('turning daily weather into twelve numbers', () => {
   });
 });
 
+describe('water with waves but no temperature', () => {
+  const months = Array.from({ length: 12 }, (_, i) => `2023-${String(i + 1).padStart(2, '0')}-15`);
+  const waves = months.map((_, i) => 0.5 + i / 20);
+  const hours = months.map((m) => `${m}T12:00`);
+
+  it('gives waves only when the model has no temperature series at all', () => {
+    const out = marineNormals({ time: months, waveMax: waves }, { time: hours, sst: hours.map(() => null) })!;
+    expect(out.wave).toHaveLength(12);
+    expect(out.seaTemp).toBeUndefined();
+  });
+
+  it('still refuses a temperature series with a month missing: that is a broken fetch, not a lake', () => {
+    const sst = hours.map((_, i) => (i === 4 ? null : 10 + i));
+    expect(marineNormals({ time: months, waveMax: waves }, { time: hours, sst })).toBeNull();
+  });
+
+  it('gives nothing without waves, whatever the temperature says', () => {
+    expect(marineNormals({ time: months, waveMax: waves.map(() => null) }, { time: hours, sst: hours.map(() => 12) })).toBeNull();
+  });
+});
+
 describe('describing months', () => {
   it('writes a run as "from to", across the new year too', () => {
     expect(describeMonths([4, 5, 6, 7, 8, 9, 10])).toBe('April to October');
@@ -137,6 +158,24 @@ describe('what each activity shows', () => {
   });
 });
 
+describe('the waves-only profiles', () => {
+  it('are real activities that normally read the water temperature, and drop only that', () => {
+    for (const [id, keys] of Object.entries(WAVES_ONLY_MEASURES)) {
+      expect(ACTIVITY_MEASURES[id]).toBeDefined();
+      expect(ACTIVITY_MEASURES[id]).toContain('seaTemp');
+      expect(keys).not.toContain('seaTemp');
+      expect(keys).toContain('wave');
+      expect(new Set(keys).size).toBe(keys.length);
+      expect(keys.length).toBeGreaterThanOrEqual(3);
+      expect(keys.length).toBeLessThanOrEqual(4);
+    }
+  });
+
+  it('leave out every activity where the water temperature is the point', () => {
+    for (const id of ['sea_swimming', 'snorkeling', 'scuba_diving', 'beach']) expect(WAVES_ONLY_MEASURES[id]).toBeUndefined();
+  });
+});
+
 describe('the block a page shows', () => {
   const twelve = (f: (i: number) => number) => Array.from({ length: 12 }, (_, i) => f(i));
   const land = { maxTemp: twelve((i) => 10 + i), minTemp: twelve((i) => 2 + i), rainDays: twelve(() => 12), snowDays: twelve(() => 0), frostDays: twelve(() => 0), wind: twelve(() => 20) };
@@ -165,6 +204,46 @@ describe('the block a page shows', () => {
     expect(b.basis).not.toContain('2022');
     expect(b.seasonal).toBeNull();
     expect(b.seasonSentence).toBeNull();
+  });
+
+  describe('where the water has waves but no temperature', () => {
+    const lake: NormalsFile = { ...file, locations: { lake: { land, marine: { wave: marine.wave } } } };
+    const at = (id: string, name = id) => monthByMonth(id, { slug: 'lake', name: 'Lakeside' }, name, lake);
+
+    it('shows wind, waves, air temperature and rain for activities where the water temperature is secondary', () => {
+      for (const id of ['sailing', 'stand_up_paddleboarding', 'sea_fishing_boat', 'windsurfing']) {
+        const b = at(id)!;
+        expect(b.rows.map((r) => r.key)).toEqual(WAVES_ONLY_MEASURES[id]);
+        expect(b.rows.some((r) => r.key === 'seaTemp')).toBe(false);
+        expect(b.rows.some((r) => r.key === 'wave')).toBe(true);
+      }
+    });
+
+    it('says plainly that there is no water temperature, and does not invent one', () => {
+      const b = at('sailing')!;
+      expect(b.basis).toContain('Water temperature is not available for this water');
+      expect(b.basis).toContain('2022 to 2024');
+      expect(b.sentences.join(' ')).not.toMatch(/sea is warmest|coldest/);
+    });
+
+    it('shows nothing for swimming, snorkelling, diving or the beach, where the temperature is the point', () => {
+      for (const id of ['sea_swimming', 'snorkeling', 'scuba_diving', 'beach']) expect(at(id)).toBeNull();
+    });
+
+    it('calls the waves "open water", not "offshore", on a lake or a sound', () => {
+      const b = at('sailing')!;
+      expect(b.rows.find((r) => r.key === 'wave')!.label).toBe('Wave height, open water');
+      expect(b.sentences.join(' ')).toContain('Waves on the open water are biggest');
+      expect(b.sentences.join(' ')).not.toMatch(/Offshore/);
+      const sea = monthByMonth('sailing', { slug: 'coast', name: 'Coast' }, 'Sailing', file)!;
+      expect(sea.rows.find((r) => r.key === 'wave')!.label).toBe('Offshore wave height');
+    });
+
+    it('still gives the full block, temperature included, where there is one', () => {
+      const b = monthByMonth('sailing', { slug: 'coast', name: 'Coast' }, 'Sailing', file)!;
+      expect(b.rows.map((r) => r.key)).toEqual(ACTIVITY_MEASURES.sailing);
+      expect(b.basis).not.toContain('not available');
+    });
   });
 
   it('never claims a verdict: no "best", no score', () => {
