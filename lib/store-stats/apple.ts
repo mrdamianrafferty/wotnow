@@ -105,6 +105,17 @@ async function fetchWithRetry(url: string, init: RequestInit, attempts = 3): Pro
   return res;
 }
 
+/** Apple's JSON error body as "CODE: detail", or the first part of whatever it sent. */
+export function appleErrorDetail(body: string): string {
+  try {
+    const e = (JSON.parse(body) as { errors?: { code?: string; detail?: string; title?: string }[] }).errors?.[0];
+    if (e) return [e.code, e.detail ?? e.title].filter(Boolean).join(': ').slice(0, 300);
+  } catch {
+    // not JSON: fall through to the raw text
+  }
+  return body.replace(/\s+/g, ' ').slice(0, 300);
+}
+
 export type AppleFrequency = 'DAILY' | 'MONTHLY' | 'YEARLY';
 
 /**
@@ -127,7 +138,7 @@ export async function fetchAppleReportText(config: AppleConfig, token: string, f
 
   // 404: no report for that date (nothing sold, or not published yet)
   if (res.status === 404) return null;
-  if (!res.ok) throw new Error(`App Store Connect ${res.status}: ${(await res.text()).slice(0, 200)}`);
+  if (!res.ok) throw new Error(`App Store Connect ${res.status} on ${frequency} ${reportDate}: ${appleErrorDetail(await res.text())}`);
   return gunzipSync(Buffer.from(await res.arrayBuffer())).toString('utf-8');
 }
 

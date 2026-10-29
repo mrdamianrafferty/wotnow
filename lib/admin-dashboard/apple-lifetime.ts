@@ -110,7 +110,7 @@ export async function getAppleLifetime(
       result = config ? { state: 'ok', byApp: await fetchAppleLifetime(config, now()) } : { state: 'not_configured' };
     } catch (err) {
       const timedOut = err instanceof Error && (err.name === 'TimeoutError' || err.name === 'AbortError');
-      result = { state: 'error', message: timedOut ? 'Apple did not answer in time' : err instanceof Error ? err.message.slice(0, 200) : String(err) };
+      result = { state: 'error', message: timedOut ? 'Apple did not answer in time' : err instanceof Error ? err.message.slice(0, 400) : String(err) };
       console.error('[apple-lifetime]', result.message);
     }
     await cache.set(KEY, result, { ttl: result.state === 'ok' ? LIFETIME_TTL_S : LIFETIME_FAILED_TTL_S, name: KEY }).catch(() => undefined);
