@@ -29,6 +29,7 @@ import { rowsFor, type Readings, type Row } from '@/lib/godaisy/call/readings';
 import { setupFromCookieHeader } from '@/lib/godaisy/call/setup';
 import { Spinner } from '@/components/call/Spinner';
 import { PageHeader } from '@/components/call/PageHeader';
+import GetTheApp from '@/components/GetTheApp';
 import { SEO_LOCATIONS, type SeoLocation } from '@/data/seoLocations';
 
 const DEFAULT_PLACE = 'newquay-cornwall';
@@ -193,6 +194,7 @@ export default function WeatherPage({ place, lat, lon, coastal }: WeatherPagePro
           </p>
         </div>
       </main>
+      <GetTheApp placement="conditions" />
     </>
   );
 }

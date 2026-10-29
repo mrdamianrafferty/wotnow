@@ -85,6 +85,11 @@ export type AnalyticsEvent =
 
   // Cross-promo events (Daisy app family footer links)
   | 'cross_promo_click'
+  // Shown / tapped: the denominators the cross_promo_click numerator never had
+  | 'cross_promo_view'
+  // Ratings: asked for from inside the app (lib/review/), and the "Rate Go Daisy" links
+  | 'review_requested'
+  | 'rate_link_click'
 
   /*
    * The call, and the bet the redesign was built on.

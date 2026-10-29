@@ -18,7 +18,9 @@
 
 import Image from 'next/image';
 import Link from 'next/link';
+import { useEffect } from 'react';
 import { trackEvent } from '../lib/analytics/events';
+import { useIsNativeApp } from '../hooks/useIsNativeApp';
 import { APP_STORE_URL, PLAY_STORE_URL, APP_LINK_PATH, daisyFamily } from '../lib/daisyFamily';
 
 export interface GetTheAppProps {
@@ -36,9 +38,21 @@ export interface GetTheAppProps {
 
 export default function GetTheApp({ placement, place }: GetTheAppProps) {
   const family = daisyFamily(placement);
+  // The native app loads these same pages. Telling someone who already has Go Daisy to download it
+  // is noise, but the rest of the family is still news to them.
+  const isNative = useIsNativeApp();
+
+  // The denominator the click events never had: how often it was on screen, per placement
+  useEffect(() => {
+    // The native check is by user agent, which is there from the first render; the hook above only
+    // learns it after an import, and would count every in-app visit as a view of a store button
+    if (isNative || /godaisy-app|Capacitor/i.test(navigator.userAgent)) return;
+    trackEvent('cross_promo_view', { from_app: 'go_daisy', placement });
+  }, [isNative, placement]);
 
   return (
     <section className="gd-app" aria-labelledby="gd-app-title">
+      {!isNative && (
       <div className="gd-app-inner">
         <div className="gd-app-main">
           <h2 id="gd-app-title" className="gd-app-title">
@@ -90,6 +104,7 @@ export default function GetTheApp({ placement, place }: GetTheAppProps) {
           <span className="gd-app-qr-caption">Point a phone at this</span>
         </div>
       </div>
+      )}
 
       <div className="gd-family">
         <p className="gd-family-lede">The rest of what we make</p>
@@ -113,9 +128,11 @@ export default function GetTheApp({ placement, place }: GetTheAppProps) {
       {/* The QR encodes this, so it is worth being a real link for anyone who
           cannot scan one — and for the accessibility tree, where the code
           itself is decoration. */}
-      <p className="gd-app-fallback">
-        Or go to <Link href={APP_LINK_PATH}>godaisy.io/app</Link>
-      </p>
+      {!isNative && (
+        <p className="gd-app-fallback">
+          Or go to <Link href={APP_LINK_PATH}>godaisy.io/app</Link>
+        </p>
+      )}
     </section>
   );
 }
