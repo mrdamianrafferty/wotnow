@@ -10,6 +10,7 @@
 import file from '../../../data/climate/normals.json';
 import { SEO_LOCATIONS } from '../../../data/seoLocations';
 import { corePagePaths } from '../tiers';
+import { SEA_POINTS } from '../seaPoints';
 import { ACTIVITY_MEASURES, MEASURES, monthByMonth, type NormalsFile } from '../climate';
 
 const data = file as unknown as NormalsFile;
@@ -61,7 +62,7 @@ describe('the climate file', () => {
       expect([where, l.wind.every((v) => v > 0 && v < 80)]).toEqual([where, true]);
       if (e.marine) {
         expect([where, e.marine.wave.every((v) => v >= 0 && v < 10)]).toEqual([where, true]);
-        expect([where, e.marine.seaTemp.every((v) => v >= -3 && v <= 36)]).toEqual([where, true]);
+        if (e.marine.seaTemp) expect([where, e.marine.seaTemp.every((v) => v >= -3 && v <= 36)]).toEqual([where, true]);
       }
     }
   });
@@ -91,11 +92,22 @@ describe('the climate file', () => {
     for (const slug of unavailable) expect([slug, data.locations[slug]?.marine === undefined]).toEqual([slug, true]);
   });
 
-  it('keeps lakes and inland cities free of sea numbers', () => {
-    // Great Lakes cities and inland ones can publish "sea" activities in the dataset; they must not borrow a coast's water
-    for (const slug of ['chicago', 'milwaukee', 'toronto', 'austin', 'portland-or']) {
-      if (data.locations[slug]) expect([slug, data.locations[slug].marine === undefined]).toEqual([slug, true]);
+  it('gives the Great Lakes cities and Seattle waves but never a water temperature', () => {
+    // The wave model covers these waters; no water temperature exists there. It is left out, not borrowed.
+    for (const slug of ['chicago', 'milwaukee', 'toronto', 'seattle']) {
+      const m = data.locations[slug]?.marine;
+      expect([slug, !!m]).toEqual([slug, true]);
+      expect([slug, m?.seaTemp === undefined]).toEqual([slug, true]);
+      expect([slug, m?.wave.length]).toEqual([slug, 12]);
     }
+  });
+
+  it('keeps places with no water at all free of sea numbers', () => {
+    for (const slug of ['austin', 'portland-or', 'nicosia']) expect([slug, data.locations[slug]?.marine === undefined]).toEqual([slug, true]);
+  });
+
+  it('gives every place with a chosen water point its sea data', () => {
+    for (const slug of Object.keys(SEA_POINTS)) expect([slug, !!data.locations[slug]?.marine]).toEqual([slug, true]);
   });
 });
 
@@ -150,6 +162,35 @@ describe('the sea, as anyone who has swum there would expect', () => {
   });
 });
 
+describe('the water points that fixed the gaps', () => {
+  it('reads Dublin Bay and the Gulf of Riga as the cold northern seas they are', () => {
+    const d = get('dublin')?.marine;
+    const r = get('riga')?.marine;
+    if (!d?.seaTemp || !r?.seaTemp) return;
+    expect(d.seaTemp[1]).toBeGreaterThan(6);
+    expect(d.seaTemp[1]).toBeLessThan(11);
+    expect(d.seaTemp[7]).toBeGreaterThan(13);
+    expect(r.seaTemp[1]).toBeLessThan(3);
+    expect(r.seaTemp[7]).toBeGreaterThan(17);
+  });
+
+  it('reads the Gulf coast as hot in summer and Puget Sound as sheltered', () => {
+    const h = get('houston')?.marine;
+    const s = get('seattle')?.marine;
+    const m = get('milwaukee')?.marine;
+    if (h?.seaTemp) expect(h.seaTemp[7]).toBeGreaterThan(28);
+    if (s && m) expect(Math.max(...s.wave)).toBeLessThan(Math.max(...m.wave));
+  });
+
+  it('has bigger Great Lakes waves in the stormy months than in midsummer', () => {
+    for (const slug of ['chicago', 'milwaukee', 'toronto']) {
+      const m = get(slug)?.marine;
+      if (!m) continue;
+      expect([slug, Math.max(m.wave[0], m.wave[10], m.wave[11]) > m.wave[6]]).toEqual([slug, true]);
+    }
+  });
+});
+
 describe('what the pages will get', () => {
   it('gives most core pages a block, and never a partial one', () => {
     const pages = corePagePaths();
@@ -158,9 +199,9 @@ describe('what the pages will get', () => {
       return monthByMonth(activity, loc, activity, data);
     });
     const shown = blocks.filter(Boolean).length;
-    // The pages left out are sea activities at places with no usable sea data (lakes, inland cities, gaps in the
-    // ocean model): left out rather than half-filled.
-    expect(shown / pages.length).toBeGreaterThan(0.88);
+    // The pages left out are swimming, diving and beach pages where there is no water temperature (the Great Lakes,
+    // Puget Sound) and sea activities at places with no water at all: left out rather than half-filled.
+    expect(shown / pages.length).toBeGreaterThan(0.95);
     for (const b of blocks) {
       if (!b) continue;
       expect(b.rows.length).toBeGreaterThanOrEqual(3);

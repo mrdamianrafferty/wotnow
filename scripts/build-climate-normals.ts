@@ -27,6 +27,7 @@ import { dirname, resolve } from 'node:path';
 import { SEO_LOCATIONS } from '../data/seoLocations';
 import { corePagePaths } from '../lib/seo/tiers';
 import { ACTIVITY_MEASURES, MEASURES } from '../lib/seo/climate';
+import { SEA_POINTS } from '../lib/seo/seaPoints';
 import { landNormals, marineNormals, type LandNormals, type MarineNormals } from '../lib/seo/climateAggregate';
 
 // Relative to where it is run (the repo root, as `npx tsx scripts/...` is): ES modules have no __dirname
@@ -159,7 +160,9 @@ async function main() {
     const have = previous[p.slug];
     const tag = `[${i + 1}/${places.length}] ${p.slug}${wantsSea ? ' (sea)' : ''} ... `;
 
-    if (have && (!wantsSea || have.marine || unavailable.has(p.slug))) {
+    // A place with a chosen water point is asked again until it has sea data, even if the city point failed before
+    const point = SEA_POINTS[p.slug];
+    if (have && (!wantsSea || have.marine || (unavailable.has(p.slug) && !point))) {
       locations[p.slug] = have;
       console.log(`${tag}already built`);
       continue;
@@ -180,14 +183,16 @@ async function main() {
       }
       const entry: Entry = { land: landData };
       if (wantsSea) {
-        const m = await marine(p.lat, p.lon, p.slug);
+        const m = await marine(point?.lat ?? p.lat, point?.lon ?? p.lon, p.slug);
         await sleep(PAUSE_MS);
-        if (m) entry.marine = m;
-        else unavailable.add(p.slug);
+        if (m) {
+          entry.marine = m;
+          unavailable.delete(p.slug);
+        } else unavailable.add(p.slug);
       }
       locations[p.slug] = entry;
       save(locations, [...unavailable]);
-      console.log(entry.marine ? 'land + sea' : wantsSea ? 'land only (no usable sea data)' : 'land');
+      console.log(entry.marine?.seaTemp ? `land + sea${point ? ` (${point.why})` : ''}` : entry.marine ? `land + waves only${point ? ` (${point.why})` : ''}` : wantsSea ? 'land only (no usable sea data)' : 'land');
     } catch (err) {
       if (!(err instanceof AllowanceSpent)) throw err;
       stoppedBy = err.message;
