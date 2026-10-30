@@ -42,7 +42,6 @@
 		"LocalNotificationsPlugin",
 		"CAPNetworkPlugin",
 		"PreferencesPlugin",
-		"PurchasesPlugin",
 		"PushNotificationsPlugin",
 		"SharePlugin",
 		"SplashScreenPlugin",
