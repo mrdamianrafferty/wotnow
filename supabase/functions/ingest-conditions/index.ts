@@ -66,13 +66,18 @@ const INVOCATION_DEADLINE_MS = 50_000;
 // alike -- while every invocation still returned 200. fetchWithTimeout also
 // caps each request at the time left before the invocation deadline, so a
 // slow request started late cannot outlive pg_net's 60 s wait or the lock.
-const HTTP_TIMEOUT_MS = Number(env.ERDDAP_HTTP_TIMEOUT_MS) || 15_000;
+// 25 s since requests became per-area (2026-09-25): one request now carries a
+// whole tile, so letting it finish is worth more than starting another.
+const HTTP_TIMEOUT_MS = Number(env.ERDDAP_HTTP_TIMEOUT_MS) || 25_000;
 
 type IngestRequestPayload = {
   bbox?: [number, number, number, number];
   providers?: string[];
   vars?: string[];
   limit?: number;
+  // Fetch and report, but write nothing. For checking a change against live
+  // ERDDAP without touching grid_conditions_latest.
+  dry_run?: boolean;
 };
 
 serve(async (req) => {
@@ -137,16 +142,18 @@ serve(async (req) => {
     : null;
 
   const providers = Array.isArray(payload?.providers) ? payload.providers as string[] : ["NOAA", "CHLOROPHYLL", "KD490"];
+  // The variables the three providers actually supply. kd490 was missing, so
+  // every pg_cron run listed KD490 as a provider and made zero Kd490 requests;
+  // only godaisy-core's workflow, which passes vars itself, ever fetched it.
+  // Salinity, oxygen, nutrients and phytoplankton were CMEMS's, removed
+  // 2026-08-10.
   const vars = Array.isArray(payload?.vars) ? payload.vars as string[] : [
     "surface_temperature_c",
-    "salinity_psu",
-    "oxygen_mg_l",
     "chlorophyll_mg_m3",
-    "nitrate_umol_l",
-    "phosphate_umol_l",
-    "phytoplankton_index",
+    "kd490",
   ];
   const maxPoints = Number(payload?.limit ?? env.INGEST_MAX_POINTS ?? 1000);
+  const dryRun = payload?.dry_run === true;
 
   const supabase = createClient(SUPABASE_URL, SERVICE_KEY, {
     auth: { persistSession: false },
@@ -194,7 +201,7 @@ serve(async (req) => {
     }
 
     const rawCells: RawGridRow[] = Array.isArray(cells) ? (cells as RawGridRow[]) : [];
-    let candidateCells = rawCells
+    const candidateCells = rawCells
       .map(buildGridCellFromBounds)
       .filter((c): c is GridCell => Boolean(c));
 
@@ -208,37 +215,44 @@ serve(async (req) => {
       truncatedTo: candidateCells.length,
       bboxApplied: Boolean(bbox),
       providers,
+      dryRun,
     };
 
+    // Batched at 500, like the freshness lookup below. This used to pass all
+    // 7,649 ids to one .in(); the request was too long, the error was never
+    // read, and every run reported gridsWithData: 0 while all 7,649 cells had
+    // a row -- so "cells without data first" never did anything.
+    const existingIds = new Set<string>();
     const cellIds = candidateCells.map((c) => c.cell_id);
-    const { data: existingData } = await supabase
-      .from("grid_conditions_latest")
-      .select("cell_id")
-      .in("cell_id", cellIds);
-
-    const existingIds = new Set((existingData || []).map((row) => row.cell_id));
+    for (let i = 0; i < cellIds.length; i += 500) {
+      const { data: rows, error } = await supabase
+        .from("grid_conditions_latest")
+        .select("cell_id")
+        .in("cell_id", cellIds.slice(i, i + 500));
+      if (error) {
+        console.error("Existing-row lookup failed", error);
+        return jsonResponse({ error: "Existing-row lookup failed", details: error.message }, 500);
+      }
+      for (const r of rows ?? []) existingIds.add(r.cell_id as string);
+    }
     const withoutData = candidateCells.filter((c) => !existingIds.has(c.cell_id));
     const withData = candidateCells.filter((c) => existingIds.has(c.cell_id));
 
     shuffleInPlace(withoutData);
     shuffleInPlace(withData);
 
-    const targetNew = Math.min(withoutData.length, Math.floor(maxPoints * 0.8));
-    const targetRefresh = Math.min(withData.length, maxPoints - targetNew);
+    const tiles = buildTiles([...withoutData, ...withData], maxPoints);
+    const tileCells = tiles.flatMap((t) => t.cells);
 
-    candidateCells = [
-      ...withoutData.slice(0, targetNew),
-      ...withData.slice(0, targetRefresh),
-    ];
-
-    diagnostics.truncatedTo = candidateCells.length;
+    diagnostics.truncatedTo = tileCells.length;
     diagnostics.gridsWithoutData = withoutData.length;
     diagnostics.gridsWithData = withData.length;
-    diagnostics.selectedNew = targetNew;
-    diagnostics.selectedRefresh = targetRefresh;
+    diagnostics.selectedNew = tileCells.filter((c) => !existingIds.has(c.cell_id)).length;
+    diagnostics.selectedRefresh = tileCells.length - diagnostics.selectedNew;
+    diagnostics.tiles = tiles.length;
 
     const sampledRows = await fetchAndSampleProviders(
-      candidateCells,
+      tiles,
       { providers, vars, deadline },
       diagnostics,
     );
@@ -290,6 +304,16 @@ serve(async (req) => {
     diagnostics.skippedStale = skippedStale;
     diagnostics.written = writableRows.length;
 
+    if (dryRun) {
+      return jsonResponse({
+        dryRun: true,
+        wouldWrite: writableRows.length,
+        sample: writableRows.slice(0, 5),
+        diagnostics,
+        durationMs: Date.now() - startedAt,
+      });
+    }
+
     if (writableRows.length === 0) {
       return jsonResponse({
         message: "Nothing to write — every cell already has a fresher reading",
@@ -298,13 +322,24 @@ serve(async (req) => {
       });
     }
 
-    const { error: upsertError } = await supabase
-      .from("grid_conditions_latest")
-      .upsert(writableRows, { onConflict: "cell_id" });
+    // One upsert per column set. A bulk upsert writes the union of every row's
+    // keys, and a row missing one of them sends NULL for it -- so a cell that
+    // got SST but not chlorophyll this run would have its stored chlorophyll
+    // erased. Area requests make mixed rows the normal case, not the exception.
+    const byColumns = new Map<string, ConditionRow[]>();
+    for (const row of writableRows) {
+      const shape = Object.keys(row).sort().join(",");
+      byColumns.set(shape, [...(byColumns.get(shape) ?? []), row]);
+    }
+    for (const group of byColumns.values()) {
+      const { error: upsertError } = await supabase
+        .from("grid_conditions_latest")
+        .upsert(group, { onConflict: "cell_id" });
 
-    if (upsertError) {
-      console.error("Upsert failed", upsertError);
-      return jsonResponse({ error: "Failed to persist conditions", diagnostics, upsertError }, 500);
+      if (upsertError) {
+        console.error("Upsert failed", upsertError);
+        return jsonResponse({ error: "Failed to persist conditions", diagnostics, upsertError }, 500);
+      }
     }
 
     return jsonResponse({ upserted: writableRows.length, diagnostics, durationMs: Date.now() - startedAt });
@@ -317,24 +352,25 @@ serve(async (req) => {
 type FetchOpts = { providers: string[]; vars: string[]; deadline: number };
 
 async function fetchAndSampleProviders(
-  cells: GridCell[],
+  tiles: Tile[],
   opts: FetchOpts,
   diagnostics: IngestDiagnostics,
 ): Promise<ConditionRow[]> {
   const aggregator = new Map<string, ConditionRow>();
 
+  // attempted = cells in tiles ERDDAP answered; successes = cells given a value.
   const tasks: Array<Promise<ProviderSample[]>> = [];
-  if (opts.providers.includes("NOAA")) {
+  if (opts.providers.includes("NOAA") && opts.vars.includes(PRODUCTS.NOAA.column)) {
     diagnostics.noaa = { sampledCells: 0, attempted: 0, successes: 0, errors: [] };
-    tasks.push(fetchNoaaSurfaceTemperatures(cells, opts.vars, opts.deadline, diagnostics.noaa));
+    tasks.push(fetchProduct(PRODUCTS.NOAA, tiles, opts.deadline, diagnostics.noaa));
   }
-  if (opts.providers.includes("CHLOROPHYLL")) {
+  if (opts.providers.includes("CHLOROPHYLL") && opts.vars.includes(PRODUCTS.CHLOROPHYLL.column)) {
     diagnostics.chlorophyll = { sampledCells: 0, attempted: 0, successes: 0, errors: [] };
-    tasks.push(fetchChlorophyllData(cells, opts.vars, opts.deadline, diagnostics.chlorophyll));
+    tasks.push(fetchProduct(PRODUCTS.CHLOROPHYLL, tiles, opts.deadline, diagnostics.chlorophyll));
   }
-  if (opts.providers.includes("KD490")) {
+  if (opts.providers.includes("KD490") && opts.vars.includes(PRODUCTS.KD490.column)) {
     diagnostics.kd490 = { sampledCells: 0, attempted: 0, successes: 0, errors: [] };
-    tasks.push(fetchKd490Data(cells, opts.vars, opts.deadline, diagnostics.kd490));
+    tasks.push(fetchProduct(PRODUCTS.KD490, tiles, opts.deadline, diagnostics.kd490));
   }
   const providerResults = await Promise.all(tasks);
   const allSamples = providerResults.flat();
@@ -397,316 +433,244 @@ function isImplausiblyStale(timeValue: string): boolean {
   return (Date.now() - t) > MAX_OBSERVATION_AGE_DAYS * 24 * 60 * 60 * 1000;
 }
 
-// NOAA ERDDAP (SST) ----------------------------------------------------------
+// ERDDAP providers -----------------------------------------------------------
+//
+// One request per AREA, not one per cell.
+//
+// This used to ask ERDDAP for a single pixel per cell per variable. ERDDAP's
+// cost is server-side queueing, not transfer: godaisy-core measured on
+// 2026-08-09 that a single point, a 40 x 100 degree box and the whole globe all
+// took ~80 s (scripts/ingestion/ingest-noaa-sst-bulk.ts). At the 7-9 s a point
+// request took on 2026-09-24, a 50 s invocation managed ~24 SST and ~6
+// chlorophyll requests before the deadline and wrote 0-2 cells an hour.
+//
+// Now the grid is split into TILE_DEGREES tiles and each request fetches the
+// box covering one tile's cells at native resolution. Every pixel whose centre
+// falls inside a cell contributes, and the cell stores their median. Two gains
+// besides throughput: a coastal cell whose centre pixel is land no longer
+// comes back empty if any of its pixels is sea, and hundreds of requests per
+// run become a handful, which is what NOAA's throttling (403/429 on
+// 2026-08-10) was reacting to.
 
-const NOAA_ERDDAP_BASE_URL = env.NOAA_ERDDAP_BASE_URL ?? "https://coastwatch.noaa.gov/erddap";
-const NOAA_DEFAULT_DATASET_ID = "noaacwBLENDEDsstDaily";
-const NOAA_DEFAULT_VARIABLE = "analysed_sst";
-const NOAA_DATASET_ID = env.NOAA_ERDDAP_DATASET_ID?.trim() || NOAA_DEFAULT_DATASET_ID;
-const NOAA_VARIABLE = env.NOAA_ERDDAP_VARIABLE?.trim() || NOAA_DEFAULT_VARIABLE;
-const NOAA_DEPTH_DIMENSION = env.NOAA_ERDDAP_DEPTH_DIMENSION ?? "";
-const NOAA_DEPTH_VALUE = env.NOAA_ERDDAP_DEPTH_VALUE ?? "0";
-const NOAA_SEARCH_RADIUS = Number(env.NOAA_ERDDAP_SEARCH_RADIUS ?? "0.25");
-const NOAA_CONCURRENCY = Number(env.NOAA_ERDDAP_CONCURRENCY ?? "2");
-const NOAA_INTERFACE = (env.NOAA_ERDDAP_INTERFACE ?? "griddap").toLowerCase();
-const NOAA_TIME_WINDOW_HOURS = Number(env.NOAA_ERDDAP_TIME_WINDOW_HOURS ?? "12");
-const NOAA_TIME_OFFSETS: number[] = (env.NOAA_ERDDAP_TIME_OFFSETS ?? "0,24,72,168,336,720,1440,2160")
-  .split(",")
-  .map((v) => Number(v.trim()))
-  .filter((v) => Number.isFinite(v) && v >= 0);
-const NOAA_MAX_POINTS = Number(env.NOAA_ERDDAP_MAX_POINTS ?? "100");
+const USER_AGENT = "fishfindr.eu marine data ingest (+https://fishfindr.eu)";
+const TILE_DEGREES = Number(env.ERDDAP_TILE_DEGREES) || 5;
 
-async function fetchNoaaSurfaceTemperatures(
-  cells: GridCell[],
-  vars: string[],
-  deadline: number,
-  diagnostics?: ProviderDiagnostics,
-): Promise<ProviderSample[]> {
-  const results: ProviderSample[] = [];
+type ConditionColumn = "surface_temperature_c" | "chlorophyll_mg_m3" | "kd490";
 
-  if (!vars.includes("surface_temperature_c")) {
-    if (diagnostics) diagnostics.sampledCells = 0;
-    return results;
-  }
+type GriddapProduct = {
+  label: string;
+  baseUrl: string;
+  datasetId: string;
+  variable: string;
+  // VIIRS products are [time][altitude][latitude][longitude]; omit the altitude
+  // slice and ERDDAP shifts every later slice one axis left and 404s.
+  altitudeAxis: boolean;
+  column: ConditionColumn;
+  concurrency: number;
+  // Unit conversion and plausibility. null rejects the pixel.
+  toValue: (raw: number) => number | null;
+};
 
-  const limitedCells = cells.slice(0, NOAA_MAX_POINTS);
-  if (diagnostics) diagnostics.sampledCells = limitedCells.length;
-
-  await mapWithConcurrency(limitedCells, NOAA_CONCURRENCY, deadline, async (cell) => {
-    const sample = await fetchNoaaForCell(cell, deadline, diagnostics);
-    if (sample) results.push(sample);
-  });
-
-  return results;
-}
-
-async function fetchNoaaForCell(cell: GridCell, deadline: number, diagnostics?: ProviderDiagnostics): Promise<ProviderSample | null> {
-  const useGriddap = NOAA_INTERFACE === "griddap";
-  const offsets = useGriddap ? [0] : (NOAA_TIME_OFFSETS.length > 0 ? NOAA_TIME_OFFSETS : [0]);
-  const windowMs = Math.max(NOAA_TIME_WINDOW_HOURS, 1) * 60 * 60 * 1000;
-  const now = new Date();
-
-  for (const offsetHours of offsets) {
-    if (diagnostics) diagnostics.attempted++;
-
-    const centerTime = new Date(now.getTime() - offsetHours * 60 * 60 * 1000);
-    const startTime = new Date(Math.min(centerTime.getTime(), now.getTime()) - windowMs);
-    const endTime = new Date(Math.min(centerTime.getTime() + windowMs, now.getTime()));
-    if (startTime > endTime) startTime.setTime(endTime.getTime() - windowMs);
-
-    const normalizedBase = NOAA_ERDDAP_BASE_URL.replace(/\/+$/, "");
-    const apiRoot = normalizedBase.endsWith("/erddap") ? normalizedBase : `${normalizedBase}/erddap`;
-    const interfaceSegment = NOAA_INTERFACE === "tabledap" ? "tabledap" : "griddap";
-    const url = new URL(`${apiRoot}/${interfaceSegment}/${NOAA_DATASET_ID}.json`);
-
-    const latCenter = clamp(cell.lat, -90, 90);
-    const lonCenter = wrapLongitude(cell.lon);
-    const latIndex = Number(latCenter.toFixed(3));
-    const lonIndex = Number(lonCenter.toFixed(3));
-    const depthValue = NOAA_DEPTH_DIMENSION ? Number(Number(NOAA_DEPTH_VALUE).toFixed(3)) : null;
-
-    if (NOAA_INTERFACE === "tabledap") {
-      const params: string[] = [
-        `time,${NOAA_VARIABLE}`,
-        `time>=${startTime.toISOString()}`,
-        `time<=${endTime.toISOString()}`,
-        `latitude>=${(latCenter - NOAA_SEARCH_RADIUS).toFixed(3)}`,
-        `latitude<=${(latCenter + NOAA_SEARCH_RADIUS).toFixed(3)}`,
-        `longitude>=${wrapLongitude(lonCenter - NOAA_SEARCH_RADIUS).toFixed(3)}`,
-        `longitude<=${wrapLongitude(lonCenter + NOAA_SEARCH_RADIUS).toFixed(3)}`,
-        `orderByClosest(%22time,latitude,longitude%22)`,
-        `limit=1`,
-      ];
-      if (depthValue !== null) params.push(`${NOAA_DEPTH_DIMENSION}=${depthValue.toFixed(3)}`);
-      url.search = `?${params.join("&")}`;
-    } else {
-      const timeSlice = "[(last)]";
-      const depthSlice = depthValue !== null ? `[(${depthValue.toFixed(3)}):1:(${depthValue.toFixed(3)})]` : "";
-      const latSlice = `[(${latIndex.toFixed(3)}):1:(${latIndex.toFixed(3)})]`;
-      const lonSlice = `[(${lonIndex.toFixed(3)}):1:(${lonIndex.toFixed(3)})]`;
-      url.search = `?${NOAA_VARIABLE}${timeSlice}${depthSlice}${latSlice}${lonSlice}`;
-    }
-
-    try {
-      const resp = await fetchWithTimeout(url.toString(), deadline);
-      if (!resp.ok) {
-        recordProviderError(diagnostics, `HTTP ${resp.status} ${resp.statusText} for cell ${cell.cell_id} (offset ${offsetHours}h)`);
-        continue;
-      }
-
-      const json = await resp.json();
-      const rows: unknown[] = json?.table?.rows ?? [];
-      if (!Array.isArray(rows) || rows.length === 0) {
-        recordProviderError(diagnostics, `No rows returned for cell ${cell.cell_id} (offset ${offsetHours}h)`);
-        continue;
-      }
-
-      const firstRow = rows[0] as unknown[];
-      const timeValue = String(firstRow[0]);
-      if (isImplausiblyStale(timeValue)) {
-        recordProviderError(diagnostics, `SST observation ${timeValue} is older than ${MAX_OBSERVATION_AGE_DAYS} days — refusing to store it as current`);
-        continue;
-      }
-      const temperature = readErddapNumber(firstRow[firstRow.length - 1]);
-      if (temperature === null) {
-        recordProviderError(diagnostics, `No temperature (masked pixel) for cell ${cell.cell_id} (offset ${offsetHours}h)`);
-        continue;
-      }
-
-      let celsius = temperature;
-      if (celsius > 200) celsius -= 273.15;
+// Was erdMH1chlamday/erdMH1kd490mday -- monthly composites frozen at 2022. The
+// daily VIIRS products below replaced them on 2026-08-10.
+const PRODUCTS: Record<"NOAA" | "CHLOROPHYLL" | "KD490", GriddapProduct> = {
+  NOAA: {
+    label: "SST",
+    baseUrl: env.NOAA_ERDDAP_BASE_URL ?? "https://coastwatch.noaa.gov/erddap",
+    datasetId: env.NOAA_ERDDAP_DATASET_ID?.trim() || "noaacwBLENDEDsstDaily",
+    variable: env.NOAA_ERDDAP_VARIABLE?.trim() || "analysed_sst",
+    altitudeAxis: false,
+    column: "surface_temperature_c",
+    concurrency: Number(env.NOAA_ERDDAP_CONCURRENCY) || 1,
+    toValue: (raw) => {
+      const celsius = raw > 200 ? raw - 273.15 : raw;
       // Sea water freezes near -1.9 °C and nowhere exceeds ~36 °C at the surface.
-      if (celsius < -2.5 || celsius > 40) {
-        recordProviderError(diagnostics, `Implausible temperature ${celsius} for cell ${cell.cell_id} (offset ${offsetHours}h)`);
+      return celsius < -2.5 || celsius > 40 ? null : Number(celsius.toFixed(3));
+    },
+  },
+  CHLOROPHYLL: {
+    label: "chlorophyll",
+    baseUrl: env.CHL_ERDDAP_BASE_URL ?? "https://coastwatch.pfeg.noaa.gov/erddap",
+    datasetId: env.CHL_ERDDAP_DATASET_ID?.trim() || "nesdisVHNnoaaSNPPnoaa20chlaGapfilledDaily",
+    variable: env.CHL_ERDDAP_VARIABLE?.trim() || "chlor_a",
+    altitudeAxis: true,
+    column: "chlorophyll_mg_m3",
+    concurrency: Number(env.CHL_ERDDAP_CONCURRENCY) || 1,
+    toValue: (raw) => (raw > 0 ? Number(raw.toFixed(3)) : null),
+  },
+  KD490: {
+    label: "Kd490",
+    baseUrl: env.KD490_ERDDAP_BASE_URL ?? "https://coastwatch.pfeg.noaa.gov/erddap",
+    datasetId: env.KD490_ERDDAP_DATASET_ID?.trim() || "nesdisVHNkd490Daily",
+    variable: env.KD490_ERDDAP_VARIABLE?.trim() || "kd_490",
+    altitudeAxis: true,
+    column: "kd490",
+    concurrency: Number(env.KD490_ERDDAP_CONCURRENCY) || 1,
+    toValue: (raw) => (raw > 0 ? Number(raw.toFixed(3)) : null),
+  },
+};
+
+type Tile = { key: string; cells: GridCell[]; latMin: number; latMax: number; lonMin: number; lonMax: number };
+
+function tileKeyFor(cell: GridCell): string {
+  return `${Math.floor(cell.latMin / TILE_DEGREES)}:${Math.floor(cell.lonMin / TILE_DEGREES)}`;
+}
+
+// Tiles in priority order: a tile ranks by its highest-priority cell, and
+// brings every candidate cell inside it along, since the extra cells cost
+// nothing to fetch. Stops adding tiles once maxCells is reached, but always
+// returns at least one.
+function buildTiles(prioritised: GridCell[], maxCells: number): Tile[] {
+  const byKey = new Map<string, Tile>();
+  for (const cell of prioritised) {
+    const key = tileKeyFor(cell);
+    let tile = byKey.get(key);
+    if (!tile) {
+      tile = { key, cells: [], latMin: cell.latMin, latMax: cell.latMax, lonMin: cell.lonMin, lonMax: cell.lonMax };
+      byKey.set(key, tile);
+    }
+    tile.cells.push(cell);
+    tile.latMin = Math.min(tile.latMin, cell.latMin);
+    tile.latMax = Math.max(tile.latMax, cell.latMax);
+    tile.lonMin = Math.min(tile.lonMin, cell.lonMin);
+    tile.lonMax = Math.max(tile.lonMax, cell.lonMax);
+  }
+
+  const selected: Tile[] = [];
+  let total = 0;
+  for (const tile of byKey.values()) { // Map keeps first-seen order = priority order
+    if (selected.length > 0 && total + tile.cells.length > maxCells) continue;
+    selected.push(tile);
+    total += tile.cells.length;
+  }
+  return selected;
+}
+
+// Grid cells are 0.25 degrees on quarter-degree boundaries (checked
+// 2026-09-25: all 7,649), so a pixel belongs to the cell keyed by its
+// floored quarter-degree.
+function quarterKey(lat: number, lon: number): string {
+  return `${Math.floor(lat * 4 + 1e-9)}:${Math.floor(lon * 4 + 1e-9)}`;
+}
+
+function median(values: number[]): number {
+  const sorted = [...values].sort((a, b) => a - b);
+  const mid = sorted.length >> 1;
+  return sorted.length % 2 ? sorted[mid] : (sorted[mid - 1] + sorted[mid]) / 2;
+}
+
+// Whether each dataset's latitude axis runs north-to-south. ERDDAP rejects a
+// (min):(max) latitude range on a descending axis, and these products differ.
+// Learnt from the first rejection and remembered while the instance is warm.
+const latitudeDescending = new Map<string, boolean>();
+
+async function fetchProduct(
+  product: GriddapProduct,
+  tiles: Tile[],
+  deadline: number,
+  diagnostics: ProviderDiagnostics,
+): Promise<ProviderSample[]> {
+  const results: ProviderSample[] = [];
+  diagnostics.tiles = tiles.length;
+  diagnostics.sampledCells = tiles.reduce((n, t) => n + t.cells.length, 0);
+  diagnostics.requests = 0;
+
+  await mapWithConcurrency(tiles, product.concurrency, deadline, async (tile) => {
+    results.push(...await fetchProductTile(product, tile, deadline, diagnostics));
+  });
+
+  return results;
+}
+
+async function fetchProductTile(
+  product: GriddapProduct,
+  tile: Tile,
+  deadline: number,
+  diagnostics: ProviderDiagnostics,
+): Promise<ProviderSample[]> {
+  const normalizedBase = product.baseUrl.replace(/\/+$/, "");
+  const apiRoot = normalizedBase.endsWith("/erddap") ? normalizedBase : `${normalizedBase}/erddap`;
+  const lonSlice = `[(${tile.lonMin.toFixed(3)}):1:(${tile.lonMax.toFixed(3)})]`;
+  const altSlice = product.altitudeAxis ? "[(0.0):1:(0.0)]" : "";
+
+  const buildUrl = (descending: boolean): string => {
+    const [a, b] = descending ? [tile.latMax, tile.latMin] : [tile.latMin, tile.latMax];
+    const url = new URL(`${apiRoot}/griddap/${product.datasetId}.json`);
+    url.search = `?${product.variable}[(last)]${altSlice}[(${a.toFixed(3)}):1:(${b.toFixed(3)})]${lonSlice}`;
+    return url.toString();
+  };
+
+  let json: { table?: { columnNames?: string[]; rows?: unknown[][] } } | null = null;
+  try {
+    let descending = latitudeDescending.get(product.datasetId) ?? false;
+    for (let attempt = 0; attempt < 2 && !json; attempt++) {
+      diagnostics.requests = (diagnostics.requests ?? 0) + 1;
+      const resp = await fetchWithTimeout(buildUrl(descending), deadline, { headers: { "User-Agent": USER_AGENT } });
+      if (resp.ok) {
+        json = await resp.json();
+        latitudeDescending.set(product.datasetId, descending);
+        break;
+      }
+      const body = await resp.text().catch(() => "");
+      // Only an axis-order complaint is worth one retry the other way round.
+      if (attempt === 0 && (resp.status === 400 || resp.status === 404) && /latitude/i.test(body)) {
+        descending = !descending;
         continue;
       }
-      if (diagnostics) diagnostics.successes++;
-
-      return {
-        cell_id: cell.cell_id,
-        collected_at: timeValue,
-        source: `${NOAA_DATASET_ID}.${NOAA_VARIABLE}`,
-        values: { surface_temperature_c: Number(celsius.toFixed(3)) },
-      };
-    } catch (error) {
-      recordProviderError(diagnostics, `Fetch error for cell ${cell.cell_id} (offset ${offsetHours}h): ${error instanceof Error ? error.message : String(error)}`);
+      recordProviderError(diagnostics, `HTTP ${resp.status} for ${product.label} tile ${tile.key}: ${body.slice(0, 160)}`);
+      return [];
     }
-  }
-
-  return null;
-}
-
-// CHLOROPHYLL ----------------------------------------------------------------
-
-const CHL_ERDDAP_BASE_URL = env.CHL_ERDDAP_BASE_URL ?? "https://coastwatch.pfeg.noaa.gov/erddap";
-// Was erdMH1chlamday/chlorophyll -- a monthly composite frozen at 2022. This is
-// the daily gap-filled VIIRS product findr's own ingestion already uses, whose
-// latest observation on 2026-08-10 was 2026-07-28.
-const CHL_DEFAULT_DATASET_ID = "nesdisVHNnoaaSNPPnoaa20chlaGapfilledDaily";
-const CHL_DEFAULT_VARIABLE = "chlor_a";
-const CHL_DATASET_ID = env.CHL_ERDDAP_DATASET_ID?.trim() || CHL_DEFAULT_DATASET_ID;
-const CHL_VARIABLE = env.CHL_ERDDAP_VARIABLE?.trim() || CHL_DEFAULT_VARIABLE;
-const CHL_CONCURRENCY = Number(env.CHL_ERDDAP_CONCURRENCY ?? "2");
-const CHL_MAX_POINTS = Number(env.CHL_ERDDAP_MAX_POINTS ?? "100");
-
-async function fetchChlorophyllData(
-  cells: GridCell[],
-  vars: string[],
-  deadline: number,
-  diagnostics?: ProviderDiagnostics,
-): Promise<ProviderSample[]> {
-  const results: ProviderSample[] = [];
-  if (!vars.includes("chlorophyll_mg_m3")) {
-    if (diagnostics) diagnostics.sampledCells = 0;
-    return results;
-  }
-
-  const limitedCells = cells.slice(0, CHL_MAX_POINTS);
-  if (diagnostics) diagnostics.sampledCells = limitedCells.length;
-
-  await mapWithConcurrency(limitedCells, CHL_CONCURRENCY, deadline, async (cell) => {
-    const sample = await fetchChlorophyllForCell(cell, deadline, diagnostics);
-    if (sample) results.push(sample);
-  });
-
-  return results;
-}
-
-async function fetchChlorophyllForCell(cell: GridCell, deadline: number, diagnostics?: ProviderDiagnostics): Promise<ProviderSample | null> {
-  if (diagnostics) diagnostics.attempted++;
-  const normalizedBase = CHL_ERDDAP_BASE_URL.replace(/\/+$/, "");
-  const apiRoot = normalizedBase.endsWith("/erddap") ? normalizedBase : `${normalizedBase}/erddap`;
-  const url = new URL(`${apiRoot}/griddap/${CHL_DATASET_ID}.json`);
-
-  const latCenter = clamp(cell.lat, -90, 90);
-  const lonCenter = wrapLongitude(cell.lon);
-  const latIndex = Number(latCenter.toFixed(3));
-  const lonIndex = Number(lonCenter.toFixed(3));
-  const latSlice = `[(${latIndex.toFixed(3)}):1:(${latIndex.toFixed(3)})]`;
-  const lonSlice = `[(${lonIndex.toFixed(3)}):1:(${lonIndex.toFixed(3)})]`;
-  // [(0.0):1:(0.0)] is the altitude axis. These datasets are
-  // [time][altitude][latitude][longitude]; omit it and ERDDAP shifts every
-  // later slice one axis to the left and 404s.
-  url.search = `?${CHL_VARIABLE}[(last)][(0.0):1:(0.0)]${latSlice}${lonSlice}`;
-
-  try {
-    const resp = await fetchWithTimeout(url.toString(), deadline);
-    if (!resp.ok) {
-      recordProviderError(diagnostics, `HTTP ${resp.status} ${resp.statusText} for chlorophyll cell ${cell.cell_id}`);
-      return null;
-    }
-    const json = await resp.json();
-    const rows: unknown[] = json?.table?.rows ?? [];
-    if (!Array.isArray(rows) || rows.length === 0) {
-      recordProviderError(diagnostics, `No chlorophyll rows for cell ${cell.cell_id}`);
-      return null;
-    }
-    const firstRow = rows[0] as unknown[];
-    const timeValue = String(firstRow[0]);
-    if (isImplausiblyStale(timeValue)) {
-      recordProviderError(diagnostics, `Chlorophyll observation ${timeValue} is older than ${MAX_OBSERVATION_AGE_DAYS} days — refusing to store it as current`);
-      return null;
-    }
-    const chl = readErddapNumber(firstRow[firstRow.length - 1]);
-    if (chl === null || chl <= 0) {
-      recordProviderError(diagnostics, `Invalid chlorophyll value for cell ${cell.cell_id}: ${chl}`);
-      return null;
-    }
-    if (diagnostics) diagnostics.successes++;
-    return {
-      cell_id: cell.cell_id,
-      collected_at: timeValue,
-      source: `${CHL_DATASET_ID}.${CHL_VARIABLE}`,
-      values: { chlorophyll_mg_m3: Number(chl.toFixed(3)) },
-    };
   } catch (error) {
-    recordProviderError(diagnostics, `Fetch error for chlorophyll cell ${cell.cell_id}: ${error instanceof Error ? error.message : String(error)}`);
-    return null;
+    recordProviderError(diagnostics, `Fetch error for ${product.label} tile ${tile.key}: ${error instanceof Error ? error.message : String(error)}`);
+    return [];
   }
-}
+  if (!json) return [];
 
-// KD490 ----------------------------------------------------------------------
-
-const KD490_ERDDAP_BASE_URL = env.KD490_ERDDAP_BASE_URL ?? "https://coastwatch.pfeg.noaa.gov/erddap";
-// Was erdMH1kd490mday/k490 -- likewise monthly and frozen; its newest stored
-// observation was 2022-05-16. Daily VIIRS equivalent, latest 2026-07-09.
-const KD490_DEFAULT_DATASET_ID = "nesdisVHNkd490Daily";
-const KD490_DEFAULT_VARIABLE = "kd_490";
-const KD490_DATASET_ID = env.KD490_ERDDAP_DATASET_ID?.trim() || KD490_DEFAULT_DATASET_ID;
-const KD490_VARIABLE = env.KD490_ERDDAP_VARIABLE?.trim() || KD490_DEFAULT_VARIABLE;
-const KD490_CONCURRENCY = Number(env.KD490_ERDDAP_CONCURRENCY ?? "2");
-const KD490_MAX_POINTS = Number(env.KD490_ERDDAP_MAX_POINTS ?? "100");
-
-async function fetchKd490Data(
-  cells: GridCell[],
-  vars: string[],
-  deadline: number,
-  diagnostics?: ProviderDiagnostics,
-): Promise<ProviderSample[]> {
-  const results: ProviderSample[] = [];
-  if (!vars.includes("kd490")) {
-    if (diagnostics) diagnostics.sampledCells = 0;
-    return results;
+  const names = json.table?.columnNames ?? [];
+  const rows = json.table?.rows ?? [];
+  const iTime = names.indexOf("time");
+  const iLat = names.indexOf("latitude");
+  const iLon = names.indexOf("longitude");
+  const iVal = names.indexOf(product.variable);
+  if ([iTime, iLat, iLon, iVal].includes(-1) || rows.length === 0) {
+    recordProviderError(diagnostics, `Unexpected ${product.label} response for tile ${tile.key}: columns ${names.join(",")}, ${rows.length} rows`);
+    return [];
   }
-  const limitedCells = cells.slice(0, KD490_MAX_POINTS);
-  if (diagnostics) diagnostics.sampledCells = limitedCells.length;
 
-  await mapWithConcurrency(limitedCells, KD490_CONCURRENCY, deadline, async (cell) => {
-    const sample = await fetchKd490ForCell(cell, deadline, diagnostics);
-    if (sample) results.push(sample);
-  });
+  const timeValue = String(rows[0][iTime]);
+  if (isImplausiblyStale(timeValue)) {
+    recordProviderError(diagnostics, `${product.label} observation ${timeValue} is older than ${MAX_OBSERVATION_AGE_DAYS} days — refusing to store it as current`);
+    return [];
+  }
 
-  return results;
-}
+  diagnostics.attempted += tile.cells.length;
+  const cellByKey = new Map(tile.cells.map((c) => [quarterKey(c.latMin, c.lonMin), c]));
+  const valuesByCell = new Map<string, number[]>();
+  for (const row of rows) {
+    const lat = readErddapNumber(row[iLat]);
+    const lon = readErddapNumber(row[iLon]);
+    const raw = readErddapNumber(row[iVal]);
+    if (lat === null || lon === null || raw === null) continue; // masked pixel: missing, not zero
+    const cell = cellByKey.get(quarterKey(lat, wrapLongitude(lon)));
+    if (!cell) continue;
+    const value = product.toValue(raw);
+    if (value === null) continue;
+    const list = valuesByCell.get(cell.cell_id) ?? [];
+    list.push(value);
+    valuesByCell.set(cell.cell_id, list);
+  }
 
-async function fetchKd490ForCell(cell: GridCell, deadline: number, diagnostics?: ProviderDiagnostics): Promise<ProviderSample | null> {
-  if (diagnostics) diagnostics.attempted++;
-  const normalizedBase = KD490_ERDDAP_BASE_URL.replace(/\/+$/, "");
-  const apiRoot = normalizedBase.endsWith("/erddap") ? normalizedBase : `${normalizedBase}/erddap`;
-  const url = new URL(`${apiRoot}/griddap/${KD490_DATASET_ID}.json`);
-  const latCenter = clamp(cell.lat, -90, 90);
-  const lonCenter = wrapLongitude(cell.lon);
-  const latIndex = Number(latCenter.toFixed(3));
-  const lonIndex = Number(lonCenter.toFixed(3));
-  const latSlice = `[(${latIndex.toFixed(3)}):1:(${latIndex.toFixed(3)})]`;
-  const lonSlice = `[(${lonIndex.toFixed(3)}):1:(${lonIndex.toFixed(3)})]`;
-  // See the chlorophyll fetcher: the altitude axis is required.
-  url.search = `?${KD490_VARIABLE}[(last)][(0.0):1:(0.0)]${latSlice}${lonSlice}`;
-
-  try {
-    const resp = await fetchWithTimeout(url.toString(), deadline);
-    if (!resp.ok) {
-      recordProviderError(diagnostics, `HTTP ${resp.status} ${resp.statusText} for Kd490 cell ${cell.cell_id}`);
-      return null;
-    }
-    const json = await resp.json();
-    const rows: unknown[] = json?.table?.rows ?? [];
-    if (!Array.isArray(rows) || rows.length === 0) {
-      recordProviderError(diagnostics, `No Kd490 rows for cell ${cell.cell_id}`);
-      return null;
-    }
-    const firstRow = rows[0] as unknown[];
-    const timeValue = String(firstRow[0]);
-    if (isImplausiblyStale(timeValue)) {
-      recordProviderError(diagnostics, `Kd490 observation ${timeValue} is older than ${MAX_OBSERVATION_AGE_DAYS} days — refusing to store it as current`);
-      return null;
-    }
-    const kd490 = readErddapNumber(firstRow[firstRow.length - 1]);
-    if (kd490 === null || kd490 <= 0) {
-      recordProviderError(diagnostics, `Invalid Kd490 value for cell ${cell.cell_id}: ${kd490}`);
-      return null;
-    }
-    if (diagnostics) diagnostics.successes++;
-    return {
-      cell_id: cell.cell_id,
+  const samples: ProviderSample[] = [];
+  for (const [cellId, values] of valuesByCell) {
+    samples.push({
+      cell_id: cellId,
       collected_at: timeValue,
-      source: `${KD490_DATASET_ID}.${KD490_VARIABLE}`,
-      values: { kd490: Number(kd490.toFixed(3)) },
-    };
-  } catch (error) {
-    recordProviderError(diagnostics, `Fetch error for Kd490 cell ${cell.cell_id}: ${error instanceof Error ? error.message : String(error)}`);
-    return null;
+      source: `${product.datasetId}.${product.variable}`,
+      values: { [product.column]: Number(median(values).toFixed(3)) },
+    });
   }
+  diagnostics.successes += samples.length;
+  return samples;
 }
 
 // CMEMS -------------------------------------------------------------------
@@ -793,12 +757,16 @@ function readErddapNumber(raw: unknown): number | null {
   return null;
 }
 
-function clamp(value: number, min: number, max: number): number {
-  return Math.min(max, Math.max(min, value));
-}
 
-
-type GridCell = { cell_id: string; lat: number; lon: number };
+type GridCell = {
+  cell_id: string;
+  lat: number;
+  lon: number;
+  latMin: number;
+  latMax: number;
+  lonMin: number;
+  lonMax: number;
+};
 type RawGridRow = {
   cell_id?: string;
   lat_min?: string | number | null;
@@ -823,7 +791,7 @@ function buildGridCellFromBounds(row: RawGridRow): GridCell | null {
   } else {
     lon = wrapLongitude(lon);
   }
-  return { cell_id: row.cell_id, lat, lon };
+  return { cell_id: row.cell_id, lat, lon, latMin, latMax, lonMin, lonMax };
 }
 
 type ProviderSample = {
@@ -854,6 +822,8 @@ type ProviderDiagnostics = {
   attempted: number;
   successes: number;
   errors: string[];
+  tiles?: number;
+  requests?: number;
 };
 
 type IngestDiagnostics = {
@@ -866,6 +836,8 @@ type IngestDiagnostics = {
   gridsWithData?: number;
   selectedNew?: number;
   selectedRefresh?: number;
+  tiles?: number;
+  dryRun?: boolean;
   skippedStale?: number;
   written?: number;
   noaa?: ProviderDiagnostics;
