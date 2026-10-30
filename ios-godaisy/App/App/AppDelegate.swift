@@ -6,7 +6,6 @@ import UserNotifications
 import BackgroundTasks
 import FirebaseCore
 import FirebaseMessaging
-import RevenueCat
 
 /// AppDelegate - iOS 17+ optimized with modern Swift patterns
 /// Uses @main instead of deprecated @UIApplicationMain
@@ -21,11 +20,6 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     ) -> Bool {
         // Clear WKWebView cache on app version change to ensure fresh JS loads
         clearWebCacheIfVersionChanged()
-
-        // Configure RevenueCat natively (the Capacitor plugin's configure()
-        // hangs due to a bridge issue, so we configure the SDK directly here)
-        Purchases.logLevel = .warn
-        Purchases.configure(withAPIKey: "appl_fUSSbSMORcfnVFSwHweCTCDAsUQ")
 
         // Initialize Firebase
         FirebaseApp.configure()
