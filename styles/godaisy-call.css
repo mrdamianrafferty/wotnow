@@ -440,6 +440,24 @@
   margin: 5px 0 0;            /* 9px flex gap + 5px = 14px, matching the dots below */
 }
 
+/* The alternates button: icon + "Try another" + "1 of 3". Still boxless (see
+   .call-icon-btn--lg above) — the words are what make it legible, not a border. */
+.call-alt-btn {
+  min-height: var(--call-tap-min);
+  padding: 0 14px;
+  display: inline-flex; align-items: center; gap: 8px;
+  border: 0; background: none; color: var(--call-on-dark);
+  font: 600 15px var(--call-font-body);
+  border-radius: var(--call-r-pill);
+  cursor: pointer;
+  transition: opacity var(--call-t-press) var(--call-ease-out),
+              transform var(--call-t-press) var(--call-ease-out);
+}
+.call-alt-btn:hover { background: none; opacity: .72; }
+.call-alt-btn:active { background: none; transform: scale(.97); }
+.call-alt-btn:focus-visible { outline: 2px solid var(--call-on-dark); outline-offset: 2px; }
+.call-alt-text { max-width: 60vw; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
 /* One quiet line for browser visitors (components/GetTheAppLink.tsx): muted, small, and not a button,
    so the one button on this screen stays the one button. */
 .call-appline { margin: 10px 0 0; text-align: center; font: 500 13px var(--call-font-body); }

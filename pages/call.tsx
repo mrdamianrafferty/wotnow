@@ -460,6 +460,7 @@ export default function CallPage({ slug, place, days, photos, indoor, coords, co
                 index={altIndex}
                 total={options.length}
                 label="Another option for today"
+                nextName={options[(altIndex + 1) % options.length]?.activityName}
               />
             )}
           </div>
