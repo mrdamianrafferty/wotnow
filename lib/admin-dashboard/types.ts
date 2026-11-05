@@ -9,6 +9,7 @@
 
 import type { StoreDownloadsSummary } from '@/lib/store-stats/summary';
 import type { StoreListingSummary } from '@/lib/store-stats/listing-summary';
+import type { StoreFinanceSummary } from '@/lib/store-stats/finance-summary';
 import type { StripeWebSummary } from './stripe-web';
 
 export type Section<T> = { state: 'ok'; data: T } | { state: 'not_configured'; missing: string[]; hint?: string } | { state: 'error'; message: string };
@@ -105,6 +106,8 @@ export interface MetricsSummary {
   audience: Section<AudienceSummary>;
   /** Stripe web plans, only for an app that sells them (Grow Daisy). Same shape as Rise Daisy's. */
   webRevenue?: Section<StripeWebSummary>;
+  /** Apple finance reports (what the vendor account was paid, per fiscal period), all apps on the account. Optional so older senders still type-check. */
+  storeFinance?: Section<StoreFinanceSummary>;
 }
 
 /** 14 daily values → this week vs last week. */
