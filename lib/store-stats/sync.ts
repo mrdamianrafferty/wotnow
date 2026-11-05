@@ -8,11 +8,16 @@
  * and first-time downloads go into app_store_listing_daily (apple-analytics.ts),
  * for listing conversion. That table is shared with Rise Daisy and Findr (Rise
  * Daisy's migration 20261028133937 created it), keyed by the same app_id.
+ *
+ * Apple's finance reports (what the account was actually paid, per fiscal
+ * period) are pulled by finance-sync.ts. They cover the whole vendor account,
+ * not one app, and never change the other jobs' results.
  */
 
 import { getSupabaseServerClient } from '@/lib/supabase/serverClient';
 import { createAppleToken, fetchAppleDay, getAppleConfig } from './apple';
 import { fetchListingForApp, type ListingRow } from './apple-analytics';
+import { FINANCE_PERIODS, syncFinance, type FinanceResult } from './finance-sync';
 import { fetchGoogleMonths, getGoogleConfig } from './google';
 import { storeStatsAppId, type StoreStatRow } from './types';
 
@@ -31,6 +36,8 @@ export interface SyncResult {
   android: PlatformResult;
   /** App Store listing views and downloads (Analytics Reports), iOS only */
   listing: PlatformResult;
+  /** App Store finance reports, vendor-wide; its problems are reported here but never fail the sync */
+  finance: FinanceResult;
 }
 
 function message(err: unknown): string {
@@ -150,8 +157,8 @@ async function syncAndroid(dates: string[]): Promise<PlatformResult> {
   }
 }
 
-export async function syncStoreStats(days: number): Promise<SyncResult> {
+export async function syncStoreStats(days: number, financePeriods = FINANCE_PERIODS): Promise<SyncResult> {
   const dates = dateRange(days);
-  const [ios, android, listing] = await Promise.all([syncIos(dates), syncAndroid(dates), syncListing(days)]);
-  return { from: dates[0], to: dates[dates.length - 1], ios, android, listing };
+  const [ios, android, listing, finance] = await Promise.all([syncIos(dates), syncAndroid(dates), syncListing(days), syncFinance(financePeriods)]);
+  return { from: dates[0], to: dates[dates.length - 1], ios, android, listing, finance };
 }

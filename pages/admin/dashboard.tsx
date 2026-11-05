@@ -16,6 +16,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { useAuth } from '@/context/AuthContext';
 import { StoreDownloads } from '@/components/admin/StoreDownloads';
+import { StoreFinancePanel } from '@/components/admin/StoreFinancePanel';
 import { RevenuePanel } from '@/components/admin/RevenuePanel';
 import { AnalyticsPanel } from '@/components/admin/AnalyticsPanel';
 import { PlatformHealthPanel } from '@/components/admin/PlatformHealthPanel';
@@ -94,6 +95,7 @@ export default function AdminDashboardPage() {
           <>
             <PanelHeading title="Store downloads" source="App Store Connect · Google Play" />
             <SectionBody section={data.storeDownloads}>{(d) => <StoreDownloads data={d} />}</SectionBody>
+            <StoreFinancePanel finance={data.storeFinance} />
             <RevenuePanel revenue={data.revenue} />
             <AnalyticsPanel analytics={data.analytics} />
             <PlatformHealthPanel platformHealth={data.platformHealth} now={new Date(data.generatedAt)} />

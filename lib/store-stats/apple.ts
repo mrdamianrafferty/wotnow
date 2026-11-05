@@ -96,7 +96,7 @@ export function parseAppleSalesReport(tsv: string, appId: string, statDate: stri
 }
 
 /** Apple's reports API throws the odd transient 500 or 429, so retry those with backoff. */
-async function fetchWithRetry(url: string, init: RequestInit, attempts = 3): Promise<Response> {
+export async function fetchWithRetry(url: string, init: RequestInit, attempts = 3): Promise<Response> {
   let res = await fetch(url, init);
   for (let i = 1; i < attempts && (res.status >= 500 || res.status === 429); i++) {
     await new Promise((resolve) => setTimeout(resolve, 500 * 2 ** i));
