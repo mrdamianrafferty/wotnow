@@ -11,8 +11,8 @@
  */
 
 import { getSupabaseServerClient } from '@/lib/supabase/serverClient';
-import { createAppleToken, getAppleConfig, type AppleConfig } from './apple';
-import { fetchFinanceReport, parseFinanceReport, recentFiscalPeriods, type FinanceFetch, type FinanceReport } from './apple-finance';
+import { createAppleToken, type AppleConfig } from './apple';
+import { fetchFinanceReport, getAppleFinanceConfig, parseFinanceReport, recentFiscalPeriods, type FinanceFetch, type FinanceReport } from './apple-finance';
 
 export type FinanceStatus = 'ok' | 'mismatch' | 'not_ready' | 'no_access' | 'error';
 
@@ -135,7 +135,7 @@ export async function syncFinance(periods = FINANCE_PERIODS, now = new Date()): 
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), FINANCE_BUDGET_MS);
   try {
-    const config = getAppleConfig();
+    const config = getAppleFinanceConfig();
     if (!config) return result;
     result.configured = true;
     const token = createAppleToken(config);

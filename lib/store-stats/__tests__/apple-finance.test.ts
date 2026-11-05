@@ -12,7 +12,7 @@
 
 import { generateKeyPairSync } from 'node:crypto';
 import { gzipSync } from 'node:zlib';
-import { fetchFinanceReport, findMismatches, parseFinanceReport, recentFiscalPeriods, usDateToIso } from '../apple-finance';
+import { fetchFinanceReport, findMismatches, getAppleFinanceConfig, parseFinanceReport, recentFiscalPeriods, usDateToIso } from '../apple-finance';
 import { summariseFinance } from '../finance-summary';
 import { syncFinance } from '../finance-sync';
 
@@ -150,6 +150,33 @@ describe('parseFinanceReport', () => {
   it('returns nothing, not a throw, for an empty or headerless file', () => {
     expect(parseFinanceReport('').rows).toEqual([]);
     expect(parseFinanceReport('Vendor Name\tX\nStart Date\t08/30/2026').rows).toEqual([]);
+  });
+});
+
+describe('getAppleFinanceConfig', () => {
+  const { privateKey: statsPem } = generateKeyPairSync('ec', { namedCurve: 'P-256' });
+  const { privateKey: financePem } = generateKeyPairSync('ec', { namedCurve: 'P-256' });
+  const pem = (k: typeof statsPem) => k.export({ type: 'pkcs8', format: 'pem' }).toString();
+  const base = {
+    APP_STORE_CONNECT_KEY_ID: 'STATS',
+    APP_STORE_CONNECT_ISSUER_ID: 'ISS',
+    APP_STORE_CONNECT_PRIVATE_KEY: pem(statsPem),
+    APP_STORE_VENDOR_NUMBER: '12345678',
+  };
+
+  it('uses the Finance key pair when both are set, with the shared issuer and vendor', () => {
+    const c = getAppleFinanceConfig({ ...base, APP_STORE_FINANCE_KEY_ID: 'FIN', APP_STORE_FINANCE_PRIVATE_KEY: pem(financePem) });
+    expect(c).toMatchObject({ keyId: 'FIN', issuerId: 'ISS', vendorNumber: '12345678', privateKey: pem(financePem) });
+  });
+
+  it('falls back to the stats key when the Finance pair is unset or only half set', () => {
+    expect(getAppleFinanceConfig(base)).toMatchObject({ keyId: 'STATS', privateKey: pem(statsPem) });
+    expect(getAppleFinanceConfig({ ...base, APP_STORE_FINANCE_KEY_ID: 'FIN' })).toMatchObject({ keyId: 'STATS', privateKey: pem(statsPem) });
+    expect(getAppleFinanceConfig({ ...base, APP_STORE_FINANCE_PRIVATE_KEY: pem(financePem) })).toMatchObject({ keyId: 'STATS' });
+  });
+
+  it('is null without the shared issuer or vendor number', () => {
+    expect(getAppleFinanceConfig({ ...base, APP_STORE_VENDOR_NUMBER: undefined, APP_STORE_FINANCE_KEY_ID: 'FIN', APP_STORE_FINANCE_PRIVATE_KEY: pem(financePem) })).toBeNull();
   });
 });
 

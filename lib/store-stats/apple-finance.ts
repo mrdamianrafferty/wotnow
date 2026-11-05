@@ -15,7 +15,23 @@
 
 import { createHash } from 'node:crypto';
 import { gunzipSync } from 'node:zlib';
-import { appleErrorDetail, fetchWithRetry, type AppleConfig } from './apple';
+import { appleErrorDetail, fetchWithRetry, getAppleConfig, type AppleConfig } from './apple';
+
+/**
+ * The stats key ("Access to Reports, Sales") cannot read finance reports and an
+ * App Store Connect key's role cannot be changed, so finance gets its own key
+ * with the Finance role: APP_STORE_FINANCE_KEY_ID + APP_STORE_FINANCE_PRIVATE_KEY.
+ * Both are optional. The id and the .p8 belong together, so the pair is used
+ * only when both are set; otherwise the stats key is tried (and Apple's 403
+ * becomes the "lacks Finance access" status). Issuer and vendor number are the
+ * team's, shared with the stats key.
+ */
+export function getAppleFinanceConfig(env: Record<string, string | undefined> = process.env): AppleConfig | null {
+  const keyId = env.APP_STORE_FINANCE_KEY_ID;
+  const privateKey = env.APP_STORE_FINANCE_PRIVATE_KEY;
+  if (!keyId || !privateKey) return getAppleConfig(env);
+  return getAppleConfig({ ...env, APP_STORE_CONNECT_KEY_ID: keyId, APP_STORE_CONNECT_PRIVATE_KEY: privateKey });
+}
 
 export interface FinanceRow {
   transaction_date: string; // YYYY-MM-DD
