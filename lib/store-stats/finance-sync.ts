@@ -12,7 +12,7 @@
 
 import { getSupabaseServerClient } from '@/lib/supabase/serverClient';
 import { createAppleToken, type AppleConfig } from './apple';
-import { fetchFinanceReport, getAppleFinanceConfig, parseFinanceReport, recentFiscalPeriods, type FinanceFetch, type FinanceReport } from './apple-finance';
+import { fetchFinanceReport, fiscalPeriodOf, getAppleFinanceConfig, parseFinanceReport, recentFiscalPeriods, type FinanceFetch, type FinanceReport } from './apple-finance';
 
 export type FinanceStatus = 'ok' | 'mismatch' | 'not_ready' | 'no_access' | 'error';
 
@@ -124,6 +124,11 @@ async function pullPeriod(db: Db, config: AppleConfig, token: string, fy: number
     throw new Error(`Finance report for ${name} had no readable rows or dates`);
   }
   const problems = [...report.mismatches, ...report.warnings];
+  if (report.endDate) {
+    // The file's own dates say which period it is; a different one means our request guess was off
+    const own = fiscalPeriodOf(report.endDate);
+    if (own.fiscalYear !== fy || own.fiscalPeriod !== period) problems.push(`file dates are ${report.startDate} to ${report.endDate}, which is ${label(own.fiscalYear, own.fiscalPeriod)}, not ${name}`);
+  }
   await storeRows(db, vendor, fy, period, report);
   await writePeriod(db, vendor, fy, period, { status: report.mismatches.length > 0 ? 'mismatch' : 'ok', detail: problems.join('; ').slice(0, 500) || null, report });
   result.stored.push(name);

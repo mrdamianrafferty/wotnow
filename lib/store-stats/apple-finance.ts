@@ -4,10 +4,10 @@
  * subscription), in the currency Apple pays out in.
  * https://developer.apple.com/documentation/appstoreconnectapi/get_v1_financereports
  *
- * Apple's fiscal calendar is its own (5-4-4 weeks, October first: FY2026
- * period 12 is 30 Aug – 26 Sep 2026, FY2027 period 1 is 27 Sep – 31 Oct), so
- * the real dates are read from the file's own Start Date / End Date rows and
- * the calendar month is only used to guess which periods to ask for.
+ * Apple's fiscal calendar is its own (5-4-4 weeks, October first: fiscal
+ * 2026-12 is 30 Aug – 26 Sep 2026, 2027-01 is 27 Sep – 31 Oct), asked for as
+ * reportDate=YYYY-MM. The real dates are read from the file's own Start Date /
+ * End Date rows; the calendar month is only used to guess which periods to ask for.
  *
  * The call needs a key with the Finance role. Without it Apple answers 401/403,
  * which is reported as `no_access` rather than thrown.
@@ -250,12 +250,13 @@ export type FinanceFetch =
 
 /** One fiscal period's FINANCE_DETAIL file. Throws on anything but ok, 404 and 401/403. */
 export async function fetchFinanceReport(config: AppleConfig, token: string, fiscalYear: number, fiscalPeriod: number, signal?: AbortSignal): Promise<FinanceFetch> {
+  // reportDate is YYYY-MM in Apple's fiscal calendar: YYYY the fiscal year, MM the fiscal month (October 01 ... September 12).
+  // Region Z1 is the consolidated detail file; ZZ is for the FINANCIAL summary and 404s here.
   const params = new URLSearchParams({
-    'filter[regionCode]': 'ZZ',
+    'filter[regionCode]': 'Z1',
     'filter[reportType]': 'FINANCE_DETAIL',
     'filter[vendorNumber]': config.vendorNumber,
-    'filter[fiscalYear]': String(fiscalYear),
-    'filter[fiscalPeriod]': String(fiscalPeriod),
+    'filter[reportDate]': `${fiscalYear}-${String(fiscalPeriod).padStart(2, '0')}`,
   });
   const res = await fetchWithRetry(`https://api.appstoreconnect.apple.com/v1/financeReports?${params}`, {
     headers: { Authorization: `Bearer ${token}`, Accept: 'application/a-gzip' },
@@ -269,6 +270,12 @@ export async function fetchFinanceReport(config: AppleConfig, token: string, fis
   const buf = Buffer.from(await res.arrayBuffer());
   const gzipped = buf.length > 2 && buf[0] === 0x1f && buf[1] === 0x8b;
   return { kind: 'ok', text: (gzipped ? gunzipSync(buf) : buf).toString('utf-8') };
+}
+
+/** The fiscal year and month a date in the period belongs to (a period's end date is always inside its own month). */
+export function fiscalPeriodOf(isoDate: string): { fiscalYear: number; fiscalPeriod: number } {
+  const [y, m] = isoDate.split('-').map(Number);
+  return { fiscalYear: y + (m >= 10 ? 1 : 0), fiscalPeriod: ((m + 2) % 12) + 1 };
 }
 
 /**

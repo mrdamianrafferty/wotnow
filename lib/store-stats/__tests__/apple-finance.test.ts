@@ -12,7 +12,7 @@
 
 import { generateKeyPairSync } from 'node:crypto';
 import { gzipSync } from 'node:zlib';
-import { fetchFinanceReport, findMismatches, getAppleFinanceConfig, parseFinanceReport, recentFiscalPeriods, usDateToIso } from '../apple-finance';
+import { fetchFinanceReport, findMismatches, fiscalPeriodOf, getAppleFinanceConfig, parseFinanceReport, recentFiscalPeriods, usDateToIso } from '../apple-finance';
 import { summariseFinance } from '../finance-summary';
 import { syncFinance } from '../finance-sync';
 
@@ -180,6 +180,14 @@ describe('getAppleFinanceConfig', () => {
   });
 });
 
+describe('fiscalPeriodOf', () => {
+  it('maps a period’s end date to Apple’s fiscal year and month', () => {
+    expect(fiscalPeriodOf('2026-09-26')).toEqual({ fiscalYear: 2026, fiscalPeriod: 12 });
+    expect(fiscalPeriodOf('2026-10-31')).toEqual({ fiscalYear: 2027, fiscalPeriod: 1 });
+    expect(fiscalPeriodOf('2027-01-30')).toEqual({ fiscalYear: 2027, fiscalPeriod: 4 });
+  });
+});
+
 describe('recentFiscalPeriods', () => {
   it('maps the calendar month to Apple’s periods, October starting the next fiscal year', () => {
     expect(recentFiscalPeriods(new Date('2026-11-05T07:00:00Z'), 4)).toEqual([
@@ -204,18 +212,17 @@ function stubFetch(status: number, body: string | Buffer = '') {
 describe('fetchFinanceReport', () => {
   afterEach(() => jest.restoreAllMocks());
 
-  it('asks for FINANCE_DETAIL, region ZZ, and gunzips the file', async () => {
+  it('asks for FINANCE_DETAIL, region Z1, reportDate in the fiscal calendar, and gunzips the file', async () => {
     const fn = stubFetch(200, gzipSync(SAMPLE));
     const got = await fetchFinanceReport(config, 'tok', 2026, 12);
     expect(got).toEqual({ kind: 'ok', text: SAMPLE });
     const url = new URL((fn.mock.calls[0] as unknown as [string])[0]);
     expect(url.pathname).toBe('/v1/financeReports');
     expect(Object.fromEntries(url.searchParams)).toEqual({
-      'filter[regionCode]': 'ZZ',
+      'filter[regionCode]': 'Z1',
       'filter[reportType]': 'FINANCE_DETAIL',
       'filter[vendorNumber]': '12345678',
-      'filter[fiscalYear]': '2026',
-      'filter[fiscalPeriod]': '12',
+      'filter[reportDate]': '2026-12',
     });
   });
 
@@ -319,6 +326,8 @@ describe('syncFinance', () => {
     expect(inserted[0].vendor_number).toBe('12345678');
     const last = writes[writes.length - 1].payload as { status: string; start_date: string; row_count: number };
     expect(last).toMatchObject({ status: 'ok', start_date: '2026-08-30', row_count: 3 });
+    // The sample is fiscal 2026-12, not the 2027-01 asked for, so the guess being off is noted
+    expect((last as unknown as { detail: string }).detail).toMatch(/FY2026 P12, not FY2027 P1/);
   });
 
   it('stores the rows but marks the period mismatch when the totals disagree', async () => {
