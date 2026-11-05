@@ -5,7 +5,7 @@
  * Apple finance reports — parser, fetch outcomes, period guess, the sync's
  * non-fatal statuses and the dashboard summary.
  *
- * The fixture is the real FD_85087731_0926.txt (Rise Daisy's three
+ * The fixture is the real a real finance file (vendor number replaced) (Rise Daisy's three
  * subscription payments). No live Apple call has been made from here: the fetch
  * tests stub `fetch`.
  */
@@ -166,7 +166,7 @@ describe('recentFiscalPeriods', () => {
   });
 });
 
-const config = { keyId: 'K', issuerId: 'I', privateKey: 'unused', vendorNumber: '85087731', appId: '1' };
+const config = { keyId: 'K', issuerId: 'I', privateKey: 'unused', vendorNumber: '12345678', appId: '1' };
 
 function stubFetch(status: number, body: string | Buffer = '') {
   const fn = jest.fn(async () => new Response(body as BodyInit, { status }));
@@ -186,7 +186,7 @@ describe('fetchFinanceReport', () => {
     expect(Object.fromEntries(url.searchParams)).toEqual({
       'filter[regionCode]': 'ZZ',
       'filter[reportType]': 'FINANCE_DETAIL',
-      'filter[vendorNumber]': '85087731',
+      'filter[vendorNumber]': '12345678',
       'filter[fiscalYear]': '2026',
       'filter[fiscalPeriod]': '12',
     });
@@ -242,7 +242,7 @@ describe('syncFinance', () => {
       APP_STORE_CONNECT_KEY_ID: 'K',
       APP_STORE_CONNECT_ISSUER_ID: 'I',
       APP_STORE_CONNECT_PRIVATE_KEY: privateKey.export({ type: 'pkcs8', format: 'pem' }).toString(),
-      APP_STORE_VENDOR_NUMBER: '85087731',
+      APP_STORE_VENDOR_NUMBER: '12345678',
     };
   });
   afterEach(() => {
@@ -289,7 +289,7 @@ describe('syncFinance', () => {
     expect(r.stored).toEqual(['FY2027 P1']);
     const inserted = writes.find((w) => w.op === 'insert')?.payload as { vendor_number: string; row_key: string }[];
     expect(inserted).toHaveLength(3);
-    expect(inserted[0].vendor_number).toBe('85087731');
+    expect(inserted[0].vendor_number).toBe('12345678');
     const last = writes[writes.length - 1].payload as { status: string; start_date: string; row_count: number };
     expect(last).toMatchObject({ status: 'ok', start_date: '2026-08-30', row_count: 3 });
   });
