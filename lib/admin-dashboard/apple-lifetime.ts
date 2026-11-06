@@ -25,7 +25,8 @@ export const LIFETIME_FROM_YEAR = 2026;
 export const LIFETIME_TTL_S = 12 * 60 * 60;
 export const LIFETIME_FAILED_TTL_S = 5 * 60;
 const KEY = 'apple-lifetime:v1';
-const TIMEOUT_MS = 12_000;
+/** Whole-fetch budget: under the route's 60 s limit, so a slow Apple becomes an error card instead of a killed request */
+const TOTAL_BUDGET_MS = 25_000;
 const CONCURRENCY = 6;
 
 export type AppleLifetime = { state: 'ok'; byApp: Record<string, number> } | { state: 'not_configured' } | { state: 'error'; message: string };
@@ -68,7 +69,7 @@ async function pool<T, R>(items: T[], size: number, fn: (item: T) => Promise<R>)
 
 export async function fetchAppleLifetime(config: AppleConfig, now = new Date()): Promise<Record<string, number>> {
   const token = createAppleToken(config);
-  const signal = AbortSignal.timeout(TIMEOUT_MS * 3);
+  const signal = AbortSignal.timeout(TOTAL_BUDGET_MS);
   const get = (frequency: AppleFrequency, date: string) => fetchAppleReportText(config, token, frequency, date, signal);
 
   // Is the last completed month's monthly report out yet? A 404 or a 400 says not (Apple answers both)

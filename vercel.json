@@ -19,6 +19,10 @@
       "includeFiles": "public/call-photos/**",
       "excludeFiles": "{tmp/**,__tests__/**,*.test.ts,*.test.tsx,docs/**,archive/**,supabase/migrations/**,scripts/**,*.md}"
     },
+    "pages/api/admin/apps-summary.ts": {
+      "maxDuration": 60,
+      "excludeFiles": "{tmp/**,__tests__/**,*.test.ts,*.test.tsx,docs/**,archive/**,supabase/migrations/**,scripts/**,*.md}"
+    },
     "pages/api/findr/log-catch-enriched.ts": {
       "maxDuration": 60,
       "excludeFiles": "{tmp/**,__tests__/**,*.test.ts,*.test.tsx,docs/**,archive/**,supabase/migrations/**,scripts/**,*.md}"
