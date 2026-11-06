@@ -143,6 +143,25 @@ export default function App({ Component, pageProps }: AppProps<PagePropsWithThem
     }
   }, []);
 
+  // Keep the icon badge at zero: reset on launch and on every return to the foreground.
+  // Pushes arrive with badge 1 (the APNs clients default to it) and nothing else clears it
+  // in a build whose native reset is missing or not firing.
+  useEffect(() => {
+    let stop: (() => void) | undefined;
+    let cancelled = false;
+    import('../lib/notifications/clearAppBadge')
+      .then((m) => m.watchAppBadge())
+      .then((unwatch) => {
+        if (cancelled) unwatch();
+        else stop = unwatch;
+      })
+      .catch(() => { /* web, or Capacitor not available */ });
+    return () => {
+      cancelled = true;
+      stop?.();
+    };
+  }, []);
+
   // Count this launch toward asking for a rating. Native only, and Go Daisy only: Grow and Findr
   // are other apps loading the same code. See lib/review/policy.ts for when it actually asks.
   useEffect(() => {
