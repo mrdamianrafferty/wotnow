@@ -114,10 +114,18 @@ export async function getActivityScoreForLocation(
    * a single activity are unchanged.
    */
   prefetched?: LocationForecast,
+  /**
+   * `openSeason`: the venue runs this activity all year, so score its days
+   * without the model's season cap. Done by scoring a copy of the model with
+   * no `seasonalMonths`, which is the one thing the cap and the "Out of
+   * season" reason read. See activity-conditions' `openSeason`.
+   */
+  opts?: { openSeason?: boolean },
 ): Promise<ActivityScorePayload | null> {
   // 1. Find the activity definition
-  const activity = activityTypes.find((a) => a.id === activityId);
-  if (!activity) return null;
+  const model = activityTypes.find((a) => a.id === activityId);
+  if (!model) return null;
+  const activity = opts?.openSeason ? { ...model, seasonalMonths: undefined } : model;
 
   // 2. Weather for the next 7 days — the caller's, or our own
   const raw = prefetched ?? await fetchForecastForLocation(location);
