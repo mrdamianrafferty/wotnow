@@ -118,6 +118,10 @@ export interface ActivityConditions {
   coastalModel: boolean;
   /** Months the activity is in season, from the model. */
   seasonalMonths?: number[];
+  /** True when the caller said this venue runs the activity all year
+   *  (`openSeason`), so its days were scored without the season cap. The
+   *  model's own months are still reported above. */
+  seasonOpen?: boolean;
 }
 
 export interface ActivityConditionsResponse {
@@ -214,6 +218,30 @@ export default async function handler(
     : 'This location';
 
   /**
+   * Activities this VENUE runs outside the model's season.
+   *
+   * A model's `seasonalMonths` describe the activity in general: sailing,
+   * kayaking and paddleboarding at a typical UK lake stop in October. Since
+   * September every day outside them is capped at 35 and told "Out of season
+   * for it, whatever the weather does". That is right for a generic lake and
+   * wrong for one that hires all winter: Rutland and Alton rent boats and
+   * boards Thursday to Monday through November, and those are real, bookable
+   * days that deserve a real reading.
+   *
+   * So the caller, which knows its venue's opening, can name the activities
+   * to score without the season cap. Only for this request, and only for the
+   * activities named; the app's own seasons are untouched. Unknown ids are
+   * refused, as for `activities`.
+   */
+  const openSeason = new Set(String(req.query.openSeason ?? '')
+    .split(',').map((s) => s.trim()).filter(Boolean));
+  const unknownOpen = [...openSeason].filter((id) => !requested.includes(id));
+  if (unknownOpen.length) {
+    res.status(400).json({ error: `openSeason names activities not requested: ${unknownOpen.join(', ')}` });
+    return;
+  }
+
+  /**
    * A water temperature the CALLER has measured or modelled, which no inland
    * forecast carries.
    *
@@ -271,6 +299,7 @@ export default async function handler(
         location,
         waterTempC !== null ? { waterTemperature: waterTempC } : undefined,
         forecast,
+        { openSeason: openSeason.has(activityId) },
       );
       if (!payload) return null;
       const model = activityTypes.find((a) => a.id === activityId);
@@ -289,6 +318,7 @@ export default async function handler(
         neutralCriteria: stillNeutral,
         coastalModel: coastal,
         seasonalMonths: model?.seasonalMonths,
+        ...(openSeason.has(activityId) ? { seasonOpen: true } : {}),
       };
     }));
 
