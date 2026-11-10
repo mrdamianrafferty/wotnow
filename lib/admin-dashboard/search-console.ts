@@ -33,7 +33,21 @@ import { errorMessage, type Section } from './types';
 export const SEARCH_CONSOLE_SCOPE = 'https://www.googleapis.com/auth/webmasters.readonly';
 export const CREDENTIALS_VAR = 'GOOGLE_ANALYTICS_CREDENTIALS';
 const API = 'https://www.googleapis.com/webmasters/v3';
+/** One request's limit when the caller sets no time budget (the search explorer). */
 const TIMEOUT_MS = 10_000;
+/**
+ * The summary's whole Google time. Six sites ask four questions each, and a
+ * busy property's 250-row query can run past 10 s, which used to fail its
+ * whole row ("The operation was aborted due to timeout", Rise Daisy, Nov 2026).
+ * So each request may take up to ATTEMPT_MAX_MS, one that times out is asked
+ * again while at least RETRY_MIN_MS of the budget is left, and no more than
+ * MAX_IN_FLIGHT run at once. The budget sits inside apps-summary's 60 s
+ * maxDuration (vercel.json) with room for the token and the family fetch.
+ */
+export const BUDGET_MS = 45_000;
+const ATTEMPT_MAX_MS = 20_000;
+const RETRY_MIN_MS = 5_000;
+export const MAX_IN_FLIGHT = 6;
 export const GOOD_TTL_S = 6 * 60 * 60;
 export const PARTIAL_TTL_S = 15 * 60;
 const CACHE_KEY = 'search-console:v1';
@@ -222,19 +236,60 @@ export interface SearchConsoleDeps {
   fetchImpl?: typeof fetch;
   getToken?: (key: ServiceAccountKey, scope: string) => Promise<string>;
   now?: () => Date;
+  /** Total time for Google's answers; see BUDGET_MS. */
+  budgetMs?: number;
 }
 
-export async function google(path: string, token: string, fetchImpl: typeof fetch, body?: object): Promise<unknown> {
-  const res = await fetchImpl(`${API}${path}`, {
-    method: body ? 'POST' : 'GET',
-    headers: { Authorization: `Bearer ${token}`, Accept: 'application/json', ...(body ? { 'Content-Type': 'application/json' } : {}) },
-    body: body ? JSON.stringify(body) : undefined,
-    signal: AbortSignal.timeout(TIMEOUT_MS),
-    cache: 'no-store',
-  });
+const isTimeout = (err: unknown) => err instanceof Error && (err.name === 'TimeoutError' || err.name === 'AbortError');
+
+/**
+ * One Search Console call. With a `deadline` (epoch ms) each attempt is capped
+ * by what is left of it, and a timed-out attempt is retried once if enough is
+ * left. Without one it is a single 10 s attempt, as before.
+ */
+export async function google(
+  path: string,
+  token: string,
+  fetchImpl: typeof fetch,
+  body?: object,
+  { deadline }: { deadline?: number } = {},
+): Promise<unknown> {
+  const attempt = (timeoutMs: number) =>
+    fetchImpl(`${API}${path}`, {
+      method: body ? 'POST' : 'GET',
+      headers: { Authorization: `Bearer ${token}`, Accept: 'application/json', ...(body ? { 'Content-Type': 'application/json' } : {}) },
+      body: body ? JSON.stringify(body) : undefined,
+      signal: AbortSignal.timeout(timeoutMs),
+      cache: 'no-store',
+    });
+  const left = () => (deadline === undefined ? TIMEOUT_MS : Math.min(ATTEMPT_MAX_MS, deadline - Date.now()));
+
+  let res: Response;
+  try {
+    res = await attempt(Math.max(left(), RETRY_MIN_MS));
+  } catch (err) {
+    if (deadline === undefined || !isTimeout(err) || left() < RETRY_MIN_MS) throw err;
+    res = await attempt(left());
+  }
   if (!res.ok)
     throw new GoogleError(res.status, `Search Console ${res.status}: ${cleanMessage((await res.text().catch(() => '')).replace(/\s+/g, ' ').slice(0, 300))}`);
   return res.json();
+}
+
+/** `fetchImpl` with at most `limit` requests in flight; the rest wait their turn. */
+export function limitConcurrency(fetchImpl: typeof fetch, limit: number): typeof fetch {
+  let active = 0;
+  const queue: (() => void)[] = [];
+  return (async (...args: Parameters<typeof fetch>) => {
+    if (active >= limit) await new Promise<void>((resolve) => queue.push(resolve));
+    active++;
+    try {
+      return await fetchImpl(...args);
+    } finally {
+      active--;
+      queue.shift()?.();
+    }
+  }) as typeof fetch;
 }
 
 export const grantHint = (account: string, property: string) =>
@@ -247,6 +302,7 @@ async function readSite(
   token: string,
   windows: ReturnType<typeof searchWindows>,
   fetchImpl: typeof fetch,
+  deadline: number,
 ): Promise<SearchSite> {
   const property = site.properties.find((p) => visible.has(p));
   if (!property) {
@@ -259,12 +315,18 @@ async function readSite(
   }
   const filters = site.page && property.startsWith('sc-domain:') ? [{ filters: [{ dimension: 'page', ...site.page }] }] : undefined;
   const query = (range: { from: string; to: string }, dimension?: 'query' | 'page') =>
-    google(`/sites/${encodeURIComponent(property)}/searchAnalytics/query`, token, fetchImpl, {
-      startDate: range.from,
-      endDate: range.to,
-      ...(dimension ? { dimensions: [dimension], rowLimit: RANK_ROWS } : {}),
-      ...(filters ? { dimensionFilterGroups: filters } : {}),
-    });
+    google(
+      `/sites/${encodeURIComponent(property)}/searchAnalytics/query`,
+      token,
+      fetchImpl,
+      {
+        startDate: range.from,
+        endDate: range.to,
+        ...(dimension ? { dimensions: [dimension], rowLimit: RANK_ROWS } : {}),
+        ...(filters ? { dimensionFilterGroups: filters } : {}),
+      },
+      { deadline },
+    );
   try {
     const [current, previous, queries, pages] = await Promise.all([
       query(windows.current),
@@ -284,8 +346,10 @@ async function readSite(
 /** Every site's figures, uncached. */
 export async function fetchSearchConsole(
   env: Record<string, string | undefined> = process.env,
-  { fetchImpl = fetch, getToken = getServiceAccountToken, now = () => new Date() }: SearchConsoleDeps = {},
+  { fetchImpl = fetch, getToken = getServiceAccountToken, now = () => new Date(), budgetMs = BUDGET_MS }: SearchConsoleDeps = {},
 ): Promise<Section<SearchConsoleSummary>> {
+  const deadline = Date.now() + budgetMs;
+  const limited = limitConcurrency(fetchImpl, MAX_IN_FLIGHT);
   const credentials = env[CREDENTIALS_VAR]?.trim();
   if (!credentials) return { state: 'not_configured', missing: [CREDENTIALS_VAR] };
 
@@ -295,7 +359,7 @@ export async function fetchSearchConsole(
 
     let visible: Set<string>;
     try {
-      visible = readSiteList(await google('/sites', token, fetchImpl));
+      visible = readSiteList(await google('/sites', token, limited, undefined, { deadline }));
     } catch (err) {
       const hint = err instanceof GoogleError && err.status === 403 ? disabledApiHint(err.message) : null;
       if (hint) return { state: 'not_configured', missing: [], hint };
@@ -304,7 +368,7 @@ export async function fetchSearchConsole(
 
     const at = now();
     const windows = searchWindows(at);
-    const sites = await Promise.all(SEARCH_SITES.map((site) => readSite(site, visible, key.clientEmail, token, windows, fetchImpl)));
+    const sites = await Promise.all(SEARCH_SITES.map((site) => readSite(site, visible, key.clientEmail, token, windows, limited, deadline)));
     return { state: 'ok', data: { window: windows.current, previous: windows.previous, account: key.clientEmail, sites, fetchedAt: at.toISOString() } };
   } catch (err) {
     return { state: 'error', message: errorMessage(err) };

@@ -12,11 +12,13 @@ import type { RuntimeCache } from '@vercel/functions';
 import {
   CREDENTIALS_VAR,
   GOOD_TTL_S,
+  MAX_IN_FLIGHT,
   PARTIAL_TTL_S,
   SEARCH_SITES,
   disabledApiHint,
   fetchSearchConsole,
   getSearchConsole,
+  limitConcurrency,
   readSiteList,
   searchTtl,
   searchWindows,
@@ -186,6 +188,77 @@ describe('fetch', () => {
       },
     });
     expect(r).toEqual({ state: 'error', message: 'Google token 400: invalid_grant' });
+  });
+});
+
+describe('slow answers', () => {
+  const timeout = () => Object.assign(new Error('The operation was aborted due to timeout'), { name: 'TimeoutError' });
+  const everySite = SEARCH_SITES.map((s) => ({ siteUrl: s.properties[0] }));
+  const isRise = (input: RequestInfo | URL) => String(input).includes(encodeURIComponent('sc-domain:risedaisy.com'));
+
+  it('asks again once when a query times out, so one slow answer does not fail the row', async () => {
+    const g = fakeGoogle(everySite);
+    let failed = false;
+    const impl = (async (input: RequestInfo | URL, init?: RequestInit) => {
+      if (!failed && isRise(input)) {
+        failed = true;
+        throw timeout();
+      }
+      return g.impl(input, init);
+    }) as typeof fetch;
+    const r = await fetchSearchConsole(env, { fetchImpl: impl, getToken, now: () => now });
+    expect(failed).toBe(true);
+    expect(site(r, 'risedaisy').result.state).toBe('ok');
+  });
+
+  it("a query that times out twice is that site's error, and the others still read", async () => {
+    const g = fakeGoogle(everySite);
+    const impl = (async (input: RequestInfo | URL, init?: RequestInit) => {
+      if (isRise(input)) throw timeout();
+      return g.impl(input, init);
+    }) as typeof fetch;
+    const r = await fetchSearchConsole(env, { fetchImpl: impl, getToken, now: () => now });
+    const rise = site(r, 'risedaisy').result;
+    expect(rise.state).toBe('error');
+    if (rise.state === 'error') expect(rise.message).toMatch(/timeout/);
+    expect(site(r, 'findr').result.state).toBe('ok');
+  });
+
+  it('does not retry once the time budget is spent', async () => {
+    let calls = 0;
+    const impl = (async (input: RequestInfo | URL) => {
+      if (String(input).endsWith('/webmasters/v3/sites')) return json({ siteEntry: [{ siteUrl: 'sc-domain:risedaisy.com', permissionLevel: 'siteFullUser' }] });
+      calls++;
+      throw timeout();
+    }) as typeof fetch;
+    await fetchSearchConsole(env, { fetchImpl: impl, getToken, now: () => now, budgetMs: 0 });
+    expect(calls).toBe(4);
+  });
+
+  it('keeps no more than MAX_IN_FLIGHT requests open at once', async () => {
+    let open = 0;
+    let peak = 0;
+    const g = fakeGoogle(everySite);
+    const impl = (async (input: RequestInfo | URL, init?: RequestInit) => {
+      open++;
+      peak = Math.max(peak, open);
+      await new Promise((r) => setTimeout(r, 5));
+      open--;
+      return g.impl(input, init);
+    }) as typeof fetch;
+    const r = await fetchSearchConsole(env, { fetchImpl: impl, getToken, now: () => now });
+    expect(r.state).toBe('ok');
+    expect(peak).toBe(MAX_IN_FLIGHT);
+    expect(g.calls.length).toBe(1 + SEARCH_SITES.length * 4);
+  });
+
+  it('limitConcurrency passes a rejection through and frees the slot', async () => {
+    const boom = (async () => {
+      throw new Error('boom');
+    }) as typeof fetch;
+    const fail = limitConcurrency(boom, 1);
+    await expect(fail('a')).rejects.toThrow('boom');
+    await expect(fail('b')).rejects.toThrow('boom');
   });
 });
 
