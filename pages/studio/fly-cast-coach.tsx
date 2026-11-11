@@ -8,6 +8,7 @@ export default function StudioFlyCastCoachPage() {
       title="Fly Cast Coach: fly casting practice app"
       description="How Fly Cast Coach turns a phone, and an Apple Watch, into a practice fly rod that coaches by sound and touch."
       path="/studio/fly-cast-coach"
+      image="/studio/og/fly-cast-coach.png"
       jsonLd={caseStudyJsonLd('fly-cast-coach')}
     >
       <Body />

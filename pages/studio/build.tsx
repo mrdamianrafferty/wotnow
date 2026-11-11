@@ -8,6 +8,7 @@ export default function StudioBuildPage() {
       title="Fishing club and fishery app development"
       description="Your own app for a fishing club, fishery or angling association, built by people who ship them: web, iPhone and Android from one codebase. Send your brief."
       path="/studio/build"
+      image="/studio/og/build.png"
       jsonLd={buildJsonLd()}
     >
       <Body />

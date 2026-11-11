@@ -59,17 +59,18 @@ describe('the Go Daisy sitemap carries the estate', () => {
 
     expect(state.status).toBe(200);
     const count = (state.body.match(/<loc>/g) ?? []).length;
+    const STATIC_PAGES = 8 + 11;
 
     /*
-     * Eight static pages, plus a hub per qualifying activity, plus a leaf per
+     * Eight static pages and the eleven Daisy Studio pages, plus a hub per qualifying activity, plus a leaf per
      * CORE (activity, location) (lib/seo/tiers.ts). Computed from the same data
      * the handler reads, so this stays true as the dataset changes and false the
      * moment a whole half of it goes missing.
      */
-    const expected = 8 + activitiesWithHubs().length + corePagePaths().length;
+    const expected = STATIC_PAGES + activitiesWithHubs().length + corePagePaths().length;
     expect(count).toBe(expected);
     // The long tail is deliberately left out: fewer URLs than the full estate
-    expect(count).toBeLessThan(8 + activitiesWithHubs().length + getAllSeoPagePaths().length);
+    expect(count).toBeLessThan(STATIC_PAGES + activitiesWithHubs().length + getAllSeoPagePaths().length);
 
     // And the shape, not just the arithmetic: a document of the right size made
     // of the wrong URLs would pass a count alone.
