@@ -89,6 +89,19 @@ function getGoDaisyUrls(baseUrl: string): SitemapUrl[] {
     { loc: `${baseUrl}/AboutUs`, lastmod: today, changefreq: 'monthly', priority: 0.5 },
     { loc: `${baseUrl}/support`, lastmod: today, changefreq: 'monthly', priority: 0.4 },
 
+    // Daisy Studio: the showcase for commissioners and sponsors.
+    { loc: `${baseUrl}/studio`, lastmod: today, changefreq: 'monthly', priority: 0.8 },
+    { loc: `${baseUrl}/studio/build`, lastmod: today, changefreq: 'monthly', priority: 0.7 },
+    { loc: `${baseUrl}/studio/hungerford-fishery`, lastmod: today, changefreq: 'monthly', priority: 0.7 },
+    { loc: `${baseUrl}/studio/rise-daisy`, lastmod: today, changefreq: 'monthly', priority: 0.6 },
+    { loc: `${baseUrl}/studio/findr`, lastmod: today, changefreq: 'monthly', priority: 0.6 },
+    { loc: `${baseUrl}/studio/fly-cast-coach`, lastmod: today, changefreq: 'monthly', priority: 0.6 },
+    { loc: `${baseUrl}/studio/grewp`, lastmod: today, changefreq: 'monthly', priority: 0.6 },
+    { loc: `${baseUrl}/studio/go-daisy`, lastmod: today, changefreq: 'monthly', priority: 0.6 },
+    { loc: `${baseUrl}/studio/grow-daisy`, lastmod: today, changefreq: 'monthly', priority: 0.6 },
+    { loc: `${baseUrl}/studio/kitten-bingo`, lastmod: today, changefreq: 'monthly', priority: 0.6 },
+    { loc: `${baseUrl}/studio/partner`, lastmod: today, changefreq: 'monthly', priority: 0.6 },
+
     // NOTE: /settings and /login deliberately omitted (have noindex meta)
   ];
 

@@ -30,13 +30,15 @@ interface Props {
   description: string;
   path: string;
   image?: string;
+  /** Structured data for the page, from components/studio/studioJsonLd. */
+  jsonLd?: Record<string, unknown>;
   children: ReactNode;
 }
 
-export default function StudioLayout({ title, description, path, image = '/studio/og/studio.png', children }: Props) {
+export default function StudioLayout({ title, description, path, image = '/studio/og/studio.png', jsonLd, children }: Props) {
   const url = `${SITE}${path}`;
   const og = image.startsWith('http') ? image : `${SITE}${image}`;
-  const fullTitle = path === '/studio' ? 'Daisy Studio · apps that read rivers, seas, skies, gardens and kittens' : `${title} · Daisy Studio`;
+  const fullTitle = path === '/studio' ? 'Daisy Studio · Fishing, outdoor and data-driven app developers' : `${title} · Daisy Studio`;
   return (
     <>
       <Head>
@@ -58,6 +60,13 @@ export default function StudioLayout({ title, description, path, image = '/studi
         {/* The studio styles load here, not in _app, so nothing leaks into the rest of godaisy.io. */}
         {/* eslint-disable-next-line @next/next/no-css-tags */}
         <link rel="stylesheet" href="/studio/studio.css" />
+        {jsonLd && (
+          <script
+            type="application/ld+json"
+            // JSON.stringify output is safe here: the data is our own constants, with "<" escaped.
+            dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, '\\u003c') }}
+          />
+        )}
       </Head>
       <div className={`${studioSans.variable} ${studioSerif.variable}`}>{children}</div>
     </>
