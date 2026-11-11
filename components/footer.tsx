@@ -36,6 +36,7 @@ const ABOUT_LINKS = [
   { href: '/whether-weather', label: 'Sorry about the weather' },
   { href: '/AboutUs', label: 'About us' },
   { href: '/support', label: 'Support Go Daisy' },
+  { href: '/studio', label: 'Daisy Studio: apps we build' },
 ];
 
 const LEGAL_LINKS = [

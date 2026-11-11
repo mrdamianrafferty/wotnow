@@ -1,0 +1,132 @@
+/* Daisy Studio: design-system tokens and components, copied from the Daisy Studio
+   design system (claude.ai artifact 7Cp158fmw2pNhQjYC7xVBk). Loaded only on /studio pages. */
+/* Daisy Studio — compiled from tokens.json for this canvas */
+@font-face { font-family: "Daisy Serif"; src: url("/fonts/daisy-serif/DaisySerif-Regular.woff2") format("woff2"); font-weight: 400; font-style: normal; font-display: swap; }
+@font-face { font-family: "Daisy Serif"; src: url("/fonts/daisy-serif/DaisySerif-Bold.woff2") format("woff2"); font-weight: 700; font-style: normal; font-display: swap; }
+@font-face { font-family: "Daisy Serif"; src: url("/fonts/daisy-serif/DaisySerif-Italic.woff2") format("woff2"); font-weight: 400; font-style: italic; font-display: swap; }
+
+:root, [data-theme="light"] {
+  --page: #faf8f5; --card: #ffffff; --panel: #f5f0e8; --border: #e8dfd3; --border-strong: #d6d3d1;
+  --ink-1: #1c1917; --ink-2: #44403c; --ink-3: #57534e; --ink-4: #736c67;
+  --moss: #3d6b4f; --moss-ink: #3d6b4f; --on-moss: #faf8f5;
+  --amber: #b8860b; --amber-ink: #6f5207; --river-blue: #1e3a5f; --river-blue-ink: #1e3a5f;
+  --peat: #1c1917; --on-dark: #faf8f5; --poor: #dc2626; --poor-ink: #dc2626;
+  --app-rise: #0c6231; --on-app-rise: #faf8f5;
+  --app-findr: #0e7490; --on-app-findr: #faf8f5;
+  --app-flycast: #22d3ee; --on-app-flycast: #1c1917;
+  --app-grewp: #18b254; --on-app-grewp: #1c1917;
+  --app-godaisy: #475569; --on-app-godaisy: #faf8f5;
+  --app-grow: #73e2a0; --on-app-grow: #1c1917;
+  --app-hungerford: #164e63; --on-app-hungerford: #faf8f5;
+  --app-kitten: #f7a8c4; --on-app-kitten: #1c1917;
+  --shadow-card: 0 1px 3px rgba(28, 25, 23, 0.05);
+  --shadow-lift: 0 18px 40px rgba(28, 25, 23, 0.24);
+}
+[data-theme="dark"] {
+  --page: #1c1917; --card: #292524; --panel: #292524; --border: #44403c;
+  --ink-1: #faf8f5; --ink-2: #e7e5e4; --ink-3: #a8a29e; --ink-4: #a8a29e;
+  --moss-ink: #589a72; --amber-ink: #b8860b; --river-blue-ink: #608fcd; --poor-ink: #e66262;
+  --app-rise: #4caf74; --on-app-rise: #1c1917; --app-findr: #22a3c4; --on-app-findr: #1c1917;
+  --app-godaisy: #94a3b8; --on-app-godaisy: #1c1917; --app-hungerford: #3b97b0; --on-app-hungerford: #1c1917;
+}
+:root {
+  --chip-gap: 7px; --grid-gap: 12px; --card-pad: 16px; --block: 24px; --gutter-app: 24px; --gutter-web: 32px;
+  --tap-min: 44px; --measure: 640px; --section-sm: 64px; --section: 96px; --page-max: 1200px;
+  --r-chip: 6px; --r-input: 8px; --r-button: 10px; --r-card: 12px; --r-share: 14px; --r-panel: 16px; --r-pill: 9999px;
+  --font-serif: "Daisy Serif", Georgia, "Times New Roman", serif;
+  --font-sans: "DM Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+
+/* Daisy Studio components: static CSS, values only from tokens.css */
+.ds { font-family: var(--font-sans); color: var(--ink-1); background: var(--page); }
+.ds *, .ds *::before, .ds *::after { box-sizing: border-box; }
+.ds-eyebrow { font-family: var(--font-serif); font-style: italic; font-variant-caps: small-caps; font-size: 11px; line-height: 14px; letter-spacing: 0.04em; color: var(--ink-3); margin: 0; }
+
+/* Button */
+.ds-btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: var(--tap-min); padding: 0 20px; border-radius: var(--r-button); font: 600 15px/20px var(--font-sans); text-decoration: none; cursor: pointer; border: 1px solid transparent; }
+.ds-btn--primary { background: var(--moss); color: var(--on-moss); }
+.ds-btn--secondary { background: transparent; color: var(--moss-ink); border-color: var(--moss-ink); }
+.ds-btn--text { padding: 0; min-height: auto; color: var(--moss-ink); text-decoration: underline; text-underline-offset: 3px; }
+.ds-btn:focus-visible, .ds-field input:focus-visible, .ds-field textarea:focus-visible, .ds-field select:focus-visible { outline: 2px solid var(--moss-ink); outline-offset: 2px; }
+
+/* Chips */
+.ds-chips { display: flex; flex-wrap: wrap; gap: var(--chip-gap); }
+.ds-chip { font: 400 13px/18px var(--font-sans); color: var(--ink-3); border: 1px solid var(--border); border-radius: var(--r-chip); padding: 2px 8px; }
+.ds-pill { display: inline-block; font: 600 13px/18px var(--font-sans); border-radius: var(--r-pill); padding: 3px 10px; background: var(--accent, var(--panel)); color: var(--on-accent, var(--ink-1)); }
+
+/* AppCard: set --accent and --on-accent inline to one app's pair */
+.ds-app-card { display: flex; flex-direction: column; gap: 12px; background: var(--card); border: 1px solid var(--border); border-radius: var(--r-card); box-shadow: var(--shadow-card); padding: var(--block); border-top: 6px solid var(--accent, var(--border)); color: var(--ink-1); text-decoration: none; }
+.ds-app-card__head { display: flex; align-items: center; gap: 14px; }
+.ds-app-card__icon { width: 56px; height: 56px; border-radius: var(--r-share); flex: none; }
+.ds-app-card__name { font: 700 23px/30px var(--font-serif); margin: 0; }
+.ds-app-card__pitch { font: 400 15px/22px var(--font-sans); color: var(--ink-2); margin: 0; }
+.ds-app-card__fact { font: 700 22px/28px var(--font-serif); margin: 0; }
+.ds-app-card__fact small { display: block; font: 400 13px/18px var(--font-sans); color: var(--ink-3); }
+.ds-app-card--large { padding: 32px; }
+.ds-app-card--large .ds-app-card__name { font-size: 38px; line-height: 44px; font-weight: 400; }
+.ds-app-card--soon { border-style: dashed; border-top-style: solid; box-shadow: none; }
+
+/* StatTile */
+.ds-stat { background: var(--card); border: 1px solid var(--border); border-radius: var(--r-card); padding: 20px; display: flex; flex-direction: column; gap: 4px; }
+.ds-stat__value { font: 700 40px/44px var(--font-serif); color: var(--ink-1); margin: 0; font-variant-numeric: lining-nums; }
+.ds-stat__label { font: 400 15px/22px var(--font-sans); color: var(--ink-2); margin: 0; }
+.ds-stat__asof { font-family: var(--font-serif); font-style: italic; font-variant-caps: small-caps; font-size: 11px; line-height: 14px; letter-spacing: 0.04em; color: var(--ink-4); margin: 6px 0 0; }
+
+/* StoryBlock */
+.ds-story { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; align-items: center; }
+.ds-story--flip .ds-story__media { order: -1; }
+.ds-story__title { font: 700 23px/30px var(--font-serif); margin: 0 0 10px; }
+.ds-story__body { font: 400 16px/24px var(--font-sans); color: var(--ink-2); margin: 0; max-width: var(--measure); }
+.ds-story__media img { width: 100%; height: auto; border-radius: var(--r-card); border: 1px solid var(--border); display: block; }
+@media (max-width: 640px) { .ds-story { grid-template-columns: 1fr; gap: 16px; } .ds-story--flip .ds-story__media { order: 0; } }
+
+/* LimitsNote: what we chose not to do */
+.ds-limits { background: var(--panel); border-radius: var(--r-panel); padding: 24px; max-width: var(--measure); }
+.ds-limits__title { font: 400 22px/28px var(--font-serif); font-style: italic; margin: 6px 0 8px; }
+.ds-limits ul { margin: 0; padding-left: 20px; font: 400 15px/22px var(--font-sans); color: var(--ink-2); }
+
+/* QuoteCard */
+.ds-quote { margin: 0; padding: 28px; background: var(--card); border: 1px solid var(--border); border-radius: var(--r-panel); max-width: var(--measure); }
+.ds-quote__text { font: italic 400 22px/32px var(--font-serif); margin: 0 0 16px; }
+.ds-quote__who { font: 600 15px/20px var(--font-sans); margin: 0; }
+.ds-quote__role { font: 400 13px/18px var(--font-sans); color: var(--ink-3); margin: 0; }
+
+/* PlacementCard */
+.ds-placement { background: var(--card); border: 1px solid var(--border); border-radius: var(--r-card); padding: 20px; display: flex; flex-direction: column; gap: 10px; }
+.ds-placement__name { font: 700 19px/26px var(--font-serif); margin: 0; }
+.ds-placement dl { margin: 0; display: grid; grid-template-columns: auto 1fr; gap: 4px 12px; font: 400 15px/22px var(--font-sans); }
+.ds-placement dt { color: var(--ink-3); }
+.ds-placement dd { margin: 0; color: var(--ink-1); }
+
+/* ContactForm */
+.ds-form { display: grid; gap: 16px; max-width: 520px; }
+.ds-field { display: grid; gap: 6px; }
+.ds-field label { font: 600 15px/20px var(--font-sans); }
+.ds-field .ds-help { font: 400 13px/18px var(--font-sans); color: var(--ink-3); }
+.ds-field input, .ds-field textarea, .ds-field select { font: 400 16px/24px var(--font-sans); color: var(--ink-1); background: var(--card); border: 1px solid var(--ink-4); border-radius: var(--r-input); padding: 10px 12px; min-height: var(--tap-min); width: 100%; }
+.ds-field textarea { min-height: 120px; resize: vertical; }
+.ds-field--error input { border-color: var(--poor); border-width: 2px; }
+.ds-field .ds-error { font: 400 13px/18px var(--font-sans); color: var(--poor-ink); }
+.ds-form__promise { font: 400 13px/18px var(--font-sans); color: var(--ink-3); margin: 0; }
+.ds-hp { position: absolute; left: -9999px; width: 1px; height: 1px; overflow: hidden; }
+
+/* DeviceFrame */
+.ds-device { display: inline-block; background: var(--peat); padding: 10px; border-radius: 44px; box-shadow: var(--shadow-lift); }
+.ds-device img { display: block; width: 100%; height: auto; border-radius: 34px; }
+.ds-device--phone { width: 240px; }
+.ds-device--wide { padding: 8px; border-radius: 22px; width: 100%; max-width: 560px; }
+.ds-device--wide img { border-radius: 14px; }
+
+/* Page-level rules from the studio designs */
+.ds{min-height:100vh;-webkit-font-smoothing:antialiased}
+:where(.ds) a{color:#3d6b4f}:where(.ds) a:not([class]):hover{color:#2f5540}
+@media (max-width: 640px){.ds [style*="max-width: 1200px"]{padding-left:20px!important;padding-right:20px!important}.ds [style*="padding: 96px 32px;"]{padding-top:48px!important;padding-bottom:48px!important}.ds [style*="padding: 96px 32px 64px"]{padding-top:48px!important;padding-bottom:32px!important}.ds [style*="padding: 64px 32px 80px"]{padding-top:32px!important;padding-bottom:40px!important}.ds [style*="padding: 0 32px 96px"]{padding-bottom:48px!important}.ds [style*="gap: 80px"]{gap:44px!important}.ds [style*="gap: 56px"],.ds [style*="gap: 48px"]{gap:28px!important}.ds [style*="padding: 40px"],.ds [style*="padding: 48px 40px"]{padding:24px!important}.ds [style*="minmax(min(240px, 100%), 1fr)"]{grid-template-columns:repeat(2,minmax(0,1fr))!important}.ds .ds-stat{min-width:0;overflow-wrap:anywhere}.ds .ds-device--phone{width:220px!important}}
+@media (max-width: 640px){.ds .findr-map{aspect-ratio:1600/830}.ds .findr-map img{height:100%!important;object-fit:cover;object-position:top}}
+@media (max-width: 640px){.ds [style*="max-width: 1200px"]{padding-left:20px!important;padding-right:20px!important}.ds [style*="padding: 96px 32px;"]{padding-top:48px!important;padding-bottom:48px!important}.ds [style*="padding: 96px 32px 64px"]{padding-top:48px!important;padding-bottom:32px!important}.ds [style*="padding: 64px 32px 80px"]{padding-top:32px!important;padding-bottom:40px!important}.ds [style*="padding: 0 32px 96px"]{padding-bottom:48px!important}.ds [style*="gap: 80px"]{gap:44px!important}.ds [style*="gap: 56px"],.ds [style*="gap: 48px"]{gap:28px!important}.ds [style*="padding: 40px"],.ds [style*="padding: 48px 40px"]{padding:24px!important}.ds [style*="minmax(min(240px, 100%), 1fr)"]{grid-template-columns:repeat(2,minmax(0,1fr))!important}.ds .ds-stat{min-width:0;overflow-wrap:anywhere}.ds .ds-device--phone{width:220px!important}.ds [aria-labelledby="tickets-h"] [style*="minmax(min(300px"]{grid-template-columns:1fr 1fr!important;gap:16px!important}.ds [aria-labelledby="tickets-h"] h3{font-size:17px!important;line-height:24px!important}.ds [aria-labelledby="tickets-h"] p{font-size:14px!important;line-height:20px!important}.ds details{display:none}.ds [aria-labelledby="agenda-h"] [style*="padding-top: 8px"]{display:none!important}.ds [aria-labelledby="grewp-sponsor-h"] .ds-placement{display:none}}
+@media (max-width: 640px){.ds .skills-grid{grid-template-columns:1fr 1fr!important;gap:12px!important}.ds .skills-grid > a{padding:16px!important}.ds .skills-grid p{display:none}.ds .skills-grid h3{font-size:18px!important;line-height:24px!important}.ds .skills-grid span{display:none}.ds [aria-hidden="true"][style*="grid-template-columns: repeat(4"]{display:none!important}.ds .founder-photo{flex-basis:120px!important;width:120px!important;height:144px!important}.ds h2{font-size:30px!important;line-height:36px!important}.ds ol[style*="gap: 32px"]{gap:20px!important}}
+:where(.ds) ol:not([style*="list-style: none"]){list-style:decimal}
+:where(.ds) ul{list-style:disc}
+
+.ds{--font-sans:var(--font-studio-sans),system-ui,-apple-system,"Segoe UI",sans-serif;--font-serif:var(--font-studio-serif),Georgia,"Times New Roman",serif}
+.ds a:not([class]){color:#3d6b4f}.ds a:not([class]):hover{color:#2f5540}
+.ds p a:not([class]),.ds li a:not([class]){text-decoration:underline}
