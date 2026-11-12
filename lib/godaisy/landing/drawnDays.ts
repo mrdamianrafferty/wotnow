@@ -188,8 +188,16 @@ function surf(): Mark[] {
   p.path([[326, who.sh], [338, who.sh]], { amp: 0.4, width: 1.6, at: 2.6, dur: 0.1, len: 20 });
   p.path([[326, 320], [338, 320]], { amp: 0.4, width: 1.6, at: 2.6, dur: 0.1, len: 20 });
   p.text(340, 262, '1.4 m', { size: 26, at: 2.7 });
-  p.dashed(232, 470, who.sh, C.warm, 2.8);
-  p.text(476, who.sh + 6, 'shoulders', { fill: C.warm, at: 2.9 });
+  p.dashed(232, 446, who.sh, C.warm, 2.8);
+  p.text(338, who.sh - 9, 'shoulders', { size: 18, fill: C.warm, at: 2.9 });
+  // a 6'2" shortboard (1.88 m) stood up beside them, a little taller than they are
+  const bx = 492, bTop = 320 - 188, bw = 17;
+  const right = curve([[bx, bTop], [bx + bw * 0.55, bTop + 12], [bx + bw * 0.95, bTop + 50], [bx + bw, bTop + 110], [bx + bw * 0.8, 306], [bx, 320]], 5);
+  const board: Pt[] = [...right, ...right.slice(1, -1).reverse().map(([x, y]) => [2 * bx - x, y] as const)];
+  p.path(board, { closed: true, amp: 0.6, fill: C.wash, at: 2.4 });
+  p.path(board, { closed: true, amp: 0.6, width: 2, at: 2.0, dur: 0.6, len: 460 });
+  p.path([[bx, bTop + 8], [bx, 312]], { amp: 0.4, stroke: C.pencil, width: 1.2, at: 2.4, dur: 0.3, len: 200 });
+  p.text(bx + bw + 6, bTop + 12, '6\'2" board', { size: 18, fill: C.pencil, weight: 500, at: 2.6 });
   p.text(60, 304, `water ${SURF_WATER_C}°`, { size: 24, fill: C.waterInk, at: 1.6 });
   p.text(430, 347, SURF_SUIT, { size: 22, anchor: 'middle', at: 2.6 });
   p.text(430, 369, '1.75 m person', { size: 17, fill: C.pencil, anchor: 'middle', weight: 500, at: 2.2 });
@@ -310,7 +318,7 @@ function cafe(): Mark[] {
 
 export const DRAWN_DAYS: readonly DrawnDay[] = [
   { id: 'surf', name: 'Surf', kicker: 'Croyde Bay · Saturday, 7:00 am', lead: 'Today is', verdict: 'a surf day.', hand: 'Waves about shoulder high. Best before six.', handAt: 3.8,
-    label: `A 1.4 metre wave beside a 1.75 metre person in a ${SURF_SUIT}, the wave reaching their shoulders, with notes on the swell, the tide, an offshore wind and sunrise.`, marks: surf },
+    label: `A 1.4 metre wave beside a 1.75 metre person in a ${SURF_SUIT}, with a surfboard stood up beside them, the wave reaching their shoulders, with notes on the swell, the tide, an offshore wind and sunrise.`, marks: surf },
   { id: 'bike', name: 'Cycling', kicker: 'Edale · Sunday, 8:00 am', lead: 'Today is', verdict: 'a bike day.', hand: 'Dry, 14°, and the wind brings you home.', handAt: 3.7,
     label: 'A cyclist on the road below Mam Tor, with flags showing a tailwind, a thermometer at 14 degrees and a furled umbrella for a dry day.', marks: bike },
   { id: 'football', name: 'Football', kicker: 'Hackney Marshes · Tuesday, 6:30 pm', lead: 'Tonight is', verdict: 'a five-a-side night.', hand: 'Dry till ten. Firm underfoot.', handAt: 3.5,
