@@ -117,7 +117,7 @@ export function IndoorPrompt({ options }: IndoorPromptProps) {
   if (!ready || options.length === 0) return null;
   const CATEGORIES: Record<string, TKey> = {
     'Creative & Arts': 'cat_creative', 'Fitness & Wellness': 'cat_fitness',
-    'Indoor Recreation': 'cat_indoor_rec', 'Indoor Sports': 'cat_indoor_sports', Other: 'cat_other',
+    'Indoor Recreation': 'cat_indoor_rec', 'Indoor Sports': 'cat_indoor_sports', Other: 'cat_misc',
   };
   const categoryName = (c: string) => (CATEGORIES[c] ? t(CATEGORIES[c]) : c);
 

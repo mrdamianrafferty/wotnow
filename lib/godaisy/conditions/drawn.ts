@@ -159,7 +159,7 @@ export function inPeople(rangeM: number, lang?: LangCode): string {
   if (rangeM < 1.0) return tr_(L, 'people_waist');
   if (rangeM < 1.5) return tr_(L, 'people_chest');
   const p = rangeM / PERSON_M;
-  if (p < 1.15) return tr_(L, 'people_one');
+  if (p < 1.15) return tr_(L, 'people_single');
   if (p < 1.4) return tr_(L, 'people_bit_more');
   if (p < 1.75) return tr_(L, 'people_and_half');
   if (p < 2.15) return tr_(L, 'people_two');

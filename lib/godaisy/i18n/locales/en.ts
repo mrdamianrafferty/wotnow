@@ -239,7 +239,7 @@ export const en = {
     people_knee: 'about knee height',
     people_waist: 'about waist height',
     people_chest: 'about chest height',
-    people_one: 'about one grown-up',
+    people_single: 'about one grown-up',
     people_bit_more: 'a bit more than one grown-up',
     people_and_half: 'a grown-up and a half',
     people_two: "two grown-ups standing on each other's shoulders",
@@ -465,6 +465,6 @@ export const en = {
     cat_fitness: 'Fitness & Wellness',
     cat_indoor_rec: 'Indoor Recreation',
     cat_indoor_sports: 'Indoor Sports',
-    cat_other: 'Other',
+    cat_misc: 'Other',
   },
 } as const satisfies Locale;
