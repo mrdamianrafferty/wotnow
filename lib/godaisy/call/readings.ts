@@ -1,7 +1,7 @@
 /**
  * Turning `/api/unified-weather` into rows a person can read.
  *
- * Shared by the evidence drawer and `/weather`, because they answer the same
+ * Shared by the drawn conditions page and its "See every number" table, which answer the same
  * question at different depths and there is no version of this codebase where
  * two readers of the same endpoint stay in agreement. The first one already
  * shipped broken once — written against OpenWeather One Call field names the
@@ -39,16 +39,48 @@ export interface Readings {
   visibilityKm?: number;
   uvi?: number;
   cloudsPct?: number;
-  hourly?: Array<{ timeISO?: string; tempC?: number; windMS?: number; precipMM?: number }>;
-  daily?: Array<{ minC?: number; maxC?: number; windMS?: number; precipMM?: number; moonPhase?: number }>;
+  hourly?: Array<{
+    timeISO?: string; tempC?: number; windMS?: number; windDeg?: number; precipMM?: number;
+    /** Metres. Present at coastal places only. */
+    waveHeightM?: number;
+    /** WMO code: 45/48 fog, 71-77 and 85/86 snow, 95+ thunder. */
+    weatherCode?: number;
+    /**
+     * Centimetres. (Until 12 Nov 2026 this was Open-Meteo's metres passed
+     * through unconverted — Tromsø's 9 cm arrived as 0.08.)
+     */
+    snowDepthCm?: number;
+    /** Snowfall, mm per hour (Open-Meteo's cm × 10). */
+    snowfallRateMmH?: number;
+  }>;
+  /**
+   * `precipMM` is ABSENT on a dry day, not zero. Sunrise, sunset and the moon
+   * are on the first day only.
+   */
+  daily?: Array<{
+    dateISO?: string; minC?: number; maxC?: number; windMS?: number; windDeg?: number;
+    precipMM?: number; summary?: string; moonPhase?: number;
+    sunriseISO?: string; sunsetISO?: string;
+  }>;
+  sunriseISO?: string;
+  sunsetISO?: string;
+  dewPointC?: number;
+  pressureTrend?: string;
   marine?: { waveHeight?: number; wavePeriod?: number; swellHeight?: number; swellPeriod?: number };
   /** An ARRAY of extremes, not an object with one. */
   tides?: Array<{ time?: string; type?: string; height?: number }>;
-  marineHourly?: Array<{ waterTempC?: number }>;
+  marineHourly?: Array<{ timeISO?: string; waterTempC?: number; waveHeightM?: number }>;
+  seaTemp?: number;
   airQuality?: { aqi?: number; components?: Record<string, number> };
   pollen?: Record<string, number | string | null>;
   soil?: { temp0cm?: number; temp6cm?: number; moisture0to1?: number };
-  moon?: { illuminationPct?: number; moonriseISO?: string; moonsetISO?: string };
+  moon?: {
+    illuminationPct?: number; moonriseISO?: string; moonsetISO?: string;
+    /** 0-1, new to new. */
+    phaseFraction?: number;
+    /** The PLACE's zone, e.g. "Europe/London" — the one clock times are told in. */
+    timezone?: string;
+  };
 }
 
 export interface Row { label: string; value: string }
@@ -86,7 +118,12 @@ const rainToday = (r: Readings): number | undefined => {
  *
  * Frozen wins over wet, because frozen mud is hard ground.
  */
-export function underfoot(moisture?: number, surfaceTempC?: number): string | null {
+export const UNDERFOOT_BANDS = [
+  'Hard and dry', 'Firm', 'Soft', 'A bit soggy', 'Muddy', 'Very muddy',
+] as const;
+export type Underfoot = (typeof UNDERFOOT_BANDS)[number] | 'Frozen hard';
+
+export function underfoot(moisture?: number, surfaceTempC?: number): Underfoot | null {
   if (typeof moisture !== 'number' || !Number.isFinite(moisture)) return null;
   if (typeof surfaceTempC === 'number' && surfaceTempC <= 0) return 'Frozen hard';
   if (moisture < 0.15) return 'Hard and dry';

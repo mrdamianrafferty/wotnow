@@ -66,9 +66,11 @@ describe('Unified Weather API – snow plumbing from Open-Meteo', () => {
             time: [toOMTime(t0), toOMTime(t1)],
             pressure_msl: [1013, 1012],
             temperature_2m: [0, -1],
-            // Open-Meteo units: snowfall in cm over last hour; snow_depth in cm
+            // Open-Meteo units: snowfall in cm over the last hour; snow_depth in
+            // METRES. This said cm until 12 Nov 2026, and passed against an API
+            // that sent Tromsø's 9 cm as 0.08.
             snowfall: [1.5, 0],
-            snow_depth: [12, 8],
+            snow_depth: [0.12, 0.08],
           },
         }),
       }
@@ -92,7 +94,7 @@ describe('Unified Weather API – snow plumbing from Open-Meteo', () => {
     expect(typeof h0.snowDepthCm).toBe('number')
     expect(typeof h0.snowfallRateMmH).toBe('number')
 
-    // Validate unit conversion: 1.5 cm/h => 15 mm/h
+    // Validate unit conversion: 0.12 m => 12 cm; 1.5 cm/h => 15 mm/h
     expect(h0.snowDepthCm).toBeCloseTo(12)
     expect(h0.snowfallRateMmH).toBeCloseTo(15)
   })

@@ -14,6 +14,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Head from 'next/head';
+import { useRouter } from 'next/router';
 import type { GetServerSideProps } from 'next';
 
 import { fetchForecastForLocation } from '@/lib/seo/getActivityScore';
@@ -32,7 +33,7 @@ import { VerdictLockup } from '@/components/call/VerdictLockup';
 import { ScreenChrome } from '@/components/call/ScreenChrome';
 import { AlternatesControl } from '@/components/call/AlternatesControl';
 import { IndoorPrompt, type IndoorOption } from '@/components/call/IndoorPrompt';
-import { EvidenceDrawer } from '@/components/call/EvidenceDrawer';
+import { whyHref } from '@/lib/godaisy/conditions/whyLink';
 import { MenuSheet } from '@/components/call/MenuSheet';
 import { LocationSheet } from '@/components/call/LocationSheet';
 import { DayPager } from '@/components/call/DayPager';
@@ -76,7 +77,7 @@ export interface CallPageProps {
   photos: Record<string, string>;
   /** Offered on a write-off. Weather-insensitive, so the day cannot spoil them. */
   indoor: IndoorOption[];
-  /** Where the drawer reads its numbers from, on demand. */
+  /** Where "Why?" sends the conditions page to read from. */
   coords: { lat: number; lon: number };
   /** Whether the sea and the tides are evidence here, or dashboard furniture. */
   coastal: boolean;
@@ -100,12 +101,20 @@ const WHEEL_MIN = 60;
 const WHEEL_REST = 220;
 
 export default function CallPage({ slug, place, days, photos, indoor, coords, coastal, error }: CallPageProps) {
-  const [dayIndex, setDayIndex] = useState(0);
+  const router = useRouter();
+  /*
+   * The day can come from the URL, so that coming Back from "Why?" lands on
+   * the day that was being explained rather than on today. "Why?" writes it
+   * into this page's history entry before it leaves.
+   */
+  const [dayIndex, setDayIndex] = useState(() => {
+    const d = Number(router.query.day);
+    return Number.isInteger(d) && d >= 0 && d < days.length ? d : 0;
+  });
   const [altIndex, setAltIndex] = useState(0);
   const [touchX, setTouchX] = useState<number | null>(null);
   const screenRef = useRef<HTMLElement>(null);
   const [sendState, setSendState] = useState<'idle' | 'working' | 'sent' | 'copied'>('idle');
-  const [drawer, setDrawer] = useState(false);
   const [menu, setMenu] = useState(false);
   const [placePicker, setPlacePicker] = useState(false);
 
@@ -139,11 +148,11 @@ export default function CallPage({ slug, place, days, photos, indoor, coords, co
    * that, Chrome and Safari read the same gesture as history-back and leave
    * the app while it is turning the day. Hence the ref and the effect.
    *
-   * Vertical dominance passes straight through untouched: the evidence drawer
-   * scrolls, and stealing its wheel would be a worse bug than the one being
-   * fixed. Overlays bail out entirely.
+   * Vertical dominance passes straight through untouched: the sheets scroll,
+   * and stealing their wheel would be a worse bug than the one being fixed.
+   * Overlays bail out entirely.
    */
-  const overlayOpen = drawer || menu || placePicker;
+  const overlayOpen = menu || placePicker;
   useEffect(() => {
     const el = screenRef.current;
     if (!el || overlayOpen) return;
@@ -417,7 +426,18 @@ export default function CallPage({ slug, place, days, photos, indoor, coords, co
             reason={option.verdict.reason}
             facts={option.facts}
             cycleKey={`${dayIndex}-${altIndex}`}
-            onWhy={() => setDrawer(true)}
+            /*
+              * "Why?" opens the drawn conditions page for this call's day,
+              * leading with what the verdict turned on. It was a drawer of
+              * the same readings over the call; the page says them instead.
+              */
+            onWhy={async () => {
+              await router.replace({ query: { ...router.query, day: String(dayIndex) } }, undefined, { shallow: true, scroll: false });
+              await router.push(whyHref({
+                place, lat: coords.lat, lon: coords.lon, coastal,
+                day: dayIndex, verdict: asSentence(option.verdict), weighed: option.weighed,
+              }));
+            }}
           />
 
           {day.isNoDay && <IndoorPrompt options={indoor} />}
@@ -477,17 +497,6 @@ export default function CallPage({ slug, place, days, photos, indoor, coords, co
         {menu && <MenuSheet onClose={() => setMenu(false)} />}
         {placePicker && <LocationSheet current={place} onClose={() => setPlacePicker(false)} />}
 
-        {drawer && (
-          <EvidenceDrawer
-            option={option}
-            place={place}
-            lat={coords.lat}
-            lon={coords.lon}
-            coastal={coastal}
-            headline={asSentence(option.verdict)}
-            onClose={() => setDrawer(false)}
-          />
-        )}
       </main>
     </Shell>
   );
@@ -726,7 +735,7 @@ export const getServerSideProps: GetServerSideProps<CallPageProps> = async (ctx)
         photos,
         indoor,
         coords: { lat: location.lat, lon: location.lon },
-        // Coastal by the same test `withMarine` uses, so the drawer offers the
+        // Coastal by the same test `withMarine` uses, so "Why?" offers the
         // sea exactly where the sea was scored.
         coastal: location.beachFacingDeg != null || location.coastal === true,
       },
