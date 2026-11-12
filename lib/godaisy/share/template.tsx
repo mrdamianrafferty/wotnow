@@ -25,6 +25,8 @@
  */
 
 import type { CallFact } from '@/lib/godaisy/call/facts';
+import { localeOf, tr_ } from '@/lib/godaisy/i18n';
+import type { LangCode } from '@/lib/godaisy/i18n/types';
 
 export type ShareCrop = 'card' | 'story' | 'og';
 
@@ -162,9 +164,10 @@ export function shareTemplate(d: ShareData, crop: ShareCrop): unknown {
  * absolute link. `d.url` names a place; the sender composes the link, because
  * only the sender knows which one is short enough to send.
  */
-export function shareText(d: ShareData): string {
+export function shareText(d: ShareData, lang?: LangCode): string {
+  const L = localeOf(lang);
   const where = d.place ? ` ${d.place}` : '';
-  return `${d.verdict}${where ? `${where},` : ''} ${d.reason.toLowerCase()} Join me?`
+  return `${d.verdict}${where ? `${where},` : ''} ${d.reason.toLocaleLowerCase(L.intl)} ${tr_(L, 'share_join')}`
     .replace(/\s+/g, ' ')
     .trim();
 }

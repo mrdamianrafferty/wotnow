@@ -1,4 +1,6 @@
 import { isDangerous } from '@/utils/criterionRoles';
+import { localeOf, tr_ } from '@/lib/godaisy/i18n';
+import type { LangCode, TKey } from '@/lib/godaisy/i18n/types';
 /**
  * The five bands The Call speaks in.
  *
@@ -71,6 +73,11 @@ export const GOOD_BANDS: ReadonlySet<CallBand> = new Set<CallBand>(['prime', 'wo
  */
 /* Was a literal set here, kept in step with three others by hand. It is now
    derived: only a SAFETY criterion earns the red band. See utils/criterionRoles. */
+
+/** The band's name in the reader's language. */
+export function bandLabel(band: CallBand, lang?: LangCode): string {
+  return tr_(localeOf(lang), `band_${band}` as TKey);
+}
 
 export function bandFor(
   score: number,

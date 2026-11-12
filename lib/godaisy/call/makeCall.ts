@@ -17,6 +17,7 @@ import { promote } from './promote';
 import type { ActivityType } from '@/data/activities/types';
 import { factsFor, nextYesFact, type CallFact } from './facts';
 import { makeVerdict, type Verdict } from './verdict';
+import { localeOf } from '@/lib/godaisy/i18n';
 import { daySeed, gustCeiling, isAdventurous, isWeekend, rankScore, rotateLeaders } from './rank';
 
 export interface CallOption {
@@ -112,13 +113,20 @@ export interface MakeCallInput {
    */
   coords?: { lat: number; lon: number };
   lang?: SupportedLanguageCode;
+  /**
+   * The next yes as 0 = Sunday. Languages that decline the weekday need the day
+   * itself, not the string `nextYes` carries ("el martes", "am Dienstag").
+   */
+  nextYesIdx?: number;
 }
 
 export function makeCall(input: MakeCallInput): Call {
   const {
     date, place, weather, suggestions, sports, seeded = [], names = {}, nextYes,
-    dayIndex = 0, weekday = '', parts, activities = [], now = new Date(), lang = 'en', coords,
+    dayIndex = 0, weekday = '', parts, activities = [], now = new Date(), lang = 'en', coords, nextYesIdx,
   } = input;
+  // 0 = Sunday, read the way the page read it to make `weekday`: in the server's own zone.
+  const weekdayIdx = new Date(date * 1000).getDay();
 
   const byId = new Map(activities.map((a) => [a.id, a]));
 
@@ -188,7 +196,10 @@ export function makeCall(input: MakeCallInput): Call {
     // numbers under it never contradict each other — see `isSevere`.
     const scored = bandFor(s.score, s.vetoed, s.binding?.key);
     const dayBand: CallBand = scored === 'marginal' && severe ? 'notToday' : scored;
-    const activityName = names[s.activityId];
+    // Another language names the sport itself: the library's names are English.
+    const activityName = lang === 'en'
+      ? names[s.activityId]
+      : (localeOf(lang).sportNames[s.activityId] ?? names[s.activityId]);
 
     /*
      * The bars are computed for EVERY band, and now decide the verdict too.
@@ -241,6 +252,9 @@ export function makeCall(input: MakeCallInput): Call {
         place,
         dayIndex,
         weekday,
+        weekdayIdx,
+        ...(nextYesIdx !== undefined ? { nextYesIdx } : {}),
+        lang,
         ...(lift ? { promoted: true } : {}),
         ...(capped.has(s.activityId) ? { gusty: true } : {}),
         ...(window ? { window } : {}),

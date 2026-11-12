@@ -12,6 +12,8 @@
  */
 
 import type { RankedSection } from './evidence';
+import { localeOf, tr_, num as fmt } from '@/lib/godaisy/i18n';
+import type { LangCode, TKey } from '@/lib/godaisy/i18n/types';
 
 /**
  * `/api/unified-weather`, as it actually answers.
@@ -85,11 +87,6 @@ export interface Readings {
 
 export interface Row { label: string; value: string }
 
-/** Degrees to the eight points, because "215°" is a number and "SW" is a wind. */
-const COMPASS = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'] as const;
-const compass = (deg?: number) =>
-  typeof deg === 'number' && Number.isFinite(deg) ? COMPASS[Math.round(deg / 45) % 8] : null;
-
 /** Today's total from the hourly series, since the daily figure is not always there. */
 const rainToday = (r: Readings): number | undefined => {
   const today = new Date().toISOString().slice(0, 10);
@@ -141,85 +138,89 @@ export function underfoot(moisture?: number, surfaceTempC?: number): Underfoot |
  * never a zero standing in for an absence. A fabricated reading in a drawer
  * whose whole job is to be checkable is the one unforgivable bug in this file.
  */
-export function rowsFor(section: RankedSection, r: Readings | null): Row[] {
+export function rowsFor(section: RankedSection, r: Readings | null, lang?: LangCode): Row[] {
   if (!r) return [];
+  const L = localeOf(lang);
+  const T = (key: TKey) => tr_(L, key);
   const n = (v: unknown, unit: string, dp = 0): string | null =>
-    typeof v === 'number' && Number.isFinite(v) ? `${v.toFixed(dp)}${unit}` : null;
+    typeof v === 'number' && Number.isFinite(v) ? `${fmt(L, v, dp)}${unit}` : null;
   const keep = (label: string, v: string | null): Row[] => (v ? [{ label, value: v }] : []);
   const kmh = (ms?: number) => (typeof ms === 'number' ? ms * 3.6 : undefined);
   const today = r.daily?.[0];
+  const compassOf = (deg?: number) =>
+    typeof deg === 'number' && Number.isFinite(deg) ? L.compassShort[Math.round(deg / 45) % 8] : null;
+  const clock = (iso?: string) => (iso
+    ? new Date(iso).toLocaleTimeString(L.intl, { hour: '2-digit', minute: '2-digit', hourCycle: 'h23' })
+    : null);
 
   switch (section.id) {
-    case 'wind': {
-      const dir = compass(r.windDeg);
+    case 'wind':
       return [
-        ...keep('Now', n(kmh(r.windSpeedMS), ' km/h')),
-        ...keep('Today', n(kmh(today?.windMS), ' km/h')),
-        ...keep('From the', dir),
+        ...keep(T('fact_now'), n(kmh(r.windSpeedMS), ' km/h')),
+        ...keep(T('fact_today'), n(kmh(today?.windMS), ' km/h')),
+        ...keep(T('fact_from_the'), compassOf(r.windDeg)),
       ];
-    }
     case 'rain':
       return [
-        ...keep('Today', n(rainToday(r), ' mm', 1)),
-        ...keep('Next hour', n(r.hourly?.[0]?.precipMM, ' mm', 1)),
+        ...keep(T('fact_today'), n(rainToday(r), ' mm', 1)),
+        ...keep(T('fact_next_hour'), n(r.hourly?.[0]?.precipMM, ' mm', 1)),
       ];
     case 'temperature':
       return [
-        ...keep('Now', n(r.temperatureC, '°C')),
-        ...keep('Feels like', n(r.feelsLikeC, '°C')),
-        ...keep('High', n(today?.maxC, '°C')),
-        ...keep('Low', n(today?.minC, '°C')),
+        ...keep(T('fact_now'), n(r.temperatureC, '°C')),
+        ...keep(T('fact_feels'), n(r.feelsLikeC, '°C')),
+        ...keep(T('fact_high'), n(today?.maxC, '°C')),
+        ...keep(T('fact_low'), n(today?.minC, '°C')),
       ];
     case 'sea':
       return [
-        ...keep('Wave height', n(r.marine?.waveHeight, ' m', 1)),
-        ...keep('Swell', n(r.marine?.swellHeight, ' m', 1)),
-        ...keep('Swell period', n(r.marine?.swellPeriod ?? r.marine?.wavePeriod, ' s')),
-        ...keep('Sea temperature', n(r.marineHourly?.[0]?.waterTempC, '°C', 1)),
+        ...keep(T('fact_wave_height'), n(r.marine?.waveHeight, ' m', 1)),
+        ...keep(T('fact_swell'), n(r.marine?.swellHeight, ' m', 1)),
+        ...keep(T('fact_swell_period'), n(r.marine?.swellPeriod ?? r.marine?.wavePeriod, ' s')),
+        ...keep(T('fact_sea_temp'), n(r.marineHourly?.[0]?.waterTempC, '°C', 1)),
       ];
     case 'tide':
       // Two extremes is a tide; six is a timetable, and this is a drawer.
       return (r.tides ?? []).slice(0, 2).flatMap((t) => {
-        const when = typeof t.time === 'string'
-          ? new Date(t.time).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })
-          : null;
-        const kind = typeof t.type === 'string' ? t.type : 'tide';
-        return when ? [{ label: `${kind[0].toUpperCase()}${kind.slice(1)} water`, value: when }] : [];
+        const when = typeof t.time === 'string' ? clock(t.time) : null;
+        const label = T(t.type === 'high' ? 'fact_high_water' : t.type === 'low' ? 'fact_low_water' : 'fact_tide');
+        return when ? [{ label, value: when }] : [];
       });
     case 'sky':
       return [
-        ...keep('Cloud', n(r.cloudsPct, '%')),
-        ...keep('Visibility', n(r.visibilityKm, ' km', 1)),
-        ...keep('UV', n(r.uvi, '')),
+        ...keep(T('fact_cloud'), n(r.cloudsPct, '%')),
+        ...keep(T('fact_visibility'), n(r.visibilityKm, ' km', 1)),
+        ...keep(T('fact_uv'), n(r.uvi, '')),
       ];
     case 'air': {
       const worstPollen = Object.entries(r.pollen ?? {})
         .filter(([, v]) => typeof v === 'number' && Number.isFinite(v))
         .sort((a, b) => (b[1] as number) - (a[1] as number))[0];
       return [
-        ...keep('Humidity', n(r.humidityPct, '%')),
-        ...keep('Pressure', n(r.pressureHpa, ' hPa')),
-        ...keep('Air quality', n(r.airQuality?.aqi, '')),
-        ...keep('PM2.5', n(r.airQuality?.components?.pm2_5, ' µg/m³', 1)),
-        ...(worstPollen ? [{ label: 'Most pollen', value: worstPollen[0].replace(/_/g, ' ') }] : []),
+        ...keep(T('fact_humidity'), n(r.humidityPct, '%')),
+        ...keep(T('fact_pressure'), n(r.pressureHpa, ' hPa')),
+        ...keep(T('fact_air_quality'), n(r.airQuality?.aqi, '')),
+        ...keep(T('fact_pm25'), n(r.airQuality?.components?.pm2_5, ' µg/m³', 1)),
+        ...(worstPollen
+          ? [{ label: T('fact_pollen'), value: L.t[`pollen_${worstPollen[0]}`] ?? worstPollen[0].replace(/_/g, ' ') }]
+          : []),
       ];
     }
-    case 'ground':
+    case 'ground': {
+      const band = underfoot(r.soil?.moisture0to1, r.soil?.temp0cm);
       return [
-        ...keep('Soil at the surface', n(r.soil?.temp0cm, '°C')),
-        ...keep('Soil at 6 cm', n(r.soil?.temp6cm, '°C')),
-        ...keep('Underfoot', underfoot(r.soil?.moisture0to1, r.soil?.temp0cm)),
-      ];
-    case 'night': {
-      const time = (iso?: string) => (iso
-        ? new Date(iso).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })
-        : null);
-      return [
-        ...keep('Moon', n(r.moon?.illuminationPct, '% lit')),
-        ...keep('Moonrise', time(r.moon?.moonriseISO)),
-        ...keep('Moonset', time(r.moon?.moonsetISO)),
+        ...keep(T('fact_soil_surface'), n(r.soil?.temp0cm, '°C')),
+        ...keep(T('fact_soil_6'), n(r.soil?.temp6cm, '°C')),
+        ...keep(T('fact_underfoot'), band ? L.underfoot[band].label : null),
       ];
     }
+    case 'night':
+      return [
+        ...keep(T('fact_moon'), n(r.moon?.illuminationPct, '')
+          ? tr_(L, 'moon_lit', { pct: n(r.moon?.illuminationPct, '') as string }) : null),
+        ...keep(T('fact_moonrise'), clock(r.moon?.moonriseISO)),
+        ...keep(T('fact_moonset'), clock(r.moon?.moonsetISO)),
+      ];
     default:
       return [];
   }

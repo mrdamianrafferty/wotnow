@@ -14,13 +14,16 @@
  * @module components/call/ScreenChrome
  */
 
+import { useGdLocale } from '@/lib/godaisy/i18n/react';
+
 export function ScreenChrome({ onMenu }: { onMenu?: () => void }) {
+  const { t } = useGdLocale();
   // A focusable button that does nothing is worse for a keyboard or
   // screen-reader user than an absent one.
   if (!onMenu) return null;
 
   return (
-    <button type="button" className="call-icon-btn" aria-label="Menu" onClick={onMenu}>
+    <button type="button" className="call-icon-btn" aria-label={t('ui_menu')} onClick={onMenu}>
       {/* 22px, not 16. With no box around it the glyph has to carry the
           control on its own, and this is the only navigation the app has. */}
       <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor"

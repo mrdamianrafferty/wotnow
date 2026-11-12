@@ -14,6 +14,7 @@
  * @module components/call/LocationSheet
  */
 
+import { useGdLocale } from '@/lib/godaisy/i18n/react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { readSetup, mirrorToPreferences, DEFAULT_SPORTS, type SetupPlace } from '@/lib/godaisy/call/setup';
 import { saveSetup } from '@/lib/godaisy/call/sync';
@@ -26,6 +27,7 @@ interface Suggestion extends SetupPlace {
 type GpsState = 'idle' | 'locating' | 'denied' | 'failed';
 
 export function LocationSheet({ current, onClose }: { current: string; onClose: () => void }) {
+  const { t } = useGdLocale();
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<Suggestion[]>([]);
   const [searching, setSearching] = useState(false);
@@ -51,7 +53,7 @@ export function LocationSheet({ current, onClose }: { current: string; onClose: 
         // itself. The CSP's `connect-src` has never allowed the browser to
         // reach `geocoding-api.open-meteo.com` directly, so calling it from
         // here silently failed every search and always fell through to
-        // "Nothing by that name." — for every query, not just obscure ones.
+        // "{t('loc_none')}" — for every query, not just obscure ones.
         const res = await fetch(`/api/geocode?q=${encodeURIComponent(q)}&limit=8`);
         const j = (await res.json()) as Array<{ name: string; lat: number; lon: number; country?: string; state?: string }>;
         // Dropped if a newer keystroke has been typed since: a slow answer for
@@ -137,7 +139,7 @@ export function LocationSheet({ current, onClose }: { current: string; onClose: 
         className="call-drawer call-place"
         role="dialog"
         aria-modal="true"
-        aria-label="Change location"
+        aria-label={t('loc_label')}
         tabIndex={-1}
         ref={panel}
         onClick={(e) => e.stopPropagation()}
@@ -145,24 +147,24 @@ export function LocationSheet({ current, onClose }: { current: string; onClose: 
         <div className="call-drawer-grab" aria-hidden="true" />
 
         <header className="call-drawer-head">
-          <p className="call-label call-drawer-kicker">Where</p>
+          <p className="call-label call-drawer-kicker">{t('loc_where')}</p>
           <p className="call-drawer-headline">{current}</p>
-          <button type="button" className="call-drawer-close" onClick={onClose}>Close</button>
+          <button type="button" className="call-drawer-close" onClick={onClose}>{t('ui_close')}</button>
         </header>
 
         <input
           type="search"
           className="call-setup-input"
-          placeholder="Town or city"
+          placeholder={t('loc_placeholder')}
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           autoComplete="off"
-          aria-label="Search for a place"
+          aria-label={t('loc_search_label')}
         />
 
         {query.length > 1 && (
           <ul className="call-setup-results call-place-results">
-            {searching && <li><Spinner label="Looking…" /></li>}
+            {searching && <li><Spinner label={t('loc_looking')} /></li>}
             {!searching && !results.length && (
               <li className="call-setup-result is-quiet">Nothing by that name.</li>
             )}
@@ -185,17 +187,16 @@ export function LocationSheet({ current, onClose }: { current: string; onClose: 
               onClick={useGps}
               disabled={gps === 'locating'}
             >
-              Use my location
+              {t('loc_use_mine')}
             </button>
-            {gps === 'locating' && <Spinner label="Finding you…" />}
+            {gps === 'locating' && <Spinner label={t('loc_finding')} />}
             {gps === 'denied' && (
               <p className="call-drawer-quiet">
-                Location is blocked for this site. Your browser settings can undo that —
-                or search for the place instead.
+                {t('loc_blocked')}
               </p>
             )}
             {gps === 'failed' && (
-              <p className="call-drawer-quiet">That did not work. Search for the place instead.</p>
+              <p className="call-drawer-quiet">{t('loc_failed')}</p>
             )}
           </div>
         )}

@@ -1,3 +1,4 @@
+import { useGdLocale } from '@/lib/godaisy/i18n/react';
 /**
  * The day pager — dots that are buttons, and arrows where swipe cannot reach.
  *
@@ -25,22 +26,20 @@ export interface DayPagerProps {
   onSelect: (index: number) => void;
 }
 
-const DAY_LABEL = new Intl.DateTimeFormat('en-GB', {
-  weekday: 'long', day: 'numeric', month: 'long',
-});
-
 export function DayPager({ dates, index, onSelect }: DayPagerProps) {
   const last = dates.length - 1;
+  const { L, t } = useGdLocale();
+  const DAY_LABEL = new Intl.DateTimeFormat(L.intl, { weekday: 'long', day: 'numeric', month: 'long' });
 
   return (
     // Not a <nav>: seven dots and two arrows in the bottom margin are a
     // control, and landmarking them would put a second "navigation" in the
     // rotor next to the menu, which is the one the screen actually has.
-    <div className="call-dots" role="group" aria-label="Day">
+    <div className="call-dots" role="group" aria-label={t('pager_group')}>
       <button
         type="button"
         className="call-dots__arrow"
-        aria-label="Previous day"
+        aria-label={t('pager_prev')}
         disabled={index <= 0}
         onClick={() => onSelect(index - 1)}
       >
@@ -68,7 +67,7 @@ export function DayPager({ dates, index, onSelect }: DayPagerProps) {
       <button
         type="button"
         className="call-dots__arrow"
-        aria-label="Next day"
+        aria-label={t('pager_next')}
         disabled={index >= last}
         onClick={() => onSelect(index + 1)}
       >
@@ -79,7 +78,7 @@ export function DayPager({ dates, index, onSelect }: DayPagerProps) {
       </button>
 
       {/* Hidden by CSS on a fine pointer — it is the sentence that was lying. */}
-      <span className="call-dots__hint">swipe for tomorrow</span>
+      <span className="call-dots__hint">{t('pager_hint')}</span>
     </div>
   );
 }

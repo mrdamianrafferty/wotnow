@@ -24,6 +24,8 @@ import { SEO_LOCATIONS, type SeoLocation } from '@/data/seoLocations';
 import { locationFromShare, coordsFromSlug } from '@/lib/godaisy/call/location';
 import { renderShare } from '@/lib/godaisy/share/render';
 import { shareText, type ShareCrop } from '@/lib/godaisy/share/template';
+import { toLang } from '@/lib/godaisy/i18n/lang';
+import { localeOf } from '@/lib/godaisy/i18n';
 import { bakedDataUri } from '@/lib/godaisy/share/photos';
 
 export const config = { api: { responseLimit: false } };
@@ -144,8 +146,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }) as Array<{ date: number; suggestions: Suggestion[] }>;
 
     const d = byDay[dayIndex];
+    // `lang` is in the URL, so each language is its own cached card and text.
+    const lang = toLang(String(req.query.lang ?? '')) ?? 'en';
+    const L = localeOf(lang);
     const weekday = (ts: number) =>
-      new Intl.DateTimeFormat('en-GB', { weekday: 'long' }).format(new Date(ts * 1000));
+      new Intl.DateTimeFormat(L.intl, { weekday: 'long' }).format(new Date(ts * 1000));
 
     const call = makeCall({
       date: d.date, place: location.name, weather: forecast[dayIndex].weather,
@@ -153,7 +158,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       // The card has to agree with the screen, daylight damping included.
       coords: { lat: location.lat, lon: location.lon },
       names: Object.fromEntries((allSports as Array<{ id: string; name: string }>).map((a) => [a.id, a.name])),
-      dayIndex, weekday: weekday(d.date),
+      dayIndex, weekday: weekday(d.date), lang,
       // Without the library the weekend bonus and the indoor ordering cannot
       // apply, and the card would name a different activity from the screen.
       activities: allSports as never,
@@ -174,9 +179,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
     const data = {
       place: location.name,
-      date: new Intl.DateTimeFormat('en-GB', { weekday: 'short', day: 'numeric', month: 'short' })
+      date: new Intl.DateTimeFormat(L.intl, { weekday: 'short', day: 'numeric', month: 'short' })
         .format(new Date(d.date * 1000)),
-      verdict: asSharedSentence({ ...option.verdict, reason: '' }).trim(),
+      verdict: asSharedSentence({ ...option.verdict, reason: '' }, lang).trim(),
       reason: option.verdict.reason,
       facts: option.facts,
       /*
@@ -214,7 +219,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     if (cropParam === 'text') {
       res.setHeader('Content-Type', 'text/plain; charset=utf-8');
-      return res.status(200).send(shareText(data));
+      return res.status(200).send(shareText(data, lang));
     }
 
     const crop = (CROPS as string[]).includes(cropParam) ? (cropParam as ShareCrop) : 'card';

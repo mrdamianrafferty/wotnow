@@ -6,10 +6,15 @@
  * kit — lifted here so the drawn conditions page can say it. The card is no
  * longer rendered anywhere; this is now the copy that is read.
  *
- * Bands are [min, max) in °C.
+ * Bands are [min, max) in °C. The WORDS live in each locale
+ * (`lib/godaisy/i18n/locales`), because "a 4/3 and boots" is said differently
+ * in every language that has surfers.
  *
  * @module lib/godaisy/conditions/seaWear
  */
+
+import { localeOf } from '@/lib/godaisy/i18n';
+import type { LangCode } from '@/lib/godaisy/i18n/types';
 
 export type SeaWear = 'freezing' | 'veryCold' | 'chilly' | 'cool' | 'mild' | 'warm' | 'hot';
 
@@ -24,18 +29,21 @@ interface Band {
 }
 
 /** Coldest first. */
-export const SEA_WEAR: readonly Band[] = [
-  { id: 'freezing', min: -Infinity, short: 'Are you mad?', say: 'are you mad?' },
-  { id: 'veryCold', min: 8, short: '6/5 or 5/4 + hood', say: "it's a 5/4 or 6/5 and a hood" },
-  { id: 'chilly', min: 12, short: '4/3 + boots', say: "it's a 4/3 and boots" },
-  { id: 'cool', min: 15, short: '3/2 full suit', say: "it's a 3/2 full suit" },
-  { id: 'mild', min: 18, short: 'Shorty / swimwear', say: "it's a shorty or just swimwear" },
-  { id: 'warm', min: 21, short: 'Swimsuit', say: "it's swimsuit weather" },
-  { id: 'hot', min: 25, short: 'Swimsuit optional', say: "it's swimsuit optional" },
+const LADDER: ReadonlyArray<{ id: SeaWear; min: number }> = [
+  { id: 'freezing', min: -Infinity },
+  { id: 'veryCold', min: 8 },
+  { id: 'chilly', min: 12 },
+  { id: 'cool', min: 15 },
+  { id: 'mild', min: 18 },
+  { id: 'warm', min: 21 },
+  { id: 'hot', min: 25 },
 ];
 
-export function seaWear(tempC: number): Band {
-  let band = SEA_WEAR[0];
-  for (const b of SEA_WEAR) if (tempC >= b.min) band = b;
-  return band;
+export const SEA_WEAR_BANDS = LADDER;
+
+export function seaWear(tempC: number, lang?: LangCode): Band {
+  let band = LADDER[0];
+  for (const b of LADDER) if (tempC >= b.min) band = b;
+  const words = localeOf(lang).seaWear[band.id];
+  return { id: band.id, min: band.min, short: words.short, say: words.say };
 }

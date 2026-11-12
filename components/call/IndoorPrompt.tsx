@@ -19,6 +19,8 @@
  */
 
 import { useEffect, useId, useMemo, useState } from 'react';
+import type { TKey } from '@/lib/godaisy/i18n/types';
+import { useGdLocale } from '@/lib/godaisy/i18n/react';
 
 export interface IndoorOption {
   id: string;
@@ -85,6 +87,7 @@ export interface IndoorPromptProps {
 }
 
 export function IndoorPrompt({ options }: IndoorPromptProps) {
+  const { t } = useGdLocale();
   const [chosen, setChosen] = useState<string | null>(null);
   const [ready, setReady] = useState(false);
   const [expanded, setExpanded] = useState(false);
@@ -112,6 +115,11 @@ export function IndoorPrompt({ options }: IndoorPromptProps) {
   }, [options]);
 
   if (!ready || options.length === 0) return null;
+  const CATEGORIES: Record<string, TKey> = {
+    'Creative & Arts': 'cat_creative', 'Fitness & Wellness': 'cat_fitness',
+    'Indoor Recreation': 'cat_indoor_rec', 'Indoor Sports': 'cat_indoor_sports', Other: 'cat_other',
+  };
+  const categoryName = (c: string) => (CATEGORIES[c] ? t(CATEGORIES[c]) : c);
 
   const picked = options.find((o) => o.id === chosen);
   const choose = (id: string) => { remember(id); setChosen(id); setExpanded(false); };
@@ -122,14 +130,16 @@ export function IndoorPrompt({ options }: IndoorPromptProps) {
         <p className="call-indoor-line">
           {/* The labels are lower-case because they sit in a chip row; here one
               of them starts a sentence. */}
-          Nothing outside today. <strong>{upperFirst(picked.label)}</strong> instead.
+          {t('indoor_settled', { pick: '\u0000' }).split('\u0000').flatMap((part, i) => (i === 0
+            ? [part]
+            : [<strong key="pick">{upperFirst(picked.label)}</strong>, part]))}
         </p>
         <button
           type="button"
           className="call-indoor-change"
           onClick={() => { remember(null); setChosen(null); }}
         >
-          Change
+          {t('indoor_change')}
         </button>
       </div>
     );
@@ -152,8 +162,8 @@ export function IndoorPrompt({ options }: IndoorPromptProps) {
 
   return (
     <div className="call-indoor">
-      <p className="call-label call-label--on-dark">Instead</p>
-      <p className="call-indoor-line">Pick something indoors and we will remember it.</p>
+      <p className="call-label call-label--on-dark">{t('indoor_instead')}</p>
+      <p className="call-indoor-line">{t('indoor_pick')}</p>
 
       <div className="call-indoor-row" hidden={expanded}>
         {three.map(chip)}
@@ -165,7 +175,7 @@ export function IndoorPrompt({ options }: IndoorPromptProps) {
             aria-controls={listId}
             aria-expanded={expanded}
           >
-            More
+            {t('indoor_more')}
           </button>
         )}
       </div>
@@ -173,7 +183,7 @@ export function IndoorPrompt({ options }: IndoorPromptProps) {
       <div className="call-indoor-all" id={listId} hidden={!expanded}>
         {grouped.map(([category, items]) => (
           <div key={category} className="call-indoor-group">
-            <p className="call-label call-label--on-dark call-indoor-group-name">{category}</p>
+            <p className="call-label call-label--on-dark call-indoor-group-name">{categoryName(category)}</p>
             <div className="call-indoor-row">{items.map(chip)}</div>
           </div>
         ))}
@@ -184,7 +194,7 @@ export function IndoorPrompt({ options }: IndoorPromptProps) {
           aria-controls={listId}
           aria-expanded={expanded}
         >
-          Fewer
+          {t('indoor_fewer')}
         </button>
       </div>
     </div>

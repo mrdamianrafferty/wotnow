@@ -19,6 +19,8 @@
  * @module components/call/MenuSheet
  */
 
+import { useGdLocale } from '@/lib/godaisy/i18n/react';
+import type { TKey } from '@/lib/godaisy/i18n/types';
 import { useEffect, useRef } from 'react';
 import Link from 'next/link';
 
@@ -39,9 +41,9 @@ interface Item {
  * is the direction the site was already moving; the rest follow it rather than
  * this becoming a third opinion.
  */
-const GROUPS: ReadonlyArray<{ title: string; items: readonly Item[] }> = [
+const groups = (t: (k: TKey) => string): ReadonlyArray<{ title: string; items: readonly Item[] }> => [
   {
-    title: 'Yours',
+    title: t('menu_yours'),
     items: [
       /*
        * THE CALL ITSELF WAS MISSING FROM A LIST HEADED "YOURS".
@@ -57,7 +59,7 @@ const GROUPS: ReadonlyArray<{ title: string; items: readonly Item[] }> = [
        * navigation: the menu already exists, and the app's main screen being
        * absent from it reads as an oversight rather than a decision.
        */
-      { href: '/', label: 'The call', note: "Back to today's answer" },
+      { href: '/', label: t('menu_call'), note: t('menu_call_note') },
       /*
        * `/weather` had no way in. The old bottom nav and header linked to it,
        * and the swap replaced both — so the conditions page became reachable
@@ -65,8 +67,8 @@ const GROUPS: ReadonlyArray<{ title: string; items: readonly Item[] }> = [
        * before phase 7. It goes first because it is a destination, not a
        * setting.
        */
-      { href: '/weather', label: 'Conditions', note: 'Every reading for where you are' },
-      { href: '/start', label: 'Sports and spots', note: 'Change what Go Daisy tells you about' },
+      { href: '/weather', label: t('menu_conditions'), note: t('menu_conditions_note') },
+      { href: '/start', label: t('menu_sports'), note: t('menu_sports_note') },
       /*
        * "Account" alone hid the one setting people go looking for.
        *
@@ -76,28 +78,29 @@ const GROUPS: ReadonlyArray<{ title: string; items: readonly Item[] }> = [
        * had no word to follow, which is a good working definition of a setting
        * that does not exist.
        */
-      { href: '/account', label: 'Account', note: 'When Go Daisy calls, and everything else' },
+      { href: '/account', label: t('menu_account'), note: t('menu_account_note') },
     ],
   },
   {
-    title: 'The small print',
+    title: t('menu_small_print'),
     items: [
-      { href: '/privacy', label: 'Privacy policy' },
-      { href: '/terms', label: 'Terms' },
-      { href: '/cookies', label: 'Cookies' },
+      { href: '/privacy', label: t('menu_privacy') },
+      { href: '/terms', label: t('menu_terms') },
+      { href: '/cookies', label: t('menu_cookies') },
     ],
   },
   {
     title: 'Go Daisy',
     items: [
-      { href: '/whether-weather', label: 'How the scoring works' },
-      { href: '/support', label: 'Support Go Daisy' },
-      { href: '/app', label: 'Get it on your phone' },
+      { href: '/whether-weather', label: t('menu_scoring') },
+      { href: '/support', label: t('menu_support') },
+      { href: '/app', label: t('menu_app') },
     ],
   },
 ];
 
 export function MenuSheet({ onClose }: { onClose: () => void }) {
+  const { t } = useGdLocale();
   const panel = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -113,7 +116,7 @@ export function MenuSheet({ onClose }: { onClose: () => void }) {
         className="call-drawer call-menu"
         role="dialog"
         aria-modal="true"
-        aria-label="Menu"
+        aria-label={t('ui_menu')}
         tabIndex={-1}
         ref={panel}
         onClick={(e) => e.stopPropagation()}
@@ -123,11 +126,11 @@ export function MenuSheet({ onClose }: { onClose: () => void }) {
         <header className="call-drawer-head">
           <p className="call-drawer-headline">Go Daisy</p>
           <button type="button" className="call-drawer-close" onClick={onClose}>
-            Close
+            {t('ui_close')}
           </button>
         </header>
 
-        {GROUPS.map((group) => (
+        {groups(t).map((group) => (
           <section key={group.title} className="call-menu-group">
             <p className="call-label call-menu-group-title">{group.title}</p>
             <ul className="call-menu-list">
@@ -144,7 +147,7 @@ export function MenuSheet({ onClose }: { onClose: () => void }) {
         ))}
 
         <p className="call-drawer-foot">
-          Free and ad-free. Weather from Open-Meteo.
+          {t('menu_foot')}
         </p>
       </div>
     </div>
