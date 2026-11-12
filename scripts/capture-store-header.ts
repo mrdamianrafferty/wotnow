@@ -1,8 +1,10 @@
 /**
- * Render Go Daisy's App Store product page header: the four drawn days, as a
- * looping 21:9 video.
+ * Render Go Daisy's App Store header and search results assets: the four
+ * drawn days, as looping videos, plus a still of each.
  *
- *   npx tsx scripts/capture-store-header.ts
+ *   npx tsx scripts/capture-store-header.ts            # both
+ *   npx tsx scripts/capture-store-header.ts header     # 21:9 product page header
+ *   npx tsx scripts/capture-store-header.ts search     # 3:2 search results
  *
  * Apple's spec for the header placement (App Store Connect › Header and
  * Search Results; developer.apple.com/help/app-store-connect/reference/
@@ -10,6 +12,10 @@
  *   - 21:9, 3840 × 1646, 30 or 60 fps, 5–30 s, .mov/.m4v/.mp4
  *   - loops continuously, muted by default
  *   - key artwork inside the art safe area: 1646 × 661 at (1097, 493)
+ * and for search results:
+ *   - 3:2, 1920 × 1280 up to 3840 × 2560 (this renders the maximum)
+ *   - same frame rates and lengths; muted, and can't be unmuted
+ *   - art safe area (at the maximum size): 2168 × 1030 at (836, 765)
  *
  * So the verdict and the drawing sit inside the safe area, and everything
  * outside it is weather: the ground running off both edges, swell, hills,
@@ -22,8 +28,8 @@
  * Frame by frame: every animation is paused and set to the frame's time
  * before each screenshot, so the motion is exact however slow the machine.
  *
- * Writes store-assets/godaisy/app-store-header.mp4, and a still of the surf
- * day as app-store-header.png for the image slot.
+ * Writes store-assets/godaisy/app-store-{header,search}.mp4, and a still of
+ * the surf day as app-store-{header,search}.png for the image slots.
  *
  * Env overrides:
  *   OUT_DIR        default store-assets/godaisy
@@ -42,9 +48,22 @@ const OUT_DIR = process.env.OUT_DIR ?? path.join('store-assets', 'godaisy');
 const FPS = 30;
 const FADE_S = 0.45;
 
-// The page is laid out at half size and captured at 2×: 1920 × 823 → 3840 × 1646.
-const W = 1920, H = 823;
-const SAFE = { x: 1097 / 2, y: 493 / 2, w: 1646 / 2, h: 661 / 2 };
+// Each page is laid out at half size and captured at 2×.
+const PLACEMENTS = {
+  header: { w: 3840, h: 1646, safe: { x: 1097, y: 493, w: 1646, h: 661 } },
+  search: { w: 3840, h: 2560, safe: { x: 836, y: 765, w: 2168, h: 1030 } },
+} as const;
+type Placement = keyof typeof PLACEMENTS;
+
+let W = 0, H = 0, K = 1;
+let SAFE = { x: 0, y: 0, w: 0, h: 0 };
+function use(p: Placement) {
+  const c = PLACEMENTS[p];
+  W = c.w / 2; H = c.h / 2;
+  SAFE = { x: c.safe.x / 2, y: c.safe.y / 2, w: c.safe.w / 2, h: c.safe.h / 2 };
+  // Everything was sized for the header's safe area; the search one is bigger.
+  K = Math.min(SAFE.w / 823, SAFE.h / 330.5);
+}
 
 // The light sketch palette, as on the conditions page (styles/godaisy-call.css).
 const VARS = `
@@ -89,8 +108,10 @@ function atmosphere(day: DrawnDay['id'], groundY: number): string {
     }
     for (const [x, y] of spots(5, 60, 200)) line([[x - 12, y], [x - 4, y - 6], [x, y], [x + 4, y - 6], [x + 12, y]], 'var(--call-sk-pencil)', 1.4, 1 + r() * 2, 0.4);
   } else if (day === 'bike') {
-    line([[-10, groundY - 40], [300, groundY - 110], [500, groundY - 74]], 'var(--call-sk-pencil)', 1.1, 0.3);
-    line([[1410, groundY - 70], [1560, groundY - 140], [1760, groundY - 90], [W + 10, groundY - 120]], 'var(--call-sk-pencil)', 1.1, 0.3);
+    // hills either side, stopping short of the safe area
+    const l = SAFE.x - 50, rgt = SAFE.x + SAFE.w + 40;
+    line([[-10, groundY - 40], [l * 0.6, groundY - 110], [l, groundY - 74]], 'var(--call-sk-pencil)', 1.1, 0.3);
+    line([[rgt, groundY - 70], [rgt + (W - rgt) * 0.3, groundY - 140], [rgt + (W - rgt) * 0.68, groundY - 90], [W + 10, groundY - 120]], 'var(--call-sk-pencil)', 1.1, 0.3);
     for (const [x] of spots(6, groundY - 2, groundY - 1)) {
       line([[x, groundY], [x, groundY - 42]], 'var(--call-sk-ink)', 1.6, 1.5 + r(), 0.6);
       line([[x, groundY - 42], [x + 16, groundY - 37], [x, groundY - 32]], 'var(--call-sk-ink)', 1.2, 1.7 + r(), 0.4, true, 'var(--call-sk-moss)');
@@ -112,13 +133,13 @@ function atmosphere(day: DrawnDay['id'], groundY: number): string {
 function dayHtml(day: DrawnDay): string {
   // Text and drawing share the safe area: text on the left, drawing on the right.
   // Inset from the safe area's edges, so a tight crop never shaves a letter.
-  const inset = 44, textW = 270, gap = 14;
+  const inset = 44 * K, textW = 270 * K, gap = 14 * K;
   const svgW = SAFE.w - inset * 2 - textW - gap, scale = svgW / VIEW.w, svgH = VIEW.h * scale;
   const svgX = SAFE.x + inset + textW + gap, svgY = SAFE.y + (SAFE.h - svgH) / 2;
   const groundY = svgY + 320 * scale;
   return `
   <svg class="bg" viewBox="0 0 ${W} ${H}" width="${W}" height="${H}">${atmosphere(day.id, groundY)}</svg>
-  <div class="text" style="left:${SAFE.x + inset}px;top:${SAFE.y + 22}px;width:${textW}px;height:${SAFE.h - 44}px">
+  <div class="text" style="left:${SAFE.x + inset}px;top:${SAFE.y + 22 * K}px;width:${textW}px;height:${SAFE.h - 44 * K}px">
     <p class="kicker">${esc(day.kicker)}</p>
     <p class="lead">${esc(day.lead)}</p>
     <p class="verdict">${esc(day.verdict)}</p>
@@ -135,7 +156,7 @@ function pageHtml(): string {
 @font-face{font-family:'Daisy Serif';src:url(data:font/woff2;base64,${font('DaisySerif-Regular.woff2')}) format('woff2');font-weight:400}
 @font-face{font-family:'Daisy Serif';src:url(data:font/woff2;base64,${font('DaisySerif-Bold.woff2')}) format('woff2');font-weight:700}
 @font-face{font-family:'Daisy Serif';src:url(data:font/woff2;base64,${font('DaisySerif-Italic.woff2')}) format('woff2');font-weight:400;font-style:italic}
-:root{${VARS}}
+:root{${VARS} --k:${K}}
 html,body{margin:0;width:${W}px;height:${H}px;overflow:hidden;background:var(--call-page)}
 #stage{position:relative;width:${W}px;height:${H}px}
 .bg{position:absolute;inset:0}
@@ -143,10 +164,10 @@ html,body{margin:0;width:${W}px;height:${H}px;overflow:hidden;background:var(--c
 .art text{font-family:'Caveat',cursive}
 .text{position:absolute;display:flex;flex-direction:column;justify-content:center}
 .text p{margin:0}
-.kicker{font:italic 400 12px 'Daisy Serif',Georgia,serif;letter-spacing:.13em;text-transform:uppercase;color:var(--call-ink-4);margin-bottom:8px!important}
-.lead{font:400 19px 'Daisy Serif',Georgia,serif;color:var(--call-ink-3)}
-.verdict{font:700 42px/1 'Daisy Serif',Georgia,serif;letter-spacing:-.02em;color:var(--call-ink-1);margin:4px 0 10px!important;text-wrap:balance}
-.hand{font:700 21px/1.15 'Caveat',cursive;color:var(--call-sk-ink)}
+.kicker{font:italic 400 calc(12px*var(--k)) 'Daisy Serif',Georgia,serif;letter-spacing:.13em;text-transform:uppercase;color:var(--call-ink-4);margin-bottom:calc(8px*var(--k))!important}
+.lead{font:400 calc(19px*var(--k)) 'Daisy Serif',Georgia,serif;color:var(--call-ink-3)}
+.verdict{font:700 calc(42px*var(--k))/1 'Daisy Serif',Georgia,serif;letter-spacing:-.02em;color:var(--call-ink-1);margin:calc(4px*var(--k)) 0 calc(10px*var(--k))!important;text-wrap:balance}
+.hand{font:700 calc(21px*var(--k))/1.15 'Caveat',cursive;color:var(--call-sk-ink)}
 .draw{stroke-dasharray:var(--len,1400);stroke-dashoffset:var(--len,1400);animation:draw .8s ease-out forwards}
 .wash,.fade{opacity:0;animation:in .5s ease-out forwards}
 .pop{opacity:0;transform-box:fill-box;transform-origin:50% 100%;transform:scale(.4);animation:pop .35s cubic-bezier(.3,1.6,.6,1) forwards}
@@ -156,8 +177,9 @@ html,body{margin:0;width:${W}px;height:${H}px;overflow:hidden;background:var(--c
 </style></head><body><div id="stage"></div></body></html>`;
 }
 
-async function main() {
-  const frames = mkdtempSync(path.join(tmpdir(), 'gd-header-'));
+async function render(placement: Placement) {
+  use(placement);
+  const frames = mkdtempSync(path.join(tmpdir(), `gd-${placement}-`));
   const browser = await chromium.launch(process.env.CHROMIUM_PATH ? { executablePath: process.env.CHROMIUM_PATH } : {});
   const page = await browser.newPage({ viewport: { width: W, height: H }, deviceScaleFactor: 2 });
   await page.setContent(pageHtml(), { waitUntil: 'networkidle' });
@@ -187,7 +209,7 @@ async function main() {
       }, { ms, opacity });
       await page.screenshot({ path: path.join(frames, `${String(n).padStart(5, '0')}.png`) });
       if (day.id === 'surf' && f === Math.round(5.5 * FPS)) {
-        await page.screenshot({ path: path.join(OUT_DIR, 'app-store-header.png') });
+        await page.screenshot({ path: path.join(OUT_DIR, `app-store-${placement}.png`) });
       }
       n += 1;
     }
@@ -195,7 +217,7 @@ async function main() {
   }
   await browser.close();
 
-  const out = path.join(OUT_DIR, 'app-store-header.mp4');
+  const out = path.join(OUT_DIR, `app-store-${placement}.mp4`);
   execFileSync('ffmpeg', [
     '-y', '-loglevel', 'error',
     '-framerate', String(FPS), '-i', path.join(frames, '%05d.png'),
@@ -209,6 +231,12 @@ async function main() {
   ], { stdio: 'inherit' });
   rmSync(frames, { recursive: true, force: true });
   console.log(`${n} frames, ${(n / FPS).toFixed(1)} s → ${out}`);
+}
+
+async function main() {
+  const arg = process.argv[2] as Placement | undefined;
+  if (arg && !(arg in PLACEMENTS)) throw new Error(`Unknown placement "${arg}": use header or search`);
+  for (const p of arg ? [arg] : (Object.keys(PLACEMENTS) as Placement[])) await render(p);
 }
 
 main().catch((e) => {
