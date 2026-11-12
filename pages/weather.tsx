@@ -38,6 +38,9 @@ import { placeFromQuery, whyFromQuery } from '@/lib/godaisy/conditions/whyLink';
 import { seedOf } from '@/lib/godaisy/conditions/pencil';
 import { Drawing } from '@/components/conditions/Drawing';
 import { trackEvent } from '@/lib/analytics/events';
+import { shareCall } from '@/lib/godaisy/call/share';
+import { drawingCard, shareLink } from '@/lib/godaisy/conditions/shareCard';
+import type { DrawnSection } from '@/lib/godaisy/conditions/drawn';
 import { Spinner } from '@/components/call/Spinner';
 import { PageHeader } from '@/components/call/PageHeader';
 import GetTheApp from '@/components/GetTheApp';
@@ -85,6 +88,8 @@ function ConditionsPage({ place, lat, lon, coastal, day, verdict, weighed }: Wea
   /** The sea arrives separately and later — see below. */
   const [sea, setSea] = useState<'idle' | 'loading' | 'ready' | 'failed'>('idle');
   const [allOpen, setAllOpen] = useState(false);
+  /** Per section, while a card is being made and for a moment after it goes. */
+  const [sharing, setSharing] = useState<Record<string, 'working' | 'sent' | 'copied'>>({});
 
   /*
    * THE SEA IS FETCHED SECOND, NOT INSTEAD.
@@ -128,6 +133,40 @@ function ConditionsPage({ place, lat, lon, coastal, day, verdict, weighed }: Wea
     })();
     return () => { live = false; };
   }, [lat, lon, coastal]);
+
+  /*
+   * Send one drawing: a card made from the drawing on screen, the sentence as
+   * the text, and a link to the same place, day and section. Through The
+   * Call's own share, so the app gets the native sheet and a browser without
+   * Web Share gets a copied link.
+   */
+  async function shareSection(s: DrawnSection, el: Element | null) {
+    setSharing((m) => ({ ...m, [s.id]: 'working' }));
+    const url = shareLink({ origin: window.location.origin, place, lat, lon, coastal, day, section: s.id });
+    // The card is forwarded, so it says the date rather than "now".
+    const dateISO = readings?.daily?.[day]?.dateISO;
+    const dated = dateISO
+      ? new Intl.DateTimeFormat(L.intl, { weekday: 'long', day: 'numeric', month: 'long', timeZone: 'UTC' }).format(new Date(`${dateISO}T12:00:00Z`))
+      : when;
+    const card = await drawingCard({
+      svg: el?.querySelector('svg.gd-drawn-svg') ?? null,
+      kicker: t('page_kicker', { place, when: dated }),
+      sentence: s.sentence,
+      facts: s.facts,
+      site: window.location.host.replace(/^www\./, ''),
+    });
+    const result = await shareCall({ text: `${s.sentence} · ${place}`, url, ...(card ? { card } : {}), title: 'Go Daisy', fileName: `go-daisy-${s.id}.png` });
+    if (result.outcome !== 'cancelled' && result.outcome !== 'failed') {
+      trackEvent('conditions_shared', { section: s.id, day, method: result.method, with_card: result.withCard });
+    }
+    const done = result.outcome === 'shared' ? 'sent' : result.outcome === 'copied' ? 'copied' : null;
+    setSharing((m) => {
+      const next = { ...m };
+      if (done) next[s.id] = done; else delete next[s.id];
+      return next;
+    });
+    if (done) setTimeout(() => setSharing((m) => { const next = { ...m }; delete next[s.id]; return next; }), 2500);
+  }
 
   // "See every number" opens itself when the link asks for it.
   useEffect(() => {
@@ -187,7 +226,7 @@ function ConditionsPage({ place, lat, lon, coastal, day, verdict, weighed }: Wea
           )}
 
           {page.sections.map((s) => (
-            <section key={s.id} className="gd-drawn-sec">
+            <section key={s.id} id={s.id} className="gd-drawn-sec">
               <h2 className="call-label gd-drawn-label">
                 {s.title}
                 {/*
@@ -197,6 +236,20 @@ function ConditionsPage({ place, lat, lon, coastal, day, verdict, weighed }: Wea
                   */}
                 {s.because && s.because.score < 0.5 && (
                   <span className="gd-drawn-because">{t('page_held_back')}</span>
+                )}
+                {!s.pending && (
+                  <button
+                    type="button"
+                    className="gd-drawn-share"
+                    aria-label={`${t('share_drawing')}: ${s.title}`}
+                    disabled={sharing[s.id] === 'working'}
+                    onClick={(e) => shareSection(s, e.currentTarget.closest('section'))}
+                  >
+                    {sharing[s.id] === 'working' ? t('call_sending')
+                      : sharing[s.id] === 'sent' ? t('call_sent')
+                        : sharing[s.id] === 'copied' ? t('call_copied')
+                          : `${t('share_drawing')} ↗`}
+                  </button>
                 )}
               </h2>
               {s.pending ? (

@@ -794,6 +794,7 @@ export const pl: Locale = {
     call_sending: 'Wysyłanie…',
     call_sent: 'Wysłano',
     call_copied: 'Skopiowano',
+    share_drawing: 'Udostępnij',
     call_alt_label: 'Inna opcja na dziś',
     call_alt_next: 'A może: {name}?',
     call_alt_try: 'Spróbować czegoś innego?',

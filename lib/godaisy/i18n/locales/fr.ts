@@ -656,6 +656,7 @@ export const fr: Locale = {
     call_sending: 'Envoi…',
     call_sent: 'Envoyé',
     call_copied: 'Copié',
+    share_drawing: 'Partager',
     call_alt_label: 'Une autre option pour aujourd’hui',
     call_alt_next: 'Ou plutôt {name} ?',
     call_alt_try: 'Une autre idée ?',

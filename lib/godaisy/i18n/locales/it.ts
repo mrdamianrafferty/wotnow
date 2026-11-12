@@ -668,6 +668,7 @@ export const it: Locale = {
     call_sending: 'Invio…',
     call_sent: 'Inviato',
     call_copied: 'Copiato',
+    share_drawing: 'Condividi',
     call_alt_label: "Un'altra opzione per oggi",
     call_alt_next: 'Oppure {name}?',
     call_alt_try: "Un'altra idea?",

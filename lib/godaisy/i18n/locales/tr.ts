@@ -788,6 +788,7 @@ export const tr: Locale = {
     call_sending: 'Gönderiliyor…',
     call_sent: 'Gönderildi',
     call_copied: 'Kopyalandı',
+    share_drawing: 'Paylaş',
     call_alt_label: 'Bugün için başka bir seçenek',
     call_alt_next: 'Ya da {name}?',
     call_alt_try: 'Başka bir tane?',

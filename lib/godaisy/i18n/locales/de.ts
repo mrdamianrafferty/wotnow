@@ -669,6 +669,7 @@ export const de: Locale = {
     call_sending: 'Wird gesendet…',
     call_sent: 'Gesendet',
     call_copied: 'Kopiert',
+    share_drawing: 'Teilen',
     call_alt_label: 'Eine weitere Möglichkeit für heute',
     call_alt_next: 'Oder {name}?',
     call_alt_try: 'Etwas anderes?',

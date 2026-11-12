@@ -112,6 +112,8 @@ export type AnalyticsEvent =
    */
   | 'call_why_opened'
   | 'conditions_numbers_opened'
+  /** One drawing sent as a card, from its section's "Share". */
+  | 'conditions_shared'
 
   // Auth events
   | 'sign_in'

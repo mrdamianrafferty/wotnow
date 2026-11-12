@@ -671,6 +671,7 @@ export const nl: Locale = {
     call_sending: 'Versturen…',
     call_sent: 'Verstuurd',
     call_copied: 'Gekopieerd',
+    share_drawing: 'Delen',
     call_alt_label: 'Nog een optie voor vandaag',
     call_alt_next: 'Of {name}?',
     call_alt_try: 'Iets anders?',

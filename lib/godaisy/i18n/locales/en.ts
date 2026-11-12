@@ -415,6 +415,7 @@ export const en = {
     call_sending: 'Sending…',
     call_sent: 'Sent',
     call_copied: 'Copied',
+    share_drawing: 'Share',
     call_alt_label: 'Another option for today',
     call_alt_next: 'Or {name}?',
     call_alt_try: 'Try another?',

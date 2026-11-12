@@ -782,6 +782,7 @@ export const sv: Locale = {
     call_sending: 'Skickar…',
     call_sent: 'Skickat',
     call_copied: 'Kopierat',
+    share_drawing: 'Dela',
     call_alt_label: 'Ett annat alternativ för i dag',
     call_alt_next: 'Eller {name}?',
     call_alt_try: 'Prova ett annat?',

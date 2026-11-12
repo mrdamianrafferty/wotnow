@@ -1323,6 +1323,13 @@ h1.call-setup-question, h1.call-verdict { margin-block: 0; }
   padding: 16px 0 22px;
 }
 .gd-drawn-label { margin: 0; color: var(--call-ink-4); display: flex; gap: 10px; align-items: baseline; flex-wrap: wrap; }
+.gd-drawn-share {
+  margin-left: auto; padding: 4px 0 4px 12px; border: 0; background: none; cursor: pointer;
+  font-family: var(--call-font-body); font-style: normal; font-variant-caps: normal;
+  font-size: var(--call-caption); font-weight: 600; letter-spacing: 0; color: var(--call-moss-ink);
+}
+.gd-drawn-share:disabled { color: var(--call-ink-4); cursor: default; }
+.gd-drawn-share:focus-visible { outline: 2px solid var(--call-moss-ink); outline-offset: 2px; border-radius: 4px; }
 .gd-drawn-because {
   font-family: var(--call-font-body); font-style: normal; font-variant-caps: normal;
   font-size: var(--call-caption); color: var(--call-amber-ink);
