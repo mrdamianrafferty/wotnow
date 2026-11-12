@@ -1,5 +1,6 @@
 import { DocPage } from '@/components/call/DocPage';
 import Image from "next/image";
+import Link from 'next/link';
 
 export default function AboutUs() {
   return (
@@ -41,6 +42,11 @@ export default function AboutUs() {
           <p className="mb-4 leading-relaxed">
             Behind the scenes, it’s a humble operation — one developer, one trusty dog companion, and a passion for transforming data into meaningful, joyful experiences.
             We don’t have an army or a big corporation. We have ideas, determination, and lots of coffee.
+          </p>
+
+          <p className="mb-4 leading-relaxed">
+            Go Daisy is one of the apps made by <Link href="/studio" className="link">Daisy Studio</Link>, which also builds apps
+            for clubs, fisheries and outdoor organisations. <Link href="/studio/go-daisy" className="link">See how we built Go Daisy</Link>.
           </p>
 
           <p className="mb-6 leading-relaxed">
