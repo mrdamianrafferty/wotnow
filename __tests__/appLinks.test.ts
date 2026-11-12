@@ -62,3 +62,24 @@ describe('a link the app is handed keeps its place, day and section', () => {
     expect(await handleDeepLink(url)).toEqual({ handled: true, path: path_ });
   });
 });
+
+describe('Android: assetlinks.json proves the Go Daisy app owns godaisy.io', () => {
+  const links = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'public', '.well-known', 'assetlinks.json'), 'utf8')) as
+    Array<{ relation: string[]; target: { package_name: string; sha256_cert_fingerprints: string[] } }>;
+  const go = links.find((l) => l.target.package_name === 'io.godaisy.app')!;
+
+  it('names the Play app signing key — the one installed apps carry — and the upload key', () => {
+    expect(go.relation).toContain('delegate_permission/common.handle_all_urls');
+    expect(go.target.sha256_cert_fingerprints).toEqual([
+      // Play Console → App signing → App signing key certificate. Without
+      // this one, no app installed from Play ever verifies.
+      '61:93:12:FF:0F:13:ED:67:3B:D3:F4:97:A6:CF:33:C5:90:35:DE:A0:44:66:44:5C:51:EF:79:C2:71:63:2D:FA',
+      // The upload key, so a release build signed locally verifies too.
+      '3C:14:FE:2F:F3:AE:BB:9B:A0:01:A7:59:41:0F:C1:10:AB:BA:E7:55:48:72:70:52:24:FF:5C:D6:27:88:4B:F0',
+    ]);
+  });
+
+  it('carries only well-formed fingerprints for it', () => {
+    for (const f of go.target.sha256_cert_fingerprints) expect(f).toMatch(/^([0-9A-F]{2}:){31}[0-9A-F]{2}$/);
+  });
+});

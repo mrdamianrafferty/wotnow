@@ -1,26 +1,39 @@
 [
   {
-    "relation": ["delegate_permission/common.handle_all_urls"],
+    "relation": [
+      "delegate_permission/common.handle_all_urls"
+    ],
     "target": {
       "namespace": "android_app",
       "package_name": "eu.fishfindr.app",
-      "sha256_cert_fingerprints": ["TODO:FINDR_CERT_SHA256"]
+      "sha256_cert_fingerprints": [
+        "TODO:FINDR_CERT_SHA256"
+      ]
     }
   },
   {
-    "relation": ["delegate_permission/common.handle_all_urls"],
+    "relation": [
+      "delegate_permission/common.handle_all_urls"
+    ],
     "target": {
       "namespace": "android_app",
       "package_name": "io.godaisy.app",
-      "sha256_cert_fingerprints": ["TODO:GODAISY_CERT_SHA256"]
+      "sha256_cert_fingerprints": [
+        "61:93:12:FF:0F:13:ED:67:3B:D3:F4:97:A6:CF:33:C5:90:35:DE:A0:44:66:44:5C:51:EF:79:C2:71:63:2D:FA",
+        "3C:14:FE:2F:F3:AE:BB:9B:A0:01:A7:59:41:0F:C1:10:AB:BA:E7:55:48:72:70:52:24:FF:5C:D6:27:88:4B:F0"
+      ]
     }
   },
   {
-    "relation": ["delegate_permission/common.handle_all_urls"],
+    "relation": [
+      "delegate_permission/common.handle_all_urls"
+    ],
     "target": {
       "namespace": "android_app",
       "package_name": "io.growdaisy.app",
-      "sha256_cert_fingerprints": ["TODO:GROWDAISY_CERT_SHA256"]
+      "sha256_cert_fingerprints": [
+        "TODO:GROWDAISY_CERT_SHA256"
+      ]
     }
   }
 ]
