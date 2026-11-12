@@ -457,6 +457,7 @@ function CallScreen({ slug, place, days, photos, indoor, coords, coastal, error 
               * the same readings over the call; the page says them instead.
               */
             onWhy={async () => {
+              trackEvent('call_why_opened', { day_index: dayIndex, activity: option.activityId, band: option.band });
               await router.replace({ query: { ...router.query, day: String(dayIndex) } }, undefined, { shallow: true, scroll: false });
               await router.push(whyHref({
                 place, lat: coords.lat, lon: coords.lon, coastal,

@@ -39,6 +39,8 @@ export interface ShareCallInput {
   card?: Blob;
   /** For the native sheet's own title, and Android's dialog. */
   title?: string;
+  /** What the attached image is called. The call's own card is the default. */
+  fileName?: string;
 }
 
 export interface ShareCallResult {
@@ -103,7 +105,7 @@ async function shareNative(input: ShareCallInput): Promise<ShareCallResult> {
       // A fresh name each time: a share sheet holding a stale file from an
       // earlier day is worse than one holding no file.
       const written = await Filesystem.writeFile({
-        path: `the-call-${Date.now()}.png`,
+        path: `${(input.fileName ?? 'the-call.png').replace(/\.png$/, '')}-${Date.now()}.png`,
         data,
         directory: Directory.Cache,
       });
@@ -193,7 +195,7 @@ export async function shareCall(input: ShareCallInput): Promise<ShareCallResult>
   let withCard = false;
   if (input.card && typeof navigator.canShare === 'function') {
     try {
-      const file = new File([input.card], 'the-call.png', { type: 'image/png' });
+      const file = new File([input.card], input.fileName ?? 'the-call.png', { type: 'image/png' });
       if (navigator.canShare({ files: [file] })) {
         payload.files = [file];
         withCard = true;

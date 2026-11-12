@@ -47,6 +47,8 @@ export interface Readings {
     waveHeightM?: number;
     /** WMO code: 45/48 fog, 71-77 and 85/86 snow, 95+ thunder. */
     weatherCode?: number;
+    /** UV index for the hour. */
+    uvi?: number;
     /**
      * Centimetres. (Until 12 Nov 2026 this was Open-Meteo's metres passed
      * through unconverted — Tromsø's 9 cm arrived as 0.08.)

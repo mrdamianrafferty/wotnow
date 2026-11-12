@@ -67,6 +67,14 @@ export interface DaypartAggregate {
    * about which weather was outside.
    */
   freezingRainHours?: number;
+  /**
+   * The heaviest hour of snowfall in this part, mm per hour.
+   *
+   * Open-Meteo's `snowfall` is centimetres in the preceding hour, so ×10. The
+   * peak rather than the mean: an hour of heavy snow is what shuts a road or
+   * a pitch, and averaging it with three dry hours would hide it.
+   */
+  snowfallRateMmH?: number;
 }
 
 /** The three parts a call can name. */
@@ -143,6 +151,7 @@ const DEFAULT_FIELDS = {
   soilMoisture: 'soil_moisture_0_to_7cm',
   cloudCover: 'cloud_cover',
   weatherCode: 'weather_code',
+  snowfall: 'snowfall',
 } as const;
 
 const mean = (a?: number[]) => (a?.length ? a.reduce((x, y) => x + y, 0) / a.length : undefined);
@@ -228,6 +237,7 @@ export function aggregateDayparts(
         freezingRainHours: bag.weatherCode
           ? bag.weatherCode.filter((c) => c === 56 || c === 57 || c === 66 || c === 67).length
           : undefined,
+        snowfallRateMmH: bag.snowfall ? Math.round(max(bag.snowfall)! * 100) / 10 : undefined,
       };
     }
   }

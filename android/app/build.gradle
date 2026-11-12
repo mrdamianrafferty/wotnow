@@ -26,6 +26,12 @@ android {
         versionCode 1
         versionName "1.0.0"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+        // App Links paths (see the HTTPS intent-filter in the main manifest).
+        // Every path by default; a flavour narrows them by overriding these.
+        manifestPlaceholders = [
+            appLinkPath1: ".*", appLinkPath2: ".*", appLinkPath3: ".*",
+            appLinkPath4: ".*", appLinkPath5: ".*", appLinkPath6: ".*"
+        ]
         aaptOptions {
              // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.
              // Default: https://android.googlesource.com/platform/frameworks/base/+/282e181b58cf72b6ca770dc7ca5f91f135444502/tools/aapt/AaptAssets.cpp#61
@@ -94,7 +100,17 @@ android {
             buildConfigField "String", "SERVER_URL", "\"https://godaisy.io\""
             manifestPlaceholders = [
                 deepLinkScheme: "godaisy",
-                deepLinkHost: "godaisy.io"
+                deepLinkHost: "godaisy.io",
+                // Only Go Daisy's own links: godaisy.io also serves /grow and
+                // /findr, which belong to the other apps. Mirrors the iOS
+                // apple-app-site-association (spot pages are iOS-only: Android
+                // patterns cannot exclude /grow/*).
+                appLinkPath1: "/call",
+                appLinkPath2: "/weather",
+                appLinkPath3: "/share/.*",
+                appLinkPath4: "/invite/.*",
+                appLinkPath5: "/poll/.*",
+                appLinkPath6: "/auth/callback.*"
             ]
         }
 

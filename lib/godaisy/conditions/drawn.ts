@@ -47,7 +47,7 @@ export type Drawing =
     gapWindy?: boolean;
   }
   | { kind: 'flags'; flags: Array<{ kmh: number; label?: string }>; first: string; last: string }
-  | { kind: 'umbrellas'; days: Array<{ label: string; wet: Wetness; note?: string; strong?: boolean }> }
+  | { kind: 'umbrellas'; days: Array<{ label: string; wet: Wetness; note?: string; strong?: boolean; thunder?: boolean }> }
   | { kind: 'wave'; waveM: number; band: WaveBand; bandLabel?: string; airC?: number; waterC?: number; wear?: SeaWear; wearLabel?: string }
   | {
     kind: 'tide';
@@ -56,7 +56,11 @@ export type Drawing =
     to: { h: number; m: number; type: string; label: string };
     rangeM: number;
   }
-  | { kind: 'daylight'; riseH: number; setH: number; riseLabel: string; setLabel: string; lengthLabel: string }
+  | {
+    kind: 'daylight'; riseH: number; setH: number; riseLabel: string; setLabel: string; lengthLabel: string;
+    /** Whole local hours with UV 6 or more, and the label for them. */
+    uvHours?: number[]; uvLabel?: string;
+  }
   | { kind: 'dots'; value: number; limit: number }
   | { kind: 'footwear'; index: number; frost?: { lowC: number; icy: boolean } }
   | { kind: 'snowDepth'; cm: number }
@@ -190,6 +194,11 @@ interface Ctx {
 type Hour = NonNullable<Readings['hourly']>[number] & { t: number; h: number; date: string };
 
 const FOG_CODES = new Set([45, 48]);
+/** Pollen field → [locale key, grains/m³ at which it counts as high]. */
+const POLLEN_HIGH: Record<string, [string, number]> = {
+  grass: ['grass', 50], birch_pollen: ['birch', 80], alder_pollen: ['alder', 80],
+  olive: ['olive', 200], ragweed_pollen: ['ragweed', 20], mugwort_pollen: ['mugwort', 30],
+};
 const SNOW_CODES = new Set([71, 73, 75, 77, 85, 86]);
 const isFog = (x: Hour) => num(x.weatherCode) && FOG_CODES.has(x.weatherCode);
 
@@ -355,7 +364,8 @@ function wind(ctx: Ctx): DrawnSection | null {
     return {
       id, title: title(ctx, id),
       sentence: T(ctx, 'wind_avg_day', { f, land: land(f) }),
-      drawing: null,
+      // Past the hourly forecast there is one number for the day, so one flag.
+      drawing: { kind: 'flags', flags: [{ kmh: kmh(d.windMS) }], first: T(ctx, 'wind_kmh', { kmh: r0(kmh(d.windMS)) }), last: '' },
       facts: [{ label: T(ctx, 'fact_average'), value: T(ctx, 'wind_kmh', { kmh: r0(kmh(d.windMS)) }) }],
     };
   }
@@ -404,14 +414,23 @@ function snowsOn(ctx: Ctx, date?: string): boolean {
     && ((num(x.snowfallRateMmH) && x.snowfallRateMmH >= 1) || (num(x.weatherCode) && SNOW_CODES.has(x.weatherCode))));
 }
 
+/** Thunder that day: WMO 95-99 in the hours, or the summary saying so. */
+function thunderOn(ctx: Ctx, d: { dateISO?: string; summary?: string }): boolean {
+  if (/thunder/.test((d.summary ?? '').toLowerCase())) return true;
+  return Boolean(d.dateISO) && ctx.hours.some((x) => x.date === d.dateISO && num(x.weatherCode) && x.weatherCode >= 95);
+}
+
 function rain(ctx: Ctx): DrawnSection | null {
   const { L } = ctx;
   const daily = ctx.r.daily ?? [];
   if (!daily[ctx.day]) return null;
   const from = ctx.day;
-  const span = daily.slice(from, from + 7).map((d, k) => ({
-    i: from + k, d, w: (snowsOn(ctx, d.dateISO) ? 'snow' : wetness(d)) as Wetness,
-  }));
+  const span = daily.slice(from, from + 7).map((d, k) => {
+    const thunder = thunderOn(ctx, d);
+    const w0 = (snowsOn(ctx, d.dateISO) ? 'snow' : wetness(d)) as Wetness;
+    // A storm is never a dry day, whatever the total says.
+    return { i: from + k, d, thunder, w: (thunder && w0 === 'dry' ? 'light' : w0) as Wetness };
+  });
   const sel = span[0];
   const firstWet = span.slice(1).find((x) => x.w !== 'dry');
   const firstDry = span.slice(1).find((x) => x.w === 'dry');
@@ -425,13 +444,16 @@ function rain(ctx: Ctx): DrawnSection | null {
       notes.set(firstWet.i, T(ctx, 'note_first_snow'));
     } else if (firstWet) {
       sentence = T(ctx, 'rain_dry_umbrella', { until: dayWord(ctx, firstWet.i, 'until') });
-      notes.set(firstWet.i, T(ctx, 'note_first_rain'));
+      notes.set(firstWet.i, T(ctx, firstWet.thunder ? 'note_thunder' : 'note_first_rain'));
     } else {
       sentence = T(ctx, 'rain_none');
     }
   } else {
     if (sel.w === 'snow') {
       sentence = T(ctx, 'rain_snow', { on: dayWord(ctx, sel.i) });
+    } else if (sel.thunder) {
+      const mm = num(sel.d.precipMM) && sel.d.precipMM >= 1 ? T(ctx, 'rain_mm', { mm: r0(sel.d.precipMM) }) : '';
+      sentence = T(ctx, 'rain_thunder', { on: dayWord(ctx, sel.i), mm });
     } else {
       const mm = num(sel.d.precipMM) && sel.d.precipMM >= 1 ? T(ctx, 'rain_mm', { mm: r0(sel.d.precipMM) }) : '';
       sentence = T(ctx, sel.w === 'light' ? 'rain_showers' : 'rain_rain', { on: dayWord(ctx, sel.i), mm });
@@ -442,6 +464,8 @@ function rain(ctx: Ctx): DrawnSection | null {
     }
   }
   sentence = upperFirst(L, sentence);
+  // Thunder later in the week is named under its day, whatever the sentence leads with.
+  for (const x of span.slice(1)) if (x.thunder && !notes.has(x.i)) notes.set(x.i, T(ctx, 'note_thunder'));
 
   const mmFact = (v: number, snow: boolean) => T(ctx, snow ? 'mm_as_water' : 'mm_plain', { mm: f1(ctx, v) });
   return {
@@ -453,6 +477,7 @@ function rain(ctx: Ctx): DrawnSection | null {
         label: x.d.dateISO ? weekday(L, x.d.dateISO, 'short') : '',
         wet: x.w,
         strong: x.i === from || notes.has(x.i),
+        thunder: x.thunder || undefined,
         note: x.i === from ? T(ctx, from === 0 ? 'note_today' : 'note_this_day') : notes.get(x.i),
       })),
     },
@@ -643,8 +668,29 @@ function sky(ctx: Ctx): DrawnSection | null {
       : T(ctx, day === 0 && first.date !== ctx.date ? 'fog_likely_tonight' : 'fog_likely', { time: ck(ctx, first.h) });
   }
 
+  /*
+   * UV, when it is high. 6 and over is the WHO's "high", the point at which
+   * shade around midday stops being optional; below it the sky section has
+   * nothing to say about it beyond the small print.
+   */
+  const uvHours = ctx.hours.filter((x) => x.date === ctx.date && num(x.uvi) && x.uvi >= 6);
+  let uvNote = '';
+  let uvLabel: string | undefined;
+  if (uvHours.length) {
+    const peak = Math.max(...uvHours.map((x) => x.uvi as number));
+    uvNote = T(ctx, 'sky_uv', {
+      word: T(ctx, UV_KEY(peak)),
+      from: ck(ctx, Math.floor(uvHours[0].h)),
+      to: ck(ctx, Math.floor(uvHours[uvHours.length - 1].h) + 1),
+    });
+    uvLabel = T(ctx, 'draw_uv', { n: r0(peak) });
+  }
+  const notesOf = (base: string) => [fogNote, uvNote].filter(Boolean)
+    .reduce((acc, n) => (acc ? T(ctx, 'sky_join', { base: acc, fog: n }) : upperFirst(L, n)), base);
+
   if (!light) {
-    return fogNote ? { id, title: title(ctx, id), sentence: fogNote, drawing: null, facts } : null;
+    const said = notesOf('');
+    return said ? { id, title: title(ctx, id), sentence: said, drawing: null, facts } : null;
   }
   const len = setH - riseH;
   const half = Math.round(len * 2) / 2;
@@ -655,9 +701,10 @@ function sky(ctx: Ctx): DrawnSection | null {
     : T(ctx, 'sky_long_day', { hours, time: ck(ctx, setH) });
   return {
     id, title: title(ctx, id),
-    sentence: fogNote ? T(ctx, 'sky_join', { base, fog: fogNote }) : base,
+    sentence: notesOf(base),
     drawing: {
       kind: 'daylight', riseH, setH,
+      ...(uvHours.length ? { uvHours: uvHours.map((x) => Math.floor(x.h)), uvLabel } : {}),
       riseLabel: T(ctx, 'draw_sunrise', { time: ck(ctx, riseH) }),
       setLabel: T(ctx, 'draw_sunset', { time: ck(ctx, setH) }),
       lengthLabel: T(ctx, 'draw_daylength', { h: Math.floor(len), m: r0((len % 1) * 60) }),
@@ -683,7 +730,18 @@ function air(ctx: Ctx): DrawnSection | null {
   }
   if (!num(pm)) return null;
   const f = pm / WHO_PM25_24H;
-  const sentence = T(ctx, f < 1 / 3 ? 'air_clean' : f < 0.6 ? 'air_half' : f < 1 ? 'air_most' : 'air_over');
+  let sentence = T(ctx, f < 1 / 3 ? 'air_clean' : f < 0.6 ? 'air_half' : f < 1 ? 'air_most' : 'air_over');
+  /*
+   * Pollen, only when it is high: the commonly used "high" bands, in grains
+   * per cubic metre. The most over its line is named; a hay-fever sufferer
+   * needs to know it is a bad day, not a league table.
+   */
+  let worst: { key: string; over: number } | null = null;
+  for (const [field, [key, high]] of Object.entries(POLLEN_HIGH)) {
+    const v = r.pollen?.[field];
+    if (typeof v === 'number' && v >= high && (!worst || v / high > worst.over)) worst = { key, over: v / high };
+  }
+  if (worst) sentence = T(ctx, 'sky_join', { base: sentence, fog: T(ctx, 'air_pollen_high', { kind: T(ctx, `pollen_${worst.key}` as TKey) }) });
   return { id: 'air', title: title(ctx, 'air'), sentence, drawing: { kind: 'dots', value: pm, limit: WHO_PM25_24H }, facts };
 }
 

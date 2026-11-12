@@ -327,6 +327,9 @@ function partWeather(day: WeatherData, p: DaypartAggregate): WeatherData {
     ...set('humidity', p.humidity),
     ...set('clouds', p.cloudCover),
     ...set('soilMoisture', typeof p.soilMoisture === 'number' ? p.soilMoisture * 100 : undefined),
+    // Each part's own heaviest hour, so a snowy afternoon does not cost the
+    // morning. Snow DEPTH is not here on purpose: it lies all day.
+    ...set('snowfallRateMmH', p.snowfallRateMmH),
   };
 }
 
@@ -491,6 +494,8 @@ async function fetchForecastForLocationUncached(
     freezing_rain_hours?: number; visibility?: number; soil_moisture?: number;
     /** Daytime snow lying, cm. Absent on the OpenWeather backstop. */
     snow_depth_cm?: number;
+    /** Daytime peak snowfall, mm per hour. Absent on the OpenWeather backstop. */
+    snowfall_rate_mm_h?: number;
     rain_window?: 'overnight' | 'morning' | 'afternoon' | 'evening' | 'spread';
     clouds?: number; humidity?: number;
   };
@@ -557,6 +562,7 @@ async function fetchForecastForLocationUncached(
                not zero, when the source has none: a fabricated 0 would read
                as a measured bare ground. */
             snowDepthCm: d.snow_depth_cm,
+            snowfallRateMmH: d.snowfall_rate_mm_h,
             clouds: d.clouds,
             humidity: d.humidity,
           },

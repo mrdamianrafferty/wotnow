@@ -118,7 +118,8 @@ const SNOW_ACTIVITY_THRESHOLDS: Record<string, Partial<{
   rock_hopping: { caution: 0.1, unsafe: 1, max_snowfall: 1, caution_snowfall: 0.5 },
 
   // Running and cardio
-  running: { caution: 1, difficult: 3, unsafe: 5, max_snowfall: 10, caution_snowfall: 2.5 },
+  // Caution from 2 cm, not 1: a dusting took a dry 80 to 60 at Val Thorens.
+  running: { caution: 2, difficult: 3, unsafe: 5, max_snowfall: 10, caution_snowfall: 2.5 },
   trail_running: { caution: 5, difficult: 15, unsafe: 30, max_snowfall: 5, caution_snowfall: 2.5 },
   cycling: { caution: 1, difficult: 3, unsafe: 5, max_snowfall: 0.5 },
   urban_exploring: { caution: 3, difficult: 10, unsafe: 15, max_snowfall: 10, caution_snowfall: 5 },

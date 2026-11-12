@@ -97,7 +97,7 @@ export const natureActivities: ActivityType[] = [
       'gust>16',
       'precipitation>2',
       'visibility<2',
-      'snowfallRateMmH>1',
+      'snowfallRateMmH>5',
     ],
 
     indoorAlternative: 'Review your field guide and update your sightings log'

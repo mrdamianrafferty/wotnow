@@ -104,6 +104,16 @@ export type AnalyticsEvent =
   | 'call_shared'
   | 'call_share_failed'
   | 'call_alternate_viewed'
+  /**
+   * The drawn conditions page. `call_why_opened` is a tap on "Why?" after the
+   * verdict; `conditions_numbers_opened` is someone opening "See every number"
+   * under the drawings. Together they say whether the drawings are read or
+   * skipped for the table.
+   */
+  | 'call_why_opened'
+  | 'conditions_numbers_opened'
+  /** One drawing sent as a card, from its section's "Share". */
+  | 'conditions_shared'
 
   // Auth events
   | 'sign_in'

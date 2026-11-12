@@ -34,12 +34,20 @@
                 <data android:scheme="${deepLinkScheme}" />
             </intent-filter>
 
-            <!-- HTTPS App Links -->
+            <!-- HTTPS App Links. Which paths each app opens comes from its flavour:
+                 the defaults (".*", every path) keep Findr and Grow as they were;
+                 Go Daisy names its own, because godaisy.io also serves /grow. -->
             <intent-filter android:autoVerify="true">
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
                 <data android:scheme="https" android:host="${deepLinkHost}" />
+                <data android:pathPattern="${appLinkPath1}" />
+                <data android:pathPattern="${appLinkPath2}" />
+                <data android:pathPattern="${appLinkPath3}" />
+                <data android:pathPattern="${appLinkPath4}" />
+                <data android:pathPattern="${appLinkPath5}" />
+                <data android:pathPattern="${appLinkPath6}" />
             </intent-filter>
 
         </activity>
