@@ -453,6 +453,8 @@ export const nl: Locale = {
     rain_then_dry: ', daarna {on} droog',
     note_first_snow: 'eerste sneeuw',
     note_first_rain: 'eerste regen',
+    rain_thunder: 'Onweer {on}{mm}',
+    note_thunder: 'onweer',
     note_dry_again: 'weer droog',
     note_today: 'vandaag',
     note_this_day: 'deze dag',
@@ -536,6 +538,8 @@ export const nl: Locale = {
     sky_short_day: 'Ongeveer {hours} daglicht, en om {time} is het weg',
     sky_long_day: 'Licht tot {time}: ongeveer {hours}',
     sky_join: '{base}. {fog}',
+    sky_uv: 'UV {word} van {from} tot {to}',
+    draw_uv: 'UV {n}',
     hours_one: '{n} uur',
     hours_other: '{n} uur',
     far_under: 'minder dan {m} m, nog geen voetbalveld',
@@ -574,6 +578,8 @@ export const nl: Locale = {
     draw_today_value: 'vandaag {v}',
     draw_who_limit: 'WHO-daglimiet {n}',
     draw_dust_key: 'fijnstof (PM2.5), µg/m³: één stip per eenheid',
+    air_pollen_high: 'Veel pollen: {kind}',
+    draw_dust_key_five: 'fijnstof (PM2.5), µg/m³: vijf per stip',
 
     /* ── Conditions: underfoot ───────────────────────────────────────── */
     snow_dusting: 'Een dun laagje sneeuw op de grond',

@@ -436,6 +436,8 @@ export const es: Locale = {
     rain_then_dry: ', y seco {on}',
     note_first_snow: 'primera nieve',
     note_first_rain: 'primera lluvia',
+    rain_thunder: 'Tormentas {on}{mm}',
+    note_thunder: 'tormenta',
     note_dry_again: 'seco otra vez',
     note_today: 'hoy',
     note_this_day: 'este día',
@@ -519,6 +521,8 @@ export const es: Locale = {
     sky_short_day: 'Unas {hours} de luz, y a las {time} se acaba',
     sky_long_day: 'Luz hasta las {time}: unas {hours}',
     sky_join: '{base}. {fog}',
+    sky_uv: 'UV {word} de {from} a {to}',
+    draw_uv: 'UV {n}',
     hours_one: '{n} hora',
     hours_other: '{n} horas',
     far_under: 'menos de {m} m, ni un campo de fútbol',
@@ -557,6 +561,8 @@ export const es: Locale = {
     draw_today_value: 'hoy {v}',
     draw_who_limit: 'límite OMS {n}',
     draw_dust_key: 'polvo fino (PM2.5), µg/m³: un punto cada uno',
+    air_pollen_high: 'Polen alto: {kind}',
+    draw_dust_key_five: 'polvo fino (PM2.5), µg/m³: cinco por punto',
 
     /* ── Conditions: underfoot ───────────────────────────────────────── */
     snow_dusting: 'Una capa fina de nieve en el suelo',

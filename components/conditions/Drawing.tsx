@@ -209,7 +209,8 @@ function Flags({ d, seed }: { d: Extract<Model, { kind: 'flags' }>; seed: number
     <Svg h={200}>
       <Line pts={[[8, base], [352, base]]} seed={seed} stroke={C.pencil} w={1.3} />
       {d.flags.map((f, i) => {
-        const x = x0 + i * step;
+        // One flag (a day past the hourly forecast) stands in the middle.
+        const x = n === 1 ? 180 : x0 + i * step;
         const L = 11 + Math.min(f.kmh, 60) * 0.42;
         const droop = ((1 - Math.min(f.kmh, 38) / 38) * 72 * Math.PI) / 180;
         const h = 7 + Math.min(f.kmh, 60) * 0.07;
@@ -238,6 +239,9 @@ function Umbrellas({ d, seed }: { d: Extract<Model, { kind: 'umbrellas' }>; seed
         const r = rng(seed + 60 + i);
         return (
           <g key={i}>
+            {day.thunder && (
+              <Shape pts={[[x + 12, 4], [x + 23, 4], [x + 17, 18], [x + 25, 18], [x + 9, 42], [x + 13, 25], [x + 5, 25]]} seed={seed + 90 + i} fill={C.amber} w={1.2} />
+            )}
             {day.wet === 'snow' ? (
               <>
                 <Flake x={x} y={70} r={17} seed={seed + 30 + i * 40} />
@@ -328,7 +332,8 @@ function Tide({ d, seed }: { d: Extract<Model, { kind: 'tide' }>; seed: number }
   // The same bands the sentence uses (`inPeople`), so the drawing never shows
   // one person under a sentence that says two.
   const people = d.rangeM / PERSON_M;
-  const stack = people < 1.75 ? 1 : people < 2.75 ? 2 : Math.min(3, Math.round(people));
+  // No cap at three: a 12 m Bristol Channel tide is seven people, as its sentence says.
+  const stack = people < 1.75 ? 1 : people < 2.75 ? 2 : Math.min(8, Math.round(people));
   const andABit = (people >= 1.15 && people < 1.75) || (people >= 2.15 && people < 2.75);
   const ticks: number[] = [];
   for (let h = Math.ceil(h0 / 2) * 2; h <= h1; h += 2) ticks.push(h);
@@ -340,7 +345,7 @@ function Tide({ d, seed }: { d: Extract<Model, { kind: 'tide' }>; seed: number }
       <Line pts={curve} seed={seed + 6} stroke={C.waterInk} w={2.4} />
       <Line pts={[[L - 4, B], [352, B]]} seed={seed + 7} stroke={C.pencil} w={1.3} />
       {ticks.map((h) => <Txt key={h} x={X(h)} y={B + 20} size={15} anchor="middle" fill={C.pencil}>{tickLabel(h)}</Txt>)}
-      {Array.from({ length: hi - lo + 1 }, (_, k) => lo + k).map((m) => (
+      {Array.from({ length: hi - lo + 1 }, (_, k) => lo + k).filter((m) => hi - lo <= 8 || m % 2 === 0).map((m) => (
         <Txt key={m} x={L - 8} y={Y(m) + 5} size={14} anchor="end" fill={C.pencil}>{`${m}m`}</Txt>
       ))}
       {[low, high].map((p, i) => (
@@ -398,6 +403,15 @@ function Daylight({ d, seed }: { d: Extract<Model, { kind: 'daylight' }>; seed: 
       })}
       <Txt x={x0 - r} y={14} size={15} fill={C.pencil}>{L.clock === '24h' ? '00:00' : t('draw_midnight')}</Txt>
       <Txt x={x0 - r} y={78} size={15} fill={C.pencil}>{L.clock === '24h' ? '12:00' : t('draw_noon')}</Txt>
+      {/* High-UV hours get rays; the label sits at the end of the noon row's caption line. */}
+      {d.uvHours?.map((hr) => {
+        const { cx, cy } = cell(hr);
+        return [45, 135, 225, 315].map((a, k) => {
+          const t0 = (a * Math.PI) / 180;
+          return <Line key={`${hr}-${k}`} pts={[[cx + Math.cos(t0) * (r + 2), cy + Math.sin(t0) * (r + 2)], [cx + Math.cos(t0) * (r + 6), cy + Math.sin(t0) * (r + 6)]]} seed={seed + 400 + hr * 4 + k} stroke={C.warm} w={1.3} />;
+        });
+      })}
+      {d.uvLabel && <Txt x={350} y={78} size={15} anchor="end" bold fill={C.warm}>{d.uvLabel}</Txt>}
       <Txt x={350} y={14} size={15} anchor="end" fill={C.pencil}>{d.lengthLabel}</Txt>
       <Txt x={clampX(rise.cx)} y={rise.cy + 30} size={17} anchor="middle" bold>{d.riseLabel}</Txt>
       <Txt x={clampX(set.cx)} y={set.cy + 30} size={17} anchor="middle" bold fill={C.warm}>{d.setLabel}</Txt>
@@ -408,25 +422,29 @@ function Daylight({ d, seed }: { d: Extract<Model, { kind: 'daylight' }>; seed: 
 function Dots({ d, seed }: { d: Extract<Model, { kind: 'dots' }>; seed: number }) {
   const { t, L } = useGdLocale();
   const id = useId().replace(/:/g, '');
-  const n = Math.min(30, Math.max(d.limit, Math.ceil(d.value)));
+  // Past 30, one dot is five, or a smoggy day would need a hundred dots.
+  const unit = d.value > 30 ? 5 : 1;
+  const v = d.value / unit;
+  const lim = d.limit / unit;
+  const n = Math.min(30, Math.max(lim, Math.ceil(v)));
   const step = Math.min(22.5, 330 / n);
   const r = Math.min(8, step * 0.36);
   const x0 = 20;
   const cy = 56;
-  const limitX = x0 + (d.limit - 1) * step + r + 4;
+  const limitX = x0 + (lim - 1) * step + r + 4;
   return (
     <Svg h={112}>
       <defs>
         {Array.from({ length: n }, (_, i) => {
-          const f = Math.max(0, Math.min(1, d.value - i));
+          const f = Math.max(0, Math.min(1, v - i));
           const cx = x0 + i * step;
           return f > 0 ? <clipPath key={i} id={`${id}a${i}`}><rect x={cx - r} y={cy - r - 2} width={2 * r * f} height={2 * r + 4} /></clipPath> : null;
         })}
       </defs>
       {Array.from({ length: n }, (_, i) => {
-        const f = Math.max(0, Math.min(1, d.value - i));
+        const f = Math.max(0, Math.min(1, v - i));
         const cx = x0 + i * step;
-        const over = i >= d.limit;
+        const over = i >= lim;
         return (
           <g key={i}>
             {f > 0 && <path d={rough(circle(cx, cy, r, 12), seed + i, 0.8, true)} fill={over ? C.warm : C.moss} clipPath={`url(#${id}a${i})`} />}
@@ -437,7 +455,7 @@ function Dots({ d, seed }: { d: Extract<Model, { kind: 'dots' }>; seed: number }
       <Line pts={[[limitX, cy - 18], [limitX, cy + 18]]} seed={seed + 50} stroke={C.warm} w={1.8} />
       <Txt x={x0 - r} y={24} size={19} bold fill={d.value > d.limit ? C.warm : C.moss}>{t('draw_today_value', { v: fmt(L, d.value, 1) })}</Txt>
       <Txt x={350} y={24} size={17} anchor="end" fill={C.warm}>{t('draw_who_limit', { n: d.limit })}</Txt>
-      <Txt x={x0 - r} y={100} size={16} fill={C.pencil}>{t('draw_dust_key')}</Txt>
+      <Txt x={x0 - r} y={100} size={16} fill={C.pencil}>{t(unit === 5 ? 'draw_dust_key_five' : 'draw_dust_key')}</Txt>
     </Svg>
   );
 }

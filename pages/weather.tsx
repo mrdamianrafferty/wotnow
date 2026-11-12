@@ -37,6 +37,7 @@ import type { LangCode, Locale, TKey } from '@/lib/godaisy/i18n/types';
 import { placeFromQuery, whyFromQuery } from '@/lib/godaisy/conditions/whyLink';
 import { seedOf } from '@/lib/godaisy/conditions/pencil';
 import { Drawing } from '@/components/conditions/Drawing';
+import { trackEvent } from '@/lib/analytics/events';
 import { Spinner } from '@/components/call/Spinner';
 import { PageHeader } from '@/components/call/PageHeader';
 import GetTheApp from '@/components/GetTheApp';
@@ -228,7 +229,11 @@ function ConditionsPage({ place, lat, lon, coastal, day, verdict, weighed }: Wea
               id="numbers"
               className="gd-drawn-all"
               open={allOpen}
-              onToggle={(e) => setAllOpen((e.currentTarget as HTMLDetailsElement).open)}
+              onToggle={(e) => {
+                const open = (e.currentTarget as HTMLDetailsElement).open;
+                if (open && !allOpen) trackEvent('conditions_numbers_opened', { day, from_call: Boolean(verdict) });
+                setAllOpen(open);
+              }}
             >
               <summary className="gd-drawn-all-summary">{t('page_all_numbers')}</summary>
               {day > 0 && <p className="gd-cond-quiet">{t('page_numbers_now', { day: page.dayName ?? t('page_numbers_that_day') })}</p>}

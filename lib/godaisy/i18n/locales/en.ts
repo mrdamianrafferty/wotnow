@@ -197,6 +197,8 @@ export const en = {
     rain_then_dry: ', then dry {on}',
     note_first_snow: 'first snow',
     note_first_rain: 'first rain',
+    rain_thunder: 'Thunderstorms {on}{mm}',
+    note_thunder: 'thunder',
     note_dry_again: 'dry again',
     note_today: 'today',
     note_this_day: 'this day',
@@ -280,6 +282,8 @@ export const en = {
     sky_short_day: "About {hours} of daylight, and it's gone by {time}",
     sky_long_day: 'Light until {time}: about {hours} of it',
     sky_join: '{base}. {fog}',
+    sky_uv: 'UV {word} from {from} to {to}',
+    draw_uv: 'UV {n}',
     hours_one: '{n} hour',
     hours_other: '{n} hours',
     far_under: 'under {m} m, not even a football pitch',
@@ -318,6 +322,8 @@ export const en = {
     draw_today_value: 'today {v}',
     draw_who_limit: 'WHO daily limit {n}',
     draw_dust_key: 'fine dust (PM2.5), µg/m³: one dot each',
+    air_pollen_high: 'High pollen: {kind}',
+    draw_dust_key_five: 'fine dust (PM2.5), µg/m³: five to a dot',
 
     /* ── Conditions: underfoot ───────────────────────────────────────── */
     snow_dusting: 'A dusting of snow on the ground',

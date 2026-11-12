@@ -272,3 +272,58 @@ describe('snow, frost and fog', () => {
     expect([5, 12, 30, 55, 80].map(snowDeep)).toEqual(['ankle', 'shin', 'knee', 'thigh', 'waist']);
   });
 });
+
+/*
+ * The gaps filled on 12 Nov 2026: thunder, high UV, high pollen, and a wind
+ * drawing for days past the hourly forecast. Same method: the real Newquay
+ * response with one thing put in.
+ */
+describe('thunder, UV, pollen and long-range wind', () => {
+  type R = typeof NOV;
+  const withEdit = (edit: (r: R) => void) => {
+    const r = JSON.parse(JSON.stringify(NOV)) as R;
+    edit(r);
+    return r;
+  };
+  const sec = (r: R, id: string, day = 0, lang?: 'de') =>
+    drawConditions(r, { day, now: NOON, coastal: true, lang } as Parameters<typeof drawConditions>[1]).sections.find((x) => x.id === id);
+
+  it('says thunder on the day, and marks it in the week strip', () => {
+    const r = withEdit((w) => { w.daily[0].summary = 'thunderstorm'; w.daily[0].precipMM = 6; });
+    const rain = sec(r, 'rain');
+    expect(rain?.sentence).toBe('Thunderstorms today, about 6 mm, then dry tomorrow');
+    expect(rain?.drawing).toMatchObject({ days: expect.arrayContaining([expect.objectContaining({ label: 'Thu', thunder: true })]) });
+  });
+
+  it('names thunder later in the week under its day', () => {
+    const r = withEdit((w) => { for (const h of w.hourly) if (h.timeISO.startsWith('2026-11-14T15')) h.weatherCode = 95; });
+    const days = (sec(r, 'rain')?.drawing as { days: Array<{ label: string; note?: string; thunder?: boolean }> }).days;
+    expect(days.find((d) => d.label === 'Sat')).toMatchObject({ thunder: true, note: 'thunder' });
+    expect(sec(r, 'rain')?.sentence).toBe('Leave the umbrella at home until Saturday');
+  });
+
+  it('adds high UV to the daylight, with its hours drawn', () => {
+    const r = withEdit((w) => { for (const h of w.hourly) if (/2026-11-12T1[2-4]/.test(h.timeISO)) h.uvi = 7; });
+    const sky = sec(r, 'sky');
+    expect(sky?.sentence).toBe("About 9 hours of daylight, and it's gone by 4:39pm. UV high from noon to 3pm");
+    expect(sky?.drawing).toMatchObject({ kind: 'daylight', uvHours: [12, 13, 14], uvLabel: 'UV 7' });
+  });
+
+  it('says nothing about UV below 6', () => {
+    const r = withEdit((w) => { for (const h of w.hourly) h.uvi = 5; });
+    expect(sec(r, 'sky')?.sentence).toBe("About 9 hours of daylight, and it's gone by 4:39pm");
+  });
+
+  it('names the pollen furthest over its high line', () => {
+    const r = withEdit((w) => { w.pollen.grass = 60; w.pollen.birch_pollen = 200; });
+    expect(sec(r, 'air')?.sentence).toBe("Clean air: fine dust is under a third of the WHO's daily limit. High pollen: birch");
+    expect(sec(r, 'air', 0, 'de')?.sentence).toMatch(/Hohe Pollenbelastung: /);
+  });
+
+  it('draws one flag for a day past the hourly forecast', () => {
+    const r = withEdit((w) => { w.hourly = w.hourly.filter((h: { timeISO: string }) => h.timeISO < '2026-11-16'); });
+    const wind = sec(r, 'wind', 5);
+    expect(wind?.drawing).toMatchObject({ kind: 'flags', flags: [expect.objectContaining({ kmh: expect.any(Number) })] });
+    expect((wind?.drawing as { flags: unknown[] }).flags).toHaveLength(1);
+  });
+});

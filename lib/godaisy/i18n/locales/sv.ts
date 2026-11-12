@@ -564,6 +564,8 @@ export const sv: Locale = {
     rain_then_dry: ', sedan torrt {on}',
     note_first_snow: 'första snön',
     note_first_rain: 'första regnet',
+    rain_thunder: 'Åska {on}{mm}',
+    note_thunder: 'åska',
     note_dry_again: 'torrt igen',
     note_today: 'i dag',
     note_this_day: 'den här dagen',
@@ -647,6 +649,8 @@ export const sv: Locale = {
     sky_short_day: 'Runt {hours} dagsljus, och det är borta vid {time}',
     sky_long_day: 'Ljust till {time}: runt {hours}',
     sky_join: '{base}. {fog}',
+    sky_uv: 'UV {word} från {from} till {to}',
+    draw_uv: 'UV {n}',
     hours_one: '{n} timme',
     hours_other: '{n} timmar',
     far_under: 'under {m} m, inte ens en fotbollsplan',
@@ -685,6 +689,8 @@ export const sv: Locale = {
     draw_today_value: 'i dag {v}',
     draw_who_limit: 'WHO:s dygnsgräns {n}',
     draw_dust_key: 'fina partiklar (PM2,5), µg/m³: en prick var',
+    air_pollen_high: 'Höga pollenhalter: {kind}',
+    draw_dust_key_five: 'fina partiklar (PM2,5), µg/m³: fem per prick',
 
     /* ── Conditions: underfoot ───────────────────────────────────────── */
     snow_dusting: 'Ett tunt lager snö på marken',
