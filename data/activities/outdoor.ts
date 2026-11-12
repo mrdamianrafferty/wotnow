@@ -79,7 +79,7 @@ export const outdoorRecreation: ActivityType[] = [
       'soilMoisture>50',
       'visibility<1',
       'snowfallRateMmH>1',
-      'snowDepthCm>4',
+      'snowDepthCm>15',
       'gust>17'],
     indoorAlternative: 'Hit the gym for a treadmill incline workout or a strength session'
   },
@@ -619,7 +619,6 @@ export const outdoorRecreation: ActivityType[] = [
       'windSpeed>12',       // hard to stay comfortable
       'temperature<-5',     // extreme cold
       'snowfallRateMmH>0.5',// falling snow obscures the sky instantly
-      'snowDepthCm>2',       // deep snow makes travel & setup difficult
       'gust>16'
     ],
 
@@ -710,7 +709,7 @@ export const outdoorRecreation: ActivityType[] = [
   // and fair carries the shoulder. See the ceiling audit in `team.ts`.
   fairConditions: ['temperature=2..5 or 20..26','windSpeed=11..13','humidity<=90','precipitation=2..4','soilMoisture=45..50','visibility=1..2',
       'gust=16..17'],
-  poorConditions: ['temperature<2 or temperature>26','windSpeed>13','precipitation>4','humidity>90','soilMoisture>50','visibility<1','snowfallRateMmH>1','snowDepthCm>4',
+  poorConditions: ['temperature<2 or temperature>26','windSpeed>13','precipitation>4','humidity>90','soilMoisture>50','visibility<1','snowfallRateMmH>1','snowDepthCm>15',
       'gust>17'],
   },
   {

@@ -136,7 +136,7 @@ export const lifestyleActivities: ActivityType[] = [
       'temperature<0 or temperature>24',  // ice underfoot, or heatstroke weather
       'soilMoisture>50', // icy pavements or boggy fields
       'snowfallRateMmH>1',             // active snowfall reduces visibility & paw grip
-      'snowDepthCm>4'                  // deeper snow becomes exhausting & icy
+      'snowDepthCm>15'                  // deeper snow becomes exhausting & icy
     ],
 
     // Chilly, warm, or damp — not ideal, but you go anyway
@@ -443,7 +443,6 @@ export const lifestyleActivities: ActivityType[] = [
       'precipitation>15',             // reduced from 20 - heavy rain, unsafe for gear
       'visibility<1',                 // reduced from 2 - severe fog/whiteout
       'snowfallRateMmH>2',            // intense snowfall threatens gear and sightlines
-      'snowDepthCm>5',                 // deep snow complicates access & tripod setup
       'gust>16'
     ],
     fairConditions: [

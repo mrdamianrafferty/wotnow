@@ -168,7 +168,6 @@ export const waterSports: ActivityType[] = [
       'visibility<2',
       'precipitation>10',
       'snowfallRateMmH>0.5',
-      'snowDepthCm>0.5'
     ],
     indoorAlternative: 'Watch surf films or work on your pop-up at home'
   },
@@ -253,7 +252,6 @@ export const waterSports: ActivityType[] = [
       'precipitation>10',
       'visibility<2',
       'snowfallRateMmH>0.5',
-      'snowDepthCm>0.5'
     ],
 
     seasonalMonths: [4, 5, 6, 7, 8, 9, 10],
@@ -312,7 +310,6 @@ export const waterSports: ActivityType[] = [
       'windRelative=onshore & waveHeight>0.8',
       'windRelative=cross-shore & windSpeed>20',
       'snowfallRateMmH>0.5',
-      'snowDepthCm>0.5'
     ],
 
     seasonalMonths: [4, 5, 6, 7, 8, 9, 10],
@@ -396,7 +393,6 @@ export const waterSports: ActivityType[] = [
       'visibility<2',
       'precipitation>10',
       'snowfallRateMmH>0.5',
-      'snowDepthCm>0.5'
     ],
     seasonalMonths: [4,5,6,7,8,9,10]
   },
@@ -481,7 +477,6 @@ export const waterSports: ActivityType[] = [
       'visibility<2',
       'precipitation>5',
       'snowfallRateMmH>0.5',
-      'snowDepthCm>0.5'
     ],
     seasonalMonths: [4,5,6,7,8,9,10]
   },
@@ -525,7 +520,6 @@ export const waterSports: ActivityType[] = [
       'windRelative=onshore & waveHeight>0.6',
       'windRelative=cross-shore & windSpeed>14',
       'snowfallRateMmH>0.5',           // airborne snow slashes visibility fast
-      'snowDepthCm>0.5'                // launch points quickly become icy
     ],
 
     fairConditions: [
@@ -591,7 +585,6 @@ export const waterSports: ActivityType[] = [
       'windRelative=offshore & windSpeed>12',
       'windRelative=onshore & waveHeight>1.2',
       'snowfallRateMmH>0.5',          // snow squalls devastate sightlines
-      'snowDepthCm>0.5'               // ramps/paths icy for launching
     ],
 
     fairConditions: [
@@ -729,7 +722,6 @@ export const waterSports: ActivityType[] = [
       'visibility<2',
       'precipitation>5',
       'snowfallRateMmH>0.5',
-      'snowDepthCm>0.5'
     ],
     seasonalMonths: [5,6,7,8,9]
   },
@@ -782,7 +774,6 @@ export const waterSports: ActivityType[] = [
       'precipitation>5',
       'windRelative=offshore & windSpeed>6',
       'snowfallRateMmH>0.5',
-      'snowDepthCm>0.5'
     ],
     seasonalMonths: [5,6,7,8,9,10]
   },
@@ -833,7 +824,6 @@ export const waterSports: ActivityType[] = [
       'visibility<2',
       'precipitation>5',
       'snowfallRateMmH>0.5',
-      'snowDepthCm>0.5'
     ],
     seasonalMonths: [4,5,6,7,8,9,10],
     indoorAlternative: 'Study charts, practise knots, or plan a passage'
@@ -936,7 +926,6 @@ export const waterSports: ActivityType[] = [
       'visibility<2',
       'precipitation>5',
       'snowfallRateMmH>0.5',
-      'snowDepthCm>0.5'
     ],
     seasonalMonths: [3,4,5,6,7,8,9,10],
     indoorAlternative: 'Knot practice, rules revision, or simulator'
@@ -990,7 +979,6 @@ export const waterSports: ActivityType[] = [
       'precipitation>8',
       'windRelative=offshore & windSpeed>6',
       'snowfallRateMmH>0.5',
-      'snowDepthCm>0.5'
     ],
     seasonalMonths: [4,5,6,7,8,9,10],
     indoorAlternative: 'Rig tuning, fitness, or watch technique videos'
@@ -1044,7 +1032,6 @@ export const waterSports: ActivityType[] = [
       'precipitation>8',
       'windRelative=offshore & windSpeed>6',
       'snowfallRateMmH>0.5',
-      'snowDepthCm>0.5'
     ],
     seasonalMonths: [4,5,6,7,8,9,10],
     indoorAlternative: 'Kite maintenance, line tuning, or strength & mobility'
@@ -1095,7 +1082,6 @@ export const waterSports: ActivityType[] = [
       'visibility<2',
       'precipitation>5',
       'snowfallRateMmH>0.5',
-      'snowDepthCm>0.5'
     ],
     seasonalMonths: [5,6,7,8,9,10],
     indoorAlternative: 'Pool skills, gear maintenance, or dive planning'
@@ -1143,7 +1129,6 @@ export const waterSports: ActivityType[] = [
       'visibility<2',
       'precipitation>5',
       'snowfallRateMmH>0.5',
-      'snowDepthCm>0.5'
     ],
     seasonalMonths: [5,6,7,8,9],
     indoorAlternative: 'Maintenance, safety review, or route planning'
@@ -1197,7 +1182,6 @@ export const waterSports: ActivityType[] = [
       'precipitation>5',
       'windRelative=offshore & windSpeed>5',
       'snowfallRateMmH>0.5',
-      'snowDepthCm>0.5'
     ],
     seasonalMonths: [5,6,7,8,9],
     indoorAlternative: 'Practise balance drills, repair kit, or plan a route'
@@ -1281,7 +1265,6 @@ export const waterSports: ActivityType[] = [
       'temperature>32',                 // heat stress
       'visibility<2',                   // fog, low contrast
       'snowfallRateMmH>0.5',            // snowfall hides horizon and gear
-      'snowDepthCm>0.5'                 // beach ramps & rigs buried quickly
     ],
     fairConditions: [
       /* One entry, OR'd — not two. Two array entries on the same key are scored

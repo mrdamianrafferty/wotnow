@@ -132,7 +132,6 @@ export const fishingActivities: ActivityType[] = [
       'precipitation>5',
       'windRelative=onshore & windSpeed>12 or windRelative=offshore & windSpeed>10',
       'snowfallRateMmH>0.5',
-      'snowDepthCm>0.5'
     ],
   },
   {
@@ -174,7 +173,6 @@ export const fishingActivities: ActivityType[] = [
       'visibility<2',
       'precipitation>5',
       'snowfallRateMmH>0.5',
-      'snowDepthCm>0.5'
     ],
   }
 ];
