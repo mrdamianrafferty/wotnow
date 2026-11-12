@@ -57,7 +57,7 @@ const ALSO_REAL: Partial<Record<LangCode, string[]>> = {
   de: ['wind', 'sea', 'is', 'air', 'rain', 'in', 'a', 'low', 'to', 'tide'],
   nl: ['wind', 'is', 'in', 'a', 'on', 'it', 'at', 'of', 'to', 'for', 'water', 'low', 'high', 'tide', 'air', 'sea', 'rain', 'dry', 'by', 'now', 'with', 'day', 'light', 'then'],
   sv: ['i', 'is', 'in', 'a', 'on', 'it', 'at', 'of', 'to', 'for', 'by', 'then', 'low', 'high', 'air', 'sea', 'rain', 'dry', 'light', 'day', 'now', 'with'],
-  fr: ['a', 'on', 'it', 'is', 'at', 'in', 'to', 'for', 'by', 'sea', 'air', 'low', 'high', 'tide', 'then', 'now', 'dry', 'rain', 'wind', 'water', 'day', 'light', 'with', 'of'],
+  fr: ['force', 'a', 'on', 'it', 'is', 'at', 'in', 'to', 'for', 'by', 'sea', 'air', 'low', 'high', 'tide', 'then', 'now', 'dry', 'rain', 'wind', 'water', 'day', 'light', 'with', 'of'],
   es: ['a', 'en', 'es', 'sea', 'it', 'is', 'on', 'at', 'in', 'to', 'for', 'by', 'low', 'high', 'tide', 'air', 'dry', 'rain', 'wind', 'water', 'day', 'now', 'with', 'of', 'light', 'then'],
   pt: ['a', 'sea', 'it', 'is', 'on', 'at', 'in', 'to', 'for', 'by', 'low', 'high', 'tide', 'air', 'dry', 'rain', 'wind', 'water', 'day', 'now', 'with', 'of', 'light', 'then'],
   it: ['a', 'it', 'is', 'on', 'at', 'in', 'to', 'for', 'by', 'low', 'high', 'tide', 'air', 'dry', 'rain', 'wind', 'water', 'day', 'now', 'with', 'of', 'light', 'then', 'sea'],
@@ -204,13 +204,15 @@ function everyString(lang: LangCode, readings: unknown, now: Date, day: number, 
     for (const f of s.facts) out.push(f.label, f.value);
     const d = s.drawing as Record<string, unknown> | null;
     if (!d) continue;
-    for (const v of Object.values(d)) {
+    // `kind`, `band`, `type`, `wear` and `tone` are internal ids, not text on the page.
+    for (const [key, v] of Object.entries(d)) {
+      if (['kind', 'band', 'wear', 'tone', 'type'].includes(key)) continue;
       if (typeof v === 'string') out.push(v);
       if (Array.isArray(v)) for (const x of v) {
         if (typeof x === 'string') out.push(x);
-        else if (x && typeof x === 'object') for (const y of Object.values(x)) if (typeof y === 'string') out.push(y);
+        else if (x && typeof x === 'object') for (const [k2, y] of Object.entries(x)) if (typeof y === 'string' && !['tone', 'wet', 'type'].includes(k2)) out.push(y);
       }
-      if (v && typeof v === 'object' && !Array.isArray(v)) for (const y of Object.values(v)) if (typeof y === 'string') out.push(y);
+      if (v && typeof v === 'object' && !Array.isArray(v)) for (const [k2, y] of Object.entries(v)) if (typeof y === 'string' && !['type'].includes(k2)) out.push(y);
     }
   }
   for (const sec of EVIDENCE_SECTIONS) for (const r of rowsFor({ ...sec, because: undefined }, readings as never, lang)) out.push(r.label, r.value);
