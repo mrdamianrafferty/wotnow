@@ -277,6 +277,28 @@ export async function fetchOpenMeteoAsOneCallShape(lat: number, lon: number): Pr
    * 0.09), so it is meaned over the same 09:00–18:00 as visibility and
    * converted once, here.
    */
+  /**
+   * The heaviest hour of snowfall in the daytime, mm per hour.
+   *
+   * About thirty models score `snowfallRateMmH` — road cycling stops at any,
+   * running is cautioned from 2.5 — and, like snow depth, The Call had never
+   * evaluated one: the hourly series was requested and then never carried to
+   * the scorer. Open-Meteo publishes it as centimetres in the preceding hour,
+   * hence ×10. The peak, not the mean, for the reason the dayparts give.
+   */
+  const daytimeSnowfallRateMmH = (dateStr: string) => {
+    const values = hourly.snowfall as (number | null)[] | undefined;
+    if (!Array.isArray(values)) return undefined;
+    let peak: number | undefined;
+    for (let h = 0; h < (hourly.time?.length ?? 0); h++) {
+      const t = hourly.time[h] as string;
+      const hour = Number(t.slice(11, 13));
+      const v = values[h];
+      if (t.startsWith(dateStr) && hour >= 9 && hour < 18 && typeof v === 'number') peak = Math.max(peak ?? 0, v);
+    }
+    return typeof peak === 'number' ? Math.round(peak * 100) / 10 : undefined;
+  };
+
   const daytimeSnowDepthCm = (dateStr: string) => {
     const v = daytimeMeanOf(hourly.snow_depth, dateStr);
     return typeof v === 'number' ? Math.round(v * 1000) / 10 : undefined;
@@ -380,6 +402,8 @@ export async function fetchOpenMeteoAsOneCallShape(lat: number, lon: number): Pr
       soil_moisture: daytimeSoilMoisture(dateStr),
       /* Centimetres — see daytimeSnowDepthCm. Not an OpenWeather field. */
       snow_depth_cm: daytimeSnowDepthCm(dateStr),
+      /* mm per hour, the daytime peak — see daytimeSnowfallRateMmH. */
+      snowfall_rate_mm_h: daytimeSnowfallRateMmH(dateStr),
       snow: typeof daily.snowfall_sum?.[i] === 'number' ? daily.snowfall_sum[i] * 10 : undefined,
       moon_phase: computeMoonPhase(dt),
     };

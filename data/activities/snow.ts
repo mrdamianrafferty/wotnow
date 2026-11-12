@@ -34,7 +34,7 @@ export const snowSports: ActivityType[] = [
       'precipitation>2',
       'visibility<1',
       'snowDepthCm<20',
-      'snowfallRateMmH>4',
+      'snowfallRateMmH>25',
       'gust>20'],
     seasonalMonths: [11, 12, 1, 2, 3],
     indoorAlternative: 'Tune your skis, check avalanche reports, or hit the gym for leg day'
@@ -72,7 +72,7 @@ export const snowSports: ActivityType[] = [
       'precipitation>2',
       'visibility<1',
       'snowDepthCm<20',
-      'snowfallRateMmH>4',
+      'snowfallRateMmH>25',
       'gust>20'
     ],
     seasonalMonths: [11, 12, 1, 2, 3],
@@ -111,7 +111,7 @@ export const snowSports: ActivityType[] = [
       'precipitation>2',
       'visibility<1',
       'snowDepthCm<10',
-      'snowfallRateMmH>4',
+      'snowfallRateMmH>15',
       'gust>20'
     ],
     seasonalMonths: [11, 12, 1, 2, 3],

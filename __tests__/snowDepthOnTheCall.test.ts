@@ -13,7 +13,7 @@ import { fetchOpenMeteoAsOneCallShape } from '../lib/weather/openMeteoOneCallAda
 
 const DATE = '2026-11-12';
 
-function payload(snowDepthM: Array<number | null> | undefined) {
+function payload(snowDepthM: Array<number | null> | undefined, snowfallCm?: number[]) {
   const time = Array.from({ length: 24 }, (_, h) => `${DATE}T${String(h).padStart(2, '0')}:00`);
   return {
     daily: {
@@ -30,6 +30,7 @@ function payload(snowDepthM: Array<number | null> | undefined) {
       rain: time.map(() => 0),
       visibility: time.map(() => 20000),
       ...(snowDepthM ? { snow_depth: snowDepthM } : {}),
+      ...(snowfallCm ? { snowfall: snowfallCm } : {}),
     },
     current: {},
   };
@@ -62,5 +63,35 @@ describe('snow depth on The Call', () => {
   it('is absent, not zero, when the source has no snow series', async () => {
     expect(await snowFor(undefined)).toBeUndefined();
     expect(await snowFor(Array(24).fill(null))).toBeUndefined();
+  });
+});
+
+async function dayFor(snowfallCm?: number[]) {
+  const g = global as unknown as { fetch: jest.Mock };
+  g.fetch = jest.fn().mockResolvedValue({ ok: true, status: 200, json: async () => payload(undefined, snowfallCm) });
+  return fetchOpenMeteoAsOneCallShape(69.65, 18.96) as Promise<{
+    daily: { snowfall_rate_mm_h?: number }[];
+    dayparts?: Record<string, Record<string, { snowfallRateMmH?: number }>>;
+  }>;
+}
+
+describe('snowfall on The Call', () => {
+  it('takes the heaviest daytime hour, in mm per hour from Open-Meteo\'s cm', async () => {
+    // 0.3 cm in the 14:00 hour is 3 mm/h; the 06:00 burst is before the day starts.
+    const fall = Array.from({ length: 24 }, (_, h) => (h === 14 ? 0.3 : h === 6 ? 2 : h === 10 ? 0.1 : 0));
+    const shape = await dayFor(fall);
+    expect(shape.daily[0].snowfall_rate_mm_h).toBeCloseTo(3);
+  });
+
+  it('gives each part of the day its own heaviest hour', async () => {
+    const fall = Array.from({ length: 24 }, (_, h) => (h === 14 ? 0.3 : h === 10 ? 0.1 : 0));
+    const parts = (await dayFor(fall)).dayparts?.[DATE];
+    expect(parts?.morning?.snowfallRateMmH).toBeCloseTo(1);
+    expect(parts?.afternoon?.snowfallRateMmH).toBeCloseTo(3);
+    expect(parts?.evening?.snowfallRateMmH).toBe(0);
+  });
+
+  it('is absent, not zero, without a snowfall series', async () => {
+    expect((await dayFor(undefined)).daily[0].snowfall_rate_mm_h).toBeUndefined();
   });
 });
