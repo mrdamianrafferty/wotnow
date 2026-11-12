@@ -19,6 +19,7 @@
  */
 
 import { rough, circle, rng, type Pt } from '@/lib/godaisy/conditions/pencil';
+import { seaWear } from '@/lib/godaisy/conditions/seaWear';
 
 export const VIEW = { w: 600, h: 380 } as const;
 
@@ -26,6 +27,7 @@ const C = {
   ink: 'var(--call-sk-ink)', pencil: 'var(--call-sk-pencil)', wash: 'var(--call-sk-wash)', paper: 'var(--call-page)',
   warm: 'var(--call-sk-warm)', water: 'var(--call-sk-water)', waterInk: 'var(--call-sk-water-ink)',
   moss: 'var(--call-sk-moss)', amber: 'var(--call-sk-amber)', sun: 'var(--call-sk-sun)', mud: 'var(--call-sk-mud)',
+  neoprene: 'var(--call-sk-neoprene)',
 };
 
 /** How a mark arrives: drawn along its length, washed in, or popped up. */
@@ -124,9 +126,21 @@ const squash = (pts: Pt[], cy: number, k: number): Pt[] => pts.map(([x, y]) => [
 
 // ── the things it draws ─────────────────────────────────────────────────────
 
-/** A stick person `h` tall, feet at `feet`. Shoulders at 82% of height, as on a real one. */
-function person(p: Pen, x: number, feet: number, h: number, at: number, width = 2.2) {
+/**
+ * A stick person `h` tall, feet at `feet`. Shoulders at 82% of height, as on a
+ * real one. `suit` puts them in a full wetsuit, drawn the way the conditions
+ * page draws one: thick neoprene under the pencil lines.
+ */
+function person(p: Pen, x: number, feet: number, h: number, at: number, width = 2.2, suit = false) {
   const r = h * 0.075, top = feet - h, neck = top + r * 2, hip = feet - h * 0.47, sh = top + h * 0.18;
+  if (suit) {
+    const nw = Math.max(3, h * 0.075), o = { amp: 0.6, stroke: C.neoprene, at: at + 0.9, dur: 0.4, len: 260 };
+    p.path([[x, neck], [x, hip]], { ...o, width: nw * 1.5 });
+    p.path([[x, sh], [x - h * 0.17, sh + h * 0.2]], { ...o, width: nw });
+    p.path([[x, sh], [x + h * 0.17, sh + h * 0.2]], { ...o, width: nw });
+    p.path([[x, hip], [x - h * 0.12, feet]], { ...o, width: nw });
+    p.path([[x, hip], [x + h * 0.12, feet]], { ...o, width: nw });
+  }
   p.path(circle(x, top + r, r), { closed: true, amp: 1, width, at, len: 200 });
   p.path([[x, neck], [x, hip]], { amp: 1, width, at: at + 0.25, len: 200 });
   p.path([[x - h * 0.17, sh + h * 0.2], [x, sh], [x + h * 0.17, sh + h * 0.2]], { amp: 1, width, at: at + 0.4, len: 200 });
@@ -155,6 +169,10 @@ function sun(p: Pen, x: number, y: number, r: number, at: number) {
 
 // ── the days ────────────────────────────────────────────────────────────────
 
+/** The surf day's sea, and what it means you wear: the app's own ladder, not a guess. */
+export const SURF_WATER_C = 15;
+export const SURF_SUIT = seaWear(SURF_WATER_C, 'en').short;
+
 /** 100 px to the metre. The wave's crest sits exactly on the person's shoulder line. */
 function surf(): Mark[] {
   const p = pen(1);
@@ -165,16 +183,16 @@ function surf(): Mark[] {
   const outline: Pt[] = [[x0, base], ...curve([[x0, base - (base - crest) * 0.25], [x0 + w * 0.3, base - (base - crest) * 0.55], [x0 + w * 0.62, crest + 4], [x0 + w * 0.76, crest], [x0 + w * 0.86, crest + 16], [x0 + w * 0.8, crest + 30], [x0 + w * 0.9, crest + 26], [x1, base]], 6), [x1, base]];
   p.path(outline, { closed: true, fill: C.water, at: 1.4 });
   p.path(outline, { closed: true, stroke: C.waterInk, width: 2.4, at: 0.4, dur: 1.2, len: 1200 });
-  person(p, 430, 320, 175, 1.6);
+  person(p, 430, 320, 175, 1.6, 2.2, true);
   p.path([[332, 320], [332, who.sh]], { amp: 0.8, width: 1.6, at: 2.3, dur: 0.4, len: 200 });
   p.path([[326, who.sh], [338, who.sh]], { amp: 0.4, width: 1.6, at: 2.6, dur: 0.1, len: 20 });
   p.path([[326, 320], [338, 320]], { amp: 0.4, width: 1.6, at: 2.6, dur: 0.1, len: 20 });
   p.text(340, 262, '1.4 m', { size: 26, at: 2.7 });
   p.dashed(232, 470, who.sh, C.warm, 2.8);
   p.text(476, who.sh + 6, 'shoulders', { fill: C.warm, at: 2.9 });
-  p.text(60, 304, 'water 15°', { size: 24, fill: C.waterInk, at: 1.6 });
-  p.text(430, 346, '1.75 m person', { size: 18, fill: C.pencil, anchor: 'middle', weight: 500, at: 2.2 });
-  p.text(430, 367, 'in a 4/3 suit', { size: 18, fill: C.pencil, anchor: 'middle', weight: 500, at: 2.3 });
+  p.text(60, 304, `water ${SURF_WATER_C}°`, { size: 24, fill: C.waterInk, at: 1.6 });
+  p.text(430, 347, SURF_SUIT, { size: 22, anchor: 'middle', at: 2.6 });
+  p.text(430, 369, '1.75 m person', { size: 17, fill: C.pencil, anchor: 'middle', weight: 500, at: 2.2 });
   [0, 1, 2].forEach((i) => p.path(curve([[24 + i * 62, 118], [44 + i * 62, 104], [64 + i * 62, 112], [74 + i * 62, 120]], 4), { amp: 0.5, stroke: C.waterInk, width: 1.8, at: 3.0 + i * 0.12, dur: 0.3, len: 120 }));
   p.text(24, 84, 'a wave every 11 seconds', { size: 20, fill: C.waterInk, weight: 500, at: 3.3 });
   p.text(24, 152, 'tide rising, high 9:12am', { size: 20, fill: C.waterInk, weight: 500, at: 3.4 });
@@ -292,7 +310,7 @@ function cafe(): Mark[] {
 
 export const DRAWN_DAYS: readonly DrawnDay[] = [
   { id: 'surf', name: 'Surf', kicker: 'Croyde Bay · Saturday, 7:00 am', lead: 'Today is', verdict: 'a surf day.', hand: 'Waves about shoulder high. Best before six.', handAt: 3.8,
-    label: 'A 1.4 metre wave beside a 1.75 metre person, reaching their shoulders, with notes on the swell, the tide, an offshore wind and sunrise.', marks: surf },
+    label: `A 1.4 metre wave beside a 1.75 metre person in a ${SURF_SUIT}, the wave reaching their shoulders, with notes on the swell, the tide, an offshore wind and sunrise.`, marks: surf },
   { id: 'bike', name: 'Cycling', kicker: 'Edale · Sunday, 8:00 am', lead: 'Today is', verdict: 'a bike day.', hand: 'Dry, 14°, and the wind brings you home.', handAt: 3.7,
     label: 'A cyclist on the road below Mam Tor, with flags showing a tailwind, a thermometer at 14 degrees and a furled umbrella for a dry day.', marks: bike },
   { id: 'football', name: 'Football', kicker: 'Hackney Marshes · Tuesday, 6:30 pm', lead: 'Tonight is', verdict: 'a five-a-side night.', hand: 'Dry till ten. Firm underfoot.', handAt: 3.5,

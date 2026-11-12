@@ -3,7 +3,8 @@
  */
 import React from 'react';
 import { render, screen, fireEvent, act } from '@testing-library/react';
-import { DRAWN_DAYS, VIEW, DAY_MS, type Mark } from '@/lib/godaisy/landing/drawnDays';
+import { DRAWN_DAYS, VIEW, DAY_MS, SURF_SUIT, SURF_WATER_C, type Mark } from '@/lib/godaisy/landing/drawnDays';
+import { seaWear } from '@/lib/godaisy/conditions/seaWear';
 import DrawnDays from '@/components/landing/DrawnDays';
 
 function flat(ms: Mark[]): Mark[] {
@@ -48,6 +49,14 @@ describe('the drawn days', () => {
     const dashed = marks.find((m) => m.kind === 'path' && m.dash);
     expect(dashed && dashed.kind === 'path' && Number(/M\d+ ([\d.]+)/.exec(dashed.d)![1])).toBeCloseTo(320 - 175 * 0.82, 0);
     expect(marks.some((m) => m.kind === 'text' && m.text === '1.4 m')).toBe(true);
+  });
+
+  it('dresses the surfer in what the wetsuit ladder says for that water', () => {
+    expect(SURF_SUIT).toBe(seaWear(SURF_WATER_C, 'en').short);
+    expect(SURF_SUIT).toBe('3/2 full suit');
+    const marks = flat(DRAWN_DAYS[0].marks());
+    expect(marks.some((m) => m.kind === 'text' && m.text === SURF_SUIT)).toBe(true);
+    expect(marks.filter((m) => m.kind === 'path' && m.stroke === 'var(--call-sk-neoprene)')).toHaveLength(5);
   });
 
   it('keeps the café cup indoors, out of the rain', () => {
