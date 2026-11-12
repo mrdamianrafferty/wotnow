@@ -23,7 +23,7 @@
 import { underfoot, UNDERFOOT_BANDS, type Readings, type Row } from '@/lib/godaisy/call/readings';
 import { seaWear, type SeaWear } from '@/lib/godaisy/conditions/seaWear';
 import {
-  rankSections, EVIDENCE_SECTIONS, type EvidenceSectionId, type Weighed,
+  rankSections, type EvidenceSectionId, type Weighed,
 } from '@/lib/godaisy/call/evidence';
 import {
   localeOf, tr_, plural, num as fmt, upperFirst, clock as clockOf, word, list as listOf, dayOfWeek,

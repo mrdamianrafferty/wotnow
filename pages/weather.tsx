@@ -32,7 +32,7 @@ import { setupFromCookieHeader } from '@/lib/godaisy/call/setup';
 import { drawConditions, todayOnlyNote, PERSON_M } from '@/lib/godaisy/conditions/drawn';
 import { langFromRequest } from '@/lib/godaisy/i18n/lang';
 import { GdLangProvider, useGdLang, useGdLocale } from '@/lib/godaisy/i18n/react';
-import { localeOf, tr_, num as fmtNum } from '@/lib/godaisy/i18n';
+import { tr_, num as fmtNum } from '@/lib/godaisy/i18n';
 import type { LangCode, Locale, TKey } from '@/lib/godaisy/i18n/types';
 import { placeFromQuery, whyFromQuery } from '@/lib/godaisy/conditions/whyLink';
 import { seedOf } from '@/lib/godaisy/conditions/pencil';

@@ -25,7 +25,7 @@
  * @module lib/godaisy/call/verdict
  */
 
-import { compass, familyFor, forceFromMs, forceName, phraseFor } from '@/utils/activityReasons';
+import { compass, familyFor, forceFromMs, phraseFor } from '@/utils/activityReasons';
 import type { WeatherData, Suggestion } from '@/utils/getSuggestionsByDay';
 import { LIMITING_BELOW, type CallBand } from './bands';
 import { choosePhrase, fillWhen } from './phrasebook';
