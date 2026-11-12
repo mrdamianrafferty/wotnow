@@ -489,6 +489,8 @@ async function fetchForecastForLocationUncached(
     thunder_hours?: number;
     /** Hours to 18:00 with freezing rain or drizzle. Ice outlasts the shower. */
     freezing_rain_hours?: number; visibility?: number; soil_moisture?: number;
+    /** Daytime snow lying, cm. Absent on the OpenWeather backstop. */
+    snow_depth_cm?: number;
     rain_window?: 'overnight' | 'morning' | 'afternoon' | 'evening' | 'spread';
     clouds?: number; humidity?: number;
   };
@@ -551,6 +553,10 @@ async function fetchForecastForLocationUncached(
             /* Already a percentage when it arrives — the adapter converts from
                m³/m³ so the band criteria and the scorer agree on units. */
             soilMoisture: d.soil_moisture,
+            /* Centimetres, already converted from Open-Meteo's metres. Absent,
+               not zero, when the source has none: a fabricated 0 would read
+               as a measured bare ground. */
+            snowDepthCm: d.snow_depth_cm,
             clouds: d.clouds,
             humidity: d.humidity,
           },

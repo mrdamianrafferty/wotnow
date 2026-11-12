@@ -119,40 +119,47 @@ const SNOW_ACTIVITY_THRESHOLDS: Record<string, Partial<{
 
   // Running and cardio
   running: { caution: 1, difficult: 3, unsafe: 5, max_snowfall: 10, caution_snowfall: 2.5 },
-  trail_running: { caution: 1, difficult: 3, unsafe: 5, max_snowfall: 5, caution_snowfall: 2.5 },
+  trail_running: { caution: 5, difficult: 15, unsafe: 30, max_snowfall: 5, caution_snowfall: 2.5 },
   cycling: { caution: 1, difficult: 3, unsafe: 5, max_snowfall: 0.5 },
   urban_exploring: { caution: 3, difficult: 10, unsafe: 15, max_snowfall: 10, caution_snowfall: 5 },
 
+  /*
+   * Water sports, sea fishing and wild swimming carry NO snow-depth thresholds,
+   * only snowfall ones. Snow lying on the land says nothing about the water,
+   * and the cold is already scored by temperature. Until 12 Nov 2026 these
+   * marked a sea swim "unsafe" at 3 cm on the ground — never noticed, because
+   * The Call did not receive snow depth at all until that day.
+   */
   // Water sports - primarily access/safety issues
-  kayaking: { caution: 1, difficult: 5, unsafe: 15, max_snowfall: 5, caution_snowfall: 2.5 },
-  sea_kayaking: { caution: 5, difficult: 15, max_snowfall: 5, caution_snowfall: 2.5 },
-  canoeing: { caution: 1, difficult: 5, unsafe: 15, max_snowfall: 5, caution_snowfall: 2.5 },
-  surfing: { caution: 5, difficult: 15, max_snowfall: 10, caution_snowfall: 5 },
-  stand_up_paddleboarding: { caution: 1, difficult: 5, max_snowfall: 5, caution_snowfall: 2.5 },
-  sup_sea: { caution: 5, difficult: 15, max_snowfall: 5, caution_snowfall: 2.5 },
-  sailing: { caution: 5, difficult: 15, max_snowfall: 10, caution_snowfall: 5 },
-  sailing_inland: { caution: 5, difficult: 15, max_snowfall: 10, caution_snowfall: 5 },
-  windsurfing: { caution: 5, difficult: 15, max_snowfall: 10, caution_snowfall: 5 },
-  windsurfing_inland: { caution: 5, difficult: 15, max_snowfall: 10, caution_snowfall: 5 },
-  kitesurfing: { caution: 10, difficult: 20, max_snowfall: 15, caution_snowfall: 10 },
-  jet_skiing: { caution: 5, difficult: 15, max_snowfall: 10, caution_snowfall: 5 },
+  kayaking: { max_snowfall: 5, caution_snowfall: 2.5 },
+  sea_kayaking: { max_snowfall: 5, caution_snowfall: 2.5 },
+  canoeing: { max_snowfall: 5, caution_snowfall: 2.5 },
+  surfing: { max_snowfall: 10, caution_snowfall: 5 },
+  stand_up_paddleboarding: { max_snowfall: 5, caution_snowfall: 2.5 },
+  sup_sea: { max_snowfall: 5, caution_snowfall: 2.5 },
+  sailing: { max_snowfall: 10, caution_snowfall: 5 },
+  sailing_inland: { max_snowfall: 10, caution_snowfall: 5 },
+  windsurfing: { max_snowfall: 10, caution_snowfall: 5 },
+  windsurfing_inland: { max_snowfall: 10, caution_snowfall: 5 },
+  kitesurfing: { max_snowfall: 15, caution_snowfall: 10 },
+  jet_skiing: { max_snowfall: 10, caution_snowfall: 5 },
   
   // Newly wired water users
-  snorkeling: { caution: 1, unsafe: 3, max_snowfall: 5, caution_snowfall: 2.5 },
-  sea_swimming: { caution: 1, unsafe: 3, max_snowfall: 5, caution_snowfall: 2.5 },
+  snorkeling: { max_snowfall: 5, caution_snowfall: 2.5 },
+  sea_swimming: { max_snowfall: 5, caution_snowfall: 2.5 },
   swimming: { caution: 1, unsafe: 3, max_snowfall: 5, caution_snowfall: 2.5 },
-  scuba_diving: { caution: 1, difficult: 5, max_snowfall: 10, caution_snowfall: 5 },
+  scuba_diving: { max_snowfall: 10, caution_snowfall: 5 },
 
   // Nature activities
   hiking: { caution: 5, difficult: 15, dangerous: 30, too_deep: 100, max_snowfall: 10, caution_snowfall: 2.5 },
-  birdwatching: { caution: 1, difficult: 5, max_snowfall: 5, caution_snowfall: 2.5 },
+  birdwatching: { caution: 15, max_snowfall: 5, caution_snowfall: 2.5 },
   photography: { beneficial: 1, optimal: 5, max_snowfall: 15, caution_snowfall: 5 },
   foraging: { caution: 1, difficult: 3, impossible: 10, max_snowfall: 2.5, caution_snowfall: 1 },
   mushroom_hunting: { caution: 1, difficult: 3, impossible: 5, max_snowfall: 1, caution_snowfall: 0.5 },
-  wild_swimming: { caution: 1, unsafe: 3, max_snowfall: 5, caution_snowfall: 2.5 },
+  wild_swimming: { max_snowfall: 5, caution_snowfall: 2.5 },
   gardening: { impossible: 1, max_snowfall: 0.5 },
   stargazing: { beneficial: 1, max_snowfall: 0.5, caution_snowfall: 0.1 },
-  dog_walking: { caution: 1, difficult: 5, max_snowfall: 15, caution_snowfall: 5 },
+  dog_walking: { caution: 5, difficult: 15, max_snowfall: 15, caution_snowfall: 5 },
 
   // Recreation activities
   picnicking: { uncomfortable: 1, impractical: 3, max_snowfall: 2.5, caution_snowfall: 1 },
@@ -202,8 +209,8 @@ const SNOW_ACTIVITY_THRESHOLDS: Record<string, Partial<{
   // Fishing
   fly_fishing_freshwater: { caution: 1, difficult: 5, dangerous: 30, max_snowfall: 10, caution_snowfall: 5 },
   coarse_fishing: { caution: 1, difficult: 5, dangerous: 30, max_snowfall: 15, caution_snowfall: 5 },
-  sea_fishing_shore: { caution: 1, difficult: 5, dangerous: 30, max_snowfall: 10, caution_snowfall: 5 },
-  sea_fishing_boat: { caution: 10, unsafe: 20, max_snowfall: 10, caution_snowfall: 5 },
+  sea_fishing_shore: { max_snowfall: 10, caution_snowfall: 5 },
+  sea_fishing_boat: { max_snowfall: 10, caution_snowfall: 5 },
 };
 
 // Activities where any snowfall or any accumulation is unsafe (zero tolerance)

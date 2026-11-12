@@ -1,4 +1,8 @@
 import { Roboto, Playfair_Display, DM_Sans } from 'next/font/google'
+// The drawn conditions page's handwriting. Declared here, not on the page,
+// because a font declared on a page is not loaded when you arrive at it by
+// client-side navigation — which is how "Why?" on the call gets there.
+import { caveat } from '@/components/conditions/handFont'
 
 import '../styles/index.css'
 import '../styles/Card.css'
@@ -258,7 +262,7 @@ export default function App({ Component, pageProps }: AppProps<PagePropsWithThem
                 <WebsiteJsonLd app={appContext} />
 
                 {/* Apply DaisyUI theme globally. If you later store theme in context, bind it here. */}
-                <div data-theme={theme} className={`${roboto.variable} ${playfair.variable} ${dmSans.variable} min-h-screen bg-base-100 text-base-content`} style={{ fontFamily: 'var(--font-roboto), system-ui, -apple-system, Segoe UI, sans-serif' }}>
+                <div data-theme={theme} className={`${roboto.variable} ${playfair.variable} ${dmSans.variable} ${caveat.variable} min-h-screen bg-base-100 text-base-content`} style={{ fontFamily: 'var(--font-roboto), system-ui, -apple-system, Segoe UI, sans-serif' }}>
                   {/* Initialize offline storage and sync service */}
                   <OfflineInit />
                   {/* Initialize performance tracking for iOS profiling */}

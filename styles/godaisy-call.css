@@ -1222,6 +1222,9 @@ h1.call-setup-question, h1.call-verdict { margin-block: 0; }
 .gd-cond-inner { max-width: 560px; margin: 0 auto; padding: 40px var(--call-gutter-app) 48px; }
 .gd-cond-kicker { margin: 0 0 4px; color: var(--call-ink-4); }
 .gd-cond-title {
+  /* Said outright: index.css colours every h1 #222, which vanished on the
+     dark page. */
+  color: var(--call-ink-1);
   margin: 0 0 12px;
   font-family: var(--call-font-display);
   font-size: var(--call-page-title); font-weight: 700;
@@ -1252,6 +1255,103 @@ h1.call-setup-question, h1.call-verdict { margin-block: 0; }
   font-size: var(--call-caption); color: var(--call-ink-4);
 }
 .gd-cond-foot a { color: var(--call-moss-ink); }
+
+/* ── The conditions, drawn ────────────────────────────────────────────────
+   Pencil on the page's own paper. One sentence in the hand face per section,
+   then the drawing, then two or three exact readings in small print. The
+   sketch colours are their own tokens because they are illustration, not UI:
+   --call-moss still means "you can act on this", and a moss-coloured flag is
+   not a button. Text colours in the drawings are measured >= 4.5:1 on the
+   page in both themes; fills are not text and are not held to it.          */
+:root {
+  --call-sk-ink:       #2b2824;
+  --call-sk-pencil:    #736c67;
+  --call-sk-wash:      #efe8dc;
+  --call-sk-warm:      #b4501a;
+  --call-sk-cold:      #2b689c;
+  --call-sk-water:     #bcd6e6;
+  --call-sk-water-ink: #2b689c;
+  --call-sk-moss:      #3d6b4f;
+  --call-sk-amber:     #8a6408;
+  --call-sk-sun:       #f1c84b;
+  --call-sk-lit:       #f6e7a8;
+  --call-sk-mud:       #8a6a48;
+  --call-sk-skin:      #ecd0b2;
+  --call-sk-leather:   #a26a3c;
+  --call-sk-welly:     #3d6b4f;
+  --call-sk-neoprene:  #2f3b42;
+  --call-sk-snow:      #ffffff;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --call-sk-ink:       #ece6da;
+    --call-sk-pencil:    #a8a29e;
+    --call-sk-wash:      #2c2824;
+    --call-sk-warm:      #f08a55;
+    --call-sk-cold:      #7cb8e3;
+    --call-sk-water:     #284a5c;
+    --call-sk-water-ink: #8cc4e6;
+    --call-sk-moss:      #7fb592;
+    --call-sk-amber:     #d9a838;
+    --call-sk-sun:       #e0b23a;
+    --call-sk-lit:       #5b5023;
+    --call-sk-mud:       #a2805a;
+    --call-sk-skin:      #9c7a5e;
+    --call-sk-leather:   #a8703f;
+    --call-sk-welly:     #4f8a63;
+    --call-sk-neoprene:  #7a93a0;
+    --call-sk-snow:      #d6dfe5;
+  }
+}
+
+.gd-drawn-asked {
+  margin: 0 0 14px; display: flex; flex-direction: column; gap: 4px;
+  padding: 12px 14px; border-radius: 10px; background: var(--call-panel);
+}
+.gd-drawn-asked .call-label { color: var(--call-ink-4); }
+.gd-drawn-asked-verdict {
+  font-family: var(--call-font-display); font-size: var(--call-body-lg);
+  line-height: 1.3; color: var(--call-ink-1);
+}
+.gd-drawn-plain {
+  margin: 0 0 var(--call-block); font-size: var(--call-body-sm);
+  color: var(--call-ink-4); font-variant-numeric: tabular-nums;
+}
+.gd-drawn-sec {
+  display: flex; flex-direction: column; gap: 4px;
+  border-top: 1.5px dashed var(--call-sk-pencil);
+  padding: 16px 0 22px;
+}
+.gd-drawn-label { margin: 0; color: var(--call-ink-4); display: flex; gap: 10px; align-items: baseline; flex-wrap: wrap; }
+.gd-drawn-because {
+  font-family: var(--call-font-body); font-style: normal; font-variant-caps: normal;
+  font-size: var(--call-caption); color: var(--call-amber-ink);
+}
+.gd-drawn-say {
+  margin: 2px 0 6px;
+  font-family: var(--call-font-hand), 'Comic Sans MS', cursive; font-weight: 700;
+  font-size: 28px; line-height: 1.05; color: var(--call-sk-ink);
+  text-wrap: balance;
+}
+.gd-drawn-svg { display: block; width: 100%; height: auto; overflow: visible; }
+.gd-drawn-svg text { font-family: var(--call-font-hand), 'Comic Sans MS', cursive; }
+.gd-drawn-facts {
+  margin: 8px 0 0; display: flex; flex-wrap: wrap; gap: 4px 16px;
+  font-size: var(--call-caption); color: var(--call-ink-4); font-variant-numeric: tabular-nums;
+}
+.gd-drawn-facts div { display: flex; gap: 5px; }
+.gd-drawn-facts dt { margin: 0; }
+.gd-drawn-facts dd { margin: 0; color: var(--call-ink-1); font-weight: 600; }
+
+.gd-drawn-all { margin-top: 8px; border-top: 1px solid var(--call-border); }
+.gd-drawn-all-summary {
+  cursor: pointer; padding: 16px 0; list-style: none;
+  font-weight: 600; font-size: var(--call-body); color: var(--call-moss-ink);
+}
+.gd-drawn-all-summary::-webkit-details-marker { display: none; }
+.gd-drawn-all-summary::after { content: ' +'; }
+.gd-drawn-all[open] > .gd-drawn-all-summary::after { content: ' −'; }
+.gd-drawn-all-summary:focus-visible { outline: 2px solid var(--call-moss-ink); outline-offset: 4px; border-radius: 4px; }
 
 /* ── Undoing a global that predates all of this ───────────────────────────
    `styles/index.css` styles the bare `section` element — 2.5rem margin,
@@ -1291,6 +1391,7 @@ h1.call-setup-question, h1.call-verdict { margin-block: 0; }
 .call-setup section,
 section.gd-app,
 section.gd-cond-block,
+section.gd-drawn-sec,
 section.gd-acct-block,
 section.gd-spot-section,
 section.gd-spot-hero,

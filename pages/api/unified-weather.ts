@@ -151,7 +151,7 @@ interface OpenMeteoGeneralHourly {
     visibility?: number[]; // meters
     // NEW: include snow arrays so we can map them into unified hourly
     snowfall?: number[]; // cm per hour
-    snow_depth?: number[]; // cm
+    snow_depth?: number[]; // METRES — converted to cm below
     // Supplement fields for free providers
     apparent_temperature?: number[]; // °C
     uv_index?: number[];
@@ -2194,7 +2194,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         const tm = typeof tc[i] === 'number' ? Number(tc[i]) : undefined;
         const visM = typeof vis[i] === 'number' ? Number(vis[i]) : undefined;
         const visKm = typeof visM === 'number' && Number.isFinite(visM) ? Math.round(visM / 100) / 10 : undefined; // Convert meters to km (1 decimal)
-        const sd = typeof snowDepth[i] === 'number' ? Number(snowDepth[i]) : undefined;
+        // Open-Meteo's snow_depth is in METRES. It was passed through as
+        // `snowDepthCm` unconverted, so Tromsø's 9 cm read as 0.08.
+        const sdM = typeof snowDepth[i] === 'number' ? Number(snowDepth[i]) : undefined;
+        const sd = typeof sdM === 'number' && Number.isFinite(sdM) ? Math.round(sdM * 1000) / 10 : undefined;
         const sfCm = typeof snowfallCm[i] === 'number' ? Number(snowfallCm[i]) : undefined;
         // Convert snowfall cm to mm/h for unified naming consistency
         const sfMmH = typeof sfCm === 'number' && Number.isFinite(sfCm) ? sfCm * 10 : undefined;

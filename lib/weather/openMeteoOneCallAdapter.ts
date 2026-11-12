@@ -59,7 +59,7 @@ export async function fetchOpenMeteoAsOneCallShape(lat: number, lon: number): Pr
      * been missing the one number that decides whether it is safe — and an
      * absent criterion scores NEUTRAL, which is worse than a low one.
      */
-    hourly: 'temperature_2m,relative_humidity_2m,dew_point_2m,precipitation_probability,precipitation,rain,snowfall,weather_code,wind_speed_10m,wind_gusts_10m,wind_direction_10m,visibility,uv_index,soil_moisture_0_to_7cm',
+    hourly: 'temperature_2m,relative_humidity_2m,dew_point_2m,precipitation_probability,precipitation,rain,snowfall,weather_code,wind_speed_10m,wind_gusts_10m,wind_direction_10m,visibility,uv_index,soil_moisture_0_to_7cm,snow_depth',
     /**
      * `wind_speed_10m_mean`, `wind_gusts_10m_max` and `precipitation_hours` are
      * asked for because the activity models already reference all three and were
@@ -268,6 +268,21 @@ export async function fetchOpenMeteoAsOneCallShape(lat: number, lon: number): Pr
   };
 
   /**
+   * Snow lying in the daytime, in CENTIMETRES.
+   *
+   * Requested because twenty-odd models already score it — `snowDepthCm>1` to
+   * call off a run, `snowDepthCm=60..200` for skiing — and The Call had never
+   * evaluated one of them: the field was not in the request, and a missing key
+   * is skipped. Open-Meteo publishes it hourly and in METRES (Tromsø's 9 cm is
+   * 0.09), so it is meaned over the same 09:00–18:00 as visibility and
+   * converted once, here.
+   */
+  const daytimeSnowDepthCm = (dateStr: string) => {
+    const v = daytimeMeanOf(hourly.snow_depth, dateStr);
+    return typeof v === 'number' ? Math.round(v * 1000) / 10 : undefined;
+  };
+
+  /**
    * WHICH part of the day the rain falls in.
    *
    * The daily shape carries how MUCH and for how many hours, which makes two
@@ -363,6 +378,8 @@ export async function fetchOpenMeteoAsOneCallShape(lat: number, lon: number): Pr
       visibility: daytimeVisibility(dateStr),
       /* Percent, not m³/m³ — see daytimeSoilMoisture. */
       soil_moisture: daytimeSoilMoisture(dateStr),
+      /* Centimetres — see daytimeSnowDepthCm. Not an OpenWeather field. */
+      snow_depth_cm: daytimeSnowDepthCm(dateStr),
       snow: typeof daily.snowfall_sum?.[i] === 'number' ? daily.snowfall_sum[i] * 10 : undefined,
       moon_phase: computeMoonPhase(dt),
     };

@@ -659,7 +659,7 @@ function normalizeCoreWeatherFields(
     ], sources),
     snowDepth: pickField([
       [], // OpenWeather: not available
-      ['hourly', 'snow_depth'], // Open-Meteo: cm
+      ['hourly', 'snow_depth'], // Open-Meteo: METRES
       [] // Stormglass: not available
     ], sources),
     // Add more fields as needed
@@ -1158,7 +1158,7 @@ async function getAirPollution({ lat, lon, apiKey }: { lat: number|string, lon: 
  *
  * - Open-Meteo (https://open-meteo.com/en/docs)
  *   • /v1/forecast: General weather, soil, snow, wind
- *     - Fields: temperature_2m (°C), precipitation (mm), windspeed_10m (m/s), soil_temperature_0cm (°C), soil_moisture_0_to_1cm (m³/m³), soil_moisture_1_to_3cm (m³/m³), snowfall (cm), snow_depth (cm), freezing_level_height (m)
+ *     - Fields: temperature_2m (°C), precipitation (mm), windspeed_10m (m/s), soil_temperature_0cm (°C), soil_moisture_0_to_1cm (m³/m³), soil_moisture_1_to_3cm (m³/m³), snowfall (cm), snow_depth (m), freezing_level_height (m)
  *   • /v1/air-quality: Air quality & pollen
  *     - Fields: alder_pollen, birch_pollen, grass_pollen, ragweed_pollen (unitless, model-dependent, relative exposure), pm2_5, pm10, o3, no2, so2, co (µg/m³), european_aqi, us_aqi (index)
  *
