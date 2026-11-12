@@ -18,6 +18,8 @@ import type { Drawing as Model } from '@/lib/godaisy/conditions/drawn';
 import type { SeaWear } from '@/lib/godaisy/conditions/seaWear';
 import { PERSON_M } from '@/lib/godaisy/conditions/drawn';
 import { rough, circle, rng, type Pt } from '@/lib/godaisy/conditions/pencil';
+import { useGdLocale } from '@/lib/godaisy/i18n/react';
+import { tick, num as fmt } from '@/lib/godaisy/i18n';
 
 const C = {
   ink: 'var(--call-sk-ink)', pencil: 'var(--call-sk-pencil)', wash: 'var(--call-sk-wash)', paper: 'var(--call-page)',
@@ -160,10 +162,12 @@ function Thermometers({ d, seed }: { d: Extract<Model, { kind: 'thermometers' }>
   const xs = d.bars.length === 1 ? [150] : [96, 236];
   const ticks: number[] = [];
   for (let t = lo; t <= hi; t += 5) ticks.push(t);
-  const windy = d.gap?.startsWith('the wind');
+  // The locale cut its own gap into lines; an old-shape drawing (English, no
+  // `gapLines`) falls back to the same cut made here.
+  const windy = d.gapWindy ?? Boolean(d.gap?.startsWith('the wind'));
   const words = d.gap?.split(' ') ?? [];
-  const gap1 = words.length > 2 ? words.slice(0, -2).join(' ') : '';
-  const gap2 = words.length > 2 ? words.slice(-2).join(' ') : words.join(' ');
+  const gap1 = d.gapLines ? d.gapLines[0] : words.length > 2 ? words.slice(0, -2).join(' ') : '';
+  const gap2 = d.gapLines ? d.gapLines[1] : words.length > 2 ? words.slice(-2).join(' ') : words.join(' ');
   return (
     <Svg h={234}>
       {ticks.map((t) => <Txt key={t} x={52} y={Y(t) + 5} size={15} anchor="end" fill={C.pencil}>{`${t}°`}</Txt>)}
@@ -276,6 +280,7 @@ function Umbrellas({ d, seed }: { d: Extract<Model, { kind: 'umbrellas' }>; seed
 }
 
 function Wave({ d, seed }: { d: Extract<Model, { kind: 'wave' }>; seed: number }) {
+  const { t } = useGdLocale();
   const base = 196;
   const pm = Math.min(60, 160 / Math.max(d.waveM, PERSON_M));
   const crest = base - d.waveM * pm;
@@ -288,19 +293,20 @@ function Wave({ d, seed }: { d: Extract<Model, { kind: 'wave' }>; seed: number }
       <Shape pts={pts} seed={seed + 8} fill={C.water} stroke={C.waterInk} w={1.8} />
       <Person x={262} y={base} h={PERSON_M * pm} seed={seed + 40} wear={d.wear} />
       <Line pts={[[112, crest], [300, crest]]} seed={seed + 51} stroke={C.warm} w={1.3} dash="3 4" />
-      <Txt x={304} y={crest + 5} size={18} bold fill={C.warm}>{d.band}</Txt>
+      <Txt x={304} y={crest + 5} size={18} bold fill={C.warm}>{d.bandLabel ?? d.band}</Txt>
       <Line pts={[[218, crest], [218, base]]} seed={seed + 52} w={1.2} />
       <Txt x={212} y={(crest + base) / 2 + 6} size={18} anchor="end" bold>{`${d.waveM.toFixed(1)} m`}</Txt>
       {d.wearLabel && <Txt x={262} y={base + 22} size={18} anchor="middle" bold fill={C.ink}>{d.wearLabel}</Txt>}
-      <Txt x={262} y={base + (d.wearLabel ? 40 : 22)} size={15} anchor="middle" fill={C.pencil}>{`${PERSON_M} m person`}</Txt>
-      {d.airC !== undefined && <Txt x={20} y={30} size={21} bold fill={C.warm}>{`air ${Math.round(d.airC)}°`}</Txt>}
-      {d.waterC !== undefined && <Txt x={22} y={base - 12} size={21} bold fill={C.waterInk}>{`water ${Math.round(d.waterC)}°`}</Txt>}
-      {hint && <Txt x={100} y={30} size={17} fill={C.pencil}>← colder than the sea</Txt>}
+      <Txt x={262} y={base + (d.wearLabel ? 40 : 22)} size={15} anchor="middle" fill={C.pencil}>{t('draw_person', { m: PERSON_M })}</Txt>
+      {d.airC !== undefined && <Txt x={20} y={30} size={21} bold fill={C.warm}>{t('draw_air', { t: Math.round(d.airC) })}</Txt>}
+      {d.waterC !== undefined && <Txt x={22} y={base - 12} size={21} bold fill={C.waterInk}>{t('draw_water', { t: Math.round(d.waterC) })}</Txt>}
+      {hint && <Txt x={100} y={30} size={17} fill={C.pencil}>{t('draw_colder_than_sea')}</Txt>}
     </Svg>
   );
 }
 
 function Tide({ d, seed }: { d: Extract<Model, { kind: 'tide' }>; seed: number }) {
+  const { L: loc, t } = useGdLocale();
   const L = 34;
   const R = 232;
   const B = 232;
@@ -326,7 +332,7 @@ function Tide({ d, seed }: { d: Extract<Model, { kind: 'tide' }>; seed: number }
   const andABit = (people >= 1.15 && people < 1.75) || (people >= 2.15 && people < 2.75);
   const ticks: number[] = [];
   for (let h = Math.ceil(h0 / 2) * 2; h <= h1; h += 2) ticks.push(h);
-  const tickLabel = (h: number) => { const k = ((h % 24) + 24) % 24; return k === 0 ? 'midnight' : k === 12 ? 'noon' : k < 12 ? `${k}am` : `${k - 12}pm`; };
+  const tickLabel = (h: number) => tick(loc, h);
   const labelEnd = (p: { h: number }) => (X(p.h) > (L + R) / 2 ? 'end' : 'start');
   return (
     <Svg h={262}>
@@ -341,7 +347,7 @@ function Tide({ d, seed }: { d: Extract<Model, { kind: 'tide' }>; seed: number }
         <g key={i}>
           <circle cx={X(p.h)} cy={Y(p.m)} r={4} fill={C.ink} />
           <Txt x={X(p.h) + (labelEnd(p) === 'end' ? -6 : 8)} y={Y(p.m) - 12} size={17} bold anchor={labelEnd(p)}>
-            {`${p.type} ${p.m.toFixed(1)} m`}
+            {t(p.type === 'high' ? 'draw_tide_high' : 'draw_tide_low', { m: p.m.toFixed(1) })}
           </Txt>
         </g>
       ))}
@@ -350,7 +356,7 @@ function Tide({ d, seed }: { d: Extract<Model, { kind: 'tide' }>; seed: number }
       {Array.from({ length: stack }, (_, k) => (
         <Person key={k} x={300} y={Y(low.m) - k * ph * 0.86} h={ph} seed={seed + 30 + k * 6} />
       ))}
-      {andABit && <Txt x={300} y={Y(high.m) - 10} size={17} anchor="middle" bold fill={C.waterInk}>+ a bit</Txt>}
+      {andABit && <Txt x={300} y={Y(high.m) - 10} size={17} anchor="middle" bold fill={C.waterInk}>{t('draw_plus_a_bit')}</Txt>}
       <Line pts={[[268, Y(low.m) - 2], [268, Y(high.m) + 2]]} seed={seed + 40} w={1.2} />
       <Txt x={262} y={(Y(low.m) + Y(high.m)) / 2 + 6} size={18} bold anchor="end">{`${d.rangeM.toFixed(1)} m`}</Txt>
     </Svg>
@@ -358,6 +364,7 @@ function Tide({ d, seed }: { d: Extract<Model, { kind: 'tide' }>; seed: number }
 }
 
 function Daylight({ d, seed }: { d: Extract<Model, { kind: 'daylight' }>; seed: number }) {
+  const { t, L } = useGdLocale();
   const id = useId().replace(/:/g, '');
   const r = 11;
   const step = 27.5;
@@ -389,8 +396,8 @@ function Daylight({ d, seed }: { d: Extract<Model, { kind: 'daylight' }>; seed: 
           </g>
         );
       })}
-      <Txt x={x0 - r} y={14} size={15} fill={C.pencil}>midnight</Txt>
-      <Txt x={x0 - r} y={78} size={15} fill={C.pencil}>noon</Txt>
+      <Txt x={x0 - r} y={14} size={15} fill={C.pencil}>{L.clock === '24h' ? '00:00' : t('draw_midnight')}</Txt>
+      <Txt x={x0 - r} y={78} size={15} fill={C.pencil}>{L.clock === '24h' ? '12:00' : t('draw_noon')}</Txt>
       <Txt x={350} y={14} size={15} anchor="end" fill={C.pencil}>{d.lengthLabel}</Txt>
       <Txt x={clampX(rise.cx)} y={rise.cy + 30} size={17} anchor="middle" bold>{d.riseLabel}</Txt>
       <Txt x={clampX(set.cx)} y={set.cy + 30} size={17} anchor="middle" bold fill={C.warm}>{d.setLabel}</Txt>
@@ -399,6 +406,7 @@ function Daylight({ d, seed }: { d: Extract<Model, { kind: 'daylight' }>; seed: 
 }
 
 function Dots({ d, seed }: { d: Extract<Model, { kind: 'dots' }>; seed: number }) {
+  const { t, L } = useGdLocale();
   const id = useId().replace(/:/g, '');
   const n = Math.min(30, Math.max(d.limit, Math.ceil(d.value)));
   const step = Math.min(22.5, 330 / n);
@@ -427,16 +435,13 @@ function Dots({ d, seed }: { d: Extract<Model, { kind: 'dots' }>; seed: number }
         );
       })}
       <Line pts={[[limitX, cy - 18], [limitX, cy + 18]]} seed={seed + 50} stroke={C.warm} w={1.8} />
-      <Txt x={x0 - r} y={24} size={19} bold fill={d.value > d.limit ? C.warm : C.moss}>{`today ${d.value.toFixed(1)}`}</Txt>
-      <Txt x={350} y={24} size={17} anchor="end" fill={C.warm}>{`WHO daily limit ${d.limit}`}</Txt>
-      <Txt x={x0 - r} y={100} size={16} fill={C.pencil}>fine dust (PM2.5), µg/m³: one dot each</Txt>
+      <Txt x={x0 - r} y={24} size={19} bold fill={d.value > d.limit ? C.warm : C.moss}>{t('draw_today_value', { v: fmt(L, d.value, 1) })}</Txt>
+      <Txt x={350} y={24} size={17} anchor="end" fill={C.warm}>{t('draw_who_limit', { n: d.limit })}</Txt>
+      <Txt x={x0 - r} y={100} size={16} fill={C.pencil}>{t('draw_dust_key')}</Txt>
     </Svg>
   );
 }
 
-const FOOTWEAR_LABELS: Array<[string, string]> = [
-  ['hard', 'and dry'], ['firm', ''], ['soft', ''], ['a bit', 'soggy'], ['muddy', ''], ['very', 'muddy'],
-];
 
 /**
  * Flip flops, bare feet, trainers, boots, wellies, and wellies again.
@@ -446,6 +451,8 @@ const FOOTWEAR_LABELS: Array<[string, string]> = [
  * the welly sunk.
  */
 function Footwear({ d, seed }: { d: Extract<Model, { kind: 'footwear' }>; seed: number }) {
+  const { t, L } = useGdLocale();
+  const FOOTWEAR_LABELS = L.shoes;
   const id = useId().replace(/:/g, '');
   const ground = 92;
   const step = 58;
@@ -536,12 +543,12 @@ function Footwear({ d, seed }: { d: Extract<Model, { kind: 'footwear' }>; seed: 
         <g>
           {Array.from({ length: 15 }, (_, k) => <Flake key={k} x={14 + k * 24} y={ground + 7} r={3.2} seed={seed + 700 + k * 3} w={1} />)}
           <Txt x={d.index >= 3 ? 6 : 354} y={22} size={17} bold anchor={d.index >= 3 ? 'start' : 'end'} fill={C.cold}>
-            {`frost overnight, ${d.frost.lowC < 0 ? '−' : ''}${Math.abs(Math.round(d.frost.lowC))}°`}
+            {t('draw_frost_overnight', { t: `${d.frost.lowC < 0 ? '−' : ''}${Math.abs(Math.round(d.frost.lowC))}°` })}
           </Txt>
-          {d.frost.icy && <Txt x={d.index >= 3 ? 6 : 354} y={40} size={16} anchor={d.index >= 3 ? 'start' : 'end'} fill={C.cold}>icy by morning</Txt>}
+          {d.frost.icy && <Txt x={d.index >= 3 ? 6 : 354} y={40} size={16} anchor={d.index >= 3 ? 'start' : 'end'} fill={C.cold}>{t('draw_icy')}</Txt>}
         </g>
       )}
-      <Txt x={x0 + d.index * step + 4} y={24} size={19} anchor="middle" bold fill={C.amber}>today</Txt>
+      <Txt x={x0 + d.index * step + 4} y={24} size={19} anchor="middle" bold fill={C.amber}>{t('draw_today')}</Txt>
       <Line pts={[[x0 + d.index * step + 4, 30], [x0 + d.index * step + 4, 38]]} seed={seed + 570} stroke={C.amber} w={1.6} />
     </Svg>
   );
@@ -549,6 +556,7 @@ function Footwear({ d, seed }: { d: Extract<Model, { kind: 'footwear' }>; seed: 
 
 /** Snow lying, against a leg: ankle, shin, knee, thigh. */
 function SnowDepth({ d, seed }: { d: Extract<Model, { kind: 'snowDepth' }>; seed: number }) {
+  const { t } = useGdLocale();
   const G = 168;
   const px = 1.3;
   const Y = (cm: number) => G - Math.min(cm, 105) * px;
@@ -558,7 +566,7 @@ function SnowDepth({ d, seed }: { d: Extract<Model, { kind: 'snowDepth' }>; seed
   const surface: Pt[] = [[14, G]];
   for (let k = 0; k <= 16; k++) surface.push([14 + k * 20.5, top - 3 + r() * 6]);
   surface.push([342, G]);
-  const marks: Array<[number, string]> = [[10, 'ankle'], [28, 'shin'], [50, 'knee'], [78, 'thigh']];
+  const marks: Array<[number, string]> = [[10, t('leg_ankle')], [28, t('leg_shin')], [50, t('leg_knee')], [78, t('leg_thigh')]];
   return (
     <Svg h={196}>
       {/* the leg and its welly, drawn first so the snow sits over them */}
@@ -582,6 +590,7 @@ function SnowDepth({ d, seed }: { d: Extract<Model, { kind: 'snowDepth' }>; seed
 
 /** A frost: a thermometer below zero, and the grass crisp with it. */
 function Frost({ d, seed }: { d: Extract<Model, { kind: 'frost' }>; seed: number }) {
+  const { t } = useGdLocale();
   const lo = Math.min(-10, Math.floor(d.lowC / 5) * 5);
   const hi = 10;
   const B = 130;
@@ -609,7 +618,7 @@ function Frost({ d, seed }: { d: Extract<Model, { kind: 'frost' }>; seed: number
           </g>
         );
       })}
-      <Txt x={352} y={44} size={22} anchor="end" bold fill={C.cold}>frost</Txt>
+      <Txt x={352} y={44} size={22} anchor="end" bold fill={C.cold}>{t('draw_frost_word')}</Txt>
       <Txt x={352} y={70} size={18} anchor="end" fill={C.cold}>{d.label}</Txt>
     </Svg>
   );
@@ -617,15 +626,16 @@ function Frost({ d, seed }: { d: Extract<Model, { kind: 'frost' }>; seed: number
 
 /** Fog: trees at known distances, and the ones past what you can see are lost in it. */
 function Visibility({ d, seed }: { d: Extract<Model, { kind: 'visibility' }>; seed: number }) {
+  const { t, L } = useGdLocale();
   const G = 128;
   const D = [20, 50, 100, 200, 500, 1000, 2000];
   const lx = (m: number) => 72 + ((Math.log10(Math.max(20, Math.min(2000, m))) - Math.log10(20)) / 2) * 268;
   const seeTo = lx(d.m);
-  const label = (m: number) => (m >= 1000 ? `${m / 1000} km` : `${m} m`);
+  const label = (m: number) => (m >= 1000 ? `${fmt(L, m / 1000, 0)} km` : `${m} m`);
   return (
     <Svg h={176}>
       <Person x={30} y={G} h={62} seed={seed} />
-      <Txt x={30} y={G + 20} size={15} anchor="middle" fill={C.pencil}>you</Txt>
+      <Txt x={30} y={G + 20} size={15} anchor="middle" fill={C.pencil}>{t('draw_you')}</Txt>
       {D.map((m, i) => {
         const x = lx(m);
         const s = 1 - 0.45 * (i / (D.length - 1));
@@ -641,13 +651,14 @@ function Visibility({ d, seed }: { d: Extract<Model, { kind: 'visibility' }>; se
       <rect x={seeTo + 8} y={10} width={Math.max(0, 352 - seeTo - 8)} height={G - 8} fill={C.wash} opacity={0.75} />
       <Line pts={[[seeTo + 8, 26], [seeTo + 8, G]]} seed={seed + 40} stroke={C.cold} w={1.4} dash="4 4" />
       {/* Right of the line while there is room, left of it once the fog is far off. */}
-      <Txt x={seeTo > 200 ? seeTo + 2 : seeTo + 14} y={22} size={17} bold anchor={seeTo > 200 ? 'end' : 'start'} fill={C.cold}>you can see this far</Txt>
+      <Txt x={seeTo > 200 ? seeTo + 2 : seeTo + 14} y={22} size={17} bold anchor={seeTo > 200 ? 'end' : 'start'} fill={C.cold}>{t('draw_see_this_far')}</Txt>
       <Line pts={[[8, G], [352, G]]} seed={seed + 41} stroke={C.pencil} w={1.3} />
     </Svg>
   );
 }
 
 function Moon({ d, seed }: { d: Extract<Model, { kind: 'moon' }>; seed: number }) {
+  const { t, L: loc } = useGdLocale();
   const cx = 48;
   const cy = 62;
   const r = 30;
@@ -660,7 +671,7 @@ function Moon({ d, seed }: { d: Extract<Model, { kind: 'moon' }>; seed: number }
   const y = 88;
   const ticks: number[] = [];
   for (let h = Math.ceil(d.fromH / 2) * 2; h <= 24; h += 2) ticks.push(h);
-  const tl = (h: number) => (h === 24 ? 'midnight' : h === 12 ? 'noon' : h > 12 ? `${h - 12}pm` : `${h}am`);
+  const tl = (h: number) => tick(loc, h);
   const stars = rng(seed + 77);
   const dark = d.darkFromH;
   return (
@@ -673,7 +684,7 @@ function Moon({ d, seed }: { d: Extract<Model, { kind: 'moon' }>; seed: number }
           fill={C.lit} stroke={C.ink} strokeWidth={1.4}
         />
       </g>
-      <Txt x={cx} y={cy + r + 24} size={17} anchor="middle" bold>{`${Math.round(d.illuminationPct)}% lit`}</Txt>
+      <Txt x={cx} y={cy + r + 24} size={17} anchor="middle" bold>{t('moon_lit', { pct: Math.round(d.illuminationPct) })}</Txt>
       {dark !== undefined && dark < 24 && (
         <path d={rough([[X(dark), y - 40], [X(24), y - 40], [X(24), y], [X(dark), y]], seed + 7, 1, true)} fill={C.wash} />
       )}
@@ -705,7 +716,7 @@ function Moon({ d, seed }: { d: Extract<Model, { kind: 'moon' }>; seed: number }
               </g>
             );
           })}
-          <Txt x={(X(dark) + X(24)) / 2} y={y - 46} size={18} anchor="middle" bold>dark sky</Txt>
+          <Txt x={(X(dark) + X(24)) / 2} y={y - 46} size={18} anchor="middle" bold>{t('draw_dark_sky')}</Txt>
         </g>
       )}
     </Svg>

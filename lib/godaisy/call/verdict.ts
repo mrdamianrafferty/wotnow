@@ -25,10 +25,12 @@
  * @module lib/godaisy/call/verdict
  */
 
-import { compass, familyFor, forceFromMs, forceName, phraseFor } from '@/utils/activityReasons';
+import { compass, familyFor, forceFromMs, phraseFor } from '@/utils/activityReasons';
 import type { WeatherData, Suggestion } from '@/utils/getSuggestionsByDay';
 import { LIMITING_BELOW, type CallBand } from './bands';
 import { choosePhrase, fillWhen } from './phrasebook';
+import { localeOf, tr_, num as fmt, upperFirst as upperFirstIn } from '@/lib/godaisy/i18n';
+import type { LangCode, Locale, TKey } from '@/lib/godaisy/i18n/types';
 
 /**
  * How a sport is named inside "Today is a ___ day."
@@ -93,6 +95,22 @@ function afterFor(activityId: string, name?: string): string {
   return p;
 }
 
+/**
+ * How a sport is named after the language's own "for" — "a day for ___", "a
+ * write-off for ___". English derives it from the library name (above); every
+ * other language carries it, written out, in its locale (`sportNames`).
+ */
+function sportObject(L: Locale, activityId: string, name?: string): string {
+  if (L.code === 'en') return afterFor(activityId, name);
+  return L.sportNames[activityId] ?? afterFor(activityId, name);
+}
+
+/** The "a day for ___." fallback for a sport with no noun frame. */
+function fallbackVerdict(L: Locale, activityId: string, name?: string): string {
+  if (L.code === 'en') return verdictNoun(activityId, name);
+  return tr_(L, 'day_for', { x: sportObject(L, activityId, name) });
+}
+
 export interface VerdictInput {
   suggestion: Pick<Suggestion, 'activityId' | 'score' | 'binding' | 'vetoed'>;
   activityName?: string;
@@ -127,6 +145,12 @@ export interface VerdictInput {
   dayIndex?: number;
   /** The weekday this call is for, already localised ("Tuesday"). */
   weekday?: string;
+  /** The same weekday as 0 = Sunday. Read by every language but English, whose `weekday` string is enough. */
+  weekdayIdx?: number;
+  /** The next yes as 0 = Sunday, for languages that decline the weekday in "Tuesday is the one". */
+  nextYesIdx?: number;
+  /** The language. English when absent. */
+  lang?: LangCode;
 }
 
 export interface Verdict {
@@ -155,12 +179,12 @@ export interface Verdict {
  * why "before eleven" is not here: eleven is inside the morning part, and the
  * scoring has nothing to say about which side of it the wind turns.
  */
-const WINDOW_CLAUSE: Record<string, string> = {
-  morning: 'Best in the morning',
-  afternoon: 'Best in the afternoon',
-  evening: 'Best in the evening',
-  'morning,afternoon': 'Best before six',
-  'afternoon,evening': 'Best from midday on',
+const WINDOW_KEY: Record<string, TKey> = {
+  morning: 'win_morning',
+  afternoon: 'win_afternoon',
+  evening: 'win_evening',
+  'morning,afternoon': 'win_morning_afternoon',
+  'afternoon,evening': 'win_afternoon_evening',
 };
 
 /**
@@ -180,24 +204,25 @@ const WINDOW_CLAUSE: Record<string, string> = {
  * Anything not here drops the half-sentence rather than reaching for a vague
  * one — the window still says when, it just does not claim to know why.
  */
-const WINDOW_ENDS: Record<string, string> = {
-  gust: 'the wind gets up after that',
-  windSpeed: 'the wind gets up after that',
-  windRelative: 'the wind gets up after that',
-  precipitation: 'the rain comes in after that',
-  rain: 'the rain comes in after that',
-  visibility: 'it closes in after that',
-  cloudCover: 'it clouds over after that',
-  waveHeight: 'the sea gets up after that',
-  swellPeriod: 'the swell goes off after that',
+const WINDOW_END_KEY: Record<string, TKey> = {
+  gust: 'win_end_wind',
+  windSpeed: 'win_end_wind',
+  windRelative: 'win_end_wind',
+  precipitation: 'win_end_rain',
+  rain: 'win_end_rain',
+  visibility: 'win_end_vis',
+  cloudCover: 'win_end_cloud',
+  waveHeight: 'win_end_sea',
+  swellPeriod: 'win_end_swell',
 };
 
 /** "Best in the morning, and the wind gets up after that." */
-function windowSentence(parts: readonly string[], ends?: string): string {
-  const clause = WINDOW_CLAUSE[parts.join(',')];
-  if (!clause) return '';
-  const why = ends ? WINDOW_ENDS[ends] : undefined;
-  return why ? `${clause}, and ${why}.` : `${clause}.`;
+function windowSentence(L: Locale, parts: readonly string[], ends?: string): string {
+  const clauseKey = WINDOW_KEY[parts.join(',')];
+  if (!clauseKey) return '';
+  const clause = tr_(L, clauseKey);
+  const whyKey = ends ? WINDOW_END_KEY[ends] : undefined;
+  return whyKey ? tr_(L, 'win_join', { clause, why: tr_(L, whyKey) }) : tr_(L, 'win_alone', { clause });
 }
 
 /**
@@ -207,9 +232,9 @@ function windowSentence(parts: readonly string[], ends?: string): string {
  * same percentage. Kept to plain English rather than that function's
  * exclamation marks and emoji, which the verdict's voice rules forbid.
  */
-function humidClause(humidity: number, temperature?: number): string {
+function humidClause(L: Locale, humidity: number, temperature?: number): string {
   const cold = typeof temperature === 'number' && temperature < 10;
-  return cold ? `damp and clammy at ${Math.round(humidity)}%` : `close and sticky at ${Math.round(humidity)}%`;
+  return tr_(L, cold ? 'humid_cold' : 'humid_warm', { pct: Math.round(humidity) });
 }
 
 /**
@@ -222,7 +247,7 @@ function humidClause(humidity: number, temperature?: number): string {
  * and the family said "land, so talk about temperature". Whatever decided the
  * score is what the sentence is about.
  */
-function bindingClause(w: WeatherData, activityId: string, bindingKey?: string): string | null {
+function bindingClause(L: Locale, w: WeatherData, activityId: string, bindingKey?: string): string | null {
   /*
    * Rain is left NULLABLE, and every dryness claim below tests for the number
    * rather than coalescing it to zero.
@@ -240,10 +265,11 @@ function bindingClause(w: WeatherData, activityId: string, bindingKey?: string):
   const rain = w.precipitation;
   const gust = w.gustspeed;
   const windKmh = w.windspeed;
+  const T = (key: TKey, vars?: Record<string, string | number>) => tr_(L, key, vars);
 
   const force = (kmh: number) => {
     const f = forceFromMs(kmh / 3.6);
-    return `${forceName(f)}, Force ${f}`;
+    return T('force_fmt', { name: L.forceNames[Math.max(0, Math.min(12, f))], f });
   };
 
   switch (bindingKey) {
@@ -251,31 +277,31 @@ function bindingClause(w: WeatherData, activityId: string, bindingKey?: string):
       if (windKmh !== undefined) return force(windKmh);
       break;
     case 'gust':
-      if (gust !== undefined) return `gusting to ${Math.round(gust)} km/h`;
+      if (gust !== undefined) return T('reason_gusting', { kmh: Math.round(gust) });
       break;
     case 'precipitation':
       if (rain === undefined) break;
-      if (rain >= 0.2) return `${rain.toFixed(1)} mm of rain`;
-      return 'dry through';
+      if (rain >= 0.2) return T('reason_rain', { mm: fmt(L, rain, 1) });
+      return T('clause_dry_through');
     case 'waterTemperature':
-      if (w.waterTemperature !== undefined) return `${Math.round(w.waterTemperature)}°C in the water`;
+      if (w.waterTemperature !== undefined) return T('clause_water', { t: Math.round(w.waterTemperature) });
       break;
     case 'waveHeight':
     case 'swellPeriod': {
       const h = w.swellHeight ?? w.waveHeight;
       if (h !== undefined) {
         return w.swellPeriod !== undefined
-          ? `${h.toFixed(1)} m at ${Math.round(w.swellPeriod)} seconds`
-          : `${h.toFixed(1)} m of swell`;
+          ? T('clause_swell_period', { h: fmt(L, h, 1), p: Math.round(w.swellPeriod) })
+          : T('clause_swell', { h: fmt(L, h, 1) });
       }
       break;
     }
     case 'cloudCover':
     case 'clouds':
-      if (w.clouds !== undefined) return w.clouds < 25 ? 'clear' : `${Math.round(w.clouds)}% cloud`;
+      if (w.clouds !== undefined) return w.clouds < 25 ? T('clause_clear') : T('clause_cloud', { pct: Math.round(w.clouds) });
       break;
     case 'soilMoisture':
-      if (w.soilMoisture !== undefined) return w.soilMoisture < 30 ? 'dry ground' : 'soft ground';
+      if (w.soilMoisture !== undefined) return w.soilMoisture < 30 ? T('clause_ground_dry') : T('clause_ground_soft');
       break;
     /*
      * Humidity, visibility, wind direction and snow were all handled by the
@@ -293,42 +319,47 @@ function bindingClause(w: WeatherData, activityId: string, bindingKey?: string):
      * point of naming it at all.
      */
     case 'humidity':
-      if (w.humidity !== undefined) return humidClause(w.humidity, w.temperature);
+      if (w.humidity !== undefined) return humidClause(L, w.humidity, w.temperature);
       break;
     case 'visibility': {
       const km = typeof w.visibility === 'number' ? w.visibility / 1000 : undefined;
       if (km !== undefined) {
-        if (km < 1) return 'thick fog, under a kilometre of visibility';
-        if (km < 4) return `murky, losing detail past ${Math.round(km)} km`;
-        return `hazy, thinning out past ${Math.round(km)} km`;
+        if (km < 1) return T('clause_fog');
+        if (km < 4) return T('clause_murky', { km: Math.round(km) });
+        return T('clause_hazy', { km: Math.round(km) });
       }
       break;
     }
     case 'windDirection':
-      if (w.winddirection !== undefined) return `wind out of the ${compass(w.winddirection)}`;
+      if (w.winddirection !== undefined) {
+        const dir = L.code === 'en'
+          ? compass(w.winddirection)
+          : L.compassWords[Math.round((((w.winddirection % 360) + 360) % 360) / 45) % 8];
+        return T('clause_wind_from', { dir });
+      }
       break;
     case 'snowDepthCm':
-      if (w.snowDepthCm !== undefined && w.snowDepthCm > 0) return `${Math.round(w.snowDepthCm)} cm of snow underfoot`;
+      if (w.snowDepthCm !== undefined && w.snowDepthCm > 0) return T('clause_snow_depth', { cm: Math.round(w.snowDepthCm) });
       break;
     case 'snowfallRateMmH':
-      if (w.snowfallRateMmH !== undefined && w.snowfallRateMmH > 0) return 'snow coming down';
+      if (w.snowfallRateMmH !== undefined && w.snowfallRateMmH > 0) return T('clause_snowing');
       break;
   }
 
   // No usable binding: fall back to what the family cares about most.
   const family = familyFor(activityId);
   if ((family === 'wind_powered' || family === 'paddle') && windKmh !== undefined) return force(windKmh);
-  if (family === 'immersion' && w.waterTemperature !== undefined) return `${Math.round(w.waterTemperature)}°C in the water`;
+  if (family === 'immersion' && w.waterTemperature !== undefined) return T('clause_water', { t: Math.round(w.waterTemperature) });
 
   // A strong gust is never "dry and mild", whatever the family thinks.
-  if (gust !== undefined && gust >= 45) return `gusting to ${Math.round(gust)} km/h`;
-  if (rain !== undefined && rain >= 1) return `${rain.toFixed(1)} mm of rain`;
+  if (gust !== undefined && gust >= 45) return T('reason_gusting', { kmh: Math.round(gust) });
+  if (rain !== undefined && rain >= 1) return T('reason_rain', { mm: fmt(L, rain, 1) });
   // The temperature is still worth saying on its own; the dryness half is only
   // added where the forecast actually carried a number to say it from.
   if (w.temperature !== undefined) {
-    const degrees = `${Math.round(w.temperature)}°C`;
-    if (rain === undefined) return degrees;
-    return `${rain < 0.2 ? 'dry' : 'mostly dry'}, ${degrees}`;
+    const degrees = `${Math.round(w.temperature)}`;
+    if (rain === undefined) return `${degrees}°C`;
+    return T(rain < 0.2 ? 'clause_dry_temp' : 'clause_mostly_dry_temp', { t: degrees });
   }
   return null;
 }
@@ -343,8 +374,9 @@ function bindingClause(w: WeatherData, activityId: string, bindingKey?: string):
  * point. `describeConditions` already knew this and only quotes a limiting clause
  * when the binding actually scored badly; this is the same rule.
  */
-function goodClause(w: WeatherData, activityId: string): string | null {
+function goodClause(L: Locale, w: WeatherData, activityId: string): string | null {
   const family = familyFor(activityId);
+  const T = (key: TKey, vars?: Record<string, string | number>) => tr_(L, key, vars);
   // Nullable for the same reason as in `bindingClause`: a day whose forecast
   // carries no precipitation is a day this cannot call dry. `dry` is false when
   // the number is missing, which drops the word rather than inverting it.
@@ -354,24 +386,24 @@ function goodClause(w: WeatherData, activityId: string): string | null {
 
   const force = (kmh: number) => {
     const f = forceFromMs(kmh / 3.6);
-    return `${forceName(f)}, Force ${f}`;
+    return T('force_fmt', { name: L.forceNames[Math.max(0, Math.min(12, f))], f });
   };
 
   if (family === 'wind_powered' && w.windspeed !== undefined) {
-    return `${force(w.windspeed)}${t ? ` and ${t}` : ''}`;
+    return t ? T('good_force_temp', { force: force(w.windspeed), t }) : force(w.windspeed);
   }
   if (family === 'paddle' && w.windspeed !== undefined) {
-    return `${force(w.windspeed)}${dry ? ', dry' : ''}`;
+    return dry ? T('good_force_dry', { force: force(w.windspeed) }) : force(w.windspeed);
   }
   if (family === 'immersion') {
-    const sea = w.waterTemperature !== undefined ? `${Math.round(w.waterTemperature)}°C in the water` : null;
-    if (sea) return `${sea}${w.windspeed !== undefined && w.windspeed < 20 ? ' and little wind' : ''}`;
+    const sea = w.waterTemperature !== undefined ? T('clause_water', { t: Math.round(w.waterTemperature) }) : null;
+    if (sea) return w.windspeed !== undefined && w.windspeed < 20 ? T('good_water_wind', { sea }) : sea;
   }
   const swell = w.swellHeight ?? w.waveHeight;
   if (swell !== undefined && swell >= 0.6 && (activityId === 'surfing' || family === 'paddle')) {
     return w.swellPeriod !== undefined
-      ? `${swell.toFixed(1)} m at ${Math.round(w.swellPeriod)} seconds`
-      : `${swell.toFixed(1)} m of swell`;
+      ? T('clause_swell_period', { h: fmt(L, swell, 1), p: Math.round(w.swellPeriod) })
+      : T('clause_swell', { h: fmt(L, swell, 1) });
   }
   /*
    * `dry` is false both for a wet day and for one with no precipitation at all,
@@ -393,13 +425,10 @@ function goodClause(w: WeatherData, activityId: string): string | null {
   const CLAIMABLY_DRY_MM = 1;
   if (t) {
     if (rain === undefined || rain >= CLAIMABLY_DRY_MM) return t;
-    return `${dry ? 'dry' : 'mostly dry'}, ${t}`;
+    return T(dry ? 'clause_dry_temp' : 'clause_mostly_dry_temp', { t: `${Math.round(w.temperature as number)}` });
   }
   return null;
 }
-
-/** Sentences start with a capital. The clauses above are written mid-sentence. */
-const upperFirst = (t: string) => (t ? t[0].toUpperCase() + t.slice(1) : t);
 
 /**
  * Build the verdict and its reason.
@@ -408,18 +437,27 @@ const upperFirst = (t: string) => (t ? t[0].toUpperCase() + t.slice(1) : t);
  * told you to close it and given you no reason to come back.
  */
 export function makeVerdict(input: VerdictInput): Verdict {
-  const { suggestion, activityName, weather, band, isFirst, window, promoted, gusty, nextYes, place = '', dayIndex = 0, weekday = '' } = input;
-  const when = (text: string) => fillWhen(text, weekday, dayIndex === 0);
-  const windowClause = window ? windowSentence(window.parts, window.ends) : '';
+  const {
+    suggestion, activityName, weather, band, isFirst, window, promoted, gusty, nextYes,
+    place = '', dayIndex = 0, weekday = '', weekdayIdx, nextYesIdx, lang,
+  } = input;
+  const L = localeOf(lang);
+  const T = (key: TKey, vars?: Record<string, string | number>) => tr_(L, key, vars);
+  const upperFirst = (t: string) => upperFirstIn(L, t);
+  const when = (text: string) => fillWhen(text, weekday, dayIndex === 0, L, weekdayIdx);
+  const windowClause = window ? windowSentence(L, window.parts, window.ends) : '';
+  const forSport = () => sportObject(L, suggestion.activityId, activityName);
+  // "Tuesday is the one." — the weekday opens the sentence, so it is the sentence-start form.
+  const nextIs = nextYes
+    ? T('next_is', { day: L.code !== 'en' && nextYesIdx !== undefined ? L.weekdayStart[nextYesIdx] : nextYes })
+    : '';
 
   if (band === 'unsafe') {
     const gust = weather.gustspeed ?? weather.windspeedMax ?? weather.windspeed;
-    const gustClause = gust !== undefined ? ` Gusting to ${Math.round(gust)} km/h.` : '';
+    const gustClause = gust !== undefined ? ` ${T('gusting_sentence', { kmh: Math.round(gust) })}` : '';
     return {
-      verdict: when('{When} is one to sit out.'),
-      reason: `Conditions are past the safe limit for ${afterFor(suggestion.activityId, activityName)}.${gustClause}${
-        nextYes ? ` ${nextYes} is the one.` : ''
-      }`.trim(),
+      verdict: when(T('unsafe_verdict')),
+      reason: `${T('unsafe_reason', { x: forSport() })}${gustClause}${nextIs ? ` ${nextIs}` : ''}`.trim(),
     };
   }
 
@@ -449,8 +487,8 @@ export function makeVerdict(input: VerdictInput): Verdict {
      */
     const gust = weather.gustspeed ?? weather.windspeedMax ?? weather.windspeed;
     const bits: string[] = [];
-    if (gust !== undefined && gust >= 35) bits.push(`gusting to ${Math.round(gust)} km/h`);
-    if (rain >= 1) bits.push(`${rain.toFixed(1)} mm of rain`);
+    if (gust !== undefined && gust >= 35) bits.push(T('reason_gusting', { kmh: Math.round(gust) }));
+    if (rain >= 1) bits.push(T('reason_rain', { mm: fmt(L, rain, 1) }));
     /*
      * Ported from the old SEO-page reasoning: humid air is what makes a
      * marginal or write-off day feel worse than its score alone suggests,
@@ -458,13 +496,11 @@ export function makeVerdict(input: VerdictInput): Verdict {
      * criterion that actually decided the score.
      */
     if (suggestion.binding?.key !== 'humidity' && typeof weather.humidity === 'number' && weather.humidity >= 90) {
-      bits.push(humidClause(weather.humidity, weather.temperature));
+      bits.push(humidClause(L, weather.humidity, weather.temperature));
     }
-    if (!bits.length && weather.temperature !== undefined) bits.push(`${Math.round(weather.temperature)}°C and little else going for it`);
-    const fallback = band === 'marginal'
-      ? 'Nothing you have picked is at its best.'
-      : 'Nothing you have picked would be any fun.';
-    const first = bits.length ? `${bits.join(' with ')}.` : fallback;
+    if (!bits.length && weather.temperature !== undefined) bits.push(T('reason_temp_little', { t: Math.round(weather.temperature) }));
+    const fallback = T(band === 'marginal' ? 'fallback_marginal' : 'fallback_notToday');
+    const first = bits.length ? `${bits.reduce((a, b) => T('bits_join', { a, b }))}.` : fallback;
     /*
      * The write-off NAMES THE SPORT, and takes the lead-in frame to do it.
      *
@@ -478,13 +514,13 @@ export function makeVerdict(input: VerdictInput): Verdict {
      * good-day verdict already splits, the big line is 37 at its worst.
      */
     return {
-      leadIn: when('{When} is'),
+      leadIn: when(T('lead_is')),
       verdict: band === 'marginal'
-        ? 'nothing special.'
-        : `a write-off for ${afterFor(suggestion.activityId, activityName)}.`,
+        ? T('nothing_special')
+        : T('writeoff', { x: forSport() }),
       // A no ALWAYS names the next yes. Without it the app has told you to close
       // it and given you no reason to come back.
-      reason: `${first[0].toUpperCase()}${first.slice(1)}${nextYes ? ` ${nextYes} is the one.` : ''}`,
+      reason: `${upperFirst(first)}${nextIs ? ` ${nextIs}` : ''}`,
     };
   }
 
@@ -492,10 +528,10 @@ export function makeVerdict(input: VerdictInput): Verdict {
   // genuinely limiting — otherwise a fine day gets explained by its dullest number.
   const limiting = gusty || (suggestion.binding && suggestion.binding.score < LIMITING_BELOW);
   const clause = gusty
-    ? bindingClause(weather, suggestion.activityId, 'gust')
+    ? bindingClause(L, weather, suggestion.activityId, 'gust')
     : limiting
-      ? bindingClause(weather, suggestion.activityId, suggestion.binding?.key)
-      : goodClause(weather, suggestion.activityId);
+      ? bindingClause(L, weather, suggestion.activityId, suggestion.binding?.key)
+      : goodClause(L, weather, suggestion.activityId);
   /*
    * A PROMOTED DAY DOES NOT GET TO DESCRIBE ITSELF.
    *
@@ -520,7 +556,8 @@ export function makeVerdict(input: VerdictInput): Verdict {
     place,
     dayIndex,
     isFirst,
-    verdictNoun(suggestion.activityId, activityName),
+    fallbackVerdict(L, suggestion.activityId, activityName),
+    L,
   );
 
   /*
@@ -532,7 +569,7 @@ export function makeVerdict(input: VerdictInput): Verdict {
   return {
     ...(phrase.leadIn ? { leadIn: when(phrase.leadIn) } : {}),
     verdict: when(phrase.verdict),
-    reason: reason || 'Conditions hold all day.',
+    reason: reason || T('hold_all_day'),
   };
 }
 
@@ -554,8 +591,25 @@ export function asSentence(v: Verdict): string {
  * The lead-in is the only place it appears, so this is a frame swap rather than
  * a rewrite: "{When} is also" becomes "{When} is", and the verdict beneath it
  * is already the noun form that follows either.
+ *
+ * Every language marks "also" in its own place, so the swap needs the language:
+ * the plain lead-in is `lead_is`, filled with the same day the "also" one named.
  */
-export function asSharedSentence(v: Verdict): string {
-  const leadIn = v.leadIn?.replace(/\s+also\b/i, '');
+export function asSharedSentence(v: Verdict, lang?: LangCode): string {
+  const L = localeOf(lang);
+  let leadIn = v.leadIn;
+  if (leadIn) {
+    if (L.code === 'en') {
+      leadIn = leadIn.replace(/\s+also\b/i, '');
+    } else {
+      // "Samstag ist auch" → compare against the 'also' template with the day cut out, and swap in the plain one.
+      const [also, plain] = [L.t.lead_is_also, L.t.lead_is];
+      const [pre, post] = also.split('{When}');
+      if (leadIn.startsWith(pre) && leadIn.endsWith(post)) {
+        const day = leadIn.slice(pre.length, leadIn.length - post.length);
+        leadIn = plain.replace('{When}', day);
+      }
+    }
+  }
   return asSentence({ ...v, ...(leadIn ? { leadIn } : {}) });
 }

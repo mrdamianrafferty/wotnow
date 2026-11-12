@@ -27,9 +27,11 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { MenuSheet } from './MenuSheet';
+import { useGdLocale } from '@/lib/godaisy/i18n/react';
 
 export function PageHeader({ title }: { title?: string }) {
   const [menu, setMenu] = useState(false);
+  const { t } = useGdLocale();
 
   return (
     <>
@@ -59,7 +61,7 @@ export function PageHeader({ title }: { title?: string }) {
           <button
             type="button"
             className="gd-head-menu"
-            aria-label="Menu"
+            aria-label={t('ui_menu')}
             onClick={() => setMenu(true)}
           >
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"

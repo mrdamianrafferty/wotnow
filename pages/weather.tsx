@@ -29,7 +29,11 @@ import type { GetServerSideProps } from 'next';
 import { EVIDENCE_SECTIONS, type EvidenceSectionId, type Weighed } from '@/lib/godaisy/call/evidence';
 import { rowsFor, type Readings, type Row } from '@/lib/godaisy/call/readings';
 import { setupFromCookieHeader } from '@/lib/godaisy/call/setup';
-import { drawConditions, PERSON_M } from '@/lib/godaisy/conditions/drawn';
+import { drawConditions, todayOnlyNote, PERSON_M } from '@/lib/godaisy/conditions/drawn';
+import { langFromRequest } from '@/lib/godaisy/i18n/lang';
+import { GdLangProvider, useGdLang, useGdLocale } from '@/lib/godaisy/i18n/react';
+import { tr_, num as fmtNum } from '@/lib/godaisy/i18n';
+import type { LangCode, Locale, TKey } from '@/lib/godaisy/i18n/types';
 import { placeFromQuery, whyFromQuery } from '@/lib/godaisy/conditions/whyLink';
 import { seedOf } from '@/lib/godaisy/conditions/pencil';
 import { Drawing } from '@/components/conditions/Drawing';
@@ -56,9 +60,25 @@ interface WeatherPageProps {
   /** The verdict this page is explaining, when the call sent it. */
   verdict: string | null;
   weighed: Weighed[];
+  /** The language the server said it all in — the same rule as the call. */
+  lang: LangCode;
 }
 
-export default function WeatherPage({ place, lat, lon, coastal, day, verdict, weighed }: WeatherPageProps) {
+/**
+ * The same language rule as the call (`lib/godaisy/i18n/lang`), read the same
+ * way, so tapping "Why?" never changes the language underneath you.
+ */
+export default function WeatherPage(props: WeatherPageProps) {
+  const lang = useGdLang(props.lang ?? 'en');
+  return (
+    <GdLangProvider lang={lang}>
+      <ConditionsPage {...props} />
+    </GdLangProvider>
+  );
+}
+
+function ConditionsPage({ place, lat, lon, coastal, day, verdict, weighed }: WeatherPageProps) {
+  const { L, lang, t } = useGdLocale();
   const [readings, setReadings] = useState<Partial<Readings> | null>(null);
   const [state, setState] = useState<'loading' | 'ready' | 'failed'>('loading');
   /** The sea arrives separately and later — see below. */
@@ -117,51 +137,51 @@ export default function WeatherPage({ place, lat, lon, coastal, day, verdict, we
   const [now] = useState(() => new Date());
   const page = useMemo(
     () => drawConditions(state === 'ready' ? readings : null, {
-      day, now, coastal, weighed,
+      day, now, coastal, weighed, lang,
       pending: coastal && (sea === 'loading' || sea === 'idle') ? ['sea', 'tide'] : [],
     }),
-    [readings, state, day, now, coastal, weighed, sea],
+    [readings, state, day, now, coastal, weighed, sea, lang],
   );
 
-  const when = page.dayName ?? (day > 0 ? 'later' : 'now');
-  const plain = state === 'ready' && day === 0 ? headline(readings) : null;
+  const when = page.dayName ?? t(day > 0 ? 'day_later' : 'page_when_now');
+  const plain = state === 'ready' && day === 0 ? headline(readings, L) : null;
 
   const allRows = ORDER
     .filter((id) => coastal || !COASTAL_ONLY.has(id))
     .map((id) => EVIDENCE_SECTIONS.find((s) => s.id === id))
     .filter((s): s is (typeof EVIDENCE_SECTIONS)[number] => Boolean(s))
-    .map((s) => ({ section: s, rows: state === 'ready' ? rowsFor({ ...s, because: undefined }, readings) : [] }))
+    .map((s) => ({ section: s, rows: state === 'ready' ? rowsFor({ ...s, because: undefined }, readings, lang) : [] }))
     .filter(({ rows }) => rows.length > 0);
 
   return (
     <>
       <Head>
-        <title>{`Conditions in ${place} | Go Daisy`}</title>
+        <title>{t('page_title', { place })}</title>
         <meta
           name="description"
-          content={`The conditions in ${place}, drawn — temperature, wind, rain${coastal ? ', waves and tides' : ''}, and every number behind them.`}
+          content={t(coastal ? 'page_description_coastal' : 'page_description', { place })}
         />
         {/* A "Why?" link is one person's call, not a page to index. */}
         {verdict && <meta name="robots" content="noindex" />}
       </Head>
 
-      <PageHeader title="Conditions" />
+      <PageHeader title={t('page_h1')} />
       <main className="gd-cond gd-drawn">
         <div className="gd-cond-inner">
-          <p className="call-label gd-cond-kicker">{`${place} · ${when}`}</p>
+          <p className="call-label gd-cond-kicker">{t('page_kicker', { place, when })}</p>
           {verdict && (
             <p className="gd-drawn-asked">
-              <span className="call-label">Why</span>
+              <span className="call-label">{t('page_why')}</span>
               <span className="gd-drawn-asked-verdict">{verdict}</span>
             </p>
           )}
-          <h1 className="gd-cond-title">Conditions</h1>
+          <h1 className="gd-cond-title">{t('page_h1')}</h1>
           {plain && <p className="gd-drawn-plain">{plain}</p>}
 
-          {state === 'loading' && <Spinner label="Reading the sky…" />}
+          {state === 'loading' && <Spinner label={t('page_loading')} />}
           {state === 'failed' && (
             <p className="gd-cond-quiet">
-              Those numbers did not load. <a href="">Try again</a>.
+              {t('page_failed')} <a href="">{t('page_retry')}</a>.
             </p>
           )}
 
@@ -175,11 +195,11 @@ export default function WeatherPage({ place, lat, lon, coastal, day, verdict, we
                   * "weighed in" put the same words on four headings in a row.
                   */}
                 {s.because && s.because.score < 0.5 && (
-                  <span className="gd-drawn-because">held the day back</span>
+                  <span className="gd-drawn-because">{t('page_held_back')}</span>
                 )}
               </h2>
               {s.pending ? (
-                <Spinner label={s.id === 'tide' ? 'Reading the tide…' : 'Reading the water…'} />
+                <Spinner label={t(s.id === 'tide' ? 'page_loading_tide' : 'page_loading_sea')} />
               ) : (
                 <>
                   <p className="gd-drawn-say">{s.sentence}</p>
@@ -197,10 +217,10 @@ export default function WeatherPage({ place, lat, lon, coastal, day, verdict, we
           ))}
 
           {coastal && sea === 'failed' && (
-            <p className="gd-cond-quiet">The sea did not answer, so the waves and tides are missing.</p>
+            <p className="gd-cond-quiet">{t('page_sea_failed')}</p>
           )}
           {page.todayOnly.length > 0 && (
-            <p className="gd-cond-quiet">{todayOnlyNote(page.todayOnly)}</p>
+            <p className="gd-cond-quiet">{todayOnlyNote(page.todayOnly, lang)}</p>
           )}
 
           {allRows.length > 0 && (
@@ -210,11 +230,11 @@ export default function WeatherPage({ place, lat, lon, coastal, day, verdict, we
               open={allOpen}
               onToggle={(e) => setAllOpen((e.currentTarget as HTMLDetailsElement).open)}
             >
-              <summary className="gd-drawn-all-summary">See every number</summary>
-              {day > 0 && <p className="gd-cond-quiet">These are the readings for right now, not for {page.dayName ?? 'that day'}.</p>}
+              <summary className="gd-drawn-all-summary">{t('page_all_numbers')}</summary>
+              {day > 0 && <p className="gd-cond-quiet">{t('page_numbers_now', { day: page.dayName ?? t('page_numbers_that_day') })}</p>}
               {allRows.map(({ section, rows }) => (
                 <section key={section.id} className="gd-cond-block">
-                  <h2 className="call-label gd-cond-block-title">{section.title}</h2>
+                  <h2 className="call-label gd-cond-block-title">{t(`title_${section.id}` as TKey)}</h2>
                   <dl className="gd-cond-rows">
                     {rows.map((r: Row) => (
                       <div key={r.label} className="gd-cond-row">
@@ -233,10 +253,10 @@ export default function WeatherPage({ place, lat, lon, coastal, day, verdict, we
               /* Back, not /call: the call was on a day and maybe a place of its
                  own, and a fresh /call would open on today at home. */
               <Link href="/call" onClick={(e) => { if (window.history.length > 1) { e.preventDefault(); window.history.back(); } }}>
-                Back to the call
+                {t('page_back')}
               </Link>
-            ) : <Link href="/call">What is today good for?</Link>}
-            <span>{` · Open-Meteo${coastal ? ', Stormglass for the sea' : ''}. The person in the drawings is ${PERSON_M} m tall.`}</span>
+            ) : <Link href="/call">{t('page_whats_good')}</Link>}
+            <span>{t(coastal ? 'page_credit_coastal' : 'page_credit', { m: fmtNum(L, PERSON_M, 2) })}</span>
           </p>
         </div>
       </main>
@@ -249,28 +269,26 @@ const pickMarine = (r: Readings | null): Partial<Readings> => (r?.marine || r?.t
   ? { marine: r.marine, tides: r.tides, marineHourly: r.marineHourly, ...(r.seaTemp !== undefined ? { seaTemp: r.seaTemp } : {}) }
   : {});
 
-function todayOnlyNote(things: string[]): string {
-  const list = things.length === 1 ? things[0] : `${things.slice(0, -1).join(', ')} and ${things[things.length - 1]}`;
-  return `${list[0].toUpperCase()}${list.slice(1)} ${things.length === 1 ? 'is' : 'are'} only measured for today.`;
-}
-
 /** "17°C, feels like 19°C, and dry." — the plain answer, above the drawings. */
-function headline(r: Readings | null): string | null {
+function headline(r: Readings | null, L: Locale): string | null {
   if (!r) return null;
+  const T = (key: TKey, vars?: Record<string, string | number>) => tr_(L, key, vars);
   const bits: string[] = [];
   if (typeof r.temperatureC === 'number') bits.push(`${Math.round(r.temperatureC)}°C`);
   if (typeof r.feelsLikeC === 'number' && Math.abs(r.feelsLikeC - (r.temperatureC ?? 0)) >= 2) {
-    bits.push(`feels like ${Math.round(r.feelsLikeC)}°C`);
+    bits.push(T('head_feels', { t: Math.round(r.feelsLikeC) }));
   }
   const rain = r.hourly?.[0]?.precipMM;
-  if (typeof rain === 'number') bits.push(rain > 0.1 ? `${rain.toFixed(1)} mm falling` : 'dry');
-  if (typeof r.windSpeedMS === 'number') bits.push(`wind ${Math.round(r.windSpeedMS * 3.6)} km/h`);
-  return bits.length ? `${bits.join(', ')}.` : null;
+  if (typeof rain === 'number') bits.push(rain > 0.1 ? T('head_falling', { mm: fmtNum(L, rain, 1) }) : T('head_dry'));
+  if (typeof r.windSpeedMS === 'number') bits.push(T('head_wind', { kmh: Math.round(r.windSpeedMS * 3.6) }));
+  return bits.length
+    ? T('head_join', { list: bits.join(', ') })
+    : null;
 }
 
 export const getServerSideProps: GetServerSideProps<WeatherPageProps> = async (ctx) => {
   const why = whyFromQuery(ctx.query);
-  const base = { day: why.day, verdict: why.verdict, weighed: why.weighed };
+  const base = { day: why.day, verdict: why.verdict, weighed: why.weighed, lang: langFromRequest(ctx.req) };
 
   /*
    * Where, in order of who asked most specifically:

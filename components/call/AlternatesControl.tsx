@@ -1,3 +1,4 @@
+import { useGdLocale } from '@/lib/godaisy/i18n/react';
 /**
  * The alternates control — names what you get next, below the primary action.
  *
@@ -28,14 +29,15 @@ export interface AlternatesControlProps {
 }
 
 export function AlternatesControl({ onCycle, index, total, label, nextName }: AlternatesControlProps) {
-  const visible = nextName ? `Or ${nextName}?` : 'Try another?';
+  const { t } = useGdLocale();
+  const visible = nextName ? t('call_alt_next', { name: nextName }) : t('call_alt_try');
   return (
     <div className="call-altrow">
       <button
         type="button"
         className="call-alt-btn"
         onClick={onCycle}
-        aria-label={`${visible} — ${label} (${index + 1} of ${total})`}
+        aria-label={`${visible} — ${label} (${index + 1}/${total})`}
       >
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
              strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">

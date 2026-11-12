@@ -32,6 +32,9 @@
  * @module lib/godaisy/call/phrasebook
  */
 
+import { tr_ } from '@/lib/godaisy/i18n';
+import type { Locale, SportPhrases as LocaleSportPhrases } from '@/lib/godaisy/i18n/types';
+
 export interface SportPhrases {
   /** For "Today is a ___ day." Omit where no natural noun form exists. */
   noun?: string;
@@ -329,7 +332,14 @@ function hash(s: string): number {
  * Day 0 is "Today"; every other day is its weekday, because "on Tuesday" reads
  * better mid-sentence than a bare "Tuesday".
  */
-export function fillWhen(text: string, weekday: string, isToday: boolean): string {
+export function fillWhen(text: string, weekday: string, isToday: boolean, L?: Locale, weekdayIdx?: number): string {
+  // Every other language says the day in its own grammar — "el sábado", "am Samstag",
+  // "w sobotę" — from tables in its locale, keyed on the weekday number.
+  if (L && L.code !== 'en' && weekdayIdx !== undefined) {
+    return text
+      .replace(/\{When\}/g, isToday ? L.todayStart : L.weekdayStart[weekdayIdx])
+      .replace(/\{when\}/g, isToday ? L.todayMid : L.weekdayOn[weekdayIdx]);
+  }
   return text
     .replace(/\{When\}/g, isToday ? 'Today' : weekday)
     // No leading space: the templates already put one before the token.
@@ -356,11 +366,17 @@ export function choosePhrase(
   dayIndex: number,
   isFirst: boolean,
   fallbackNoun: string,
+  L?: Locale,
 ): PhraseChoice {
-  const entry = PHRASEBOOK[activityId];
+  const english = !L || L.code === 'en';
+  const entry: (SportPhrases | LocaleSportPhrases) | undefined = english ? PHRASEBOOK[activityId] : L!.sports[activityId];
   // The lead-in names a day as much as the predicates do, so it carries the same
   // token: on a swiped-to day it must read "Tuesday is", not "Today is".
-  const leadIn = isFirst ? '{When} is' : '{When} is also';
+  const leadIn = english
+    ? (isFirst ? '{When} is' : '{When} is also')
+    : tr_(L!, isFirst ? 'lead_is' : 'lead_is_also');
+  // English builds "a ___ day." around the noun; every other language writes the whole verdict.
+  const nounVerdict = (noun: string) => (english ? `a ${noun} day.` : noun);
 
   if (!entry) return { leadIn, verdict: fallbackNoun };
 
@@ -385,9 +401,9 @@ export function choosePhrase(
   // An ALTERNATE always uses the noun frame when the sport has one: "Today is
   // also a good day to hoist the mainsail" does not parse, and the "also" is
   // what tells you this is the second answer rather than a new day.
-  if (!isFirst && entry.noun) return { leadIn, verdict: `a ${entry.noun} day.` };
+  if (!isFirst && entry.noun) return { leadIn, verdict: nounVerdict(entry.noun) };
 
-  if (nounOption && pick === 0) return { leadIn, verdict: `a ${entry.noun} day.` };
+  if (nounOption && pick === 0) return { leadIn, verdict: nounVerdict(entry.noun as string) };
   const i = pick - nounOption;
   if (i < predicates.length) return { leadIn, verdict: predicates[i] };
   // A complete sentence carries its own subject, so the lead-in is dropped.

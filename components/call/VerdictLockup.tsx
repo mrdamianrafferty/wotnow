@@ -12,6 +12,7 @@ import { useEffect, useRef } from 'react';
 import { fitVerdict } from '@/lib/godaisy/fitVerdict';
 import type { CallFact } from '@/lib/godaisy/call/facts';
 import { FactTile } from './FactTile';
+import { useGdLocale } from '@/lib/godaisy/i18n/react';
 
 export interface VerdictLockupProps {
   /** Omitted where the screen draws its own — the call puts it in ScreenChrome. */
@@ -29,6 +30,7 @@ export interface VerdictLockupProps {
 
 export function VerdictLockup({ kicker, leadIn, verdict, reason, facts, cycleKey, onWhy }: VerdictLockupProps) {
   const ref = useRef<HTMLHeadingElement>(null);
+  const { t } = useGdLocale();
 
   /*
    * Re-fit on every verdict change, not just on mount. Alternates swap the whole
@@ -72,7 +74,7 @@ export function VerdictLockup({ kicker, leadIn, verdict, reason, facts, cycleKey
           {verdict}
           {onWhy && (
             <button type="button" className="call-why" onClick={onWhy}>
-              Why?
+              {t('call_why')}
             </button>
           )}
         </h1>

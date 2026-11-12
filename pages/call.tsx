@@ -39,6 +39,10 @@ import { LocationSheet } from '@/components/call/LocationSheet';
 import { DayPager } from '@/components/call/DayPager';
 import GetTheAppLink from '@/components/GetTheAppLink';
 import { asSentence } from '@/lib/godaisy/call/verdict';
+import { langFromRequest } from '@/lib/godaisy/i18n/lang';
+import { GdLangProvider, useGdLang, useGdLocale } from '@/lib/godaisy/i18n/react';
+import { localeOf, tr_ } from '@/lib/godaisy/i18n';
+import type { LangCode } from '@/lib/godaisy/i18n/types';
 
 const DAYS = 7;
 
@@ -81,6 +85,8 @@ export interface CallPageProps {
   coords: { lat: number; lon: number };
   /** Whether the sea and the tides are evidence here, or dashboard furniture. */
   coastal: boolean;
+  /** The language the server said it all in. See `lib/godaisy/i18n/lang`. */
+  lang: LangCode;
   error?: string;
 }
 
@@ -100,8 +106,23 @@ const SWIPE_MIN = 48;
 const WHEEL_MIN = 60;
 const WHEEL_REST = 220;
 
-export default function CallPage({ slug, place, days, photos, indoor, coords, coastal, error }: CallPageProps) {
+/**
+ * The page, in the language the server chose. `useGdLang` mirrors the person's
+ * own setting into the cookie the server reads, and asks for the page again once
+ * if the server guessed differently.
+ */
+export default function CallPage(props: CallPageProps) {
+  const lang = useGdLang(props.lang ?? 'en');
+  return (
+    <GdLangProvider lang={lang}>
+      <CallScreen {...props} />
+    </GdLangProvider>
+  );
+}
+
+function CallScreen({ slug, place, days, photos, indoor, coords, coastal, error }: CallPageProps) {
   const router = useRouter();
+  const { L, lang, t } = useGdLocale();
   /*
    * The day can come from the URL, so that coming Back from "Why?" lands on
    * the day that was being explained rather than on today. "Why?" writes it
@@ -181,20 +202,20 @@ export default function CallPage({ slug, place, days, photos, indoor, coords, co
 
   const kicker = useMemo(() => {
     if (!day) return place;
-    const when = new Intl.DateTimeFormat('en-GB', {
+    const when = new Intl.DateTimeFormat(L.intl, {
       weekday: 'long', day: 'numeric', month: 'long',
     }).format(new Date(day.date * 1000));
     return `${place} · ${when}`;
-  }, [day, place]);
+  }, [day, place, L.intl]);
 
   if (error || !day || !option) {
     return (
       <Shell title="Go Daisy">
         <main className="call-screen call-screen--empty">
           <p className="call-label">{place}</p>
-          <p className="call-verdict call-verdict--quiet">Reading the conditions…</p>
+          <p className="call-verdict call-verdict--quiet">{t('call_loading')}</p>
           <p className="call-reason call-reason--dark">
-            {error ?? 'No call for this place yet.'}
+            {error ?? t('call_none')}
           </p>
         </main>
       </Shell>
@@ -233,7 +254,10 @@ export default function CallPage({ slug, place, days, photos, indoor, coords, co
      * first real run, which is the entire argument for having it.
      */
     const qs = `place=${encodeURIComponent(slug)}&day=${dayIndex}&alt=${altIndex}&date=${iso}`
-      + `&a=${encodeURIComponent(option.activityId)}&n=${encodeURIComponent(place)}`;
+      + `&a=${encodeURIComponent(option.activityId)}&n=${encodeURIComponent(place)}`
+      // The card and the message the person is about to send speak the language
+      // the screen does. English stays off the URL so existing cards keep theirs.
+      + (lang === 'en' ? '' : `&lang=${lang}`);
 
     /*
      * A SHORT LINK FOR ANY PLACE, NOT JUST THE SEEDED ONES.
@@ -370,6 +394,7 @@ export default function CallPage({ slug, place, days, photos, indoor, coords, co
         date: day.date,
         dayIndex,
         altIndex,
+        lang,
       }}
     >
       <main
@@ -455,12 +480,12 @@ export default function CallPage({ slug, place, days, photos, indoor, coords, co
               aria-live="polite"
             >
               {sendState === 'working'
-                ? 'Sending…'
+                ? t('call_sending')
                 : sendState === 'sent'
-                  ? 'Sent'
+                  ? t('call_sent')
                   : sendState === 'copied'
-                    ? 'Copied'
-                    : 'Send out the call'}
+                    ? t('call_copied')
+                    : t('call_send')}
             </button>
             {hasAlternates && (
               <AlternatesControl
@@ -479,7 +504,7 @@ export default function CallPage({ slug, place, days, photos, indoor, coords, co
                 })}
                 index={altIndex}
                 total={options.length}
-                label="Another option for today"
+                label={t('call_alt_label')}
                 nextName={options[(altIndex + 1) % options.length]?.activityName}
               />
             )}
@@ -530,6 +555,7 @@ interface ShellPreview {
   date: number;
   dayIndex: number;
   altIndex: number;
+  lang: LangCode;
 }
 
 function Shell({
@@ -544,7 +570,7 @@ function Shell({
   if (preview) {
     const iso = new Date(preview.date * 1000).toISOString().slice(0, 10);
     const q = `place=${encodeURIComponent(preview.slug)}&day=${preview.dayIndex}`
-      + `&alt=${preview.altIndex}&date=${iso}`
+      + `&alt=${preview.altIndex}&date=${iso}${preview.lang === 'en' ? '' : `&lang=${preview.lang}`}`
       + `&a=${encodeURIComponent(preview.activityId)}&n=${encodeURIComponent(preview.place)}`;
     og = {
       url: `${origin}/call?${q}&from=share`,
@@ -564,7 +590,7 @@ function Shell({
           <>
             <meta property="og:type" content="website" />
             <meta property="og:site_name" content="Go Daisy" />
-            <meta property="og:title" content={`${title.replace(' — Go Daisy', '')} in ${preview!.place}`} />
+            <meta property="og:title" content={tr_(localeOf(preview!.lang), 'og_title', { what: title.replace(' — Go Daisy', ''), place: preview!.place })} />
             <meta property="og:description" content={og.description} />
             <meta property="og:url" content={og.url} />
             <meta property="og:image" content={og.image} />
@@ -574,7 +600,7 @@ function Shell({
             {/* `summary_large_image` is what turns a thumbnail into the card.
                 Without it the picture is a 120px square beside the text. */}
             <meta name="twitter:card" content="summary_large_image" />
-            <meta name="twitter:title" content={`${title.replace(' — Go Daisy', '')} in ${preview!.place}`} />
+            <meta name="twitter:title" content={tr_(localeOf(preview!.lang), 'og_title', { what: title.replace(' — Go Daisy', ''), place: preview!.place })} />
             <meta name="twitter:description" content={og.description} />
             <meta name="twitter:image" content={og.image} />
           </>
@@ -648,6 +674,10 @@ export const getServerSideProps: GetServerSideProps<CallPageProps> = async (ctx)
   // should see.
   const chosen = sports.length ? sports : setup ? setup.sports : seedSports(location);
 
+  // The person's setting by way of the cookie, else their browser, else English.
+  const lang = langFromRequest(ctx.req);
+  const L = localeOf(lang);
+
   try {
     const forecast = (await fetchForecastForLocation(location)).slice(0, DAYS);
     const byDay = getSuggestionsByDay({
@@ -658,8 +688,9 @@ export const getServerSideProps: GetServerSideProps<CallPageProps> = async (ctx)
       includeAllActivities: true,
     }) as Array<{ date: number; suggestions: Suggestion[] }>;
 
-    const weekday = (ts: number) =>
-      new Intl.DateTimeFormat('en-GB', { weekday: 'long' }).format(new Date(ts * 1000));
+    // 0 = Sunday, in the server's own zone — the same reading `makeCall` takes.
+    const weekdayIdx = (ts: number) => new Date(ts * 1000).getDay();
+    const weekday = (ts: number) => L.weekday[weekdayIdx(ts)];
 
     /*
      * A no-day must name the next yes, so the good days are found first.
@@ -674,12 +705,14 @@ export const getServerSideProps: GetServerSideProps<CallPageProps> = async (ctx)
         date: d.date, place: location.name, weather: forecast[i].weather,
         suggestions: d.suggestions, sports: chosen, seeded: chosen, dayIndex: i,
         coords: { lat: location.lat, lon: location.lon },
+        lang,
       });
-      return c.call && isGood(c.call.band) ? weekday(d.date) : null;
+      return c.call && isGood(c.call.band) ? d.date : null;
     });
 
     const days: Call[] = byDay.map((d, i) => {
-      const nextYes = goodDayLabels.slice(i + 1).find(Boolean) ?? undefined;
+      const nextYesDate = goodDayLabels.slice(i + 1).find(Boolean) ?? undefined;
+      const nextYes = nextYesDate ? weekday(nextYesDate) : undefined;
       return makeCall({
         date: d.date,
         place: location.name,
@@ -693,6 +726,8 @@ export const getServerSideProps: GetServerSideProps<CallPageProps> = async (ctx)
           (allSports as Array<{ id: string; name: string }>).map((a) => [a.id, a.name]),
         ),
         nextYes,
+        ...(nextYesDate ? { nextYesIdx: weekdayIdx(nextYesDate) } : {}),
+        lang,
         dayIndex: i,
         weekday: weekday(d.date),
         parts: forecast[i].parts,
@@ -724,7 +759,9 @@ export const getServerSideProps: GetServerSideProps<CallPageProps> = async (ctx)
       .map((a) => ({
         id: a.id,
         category: a.category,
-        label: a.name.replace(/^(?:Go to|Do Some|Go|Play|Do|Have|Take|Try|Hit|Visit)\s+/i, '').toLowerCase(),
+        label: lang === 'en'
+          ? a.name.replace(/^(?:Go to|Do Some|Go|Play|Do|Have|Take|Try|Hit|Visit)\s+/i, '').toLowerCase()
+          : (L.sportNames[a.id] ?? a.name.replace(/^(?:Go to|Do Some|Go|Play|Do|Have|Take|Try|Hit|Visit)\s+/i, '').toLowerCase()),
       }));
 
     return {
@@ -738,6 +775,7 @@ export const getServerSideProps: GetServerSideProps<CallPageProps> = async (ctx)
         // Coastal by the same test `withMarine` uses, so "Why?" offers the
         // sea exactly where the sea was scored.
         coastal: location.beachFacingDeg != null || location.coastal === true,
+        lang,
       },
     };
   } catch (e) {
@@ -754,7 +792,8 @@ export const getServerSideProps: GetServerSideProps<CallPageProps> = async (ctx)
         // correct so a retry has somewhere to read from.
         coords: { lat: location.lat, lon: location.lon },
         coastal: location.beachFacingDeg != null || location.coastal === true,
-        error: e instanceof Error ? e.message : 'The forecast is unavailable.',
+        lang,
+        error: e instanceof Error ? e.message : L.t.call_forecast_unavailable,
       },
     };
   }
