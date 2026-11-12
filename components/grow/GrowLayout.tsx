@@ -360,6 +360,8 @@ export function GrowLayout({
             <Link href="/grow/garden" className="hover:text-foreground hover:underline">Garden</Link>
             <Link href="/grow/weather" className="hover:text-foreground hover:underline">Weather</Link>
             <Link href="/grow/info" className="hover:text-foreground hover:underline">Info</Link>
+            {/* Absolute: grow.godaisy.io redirects every path into /grow. */}
+            <a href="https://godaisy.io/studio/grow-daisy" className="hover:text-foreground hover:underline">Made by Daisy Studio</a>
           </nav>
         </footer>
       </main>
