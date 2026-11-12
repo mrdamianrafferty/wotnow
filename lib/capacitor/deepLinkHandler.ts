@@ -60,7 +60,7 @@ export function initDeepLinkHandler(): void {
 /**
  * Handle a deep link URL
  */
-async function handleDeepLink(urlString: string): Promise<DeepLinkResult> {
+export async function handleDeepLink(urlString: string): Promise<DeepLinkResult> {
   try {
     const url = new URL(urlString);
     const scheme = url.protocol.replace(':', '');
@@ -83,7 +83,13 @@ async function handleDeepLink(urlString: string): Promise<DeepLinkResult> {
     if (isAppScheme(scheme) || isAppHost(host)) {
       return {
         handled: true,
-        path: pathname || '/',
+        /*
+         * The query and the hash travel with the path. Shared links carry
+         * everything in them — `/call?place=…`, `/weather?n=…&lat=…&day=2#tide`
+         * — and keeping only the path opened the reader's OWN place instead of
+         * the one that was sent.
+         */
+        path: `${pathname || '/'}${url.search}${url.hash}`,
       };
     }
 

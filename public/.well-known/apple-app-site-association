@@ -15,7 +15,19 @@
         "appID": "T7754BV8QM.io.godaisy.app",
         "paths": [
           "/auth/callback",
-          "/auth/callback/*"
+          "/auth/callback/*",
+          "NOT /grow",
+          "NOT /grow/*",
+          "NOT /findr",
+          "NOT /findr/*",
+          "NOT /api/*",
+          "NOT /admin/*",
+          "NOT /auth/*",
+          "NOT /_next/*",
+          "NOT /.well-known/*",
+          "/call",
+          "/weather",
+          "/*/*"
         ]
       },
       {
