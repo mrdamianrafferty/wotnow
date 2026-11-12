@@ -67,6 +67,37 @@ const rainToday = (r: Readings): number | undefined => {
 };
 
 /**
+ * What the ground is like to walk on, from the top centimetre of soil.
+ *
+ * "38%" told nobody anything: it is volumetric water content (m³ of water per
+ * m³ of soil, here 0-1), and whether 38% is a dry path or a bog depends on
+ * knowing that the scale tops out in the mid-40s. So it is said in words.
+ *
+ * THE CUT-OFFS ARE FROM THE MODEL'S OWN RANGE, not from a soil-science table.
+ * Open-Meteo's 0-1 cm layer was sampled hourly for 92 days (Aug-Nov 2026) at
+ * seven places. It saturates at about 0.44 across the UK; Keswick and Edale sat
+ * between 0.35 and 0.44 the whole time; London and Norwich ran from about 0.08
+ * in a dry September to 0.35 after November rain; Madrid went down to 0.05.
+ * The bands split that spread so the fells read muddy most days, a dry
+ * lowland summer reads hard, and a wet lowland week reads soggy.
+ *
+ * It is a model with no idea of the soil type: sand drains at values where
+ * clay is still sticky. Fine for "do I need boots", not for anything finer.
+ *
+ * Frozen wins over wet, because frozen mud is hard ground.
+ */
+export function underfoot(moisture?: number, surfaceTempC?: number): string | null {
+  if (typeof moisture !== 'number' || !Number.isFinite(moisture)) return null;
+  if (typeof surfaceTempC === 'number' && surfaceTempC <= 0) return 'Frozen hard';
+  if (moisture < 0.15) return 'Hard and dry';
+  if (moisture < 0.25) return 'Firm';
+  if (moisture < 0.32) return 'Soft';
+  if (moisture < 0.37) return 'A bit soggy';
+  if (moisture < 0.41) return 'Muddy';
+  return 'Very muddy';
+}
+
+/**
  * The readings for one section.
  *
  * Nothing is defaulted: a missing field produces no row, never "undefined" and
@@ -140,8 +171,7 @@ export function rowsFor(section: RankedSection, r: Readings | null): Row[] {
       return [
         ...keep('Soil at the surface', n(r.soil?.temp0cm, '°C')),
         ...keep('Soil at 6 cm', n(r.soil?.temp6cm, '°C')),
-        ...keep('Moisture, top layer', n(
-          typeof r.soil?.moisture0to1 === 'number' ? r.soil.moisture0to1 * 100 : undefined, '%')),
+        ...keep('Underfoot', underfoot(r.soil?.moisture0to1, r.soil?.temp0cm)),
       ];
     case 'night': {
       const time = (iso?: string) => (iso
