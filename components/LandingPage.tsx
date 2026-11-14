@@ -46,7 +46,7 @@
 import React from 'react';
 import Link from 'next/link';
 import Head from 'next/head';
-import Image from 'next/image';
+import DrawnDays from './landing/DrawnDays';
 import { PageHeader } from './call/PageHeader';
 import dynamic from 'next/dynamic';
 import SEO from './SEO';
@@ -221,24 +221,10 @@ const LandingPage: React.FC<LandingPageProps> = ({
         {/* =================================================================
             1. THE CALL — proof, before any promise
             ================================================================= */}
-        <section className="gd-land-shout">
-          <Image
-            className="gd-land-shout-photo"
-            src="/landing/hero-surf.webp"
-            alt=""
-            fill
-            priority
-            sizes="100vw"
-          />
-          <div className="gd-land-shout-body">
-            <p className="gd-land-kicker">Croyde Bay · Saturday, 7:00 am</p>
-            <p className="gd-land-lead">Today is</p>
-            <h1 className="gd-land-verdict">a surf day.</h1>
-            <p className="gd-land-shout-reason">
-              1.5 m at 11 seconds. Best before six, and the wind gets up after that.
-            </p>
-          </div>
-        </section>
+        {/* Four days drawn in pencil, the conditions page's style: surf,
+            cycling, five-a-side and a café day. It replaced a photographed
+            surf call; see components/landing/DrawnDays.tsx. */}
+        <DrawnDays />
 
         <section className="gd-land-band">
           <div className="gd-land-inner gd-land-thesis">
