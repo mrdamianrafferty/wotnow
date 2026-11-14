@@ -63,7 +63,7 @@ function format(key: string, w: WeatherData): string | null {
       const h = n(w.swellHeight ?? w.waveHeight, 1);
       const p = n(w.swellPeriod);
       if (!h) return null;
-      return p ? `${h} m · ${p} s` : `${h} m`;
+      return p ? `${h}m · ${p} s` : `${h}m`;
     }
     case 'swellPeriod':      { const v = n(w.swellPeriod); return v && `${v} s`; }
     default: return null;

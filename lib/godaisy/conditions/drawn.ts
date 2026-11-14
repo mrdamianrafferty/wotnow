@@ -512,7 +512,7 @@ function sea(ctx: Ctx): DrawnSection | null {
   if (!num(waveM) && !num(waterC)) return null;
 
   const facts: Row[] = [];
-  if (num(waveM)) facts.push({ label: T(ctx, 'fact_waves'), value: `${f1(ctx, waveM)} m` });
+  if (num(waveM)) facts.push({ label: T(ctx, 'fact_waves'), value: `${f1(ctx, waveM)}m` });
   if (num(waterC)) facts.push({ label: T(ctx, 'fact_water'), value: `${f1(ctx, waterC)}°C` });
   if (day === 0 && num(r.marine?.swellPeriod ?? r.marine?.wavePeriod)) {
     facts.push({ label: T(ctx, 'fact_period'), value: `${r0((r.marine!.swellPeriod ?? r.marine!.wavePeriod)!)} s` });
@@ -589,8 +589,8 @@ function tide(ctx: Ctx): DrawnSection | null {
       rangeM: range,
     },
     facts: [
-      { label: typeFact(a.type), value: `${f1(ctx, a.m)} m · ${ta}` },
-      { label: typeFact(b.type), value: `${f1(ctx, b.m)} m · ${tb}` },
+      { label: typeFact(a.type), value: `${f1(ctx, a.m)}m · ${ta}` },
+      { label: typeFact(b.type), value: `${f1(ctx, b.m)}m · ${tb}` },
     ],
   };
 }

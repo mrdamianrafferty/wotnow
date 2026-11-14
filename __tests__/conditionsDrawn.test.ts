@@ -36,7 +36,7 @@ describe('today, in Newquay', () => {
       wind: "Force 5 now. By noon tomorrow it's force 1: smoke drifts",
       rain: 'Leave the umbrella at home until Sunday',
       sea: "Waves about chest high. At 14°, it's a 4/3 and boots",
-      tide: "Between 1:09pm and 7pm the sea climbs 3.8 m. That's two grown-ups standing on each other's shoulders, and then some",
+      tide: "Between 1:09pm and 7pm the sea climbs 3.8m. That's two grown-ups standing on each other's shoulders, and then some",
       sky: "About 9 hours of daylight, and it's gone by 4:39pm",
       air: "Clean air: fine dust is under a third of the WHO's daily limit",
       ground: 'Muddy. Wellies, not trainers',
@@ -77,7 +77,7 @@ describe('a later day, from the call', () => {
     const s = Object.fromEntries(p.sections.map((x) => [x.id, x.sentence]));
     expect(s.temperature).toBe('About 11° all day');
     expect(s.rain).toBe('Rain on Sunday, about 11 mm');
-    expect(s.sea).toBe("Waves bigger than a grown-up, 2.3 m. At 14°, it's a 4/3 and boots");
+    expect(s.sea).toBe("Waves bigger than a grown-up, 2.3m. At 14°, it's a 4/3 and boots");
     expect(p.todayOnly).toEqual(expect.arrayContaining(['the air', 'the ground', 'the moon']));
   });
 
@@ -250,9 +250,9 @@ describe('snow, frost and fog', () => {
   it('leads the sky with fog, as how far you can see', () => {
     const r = winter((w) => { w.visibilityKm = 0.4; [0, 1, 2].forEach((i) => { w.hourly[i].weatherCode = 45; }); });
     const sky = say(r, 'sky');
-    expect(sky?.sentence).toBe('Fog: you can see about 400 m, four football pitches, clearing by 3pm');
+    expect(sky?.sentence).toBe('Fog: you can see about 400m, four football pitches, clearing by 3pm');
     expect(sky?.drawing).toEqual({ kind: 'visibility', m: 400 });
-    expect(sky?.facts[0]).toEqual({ label: 'Visibility', value: '400 m' });
+    expect(sky?.facts[0]).toEqual({ label: 'Visibility', value: '400m' });
   });
 
   it('calls one to two kilometres mist', () => {
@@ -266,9 +266,9 @@ describe('snow, frost and fog', () => {
   });
 
   it('measures fog and snow against things people know', () => {
-    expect(howFar(60)).toBe('under 60 m, not even a football pitch');
-    expect(howFar(150)).toBe('about 150 m, two football pitches');
-    expect(howFar(950)).toBe('about 950 m, ten football pitches');
+    expect(howFar(60)).toBe('under 60m, not even a football pitch');
+    expect(howFar(150)).toBe('about 150m, two football pitches');
+    expect(howFar(950)).toBe('about 950m, ten football pitches');
     expect([5, 12, 30, 55, 80].map(snowDeep)).toEqual(['ankle', 'shin', 'knee', 'thigh', 'waist']);
   });
 });
