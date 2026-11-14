@@ -299,7 +299,7 @@ function Wave({ d, seed }: { d: Extract<Model, { kind: 'wave' }>; seed: number }
       <Line pts={[[112, crest], [300, crest]]} seed={seed + 51} stroke={C.warm} w={1.3} dash="3 4" />
       <Txt x={304} y={crest + 5} size={18} bold fill={C.warm}>{d.bandLabel ?? d.band}</Txt>
       <Line pts={[[218, crest], [218, base]]} seed={seed + 52} w={1.2} />
-      <Txt x={212} y={(crest + base) / 2 + 6} size={18} anchor="end" bold>{`${d.waveM.toFixed(1)} m`}</Txt>
+      <Txt x={212} y={(crest + base) / 2 + 6} size={18} anchor="end" bold>{`${d.waveM.toFixed(1)}m`}</Txt>
       {d.wearLabel && <Txt x={262} y={base + 22} size={18} anchor="middle" bold fill={C.ink}>{d.wearLabel}</Txt>}
       <Txt x={262} y={base + (d.wearLabel ? 40 : 22)} size={15} anchor="middle" fill={C.pencil}>{t('draw_person', { m: PERSON_M })}</Txt>
       {d.airC !== undefined && <Txt x={20} y={30} size={21} bold fill={C.warm}>{t('draw_air', { t: Math.round(d.airC) })}</Txt>}
@@ -363,7 +363,7 @@ function Tide({ d, seed }: { d: Extract<Model, { kind: 'tide' }>; seed: number }
       ))}
       {andABit && <Txt x={300} y={Y(high.m) - 10} size={17} anchor="middle" bold fill={C.waterInk}>{t('draw_plus_a_bit')}</Txt>}
       <Line pts={[[268, Y(low.m) - 2], [268, Y(high.m) + 2]]} seed={seed + 40} w={1.2} />
-      <Txt x={262} y={(Y(low.m) + Y(high.m)) / 2 + 6} size={18} bold anchor="end">{`${d.rangeM.toFixed(1)} m`}</Txt>
+      <Txt x={262} y={(Y(low.m) + Y(high.m)) / 2 + 6} size={18} bold anchor="end">{`${d.rangeM.toFixed(1)}m`}</Txt>
     </Svg>
   );
 }
@@ -649,7 +649,7 @@ function Visibility({ d, seed }: { d: Extract<Model, { kind: 'visibility' }>; se
   const D = [20, 50, 100, 200, 500, 1000, 2000];
   const lx = (m: number) => 72 + ((Math.log10(Math.max(20, Math.min(2000, m))) - Math.log10(20)) / 2) * 268;
   const seeTo = lx(d.m);
-  const label = (m: number) => (m >= 1000 ? `${fmt(L, m / 1000, 0)} km` : `${m} m`);
+  const label = (m: number) => (m >= 1000 ? `${fmt(L, m / 1000, 0)} km` : `${m}m`);
   return (
     <Svg h={176}>
       <Person x={30} y={G} h={62} seed={seed} />

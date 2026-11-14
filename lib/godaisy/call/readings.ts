@@ -176,8 +176,8 @@ export function rowsFor(section: RankedSection, r: Readings | null, lang?: LangC
       ];
     case 'sea':
       return [
-        ...keep(T('fact_wave_height'), n(r.marine?.waveHeight, ' m', 1)),
-        ...keep(T('fact_swell'), n(r.marine?.swellHeight, ' m', 1)),
+        ...keep(T('fact_wave_height'), n(r.marine?.waveHeight, 'm', 1)),
+        ...keep(T('fact_swell'), n(r.marine?.swellHeight, 'm', 1)),
         ...keep(T('fact_swell_period'), n(r.marine?.swellPeriod ?? r.marine?.wavePeriod, ' s')),
         ...keep(T('fact_sea_temp'), n(r.marineHourly?.[0]?.waterTempC, '°C', 1)),
       ];

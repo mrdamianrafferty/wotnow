@@ -1404,6 +1404,7 @@ section.gd-spot-section,
 section.gd-spot-hero,
 section.gd-spot-colophon,
 section.gd-land-shout,
+section.gd-land-drawn,
 section.gd-land-band,
 section.gd-land-foot {
   margin-bottom: 0;
@@ -1421,6 +1422,7 @@ section.gd-spot-colophon { padding: 28px var(--call-gutter-app) 40px; }
    the app shell's card chrome (radius, shadow, margin) that made the hero
    read as a floating tile rather than the top of a page. */
 section.gd-land-shout { padding: 56px var(--call-gutter-app) 44px; }
+section.gd-land-drawn { padding: 44px var(--call-gutter-app) 20px; }
 section.gd-land-band  { padding: 48px var(--call-gutter-app); }
 section.gd-land-foot  { padding: 32px var(--call-gutter-app) 44px; }
 
@@ -2378,6 +2380,67 @@ section.gd-land-foot  { padding: 32px var(--call-gutter-app) 44px; }
   line-height: 1.5;
   color: var(--call-on-dark-body);
 }
+
+/* ── The days, drawn ─────────────────────────────────────────────────
+   Four days in the conditions page's pencil, one after another (see
+   components/landing/DrawnDays.tsx). It sits on the page colour, so the
+   sketch tokens' dark values carry it into dark mode untouched.        */
+.gd-land-drawn { background: var(--call-page); color: var(--call-ink-1); }
+.gd-land-drawn-inner {
+  max-width: 1080px; margin: 0 auto;
+  display: grid; gap: 18px; align-items: center;
+  min-height: 380px;
+}
+@media (min-width: 860px) {
+  .gd-land-drawn-inner { grid-template-columns: minmax(0, 5fr) minmax(0, 6fr); gap: 32px; }
+}
+.gd-land-drawn-text, .gd-land-drawn-svg { transition: opacity .45s ease; }
+.gd-land-drawn.is-leaving .gd-land-drawn-text,
+.gd-land-drawn.is-leaving .gd-land-drawn-svg { opacity: 0; }
+.gd-land-lead.is-dark { color: var(--call-ink-3); }
+.gd-land-verdict.is-dark { color: var(--call-ink-1); margin-bottom: 12px; }
+.gd-land-drawn-hand {
+  margin: 0; max-width: 36ch;
+  font-family: var(--call-font-hand); font-weight: 700;
+  font-size: clamp(22px, 2.6vw, 28px); line-height: 1.15;
+  color: var(--call-sk-ink);
+}
+.gd-land-drawn-svg { width: 100%; height: auto; display: block; overflow: visible; }
+.gd-land-drawn-svg text { font-family: var(--call-font-hand); }
+.gd-land-drawn-controls {
+  max-width: 1080px; margin: 14px auto 0;
+  display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px;
+}
+.gd-land-drawn-days { display: flex; flex-wrap: wrap; gap: 4px; }
+.gd-land-drawn-controls button {
+  font-family: var(--call-font-hand); font-weight: 700; font-size: 20px;
+  background: none; border: 0; border-bottom: 2px solid transparent;
+  padding: 4px 8px; min-height: 44px; cursor: pointer; color: var(--call-ink-4); box-shadow: none; border-radius: 0;
+}
+.gd-land-drawn-controls button:hover { color: var(--call-ink-1); background: none; }
+.gd-land-drawn-days button[aria-pressed="true"] { color: var(--call-ink-1); border-bottom-color: var(--call-sk-warm); }
+.gd-land-drawn-controls button:focus-visible { outline: 2px solid var(--call-sk-moss); outline-offset: 2px; border-radius: 4px; }
+.gd-land-drawn-pause { color: var(--call-sk-moss) !important; }
+
+/* Drawing on. Only for people who are happy with motion; everyone else, and
+   anyone without script, gets the drawing finished. */
+@media (prefers-reduced-motion: no-preference) {
+  .gd-dd-draw {
+    stroke-dasharray: var(--gd-dd-len, 1400);
+    stroke-dashoffset: var(--gd-dd-len, 1400);
+    animation: gd-dd-draw .8s ease-out forwards;
+  }
+  .gd-dd-wash, .gd-dd-fade { opacity: 0; animation: gd-dd-in .5s ease-out forwards; }
+  .gd-dd-pop {
+    opacity: 0; transform-box: fill-box; transform-origin: 50% 100%; transform: scale(.4);
+    animation: gd-dd-pop .35s cubic-bezier(.3, 1.6, .6, 1) forwards;
+  }
+  .gd-dd-write { clip-path: inset(0 100% 0 0); animation: gd-dd-write .9s steps(18) forwards; }
+}
+@keyframes gd-dd-draw { to { stroke-dashoffset: 0; } }
+@keyframes gd-dd-in { to { opacity: 1; } }
+@keyframes gd-dd-pop { to { opacity: 1; transform: scale(1); } }
+@keyframes gd-dd-write { to { clip-path: inset(0 0 0 0); } }
 
 /* ── The thesis, beside its button ─────────────────────────────────── */
 .gd-land-thesis {
