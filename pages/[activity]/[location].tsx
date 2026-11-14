@@ -365,8 +365,10 @@ export const getStaticProps: GetStaticProps<PageProps> = async (ctx) => {
  * `sentence` is the prose form. "Today is Worth a look for cycling" is not
  * English, and the badge form cannot simply be lower-cased into a sentence.
  */
-function bandWords(score: number): { band: CallBand; label: string; sentence: string } {
-  const band = bandFor(score);
+function bandWords(score: number, called?: CallBand): { band: CallBand; label: string; sentence: string } {
+  // The payload's own band where it carries one: it is the app's call, and it
+  // can say Unsafe, which no score can. See DailyScore.band.
+  const band = called ?? bandFor(score);
   const sentence: Record<CallBand, string> = {
     prime: 'a prime day',
     worthALook: 'a day worth a look',
@@ -398,7 +400,7 @@ export default function ProgrammaticSeoPage({
    * bake one visitor's `?from=share` into the page everyone else gets.
    */
   const invited = router.query.from === 'share';
-  const today = bandWords(score.todayScore);
+  const today = bandWords(score.todayScore, score.todayBand);
   const canonicalUrl = `https://godaisy.io/${activityIdToSlug(activityId)}/${location.slug}`;
   const pageTitle = `Is today a good day for ${activityName} in ${location.name}?`;
   const pageDescription = `Today is ${today.sentence} for ${activityName} in ${location.name} — ${score.todayScore}/100. Live weather scoring for ${location.name}, ${location.country}, updated hourly. Free, ad-free.`;
@@ -559,7 +561,7 @@ export default function ProgrammaticSeoPage({
 
             <div className="gd-spot-week">
               {score.weeklyOutlook.map((d) => {
-                const b = bandWords(d.score);
+                const b = bandWords(d.score, d.band);
                 // A floor of 8%, or a score of 3 draws nothing and the day looks
                 // like missing data rather than a bad day.
                 const height = Math.max(d.score, 8);

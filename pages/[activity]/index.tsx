@@ -170,7 +170,7 @@ export const getStaticProps: GetStaticProps<HubProps> = async (ctx) => {
      * claim is "ranked best first" a row of noughts is a lie about the sea.
      */
     if (!p) return null;
-    const band = bandFor(p.todayScore);
+    const band = p.todayBand ?? bandFor(p.todayScore);
     return {
       slug: l.slug,
       name: l.name,
