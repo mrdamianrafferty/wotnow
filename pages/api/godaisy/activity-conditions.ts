@@ -101,7 +101,14 @@ export interface ActivityConditionsDay {
   date: string;
   dayLabel: string;
   score: number;
+  /** perfect/good/fair/poor — always derived from `score`, never contradicts it. */
   evaluation: string;
+  /**
+   * The band Go Daisy itself calls the day at: prime, worthALook, marginal,
+   * notToday or unsafe. Same thresholds as the app and the spot pages, and
+   * the only field that can say unsafe.
+   */
+  band: string;
   reasoning: string;
 }
 
@@ -313,7 +320,7 @@ export default async function handler(
         name: model?.name ?? activityId,
         days: (payload.weeklyOutlook ?? []).map((d) => ({
           date: d.date, dayLabel: d.dayLabel, score: d.score,
-          evaluation: d.evaluation, reasoning: d.reasoning,
+          evaluation: d.evaluation, band: d.band, reasoning: d.reasoning,
         })),
         neutralCriteria: stillNeutral,
         coastalModel: coastal,

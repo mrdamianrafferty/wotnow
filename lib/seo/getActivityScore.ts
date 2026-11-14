@@ -27,16 +27,16 @@
  * something subtly different.
  */
 
-import { getSuggestionsByDay } from '../../utils/getSuggestionsByDay';
+import { evaluationForScore, getSuggestionsByDay } from '../../utils/getSuggestionsByDay';
 import type { Suggestion, WeatherData } from '../../utils/getSuggestionsByDay';
 import { activityTypes } from '../../data/activityTypes';
 import type { ActivityType } from '../../data/activities/types';
 import type { SeoLocation } from '../../data/seoLocations';
 import { fetchOpenMeteoAsOneCallShape } from '../weather/openMeteoOneCallAdapter';
 import { openMeteoUrl } from '../services/openMeteoUrl';
-import { promote } from '../godaisy/call/promote';
-import { partBands } from '../godaisy/call/window';
-import { bandFor, isSevere } from '../godaisy/call/bands';
+import { dayCall } from '../godaisy/call/dayCall';
+import { makeVerdict } from '../godaisy/call/verdict';
+import { bandFor, type CallBand } from '../godaisy/call/bands';
 import type { DaypartAggregate, DaypartName } from '../weather/openMeteoOneCallAdapter';
 import { cachedForecast, forecastCacheKey } from './forecastCache';
 
@@ -48,7 +48,18 @@ export interface DailyScore {
   date: string; // ISO date (YYYY-MM-DD)
   dayLabel: string; // "Today", "Tomorrow", "Friday"...
   score: number; // 0–100
+  /**
+   * The engine's four-word label, ALWAYS derived from `score` above
+   * (`evaluationForScore`). It used to be the day-level label carried past a
+   * promotion that had already moved the score — 73 and "poor" in one object.
+   */
   evaluation: 'perfect' | 'good' | 'fair' | 'poor' | 'indoor' | 'indoorAlternative';
+  /**
+   * The band the app itself calls this day at (Prime … Unsafe). Agrees with
+   * `bandFor(score)` except for Unsafe, which no score can express — so read
+   * this rather than re-deriving it from the number.
+   */
+  band: CallBand;
   reasoning: string;
 }
 
@@ -56,6 +67,7 @@ export interface ActivityScorePayload {
   // Current-day answer
   todayScore: number;
   todayEvaluation: DailyScore['evaluation'];
+  todayBand: CallBand;
   todayReasoning: string;
   // Best window in next 7 days
   bestDay: DailyScore | null;
@@ -148,7 +160,6 @@ export async function getActivityScoreForLocation(
   const weeklyOutlook: DailyScore[] = dailySuggestions.map(
     (day: { date: number; suggestions: Suggestion[] }, i: number) => {
     const suggestion = day.suggestions?.find?.((s: Suggestion) => s.activityId === activityId);
-    const dayScore = suggestion?.score ?? 0;
 
     /*
      * THE SAME PROMOTION THE APP APPLIES, or the two disagree in public.
@@ -159,53 +170,75 @@ export async function getActivityScoreForLocation(
      * A day whose parts hold up is not a write-off, and it cannot be one on the
      * web and not in the app.
      *
-     * `promote` is imported rather than reimplemented: a rule with this much
-     * riding on it does not get two copies, and it very nearly had them.
+     * The rules are imported rather than reimplemented (`dayCall`): a rule with
+     * this much riding on it does not get two copies. It had one anyway — this
+     * file applied the promotion and skipped the gust ceiling and the severe
+     * demotion, and moved the score without moving the evaluation.
      */
     const parts = forecast[i]?.parts;
     const w = forecast[i]?.weather ?? {};
-    const lift = parts
-      ? promote(
-          bandFor(dayScore, suggestion?.vetoed, suggestion?.binding?.key),
-          partBands(activityId, parts, day.date, [activity], now, { lat: location.lat, lon: location.lon }),
-          parts,
-          isSevere(w.precipitation, w.gustspeed ?? w.windspeed),
-          w.gustspeed ?? w.windspeedMax ?? w.windspeed,
-        )
-      : null;
+    if (!suggestion) {
+      return {
+        date: new Date(day.date * 1000).toISOString().slice(0, 10),
+        dayLabel: labelForOffset(i),
+        score: 0,
+        evaluation: 'poor' as const,
+        band: 'notToday' as const,
+        reasoning: '',
+      };
+    }
+    /*
+     * Gust ceiling, severe demotion and promotion — the app's own rules, from
+     * the one place they live. This file used to apply the promotion alone,
+     * so the same day could be Prime here and capped below it in the app.
+     */
+    const called = dayCall({
+      suggestion,
+      weather: w,
+      parts,
+      date: day.date,
+      activities: [activity],
+      now,
+      coords: { lat: location.lat, lon: location.lon },
+    });
+
+    /*
+     * A PROMOTED DAY'S REASONING IS ABOUT THE DAY IT IS NO LONGER.
+     *
+     * The day-level sentence says "Not a day for archery" over a number that
+     * now says 73. It used to be blanked, which left the API answering a
+     * lifted day with no advice at all. It is now the sentence the app writes
+     * for the same day — "Best in the afternoon, and the rain comes in after
+     * that." — from the same verdict code, with the same window.
+     */
+    /*
+     * And the same for any day whose band `dayCall` moved: a severe day
+     * demoted from Marginal kept "Rideable, with something against you" under
+     * a Not today, and a gust-capped day kept a Prime day's praise. Where the
+     * band is the engine's own, so is the sentence.
+     */
+    const moved = called.promoted || called.gusty
+      || called.band !== bandFor(suggestion.score, suggestion.vetoed, suggestion.binding?.key);
+    const reasoning = moved
+      ? makeVerdict({
+          suggestion: { ...suggestion, score: called.score, vetoed: false },
+          activityName: model.name,
+          weather: called.runWeather,
+          band: called.band,
+          isFirst: true,
+          ...(called.promoted ? { promoted: true } : {}),
+          ...(called.gusty ? { gusty: true } : {}),
+          ...(called.window ? { window: called.window } : {}),
+        }).reason
+      : (suggestion.reasoning ?? '');
 
     return {
       date: new Date(day.date * 1000).toISOString().slice(0, 10),
       dayLabel: labelForOffset(i),
-      score: lift?.score ?? dayScore,
-      evaluation: suggestion?.evaluation ?? 'poor',
-      /*
-       * A PROMOTED DAY'S REASONING IS ABOUT THE DAY IT IS NO LONGER.
-       *
-       * `score` takes the lift and these two did not, so a day the parts
-       * rescued kept the sentence the day-level scorer wrote for it. Rendered
-       * together, as they are on every spot page and on the hub's hero:
-       *
-       *   Today is a day worth a look.
-       *   Not a day for surfing. Light breeze, Force 2, gusting Force 4.
-       *
-       * Two sentences, one paragraph, flatly contradicting each other — over a
-       * number that says 76. The verdict is the correct one: `promote` only
-       * fires when a real part of the day holds up, and the whole point of it
-       * is that a day whose parts hold up is not a write-off.
-       *
-       * So the stale sentence goes rather than the score. It is not replaced
-       * with a generated one: `promote` returns a band, a score and the winning
-       * part's weather, but no prose, and inventing a reason here would put a
-       * fourth voice on a page that already had three. The page renders the
-       * verdict, the band and the week, all of which agree.
-       *
-       * The better fix is upstream — carry the winning part through so the
-       * reason can become the window clause the app itself would use ("Best
-       * before six"). That is a change to `promote`'s return type and to every
-       * caller, and it is not this file's to make.
-       */
-      reasoning: lift ? '' : (suggestion?.reasoning ?? ''),
+      score: called.score,
+      evaluation: evaluationForScore(called.score),
+      band: called.band,
+      reasoning,
     };
   });
 
@@ -247,6 +280,7 @@ export async function getActivityScoreForLocation(
   return {
     todayScore: todayDay?.score ?? 0,
     todayEvaluation: todayDay?.evaluation ?? 'poor',
+    todayBand: todayDay?.band ?? bandFor(0),
     todayReasoning: todayDay?.reasoning ?? '',
     bestDay,
     weeklyOutlook,

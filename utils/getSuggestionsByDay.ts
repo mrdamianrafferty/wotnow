@@ -250,8 +250,14 @@ function toEpochMs(date: number): number {
   return date > YEAR_5138_IN_SECONDS ? date : date * 1000;
 }
 
-// Map numeric score to suitability label (for outdoor)
-function toLevel(score: number): SuitabilityLevel | 'poor' {
+// Map numeric score to suitability label (for outdoor).
+// Exported so a caller that moves a score after this file (the part-of-day
+// promotion) re-derives the label from the SAME thresholds rather than
+// carrying the stale one — see lib/godaisy/call/dayCall.
+export function evaluationForScore(score: number): SuitabilityLevel {
+  return toLevel(score);
+}
+function toLevel(score: number): SuitabilityLevel {
   if (score >= 90) return 'perfect';
   if (score >= 60) return 'good';
   if (score >= 40) return 'fair';

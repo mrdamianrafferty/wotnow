@@ -10,10 +10,10 @@
 
 import type { Suggestion, WeatherData } from '@/utils/getSuggestionsByDay';
 import type { SupportedLanguageCode } from '@/lib/i18n/translate';
-import { bandFor, isGood, isSevere, type CallBand } from './bands';
-import { bestWindow, partBands, type ForecastParts, type PartName } from './window';
+import { isGood, type CallBand } from './bands';
+import { partBands, type ForecastParts, type PartName } from './window';
 import { EVENING } from '@/data/activityLight';
-import { promote } from './promote';
+import { dayCall } from './dayCall';
 import type { ActivityType } from '@/data/activities/types';
 import { factsFor, nextYesFact, type CallFact } from './facts';
 import { makeVerdict, type Verdict } from './verdict';
@@ -159,9 +159,6 @@ export function makeCall(input: MakeCallInput): Call {
     return a.activityId.localeCompare(b.activityId);
   });
 
-  const severe = isSevere(weather.precipitation, weather.gustspeed ?? weather.windspeed);
-  const dayGust = weather.gustspeed ?? weather.windspeedMax ?? weather.windspeed;
-
   /*
    * Scoring three parts means three more passes through the activity models,
    * and the answer is now needed twice for every activity — once to decide
@@ -184,18 +181,18 @@ export function makeCall(input: MakeCallInput): Call {
    * promoted here too, or it is rendered with the good-day sentence and then
    * filtered out of the good list — which put it back on the no-day path with a
    * verdict written for the opposite case.
+   *
+   * The rules live in `dayCall`, which the web pages and the
+   * activity-conditions API use too. They had their own copy, and it drifted.
    */
-  const bandOf = (s: Suggestion): CallBand => {
-    const scored = bandFor(s.score, s.vetoed, s.binding?.key);
-    const dayBand: CallBand = scored === 'marginal' && severe ? 'notToday' : scored;
-    return promote(dayBand, barsFor(s.activityId), parts, severe, dayGust)?.band ?? dayBand;
-  };
+  const callFor = (s: Suggestion) => dayCall({
+    suggestion: s, weather, parts, date, activities, now, coords, bars: barsFor(s.activityId),
+  });
+  const bandOf = (s: Suggestion): CallBand => callFor(s).band;
 
   const build = (s: Suggestion, isFirst: boolean): CallOption => {
-    // Marginal means dull. On a severe day it is demoted, so the shrug and the
-    // numbers under it never contradict each other — see `isSevere`.
-    const scored = bandFor(s.score, s.vetoed, s.binding?.key);
-    const dayBand: CallBand = scored === 'marginal' && severe ? 'notToday' : scored;
+    // Gust ceiling, severe demotion and promotion, in that order — see `dayCall`.
+    const day = callFor(s);
     // Another language names the sport itself: the library's names are English.
     const activityName = lang === 'en'
       ? names[s.activityId]
@@ -207,18 +204,13 @@ export function makeCall(input: MakeCallInput): Call {
      * They were the drawer's evidence; they turned out to be better evidence
      * than the day. See `promote` below.
      */
-    const bars = barsFor(s.activityId);
-    const lift = promote(dayBand, bars, parts, severe, dayGust);
-    const band = lift?.band ?? dayBand;
+    const { bars, band, window } = day;
 
     /*
      * The window is only asked for on a day that is a yes — which now includes
      * a day promoted into one. "Best in the morning" over "a write-off" was a
      * contradiction; over "a good day to get the bike out" it is the point.
      */
-    const window = isGood(band)
-      ? bestWindow(s.activityId, parts, date, activities, now, coords)
-      : undefined;
 
     const weighed = (s.criteria ?? [])
       .slice(0, 10)
@@ -233,17 +225,20 @@ export function makeCall(input: MakeCallInput): Call {
      * written from the run's weather, which is the weather of the hours the
      * sentence is actually about.
      */
-    const runWeather = lift?.weather ?? weather;
+    const runWeather = day.runWeather;
+    // The score the band was decided on: lifted, or pulled under Marginal on a
+    // severe day — so the number and the band never disagree. See `dayCall`.
+    const called = { ...s, score: day.score, ...(day.promoted ? { vetoed: false } : {}) };
 
     return {
       activityId: s.activityId,
       ...(activityName ? { activityName } : {}),
-      score: lift?.score ?? s.score,
+      score: day.score,
       band,
       ...(weighed.length ? { weighed } : {}),
       ...(bars.length && !isIndoor(s.activityId, activities) ? { parts: bars } : {}),
       verdict: makeVerdict({
-        suggestion: lift ? { ...s, score: lift.score, vetoed: false } : s,
+        suggestion: called,
         activityName,
         weather: runWeather,
         band,
@@ -255,11 +250,11 @@ export function makeCall(input: MakeCallInput): Call {
         weekdayIdx,
         ...(nextYesIdx !== undefined ? { nextYesIdx } : {}),
         lang,
-        ...(lift ? { promoted: true } : {}),
+        ...(day.promoted ? { promoted: true } : {}),
         ...(capped.has(s.activityId) ? { gusty: true } : {}),
         ...(window ? { window } : {}),
       }),
-      facts: factsFor(lift ? { ...s, score: lift.score, vetoed: false } : s, runWeather, lang),
+      facts: factsFor(called, runWeather, lang),
     };
   };
 
