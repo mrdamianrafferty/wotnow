@@ -9,6 +9,38 @@
           "/auth/callback/*",
           "/findr",
           "/findr/*"
+        ],
+        "appIDs": [
+          "T7754BV8QM.eu.fishfindr.app"
+        ],
+        "components": [
+          {
+            "/": "/auth/callback",
+            "?": {
+              "via": "web"
+            },
+            "exclude": true,
+            "comment": "Sign-in started in a browser finishes there (lib/auth/webCallback.ts)"
+          },
+          {
+            "/": "/auth/callback/*",
+            "?": {
+              "via": "web"
+            },
+            "exclude": true
+          },
+          {
+            "/": "/auth/callback"
+          },
+          {
+            "/": "/auth/callback/*"
+          },
+          {
+            "/": "/findr"
+          },
+          {
+            "/": "/findr/*"
+          }
         ]
       },
       {
@@ -28,6 +60,77 @@
           "/call",
           "/weather",
           "/*/*"
+        ],
+        "appIDs": [
+          "T7754BV8QM.io.godaisy.app"
+        ],
+        "components": [
+          {
+            "/": "/auth/callback",
+            "?": {
+              "via": "web"
+            },
+            "exclude": true,
+            "comment": "Sign-in started in a browser finishes there (lib/auth/webCallback.ts)"
+          },
+          {
+            "/": "/auth/callback/*",
+            "?": {
+              "via": "web"
+            },
+            "exclude": true
+          },
+          {
+            "/": "/auth/callback"
+          },
+          {
+            "/": "/auth/callback/*"
+          },
+          {
+            "/": "/grow",
+            "exclude": true
+          },
+          {
+            "/": "/grow/*",
+            "exclude": true
+          },
+          {
+            "/": "/findr",
+            "exclude": true
+          },
+          {
+            "/": "/findr/*",
+            "exclude": true
+          },
+          {
+            "/": "/api/*",
+            "exclude": true
+          },
+          {
+            "/": "/admin/*",
+            "exclude": true
+          },
+          {
+            "/": "/auth/*",
+            "exclude": true
+          },
+          {
+            "/": "/_next/*",
+            "exclude": true
+          },
+          {
+            "/": "/.well-known/*",
+            "exclude": true
+          },
+          {
+            "/": "/call"
+          },
+          {
+            "/": "/weather"
+          },
+          {
+            "/": "/*/*"
+          }
         ]
       },
       {

@@ -31,6 +31,7 @@
 
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { Capacitor } from '@capacitor/core';
+import { markWebCallback } from './webCallback';
 import { createLogger } from '@/lib/utils/logger';
 import { mapAuthError } from './utils';
 
@@ -228,7 +229,7 @@ async function signInWithAppleWeb(
   try {
     logger.info('Starting web Apple Sign In flow');
 
-    const finalRedirectTo = resolveWebCallback(redirectTo);
+    const finalRedirectTo = markWebCallback(resolveWebCallback(redirectTo));
 
     logger.info('OAuth redirect URL:', finalRedirectTo);
 

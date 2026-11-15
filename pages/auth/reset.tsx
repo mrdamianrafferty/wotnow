@@ -3,6 +3,7 @@ import Link from 'next/link';
 import Head from 'next/head';
 import { Flower2 } from 'lucide-react';
 import { supabase } from '../../lib/supabase/client';
+import { markWebCallback } from '../../lib/auth/webCallback';
 
 export default function ResetPassword() {
   const [email, setEmail] = useState('');
@@ -17,7 +18,7 @@ export default function ResetPassword() {
 
     try {
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/auth/callback`,
+        redirectTo: markWebCallback(`${window.location.origin}/auth/callback`),
       });
 
       if (error) throw error;
