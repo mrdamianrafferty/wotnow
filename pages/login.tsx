@@ -8,6 +8,7 @@ import { Cloud, Sun, Waves, Leaf, Droplets, AlertCircle, RefreshCw } from 'lucid
 import { signInWithApple, APPLE_NATIVE_ERRORS } from '../lib/auth/appleSignIn';
 import { signInWithGoogleNative, resetGoogleNative, GOOGLE_NATIVE_ERRORS } from '../lib/auth/googleNative';
 import { readSetup } from '@/lib/godaisy/call/setup';
+import { markWebCallback } from '@/lib/auth/webCallback';
 
 export default function GoDaisyLogin() {
   const router = useRouter();
@@ -138,7 +139,7 @@ export default function GoDaisyLogin() {
           email: emailNorm,
           password,
           options: {
-            emailRedirectTo: `${window.location.origin}/auth/callback?app=godaisy`,
+            emailRedirectTo: markWebCallback(`${window.location.origin}/auth/callback?app=godaisy`),
             data: {
               app: 'godaisy',
             },
@@ -243,7 +244,8 @@ export default function GoDaisyLogin() {
         }
       }
 
-      const redirectUrl = authCallbackUrl;
+      // In a browser, finish in the browser: see lib/auth/webCallback.ts.
+      const redirectUrl = markWebCallback(authCallbackUrl);
       console.log('[Go Daisy Auth] Starting OAuth:', {
         provider,
         origin: typeof window !== 'undefined' ? window.location.origin : 'server',
