@@ -242,6 +242,23 @@
    token set that other surfaces share.
    ════════════════════════════════════════════════════════════════════ */
 
+/* Every page here is full-bleed: its <main> owns the page background and
+   centres its own inner column. index.css still carries the old layout's
+   `main, .page { max-width: 1200px; margin: 2rem auto; padding: 1rem }`, and
+   each of these inherited it — a 32px strip of the app's white background
+   above and below the page, white margins either side past 1200px, and 16px
+   of padding nobody asked for. Undo it here, once, rather than in the global
+   rule, which older pages still lean on. Padding goes too, except where a
+   page sets its own (.call-setup), which wins on source order below.
+   Not .call-screen: its scene is position: fixed, so the strip never showed
+   there, and its hero's placement is what the store screenshots were taken
+   from. Moving it is its own decision, not a side effect of this one. */
+.call-setup, .gd-cond, .gd-doc, .gd-acct, .gd-spot, .gd-land, .gd-share {
+  max-width: none;
+  margin: 0;
+  padding: 0;
+}
+
 .call-screen {
   position: relative;
   min-height: 100dvh;
@@ -1589,12 +1606,14 @@ section.gd-land-foot  { padding: 32px var(--call-gutter-app) 44px; }
 /* A bare `a { color: #4a90e2 }` in index.css reaches every link the redesign
    does not name — a browser-era blue on a cream page. Prose links inside the
    redesigned surfaces take the moss ink the rest of the system uses. */
-.gd-acct p a, .gd-acct li a, .gd-cond p a, .gd-spot p a, .call-drawer p a {
+/* Not .gd-hub-cta: it is a button that happens to sit in a <p>, and this rule
+   outranks its own (0,1,2 to 0,1,0) — moss text on a moss pill, invisible. */
+.gd-acct p a, .gd-acct li a, .gd-cond p a, .gd-spot p a:not(.gd-hub-cta), .call-drawer p a {
   color: var(--call-moss-ink);
   text-decoration: underline;
   text-underline-offset: 2px;
 }
-.gd-acct p a:hover, .gd-cond p a:hover, .gd-spot p a:hover { color: var(--call-ink-1); }
+.gd-acct p a:hover, .gd-cond p a:hover, .gd-spot p a:not(.gd-hub-cta):hover { color: var(--call-ink-1); }
 
 /* A note is a div, so the rule above never reached its links and the old
    app's global `a { color: #4a90e2 }` did — 2.90:1 on the note's panel. Buttons
