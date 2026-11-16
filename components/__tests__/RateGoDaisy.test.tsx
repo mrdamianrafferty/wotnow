@@ -7,7 +7,7 @@ const trackEvent = jest.fn();
 jest.mock('@/hooks/useIsNativeApp', () => ({ useIsNativeApp: () => state.native }));
 jest.mock('@/lib/capacitor/platform', () => ({ getPlatform: () => state.platform }));
 jest.mock('@capacitor/browser', () => ({ Browser: { open: (o: unknown) => open(o) } }));
-jest.mock('@/lib/analytics/events', () => ({ trackEvent: (...a: unknown[]) => trackEvent(...a) }));
+jest.mock('@/lib/analytics/track', () => ({ track: (...a: unknown[]) => trackEvent(...a) }));
 
 import RateGoDaisy from '../RateGoDaisy';
 import { APP_STORE_REVIEW_URL, PLAY_STORE_URL, reviewUrl } from '@/lib/daisyFamily';

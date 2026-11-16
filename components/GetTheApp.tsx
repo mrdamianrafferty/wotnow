@@ -19,7 +19,7 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { useEffect } from 'react';
-import { trackEvent } from '../lib/analytics/events';
+import { track } from '@/lib/analytics/track';
 import { useIsNativeApp } from '../hooks/useIsNativeApp';
 import { APP_STORE_URL, PLAY_STORE_URL, APP_LINK_PATH, daisyFamily } from '../lib/daisyFamily';
 
@@ -47,7 +47,7 @@ export default function GetTheApp({ placement, place }: GetTheAppProps) {
     // The native check is by user agent, which is there from the first render; the hook above only
     // learns it after an import, and would count every in-app visit as a view of a store button
     if (isNative || /godaisy-app|Capacitor/i.test(navigator.userAgent)) return;
-    trackEvent('cross_promo_view', { from_app: 'go_daisy', placement });
+    track('cross_promo_view', { from_app: 'go_daisy', placement });
   }, [isNative, placement]);
 
   return (
@@ -67,7 +67,7 @@ export default function GetTheApp({ placement, place }: GetTheAppProps) {
             <a
               className="gd-app-store"
               href={APP_STORE_URL}
-              onClick={() => trackEvent('cross_promo_click', {
+              onClick={() => track('cross_promo_click', {
                 from_app: 'go_daisy', to_app: 'app_store', placement,
               })}
             >
@@ -76,7 +76,7 @@ export default function GetTheApp({ placement, place }: GetTheAppProps) {
             <a
               className="gd-app-store"
               href={PLAY_STORE_URL}
-              onClick={() => trackEvent('cross_promo_click', {
+              onClick={() => track('cross_promo_click', {
                 from_app: 'go_daisy', to_app: 'google_play', placement,
               })}
             >
@@ -113,7 +113,7 @@ export default function GetTheApp({ placement, place }: GetTheAppProps) {
             <li key={app.toApp}>
               <a
                 href={app.url}
-                onClick={() => trackEvent('cross_promo_click', {
+                onClick={() => track('cross_promo_click', {
                   from_app: 'go_daisy', to_app: app.toApp, placement,
                 })}
               >

@@ -23,6 +23,8 @@ import { isGoDaisyPlusProduct, mapGoDaisyProductToTier } from '@/lib/godaisy/rev
 import { isGoDaisyTip } from '@/lib/godaisy/tipProducts';
 import type { GrowSubscriptionTier } from '@/lib/grow/subscription';
 import type { GoDaisyTier } from '@/lib/godaisy/subscription';
+import { sendServerEvent } from '@/lib/analytics/measurement-protocol';
+import { revenueCatServerEvent } from '@/lib/analytics/paymentEvents';
 
 // Disable Next.js body parsing for raw body access
 export const config = {
@@ -158,6 +160,17 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     } else {
       await handleGrowDaisyEvent(supabase, userId, event);
     }
+
+    // GA4 start_trial / purchase, after the entitlement write succeeded (a
+    // throw above means a retry, which sends it then). Tips are Go Daisy's tip
+    // jar (/support, /account). Never throws; a no-op without the secret.
+    const isTip = isGoDaisyTip(event.product_id);
+    const gaApp = isGoDaisyPlus || isTip ? 'godaisy' : 'grow';
+    const gaKind = isTip
+      ? 'tip'
+      : !isGoDaisyPlus && mapProductToTier(event.product_id)?.type === 'lifetime' ? 'lifetime' : 'subscription';
+    const ga = revenueCatServerEvent(event, gaApp, gaKind);
+    if (ga) await sendServerEvent(ga.event, ga.opts);
 
     return res.status(200).json({ received: true });
   } catch (error) {

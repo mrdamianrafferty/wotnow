@@ -21,7 +21,7 @@
 
 import { useEffect, useState } from 'react';
 import InlineLocationSearch from '@/components/grow/onboarding/InlineLocationSearch';
-import { trackEvent } from '@/lib/analytics/events';
+import { track } from '@/lib/analytics/track';
 
 interface NearbyFisheryResult {
   slug: string;
@@ -39,7 +39,7 @@ const RISE_DAISY_GENERIC_URL =
   'https://www.risedaisy.com/?utm_source=go_daisy&utm_medium=cross_promo&utm_content=activity_page';
 
 function handleClick() {
-  trackEvent('cross_promo_click', { from_app: 'go_daisy', to_app: 'rise_daisy', placement: 'activity_page' });
+  track('cross_promo_click', { from_app: 'go_daisy', to_app: 'rise_daisy', placement: 'activity_page' });
 }
 
 const boxStyle: React.CSSProperties = {

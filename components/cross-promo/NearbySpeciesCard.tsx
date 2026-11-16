@@ -22,7 +22,7 @@
 
 import { useEffect, useState } from 'react';
 import InlineLocationSearch from '@/components/grow/onboarding/InlineLocationSearch';
-import { trackEvent } from '@/lib/analytics/events';
+import { track } from '@/lib/analytics/track';
 
 interface NearbySpeciesResult {
   commonName: string;
@@ -38,7 +38,7 @@ interface NearbySpeciesCardProps {
 const FINDR_GENERIC_URL = 'https://fishfindr.eu/?utm_source=go_daisy&utm_medium=cross_promo&utm_content=activity_page';
 
 function handleClick() {
-  trackEvent('cross_promo_click', { from_app: 'go_daisy', to_app: 'findr', placement: 'activity_page' });
+  track('cross_promo_click', { from_app: 'go_daisy', to_app: 'findr', placement: 'activity_page' });
 }
 
 const boxStyle: React.CSSProperties = {

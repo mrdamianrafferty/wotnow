@@ -33,6 +33,7 @@ import {
 } from '@/lib/godaisy/call/setup';
 import { loadSetup, saveSetup } from '@/lib/godaisy/call/sync';
 import { CallDeliveryNotice } from '@/components/call/CallDeliveryNotice';
+import { track } from '@/lib/analytics/track';
 import {
   SportsStep, SpotsStep, HourStep, SEED_TARGET,
   type SportOption, type PlaceSuggestion,
@@ -243,6 +244,7 @@ export default function StartPage() {
      * the next launch.
      */
     void saveSetup(setup);
+    track('tutorial_complete', { sports_count: sports.length, has_coastal: Boolean(coastal), has_hour: hour !== undefined });
     // `replace`, not `push`: the back button from the call should not land on
     // the last screen of a flow that is already finished.
     router.replace('/call');

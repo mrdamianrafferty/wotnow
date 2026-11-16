@@ -33,6 +33,7 @@ import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { HOUR_OPTIONS } from './SetupSteps';
 import { loadCallHour, saveCallHour } from '@/lib/godaisy/call/sync';
+import { track } from '@/lib/analytics/track';
 
 type Status = 'loading' | 'ready' | 'saving' | 'saved' | 'local-only' | 'no-setup';
 
@@ -54,7 +55,9 @@ export function CallHourCard() {
   const pick = useCallback(async (h: number) => {
     setHour(h);
     setStatus('saving');
-    setStatus(await saveCallHour(h));
+    const result = await saveCallHour(h);
+    setStatus(result);
+    if (result === 'saved' || result === 'local-only') track('save_location', { kind: 'hour', method: 'pick', surface: 'account' });
   }, []);
 
   return (

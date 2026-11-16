@@ -21,7 +21,7 @@
 
 import Link from 'next/link';
 import Image from 'next/image';
-import { trackEvent } from '../lib/analytics/events';
+import { track } from '@/lib/analytics/track';
 import { APP_STORE_URL, PLAY_STORE_URL, daisyFamily } from '../lib/daisyFamily';
 import { useIsNativeApp } from '../hooks/useIsNativeApp';
 import RateGoDaisy from './RateGoDaisy';
@@ -46,7 +46,7 @@ const LEGAL_LINKS = [
 ];
 
 function handleCrossPromoClick(toApp: string) {
-  trackEvent('cross_promo_click', { from_app: 'go_daisy', to_app: toApp, placement: 'footer' });
+  track('cross_promo_click', { from_app: 'go_daisy', to_app: toApp, placement: 'footer' });
 }
 
 export default function Footer() {
