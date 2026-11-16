@@ -14,7 +14,7 @@
  */
 
 import { Capacitor } from '@capacitor/core';
-import { trackEvent } from '@/lib/analytics/events';
+import { track } from '@/lib/analytics/track';
 import { parseState, recordAsk, recordSession, shouldAsk, type ReviewState } from './policy';
 
 const KEY = 'gd.review.v1';
@@ -63,7 +63,7 @@ export async function noteHappyMoment(moment: string, now = Date.now()): Promise
     const { InAppReview } = await import('@capacitor-community/in-app-review');
     // Saved first: if the sheet throws half way, the next launch must not ask again straight away
     await save(recordAsk(state, now));
-    trackEvent('review_requested', { moment, platform: Capacitor.getPlatform() });
+    track('review_requested', { moment, platform: Capacitor.getPlatform() });
     await InAppReview.requestReview();
     return true;
   } catch {

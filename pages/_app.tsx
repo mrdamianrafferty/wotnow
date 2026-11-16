@@ -28,6 +28,10 @@ import { ErrorBoundary } from '../components/ErrorBoundary';
 import { PullToRefresh } from '../components/PullToRefresh';
 import { OrganizationJsonLd, WebsiteJsonLd } from '../components/JsonLd';
 import { GA_MEASUREMENT_IDS } from '../lib/analytics/gaIds';
+import { gaInitScript, prepareForPath } from '../lib/analytics/track';
+
+// user_id, user properties and sign_up / login for whichever property is loaded
+const AnalyticsIdentity = dynamic(() => import('../components/analytics/AnalyticsIdentity'), { ssr: false });
 
 // Lazy-load RevenueCat auth sync (iOS only, Grow only)
 const RevenueCatAuthSync = dynamic(
@@ -136,6 +140,17 @@ export default function App({ Component, pageProps }: AppProps<PagePropsWithThem
 
   // GA4 tag: only fires for godaisy.io / grow.godaisy.io (see GA_MEASUREMENT_IDS above).
   const gaId = isFindr ? undefined : GA_MEASUREMENT_IDS[appContext as 'godaisy' | 'grow'];
+
+  // Each client-side navigation: switch hits off on admin pages and preview
+  // hosts, and tag the section (content_group), before enhanced measurement's
+  // history page_view fires. The landing page is handled when the tag is ready
+  // (lib/analytics/track.ts flush).
+  useEffect(() => {
+    if (!gaId) return;
+    const onRoute = (url: string) => prepareForPath(gaId, url);
+    router.events.on('routeChangeStart', onRoute);
+    return () => router.events.off('routeChangeStart', onRoute);
+  }, [gaId, router.events]);
 
   // Detect iOS native for RevenueCat auth sync
   const [isIOSNative, setIsIOSNative] = useState(false);
@@ -298,18 +313,14 @@ export default function App({ Component, pageProps }: AppProps<PagePropsWithThem
                   <PullToRefresh>
                     <Component {...pageProps} />
                   </PullToRefresh>
+                  {gaId && !isFindr && <AnalyticsIdentity app={appContext as 'godaisy' | 'grow'} />}
                   <Analytics />
                   <SpeedInsights />
                   {process.env.NODE_ENV === 'production' && gaId && (
                     <>
                       <Script strategy="afterInteractive" src={`https://www.googletagmanager.com/gtag/js?id=${gaId}`} />
                       <Script id="ga-init" strategy="afterInteractive">
-                        {`
-                          window.dataLayer = window.dataLayer || [];
-                          function gtag(){dataLayer.push(arguments);}
-                          gtag('js', new Date());
-                          gtag('config', '${gaId}');
-                        `}
+                        {gaInitScript(gaId)}
                       </Script>
                     </>
                   )}

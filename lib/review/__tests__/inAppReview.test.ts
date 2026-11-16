@@ -17,7 +17,7 @@ jest.mock('@capacitor/preferences', () => ({
   },
 }));
 jest.mock('@capacitor-community/in-app-review', () => ({ InAppReview: { requestReview: () => requestReview() } }));
-jest.mock('@/lib/analytics/events', () => ({ trackEvent: (...a: unknown[]) => trackEvent(...a) }));
+jest.mock('@/lib/analytics/track', () => ({ track: (...a: unknown[]) => trackEvent(...a) }));
 
 import { noteHappyMoment, recordReviewSession, resetReviewSessionForTests } from '../inAppReview';
 import { parseState } from '../policy';

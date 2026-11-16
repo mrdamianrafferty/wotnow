@@ -3,6 +3,7 @@
  * Posts to /api/studio/brief, which emails hello@godaisy.io.
  */
 import { useState, type FormEvent } from 'react';
+import { track } from '@/lib/analytics/track';
 
 type State = 'idle' | 'sending' | 'sent' | 'error';
 
@@ -26,6 +27,8 @@ export default function BriefForm() {
         throw new Error(body.error || 'send_failed');
       }
       setState('sent');
+      // The enquiry itself is never sent to GA, only that one arrived.
+      track('generate_lead', { lead_source: 'studio_brief', surface: 'studio_build' });
     } catch (err) {
       setState('error');
       setError(err instanceof Error && err.message !== 'send_failed' ? err.message : '');

@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { useUIText } from "../hooks/useUIText";
 import { GODAISY_TIP_PRODUCTS } from "../lib/godaisy/tipProducts";
 import type { TipPackage } from "../lib/grow/revenueCat";
+import { track } from "@/lib/analytics/track";
 import {
   Heart,
   Coffee,
@@ -78,6 +79,7 @@ export default function SupportPage() {
   const handleTipPurchase = async (pkg: TipPackage) => {
     try {
       setPurchasingId(pkg.identifier);
+      track('begin_checkout', { product: pkg.identifier, product_kind: 'tip', surface: 'support' });
       setTipError(null);
       setTipSuccess(false);
 

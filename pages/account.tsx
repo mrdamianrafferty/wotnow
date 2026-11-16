@@ -19,6 +19,7 @@ import { GODAISY_TIP_PRODUCTS } from '@/lib/godaisy/tipProducts';
 import type { TipPackage } from '@/lib/grow/revenueCat';
 import RateGoDaisy from '@/components/RateGoDaisy';
 import { useIsNativeApp } from '@/hooks/useIsNativeApp';
+import { track } from '@/lib/analytics/track';
 
 /** Map product IDs to Lucide icons and accent colours */
 const TIP_ICON_MAP: Record<string, { icon: typeof Coffee; accent: string; bg: string }> = {
@@ -152,6 +153,7 @@ export default function AccountPage() {
   const handleTipPurchase = async (pkg: TipPackage) => {
     try {
       setPurchasingId(pkg.identifier);
+      track('begin_checkout', { product: pkg.identifier, product_kind: 'tip', surface: 'account' });
       setTipError(null);
       setTipSuccess(false);
 
@@ -249,6 +251,7 @@ export default function AccountPage() {
       return { ...prev, locations: [...otherLocations, { ...loc, type: 'home' as const }] };
     });
     void saveCallPlace(loc);
+    track('save_location', { kind: 'place', method: 'search', surface: 'account' });
   };
 
   const updateCoastalLocation = (loc: { name: string; lat: number; lon: number }) => {
@@ -257,6 +260,7 @@ export default function AccountPage() {
       return { ...prev, locations: [...otherLocations, { ...loc, type: 'coastal' as const }] };
     });
     void saveCallCoastal(loc);
+    track('save_location', { kind: 'coastal', method: 'search', surface: 'account' });
   };
 
   const saveDisplayName = async () => {

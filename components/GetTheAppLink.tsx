@@ -10,7 +10,7 @@
 import { useEffect } from 'react';
 import Link from 'next/link';
 import { useIsNativeApp } from '@/hooks/useIsNativeApp';
-import { trackEvent } from '@/lib/analytics/events';
+import { track } from '@/lib/analytics/track';
 import { APP_LINK_PATH } from '@/lib/daisyFamily';
 
 export default function GetTheAppLink({ placement }: { placement: string }) {
@@ -19,7 +19,7 @@ export default function GetTheAppLink({ placement }: { placement: string }) {
   const inApp = isNative || (typeof navigator !== 'undefined' && /godaisy-app|Capacitor/i.test(navigator.userAgent));
 
   useEffect(() => {
-    if (!inApp) trackEvent('cross_promo_view', { from_app: 'go_daisy', placement });
+    if (!inApp) track('cross_promo_view', { from_app: 'go_daisy', placement });
   }, [inApp, placement]);
 
   if (inApp) return null;
@@ -27,7 +27,7 @@ export default function GetTheAppLink({ placement }: { placement: string }) {
     <p className="call-appline">
       <Link
         href={APP_LINK_PATH}
-        onClick={() => trackEvent('cross_promo_click', { from_app: 'go_daisy', to_app: 'go_daisy_app', placement })}
+        onClick={() => track('cross_promo_click', { from_app: 'go_daisy', to_app: 'go_daisy_app', placement })}
       >
         Get the Go Daisy app
       </Link>

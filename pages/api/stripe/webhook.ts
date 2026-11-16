@@ -20,6 +20,11 @@
  * - customer.subscription.deleted
  * - checkout.session.completed (including one-time lifetime purchases)
  * - invoice.payment_failed (records + dunning email; does not downgrade)
+ * - invoice.payment_succeeded (GA4 `purchase` only; no profile writes)
+ *
+ * GA4: start_trial and purchase are sent to the right property (Go Daisy or
+ * Grow) via lib/analytics/measurement-protocol.ts. That never throws and is a
+ * no-op without GA_MP_API_SECRET_<APP>, so it can't turn into a Stripe retry.
  *
  * Grow Daisy events also dispatch transactional email via
  * lib/grow/sendSubscriptionEmail. Those calls are deliberately awaited but
@@ -52,6 +57,8 @@ import {
   formatEpochDate,
   type GrowLifecycleContext,
 } from '@/lib/grow/sendSubscriptionEmail';
+import { sendServerEvent } from '@/lib/analytics/measurement-protocol';
+import { stripeInvoicePurchase, stripeLifetimePurchase, stripeTrialStarted } from '@/lib/analytics/paymentEvents';
 
 type SupabaseServerClient = SupabaseClient<unknown>;
 
@@ -762,6 +769,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           // write — see belongsToThisApp().
           console.warn(`[webhook] Unroutable checkout event reached switch: ${event.id}`);
         }
+
+        // GA4: a lifetime purchase never produces an invoice, so it is counted
+        // here. Subscription revenue is counted from invoice.payment_succeeded.
+        const lifetime = stripeLifetimePurchase(session);
+        if (lifetime) await sendServerEvent(lifetime.event, lifetime.opts);
         break;
       }
 
@@ -828,6 +840,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           // premium — it called updateProfileFromSubscription(), which
           // sets profiles.subscription_status = 'premium'. Now a no-op.
           console.warn(`[webhook] Unroutable subscription event reached switch: ${event.id}`);
+        }
+
+        // GA4 start_trial: on `created` only, so a later `updated` while still
+        // trialing doesn't count the same trial again.
+        if (event.type === 'customer.subscription.created') {
+          const trial = stripeTrialStarted(subscription);
+          if (trial) await sendServerEvent(trial.event, trial.opts);
         }
         break;
       }
@@ -1000,6 +1019,31 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           );
 
           console.warn(`[grow] Payment FAILED for user ${failedUserId} (sub ${subId}) — tier unchanged pending Stripe retries`);
+        }
+        break;
+      }
+
+      case 'invoice.payment_succeeded': {
+        // GA4 only: every paid subscription invoice (the first charge, after a
+        // trial, and each renewal) is a `purchase`, with the invoice id as
+        // transaction_id so GA drops a redelivered event. Tier state is still
+        // owned by the subscription events above; nothing is written here.
+        // The endpoint must have this event enabled in Stripe, or it never arrives.
+        const invoice = event.data.object as Stripe.Invoice & {
+          subscription?: string | null;
+          parent?: { subscription_details?: { subscription?: string | null } | null } | null;
+        };
+        const subId = (typeof invoice.subscription === 'string' ? invoice.subscription : null)
+          ?? invoice.parent?.subscription_details?.subscription
+          ?? null;
+        if (!subId) break;
+        // Analytics only, so a failed lookup is logged rather than retried.
+        try {
+          const paidSub = await stripe.subscriptions.retrieve(subId);
+          const purchase = stripeInvoicePurchase(invoice, paidSub);
+          if (purchase) await sendServerEvent(purchase.event, purchase.opts);
+        } catch (err) {
+          console.warn(`[webhook] invoice.payment_succeeded: GA purchase skipped for ${event.id}:`, err);
         }
         break;
       }

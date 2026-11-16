@@ -19,6 +19,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { readSetup, mirrorToPreferences, DEFAULT_SPORTS, type SetupPlace } from '@/lib/godaisy/call/setup';
 import { saveSetup } from '@/lib/godaisy/call/sync';
 import { Spinner } from './Spinner';
+import { currentSurface, track } from '@/lib/analytics/track';
 
 interface Suggestion extends SetupPlace {
   detail?: string;
@@ -92,7 +93,7 @@ export function LocationSheet({ current, onClose }: { current: string; onClose: 
    * unless the change is marked pending, and a reload that beat the marker
    * would put the old place straight back.
    */
-  const choose = useCallback(async (place: SetupPlace) => {
+  const choose = useCallback(async (place: SetupPlace, method: 'search' | 'gps' = 'search') => {
     const saved = readSetup();
     const setup = saved
       ? { ...saved, place }
@@ -101,6 +102,7 @@ export function LocationSheet({ current, onClose }: { current: string; onClose: 
       : { v: 1 as const, sports: [...DEFAULT_SPORTS], place };
     mirrorToPreferences(setup);
     await saveSetup(setup);
+    track('save_location', { kind: 'place', method, surface: currentSurface() });
     window.location.assign('/');
   }, []);
 
@@ -126,7 +128,7 @@ export function LocationSheet({ current, onClose }: { current: string; onClose: 
             if (Array.isArray(j) && j[0]?.country) country = j[0].country;
           }
         } catch { /* keep "Here" */ }
-        choose({ name, lat, lon, country });
+        choose({ name, lat, lon, country }, 'gps');
       },
       (err) => setGps(err.code === err.PERMISSION_DENIED ? 'denied' : 'failed'),
       { enableHighAccuracy: false, timeout: 10000, maximumAge: 5 * 60 * 1000 },

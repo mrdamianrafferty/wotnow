@@ -9,6 +9,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { createClient } from '@/lib/supabase/client';
+import { currentSurface, track } from '@/lib/analytics/track';
 
 // =============================================================================
 // TYPES
@@ -105,6 +106,7 @@ export function useGoDaisyPushNotifications(): UseGoDaisyPushNotificationsState 
       const result = await Notification.requestPermission();
       const perm = result as PushPermissionState;
       setPermission(perm);
+      track('push_permission', { result: perm, surface: currentSurface() });
       return perm;
     } catch (err) {
       console.error('[GoDaisyPush] Error requesting permission:', err);
@@ -185,6 +187,7 @@ export function useGoDaisyPushNotifications(): UseGoDaisyPushNotificationsState 
 
       setIsSubscribed(true);
       setIsLoading(false);
+      track('enable_notifications', { surface: currentSurface() });
       return true;
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to subscribe';

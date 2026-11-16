@@ -27,7 +27,7 @@ import { SEO_LOCATIONS } from '@/data/seoLocations';
 import type { SeoLocation } from '@/data/seoLocations';
 import { locationFromSetup, locationFromShare } from '@/lib/godaisy/call/location';
 import bgMap from '@/data/bgMap';
-import { trackEvent } from '@/lib/analytics/events';
+import { track } from '@/lib/analytics/track';
 import { shareCall } from '@/lib/godaisy/call/share';
 import { VerdictLockup } from '@/components/call/VerdictLockup';
 import { ScreenChrome } from '@/components/call/ScreenChrome';
@@ -147,6 +147,24 @@ function CallScreen({ slug, place, days, photos, indoor, coords, coastal, error 
   const options = day?.alternates.length ? day.alternates : day?.call ? [day.call] : [];
   const option = options[altIndex % Math.max(1, options.length)] ?? day?.call ?? null;
   const hasAlternates = options.length > 1;
+
+  /*
+   * THE "USED IT" MOMENT. A page_view of / or /call also counts the landing
+   * page, a redirect and an error; this counts a call actually put in front of
+   * somebody. Once per page load, on the day they arrived at.
+   */
+  const viewed = useRef(false);
+  useEffect(() => {
+    if (viewed.current || !option || error) return;
+    viewed.current = true;
+    track('view_call', {
+      activity_id: option.activityId,
+      band: option.band,
+      day_index: dayIndex,
+      alternates: options.length,
+      place_kind: SEO_LOCATIONS.some((l: SeoLocation) => l.slug === slug) ? 'spot_page' : 'own_place',
+    });
+  }, [option, error, dayIndex, options.length, slug]);
 
   const turn = useCallback((delta: number) => {
     setDayIndex((d) => Math.min(days.length - 1, Math.max(0, d + delta)));
@@ -293,7 +311,7 @@ function CallScreen({ slug, place, days, photos, indoor, coords, coastal, error 
       if (!textRes.ok) throw new Error(`share text ${textRes.status}`);
       text = await textRes.text();
     } catch (e) {
-      trackEvent('call_share_failed', {
+      track('call_share_failed', {
         activity_id: option.activityId,
         stage: 'text',
         reason: e instanceof Error ? e.message : 'unknown',
@@ -314,7 +332,7 @@ function CallScreen({ slug, place, days, photos, indoor, coords, coastal, error 
       // No card is a reason to send words, not a reason to send nothing — but
       // it IS worth counting. A 404 from the renderer is exactly what shipped
       // for months, and a number would have found it before a screenshot did.
-      trackEvent('call_share_failed', {
+      track('call_share_failed', {
         activity_id: option.activityId,
         stage: 'card',
         reason: e instanceof Error ? e.message : 'unknown',
@@ -344,7 +362,7 @@ function CallScreen({ slug, place, days, photos, indoor, coords, coastal, error 
     }
 
     if (result.outcome === 'failed') {
-      trackEvent('call_share_failed', {
+      track('call_share_failed', {
         activity_id: option.activityId,
         stage: 'send',
         reason: result.reason ?? 'unknown',
@@ -362,7 +380,7 @@ function CallScreen({ slug, place, days, photos, indoor, coords, coastal, error 
      * nothing counted one for the life of the project, so the central bet had
      * no evidence either way.
      */
-    trackEvent('call_shared', {
+    track('call_shared', {
       activity_id: option.activityId,
       day_index: dayIndex,
       band: option.band,
@@ -372,6 +390,8 @@ function CallScreen({ slug, place, days, photos, indoor, coords, coastal, error 
       // shapes, and only one of them was ever tested.
       place_kind: spotSlug ? 'spot_page' : 'own_place',
     });
+    // GA4's recommended name too, so the standard sharing report sees it.
+    track('share', { method: result.method, content_type: 'call', item_id: option.activityId });
 
     setTimeout(() => setSendState('idle'), 2400);
 
@@ -457,7 +477,7 @@ function CallScreen({ slug, place, days, photos, indoor, coords, coastal, error 
               * the same readings over the call; the page says them instead.
               */
             onWhy={async () => {
-              trackEvent('call_why_opened', { day_index: dayIndex, activity: option.activityId, band: option.band });
+              track('call_why_opened', { day_index: dayIndex, activity: option.activityId, band: option.band });
               await router.replace({ query: { ...router.query, day: String(dayIndex) } }, undefined, { shallow: true, scroll: false });
               await router.push(whyHref({
                 place, lat: coords.lat, lon: coords.lon, coastal,
@@ -495,7 +515,7 @@ function CallScreen({ slug, place, days, photos, indoor, coords, coastal, error 
                   // Whether the second answer gets looked at is the other half
                   // of the sharing bet: a day with two good things on it is
                   // worth more than a day with one, and nothing measured it.
-                  trackEvent('call_alternate_viewed', {
+                  track('call_alternate_viewed', {
                     activity_id: options[next]?.activityId ?? '',
                     position: next,
                     of: options.length,

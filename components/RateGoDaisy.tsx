@@ -10,7 +10,7 @@ import { Browser } from '@capacitor/browser';
 import { useIsNativeApp } from '@/hooks/useIsNativeApp';
 import { getPlatform } from '@/lib/capacitor/platform';
 import { reviewUrl } from '@/lib/daisyFamily';
-import { trackEvent } from '@/lib/analytics/events';
+import { track } from '@/lib/analytics/track';
 
 export default function RateGoDaisy({ placement, className }: { placement: string; className?: string }) {
   const isNative = useIsNativeApp();
@@ -26,7 +26,7 @@ export default function RateGoDaisy({ placement, className }: { placement: strin
       onClick={(e) => {
         // The shell's own browser, so a store page never replaces the app's page
         e.preventDefault();
-        trackEvent('rate_link_click', { placement, platform });
+        track('rate_link_click', { placement, platform });
         void Browser.open({ url }).catch(() => window.location.assign(url));
       }}
     >

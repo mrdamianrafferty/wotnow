@@ -37,7 +37,7 @@ import type { LangCode, Locale, TKey } from '@/lib/godaisy/i18n/types';
 import { placeFromQuery, whyFromQuery } from '@/lib/godaisy/conditions/whyLink';
 import { seedOf } from '@/lib/godaisy/conditions/pencil';
 import { Drawing } from '@/components/conditions/Drawing';
-import { trackEvent } from '@/lib/analytics/events';
+import { track } from '@/lib/analytics/track';
 import { shareCall } from '@/lib/godaisy/call/share';
 import { drawingCard, shareLink } from '@/lib/godaisy/conditions/shareCard';
 import type { DrawnSection } from '@/lib/godaisy/conditions/drawn';
@@ -157,7 +157,8 @@ function ConditionsPage({ place, lat, lon, coastal, day, verdict, weighed }: Wea
     });
     const result = await shareCall({ text: `${s.sentence} · ${place}`, url, ...(card ? { card } : {}), title: 'Go Daisy', fileName: `go-daisy-${s.id}.png` });
     if (result.outcome !== 'cancelled' && result.outcome !== 'failed') {
-      trackEvent('conditions_shared', { section: s.id, day, method: result.method, with_card: result.withCard });
+      track('conditions_shared', { section: s.id, day, method: result.method, with_card: result.withCard });
+      track('share', { method: result.method, content_type: 'conditions', item_id: s.id });
     }
     const done = result.outcome === 'shared' ? 'sent' : result.outcome === 'copied' ? 'copied' : null;
     setSharing((m) => {
@@ -284,7 +285,7 @@ function ConditionsPage({ place, lat, lon, coastal, day, verdict, weighed }: Wea
               open={allOpen}
               onToggle={(e) => {
                 const open = (e.currentTarget as HTMLDetailsElement).open;
-                if (open && !allOpen) trackEvent('conditions_numbers_opened', { day, from_call: Boolean(verdict) });
+                if (open && !allOpen) track('conditions_numbers_opened', { day, from_call: Boolean(verdict) });
                 setAllOpen(open);
               }}
             >
