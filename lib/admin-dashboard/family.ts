@@ -32,13 +32,13 @@ export interface FamilyApp {
 }
 
 export const FAMILY_APPS: FamilyApp[] = [
-  { id: 'godaisy', name: 'Go Daisy', envKey: 'GODAISY', color: '#475569', platforms: ['ios', 'android'], inProcess: 'go_daisy', appleId: '6755695873' },
-  { id: 'growdaisy', name: 'Grow Daisy', envKey: 'GROWDAISY', color: '#73e2a0', platforms: ['ios', 'android'], inProcess: 'grow_daisy', appleId: '6756812661' },
-  { id: 'risedaisy', name: 'Rise Daisy', envKey: 'RISEDAISY', color: '#0c6231', platforms: ['ios', 'android'], appleId: '6761378447' },
-  { id: 'hungerford', name: 'Hungerford', envKey: 'HUNGERFORD', color: '#164e63', platforms: ['ios'], noRevenue: true, client: true, appleId: '6804752331' },
-  { id: 'findr', name: 'Findr', envKey: 'FINDR', color: '#0e7490', platforms: ['ios', 'android'], appleId: '6755045700' },
-  { id: 'flycast', name: 'Fly Cast', envKey: 'FLYCAST', color: '#22d3ee', platforms: ['ios', 'android'], appleId: '6785914297' },
-  { id: 'grewp', name: 'Grewp', envKey: 'GREWP', color: '#18b254', platforms: ['ios', 'android'], appleId: '6756231693' },
+  { id: 'godaisy', name: 'Go Daisy', envKey: 'GODAISY', color: '#ea580c', platforms: ['ios', 'android'], inProcess: 'go_daisy', appleId: '6755695873' },
+  { id: 'growdaisy', name: 'Grow Daisy', envKey: 'GROWDAISY', color: '#ca8a04', platforms: ['ios', 'android'], inProcess: 'grow_daisy', appleId: '6756812661' },
+  { id: 'risedaisy', name: 'Rise Daisy', envKey: 'RISEDAISY', color: '#2563eb', platforms: ['ios', 'android'], appleId: '6761378447' },
+  { id: 'hungerford', name: 'Hungerford', envKey: 'HUNGERFORD', color: '#94a3b8', platforms: ['ios'], noRevenue: true, client: true, appleId: '6804752331' },
+  { id: 'findr', name: 'Findr', envKey: 'FINDR', color: '#0891b2', platforms: ['ios', 'android'], appleId: '6755045700' },
+  { id: 'flycast', name: 'Fly Cast', envKey: 'FLYCAST', color: '#334155', platforms: ['ios', 'android'], appleId: '6785914297' },
+  { id: 'grewp', name: 'Grewp', envKey: 'GREWP', color: '#0a7a3a', platforms: ['ios', 'android'], appleId: '6756231693' },
 ];
 
 /** A 7-day count against the 7 days before; `daily` oldest first when known. */

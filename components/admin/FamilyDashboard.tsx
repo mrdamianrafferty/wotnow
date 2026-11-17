@@ -6,11 +6,15 @@
  * rather than showing a zero.
  */
 
-import type { CSSProperties, ReactNode } from 'react';
+import { useEffect, useState, type CSSProperties, type ReactNode } from 'react';
 import Link from 'next/link';
 import { attentionActions, makeAction, type ActionLink } from '@/lib/admin-dashboard/app-links';
 import { appAttention, deriveAttention, type AttentionItem } from '@/lib/admin-dashboard/attention';
 import { adjustUsers, AUTOMATED_RULE_TEXT, familyUsers, type UsersView } from '@/lib/admin-dashboard/automated';
+import { attentionKey, DISMISS_DAYS, splitDismissed, useDismissals } from '@/lib/admin-dashboard/dismissals';
+import { errorRate } from '@/lib/admin-dashboard/funnel';
+import { appDownloadsDaily, appErrorsDaily, appUsersDaily, listingConversionDaily, stackedDownloads, sumSeries } from '@/lib/admin-dashboard/family-series';
+import { Sparkline } from './Sparkline';
 import {
   FAMILY_APPS,
   appMrr,
@@ -58,6 +62,28 @@ function arrow(t: Trend): string {
   return `${t.delta > 0 ? '▲' : '▼'} ${Math.abs(t.delta)}%`;
 }
 const onWeekBefore = (t: Trend) => (t.delta === null || t.delta === 0 ? arrow(t) : `${arrow(t)} on the week before`);
+
+/** Whether a change reads as good news: users up is good, errors up is not. */
+type Tone = 'good' | 'bad' | 'flat';
+function tone(delta: number | null | undefined, upIsGood: boolean): Tone {
+  if (!delta) return 'flat';
+  return delta > 0 === upIsGood ? 'good' : 'bad';
+}
+
+interface Kpi {
+  label: string;
+  value: string;
+  change: string;
+  tone: Tone;
+  note: string;
+  title?: string;
+  /** 14 daily figures, oldest first; a tile without one draws no line. */
+  line?: (number | null)[];
+  /** The line is of something that is bad when it rises (errors). */
+  lineBad?: boolean;
+  /** MRR by app, as one bar split by share. */
+  split?: { id: FamilyAppId; color: string; value: number; label: string }[];
+}
 const pct = (part: number, whole: number) => (whole > 0 ? Math.round((part / whole) * 100) : 0);
 const plural = (n: number, one: string, many = `${one}s`) => `${fmt(n)} ${n === 1 ? one : many}`;
 const okData = <T,>(p: Part<T>): T | null => (p.state === 'ok' ? p.data : null);
@@ -311,28 +337,45 @@ function Header({ data, attention, refresh }: { data: FamilySummary; attention: 
 
   const topErrors = apps.map((a) => ({ a, e: okData(a.health)?.errors?.value ?? 0 })).sort((x, y) => y.e - x.e)[0];
 
-  const kpis: { label: string; value: string; change: string; note: string; title?: string }[] = [
+  // 14-day lines, summed across the apps whose series cover the same days
+  const usersLine = sumSeries(apps.map(appUsersDaily));
+  const downloadsLine = sumSeries(apps.map(appDownloadsDaily));
+  const errorsLine = sumSeries(apps.map(appErrorsDaily));
+  const listingLine = listingConversionDaily(apps);
+  const lineNote = (what: string, n: number) => ` The line is ${what} each day over 14 days, ${n === count ? 'all apps' : `${n} of ${count} apps`}.`;
+
+  // MRR by app in the headline currency, for the split bar
+  const mrrSplit = mrrMain
+    ? apps
+        .flatMap((a) =>
+          appMrr(a, true)
+            .filter((m) => m.currency === mrrMain.currency && m.value > 0)
+            .map((m) => ({ id: a.id, name: a.name, color: a.color, value: m.value })),
+        )
+        .sort((x, y) => y.value - x.value)
+    : [];
+
+  const kpis: Kpi[] = [
+    {
+      label: 'Active users',
+      value: fu.headline.apps ? fmt(fu.headline.value) : '—',
+      change: fu.headline.apps ? `${onWeekBefore(fu.headline)}${fu.excluded > 0 && fu.headline.delta !== null ? ' (est.)' : ''}` : 'No app reporting',
+      tone: tone(fu.headline.apps ? fu.headline.delta : null, true),
+      note:
+        fu.excluded > 0
+          ? `Raw ${fmt(fu.raw.value)} → ${fmt(fu.headline.value)} adjusted · ${excludedNames} excluded${fu.rawOnly.length ? ` · ${fu.rawOnly.length} raw only` : ''}`
+          : `Summed per app · ${ofN(fu.headline.apps)}${fu.rawOnly.length ? ` · ${fu.rawOnly.length} raw only` : ''}`,
+      title: AUTOMATED_RULE_TEXT + (usersLine.apps ? lineNote('GA4’s raw active users', usersLine.apps) : ''),
+      line: usersLine.daily,
+    },
     {
       label: 'Downloads',
       value: totals.downloads.apps ? fmt(totals.downloads.value) : '—',
       change: totals.downloads.apps ? onWeekBefore(totals.downloads) : 'No app reporting',
+      tone: tone(totals.downloads.apps ? totals.downloads.delta : null, true),
       note: totals.downloads.apps ? (androidPending ? 'iOS only · Android pending' : `iOS ${fmt(ios)} · Android ${fmt(android)}`) + inclClient : '',
-    },
-    {
-      label: 'Downloads, 30 days',
-      value: dl30.length ? fmt(ios30 + android30) : '—',
-      change: dl30.length ? 'Last 30 complete days' : 'No app reporting',
-      note: dl30.length ? `iOS ${fmt(ios30)} · Android ${fmt(android30)} · ${ofN(dl30.length)}${inclClient}` : '',
-      title: 'First-time downloads over the last 30 complete days, summed across apps. Apps that do not send a 30-day figure are not counted.',
-    },
-    {
-      label: 'Downloads, all time',
-      value: totals.lifetime.apps ? fmt(totals.lifetime.value) : '—',
-      change: totals.lifetime.apps ? 'First-time downloads since launch' : 'Not reported yet',
-      note: totals.lifetime.apps
-        ? `iOS ${fmt(totals.lifetime.ios)} · Android ${fmt(totals.lifetime.android)} · ${ofN(totals.lifetime.apps)}${inclClient}${data.lifetimeNote ? ` · ${data.lifetimeNote}` : ''}`
-        : (data.lifetimeNote ?? 'Needs the App Store and Play reports'),
-      title: 'First-time downloads since launch, summed across apps: App Store sales reports (first-time downloads) plus Play installs (people who installed). An app with no figure from a store is left out of that store’s count, not counted as zero.',
+      title: `First-time downloads, last 7 complete days.${downloadsLine.apps ? lineNote('first-time downloads', downloadsLine.apps) : ''}`,
+      line: downloadsLine.daily,
     },
     {
       label: 'Monthly recurring revenue',
@@ -342,32 +385,59 @@ function Header({ data, attention, refresh }: { data: FamilySummary; attention: 
         : mrrMain
           ? ofN(mrrMain.apps)
           : 'No app reporting',
+      tone: 'flat',
       note: mrrByApp.length ? mrrByApp.join(' · ') : 'No app has MRR yet',
-    },
-    {
-      label: 'Paying subscriptions',
-      value: totals.activeSubscriptions.apps ? fmt(totals.activeSubscriptions.value) : '—',
-      change: totals.activeTrials.apps ? `${fmt(totals.activeTrials.value)} in trial` : 'Trials not reported',
-      note: `${totals.activeSubscriptions.apps} of ${payingApps} paid apps reporting`,
-    },
-    {
-      label: 'Active users',
-      value: fu.headline.apps ? fmt(fu.headline.value) : '—',
-      change: fu.headline.apps ? `${onWeekBefore(fu.headline)}${fu.excluded > 0 && fu.headline.delta !== null ? ' (est.)' : ''}` : 'No app reporting',
-      note:
-        fu.excluded > 0
-          ? `Raw ${fmt(fu.raw.value)} → ${fmt(fu.headline.value)} adjusted · ${excludedNames} excluded${fu.rawOnly.length ? ` · ${fu.rawOnly.length} raw only` : ''}`
-          : `Summed per app · ${ofN(fu.headline.apps)}${fu.rawOnly.length ? ` · ${fu.rawOnly.length} raw only` : ''}`,
-      title: AUTOMATED_RULE_TEXT,
+      split: mrrSplit.length > 1 ? mrrSplit.map((m) => ({ ...m, label: `${m.name} ${money(m.value, mrrMain!.currency)}` })) : undefined,
     },
     {
       label: 'Error events',
       value: totals.errors.apps ? fmt(totals.errors.value) : '—',
       change: totals.errors.apps ? onWeekBefore(totals.errors) : 'No app reporting',
+      tone: tone(totals.errors.apps ? totals.errors.delta : null, false),
       note: topErrors && topErrors.e > 0 ? `${pct(topErrors.e, totals.errors.value)}% from ${topErrors.a.name}` : ofN(totals.errors.apps),
+      title: `Stored error events, last 7 complete days.${errorsLine.apps ? lineNote('error events', errorsLine.apps) : ''}`,
+      line: errorsLine.daily,
+      lineBad: true,
     },
-    listingKpi,
+    {
+      ...listingKpi,
+      tone: tone(ls?.apps && listingChange && listingChange !== 'Same' ? (listingChange.startsWith('▲') ? 1 : -1) : null, true),
+      title: `${listingKpi.title}. The line is the rate over a rolling 7 days.`,
+      line: listingLine,
+    },
   ];
+
+  const minor: { label: string; value: string; title: string }[] = [
+    {
+      label: 'Downloads, 30 days',
+      value: dl30.length ? fmt(ios30 + android30) : '—',
+      title: dl30.length
+        ? `First-time downloads over the last 30 complete days, summed across apps: iOS ${fmt(ios30)} · Android ${fmt(android30)} · ${ofN(dl30.length)}${inclClient}. Apps that do not send a 30-day figure are not counted.`
+        : 'No app sends a 30-day figure',
+    },
+    {
+      label: 'All time',
+      value: totals.lifetime.apps ? fmt(totals.lifetime.value) : '—',
+      title: totals.lifetime.apps
+        ? `First-time downloads since launch: iOS ${fmt(totals.lifetime.ios)} · Android ${fmt(totals.lifetime.android)} · ${ofN(totals.lifetime.apps)}${inclClient}${data.lifetimeNote ? ` · ${data.lifetimeNote}` : ''}. App Store sales reports plus Play installs; an app with no figure from a store is left out of that store’s count, not counted as zero.`
+        : (data.lifetimeNote ?? 'Needs the App Store and Play reports'),
+    },
+    {
+      label: 'Paying',
+      value: totals.activeSubscriptions.apps ? fmt(totals.activeSubscriptions.value) : '—',
+      title: `Paying subscriptions, ${totals.activeSubscriptions.apps} of ${payingApps} paid apps reporting`,
+    },
+    {
+      label: 'In trial',
+      value: totals.activeTrials.apps ? fmt(totals.activeTrials.value) : '—',
+      title: totals.activeTrials.apps ? `Active trials, ${ofN(totals.activeTrials.apps)}` : 'Trials not reported',
+    },
+  ];
+
+  const urgent = attention.filter((a) => a.level === 'danger').length;
+  const toCheck = attention.length - urgent;
+  const attentionText =
+    attention.length === 0 ? 'All clear' : [urgent ? `${fmt(urgent)} urgent` : null, toCheck ? `${fmt(toCheck)} to check` : null].filter(Boolean).join(' · ');
 
   return (
     <header className={s.header}>
@@ -390,8 +460,8 @@ function Header({ data, attention, refresh }: { data: FamilySummary; attention: 
             <Link href="/admin/search" className={s.pillLinkOutline}>
               Search detail
             </Link>
-            <a href="#attention" className={s.pillLinkOutline}>
-              {attention.length === 0 ? 'All clear' : `${plural(attention.length, 'thing')} need${attention.length === 1 ? 's' : ''} attention`}
+            <a href="#attention" className={urgent ? s.pillAlert : s.pillLinkOutline}>
+              {attentionText}
             </a>
             {refresh ? <RefreshButton data={data} control={refresh} /> : null}
           </nav>
@@ -401,9 +471,25 @@ function Header({ data, attention, refresh }: { data: FamilySummary; attention: 
             <div key={k.label} className={s.kpi} title={k.title}>
               <span className={s.kpiLabel}>{k.label}</span>
               <span className={s.kpiValue}>{k.value}</span>
-              <span className={s.kpiChange}>{k.change}</span>
+              <span className={`${s.kpiChange} ${s[`tone_${k.tone}`]}`}>{k.change}</span>
+              {k.line && k.line.filter((v) => v !== null).length >= 2 ? (
+                <Sparkline className={s.kpiLine} values={k.line} color={k.lineBad ? '#fca5a5' : '#73e2a0'} fill={k.lineBad ? 'rgba(252,165,165,0.14)' : 'rgba(115,226,160,0.14)'} height={36} />
+              ) : k.split ? (
+                <div className={s.kpiSplit} role="img" aria-label={`MRR by app: ${k.split.map((p) => p.label).join(', ')}`}>
+                  {k.split.map((p) => (
+                    <span key={p.id} title={p.label} style={{ flex: `${p.value} 1 0`, background: p.color }} />
+                  ))}
+                </div>
+              ) : null}
               {k.note ? <span className={s.kpiNote}>{k.note}</span> : null}
             </div>
+          ))}
+        </div>
+        <div className={s.minorRow}>
+          {minor.map((m) => (
+            <span key={m.label} className={s.minor} title={m.title}>
+              {m.label} <strong className={s.minorValue}>{m.value}</strong>
+            </span>
           ))}
         </div>
       </div>
@@ -411,55 +497,211 @@ function Header({ data, attention, refresh }: { data: FamilySummary; attention: 
   );
 }
 
-function Attention({ items, apps }: { items: AttentionItem[]; apps: AppSnapshot[] }) {
+const shortDate = (ms: number) => new Date(ms).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
+
+function DismissButton({ item, onDismiss }: { item: AttentionItem; onDismiss: (it: AttentionItem) => void }) {
+  return (
+    <button
+      type="button"
+      className={s.dismiss}
+      onClick={() => onDismiss(item)}
+      aria-label={`Dismiss “${item.title}” for ${item.label} for ${DISMISS_DAYS} days`}
+      title={`Hide this for ${DISMISS_DAYS} days in this browser. It comes back after that if it still applies.`}
+    >
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" aria-hidden="true">
+        <path d="M18 6 6 18M6 6l12 12" />
+      </svg>
+    </button>
+  );
+}
+
+function Attention({
+  items,
+  dismissed,
+  apps,
+  onDismiss,
+  onRestore,
+}: {
+  items: AttentionItem[];
+  dismissed: { item: AttentionItem; until: number }[];
+  apps: AppSnapshot[];
+  onDismiss: (it: AttentionItem) => void;
+  onRestore: (it: AttentionItem) => void;
+}) {
   const urls = Object.fromEntries(apps.map((a) => [a.id, a.dashboardUrl]));
   const names = Object.fromEntries(apps.map((a) => [a.id, a.name]));
+  const colors = Object.fromEntries(apps.map((a) => [a.id, a.color]));
+  const urgent = items.filter((it) => it.level === 'danger');
+  const rest = items.filter((it) => it.level !== 'danger');
+
+  const actions = (it: AttentionItem) => {
+    const links = attentionActions(it, urls, names);
+    return links.length ? (
+      <div className={s.actions}>
+        {links.map((l) => (
+          <SmartLink key={l.href} link={l} className={s.actionLink}>
+            {l.text} <span aria-hidden="true">→</span>
+          </SmartLink>
+        ))}
+      </div>
+    ) : null;
+  };
+  const dot = (it: AttentionItem) => <span className={s.dot} style={{ background: it.apps.length === 1 ? colors[it.apps[0]] : '#94a3b8' }} />;
+
   return (
     <section id="attention" className={s.attention} aria-labelledby="attention-h">
       <div className={s.sectionHead}>
         <h2 id="attention-h" className={s.h2}>
           Needs attention
         </h2>
-        {items.length ? <span className={s.meta}>Worst first</span> : null}
+        {items.length ? <span className={s.meta}>Worst first · dismiss one to hide it for {DISMISS_DAYS} days</span> : null}
       </div>
       {items.length === 0 ? (
-        <p className={s.allClear}>Nothing needs attention. Every app answered, errors are steady and the traffic looks real.</p>
-      ) : (
+        <p className={s.allClear}>
+          {dismissed.length
+            ? `Nothing else needs attention. ${plural(dismissed.length, 'item')} dismissed for now.`
+            : 'Nothing needs attention. Every app answered, errors are steady and the traffic looks real.'}
+        </p>
+      ) : null}
+      {urgent.length ? (
         <div className={s.alerts}>
-          {items.map((it, i) => (
-            <div key={`${it.rule}-${it.label}-${i}`} className={`${s.alert} ${s[`alert_${it.level}`]}`}>
+          {urgent.map((it) => (
+            <div key={attentionKey(it)} className={`${s.alert} ${s.alert_danger}`}>
               <div className={s.alertHead}>
                 <AlertIcon level={it.level} />
                 <span className={s.alertLevel}>
                   {LEVEL_LABEL[it.level]} · {it.label}
                 </span>
+                <DismissButton item={it} onDismiss={onDismiss} />
               </div>
               <p className={s.alertTitle}>{it.title}</p>
               <p className={s.alertBody}>{it.body}</p>
-              {(() => {
-                const actions = attentionActions(it, urls, names);
-                return actions.length ? (
-                  <div className={s.actions}>
-                    {actions.map((l) => (
-                      <SmartLink key={l.href} link={l} className={s.actionLink}>
-                        {l.text} <span aria-hidden="true">→</span>
-                      </SmartLink>
-                    ))}
-                  </div>
-                ) : null;
-              })()}
+              {actions(it)}
             </div>
           ))}
         </div>
-      )}
+      ) : null}
+      {rest.length ? (
+        <details className={s.fold} open={urgent.length === 0}>
+          <summary className={s.foldSummary}>
+            {urgent.length ? `${plural(rest.length, 'more thing')} to check` : `${plural(rest.length, 'thing')} to check`}
+          </summary>
+          <ul className={s.checkList}>
+            {rest.map((it) => (
+              <li key={attentionKey(it)} className={s.checkItem}>
+                <div className={s.checkHead}>
+                  {dot(it)}
+                  <span className={s.checkApp}>{it.label}</span>
+                  <span className={s.checkTitle}>{it.title}</span>
+                  <span className={`${s.levelTag} ${s[`levelTag_${it.level}`]}`}>{LEVEL_LABEL[it.level]}</span>
+                  <DismissButton item={it} onDismiss={onDismiss} />
+                </div>
+                <p className={s.checkBody}>{it.body}</p>
+                {actions(it)}
+              </li>
+            ))}
+          </ul>
+        </details>
+      ) : null}
+      {dismissed.length ? (
+        <details className={s.fold}>
+          <summary className={s.foldSummary}>{plural(dismissed.length, 'dismissed item')}</summary>
+          <ul className={s.checkList}>
+            {dismissed.map(({ item: it, until }) => (
+              <li key={attentionKey(it)} className={s.checkItem}>
+                <div className={s.checkHead}>
+                  {dot(it)}
+                  <span className={s.checkApp}>{it.label}</span>
+                  <span className={s.checkTitle}>{it.title}</span>
+                  <span className={s.muted}>back {shortDate(until)}</span>
+                  <button type="button" className={s.restore} onClick={() => onRestore(it)}>
+                    Restore
+                  </button>
+                </div>
+              </li>
+            ))}
+          </ul>
+        </details>
+      ) : null}
     </section>
   );
 }
 
-function Comparisons({ data, androidPending }: { data: FamilySummary; androidPending: boolean }) {
+/** Each day's first-time downloads, stacked by app: the family's growth in one picture. */
+function DownloadsChart({ data, androidPending }: { data: FamilySummary; androidPending: boolean }) {
+  const { days, apps: legend, left } = stackedDownloads(data.apps);
+  const total = legend.reduce((a, l) => a + l.total, 0);
+  const max = Math.max(0, ...days.map((d) => d.total));
+  // Gridlines at a round step, three or four of them
+  const step = max <= 4 ? 1 : max <= 10 ? 2 : max <= 25 ? 5 : max <= 50 ? 10 : Math.ceil(max / 40) * 10;
+  const top = Math.max(step, Math.ceil(max / step) * step);
+  const grid = Array.from({ length: Math.floor(top / step) + 1 }, (_, i) => i * step);
+  const end = new Date(data.generatedAt).getTime() - DAY;
+  const dateOf = (i: number) => new Date(end - (days.length - 1 - i) * DAY);
+  const label = (d: Date) => d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', timeZone: 'UTC' });
+  const ticks = days.length ? [0, Math.round((days.length - 1) / 2), days.length - 1] : [];
+
+  return (
+    <section className={`${s.card} ${s.chartCard}`} aria-labelledby="downloads-h">
+      <div className={s.sectionHead}>
+        <h2 id="downloads-h" className={s.h3}>
+          Downloads by app, last {days.length || 14} days
+        </h2>
+        <span className={s.meta}>
+          {days.length
+            ? `${plural(total, 'first-time download')}${androidPending ? ', iOS only while Android is pending' : ''}${left.length ? ` · ${left.join(', ')} not in the chart (no daily figures)` : ''}`
+            : 'No app sends daily downloads yet'}
+        </span>
+      </div>
+      {days.length ? (
+        <>
+          <div className={s.legendInline}>
+            {legend.map((l) => (
+              <a key={l.id} href={`#app-${l.id}`} className={`${s.legendItem} ${s.rowLink}`} aria-label={`${l.name}: ${fmt(l.total)} downloads. Show its detail`}>
+                <span className={s.dot} style={{ background: l.color }} />
+                <span>{l.name}</span>
+                <strong className={s.strong}>{fmt(l.total)}</strong>
+              </a>
+            ))}
+          </div>
+          <div
+            className={s.chart}
+            role="img"
+            aria-label={`Daily first-time downloads by app, ${label(dateOf(0))} to ${label(dateOf(days.length - 1))}: ${legend.map((l) => `${l.name} ${l.total}`).join(', ')}`}
+          >
+            {grid.map((g) => (
+              <div key={g} className={s.gridLine} style={{ bottom: `${(g / top) * 100}%` }}>
+                <span className={s.gridLabel}>{g}</span>
+              </div>
+            ))}
+            <div className={s.bars14}>
+              {days.map((d) => (
+                <div
+                  key={d.index}
+                  className={s.dayBar}
+                  style={{ height: `${(d.total / top) * 100}%` }}
+                  title={`${label(dateOf(d.index))}: ${plural(d.total, 'download')}${d.segments.length ? ` (${d.segments.map((g) => `${g.name} ${g.value}`).join(', ')})` : ''}`}
+                >
+                  {[...d.segments].reverse().map((g) => (
+                    <span key={g.id} style={{ flex: `${g.value} 1 0`, background: g.color }} />
+                  ))}
+                </div>
+              ))}
+            </div>
+          </div>
+          <div className={s.ticks}>
+            {ticks.map((i) => (
+              <span key={i}>{label(dateOf(i))}</span>
+            ))}
+          </div>
+        </>
+      ) : null}
+    </section>
+  );
+}
+
+function Comparisons({ data }: { data: FamilySummary }) {
   const { apps, totals } = data;
-  const share = totals.downloadShare;
-  const shareTotal = share.reduce((a, x) => a + x.value, 0);
 
   type Row = { a: AppSnapshot; t: Trend | null; why: string };
   const rows = (pick: (a: AppSnapshot) => { t: Trend | null; part: Part<unknown> }): Row[] =>
@@ -532,42 +774,6 @@ function Comparisons({ data, androidPending }: { data: FamilySummary; androidPen
 
   return (
     <section className={`${s.section} ${s.grid3}`} aria-label="Comparisons">
-      <Card
-        title="Where downloads came from"
-        sub={
-          totals.downloads.apps === 0
-            ? 'No app reports downloads'
-            : `${plural(totals.downloads.value, 'first-time download')}${androidPending ? ', iOS only while Android is pending' : ''}`
-        }
-      >
-        {shareTotal > 0 ? (
-          <div className={s.stackBar} role="img" aria-label={`Download share: ${share.map((x) => `${x.name} ${pct(x.value, shareTotal)}%`).join(', ')}`}>
-            {share.map((x) => (
-              <div
-                key={x.id}
-                title={`${x.name}: ${fmt(x.value)} downloads (${pct(x.value, shareTotal)}%)`}
-                style={{ flex: `${x.value} 1 0`, background: x.color }}
-              />
-            ))}
-          </div>
-        ) : null}
-        <div className={s.legend}>
-          {[...apps]
-            .sort((x, y) => (okData(y.downloads)?.total.value ?? -1) - (okData(x.downloads)?.total.value ?? -1))
-            .map((a) => {
-              const d = okData(a.downloads);
-              return (
-                <div key={a.id} className={s.legendRow}>
-                  <span className={s.dot} style={{ background: a.color }} />
-                  <a href={`#app-${a.id}`} className={`${s.grow} ${s.rowLink}`} aria-label={`Jump to ${a.name}'s card`}>{a.name}</a>
-                  <span className={s.strong}>{d ? fmt(d.total.value) : '—'}</span>
-                  <span className={s.pct}>{d ? `${pct(d.total.value, shareTotal)}%` : ''}</span>
-                </div>
-              );
-            })}
-        </div>
-      </Card>
-
       <Card
         title="Active users"
         sub={
@@ -808,17 +1014,92 @@ function releaseLabel(r: PlayRelease): string {
   return r.status === 'halted' ? `${v} · halted${pct ? ` at ${pct}` : ''}` : `${v} · ${pct ?? 'staged'} rollout`;
 }
 
-function AppCard({ app, attention, maxDl }: { app: AppSnapshot; attention: AttentionItem[]; maxDl: number }) {
+/** The status pill an app shows, in its row and on its card: whether it answered, else its worst attention item. */
+function appPill(app: AppSnapshot, attention: AttentionItem[]): { kind: 'ok' | 'warn' | 'bad'; label: string } {
   const item = appAttention(attention, app.id);
-  const pill =
-    app.status !== 'ok'
-      ? {
-          kind: 'warn',
-          label: app.status === 'not_configured' ? 'Not connected' : 'Unavailable',
-        }
-      : item
-        ? { kind: item.level === 'danger' ? 'bad' : 'warn', label: item.short }
-        : { kind: 'ok', label: 'Healthy' };
+  if (app.status !== 'ok') return { kind: 'warn', label: app.status === 'not_configured' ? 'Not connected' : 'Unavailable' };
+  if (item) return { kind: item.level === 'danger' ? 'bad' : 'warn', label: item.short };
+  return { kind: 'ok', label: 'Healthy' };
+}
+
+/** One row per app, ordered by active users; selecting a row shows that app's full card under the list. */
+function AppStrip({
+  apps,
+  attention,
+  selected,
+  onSelect,
+}: {
+  apps: AppSnapshot[];
+  attention: AttentionItem[];
+  selected: FamilyAppId | null;
+  onSelect: (id: FamilyAppId) => void;
+}) {
+  return (
+    <div className={s.stripScroll}>
+      <div className={s.strip} role="list">
+        <div className={`${s.stripRow} ${s.stripHead}`} aria-hidden="true">
+          <span />
+          <span>App</span>
+          <span>Users, 14 days</span>
+          <span className={s.right}>Users</span>
+          <span className={s.right}>Downloads</span>
+          <span className={s.right}>MRR</span>
+          <span className={s.right}>Errors /100</span>
+          <span>Status</span>
+        </div>
+        {apps.map((a) => {
+          const pill = appPill(a, attention);
+          const uv = adjustUsers(a);
+          const dl = okData(a.downloads);
+          const rev = okData(a.revenue);
+          const mrr = appMrr(a);
+          const er = errorRate(a);
+          const family = FAMILY_APPS.find((f) => f.id === a.id);
+          const on = selected === a.id;
+          const trendClass = (t: Trend | null | undefined, upIsGood = true) => (t ? s[`tone_${tone(t.delta, upIsGood)}Ink`] : '');
+          return (
+            <div key={a.id} role="listitem">
+              <button
+                type="button"
+                id={`app-${a.id}`}
+                className={`${s.stripRow} ${s.stripButton} ${on ? s.stripOn : ''}`}
+                style={on ? { boxShadow: `inset 4px 0 0 ${a.color}` } : undefined}
+                aria-expanded={on}
+                aria-controls="app-detail"
+                onClick={() => onSelect(a.id)}
+              >
+                <span className={s.stripDot} style={{ background: a.color }} />
+                <span className={s.stripName}>
+                  <span className={s.stripNameText}>{a.name}</span>
+                  <span className={s.stripSub}>{family?.client ? 'Client app · iOS' : (family?.platforms ?? []).map((p) => (p === 'ios' ? 'iOS' : 'Android')).join(' · ')}</span>
+                </span>
+                <Sparkline values={appUsersDaily(a) ?? []} color={a.color} height={28} />
+                <span className={`${s.right} ${s.stripCell}`}>
+                  <strong className={s.stripValue}>{uv.headline ? fmt(uv.headline.value) : '—'}</strong>
+                  <span className={`${s.stripDelta} ${trendClass(uv.headline)}`}>{uv.headline ? arrow(uv.headline) : reason(a.analytics) || 'not reported'}</span>
+                </span>
+                <span className={`${s.right} ${s.stripCell}`}>
+                  <strong className={s.stripValue}>{dl ? fmt(dl.total.value) : '—'}</strong>
+                  <span className={`${s.stripDelta} ${trendClass(dl?.total)}`}>{dl ? arrow(dl.total) : reason(a.downloads) || 'not reported'}</span>
+                </span>
+                <span className={`${s.right} ${s.stripValue}`}>
+                  {rev?.source === 'none' || family?.noRevenue ? '—' : mrr.length ? mrr.map((m) => money(m.value, m.currency)).join(' + ') : '—'}
+                </span>
+                <span className={`${s.right} ${s.stripValue}`} title={er.note ?? undefined}>
+                  {er.per100 !== null ? fmt(er.per100, er.per100 >= 10 || Number.isInteger(er.per100) ? 0 : 1) : '—'}
+                </span>
+                <span className={`${s.pill} ${s[`pill_${pill.kind}`]} ${s.stripPill}`}>{pill.label}</span>
+              </button>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+function AppCard({ app, attention, maxDl }: { app: AppSnapshot; attention: AttentionItem[]; maxDl: number }) {
+  const pill = appPill(app, attention);
 
   const dash = app.dashboardUrl ? makeAction(`Open ${app.name}'s dashboard`, app.dashboardUrl) : null;
   const head = (
@@ -844,7 +1125,7 @@ function AppCard({ app, attention, maxDl }: { app: AppSnapshot; attention: Atten
 
   if (app.status !== 'ok') {
     return (
-      <article id={`app-${app.id}`} className={s.appCard}>
+      <article id={`app-${app.id}-card`} className={s.appCard}>
         <div className={s.band} style={{ background: app.color }} />
         <div className={s.appBody}>
           {head}
@@ -935,7 +1216,7 @@ function AppCard({ app, attention, maxDl }: { app: AppSnapshot; attention: Atten
     .replace(/^./, (c) => c.toUpperCase());
 
   return (
-    <article id={`app-${app.id}`} className={s.appCard}>
+    <article id={`app-${app.id}-card`} className={s.appCard}>
       <div className={s.band} style={{ background: app.color }} />
       <div className={s.appBody}>
         {head}
@@ -1084,27 +1365,48 @@ export function FamilyDashboard({
   const byUsers = [...data.apps].sort((a, b) => (adjustUsers(b).headline?.value ?? -1) - (adjustUsers(a).headline?.value ?? -1));
   const maxDl = Math.max(0, ...data.apps.map((a) => okData(a.downloads)).flatMap((d) => (d ? [d.total.value, d.total.previous] : [])));
 
+  // Dismissed items leave Needs attention and the header count; app status pills still show them
+  const { dismissals, dismiss, restore } = useDismissals();
+  const { active, dismissed } = splitDismissed(attention, dismissals, Date.now());
+
+  const [picked, setPicked] = useState<FamilyAppId | null>(null);
+  const selected = picked && byUsers.some((a) => a.id === picked) ? picked : (byUsers[0]?.id ?? null);
+  // "#app-findr" (the legend, the comparison bars, a shared link) opens that app
+  useEffect(() => {
+    const fromHash = () => {
+      const m = /^#app-([a-z]+)/.exec(window.location.hash);
+      if (m && FAMILY_APPS.some((f) => f.id === m[1])) setPicked(m[1] as FamilyAppId);
+    };
+    fromHash();
+    window.addEventListener('hashchange', fromHash);
+    return () => window.removeEventListener('hashchange', fromHash);
+  }, []);
+
   return (
     <>
-      <Header data={data} attention={attention} refresh={refresh} />
+      <Header data={data} attention={active} refresh={refresh} />
       <main className={s.main}>
         {notice}
-        <Attention items={attention} apps={data.apps} />
-        <Comparisons data={data} androidPending={androidPending} />
-        <Audience data={data} attention={attention} />
-        <section id="apps" className={s.section} aria-labelledby="apps-h">
-          <div className={s.sectionHead}>
-            <h2 id="apps-h" className={s.h2}>
+        <Attention items={active} dismissed={dismissed} apps={data.apps} onDismiss={dismiss} onRestore={restore} />
+        <DownloadsChart data={data} androidPending={androidPending} />
+        <section id="apps" className={`${s.card} ${s.appsCard}`} aria-labelledby="apps-h">
+          <div className={`${s.sectionHead} ${s.appsHead}`}>
+            <h2 id="apps-h" className={s.h3}>
               By app
             </h2>
-            <span className={s.meta}>Ordered by active users</span>
+            <span className={s.meta}>Ordered by active users · select an app for its detail</span>
           </div>
-          <div className={s.appGrid}>
+          <AppStrip apps={byUsers} attention={attention} selected={selected} onSelect={setPicked} />
+          <div id="app-detail" className={s.appDetail}>
             {byUsers.map((a) => (
-              <AppCard key={a.id} app={a} attention={attention} maxDl={maxDl} />
+              <div key={a.id} hidden={a.id !== selected}>
+                <AppCard app={a} attention={attention} maxDl={maxDl} />
+              </div>
             ))}
           </div>
         </section>
+        <Comparisons data={data} />
+        <Audience data={data} attention={attention} />
         {beforeFooter}
         <p className={s.footer}>
           Generated{' '}

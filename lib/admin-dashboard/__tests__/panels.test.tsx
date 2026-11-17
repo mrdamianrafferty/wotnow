@@ -65,14 +65,18 @@ describe('admin dashboard panels', () => {
     // Headline active users: raw beside the adjusted figure
     expect(screen.getByText('Raw 1,945 → 1,282 adjusted · Singapore excluded')).toBeInTheDocument();
     expect(screen.getByText(/GA4 returned no age or gender rows for any of the 7 apps/)).toBeInTheDocument();
-    expect(screen.getByText('6 things need attention')).toBeInTheDocument();
+    // The header counts what Needs attention shows: urgent first, then the rest
+    const count = screen.getByRole('link', { name: /urgent|to check/ }).textContent ?? '';
+    expect(count).toMatch(/^\d+ urgent · \d+ to check$/);
+    expect((count.match(/\d+/g) ?? []).reduce((a, n) => a + Number(n), 0)).toBe(6);
   });
 
   it('shows an app that did not answer, in its card and in Needs attention', () => {
     const data = sampleFamilySummary(now);
     const apps = data.apps.map((a) => (a.id === 'findr' ? unavailableSnapshot(a, 'unavailable', 'No answer within 8 s') : a));
     render(<FamilyDashboard data={{ ...data, apps, totals: familyTotals(apps) }} />);
-    expect(screen.getByText('Unavailable')).toBeInTheDocument();
+    // In its row in the list and on its card
+    expect(screen.getAllByText('Unavailable')).toHaveLength(2);
     expect(screen.getByText('Didn’t answer')).toBeInTheDocument();
     expect(screen.getAllByText('No answer within 8 s')).toHaveLength(2);
   });

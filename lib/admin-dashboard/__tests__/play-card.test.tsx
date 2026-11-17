@@ -12,7 +12,7 @@ const now = new Date('2026-10-28T10:00:00Z');
 describe('Google Play row on the family dashboard', () => {
   const card = (id: string) => {
     render(<FamilyDashboard data={sampleFamilySummary(now, { withPlay: true })} />);
-    return within(document.getElementById(`app-${id}`)!);
+    return within(document.getElementById(`app-${id}-card`)!);
   };
 
   it('shows the rating with its 30-day change, and the release state', () => {
@@ -37,14 +37,14 @@ describe('Google Play row on the family dashboard', () => {
 describe('Play downloads on the card', () => {
   it('shows active devices, uninstalls and the listing’s visitors → installs, only for apps that have them', () => {
     render(<FamilyDashboard data={sampleFamilySummary(now, { withPlay: true })} />);
-    const findr = within(document.getElementById('app-findr')!);
+    const findr = within(document.getElementById('app-findr-card')!);
     expect(findr.getByText('22 active devices · 3 uninstalls in 7 days')).toBeInTheDocument();
     expect(findr.getByText(/Listing 96 visitors → 6 installs \(6\.3%\)/)).toBeInTheDocument();
-    expect(within(document.getElementById('app-grewp')!).queryByText(/active device/)).toBeNull();
+    expect(within(document.getElementById('app-grewp-card')!).queryByText(/active device/)).toBeNull();
   });
 
   it('counts the Android downloads in the card’s total', () => {
     render(<FamilyDashboard data={sampleFamilySummary(now, { withPlay: true })} />);
-    expect(within(document.getElementById('app-risedaisy')!).getByText(/Android 14/)).toBeInTheDocument();
+    expect(within(document.getElementById('app-risedaisy-card')!).getByText(/Android 14/)).toBeInTheDocument();
   });
 });
