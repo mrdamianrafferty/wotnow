@@ -71,6 +71,12 @@ export function listingConversionDaily(apps: AppSnapshot[], window = 7): (number
   return out;
 }
 
+/** The newest day any app's store figures reach (YYYY-MM-DD), or null when none says. */
+export function latestStoreDate(apps: AppSnapshot[]): string | null {
+  const dates = apps.map((a) => okData(a.downloads)?.latestDate ?? null).filter((d): d is string => !!d);
+  return dates.length ? dates.sort()[dates.length - 1] : null;
+}
+
 export interface StackedDay {
   /** Index into the series, oldest first. */
   index: number;

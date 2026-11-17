@@ -13,7 +13,7 @@ import { appAttention, deriveAttention, type AttentionItem } from '@/lib/admin-d
 import { adjustUsers, AUTOMATED_RULE_TEXT, familyUsers, type UsersView } from '@/lib/admin-dashboard/automated';
 import { attentionKey, DISMISS_DAYS, splitDismissed, useDismissals } from '@/lib/admin-dashboard/dismissals';
 import { errorRate } from '@/lib/admin-dashboard/funnel';
-import { appDownloadsDaily, appErrorsDaily, appUsersDaily, listingConversionDaily, stackedDownloads, sumSeries } from '@/lib/admin-dashboard/family-series';
+import { appDownloadsDaily, appErrorsDaily, appUsersDaily, latestStoreDate, listingConversionDaily, stackedDownloads, sumSeries } from '@/lib/admin-dashboard/family-series';
 import { Sparkline } from './Sparkline';
 import {
   FAMILY_APPS,
@@ -300,7 +300,9 @@ function Header({ data, attention, refresh }: { data: FamilySummary; attention: 
   const clientNames = FAMILY_APPS.filter((f) => f.client && apps.some((a) => a.id === f.id && okData(a.downloads) !== null)).map((f) => f.name);
   const inclClient = clientNames.length ? ` · incl. ${clientNames.join(', ')} (client app)` : '';
 
-  const [mrrMain, ...mrrRest] = totals.mrr;
+  const [mrrMain, ...mrrOther] = totals.mrr;
+  // A currency only some free apps report in (€0.00) is not money waiting to be converted
+  const mrrRest = mrrOther.filter((m) => m.value > 0);
   const mrrByApp = apps
     .flatMap((a) =>
       appMrr(a, true)
@@ -640,6 +642,11 @@ function DownloadsChart({ data, androidPending }: { data: FamilySummary; android
   const dateOf = (i: number) => new Date(end - (days.length - 1 - i) * DAY);
   const label = (d: Date) => d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', timeZone: 'UTC' });
   const ticks = days.length ? [0, Math.round((days.length - 1) / 2), days.length - 1] : [];
+  // Stores report a day or two late: a day after every app's latest report is not a zero
+  const reported = latestStoreDate(data.apps);
+  const pending = (i: number) => reported !== null && dateOf(i).toISOString().slice(0, 10) > reported;
+  const pendingCount = days.filter((d) => pending(d.index)).length;
+  const reportedLabel = reported ? label(new Date(`${reported}T00:00:00Z`)) : null;
 
   return (
     <section className={`${s.card} ${s.chartCard}`} aria-labelledby="downloads-h">
@@ -651,6 +658,7 @@ function DownloadsChart({ data, androidPending }: { data: FamilySummary; android
           {days.length
             ? `${plural(total, 'first-time download')}${androidPending ? ', iOS only while Android is pending' : ''}${left.length ? ` · ${left.join(', ')} not in the chart (no daily figures)` : ''}`
             : 'No app sends daily downloads yet'}
+          {days.length && pendingCount && reportedLabel ? ` · store data to ${reportedLabel}` : ''}
         </span>
       </div>
       {days.length ? (
@@ -675,7 +683,10 @@ function DownloadsChart({ data, androidPending }: { data: FamilySummary; android
               </div>
             ))}
             <div className={s.bars14}>
-              {days.map((d) => (
+              {days.map((d) =>
+                pending(d.index) ? (
+                  <div key={d.index} className={s.dayPending} title={`${label(dateOf(d.index))}: no store report yet`} />
+                ) : (
                 <div
                   key={d.index}
                   className={s.dayBar}
@@ -686,7 +697,8 @@ function DownloadsChart({ data, androidPending }: { data: FamilySummary; android
                     <span key={g.id} style={{ flex: `${g.value} 1 0`, background: g.color }} />
                   ))}
                 </div>
-              ))}
+                ),
+              )}
             </div>
           </div>
           <div className={s.ticks}>

@@ -110,3 +110,25 @@ describe('family series', () => {
     for (const v of line) if (v !== null) expect(v).toBeGreaterThanOrEqual(0);
   });
 });
+
+describe('display details', () => {
+  it('marks days no store has reported yet instead of drawing them as zero', () => {
+    const data = sampleFamilySummary(now);
+    // Every store's figures stop two days short of the chart's last day (26 Oct)
+    const apps = data.apps.map((a) => (a.downloads.state === 'ok' ? { ...a, downloads: { ...a.downloads, data: { ...a.downloads.data, latestDate: '2026-10-24' } } } : a));
+    render(<FamilyDashboard data={{ ...data, apps }} />);
+    expect(screen.getByTitle('25 Oct: no store report yet')).toBeInTheDocument();
+    expect(screen.getByTitle('26 Oct: no store report yet')).toBeInTheDocument();
+    expect(screen.queryByTitle('24 Oct: no store report yet')).toBeNull();
+    expect(within(document.getElementById('downloads-h')!.parentElement!).getByText(/· store data to 24 Oct$/)).toBeInTheDocument();
+  });
+
+  it('leaves currencies with nothing in them out of the MRR tile’s “not converted” line', () => {
+    const data = sampleFamilySummary(now);
+    const totals = { ...data.totals, mrr: [...data.totals.mrr, { currency: 'USD', value: 0, apps: 1 }] };
+    render(<FamilyDashboard data={{ ...data, totals }} />);
+    const line = screen.getByText(/not converted$/).textContent ?? '';
+    expect(line).not.toMatch(/\$0/);
+    expect(line).toMatch(/£26\.49/);
+  });
+});
