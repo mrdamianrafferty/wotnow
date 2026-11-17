@@ -5,7 +5,11 @@ import Link from 'next/link';
 export default function AboutUs() {
   return (
     <>
-    <DocPage title="About us" description="One man, one dog, and an app about getting outside.">
+    <DocPage
+      title="About us"
+      metaTitle="About us: who makes Go Daisy"
+      description="Go Daisy is made by one developer and his dog, Bruno. The founder's background at the BBC, DCMS and Kew, and why he built an app to get people outdoors."
+    >
 
           <div className="mb-8 flex flex-col items-center">
             <Image

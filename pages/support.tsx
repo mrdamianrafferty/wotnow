@@ -135,7 +135,11 @@ export default function SupportPage() {
     'Tell a friend, start a plan, or share your favourite Go Daisy moment. Word of mouth is golden.');
 
   return (
-    <DocPage title="Support Go Daisy" description="Go Daisy is free and ad-free. Here is how to keep it that way.">
+    <DocPage
+      title="Support Go Daisy"
+      metaTitle="Support Go Daisy on Patreon or with a tip"
+      description="Go Daisy is free and ad-free, with no features locked behind payment. Support it on Patreon or with a one-off tip in the iOS app; billing and perks explained."
+    >
 
           {/* Support options */}
           <div className={`grid gap-6 ${platformResolved && !isIOSNative ? 'sm:grid-cols-2' : ''}`}>

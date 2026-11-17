@@ -5,7 +5,11 @@ import Image from "next/image";
 export default function HowWeDoIt() {
   return (
     <>
-    <DocPage title="How we do it" description="Where Go Daisy gets its forecasts, and how it turns them into an answer.">
+    <DocPage
+      title="How we do it"
+      metaTitle="How we do it: forecast data and scoring"
+      description="Where Go Daisy's forecasts come from (Open-Meteo, the Norwegian Meteorological Institute, Stormglass) and how wind, swell and wave period become a score."
+    >
 
           {/* Placeholder for custom illustration */}
           <div className="w-full h-64 bg-base-300 rounded-lg mb-8 flex items-center justify-center">

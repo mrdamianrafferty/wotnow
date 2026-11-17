@@ -9,7 +9,8 @@ export default function TermsOfService() {
     <>
     <DocPage
       title="Terms of use"
-      description="The terms you agree to when you use Go Daisy."
+      metaTitle="Terms of use for the app and website"
+      description="The terms for using Go Daisy: use of the service, your data, forecast accuracy, account deletion, liability, and the Spanish law that governs the agreement."
     >
             <section className="mb-8">
               <h2 className="text-xl font-semibold mb-4">1. About Go Daisy</h2>

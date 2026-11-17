@@ -134,9 +134,8 @@ export default function ActivitiesIndex({
   const canonicalUrl = 'https://godaisy.io/activities';
   const pageTitle = 'Every activity Go Daisy scores';
   const pageDescription =
-    `${totalActivities} activities, ${totalHubs} of them with a ranked page of the best places ` +
-    `today — surfing, hiking, padel, cricket, stargazing, sea swimming and more. ` +
-    `Live weather scoring, free and ad-free.`;
+    `${totalActivities} activities Go Daisy scores against the weather, ${totalHubs} with a ranked ` +
+    `page of today's best places: surfing, hiking, padel, stargazing and more. Free, ad-free.`;
 
   const breadcrumbJsonLd = {
     '@context': 'https://schema.org',

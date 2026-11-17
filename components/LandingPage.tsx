@@ -196,7 +196,7 @@ const LandingPage: React.FC<LandingPageProps> = ({
     <>
       <SEO
         title="One sentence a day, about the things you actually do"
-        description={`Go Daisy scores ${totalActivities} activities — surfing, trail running, padel, stargazing, sea swimming — against the wind, waves, tides and sky, and tells you what today is good for. Free, ad-free, no account to start.`}
+        description={`Go Daisy scores ${totalActivities} activities, from surfing and padel to stargazing, against wind, waves, tides and sky, and says what today is good for. Free and ad-free.`}
         url="https://godaisy.io"
         type="website"
       />
