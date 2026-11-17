@@ -138,6 +138,9 @@
 .root .pillLinkOutline {
   color: var(--brand-50);
 }
+.root button.pillLinkOutline {
+  border: 1px solid var(--brand-300);
+}
 .pillButton {
   background: transparent;
   font-family: inherit;
@@ -1004,6 +1007,17 @@
   gap: 2px;
   border-radius: 4px 4px 0 0;
   overflow: hidden;
+}
+.dayPending {
+  flex: 1 1 0;
+  min-width: 0;
+  max-width: 56px;
+  margin: 0 auto;
+  height: 100%;
+  border: 1px dashed var(--neutral-300);
+  border-bottom: 0;
+  border-radius: 4px 4px 0 0;
+  background: repeating-linear-gradient(135deg, transparent 0 6px, rgba(148, 163, 184, 0.12) 6px 12px);
 }
 .dayBar > span {
   min-height: 2px;
