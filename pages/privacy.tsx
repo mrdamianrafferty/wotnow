@@ -8,7 +8,8 @@ export default function PrivacyPolicy() {
     <>
     <DocPage
       title="Privacy policy"
-      description="How Go Daisy, Grow Daisy and Findr collect, use and protect your information."
+      metaTitle="Privacy policy for Go Daisy, Grow Daisy and Findr"
+      description="What Go Daisy, Grow Daisy and Findr collect and why, which third parties process it (Supabase, Google, Stripe and others), and your rights over your data."
       updated={`Last updated: ${lastUpdated}`}
     >
             <section className="mb-8">

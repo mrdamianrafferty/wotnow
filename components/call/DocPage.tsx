@@ -26,9 +26,16 @@ import { PageHeader } from './PageHeader';
 import Footer from '@/components/footer';
 
 export function DocPage({
-  title, description, updated, kicker, children,
+  title, metaTitle, description, updated, kicker, children,
 }: {
   title: string;
+  /**
+   * The words before "| Go Daisy" in the tab and the search listing, when the
+   * on-page heading is too short to stand alone there ("About us | Go Daisy"
+   * is 19 characters and says nothing to someone scanning results). The h1
+   * keeps `title`.
+   */
+  metaTitle?: string;
   description?: string;
   /** "Last updated: 1 January 2026" — the legal pages need it, the rest do not. */
   updated?: string;
@@ -50,23 +57,24 @@ export function DocPage({
    */
   const { asPath } = useRouter();
   const canonical = `https://godaisy.io${asPath.split(/[?#]/)[0]}`;
+  const headTitle = `${metaTitle ?? title} | Go Daisy`;
 
   return (
     <>
       <Head>
-        <title>{`${title} | Go Daisy`}</title>
+        <title>{headTitle}</title>
         {description && <meta name="description" content={description} />}
         <link rel="canonical" href={canonical} />
         <meta property="og:type" content="article" />
         <meta property="og:url" content={canonical} />
-        <meta property="og:title" content={`${title} | Go Daisy`} />
+        <meta property="og:title" content={headTitle} />
         {description && <meta property="og:description" content={description} />}
         <meta property="og:image" content="https://godaisy.io/og-image.png" />
         <meta property="og:image:width" content="1200" />
         <meta property="og:image:height" content="630" />
         <meta property="og:site_name" content="Go Daisy" />
         <meta name="twitter:card" content="summary_large_image" />
-        <meta name="twitter:title" content={`${title} | Go Daisy`} />
+        <meta name="twitter:title" content={headTitle} />
         {description && <meta name="twitter:description" content={description} />}
         <meta name="twitter:image" content="https://godaisy.io/og-image.png" />
       </Head>

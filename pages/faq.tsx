@@ -209,7 +209,7 @@ export default function FAQPage() {
 
     <DocPage
         title="Frequently asked questions"
-        description="Everything about Go Daisy — which activities it covers (surf, hiking, padel, cricket, stargazing, fishing, gardening and 100+ more), where the data comes from, and how the scoring works. Free, ad-free, UK and Europe."
+        description="Answers about Go Daisy: the 100+ activities it scores, from surfing and padel to stargazing, where the weather data comes from and how the scoring works."
       >
 
         <section className="px-4 py-12">

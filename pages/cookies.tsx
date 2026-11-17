@@ -9,7 +9,8 @@ export default function CookiePolicy() {
     <>
     <DocPage
       title="Cookie policy"
-      description="What Go Daisy stores in your browser, and why."
+      metaTitle="Cookie policy: what we store and why"
+      description="Which cookies Go Daisy sets: essential ones for sign-in and saved places, functional ones for preferences, and optional analytics. No advertising cookies."
     >
             <section className="mb-8">
               <h2 className="text-xl font-semibold mb-4">1. What Are Cookies?</h2>

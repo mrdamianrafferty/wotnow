@@ -14,7 +14,7 @@ import React from 'react';
 export default function WeatherExplainerPage() {
   return (
     <>
-    <DocPage title="Why forecasts get it wrong" description="What a weather model can and cannot know, and why Go Daisy says what it says.">
+    <DocPage title="Why forecasts get it wrong" description="Why weather forecasts get it wrong: sparse sensors, microclimates, instrument quirks, coarse model grids and politics, plus practical ways to cope with them.">
 
         {/* Content grid */}
         <section className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 py-8 lg:py-12">
