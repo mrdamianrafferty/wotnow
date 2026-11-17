@@ -5,7 +5,7 @@
  * not exist for the app is left out.
  */
 
-import { render, screen, within } from '@testing-library/react';
+import { fireEvent, render, screen, within } from '@testing-library/react';
 import { FamilyDashboard } from '@/components/admin/FamilyDashboard';
 import { adjustUsers } from '../automated';
 import { FAMILY_APPS, readAppSummary, type AppSnapshot, type Part, type VercelPart } from '../family';
@@ -159,17 +159,19 @@ describe('errorRate', () => {
 describe('on the family dashboard', () => {
   it('shows each card’s funnel, "not tracked" steps, errors per 100 users and a link to the top issue', () => {
     render(<FamilyDashboard data={sampleFamilySummary(now, { withVercel: true, withTopIssues: true })} />);
-    const go = document.getElementById('app-godaisy')!;
+    // Only the selected app's card is open: pick Go Daisy's row first
+    fireEvent.click(screen.getByRole('button', { name: /^Go Daisy/ }));
+    const go = document.getElementById('app-godaisy-card')!;
     expect(within(go).getByRole('list', { name: /Go Daisy funnel: Visitors \d+, Downloads \d+, Trials/ })).toBeInTheDocument();
     expect(within(go).getByRole('link', { name: /hourly.*opens Sentry in a new tab/ })).toHaveAttribute('href', 'https://go-daisy.sentry.io/issues/GODAISY-NEXTJS-4F/');
     expect(within(go).getByText('Errors per 100 users')).toBeInTheDocument();
 
-    const hf = document.getElementById('app-hungerford')!;
+    const hf = document.getElementById('app-hungerford-card')!;
     expect(within(hf).getByText(/project shared with Rise Daisy/)).toBeInTheDocument();
     expect(within(hf).queryByText(/^Trials/)).toBeNull();
 
     // Findr's Sentry is not connected in the sample: no rate, and a reason
-    expect(within(document.getElementById('app-findr')!).getByText(/Top issue: Sentry refused the token/)).toBeInTheDocument();
+    expect(within(document.getElementById('app-findr-card')!).getByText(/Top issue: Sentry refused the token/)).toBeInTheDocument();
     expect(screen.getAllByText('not tracked').length).toBeGreaterThan(0);
   });
 });
