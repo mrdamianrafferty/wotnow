@@ -41,6 +41,8 @@ export const RULES = {
   disagreeMinVisitors: 20,
   /** ...and "far lower" is under this share of it. */
   disagreeRatio: 0.25,
+  /** Apps whose GA4 tag waits for cookie consent: only 1–3% of visitors accept, so GA4 sits far below Vercel by design. Flag below this share. */
+  disagreeRatioConsentGated: 0.01,
   /** Vercel: a country whose visitors view this many pages each is a script, not people. */
   botViewsPerVisitor: 15,
   /** ...once it has this many visitors or views, so a single curious reader cannot trip it. */
@@ -196,13 +198,32 @@ function automatedTraffic(summary: FamilySummary): AttentionItem[] {
   });
 }
 
+/** Web apps that load GA4 only after the visitor accepts cookies (checked in each app's tag code, 2026-11-19). */
+export const CONSENT_GATED_APPS: ReadonlySet<string> = new Set(['godaisy', 'grewp', 'risedaisy', 'hungerford']);
+/** Countries left out of the Vercel count as bot traffic, as Rise Daisy's own dashboard does. */
+export const VERCEL_BOT_COUNTRIES: ReadonlySet<string> = new Set(['Singapore', 'China']);
+
+/** Vercel visitors minus countries that are scripts: the known bot list, or pages per visitor past the automated_vercel rule. */
+export function vercelHumanVisitors(v: { visitors: { value: number }; countries: { name: string; visitors: number; pageviews: number }[] }): number {
+  const botVisitors = v.countries
+    .filter(
+      (x) =>
+        VERCEL_BOT_COUNTRIES.has(x.name) ||
+        (x.pageviews / Math.max(x.visitors, 1) > RULES.botViewsPerVisitor && (x.visitors >= RULES.botMinVisitorsOrViews || x.pageviews >= RULES.botMinVisitorsOrViews)),
+    )
+    .reduce((sum, x) => sum + x.visitors, 0);
+  return Math.max(v.visitors.value - botVisitors, 0);
+}
+
 /** GA4 needs consent and Vercel does not, so a wide gap either way means a tag or script is broken. */
 function analyticsDisagree(apps: AppSnapshot[]): AttentionItem[] {
   return apps.flatMap((a): AttentionItem[] => {
-    const v = okData(a.vercel ?? NO_PART)?.visitors.value;
+    const vp = okData(a.vercel ?? NO_PART);
+    const v = vp ? vercelHumanVisitors(vp) : undefined;
     const g = okData(a.analytics)?.activeUsers?.value;
     if (v === undefined || g === undefined) return [];
-    const ga4Low = v >= RULES.disagreeMinVisitors && g < v * RULES.disagreeRatio;
+    const ratio = CONSENT_GATED_APPS.has(a.id) ? RULES.disagreeRatioConsentGated : RULES.disagreeRatio;
+    const ga4Low = v >= RULES.disagreeMinVisitors && g < v * ratio;
     const vercelLow = g >= RULES.disagreeMinVisitors && v < g * RULES.disagreeRatio;
     if (!ga4Low && !vercelLow) return [];
     return [
@@ -212,7 +233,7 @@ function analyticsDisagree(apps: AppSnapshot[]): AttentionItem[] {
         apps: [a.id],
         label: a.name,
         title: 'Analytics disagree',
-        body: `Vercel counted ${n(v)} visitor${v === 1 ? '' : 's'} and GA4 ${n(g)} active user${g === 1 ? '' : 's'} this week. Check the ${ga4Low ? 'GA4 tag (is it blocked, or on the wrong property?)' : 'Vercel script (is <Analytics /> on the page?)'}.`,
+        body: `Vercel counted ${n(v)} visitor${v === 1 ? '' : 's'} (bot countries left out) and GA4 ${n(g)} active user${g === 1 ? '' : 's'} this week. Check the ${ga4Low ? 'GA4 tag (is it blocked, or on the wrong property?)' : 'Vercel script (is <Analytics /> on the page?)'}.`,
         short: 'Analytics disagree',
       },
     ];
