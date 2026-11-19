@@ -58,6 +58,26 @@ export default class MyDocument extends Document {
   {/* Google Maps API - now loaded lazily via lib/googleMapsLazy.ts when needed */}
   {/* Removed synchronous script to improve initial page load performance */}
 
+  {/* Blocked-storage fallback. Mail and Messages link previews, some private
+      modes and blocked site data make window.localStorage / sessionStorage
+      throw SecurityError on access. Dozens of call sites read storage without
+      a try/catch, and one throw inside a provider's effect took the whole page
+      down to the error boundary ("Oops! Something went wrong" in the Mail
+      preview of godaisy.io/studio, 2026-11-19). If access throws, put an
+      in-memory Storage in its place for this page view. Must run before the
+      Next bundles, so it lives here as the first inline script. */}
+  <script
+    dangerouslySetInnerHTML={{
+      __html: `(function(){
+        function mem(){var d={};return{get length(){return Object.keys(d).length},key:function(i){return Object.keys(d)[i]||null},getItem:function(k){return Object.prototype.hasOwnProperty.call(d,k)?d[k]:null},setItem:function(k,v){d[k]=String(v)},removeItem:function(k){delete d[k]},clear:function(){d={}}};}
+        ['localStorage','sessionStorage'].forEach(function(k){
+          try{var s=window[k];if(s){s.getItem('__probe__');return;}}catch(e){}
+          try{Object.defineProperty(window,k,{value:mem(),configurable:true});}catch(e){}
+        });
+      })();`,
+    }}
+  />
+
   {/* Cookie consent banner (Go Daisy + Findr) */}
   <script
     dangerouslySetInnerHTML={{
