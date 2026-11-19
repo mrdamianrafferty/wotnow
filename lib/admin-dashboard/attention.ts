@@ -39,10 +39,15 @@ export const RULES = {
   wrongPropertyMinErrors: 100,
   /** Either counter needs this many people before the other being far lower means anything. */
   disagreeMinVisitors: 20,
-  /** ...and "far lower" is under this share of it. */
+  /** ...and Vercel "far lower" than GA4 is under this share of it. */
   disagreeRatio: 0.25,
-  /** Apps whose GA4 tag waits for cookie consent: only 1–3% of visitors accept, so GA4 sits far below Vercel by design. Flag below this share. */
-  disagreeRatioConsentGated: 0.01,
+  /**
+   * GA4 "far lower" than Vercel is under this share. Looser than the other way
+   * round: GA4 only counts people whose browser runs the tag and, where a site
+   * asks, who accept cookies (Grewp 2026-11-12..18: 254 accepted, 124 declined),
+   * and Vercel also counts scripts that run JavaScript, so a wide gap is usual.
+   */
+  ga4LowRatio: 0.1,
   /** Vercel: a country whose visitors view this many pages each is a script, not people. */
   botViewsPerVisitor: 15,
   /** ...once it has this many visitors or views, so a single curious reader cannot trip it. */
@@ -198,34 +203,52 @@ function automatedTraffic(summary: FamilySummary): AttentionItem[] {
   });
 }
 
-/** Web apps that load GA4 only after the visitor accepts cookies (checked in each app's tag code, 2026-11-19). */
-export const CONSENT_GATED_APPS: ReadonlySet<string> = new Set(['godaisy', 'grewp', 'risedaisy', 'hungerford']);
 /** Countries left out of the Vercel count as bot traffic, as Rise Daisy's own dashboard does. */
 export const VERCEL_BOT_COUNTRIES: ReadonlySet<string> = new Set(['Singapore', 'China']);
 
+type VercelCountries = { visitors: { value: number }; countries: { code: string; name: string; visitors: number; pageviews: number }[] };
+
+const isBotCountry = (x: VercelCountries['countries'][number]) =>
+  VERCEL_BOT_COUNTRIES.has(x.name) ||
+  (x.pageviews / Math.max(x.visitors, 1) > RULES.botViewsPerVisitor && (x.visitors >= RULES.botMinVisitorsOrViews || x.pageviews >= RULES.botMinVisitorsOrViews));
+
 /** Vercel visitors minus countries that are scripts: the known bot list, or pages per visitor past the automated_vercel rule. */
-export function vercelHumanVisitors(v: { visitors: { value: number }; countries: { name: string; visitors: number; pageviews: number }[] }): number {
-  const botVisitors = v.countries
-    .filter(
-      (x) =>
-        VERCEL_BOT_COUNTRIES.has(x.name) ||
-        (x.pageviews / Math.max(x.visitors, 1) > RULES.botViewsPerVisitor && (x.visitors >= RULES.botMinVisitorsOrViews || x.pageviews >= RULES.botMinVisitorsOrViews)),
-    )
-    .reduce((sum, x) => sum + x.visitors, 0);
-  return Math.max(v.visitors.value - botVisitors, 0);
+export function vercelHumanVisitors(v: VercelCountries): number {
+  const bots = v.countries.filter(isBotCountry).reduce((sum, x) => sum + x.visitors, 0);
+  return Math.max(v.visitors.value - bots, 0);
 }
 
-/** GA4 needs consent and Vercel does not, so a wide gap either way means a tag or script is broken. */
+/**
+ * Vercel visitors from the countries GA4 also reports users from. Crawlers
+ * arrive from everywhere with about one page each (Pakistan, Bangladesh and
+ * Argentina made 1,116, 1,074 and 825 one-page "visitors" to Grewp in a week),
+ * and GA4 sees none of them, so counting only where GA4 has people compares
+ * like with like. Vercel carries just its top 10 countries, so this can only
+ * undercount, which makes the alert quieter, never louder. Null when no
+ * country matches (GA4 saw nobody, or nobody in Vercel's top 10).
+ */
+export function vercelVisitorsInGa4Countries(v: VercelCountries, ga4Codes: (string | null)[]): number | null {
+  const codes = new Set(ga4Codes.filter((c): c is string => !!c).map((c) => c.toUpperCase()));
+  const matched = v.countries.filter((x) => codes.has(x.code.toUpperCase()) && !isBotCountry(x));
+  return matched.length ? matched.reduce((sum, x) => sum + x.visitors, 0) : null;
+}
+
+/** GA4 and Vercel count different things, so only a wide gap means a tag or script is broken. */
 function analyticsDisagree(apps: AppSnapshot[]): AttentionItem[] {
   return apps.flatMap((a): AttentionItem[] => {
     const vp = okData(a.vercel ?? NO_PART);
-    const v = vp ? vercelHumanVisitors(vp) : undefined;
     const g = okData(a.analytics)?.activeUsers?.value;
-    if (v === undefined || g === undefined) return [];
-    const ratio = CONSENT_GATED_APPS.has(a.id) ? RULES.disagreeRatioConsentGated : RULES.disagreeRatio;
-    const ga4Low = v >= RULES.disagreeMinVisitors && g < v * ratio;
-    const vercelLow = g >= RULES.disagreeMinVisitors && v < g * RULES.disagreeRatio;
+    if (!vp || g === undefined) return [];
+    const all = vercelHumanVisitors(vp);
+    const inGa4Countries = vercelVisitorsInGa4Countries(vp, okData(a.audience)?.countries.map((c) => c.code) ?? []);
+    const compared = inGa4Countries ?? all;
+    const ga4Low = compared >= RULES.disagreeMinVisitors && g < compared * RULES.ga4LowRatio;
+    const vercelLow = g >= RULES.disagreeMinVisitors && all < g * RULES.disagreeRatio;
     if (!ga4Low && !vercelLow) return [];
+    const where = ga4Low && inGa4Countries !== null ? 'from the countries GA4 reports users in' : 'with bot countries left out';
+    const body = ga4Low
+      ? `Vercel saw ${n(compared)} visitor${compared === 1 ? '' : 's'} this week ${where}; GA4 counted ${n(g)} active user${g === 1 ? '' : 's'}, ${(Math.round((g / compared) * 1000) / 10).toLocaleString('en-GB')}% of that. Some gap is normal, since GA4 only counts people who run its tag and accept cookies, but this is wider than usual. Check the GA4 tag is not blocked (CSP, consent banner) and GA_PROPERTY_ID is the property that tag reports to. If both are fine, it is probably crawler traffic in Vercel.`
+      : `Vercel saw ${n(all)} visitor${all === 1 ? '' : 's'} this week (bot countries left out) and GA4 ${n(g)} active user${g === 1 ? '' : 's'}. GA4 counting far more people than Vercel means Vercel’s script is missing: check <Analytics /> is on the page.`;
     return [
       {
         level: 'check',
@@ -233,7 +256,7 @@ function analyticsDisagree(apps: AppSnapshot[]): AttentionItem[] {
         apps: [a.id],
         label: a.name,
         title: 'Analytics disagree',
-        body: `Vercel counted ${n(v)} visitor${v === 1 ? '' : 's'} (bot countries left out) and GA4 ${n(g)} active user${g === 1 ? '' : 's'} this week. Check the ${ga4Low ? 'GA4 tag (is it blocked, or on the wrong property?)' : 'Vercel script (is <Analytics /> on the page?)'}.`,
+        body,
         short: 'Analytics disagree',
       },
     ];

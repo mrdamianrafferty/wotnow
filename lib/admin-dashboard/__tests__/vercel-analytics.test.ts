@@ -143,17 +143,19 @@ describe('Needs attention', () => {
   };
   const rules = (s: FamilySummary, rule: string) => deriveAttention(s).filter((i) => i.rule === rule);
 
-  it('flags Go Daisy’s blocked GA4: Vercel 300, GA4 1 (under 1%, since only 1–3% accept cookies)', () => {
+  it('flags Go Daisy’s blocked GA4: Vercel 300, GA4 1', () => {
     const [item] = rules(withVercel('godaisy', part(300, 600)), 'analytics_disagree');
     expect(item).toMatchObject({ apps: ['godaisy'], title: 'Analytics disagree', level: 'check' });
-    expect(item.body).toMatch(/GA4 tag/);
+    expect(item.body).toMatch(/GA4 tag is not blocked/);
+    expect(item.body).toMatch(/GA_PROPERTY_ID/);
+    expect(item.body).toMatch(/0\.3% of that/);
   });
 
   it('flags the other way: GA4 well above Vercel (Fly Cast 3 vs 23) points at the Vercel script', () => {
     const g = ga4Users('flycast');
     const [item] = rules(withVercel('flycast', part(1, 3)), 'analytics_disagree');
     expect(g).toBeGreaterThanOrEqual(20);
-    expect(item.body).toMatch(/Vercel script/);
+    expect(item.body).toMatch(/Vercel’s script is missing/);
   });
 
   it('stays quiet when the two are close, when both are small, and without Vercel figures', () => {
@@ -164,14 +166,19 @@ describe('Needs attention', () => {
     expect(rules(withVercel('findr', { state: 'error', message: 'x' }), 'analytics_disagree')).toHaveLength(0);
   });
 
-  it('accepts a consent-gated app’s ~2% GA4 share, but not an ungated app’s', () => {
-    expect(rules(withVercel('godaisy', part(89, 210)), 'analytics_disagree')).toHaveLength(0); // GA4 1 vs 89 = 1.1%
-    expect(rules(withVercel('findr', part(89, 210)), 'analytics_disagree').length).toBe(ga4Users('findr') < 89 * 0.25 ? 1 : 0);
+  it('compares GA4 only with Vercel visitors from countries GA4 reports users in', () => {
+    // Grewp-style: 2,100 one-page "visitors" from Pakistan and Bangladesh, GA4 sees nobody there (its only country is US)
+    const crawled = part(2148, 2200, [['PK', 1100, 1100], ['BD', 1000, 1000], ['US', 8, 9]]);
+    expect(rules(withVercel('godaisy', crawled), 'analytics_disagree')).toHaveLength(0); // US 8: under the 20 floor
+    const real = part(2160, 2220, [['PK', 1100, 1100], ['BD', 1000, 1000], ['US', 60, 120]]);
+    const [item] = rules(withVercel('godaisy', real), 'analytics_disagree'); // GA4 1 of 60 US visitors
+    expect(item.body).toMatch(/from the countries GA4 reports users in/);
+    expect(item.body).toMatch(/Vercel saw 60 visitors/);
   });
 
   it('leaves bot countries out of the Vercel side before comparing', () => {
-    // 300 visitors, but 280 are Singapore: 20 left, GA4 1 vs 20 is 5%, above 1%
-    expect(rules(withVercel('godaisy', part(300, 600, [['Singapore', 280, 400], ['GB', 20, 40]])), 'analytics_disagree')).toHaveLength(0);
+    // 300 visitors, 290 of them Singapore: 10 left, under the 20 floor
+    expect(rules(withVercel('godaisy', part(300, 600, [['Singapore', 290, 400], ['GB', 10, 20]])), 'analytics_disagree')).toHaveLength(0);
   });
 
   it('flags a country viewing 15+ pages a visitor: Grewp’s US, 125 visitors and 5,468 views', () => {
