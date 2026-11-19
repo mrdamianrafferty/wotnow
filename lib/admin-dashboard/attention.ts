@@ -222,10 +222,18 @@ function analyticsDisagree(apps: AppSnapshot[]): AttentionItem[] {
     const v = vp ? vercelHumanVisitors(vp) : undefined;
     const g = okData(a.analytics)?.activeUsers?.value;
     if (v === undefined || g === undefined) return [];
-    const ratio = CONSENT_GATED_APPS.has(a.id) ? RULES.disagreeRatioConsentGated : RULES.disagreeRatio;
+    const gated = CONSENT_GATED_APPS.has(a.id);
+    const ratio = gated ? RULES.disagreeRatioConsentGated : RULES.disagreeRatio;
     const ga4Low = v >= RULES.disagreeMinVisitors && g < v * ratio;
     const vercelLow = g >= RULES.disagreeMinVisitors && v < g * RULES.disagreeRatio;
     if (!ga4Low && !vercelLow) return [];
+    const share = v > 0 ? `${(Math.round((g / v) * 1000) / 10).toLocaleString('en-GB')}%` : 'none';
+    const counts = `Vercel saw ${n(v)} visitor${v === 1 ? '' : 's'} this week (bot countries left out); GA4 saw ${n(g)} active user${g === 1 ? '' : 's'}, ${ga4Low ? `${share} of Vercel’s count` : 'more than Vercel’s count'}.`;
+    const why = ga4Low
+      ? gated
+        ? `${cap(a.name)} only loads GA4 after a visitor accepts cookies, so a few percent is normal. Under ${RULES.disagreeRatioConsentGated * 100}% suggests the tag is blocked (check the site’s CSP and consent banner) or GA_PROPERTY_ID points at the wrong GA4 property.`
+        : `GA4 should see most of Vercel’s visitors here. Check the GA4 tag is not blocked and GA_PROPERTY_ID is the property that tag reports to.`
+      : `GA4 counting more people than Vercel means Vercel’s script is missing: check <Analytics /> is on the page.`;
     return [
       {
         level: 'check',
@@ -233,7 +241,7 @@ function analyticsDisagree(apps: AppSnapshot[]): AttentionItem[] {
         apps: [a.id],
         label: a.name,
         title: 'Analytics disagree',
-        body: `Vercel counted ${n(v)} visitor${v === 1 ? '' : 's'} (bot countries left out) and GA4 ${n(g)} active user${g === 1 ? '' : 's'} this week. Check the ${ga4Low ? 'GA4 tag (is it blocked, or on the wrong property?)' : 'Vercel script (is <Analytics /> on the page?)'}.`,
+        body: `${counts} ${why}`,
         short: 'Analytics disagree',
       },
     ];

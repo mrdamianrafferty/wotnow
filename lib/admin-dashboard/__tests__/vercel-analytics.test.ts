@@ -146,14 +146,16 @@ describe('Needs attention', () => {
   it('flags Go Daisy’s blocked GA4: Vercel 300, GA4 1 (under 1%, since only 1–3% accept cookies)', () => {
     const [item] = rules(withVercel('godaisy', part(300, 600)), 'analytics_disagree');
     expect(item).toMatchObject({ apps: ['godaisy'], title: 'Analytics disagree', level: 'check' });
-    expect(item.body).toMatch(/GA4 tag/);
+    expect(item.body).toMatch(/only loads GA4 after a visitor accepts cookies/);
+    expect(item.body).toMatch(/GA_PROPERTY_ID/);
+    expect(item.body).toMatch(/0\.3%/);
   });
 
   it('flags the other way: GA4 well above Vercel (Fly Cast 3 vs 23) points at the Vercel script', () => {
     const g = ga4Users('flycast');
     const [item] = rules(withVercel('flycast', part(1, 3)), 'analytics_disagree');
     expect(g).toBeGreaterThanOrEqual(20);
-    expect(item.body).toMatch(/Vercel script/);
+    expect(item.body).toMatch(/Vercel’s script is missing/);
   });
 
   it('stays quiet when the two are close, when both are small, and without Vercel figures', () => {
