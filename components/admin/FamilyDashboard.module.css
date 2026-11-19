@@ -138,7 +138,9 @@
 .root .pillLinkOutline {
   color: var(--brand-50);
 }
-.root button.pillLinkOutline {
+/* The site-wide reset is button:not(.btn):not([class*="call-"]):not([class*="gd-"]),
+   specificity (0,3,1): this has to outrank it to get the outline back */
+.root .headerLinks button.pillLinkOutline.pillButton {
   border: 1px solid var(--brand-300);
 }
 .pillButton {
