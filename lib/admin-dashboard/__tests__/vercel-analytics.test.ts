@@ -143,8 +143,8 @@ describe('Needs attention', () => {
   };
   const rules = (s: FamilySummary, rule: string) => deriveAttention(s).filter((i) => i.rule === rule);
 
-  it('flags Go Daisy’s blocked GA4: Vercel 89, GA4 1', () => {
-    const [item] = rules(withVercel('godaisy', part(89, 210)), 'analytics_disagree');
+  it('flags Go Daisy’s blocked GA4: Vercel 300, GA4 1 (under 1%, since only 1–3% accept cookies)', () => {
+    const [item] = rules(withVercel('godaisy', part(300, 600)), 'analytics_disagree');
     expect(item).toMatchObject({ apps: ['godaisy'], title: 'Analytics disagree', level: 'check' });
     expect(item.body).toMatch(/GA4 tag/);
   });
@@ -162,6 +162,16 @@ describe('Needs attention', () => {
     expect(rules(withVercel('godaisy', part(19, 40)), 'analytics_disagree')).toHaveLength(0); // GA4 1 vs 19: under the 20 floor
     expect(rules(withVercel('findr', { state: 'not_configured', missing: ['VERCEL_ANALYTICS_TOKEN'] }), 'analytics_disagree')).toHaveLength(0);
     expect(rules(withVercel('findr', { state: 'error', message: 'x' }), 'analytics_disagree')).toHaveLength(0);
+  });
+
+  it('accepts a consent-gated app’s ~2% GA4 share, but not an ungated app’s', () => {
+    expect(rules(withVercel('godaisy', part(89, 210)), 'analytics_disagree')).toHaveLength(0); // GA4 1 vs 89 = 1.1%
+    expect(rules(withVercel('findr', part(89, 210)), 'analytics_disagree').length).toBe(ga4Users('findr') < 89 * 0.25 ? 1 : 0);
+  });
+
+  it('leaves bot countries out of the Vercel side before comparing', () => {
+    // 300 visitors, but 280 are Singapore: 20 left, GA4 1 vs 20 is 5%, above 1%
+    expect(rules(withVercel('godaisy', part(300, 600, [['Singapore', 280, 400], ['GB', 20, 40]])), 'analytics_disagree')).toHaveLength(0);
   });
 
   it('flags a country viewing 15+ pages a visitor: Grewp’s US, 125 visitors and 5,468 views', () => {
