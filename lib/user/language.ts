@@ -124,7 +124,15 @@ export function getUserLanguage(): string {
     return DEFAULT_LANGUAGE;
   }
 
-  const manualSelection = window.localStorage.getItem(LOCAL_STORAGE_KEY);
+  // Storage can be blocked (Mail and Messages link previews, private modes,
+  // blocked site data); reading it then throws SecurityError and took the whole
+  // page down to the error boundary. Fall back to the browser's language.
+  let manualSelection: string | null = null;
+  try {
+    manualSelection = window.localStorage.getItem(LOCAL_STORAGE_KEY);
+  } catch {
+    manualSelection = null;
+  }
   if (isSupportedLanguage(manualSelection)) {
     return manualSelection;
   }

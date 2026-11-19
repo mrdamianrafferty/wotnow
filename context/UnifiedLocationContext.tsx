@@ -122,8 +122,12 @@ function readStoredState(): StoredState | null {
 function persistState(state: StoredState | null) {
   if (typeof window === 'undefined') return;
   if (!state || state.locations.length === 0) {
-    window.localStorage.removeItem(STORAGE_KEY);
-    window.localStorage.removeItem(LEGACY_STORAGE_KEY); // Clean up legacy too
+    try {
+      window.localStorage.removeItem(STORAGE_KEY);
+      window.localStorage.removeItem(LEGACY_STORAGE_KEY); // Clean up legacy too
+    } catch {
+      // Storage blocked (link previews, blocked site data): nothing to clear.
+    }
     // Also clear from Capacitor Preferences
     persistToNativePreferences(null);
     return;
